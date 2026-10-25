@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/tuning-data-config.md
 > **Architecture Module**: Tuning (TDC) in `StealthFoundation`, plus the cross-cutting bootstrap of the module skeleton, test harness and CI
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories tuning-data-config`
+> **Stories**: 100 stories (99 Ready, 1 Blocked); see the Stories table below
 > **Engine Risk**: MEDIUM (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 1 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -67,3 +67,112 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 - Visual/Feel and UI stories have retained screenshots in `production/qa/evidence/`
   (a lead sign-off too for Visual/Feel)
 - Stories embed Control Manifest version 2026-10-25e and every governing ADR's conditional gate has reported before dependent work is marked Done
+
+## Stories
+
+Stories 001-028 are Exit A (bootstrap: module skeleton, test harness, CI, VCS), 029-037 close TD-REG-1 and the AC-3b doc lint, 038-100 are Exit B (the TDC pipeline). Numbers 097-100 were added after the QL-STORY-READY review; build order follows each story's `Depends on` list, not the number (099 and 100 before 077/079/093, 097 after 050, 098 after 097). Stories 019, 020, 064, 071 and 085 are verification stories for [U] engine claims and close PASS or with a recorded amendment request (never by skipping).
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Foundation module skeleton and server-only guard header | Integration | Ready | ADR-0007 |
+| 002 | Gameplay and Presentation module skeletons with the presentation guard define | Integration | Ready | ADR-0007 |
+| 003 | Split the prototype module into the ADR-0007 composition root | Integration | Ready | ADR-0007 |
+| 004 | StealthTestHarness module excluded from Shipping and Test | Integration | Ready | ADR-0007 |
+| 005 | Compile-probe runner with the ADR-0007 guard probe and its positive control | Integration | Ready | ADR-0008 |
+| 006 | Shipping-symbol check: no harness module and no test-seam symbols in Shipping | Integration | Ready | ADR-0008 |
+| 007 | IStealthClock and an injectable fake clock | Logic | Ready | ADR-0008 |
+| 008 | IStealthFaultSink and the WITH_STEALTH_TEST_SEAMS define | Logic | Ready | ADR-0008 |
+| 009 | Log-capture hook asserting warnings by key | Logic | Ready | ADR-0008 |
+| 010 | Negative-control helper: the suite passes only if the inner check fails | Logic | Ready | ADR-0008 |
+| 011 | T0 lint framework: observation emitter and gate script | Logic | Ready | ADR-0008 |
+| 012 | Include lint rules (a)-(c) | Logic | Ready | ADR-0007 |
+| 013 | Include lint rules (d)-(f) | Logic | Ready | ADR-0007 |
+| 014 | Include lint rules (g)-(h) | Logic | Ready | ADR-0007 |
+| 015 | Include lint rules (i)-(j) | Logic | Ready | ADR-0007 |
+| 016 | Seeded violation per lint rule watched to fail | Logic | Ready | ADR-0008 |
+| 017 | Net emulation profiles StealthLeak1, StealthLeak2, StealthClean | Config/Data | Ready | ADR-0008 |
+| 018 | Harness replication-system assertion and result JSON | Logic | Ready | ADR-0008 |
+| 019 | CQTest listen server with three clients runs headless under -nullrhi | Integration | Ready | ADR-0008 |
+| 020 | Gauntlet host plus client smoke scenario with legacy-driver assertion | Integration | Ready | ADR-0008 |
+| 021 | Per-commit gate script | Integration | Ready | ADR-0008 |
+| 022 | CI workflow runs the T0 lint and the same gate | Config/Data | Ready | ADR-0008 |
+| 023 | Nightly workflow: compile probes, T3 suites, Shipping-symbol check | Integration | Ready | ADR-0008 |
+| 024 | VCS conformance check for ignore and attribute rules | Config/Data | Ready | ADR-0009 |
+| 025 | Tracked pre-commit hook framework running the T0 lint | Logic | Ready | ADR-0009 |
+| 026 | Pre-commit check rejects changes to never-resave assets | Logic | Ready | ADR-0009 |
+| 027 | Pre-commit check compares changed assets with git lfs locks | Logic | Ready | ADR-0009 |
+| 028 | commit-msg hook enforces Conventional Commits with a story or ADR reference | Logic | Ready | ADR-0009 |
+| 029 | Parser for the Tuning Knobs tables of every GDD | Logic | Ready | ADR-0004 |
+| 030 | Mirror the missing owner keys into entities.yaml (TD-REG-1 first task) | Config/Data | Ready | ADR-0004 |
+| 031 | Doc lint: every Tuning Knobs table has the CR-15 columns | Logic | Ready | ADR-0004 |
+| 032 | Doc lint: every key appears as owned in exactly one GDD | Logic | Ready | ADR-0004 |
+| 033 | Doc lint: every owned key matches an entities.yaml constant | Logic | Ready | ADR-0004 |
+| 034 | Doc lint: every owned key matches a schema row, shrinking pending-owner baseline | Logic | Ready | ADR-0004 |
+| 035 | Doc lint negative control: a fixture GDD with a duplicated key fails | Logic | Ready | ADR-0008 |
+| 036 | Doc lint: invariant-read keys must say "bounded by <Id>" | Logic | Ready | ADR-0004 |
+| 037 | Close TD-REG-1 in the tech-debt register | Config/Data | Ready | ADR-0004 |
+| 038 | Schema row struct, type tags, latch enum and schema constants | Logic | Ready | ADR-0004 |
+| 039 | Preset data-asset classes with no Config back door | Logic | Ready | ADR-0004 |
+| 040 | The eight canonical keys and the client/server tuning faces | Logic | Ready | ADR-0004 |
+| 041 | StealthTuningSchemaGen commandlet writes the generated schema table | Logic | Ready | ADR-0004 |
+| 042 | Bootstrap regeneration flow for the schema table | Integration | Ready | ADR-0004 |
+| 043 | Schema fingerprint and the SchemaVersionBumped test | Logic | Ready | ADR-0004 |
+| 044 | AC-3a SchemaComplete | Logic | Ready | ADR-0004 |
+| 045 | AC-5 HashStableAndSensitive | Logic | Ready | ADR-0004 |
+| 046 | AC-4 ValidateClampAndNan | Logic | Ready | ADR-0004 |
+| 047 | AC-18 DerivedIndicators | Logic | Ready | ADR-0004 |
+| 048 | AC-17 InvariantBoundaries | Logic | Ready | ADR-0004 |
+| 049 | AC-26 SafeRangeWarnOnly | Logic | Ready | ADR-0004 |
+| 050 | AC-6a FallbackToDefault: Resolve() and the preset-source seam | Logic | Ready | ADR-0004 |
+| 051 | AC-6b FallbackToSchema | Logic | Ready | ADR-0004 |
+| 052 | Round and Session stubs for TDC tests | Logic | Ready | ADR-0008 |
+| 053 | AC-6c FallbackFailed | Logic | Ready | ADR-0004 |
+| 054 | AC-32 FrozenImmutable | Logic | Ready | ADR-0004 |
+| 055 | AC-30 mechanism: owner-invariant rows | Logic | Ready | ADR-0004 |
+| 056 | Default, Playtest and Solo preset assets and the catalog | Config/Data | Ready | ADR-0004 |
+| 057 | Asset Manager primary types with AlwaysCook | Config/Data | Ready | ADR-0004 |
+| 058 | AC-1 DefaultPreset: the game-instance preset store | Integration | Ready | ADR-0004 |
+| 059 | AC-2a PresetNotSelectable | Logic | Ready | ADR-0004 |
+| 060 | AC-2b PresetCaseInsensitive | Logic | Ready | ADR-0004 |
+| 061 | AC-2c PresetMalformed | Logic | Ready | ADR-0004 |
+| 062 | AC-2d ClientOptionIgnored | Integration | Ready | ADR-0004 |
+| 063 | AC-2e PresetSurvivesTravel (multi-process) | Integration | Ready | ADR-0004 |
+| 064 | AC-27 PresetsCooked (cooked Dev build) | Integration | Ready | ADR-0004 |
+| 065 | AC-29 CatalogClean (CI script) | Logic | Ready | ADR-0004 |
+| 066 | UStealthTuningService and AC-21 PlayerNpcParity | Logic | Ready | ADR-0004 |
+| 067 | World-scoped accessor reads its own world in multi-client PIE | Integration | Ready | ADR-0004 |
+| 068 | AC-28 ServerKeyNotOnClient | Logic | Ready | ADR-0004 |
+| 069 | AC-8 static half NoClientAssetReference | Logic | Ready | ADR-0004 |
+| 070 | AC-19 SnapshotSizeBudget | Logic | Ready | ADR-0004 |
+| 071 | Spike T-1: atomic snapshot delivery under loss and for a rejoiner | Integration | Ready | ADR-0004 |
+| 072 | Snapshot replication hold-back and arrival-order test hook | Logic | Ready | ADR-0008 |
+| 073 | AC-7 SnapshotPublicOnly | Integration | Ready | ADR-0004 |
+| 074 | AC-10 ClientHashHandoff | Integration | Ready | ADR-0004 |
+| 075 | AC-11 StaleEpochIgnored | Integration | Ready | ADR-0004 |
+| 076 | AC-9 NoPawnBeforeReady | Integration | Ready | ADR-0004 |
+| 077 | AC-12a HostPath | Integration | Ready | ADR-0004 |
+| 078 | AC-12b RemoteLoopbackHash (multi-process) | Integration | Ready | ADR-0004 |
+| 079 | AC-12c SelfCheckFault | Logic | Ready | ADR-0004 |
+| 080 | AC-13 RejoinSnapshot (multi-process) | Integration | Ready | ADR-0004 |
+| 081 | AC-23 TravelEpoch (multi-process) | Integration | Ready | ADR-0004 |
+| 082 | AC-8 LocalTamperIgnored (multi-process) | Integration | Ready | ADR-0004 |
+| 083 | AC-16 FullHashNotReplicated (provisional on Round) | Integration | Ready | ADR-0004 |
+| 084 | AC-20 RoundLogHeader (provisional on Round) | Logic | Ready | ADR-0004 |
+| 085 | AC-14a HotReloadPie | Integration | Ready | ADR-0004 |
+| 086 | AC-14b HotReloadRejected | Integration | Ready | ADR-0004 |
+| 087 | AC-14c HotReloadAbsentPackaged | Logic | Ready | ADR-0004 |
+| 088 | Back-door code behind guards with sentinel literals (AC-22 positive control) | Integration | Ready | ADR-0004 |
+| 089 | AC-22 NoShippingBackDoor (CI script) | Integration | Ready | ADR-0004 |
+| 090 | AC-31 PresetChangeNextRound | Integration | Ready | ADR-0004 |
+| 091 | AC-15 NoVariantKeys | Logic | Ready | ADR-0004 |
+| 092 | AC-25 NoHardcodedGameplay (CI literal scan) | Logic | Ready | ADR-0004 |
+| 093 | AC-24 LocalSettingsNotTuning | Integration | Ready | ADR-0004 |
+| 094 | SafeRangeLint with a shrink-only baseline | Logic | Ready | ADR-0004 |
+| 095 | Retire the eight canonical Config fields of UStealthSettings | Integration | Ready | ADR-0007 |
+| 096 | AC-30 closure: every owner invariant over the full schema | Logic | Blocked | ADR-0004 |
+| 097 | Invariants reject the whole preset (AC-17 closing clauses) | Logic | Ready | ADR-0004 |
+| 098 | Derived indicators, preset scope (AC-18 scope clauses) | Logic | Ready | ADR-0004 |
+| 099 | Self-check forcing hook and disconnect recorder (test seams) | Logic | Ready | ADR-0008 |
+| 100 | Reliable-RPC counter and replicated-property CRC helper (test seams) | Logic | Ready | ADR-0008 |
+
+Story 096 is Blocked on other epics (all 18 owners must register their schema sub-structs and invariant rows), not on an ADR or spike; it unblocks when story 034's pending-owner baseline is empty. The file names are `story-NNN-<slug>.md` in this folder.
