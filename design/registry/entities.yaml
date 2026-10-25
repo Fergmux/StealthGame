@@ -514,7 +514,7 @@ entities:
       - design/gdd/procedural-city-generator.md
       - design/gdd/shared-character-locomotion.md
     zone_ids: "ZoneId 0-3, never a team; ZoneCandidatesMinCount (2) to 4 candidates, exactly 2 used per round"
-    start_cells: "at least TeamSize + 1 start cells, StartCellSpacingCm (8 m) apart, within StartCellMaxRadiusCm (18 m) of the anchor"
+    start_cells: "at least TeamSize + 1 start cells, StartCellSpacingCm (8 m) apart, within StartCellMaxRadiusCm (16 m) of the anchor"
     density_disc: "TeamZoneRadiusCm (35 m)"
     respawn_region: "walkable cells within InformantRespawnPathCm (45 m path) of the team's OWN zone anchor, restricted to cells strictly nearer by path to that anchor than to the partner zone's anchor (LSC TeamSpawn RespawnRegion(zone, partner), R5b; the two teams' regions are disjoint, never a union of both discs). Pillar-1 review of the restriction: Penalty OQ-NKP-13 (taken over from CPA OQ-14)"
     # wording changed 2026-10-25 (LSC re-review: nearer-anchor, per zone pair; was "of the anchor"); clarified again 2026-10-25 cross-review fix C-W40 (own anchor, strictly nearer; OQ pointer moved to Penalty OQ-NKP-13)
@@ -5068,7 +5068,7 @@ constants:
     safe_range: "4,000-4,400 on the generator (hand-built maps up to 8,000 if they still pass FinalCandidatesMinCount)"
     audience: ServerOnly
     latch: Round
-    note: "decision D4 (PCG OQ9): V-SEP start-to-final path floor lowered 60 m -> 44 m. On the generator's corner-zone geometry a court at (x, y) from an axis corner is final-eligible iff x + y <= 110 - 1.08 * F (8 % path guard); 6 courts at >= 24 m spacing need F <= 44.4 m (Generator S4, LSC D5), hence 4,400 and the generator safe ceiling. FinalCandidatesMinCount is never lowered below 6. Registered by the cross-review fix pass 2026-10-25 (C-W16); the closeout had claimed the registry update without landing it. Margin at default jitter is open (C-W24, PCG OQ9 enumeration)."
+    note: "decision D4 (PCG OQ9): V-SEP start-to-final path floor lowered 60 m -> 44 m. On the generator's corner-zone geometry a court at (x, y) from an axis corner is final-eligible iff x + y <= 112 - 1.08 * F (radius 16 m, D50; 8 % path guard); 6 courts at >= 24 m spacing need F <= 46.3 m at radius 16 m (44.4 m at 18 m) (Generator S4, LSC D5), hence 4,400 and the generator safe ceiling. FinalCandidatesMinCount is never lowered below 6. Registered by the cross-review fix pass 2026-10-25 (C-W16); the closeout had claimed the registry update without landing it. Margin at default jitter resolved by D50 (PCG OQ9 enumeration: 0.615 at radius 16 m, jitter 0)."
     added: 2026-10-25
     revised: ""
   - name: CameraMaskOffHysteresisCm
@@ -5221,7 +5221,7 @@ constants:
     source: design/gdd/level-socket-contract.md
     referenced_by:
       - design/gdd/level-socket-contract.md
-    value: 1800
+    value: 1600
     unit: cm
     hard_range: "1200-2500"
     safe_range: "1500-2000"
@@ -5229,7 +5229,7 @@ constants:
     latch: Round
     note: "LSC Tuning Knobs (level-socket-contract.md:576); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
     added: 2026-10-25
-    revised: ""
+    revised: "2026-10-25 (D50): 1800 -> 1600"
   - name: ZoneNpcWindowMinCount
     status: active
     source: design/gdd/level-socket-contract.md
