@@ -219,11 +219,11 @@ stories:
     name: "Harness replication-system assertion and result JSON"
     file: "production/epics/tuning-data-config/story-018-replication-system-assertion.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "qa-lead"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-020"
     name: "Gauntlet host plus client smoke scenario with legacy-driver assertion"
     file: "production/epics/tuning-data-config/story-020-gauntlet-multiprocess-smoke.md"

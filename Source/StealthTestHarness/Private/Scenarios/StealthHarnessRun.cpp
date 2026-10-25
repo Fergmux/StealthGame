@@ -18,6 +18,7 @@
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
+#include "Misc/App.h"
 #include "Misc/CommandLine.h"
 #include "Misc/CoreDelegates.h"
 #include "Misc/Parse.h"
@@ -118,10 +119,39 @@ namespace StealthHarness
 		}
 
 		const FString RunId = StringParam(TEXT("RunId"), FDateTime::Now().ToString(TEXT("%Y%m%d-%H%M%S")));
-		const FString Dir = StringParam(TEXT("Out"), FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Harness"), RunId));
+		// -StealthHarnessOut=<path>: a ".json" value is this process's result file (records go beside it);
+		// any other value is a folder shared by the processes of a run (records and server/client<N>-result.json
+		// go there); absent: records go to Saved/Harness/<RunId> and no result file is written (story tdc-018).
+		const FString OutParam = StringParam(TEXT("Out"), FString());
+		const FString Dir = OutParam.IsEmpty() ? FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Harness"), RunId)
+			: (OutParam.EndsWith(TEXT(".json"), ESearchCase::IgnoreCase) ? FPaths::GetPath(OutParam) : OutParam);
+		ResultPath = FStealthHarnessScenarioRunner::ResolveResultPath(OutParam, bServerProcess, ClientIndex);
 		const FString FileName = bServerProcess ? FString(TEXT("server.jsonl")) : FString::Printf(TEXT("client%d.jsonl"), ClientIndex);
 		IFileManager::Get().MakeDirectory(*Dir, true);
 		File.Reset(IFileManager::Get().CreateFileWriter(*FPaths::Combine(Dir, FileName), FILEWRITE_AllowRead));
+
+		// The replication-system assertion reads the game net driver of the running game world (story tdc-018).
+		FString NetProfile;
+		FParse::Value(FCommandLine::Get(), TEXT("PktEmulationProfile="), NetProfile);
+		// Negative-control seam for the T3 runs: -StealthHarnessForceReplicationSystem=<legacy|iris> makes THIS process report that
+		// system to the assertion instead of reading its driver (the engine switch -UseIrisReplication=1 only takes effect when the
+		// net driver config allows Iris and the Iris plugin is on, which this project deliberately does not do: ADR-0001).
+		const FString Forced = StringParam(TEXT("ForceReplicationSystem"), FString());
+		if (!Forced.IsEmpty())
+		{
+			ReplicationProbe = MakeUnique<FStealthFixedReplicationProbe>(Forced.Equals(TEXT("iris"), ESearchCase::IgnoreCase) ? EHarnessReplicationSystem::Iris : EHarnessReplicationSystem::Legacy);
+			UE_LOGF(LogStealthHarness, Warning, "Negative control: the replication-system probe is forced to report %ls", *Forced);
+		}
+		if (!ReplicationProbe)
+		{
+			ReplicationProbe = MakeUnique<FStealthNetDriverReplicationProbe>([]() -> const UNetDriver*
+			{
+				const UWorld* World = FindGameWorld();
+				return World ? World->GetNetDriver() : nullptr;
+			});
+		}
+		Runner = MakeUnique<FStealthHarnessScenarioRunner>(*ReplicationProbe, ScenarioName, LexToString(FApp::GetBuildConfiguration()), NetProfile);
+		Runner->AddCapture(FPaths::Combine(Dir, FileName));
 
 		Write(TEXT("start"), FString::Printf(TEXT("\"scenario\":%s,\"known\":%d,\"role\":%s,\"client\":%d,\"expectedClients\":%d,\"pid\":%u,\"cmdline\":%s"),
 			*Q(ScenarioName), (int32)bKnownScenario, *Q(bServerProcess ? TEXT("server") : TEXT("client")), ClientIndex, ExpectedClients,
@@ -390,7 +420,7 @@ namespace StealthHarness
 		Write(TEXT("truth"), FString::Printf(TEXT("\"tag\":\"runner\",%s,\"pawns\":[%s]"), *ServerTimeFields(World), *Pawns));
 	}
 
-	void FRun::Finish(const TCHAR* Reason)
+	void FRun::Finish(const TCHAR* Reason, bool bAbnormal)
 	{
 		if (bFinished)
 		{
@@ -400,6 +430,10 @@ namespace StealthHarness
 		if (Scenario.IsValid())
 		{
 			Scenario->OnFinish(*this);
+		}
+		if (bAbnormal)
+		{
+			Runner->MarkFailed(Reason);
 		}
 		Write(TEXT("end"), FString::Printf(TEXT("\"reason\":%s"), *Q(Reason)));
 		// The host closes every client connection so the clients see the end at once (not a 60 s timeout).
@@ -418,7 +452,11 @@ namespace StealthHarness
 			File->Flush();
 		}
 		UE_LOGF(LogStealthHarness, Display, "Harness scenario %ls finished (%ls); requesting exit.", *ScenarioName, Reason);
-		FPlatformMisc::RequestExit(false, TEXT("StealthHarness"));
+		// The result JSON: written once, here, with the verdict of the whole run (story tdc-018).
+		const EStealthHarnessResultWrite Written = Runner->WriteResult(ResultPath);
+		const bool bPassed = Runner->IsPassing() && Written != EStealthHarnessResultWrite::Failed;
+		UE_LOGF(LogStealthHarness, Display, "Harness scenario %ls result: %ls", *ScenarioName, bPassed ? TEXT("passed") : TEXT("FAILED"));
+		FPlatformMisc::RequestExitWithStatus(false, bPassed ? 0 : 1, TEXT("StealthHarness"));
 	}
 
 	bool FRun::Tick(float DeltaSeconds)
@@ -431,7 +469,7 @@ namespace StealthHarness
 		}
 		if (Now - ProcessStart > MaxSeconds)
 		{
-			Finish(TEXT("max-seconds ceiling"));
+			Finish(TEXT("max-seconds ceiling"), /*bAbnormal*/ true);
 			return true;
 		}
 		if (File.IsValid() && Now - LastFlush > 1.0)
@@ -481,6 +519,16 @@ namespace StealthHarness
 		if (!bBootWritten)
 		{
 			WriteBoot(World);
+			// Story tdc-018: no leak or parity result is trusted under the wrong replication system.
+			const bool bSystemOk = Runner->AssertReplicationSystem();
+			Write(TEXT("replicationSystem"), FString::Printf(TEXT("\"system\":%s,\"expected\":%s,\"ok\":%d,\"negativeControlDetected\":%d"),
+				*Q(StealthHarness::ToString(Runner->GetResult().ReplicationSystem)), *Q(StealthHarness::ToString(StealthHarness::PinnedReplicationSystem)),
+				(int32)bSystemOk, (int32)Runner->GetResult().bNegativeControlDetected));
+			if (!bSystemOk)
+			{
+				Finish(TEXT("replication system assertion failed"));
+				return true;
+			}
 		}
 		if (Now - LastNetSample >= 1.0)
 		{

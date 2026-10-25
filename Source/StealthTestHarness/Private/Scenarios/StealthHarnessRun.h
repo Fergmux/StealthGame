@@ -16,6 +16,7 @@
 #include "CoreMinimal.h"
 #include "Containers/Ticker.h"
 #include "Engine/World.h"
+#include "StealthHarnessScenarioRunner.h"
 
 class AActor;
 class APawn;
@@ -89,6 +90,9 @@ namespace StealthHarness
 		/** Records the class replication layout (ClassReps index -> property, condition) once per class. */
 		void DumpLayoutOnce(const UClass* Class);
 
+		/** The process's result evaluator (story tdc-018): replication-system assertion, faults[], captures[]. Null before construction finishes. */
+		FStealthHarnessScenarioRunner& GetRunner() { return *Runner; }
+
 		const FString& GetScenarioName() const { return ScenarioName; }
 		bool IsServerProcess() const { return bServerProcess; }
 		int32 GetClientIndex() const { return ClientIndex; }
@@ -103,7 +107,8 @@ namespace StealthHarness
 		void WriteBoot(UWorld* World);
 		void WriteNetSample(UWorld* World);
 		void WritePawnTruth(UWorld* World);
-		void Finish(const TCHAR* Reason);
+		/** Ends the run: bAbnormal marks it failed (a ceiling hit), then the result JSON is written and the process exits with 0 (passed) or 1. */
+		void Finish(const TCHAR* Reason, bool bAbnormal = false);
 		static UWorld* FindGameWorld();
 
 		FString ScenarioName;
@@ -113,6 +118,9 @@ namespace StealthHarness
 		FDelegateHandle PostEngineInitHandle;
 		FDelegateHandle WorldInitHandle;
 		TSet<FName> DumpedClasses;
+		TUniquePtr<IStealthReplicationSystemProbe> ReplicationProbe;
+		TUniquePtr<FStealthHarnessScenarioRunner> Runner;
+		FString ResultPath;
 
 		bool bServerProcess = false;
 		int32 ClientIndex = 0;

@@ -1,12 +1,12 @@
 # Story 018: Harness replication-system assertion and result JSON
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -71,10 +71,11 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthTestHarness/Private/StealthHarnessScenarioRunner.h`
-- `Source/StealthTestHarness/Private/StealthHarnessScenarioRunner.cpp`
-- `Source/StealthTestHarness/Private/StealthHarnessResult.h`
+- `Source/StealthTestHarness/Private/StealthHarnessScenarioRunner.h`, `Source/StealthTestHarness/Private/StealthHarnessScenarioRunner.cpp` (probe seam, production probe, fixed fake, runner with fault sink, negative control, result writer)
+- `Source/StealthTestHarness/Private/StealthHarnessResult.h` (result record and JSON)
 - `Source/StealthTestHarness/Private/Tests/ReplicationSystemAssertedTest.cpp`
+- `Source/StealthTestHarness/Private/Scenarios/StealthHarnessRun.h`, `Source/StealthTestHarness/Private/Scenarios/StealthHarnessRun.cpp` (the T3 process runner asserts at boot, writes the result at the end, exits 0/1)
+- `Source/StealthTestHarness/StealthTestHarness.Build.cs` (added the `Json` module)
 
 ---
 
@@ -96,7 +97,7 @@
 **Required evidence**:
 - Logic: `Source/StealthTestHarness/Private/Tests/ReplicationSystemAssertedTest.cpp` must exist and pass (`StealthGame.Harness.ReplicationSystemAsserted`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`Source/StealthTestHarness/Private/Tests/ReplicationSystemAssertedTest.cpp`, `StealthGame.Harness.ReplicationSystemAsserted`; plus real two-process runs, 2026-10-25)
 
 ---
 
@@ -105,3 +106,14 @@
 - Depends on: `production/epics/tuning-data-config/story-004-test-harness-module-shipping-excluded.md`, `production/epics/tuning-data-config/story-007-stealth-clock-interface.md`
 - Unlocks: `production/epics/tuning-data-config/story-020-gauntlet-multiprocess-smoke.md`
 - Open verification claims: the plan has no Note line for this story. Open items found while writing: the `build` and `netProfile` value sets, the absent/unwritable output path behaviour, and the missing declared dependency on story 008 for `faults[]`.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: `IStealthReplicationSystemProbe` with the production `FStealthNetDriverReplicationProbe` (`UNetDriver::IsUsingIrisReplication()`; the class default reads legacy; no driver reads Unknown); a fake reporting Iris fails the run (the suite passes only because that failure is detected, via `FStealthNegativeControl`), a fake reporting legacy passes, Unknown fails; the result JSON has exactly the eight keys `scenario, build, replicationSystem, netProfile, passed, negativeControlDetected, faults[], captures[]` read back from `-StealthHarnessOut`; faults[] is filled through the `IStealthFaultSink` face and a fault fails the run; an absent path writes no file and still evaluates; an unwritable path returns Failed and fails the run; a run that never asserted is not a pass. Real processes: `run-mp.ps1 -Scenario Smoke` host + client each wrote `replicationSystem: legacy, passed: true, negativeControlDetected: true` (evidence `live-run/`); a process forced to report Iris wrote `iris`, `passed: false` and exited with status 1 (`RequestExitWithStatus(0, 1, StealthHarness)`))
+**Decisions**: named `EHarnessReplicationSystem` (the engine already has a global `EReplicationSystem`); the probe returns Legacy, Iris or Unknown and Unknown never reads as legacy; `build` = the build configuration string (`LexToString(FApp::GetBuildConfiguration())`), `netProfile` = the `-PktEmulationProfile` name or `none`; `-StealthHarnessOut` is the result FILE when it ends in `.json`, else a FOLDER (the interim launcher run-mp.ps1 already passes a folder) and the file is `server-result.json` / `client<N>-result.json`; absent path = no file, still evaluated and logged; unwritable path = failed run; `faults[]` comes from the runner being the process's `IStealthFaultSink` (story 008 is in the repo) and any fault fails the run; the negative control uses `FStealthNegativeControl` (story 010 is in the repo): every run evaluates the comparison against a probe reporting the OTHER system and records `negativeControlDetected`; a control that is not detected fails the run; expected failures log at Warning, not Error, so an automation test exercising them does not fail on log errors; the assertion runs at the first boot record of every harness process (`-StealthHarnessScenario=`), not in processes without a scenario
+**Deviations**: `StealthHarnessScenarioRunner.h/.cpp` live in `Private/` (as the story lists) and the process runner is the existing `Scenarios/StealthHarnessRun.*` from the earlier spikes, extended rather than replaced
+**Test Evidence**: `production/qa/evidence/story-018-replication-system-assertion/test-run.txt` (build `Result: Succeeded`; 37/37 `StealthGame.` tests Success), `live-run/` (two-process result JSON and records), `stamp.txt`
+**Run result**: OBSERVED — two real processes (listen host + client, Development editor binary `-game -nullrhi`) via tools/ci/mp/run-mp.ps1: `production/qa/evidence/story-018-replication-system-assertion/live-run/` (no screenshot: nothing player-visible; the observation is the result JSON and the boot records, including `maxPlayers: 10` from decision D51)
+**Reviewed by**: focused code review (self-applied, unattended run): the Error-level log of an expected failure (it failed the automation test) was found and changed to Warning; no further defects found

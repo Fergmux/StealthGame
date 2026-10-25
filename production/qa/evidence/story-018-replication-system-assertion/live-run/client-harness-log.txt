@@ -1,0 +1,8 @@
+LogCsvProfiler: Display: Metadata set : commandline="" "C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject" 127.0.0.1?Name=C1 -game -unattended -nosplash -nosound -NoVerifyGC -log -StealthHarnessScenario=Smoke -StealthHarnessRunId=tdc020-smoke-legacy -StealthHarnessOut="C:\Use
+LogInit: Command Line: 127.0.0.1?Name=C1 -game -unattended -nosplash -nosound -NoVerifyGC -log -StealthHarnessScenario=Smoke -StealthHarnessRunId=tdc020-smoke-legacy -StealthHarnessOut="C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-smoke-legacy" -StealthHarnessClients=1 -
+[2026.10.25-10.05.10:473][  0]LogStealthHarness: Display: Harness scenario Smoke (client 1) writing to C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-smoke-legacy
+[2026.10.25-10.05.37:196][250]LogStealthHarness: Display: Replication system legacy (expected legacy), negative control detected
+[2026.10.25-10.05.37:796][308]LogStealthHarness: Display: Harness scenario Smoke finished (server connection lost); requesting exit.
+[2026.10.25-10.05.37:796][308]LogStealthHarness: Display: Result written to C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-smoke-legacy/client1-result.json (passed 1, replicationSystem legacy)
+[2026.10.25-10.05.37:796][309]LogStealthHarness: Display: Harness scenario Smoke result: passed
+[2026.10.25-10.05.37:796][309]LogWindows: FPlatformMisc::RequestExitWithStatus(0, 0, StealthHarness)
