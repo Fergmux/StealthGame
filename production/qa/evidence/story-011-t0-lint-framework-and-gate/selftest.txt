@@ -1,0 +1,20 @@
+# bash tools/ci/lint/selftest/run-framework-selftest.sh (2026-10-25, Git for Windows bash)
+SELFTEST clean-pass ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST one-finding-fail ok
+    finding.txt:3 demo seeded violation marker
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST one-finding-fail-text ok
+    finding.txt:3 demo seeded violation marker
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST zero-files-not-assessed ok
+    GATE: NOT ASSESSED (0 file(s) scanned; an empty or broken lint scope is not a pass)
+SELFTEST two-findings-two-lines ok
+SELFTEST emitter-no-verdict ok
+SELFTEST obs-clean-pass ok
+SELFTEST malformed-line-not-assessed ok
+SELFTEST missing-obs-not-assessed ok
+SELFTEST crashed-rule-not-assessed ok
+SELFTEST scanned-counts-distinct-files ok
+SELFTEST RESULT: PASS (11 cases)
+exit=0

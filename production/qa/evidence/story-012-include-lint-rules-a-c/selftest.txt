@@ -1,0 +1,40 @@
+# bash tools/ci/lint/selftest/run-include-abc-selftest.sh (2026-10-25)
+SELFTEST a-seeded ok
+    Source/StealthGameplay/Public/Misc/StealthOtherFolder.h:1 a header in Public/ outside View/ and Server/ (only the module header and the guard may sit in Public/)
+    Source/StealthGameplay/Public/StealthLooseHeader.h:1 a header in Public/ outside View/ and Server/ (only the module header and the guard may sit in Public/)
+    GATE: FAIL (2 finding(s); 3 file(s) scanned)
+SELFTEST a-clean ok
+    GATE: PASS (4 file(s) scanned, 0 findings)
+SELFTEST b-seeded ok
+    Source/StealthFoundation/Public/Server/StealthGuardNotFirst.h:3 b first include is "CoreMinimal.h", must be "StealthServerOnlyGuard.h"
+    Source/StealthFoundation/Public/Server/StealthNoGuard.h:1 b Server header does not include StealthServerOnlyGuard.h first (no #include found)
+    GATE: FAIL (2 finding(s); 2 file(s) scanned)
+SELFTEST b-clean ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST c-seeded ok
+    Source/StealthGameplay/Public/View/StealthLeakyView.h:4 c View header includes server header "Server/StealthSomeService.h"
+    GATE: FAIL (1 finding(s); 1 file(s) scanned)
+SELFTEST c-clean ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST prototype-exempt-and-unlisted ok
+    Source/StealthGame/Public/StealthUnlistedNew.h:1 a header in Public/ outside View/ and Server/ (only the module header and the guard may sit in Public/)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST real-tree-zero-findings ok
+    GATE: PASS (29 file(s) scanned, 0 findings)
+SELFTEST shrink-only-unchanged ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST shrink-only-removal-allowed ok
+    Source/StealthGame/Public/StealthTwo.h:1 a header in Public/ outside View/ and Server/ (only the module header and the guard may sit in Public/)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST shrink-only-growth-reported ok
+    tools/ci/lint/prototype-exempt.txt:3 shrink-only entry 'Source/StealthGame/Public/StealthThree.h' is not in the list at HEAD; the list may only shrink (G3)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST shrink-only-unverifiable-base-reported ok
+SELFTEST RESULT: PASS (12 cases)
+exit=0
+
+# Real tree: bash tools/ci/lint/gate.sh tools/ci/lint/include-lint-abc.sh
+GATE: PASS (29 file(s) scanned, 0 findings)
+exit=0
+
+# Watched to fail on the real tree: with prototype-exempt.txt moved away the gate reported 17 rule (a) findings (15 Source/StealthGame/Public headers + 2 StealthGameEditor toolset headers): GATE: FAIL (17 finding(s); 29 file(s) scanned)

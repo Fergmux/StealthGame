@@ -84,20 +84,20 @@ stories:
     name: "T0 lint framework: observation emitter and gate script"
     file: "production/epics/tuning-data-config/story-011-t0-lint-framework-and-gate.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-012"
     name: "Include lint rules (a)-(c): header placement, guard first, view must not include server"
     file: "production/epics/tuning-data-config/story-012-include-lint-rules-a-c.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-019"
     name: "CQTest listen server with three clients runs headless under -nullrhi"
     file: "production/epics/tuning-data-config/story-019-cqtest-headless-proof.md"

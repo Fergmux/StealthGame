@@ -1,0 +1,6 @@
+Reviewed-Content-Hash: tools/ci/lint/include-lint-abc.sh dcd5ee38874ca8e31d78f651c6b02635dc40204a
+Reviewed-Content-Hash: tools/ci/lint/prototype-exempt.txt c31e53528dc4e57a2eb29f7a2dc50e367c8f21f3
+Reviewed-Content-Hash: tools/ci/lint/selftest/run-include-abc-selftest.sh cb9954c23fbfeca87df18beb7afacb81cc406626
+Reviewed-Content-Hash: tools/ci/lint/emit.sh 5656bde0f9419bd4debd07e3cb8148b1134d4c5e
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/IncludeLintAbcTest.cpp a3edd839c9711fd80b0ebd1ed544f35d7b838642
+Story: production/epics/tuning-data-config/story-012-include-lint-rules-a-c.md

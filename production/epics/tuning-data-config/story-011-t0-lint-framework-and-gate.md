@@ -1,12 +1,12 @@
 # Story 011: T0 lint framework: observation emitter and gate script
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *Bootstrap criterion (no GDD), from `tdc-plan.md`:*
 
-- [ ] `tools/ci/lint/` has a shared emitter that prints one `file:line rule message` observation per finding and a gate script that is the only place pass/fail is decided (exit 0 with no findings, nonzero with any, NOT ASSESSED nonzero when no input files were scanned); a self-test over a two-file fixture proves each outcome.
+- [x] `tools/ci/lint/` has a shared emitter that prints one `file:line rule message` observation per finding and a gate script that is the only place pass/fail is decided (exit 0 with no findings, nonzero with any, NOT ASSESSED nonzero when no input files were scanned); a self-test over a two-file fixture proves each outcome.
 
 ---
 
@@ -92,7 +92,7 @@
 **Required evidence**:
 - Logic: the selftest under `tools/ci/lint/selftest/` (run by the T0 gate step) and the G2 wrapper `StealthGame.Build.LintFramework` (`Source/StealthFoundation/Private/Tests/Build/LintFrameworkTest.cpp`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`tools/ci/lint/selftest/run-framework-selftest.sh` 11/11 cases; `StealthGame.Build.LintFramework`, 2026-10-25)
 
 ---
 
@@ -102,3 +102,15 @@
 - Unlocks: `production/epics/tuning-data-config/story-012-include-lint-rules-a-c.md`, `production/epics/tuning-data-config/story-013-include-lint-rules-d-f.md`, `production/epics/tuning-data-config/story-014-include-lint-rules-g-h.md`, `production/epics/tuning-data-config/story-015-include-lint-rules-i-j.md`, `production/epics/tuning-data-config/story-021-per-commit-gate-script.md`, `production/epics/tuning-data-config/story-025-pre-commit-hook-framework.md`, `production/epics/tuning-data-config/story-029-knob-table-parser.md`, `production/epics/tuning-data-config/story-092-no-hardcoded-gameplay-scan.md`
 - Sequencing note (not a plan dependency): the G2 wrapper test needs the StealthFoundation module of `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`.
 - Open verification claims from the plan's Note lines: none. The plan's Note ("follows the `.claude/scripts` rule: helpers emit observations, never verdicts") is a design rule, not a verification claim.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: (a) clean file only -> `GATE: PASS`, exit 0; (b) two-file fixture with one finding -> exit 1, `finding.txt:3 demo seeded violation marker` printed, `GATE: FAIL`; (c) zero files -> exit 2, `GATE: NOT ASSESSED`, distinct from FAIL by text and code; edges: the rule/emitter alone exits 0 with no verdict text; two findings -> two lines; plus contract breaks: malformed line, missing observation file and a crashing rule -> NOT ASSESSED; SCANNED counted per distinct file)
+**Contract (stable, for stories 012-016, 024, 025, 029, 092)**: rule scripts source `tools/ci/lint/emit.sh` and print only `<path>:<line> <rule> <message>` findings (repo-relative, forward slashes, no spaces; line 0 = whole file) and `SCANNED <path>` lines on stdout; diagnostics go to stderr. `gate.sh [--root <dir>] <rule-script>...` runs each rule as `bash <rule> <root>`; `gate.sh --obs <file>` gates a recorded stream. Exit 0 PASS / 1 FAIL / 2 NOT ASSESSED. Library also provides `lint_root`, `lint_rel`, `lint_scope_modules` (G5), `lint_prototype_module` and the G3 helper `lint_shrink_only` (first used by story 012).
+**Bash on Windows**: the wrapper runs the selftest with Git for Windows' bash (`StealthBuildTest::FindBash`, overridable with `STEALTH_BASH`), never a bare `bash` from PATH (WSL launcher risk); the CI workflow's `shell: bash` is the same Git bash on the self-hosted runner.
+**Deviations**: the demonstration rule `selftest/framework/demo-rule.sh` exists only to drive the selftest (no real rule existed yet); a third fixture (`two/`) proves the two-lines edge case; the empty-input case uses a temp directory (git cannot track an empty folder).
+**Test Evidence**: `production/qa/evidence/story-011-t0-lint-framework-and-gate/test-run.txt` (build `Result: Succeeded`; 24/24 `StealthGame.` tests Success), `selftest.txt`, `stamp.txt`
+**Run result**: N/A — CI tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): one defect fixed before close (a selftest finding-count regex matched the `GATE:` line)

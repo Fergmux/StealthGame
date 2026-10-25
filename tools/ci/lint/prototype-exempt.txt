@@ -1,0 +1,21 @@
+# Prototype public headers that predate ADR-0007 (story tdc-012). Skipped by include-lint rules (a)
+# and (b). This list may only shrink (G3): an entry leaves when its class is promoted by rewrite
+# (ADR-0007 section 8). One repo-relative path per line; lines starting with # are comments.
+Source/StealthGame/Public/StealthBush.h
+Source/StealthGame/Public/StealthCharacter.h
+Source/StealthGame/Public/StealthCityGenerator.h
+Source/StealthGame/Public/StealthGame.h
+Source/StealthGame/Public/StealthGameMode.h
+Source/StealthGame/Public/StealthGameState.h
+Source/StealthGame/Public/StealthHUD.h
+Source/StealthGame/Public/StealthMovementComponent.h
+Source/StealthGame/Public/StealthNpcController.h
+Source/StealthGame/Public/StealthObjective.h
+Source/StealthGame/Public/StealthPlayerController.h
+Source/StealthGame/Public/StealthPlayerState.h
+Source/StealthGame/Public/StealthRules.h
+Source/StealthGame/Public/StealthSettings.h
+Source/StealthGame/Public/StealthTypes.h
+# Prototype-era MCP toolset headers of the editor module, also pre-ADR-0007 (decision logged 2026-10-25).
+Source/StealthGameEditor/Public/StealthAssetToolset.h
+Source/StealthGameEditor/Public/StealthPlayToolset.h

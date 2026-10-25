@@ -1,0 +1,2 @@
+# fixture exempt list
+Source/StealthGame/Public/StealthListedOld.h

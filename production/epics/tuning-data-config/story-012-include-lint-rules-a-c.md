@@ -1,12 +1,12 @@
 # Story 012: Include lint rules (a)-(c): header placement, guard first, view must not include server
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *Bootstrap criterion (no GDD), as revised in `tdc-plan-amendments.md`:*
 
-- [ ] per G5/G6, the lint reports with file:line (a) a header directly in a `Public/` folder outside `View/`/`Server/` (module header and StealthServerOnlyGuard.h excepted), (b) a `Public/Server/` header whose first include is not StealthServerOnlyGuard.h, (c) a `Public/View/` header that includes a `Server/` header; zero findings on the real tree; a seeded fixture for each of a, b, c is reported.
+- [x] per G5/G6, the lint reports with file:line (a) a header directly in a `Public/` folder outside `View/`/`Server/` (module header and StealthServerOnlyGuard.h excepted), (b) a `Public/Server/` header whose first include is not StealthServerOnlyGuard.h, (c) a `Public/View/` header that includes a `Server/` header; zero findings on the real tree; a seeded fixture for each of a, b, c is reported.
 
 ---
 
@@ -91,7 +91,7 @@
 **Required evidence**:
 - Logic: the selftest under `tools/ci/lint/selftest/` (run by the T0 gate step) and the G2 wrapper `StealthGame.Build.IncludeLintAbc` (`Source/StealthFoundation/Private/Tests/Build/IncludeLintAbcTest.cpp`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`tools/ci/lint/selftest/run-include-abc-selftest.sh` 12/12 cases; `StealthGame.Build.IncludeLintAbc`, 2026-10-25)
 
 ---
 
@@ -100,3 +100,14 @@
 - Depends on: `production/epics/tuning-data-config/story-011-t0-lint-framework-and-gate.md`, `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`, `production/epics/tuning-data-config/story-002-gameplay-presentation-module-skeletons.md`
 - Unlocks: `production/epics/tuning-data-config/story-016-lint-seeded-violation-controls.md`, `production/epics/tuning-data-config/story-069-no-client-asset-reference.md`
 - Open verification claims from the plan's Note lines: none (no Note line on 012). Open design points: the G3 helper location and the G5 wording tension about the prototype module (see Implementation Notes).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: seeded (a) `Source/StealthGameplay/Public/StealthLooseHeader.h:1 a` and a non-View/Server subfolder header; seeded (b) guard not first `...StealthGuardNotFirst.h:3 b` and no include at all; seeded (c) `...View/StealthLeakyView.h:4 c`; each clean control (module header, guard in Foundation, out-of-scope module, guard after a comment/`#pragma once`, nested `Server/Testing/`, commented-out and `GameServerUtils.h` includes in a View header) gives zero findings; exempt prototype header not flagged, unlisted prototype header flagged (a); real tree `GATE: PASS (29 file(s) scanned, 0 findings)`, watched to fail with 17 findings when the exempt list is removed; G3: unchanged list passes, removal allowed, growth reported as `prototype-exempt.txt:3 shrink-only`, unresolvable base reported)
+**Decisions**: rule ids `a`/`b`/`c` plus `shrink-only`; (a) also flags headers in `Public/` subfolders other than `View/`/`Server/` (ADR-0007 §3 wording); the guard is excepted only in StealthFoundation; (c) matches an include path whose first or any later segment is `Server/`; comments (line and block) are stripped before reading includes. G5 tension resolved per the spec: `Source/StealthGame` is scanned for (a)/(b) with the exempt list. G3 helper `lint_shrink_only` lives in `emit.sh` (base: argument, else `LINT_BASE_REF`, else `HEAD`; CI passes the before-SHA or `HEAD~1`); a file absent at the base is exempt (first commit).
+**Deviations**: `prototype-exempt.txt` also lists `Source/StealthGameEditor/Public/StealthAssetToolset.h` and `StealthPlayToolset.h` (pre-ADR-0007 MCP toolset headers in a G5 module; the story named only the `Source/StealthGame/Public/` headers). Decision logged; they leave the list when the toolsets move to `Private/` or `Server/`.
+**Test Evidence**: `production/qa/evidence/story-012-include-lint-rules-a-c/test-run.txt` (build `Result: Succeeded`; 24/24 `StealthGame.` tests Success), `selftest.txt`, `stamp.txt`
+**Run result**: N/A — CI tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no further defects found
