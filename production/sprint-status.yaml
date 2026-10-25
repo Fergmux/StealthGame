@@ -411,11 +411,11 @@ stories:
     name: "Net-emulation spike measures RTT, packet rate, burst outages and map load time"
     file: "production/epics/session-travel/story-002-net-emulation-measurement-spike.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "network-programmer"
     estimate_days: 2.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: must-have
   - id: "st-003"

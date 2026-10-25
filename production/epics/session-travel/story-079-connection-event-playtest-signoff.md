@@ -1,7 +1,7 @@
 # Story 079: Observers pick the connection-event pawn no better than chance over 20 trials
 
 > **Epic**: Session & Travel
-> **Status**: Blocked — BLOCKED: story 078 (and with it the net-emulation spike, story 002) has not reported; the playtest needs the baseline behaviour in place
+> **Status**: Blocked — BLOCKED: story 078 has not been built (the net-emulation spike, story 002, reported 2026-10-25: production/qa/spikes/2026-10-25_session-net-emulation.md); the playtest needs the baseline behaviour in place
 > **Layer**: Foundation
 > **Type**: Visual/Feel
 > **Estimate**: M

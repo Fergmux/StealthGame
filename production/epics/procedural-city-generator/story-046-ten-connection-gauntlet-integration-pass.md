@@ -1,7 +1,7 @@
 # Story 046: Ten-connection Gauntlet integration pass
 
 > **Epic**: Procedural City Generator
-> **Status**: Blocked — BLOCKED: spikes R1 and R4 (generator-scale: stories 041-043; ADR-0022 R1, ADR-0014 R4) have not reported, and the net-emulation and traversal spike (`shared-character-locomotion/story-045-net-emulation-traversal-spike.md`, with the session net-emulation measurement `session-travel/story-002-net-emulation-measurement-spike.md`) has not reported; without them a 10-connection run would measure an unproven budget. The pass is also only meaningful after the gameplay epics it exercises are Done (it is the epic's exit criterion, last in build order).
+> **Status**: Blocked — BLOCKED: spikes R1 and R4 (generator-scale: stories 041-043; ADR-0022 R1, ADR-0014 R4) have not reported; without them a 10-connection run would measure an unproven budget. The pass is also only meaningful after the gameplay epics it exercises are Done (it is the epic's exit criterion, last in build order). (The net-emulation spikes have reported: production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md and, for Session, production/qa/spikes/2026-10-25_session-net-emulation.md, 2026-10-25.)
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L

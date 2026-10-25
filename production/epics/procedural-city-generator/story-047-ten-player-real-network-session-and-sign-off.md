@@ -1,7 +1,7 @@
 # Story 047: Ten-player real-network session and sign-off
 
 > **Epic**: Procedural City Generator
-> **Status**: Blocked — BLOCKED: spikes R1 and R4 (generator-scale, stories 041-043) and the net-emulation and traversal spike (`shared-character-locomotion/story-045-net-emulation-traversal-spike.md`) have not reported, and story 046 (the 10-connection Gauntlet pass on one machine) is its precondition; a real-network session before the budgets and loss behaviour are known would only rediscover them.
+> **Status**: Blocked — BLOCKED: spikes R1 and R4 (generator-scale, stories 041-043) have not reported, and story 046 (the 10-connection Gauntlet pass on one machine) is its precondition; a real-network session before the budgets and loss behaviour are known would only rediscover them. (The net-emulation spikes reported 2026-10-25: production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md, production/qa/spikes/2026-10-25_session-net-emulation.md.)
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L

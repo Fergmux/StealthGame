@@ -1,7 +1,7 @@
 # Story 078: A pawn whose player went silent 15 s stays within the Crowd baseline
 
 > **Epic**: Session & Travel
-> **Status**: Blocked — BLOCKED: the net-emulation measurement spike (story 002) has not reported; the GDD (Open Question 4, F3/F4/F7) holds the Soft, Hard, window and travel defaults provisional until it does
+> **Status**: Ready — unblocked 2026-10-25: the net-emulation measurement spike (story 002) reported (production/qa/spikes/2026-10-25_session-net-emulation.md): Soft 3, Hard 12, RejoinWindow 120, TravelLoad 60 and AckGrace 15 confirmed from measured R_c, RTT_p99, bursts and load times (Wi-Fi bursts remain a playtest input).
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
