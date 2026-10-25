@@ -9,10 +9,21 @@
 #   done           ↔  Complete
 #   blocked        ↔  Blocked
 
-sprint: 1
-goal: "Calibration + bootstrap: TDC Exit A bootstrap, conditioning spikes that unblock the most stories, and the ADR-0013 identity-tell removal"
-start: "2026-10-26"
-end: "2026-11-06"
+# Sprint history preserved below: the `stories:` list holds every sprint's entries. Entries without a `sprint:`
+# field belong to Sprint 1 (unchanged except for the carryover marking). Sprint 1 header, kept verbatim:
+#   sprint: 1
+#   goal: "Calibration + bootstrap: TDC Exit A bootstrap, conditioning spikes that unblock the most stories, and the ADR-0013 identity-tell removal"
+#   start: "2026-10-26"
+#   end: "2026-11-06"
+#   generated: "2026-10-25"
+#   updated: "2026-10-25"
+# Sprint 2 additions: `sprint: 2` on new entries; `carryover_to_sprint: 2` and `sprint2_priority` on Sprint 1 entries that carry over.
+# Note: plan-math.sh progress counts every story in the list (Sprint 1 history included), so its done_pct reads high until Sprint 1 entries are archived.
+
+sprint: 2
+goal: "Production Foundation + Core spine: TDC Exit B pipeline, Participant State & Roster core (Logic), Round & Match Exit A queue and Event Log plus start of Exit B, Input & Interaction core with spikes V1/V2/V3/V5, Shared Character & Locomotion Exit A core, Session & Travel spikes and core Logic"
+start: "2026-11-09"
+end: "2026-11-20"
 generated: "2026-10-25"
 updated: "2026-10-25"
 
@@ -273,56 +284,74 @@ stories:
     name: "CI workflow runs the T0 lint and the same gate"
     file: "production/epics/tuning-data-config/story-022-ci-workflow-t0-lint-step.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: should-have
+    carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
   - id: "tdc-023"
     name: "Nightly workflow: compile probes, T3 suites, Shipping-symbol check"
     file: "production/epics/tuning-data-config/story-023-nightly-workflow.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: should-have
+    carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
   - id: "tdc-025"
     name: "Tracked pre-commit hook framework running the T0 lint"
     file: "production/epics/tuning-data-config/story-025-pre-commit-hook-framework.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: should-have
+    carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
   - id: "tdc-026"
     name: "Pre-commit check rejects changes to never-resave assets"
     file: "production/epics/tuning-data-config/story-026-never-resave-commit-check.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: should-have
+    carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
   - id: "tdc-027"
     name: "Pre-commit check compares changed assets with git lfs locks"
     file: "production/epics/tuning-data-config/story-027-lfs-lock-commit-check.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: should-have
+    carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
   - id: "tdc-028"
     name: "commit-msg hook enforces Conventional Commits with a story or ADR reference"
     file: "production/epics/tuning-data-config/story-028-commit-message-check.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: should-have
+    carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
   - id: "ivp-005"
     name: "Spike S10, a re-opened pawn is a new actor that presents correctly from replicated state"
     file: "production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md"
@@ -332,6 +361,8 @@ stories:
     estimate_days: 1.0
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: should-have
   - id: "ivp-006"
     name: "Spike S12, the cull delay and un-cull lead are recomputed from measured L99"
     file: "production/epics/information-visibility-policy/story-006-spike-s12-cull-delay-vs-measured-l99.md"
@@ -341,6 +372,8 @@ stories:
     estimate_days: 0.5
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: should-have
   - id: "iif-007"
     name: "IA_* actions and IMC contexts exist and the trigger lint passes"
     file: "production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md"
@@ -350,6 +383,8 @@ stories:
     estimate_days: 0.5
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: must-have
   - id: "iif-008"
     name: "Spike V1 reports Enhanced Input edge behaviour on this project's contexts"
     file: "production/epics/input-interaction-framework/story-008-spike-v1-enhanced-input-edges.md"
@@ -359,6 +394,8 @@ stories:
     estimate_days: 1.0
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: must-have
   - id: "st-001"
     name: "PIE harness hook forces client disconnect, rejoin, supersede and host kick"
     file: "production/epics/session-travel/story-001-harness-connection-event-hook.md"
@@ -368,6 +405,8 @@ stories:
     estimate_days: 0.5
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: must-have
   - id: "st-002"
     name: "Net-emulation spike measures RTT, packet rate, burst outages and map load time"
     file: "production/epics/session-travel/story-002-net-emulation-measurement-spike.md"
@@ -377,6 +416,8 @@ stories:
     estimate_days: 2.0
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: must-have
   - id: "st-003"
     name: "Spike S3: stores and views survive two seamless travels in multi-process standalone"
     file: "production/epics/session-travel/story-003-spike-s3-seamless-travel-persistence.md"
@@ -386,6 +427,9 @@ stories:
     estimate_days: 2.0
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: must-have
+    sprint2_estimate_days: 3.0
   - id: "st-004"
     name: "Spike S4: retained PlayerState adopted on rejoin with no visible change to other clients"
     file: "production/epics/session-travel/story-004-spike-s4-rejoin-playerstate-adoption.md"
@@ -395,33 +439,47 @@ stories:
     estimate_days: 2.0
     blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: must-have
+    sprint2_estimate_days: 3.0
   - id: "iif-009"
     name: "Spike V2 reports ClientSetPossessionEpoch always precedes ClientRestart"
     file: "production/epics/input-interaction-framework/story-009-spike-v2-possession-epoch-order.md"
     priority: nice-to-have
-    status: blocked
+    status: ready-for-dev
     owner: "gameplay-programmer"
     estimate_days: 1.0
-    blocker: "Needs factory, controller and possession path (Round and SCL stories not yet written)"
+    blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: must-have
+    sprint2_estimate_days: 1.5
+    carryover_note: "Unblocked at Sprint 2 planning: the story now uses a throwaway probe or direct calls and states that in its report"
   - id: "iif-010"
     name: "Spike V3 reports server NetGUID resolution of a culled pawn"
     file: "production/epics/input-interaction-framework/story-010-spike-v3-netguid-server-resolution.md"
     priority: nice-to-have
-    status: blocked
+    status: ready-for-dev
     owner: "gameplay-programmer"
     estimate_days: 1.0
-    blocker: "Needs the IVP cull mechanism (ivp-004 and later stories) and the shared pawn"
+    blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: must-have
+    carryover_note: "Unblocked at Sprint 2 planning: the story now uses a throwaway probe or direct calls and states that in its report"
   - id: "iif-011"
     name: "Spike V5 reports Common UI Menu-mode switch yields a synchronous End"
     file: "production/epics/input-interaction-framework/story-011-spike-v5-commonui-menu-end.md"
     priority: nice-to-have
-    status: blocked
+    status: ready-for-dev
     owner: "ue-umg-specialist"
     estimate_days: 1.0
-    blocker: "iif-007; needs a HUD menu root and UCommonGameViewportClient config (HUD epic has no stories)"
+    blocker: ""
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: must-have
+    sprint2_estimate_days: 1.5
+    carryover_note: "Unblocked at Sprint 2 planning: the story now uses a throwaway probe or direct calls and states that in its report"
   - id: "cam-011"
     name: "Camera mask spike (OQ5 / OQ10)"
     file: "production/epics/camera-system/story-011-mask-spike-oq5-oq10.md"
@@ -431,3 +489,2016 @@ stories:
     estimate_days: 1.0
     blocker: "Needs the 60-character graybox street (Character Pool and Level Socket Contract epics have no stories)"
     completed: ""
+    carryover_to_sprint: 2
+    sprint2_priority: not-scheduled
+  - id: "tdc-029"
+    name: "Parser for the Tuning Knobs tables of every GDD"
+    file: "production/epics/tuning-data-config/story-029-knob-table-parser.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "devops-engineer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-030"
+    name: "Mirror the missing owner keys into entities.yaml (TD-REG-1 first task)"
+    file: "production/epics/tuning-data-config/story-030-registry-mirror-completion.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-031"
+    name: "Doc lint: every Tuning Knobs table has the CR-15 columns"
+    file: "production/epics/tuning-data-config/story-031-doc-lint-cr15-columns.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "devops-engineer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-032"
+    name: "Doc lint: every key appears as owned in exactly one GDD"
+    file: "production/epics/tuning-data-config/story-032-doc-lint-one-owner.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "devops-engineer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-033"
+    name: "Doc lint: every owned key matches an entities.yaml constant"
+    file: "production/epics/tuning-data-config/story-033-doc-lint-registry-match.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "devops-engineer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-034"
+    name: "Doc lint: every owned key matches a schema row, with a shrinking pending-owner baseline"
+    file: "production/epics/tuning-data-config/story-034-doc-lint-schema-row-match.md"
+    priority: should-have
+    status: backlog
+    owner: "devops-engineer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-035"
+    name: "Doc lint negative control: a fixture GDD with a duplicated key fails"
+    file: "production/epics/tuning-data-config/story-035-doc-lint-duplicate-fixture.md"
+    priority: should-have
+    status: backlog
+    owner: "devops-engineer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-036"
+    name: "Doc lint: invariant-read keys must say 'bounded by <Id>'"
+    file: "production/epics/tuning-data-config/story-036-doc-lint-bounded-by.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "devops-engineer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-037"
+    name: "Close TD-REG-1 in the tech-debt register"
+    file: "production/epics/tuning-data-config/story-037-close-td-reg-1.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-038"
+    name: "Schema row struct, type tags, latch enum and schema constants"
+    file: "production/epics/tuning-data-config/story-038-schema-row-types.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-039"
+    name: "Preset data-asset classes with no Config back door"
+    file: "production/epics/tuning-data-config/story-039-preset-asset-classes.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-040"
+    name: "The eight canonical keys and the client/server tuning faces"
+    file: "production/epics/tuning-data-config/story-040-canonical-keys-and-faces.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-041"
+    name: "StealthTuningSchemaGen commandlet writes the generated schema table"
+    file: "production/epics/tuning-data-config/story-041-schema-generator-commandlet.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-042"
+    name: "Bootstrap regeneration flow for the schema table"
+    file: "production/epics/tuning-data-config/story-042-schema-bootstrap-regeneration.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "qa-lead"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-043"
+    name: "Schema fingerprint and the SchemaVersionBumped test"
+    file: "production/epics/tuning-data-config/story-043-schema-fingerprint-version-bump.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-044"
+    name: "AC-3a SchemaComplete: rows, pins, mirrors and reflection hygiene"
+    file: "production/epics/tuning-data-config/story-044-schema-complete.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-045"
+    name: "AC-5 HashStableAndSensitive: FNV-1a-64 over the F-2 byte stream"
+    file: "production/epics/tuning-data-config/story-045-hasher-golden.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-046"
+    name: "AC-4 ValidateClampAndNan: the F-1 validation stage"
+    file: "production/epics/tuning-data-config/story-046-f1-validate-clamp-nan.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-047"
+    name: "AC-18 DerivedIndicators: the F-3 indicators"
+    file: "production/epics/tuning-data-config/story-047-derived-indicators.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-048"
+    name: "AC-17 InvariantBoundaries: invariants I-1 to I-5"
+    file: "production/epics/tuning-data-config/story-048-invariants-i1-i5.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-049"
+    name: "AC-26 SafeRangeWarnOnly"
+    file: "production/epics/tuning-data-config/story-049-safe-range-warn-only.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-050"
+    name: "AC-6a FallbackToDefault: Resolve() and the preset-source seam"
+    file: "production/epics/tuning-data-config/story-050-resolve-fallback-to-default.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-051"
+    name: "AC-6b FallbackToSchema"
+    file: "production/epics/tuning-data-config/story-051-fallback-to-schema.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-052"
+    name: "Round and Session stubs for TDC tests"
+    file: "production/epics/tuning-data-config/story-052-round-session-stubs.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-053"
+    name: "AC-6c FallbackFailed"
+    file: "production/epics/tuning-data-config/story-053-fallback-failed.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-054"
+    name: "AC-32 FrozenImmutable: FValidatedTuning has no mutator"
+    file: "production/epics/tuning-data-config/story-054-validated-tuning-frozen-immutable.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-055"
+    name: "AC-30 mechanism: owner-invariant rows with Pass/Warn/Reject and context"
+    file: "production/epics/tuning-data-config/story-055-owner-invariant-mechanism.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-056"
+    name: "Default, Playtest and Solo preset assets and the catalog"
+    file: "production/epics/tuning-data-config/story-056-default-preset-assets-and-catalog.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-057"
+    name: "Asset Manager primary types with AlwaysCook"
+    file: "production/epics/tuning-data-config/story-057-asset-manager-primary-types.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-058"
+    name: "AC-1 DefaultPreset: the game-instance preset store"
+    file: "production/epics/tuning-data-config/story-058-tuning-store-default-preset.md"
+    priority: should-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-059"
+    name: "AC-2a PresetNotSelectable"
+    file: "production/epics/tuning-data-config/story-059-preset-not-selectable.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-060"
+    name: "AC-2b PresetCaseInsensitive"
+    file: "production/epics/tuning-data-config/story-060-preset-case-insensitive.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-061"
+    name: "AC-2c PresetMalformed"
+    file: "production/epics/tuning-data-config/story-061-preset-malformed.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-062"
+    name: "AC-2d ClientOptionIgnored"
+    file: "production/epics/tuning-data-config/story-062-client-option-ignored.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-063"
+    name: "AC-2e PresetSurvivesTravel (multi-process)"
+    file: "production/epics/tuning-data-config/story-063-preset-survives-travel.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-064"
+    name: "AC-27 PresetsCooked (cooked Dev build)"
+    file: "production/epics/tuning-data-config/story-064-presets-cooked.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-065"
+    name: "AC-29 CatalogClean (CI script)"
+    file: "production/epics/tuning-data-config/story-065-catalog-clean.md"
+    priority: should-have
+    status: backlog
+    owner: "devops-engineer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-066"
+    name: "UStealthTuningService and AC-21 PlayerNpcParity"
+    file: "production/epics/tuning-data-config/story-066-tuning-service-and-parity.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-067"
+    name: "World-scoped accessor reads its own world in multi-client PIE"
+    file: "production/epics/tuning-data-config/story-067-world-scoped-accessor-pie.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-068"
+    name: "AC-28 ServerKeyNotOnClient"
+    file: "production/epics/tuning-data-config/story-068-server-key-not-on-client.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-069"
+    name: "AC-8 static half NoClientAssetReference"
+    file: "production/epics/tuning-data-config/story-069-no-client-asset-reference.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-070"
+    name: "AC-19 SnapshotSizeBudget: FStealthTuningSnapshot and NetSerialize"
+    file: "production/epics/tuning-data-config/story-070-snapshot-struct-size-budget.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-071"
+    name: "Spike T-1: atomic snapshot delivery under loss and for a rejoiner"
+    file: "production/epics/tuning-data-config/story-071-snapshot-atomic-spike.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-072"
+    name: "Snapshot replication hold-back and arrival-order test hook"
+    file: "production/epics/tuning-data-config/story-072-snapshot-holdback-test-hook.md"
+    priority: should-have
+    status: backlog
+    owner: "devops-engineer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-073"
+    name: "AC-7 SnapshotPublicOnly"
+    file: "production/epics/tuning-data-config/story-073-gamestate-snapshot-public-only.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-074"
+    name: "AC-10 ClientHashHandoff"
+    file: "production/epics/tuning-data-config/story-074-client-hash-handoff.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-075"
+    name: "AC-11 StaleEpochIgnored"
+    file: "production/epics/tuning-data-config/story-075-stale-epoch-ignored.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-076"
+    name: "AC-9 NoPawnBeforeReady"
+    file: "production/epics/tuning-data-config/story-076-no-pawn-before-ready.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-077"
+    name: "AC-12a HostPath"
+    file: "production/epics/tuning-data-config/story-077-host-path.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-078"
+    name: "AC-12b RemoteLoopbackHash (multi-process)"
+    file: "production/epics/tuning-data-config/story-078-remote-loopback-hash.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-079"
+    name: "AC-12c SelfCheckFault"
+    file: "production/epics/tuning-data-config/story-079-self-check-fault.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-080"
+    name: "AC-13 RejoinSnapshot (multi-process)"
+    file: "production/epics/tuning-data-config/story-080-rejoin-snapshot.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-081"
+    name: "AC-23 TravelEpoch (multi-process)"
+    file: "production/epics/tuning-data-config/story-081-travel-epoch.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-082"
+    name: "AC-8 LocalTamperIgnored (multi-process)"
+    file: "production/epics/tuning-data-config/story-082-local-tamper-ignored.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-083"
+    name: "AC-16 FullHashNotReplicated (provisional on Round)"
+    file: "production/epics/tuning-data-config/story-083-full-hash-not-replicated.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-084"
+    name: "AC-20 RoundLogHeader (provisional on Round)"
+    file: "production/epics/tuning-data-config/story-084-round-log-header.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-085"
+    name: "AC-14a HotReloadPie"
+    file: "production/epics/tuning-data-config/story-085-hot-reload-pie.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-086"
+    name: "AC-14b HotReloadRejected"
+    file: "production/epics/tuning-data-config/story-086-hot-reload-rejected.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-087"
+    name: "AC-14c HotReloadAbsentPackaged"
+    file: "production/epics/tuning-data-config/story-087-hot-reload-absent-packaged.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-088"
+    name: "Back-door code behind guards with sentinel literals (AC-22 positive control)"
+    file: "production/epics/tuning-data-config/story-088-backdoor-code-sentinels.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-089"
+    name: "AC-22 NoShippingBackDoor (CI script)"
+    file: "production/epics/tuning-data-config/story-089-no-shipping-back-door-scan.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "devops-engineer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-090"
+    name: "AC-31 PresetChangeNextRound"
+    file: "production/epics/tuning-data-config/story-090-preset-change-next-round.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-091"
+    name: "AC-15 NoVariantKeys"
+    file: "production/epics/tuning-data-config/story-091-no-variant-keys.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-092"
+    name: "AC-25 NoHardcodedGameplay (CI literal scan)"
+    file: "production/epics/tuning-data-config/story-092-no-hardcoded-gameplay-scan.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "devops-engineer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-093"
+    name: "AC-24 LocalSettingsNotTuning"
+    file: "production/epics/tuning-data-config/story-093-local-settings-not-tuning.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-094"
+    name: "SafeRangeLint with a shrink-only baseline"
+    file: "production/epics/tuning-data-config/story-094-safe-range-lint-baseline.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "devops-engineer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-095"
+    name: "Retire the eight canonical Config fields of UStealthSettings"
+    file: "production/epics/tuning-data-config/story-095-retire-prototype-settings-canonical-fields.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "qa-lead"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-097"
+    name: "Invariants reject the whole preset (AC-17 closing clauses)"
+    file: "production/epics/tuning-data-config/story-097-invariants-reject-whole-preset.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-098"
+    name: "Derived indicators, preset scope (AC-18 scope clauses)"
+    file: "production/epics/tuning-data-config/story-098-derived-indicators-preset-scope.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-099"
+    name: "Self-check forcing hook and disconnect recorder (test seams)"
+    file: "production/epics/tuning-data-config/story-099-selfcheck-and-disconnect-seams.md"
+    priority: should-have
+    status: backlog
+    owner: "devops-engineer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "tdc-100"
+    name: "Reliable-RPC counter and replicated-property CRC helper (test seams)"
+    file: "production/epics/tuning-data-config/story-100-rpc-counter-and-property-crc-helper.md"
+    priority: should-have
+    status: backlog
+    owner: "lead-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-001"
+    name: "Participant record fields equal the R3 whitelist exactly"
+    file: "production/epics/participant-state-roster/story-001-record-schema-whitelist.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-002"
+    name: "BeginMatch and registration assign ids, handles and reject a full roster"
+    file: "production/epics/participant-state-roster/story-002-begin-match-and-register.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-003"
+    name: "Mutation from a worker thread is rejected and faulted"
+    file: "production/epics/participant-state-roster/story-003-off-game-thread-mutation-rejected.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-004"
+    name: "Every roster call on a client is rejected or answers not-targetable and faults"
+    file: "production/epics/participant-state-roster/story-004-client-calls-rejected.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-005"
+    name: "A locked roster rejects registration, removal and team changes but reclaims known keys"
+    file: "production/epics/participant-state-roster/story-005-locked-roster-is-frozen.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-006"
+    name: "A batch swap of two players across full teams applies atomically"
+    file: "production/epics/participant-state-roster/story-006-assign-teams-atomic-swap.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-007"
+    name: "An invalid team batch changes nothing and fires no event"
+    file: "production/epics/participant-state-roster/story-007-assign-teams-all-or-nothing.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-008"
+    name: "Registration, team, removal and reclaim each fire exactly one sequenced event"
+    file: "production/epics/participant-state-roster/story-008-registration-and-team-events.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-009"
+    name: "Session connection states project onto Connection fields only"
+    file: "production/epics/participant-state-roster/story-009-connection-projection.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-010"
+    name: "BindPawn rejects an already-bound participant, an in-use pawn and a round-ended participant"
+    file: "production/epics/participant-state-roster/story-010-bind-pawn-guards.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-011"
+    name: "Tombstones respect generations and ReleaseToCrowd needs a disconnected participant"
+    file: "production/epics/participant-state-roster/story-011-tombstone-generation-and-release.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-012"
+    name: "Clearing a live binding during Active faults, but level-teardown clears are silent"
+    file: "production/epics/participant-state-roster/story-012-clear-binding-while-live.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-013"
+    name: "ResolveVictimKind answers the full pawn-state matrix and never yields Npc for NotTargetable"
+    file: "production/epics/participant-state-roster/story-013-resolve-victim-kind-matrix.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-014"
+    name: "Active to Informant applies for each entering reason with the correct pawn disposition"
+    file: "production/epics/participant-state-roster/story-014-transition-active-to-informant.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-015"
+    name: "A Disconnect transition is rejected while the participant is connected"
+    file: "production/epics/participant-state-roster/story-015-transition-disconnect-requires-disconnected.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-016"
+    name: "The first entering reason is kept and later reasons are no-ops"
+    file: "production/epics/participant-state-roster/story-016-transition-first-reason-wins.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-017"
+    name: "No revival and no round-ended-to-informant transitions are possible"
+    file: "production/epics/participant-state-roster/story-017-transition-no-revival-no-late-events.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-018"
+    name: "Unregistered and retired ids are rejected by every id-taking API"
+    file: "production/epics/participant-state-roster/story-018-transition-unknown-id-rejected.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-019"
+    name: "RoundEnd and Reset reasons are rejected on single transitions"
+    file: "production/epics/participant-state-roster/story-019-batch-only-reasons-rejected-singly.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-020"
+    name: "Killing an informant retires its binding without a state event"
+    file: "production/epics/participant-state-roster/story-020-informant-kill-is-not-a-transition.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-021"
+    name: "RetireAtServerTime reaches teammate entries for each retiring reason"
+    file: "production/epics/participant-state-roster/story-021-retire-at-server-time-source.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-022"
+    name: "ResetAll resets every non-dormant record with exactly one roster-reset event"
+    file: "production/epics/participant-state-roster/story-022-reset-all-batch.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-023"
+    name: "EndRoundAll ends all records once and is idempotent"
+    file: "production/epics/participant-state-roster/story-023-end-round-all-batch-idempotent.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-024"
+    name: "Calls carrying an old round epoch or match id are rejected"
+    file: "production/epics/participant-state-roster/story-024-stale-epoch-rejected.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-025"
+    name: "Undersized rosters count correctly and lock and reset preconditions hold"
+    file: "production/epics/participant-state-roster/story-025-undersized-rosters-and-lock.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-026"
+    name: "Late binds and transitions after a round boundary are rejected"
+    file: "production/epics/participant-state-roster/story-026-round-boundary-late-events.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-027"
+    name: "The transition matrix equals the checked-in CSV fixture for every combination"
+    file: "production/epics/participant-state-roster/story-027-transition-exhaustive-matrix.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-028"
+    name: "Re-entrant listener calls see live state and events dispatch FIFO with strict EventSeq"
+    file: "production/epics/participant-state-roster/story-028-reentrant-listener-ordering.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-029"
+    name: "Reclaim restores the same record for active and informant participants"
+    file: "production/epics/participant-state-roster/story-029-reclaim-core.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-030"
+    name: "An informant's released pawn becomes an NPC and a reclaim adopts a different pawn"
+    file: "production/epics/participant-state-roster/story-030-informant-disconnect-release-reclaim.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-031"
+    name: "GetLegalityClass answers per pawn state and BindPawn adopts an unbound pawn"
+    file: "production/epics/participant-state-roster/story-031-legality-class-and-adoption.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-032"
+    name: "GetRelation answers the viewer-subject matrix symmetrically"
+    file: "production/epics/participant-state-roster/story-032-get-relation-matrix.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "psr-033"
+    name: "Hot-path queries allocate nothing and probe at most twice per call"
+    file: "production/epics/participant-state-roster/story-033-query-hot-path-budget.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-001"
+    name: "Tests inject a fake IClock supplying server time and ServerTickIndex"
+    file: "production/epics/round-match-framework/story-001-test-seam-fake-clock.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-002"
+    name: "Tests inject a fixed ServerSecret and therefore fixed sub-seeds"
+    file: "production/epics/round-match-framework/story-002-test-seam-fixed-server-secret.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-003"
+    name: "Tests inject fake Session, Roster, TDC, Character Pool, Level Socket and Crowd gateways"
+    file: "production/epics/round-match-framework/story-003-test-seam-fake-gateways.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-004"
+    name: "Tests register stub resolvers per queue item type"
+    file: "production/epics/round-match-framework/story-004-test-seam-stub-resolvers.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-005"
+    name: "Fixture constants live in test constant files, not inline"
+    file: "production/epics/round-match-framework/story-005-test-fixture-constants.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-006"
+    name: "Intake permutation is fair per source, deterministic per (secret, tick, mailbox set), keys strictly increasing"
+    file: "production/epics/round-match-framework/story-006-intake-fairness.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-007"
+    name: "Per-source order, DueEpsilonMs stamping, TieRank ties, stale-connection and per-drain cap rules hold"
+    file: "production/epics/round-match-framework/story-007-intake-ordering-rules.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-008"
+    name: "Resolvers return Voided/in-slot/deferred outcomes with the specified keys and Seq consumption"
+    file: "production/epics/round-match-framework/story-008-resolver-contract.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-009"
+    name: "Follow-on transitions and subscribers run depth-first in the item's slot; cascade depth 9 logs CascadeOverflow"
+    file: "production/epics/round-match-framework/story-009-follow-ons-inline.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-010"
+    name: "An item stamped with the previous RoundEpoch is Rejected_StaleEpoch when drained"
+    file: "production/epics/round-match-framework/story-010-stale-epoch-item.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-011"
+    name: "Event Log header and WinLatched hold the specified fields for every terminal outcome and are unreadable before Ended"
+    file: "production/epics/round-match-framework/story-011-event-log-content.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-012"
+    name: "The 4096-entry ring evicts oldest ordinary entries first, protects header and WinLatched, and counts TruncatedCount"
+    file: "production/epics/round-match-framework/story-012-log-truncation.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-013"
+    name: "Mean entry size is reported against F8 and the ring never exceeds 16,384 entries"
+    file: "production/epics/round-match-framework/story-013-log-size-bound.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-014"
+    name: "No log device, ClientMessage or trace channel carries a sentinel; dumplog is refused before Ended"
+    file: "production/epics/round-match-framework/story-014-log-never-leaks.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-015"
+    name: "At most one Voided entry per second per source and the kill timeline stays intact"
+    file: "production/epics/round-match-framework/story-015-voided-rate-limit.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-016"
+    name: "PacingRatio, ObjectiveEndShare, AbortedActiveShare and stall/abort flags compute per F7 from fixture logs"
+    file: "production/epics/round-match-framework/story-016-pacing-metrics.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-017"
+    name: "A second final Complete after the latch returns Rejected_Latched and is logged TendCompleted with Latched = true"
+    file: "production/epics/round-match-framework/story-017-latched-final-complete-logged.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-018"
+    name: "A new key joins the smaller team; ties go to team RoundsPlayedCount parity"
+    file: "production/epics/round-match-framework/story-018-team-assignment.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-019"
+    name: "A reclaimed Dormant key keeps its team and triggers no AssignTeams call"
+    file: "production/epics/round-match-framework/story-019-team-reclaim-keeps-team.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-020"
+    name: "SwapTeam is refused only when the target team is full; pair exchange is atomic; swaps outside Lobby return WrongPhase"
+    file: "production/epics/round-match-framework/story-020-swap-team-rules.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-021"
+    name: "A preset with a different TeamSize calls SetTeamSize once; refusals keep the previous preset; locked teams never call it"
+    file: "production/epics/round-match-framework/story-021-team-size-injection.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-022"
+    name: "Start refuses each invalid team layout with the specified code in check order and stays in Lobby"
+    file: "production/epics/round-match-framework/story-022-start-validity.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-023"
+    name: "Start refuses with ParticipantNotConnected naming exactly the Dormant, Unresponsive or Connecting set"
+    file: "production/epics/round-match-framework/story-023-start-refuses-not-connected.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-024"
+    name: "An accepted Start calls Session and Roster in the specified order and enters Preparing only after travel acceptance"
+    file: "production/epics/round-match-framework/story-024-start-ordering.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-025"
+    name: "A Session refusal at RequestRoundTravel rolls admission, teams and phase back and logs StartRolledBack"
+    file: "production/epics/round-match-framework/story-025-start-rollback.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-026"
+    name: "A non-host client cannot run any of the eight stealth.round commands by console or ServerExecRPC"
+    file: "production/epics/round-match-framework/story-026-host-only-commands.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-027"
+    name: "stealth.round.reset/abort and the other host commands behave per phase and exist only on the game instance"
+    file: "production/epics/round-match-framework/story-027-reset-command-matrix.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-028"
+    name: "Each phase pushes the specified admission mode and every illegal transition is refused"
+    file: "production/epics/round-match-framework/story-028-phase-admission-and-illegal-transitions.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-029"
+    name: "FRoundPublicState replicates with Unknown = 0, survives seamless travel and LastResult survives into Lobby"
+    file: "production/epics/round-match-framework/story-029-public-state-replication.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-030"
+    name: "MatchScore, RoundsPlayedCount, host id, teams and archived slices persist across travel; RoundEpoch increments"
+    file: "production/epics/round-match-framework/story-030-match-scope-survives-travel.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-031"
+    name: "AllocateAppearances is called 0 times with tuning withheld and exactly once after OnTuningReady"
+    file: "production/epics/round-match-framework/story-031-allocate-once.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-032"
+    name: "Layout, a client acknowledgement or world-ready each alone hold Preparing; releasing reaches Active"
+    file: "production/epics/round-match-framework/story-032-preparing-barrier.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-033"
+    name: "An acknowledgement with an old nonce or replaced controller is dropped and does not satisfy the barrier"
+    file: "production/epics/round-match-framework/story-033-stale-ack-dropped.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-034"
+    name: "Each of the 13 abort codes returns to Lobby with no result, no pawns, PreparingFailed archived and nothing released"
+    file: "production/epics/round-match-framework/story-034-preparing-aborts.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-035"
+    name: "F6 T_needed is computed at freeze with the specified values and warning boundaries"
+    file: "production/epics/round-match-framework/story-035-watchdog-bound.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-036"
+    name: "Per-slot spawn rank is uniform over 1..D across 1,000 fixed-secret round starts"
+    file: "production/epics/round-match-framework/story-036-spawn-order-uniform.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-037"
+    name: "Spawn order sigma is identical when player flags are flipped and differs with a different secret"
+    file: "production/epics/round-match-framework/story-037-spawn-order-ignores-playerness.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-038"
+    name: "The placement share invariant passes at 5 players/5 NPCs and aborts PlacementInvariant at 5/4; GlobalShare matches F5"
+    file: "production/epics/round-match-framework/story-038-placement-invariant.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "rmf-039"
+    name: "All D pawns spawn in one server frame in sigma order and a Connecting participant's pawn is gated"
+    file: "production/epics/round-match-framework/story-039-spawn-one-frame-and-gate.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-001"
+    name: "Command and reply types match the ADR key interfaces"
+    file: "production/epics/input-interaction-framework/story-001-command-reply-types.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-002"
+    name: "FPawnCommandCore runs headless with an injected clock and stub queue"
+    file: "production/epics/input-interaction-framework/story-002-pawn-command-core-skeleton.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-003"
+    name: "UActionHub registers predicates weakly and fires native events only"
+    file: "production/epics/input-interaction-framework/story-003-action-hub-and-predicate-registry.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-004"
+    name: "One batched ClientCommandReplies per connection per drain, null sink discards"
+    file: "production/epics/input-interaction-framework/story-004-reply-sink-and-drain-end-flush.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-005"
+    name: "AC 1 EntryPointSet"
+    file: "production/epics/input-interaction-framework/story-005-entry-point-set.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-006"
+    name: "AC 2 NoCallerIdentityParameter"
+    file: "production/epics/input-interaction-framework/story-006-no-caller-identity-parameter.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-012"
+    name: "AC 4 EdgesNotRepeat"
+    file: "production/epics/input-interaction-framework/story-012-edges-not-repeat.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-014"
+    name: "AC 29 CameraToggleLocal"
+    file: "production/epics/input-interaction-framework/story-014-camera-toggle-local.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-015"
+    name: "AC 30 DefaultBindings"
+    file: "production/epics/input-interaction-framework/story-015-default-bindings.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-016"
+    name: "AC 31 (MVP clause only; the VS deferred gate ToggleStreamParity is out of scope)"
+    file: "production/epics/input-interaction-framework/story-016-no-toggle-setting-mvp.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-017"
+    name: "AC 76, client scaling clause: IA_WalkSlower scales keyboard Move to 0.8 / 0.9 / 0.8 / 1.0"
+    file: "production/epics/input-interaction-framework/story-017-walk-slower-scaling.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-018"
+    name: "AC 76 WalkSlowerModifier, server-side clause: received magnitude, SCL pace, accel/brake, only ServerMove"
+    file: "production/epics/input-interaction-framework/story-018-walk-slower-two-client.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-019"
+    name: "D37: the sample's Ctrl jog toggle is removed; Ctrl only drives walk-slower"
+    file: "production/epics/input-interaction-framework/story-019-remove-sample-ctrl-jog-toggle.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-020"
+    name: "AC 6 IngressClampAndDrop"
+    file: "production/epics/input-interaction-framework/story-020-ingress-clamp-and-drop.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-021"
+    name: "AC 7 IngressNeverDropsMatchedEnd"
+    file: "production/epics/input-interaction-framework/story-021-ingress-never-drops-matched-end.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-022"
+    name: "AC 59 TransportBucketAndAbuseLog"
+    file: "production/epics/input-interaction-framework/story-022-transport-bucket-and-abuse-log.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-023"
+    name: "AC 60 ImpossiblePayloadDisconnects"
+    file: "production/epics/input-interaction-framework/story-023-impossible-payload-disconnects.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-024"
+    name: "AC 70 HostIngressParity"
+    file: "production/epics/input-interaction-framework/story-024-host-ingress-parity.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-025"
+    name: "AC 79 PossessionEpochGate"
+    file: "production/epics/input-interaction-framework/story-025-possession-epoch-gate.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-026"
+    name: "AC 3 BoundUnboundSameEvents"
+    file: "production/epics/input-interaction-framework/story-026-bound-unbound-same-events.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-027"
+    name: "AC 8 StageTwoAtResolution"
+    file: "production/epics/input-interaction-framework/story-027-stage-two-at-resolution.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-029"
+    name: "AC 10 RejectionCodeSet"
+    file: "production/epics/input-interaction-framework/story-029-rejection-code-set.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-094"
+    name: "AStealthPlayerController carries the command transport and the client builder shell"
+    file: "production/epics/input-interaction-framework/story-094-controller-transport-skeleton.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "iif-095"
+    name: "Server command log, outgoing-RPC spy and shared stub doubles exist in the test harness"
+    file: "production/epics/input-interaction-framework/story-095-command-test-seams.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-002"
+    name: "Body constants published: step height, floor angle, capsule, kerb and block heights"
+    file: "production/epics/shared-character-locomotion/story-002-body-constants-published.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-003"
+    name: "Every SCL tuning key registered with its audience and latch, invariants enforced"
+    file: "production/epics/shared-character-locomotion/story-003-tuning-keys-registered.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-006"
+    name: "Every Shared Pawn comes from one spawn site"
+    file: "production/epics/shared-character-locomotion/story-006-single-spawn-site.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-007"
+    name: "A rejected bind destroys the pawn before FinishSpawning"
+    file: "production/epics/shared-character-locomotion/story-007-factory-bind-fail-destroys.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-009"
+    name: "Stop floor: every stop to rest lasts at least StopMinSec"
+    file: "production/epics/shared-character-locomotion/story-009-stop-floor.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-010"
+    name: "Speed tiers, pace quantisation and effective-gait clamps"
+    file: "production/epics/shared-character-locomotion/story-010-speed-tiers.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-011"
+    name: "Release-to-stop baseline, identical for AI and for owner prediction"
+    file: "production/epics/shared-character-locomotion/story-011-release-baseline-stop.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-012"
+    name: "Turn shaping, latched reversal and pivot"
+    file: "production/epics/shared-character-locomotion/story-012-turn-shaping.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-013"
+    name: "IsRunning with hysteresis"
+    file: "production/epics/shared-character-locomotion/story-013-isrunning-hysteresis.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-014"
+    name: "Informants walk only, cannot traverse, and SCL refuses the traversal mode"
+    file: "production/epics/shared-character-locomotion/story-014-informant-restrictions.md"
+    priority: should-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-015"
+    name: "Planted brace: step-into-stance entry, then no translation and no yaw"
+    file: "production/epics/shared-character-locomotion/story-015-brace-planted.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "scl-016"
+    name: "Commanded displacement is separate from external displacement"
+    file: "production/epics/shared-character-locomotion/story-016-commanded-vs-external-displacement.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-005"
+    name: "SipHash-2-4 passes the published reference vectors"
+    file: "production/epics/session-travel/story-005-siphash24-reference-vectors.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-006"
+    name: "PCG32 integer stream reproduces the reference outputs"
+    file: "production/epics/session-travel/story-006-pcg32-int-stream-reference-vectors.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-007"
+    name: "UniformBelow, UniformInRange, WeightedPick and Fisher-Yates are unbiased and edge-safe"
+    file: "production/epics/session-travel/story-007-ranged-draw-helpers-unbiased.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "network-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-008"
+    name: "FSecretStream counter draws are independent of interleaved draws"
+    file: "production/epics/session-travel/story-008-secret-stream-counter-independence.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "network-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-009"
+    name: "OpenSession draws ServerSecret and MatchNonce from OS entropy and fails closed"
+    file: "production/epics/session-travel/story-009-os-entropy-and-session-secret.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-010"
+    name: "Round seed and sub-seed derivation match the F5 golden vectors"
+    file: "production/epics/session-travel/story-010-seed-derivation-golden-vectors.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-011"
+    name: "GetServerSubSeed is unreachable from clients and from generator scope"
+    file: "production/epics/session-travel/story-011-server-sub-seed-server-only.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-012"
+    name: "CI grep bans engine RNG APIs and the CityGenerator include rule is enforced"
+    file: "production/epics/session-travel/story-012-forbidden-rng-ci-grep-and-include-lint.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "devops-engineer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-014"
+    name: "Session lifecycle: OpenSession seeds the host, EndSession clears every store on every exit path"
+    file: "production/epics/session-travel/story-014-session-service-lifecycle-and-empty-stores.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "network-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-015"
+    name: "Illegal ConnectionState transitions assert and leave the state unchanged"
+    file: "production/epics/session-travel/story-015-connection-state-machine-illegal-transitions.md"
+    priority: should-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-017"
+    name: "A host with a client never leaves Connected over 60 s of fake time"
+    file: "production/epics/session-travel/story-017-host-never-unresponsive.md"
+    priority: should-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-018"
+    name: "Silence clock fires Soft and Hard inside the F2 bounds and survives host hitches"
+    file: "production/epics/session-travel/story-018-silence-clock-detection-bound-f2.md"
+    priority: should-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-019"
+    name: "A packet or rejoin arriving in the deciding tick wins over the timeout"
+    file: "production/epics/session-travel/story-019-same-tick-arrival-wins.md"
+    priority: should-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-020"
+    name: "A packet from an Unresponsive participant restores Connected and raises OnParticipantResponsive once"
+    file: "production/epics/session-travel/story-020-responsive-again-event.md"
+    priority: should-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-022"
+    name: "Shipped config has SessionHeartbeatIntervalSec 0 and no heartbeat RPC on any pawn"
+    file: "production/epics/session-travel/story-022-heartbeat-disabled-in-mvp.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-023"
+    name: "AStealthGameMode derives AGameModeBase with seamless travel and Session hook overrides"
+    file: "production/epics/session-travel/story-023-game-mode-skeleton-agamemodebase.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "network-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-028"
+    name: "The first failing admission gate decides the reason code"
+    file: "production/epics/session-travel/story-028-admission-gate-order.md"
+    priority: should-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-030"
+    name: "Capacity is 2 x TeamSize and a pending handshake holds its slot until it fails"
+    file: "production/epics/session-travel/story-030-capacity-f1.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-032"
+    name: "Display names are trimmed, stripped, truncated and suffixed; rejoin matches by key only"
+    file: "production/epics/session-travel/story-032-display-name-sanitise-and-dedupe.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-033"
+    name: "A rejoin with a different requested name keeps the original name"
+    file: "production/epics/session-travel/story-033-display-name-fixed-for-match.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "st-035"
+    name: "A key the host kicked earlier is rejected Refused in every admission mode"
+    file: "production/epics/session-travel/story-035-kicked-key-refused.md"
+    priority: nice-to-have
+    status: backlog
+    owner: "network-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: ""
+    sprint: 2
+  - id: "cpa-003"
+    name: "One Meshy test character generated and normalised to the UEFN skeleton"
+    file: "production/epics/character-pool-appearance/story-003-meshy-test-character-generate-normalise.md"
+    priority: should-have
+    status: in-progress
+    owner: "technical-artist"
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+    sprint: 2
+    carryover_note: "In flight when Sprint 1 closed (Meshy test character generated; UE import remains); not in the Sprint 1 plan"
