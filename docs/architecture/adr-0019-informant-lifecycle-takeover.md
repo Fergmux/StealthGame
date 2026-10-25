@@ -34,7 +34,7 @@ An eliminated player stays in the match as an informant who must periodically re
 | Field | Value |
 |-------|-------|
 | **Depends On** | ADR-0001 (carrier model; **`T_due` in the C-TeamView owner part**, ADR-0001 §6 as decided by the user 2026-10-25), ADR-0002 (`ScheduleAt`, `ETimerKind::InformantRespawn`, resolvers, epoch tokens, latch, Roster flush barrier), ADR-0004 (Penalty/LSC/Round keys), ADR-0006 (secret streams consumed through ADR-0014), ADR-0010 (`TakeOverCrowdPawn`, `RequestHandOver`, hand-over pass, `ReleaseBody` requested by ADR-0018), ADR-0011 (informant legality, reply sink), ADR-0012 (`TakeNpcCard`, `ReleaseCard`, ledger pairing), ADR-0014 (`PickRespawnPawn`, widening, `RespawnPick` stream), ADR-0016 (`ITakeoverEligibilitySource::TryReleaseNpc`, `ICrowdControl::AdoptReleasedPawn`), ADR-0017 (`IsInBushOrTransition` inside Crowd eligibility), ADR-0018 (`OnPawnKilled`, `GetScheduledDeathServerTime`, `IStrikeTallySource`, body release before takeover). All must be Accepted before implementation. |
-| **Enables** | ADR-0021 (HUD tally, exile card and returning countdown read Penalty's owner data), ADR-0023 (Penalty Event Log rows), Informant Pings (VS, system 20: embodied/awaiting states) |
+| **Enables** | ADR-0021 (HUD tally, exile card and returning countdown read Penalty's owner data), ADR-0023 (Penalty Event Log rows), Informant Pings (MVP since 2026-10-25, system 20: embodied/awaiting states) |
 | **Blocks** | NPC-Kill Penalty & Informants epic (strike count, tally, exile, informant respawn, returning informant); the HUD returning-countdown story (carrier decided 2026-10-25, §6) |
 | **Ordering Note** | Should-have before Penalty is built (architecture.md). The user decided 2026-10-25: `T_due` rides the C-TeamView owner part (ADR-0001 §6, option (a); §6 below); the tally is confirmed (Penalty OQ-NKP-1) and the C-TeamView tally re-push is adopted (Penalty CR-19, §2.2a). |
 
@@ -175,7 +175,7 @@ Penalty always computes and stores `DueServerTime` (§3.2) and raises a server-s
 
 | ADR-0001 §6 option | Adapter (only after the decision) | Reconnect / rejoin | Inputs the client would need, and whether it already holds them |
 |---|---|---|---|
-| (a) field in the C-TeamView owner part | Roster owner part gains `DueServerTime` (double, −1 when none); Penalty writes it on `OnDueTimeChanged` through the Roster's owner-part write API, never while `IsLatched()` | survives (replicated state) | `T_due` itself (new Owner field: needs IVP fact + allowlist rows; never on the pawn) |
+| (a) field in the C-TeamView owner part | Roster owner part gains `T_due` (double, 0 = none; ADR-0001 `FTeamViewOwnerPart`), written from `DueServerTime`; Penalty writes it on `OnDueTimeChanged` through the Roster's owner-part write API, never while `IsLatched()` | survives (replicated state) | `T_due` itself (new Owner field: needs IVP fact + allowlist rows; never on the pawn) |
 | (b) field in an owner reply | an `FInformantDueReply {DueServerTime}` entry in ADR-0011's `ClientCommandReplies` batch on every change, resent on `OnInformantReadmitted` | resent by Penalty on readmission; lost on a client restart until the next change unless resent | `T_due` itself (new Owner reply entry: needs an IVP leak-catalogue row) |
 | (c) client derivation | no carrier | derived again from the inputs on rebuild | `D` = `InformantRespawnDelaySec` (held: public tuning); own `DeathServerTime` (held: `FDeathState`, All); `T_v` of the killing strike (held only if the client can identify the killing strike's `FActionState`, which names no victim); `NoPawnFadeSec`, `DeathFallSec` (held: tuning); exile slot time (held by the exiled owner via its own strike write); **`t_lost` after a disconnect/reclaim and `t_now` of the reclaim (not held: server-only)** |
 
@@ -362,7 +362,7 @@ The prototype's informant respawn (spawn at team start, `PlayerStart`-based, `So
 
 ## Related
 - **Depends on**: ADR-0001, ADR-0002, ADR-0004, ADR-0006, ADR-0010, ADR-0011, ADR-0012, ADR-0014, ADR-0016, ADR-0017, ADR-0018.
-- **Enables**: ADR-0021, ADR-0023; Informant Pings (VS).
+- **Enables**: ADR-0021, ADR-0023; Informant Pings (MVP since 2026-10-25).
 - **Amendment / confirmation requests (not applied; owned by other ADRs)**:
   1. **ADR-0010 §3.2:** add `CheckTakeOverEligibility(const AStealthPawn*) const` (side-effect-free, same predicate as `TakeOverCrowdPawn` step 1) so the `TryReleaseNpc` → `NotEligible` path is unreachable in normal play.
   2. **ADR-0014 §7.3 / Key Interfaces:** confirm `FRespawnPick { Pawn; Status ∈ {Picked, None, Deferred}; WideningLevel }`, widening keyed by `RespawnRequestSeq` from the request's first call, and that a `Deferred` result is returned when the per-frame pick guard defers.
@@ -395,3 +395,6 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 
 Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-25_rereview-followups.md`); decision unchanged, Status unchanged (Accepted).
 - §4.3: respawn-region wording aligned with LSC R3/R5b and ADR-0014 §7.3: level 0 is unseen pawns inside the team's respawn region (nearer-anchor cut, precomputed per zone pair); levels 1 and 2 keep the cut and exclude the enemy region (level-sensitive wording only; no rule change; LSC re-review xdoc).
+
+Architecture review 2026-10-25b (`docs/architecture/architecture-review-2026-10-25b.md`); text corrections only, decision unchanged, Status unchanged (Accepted).
+- Pings milestone corrected (VS → MVP); §6 option (a) row aligned with ADR-0001's `T_due` field name and sentinel.

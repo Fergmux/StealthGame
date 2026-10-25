@@ -37,7 +37,7 @@
 #   its fields sit two columns past the dash. Quote a value that holds ": ". A
 #   line in any other shape is reported as unsupported layout, with its number.
 
-version: 3
+version: 4
 last_updated: "2026-10-25"
 
 requirements:
@@ -101,9 +101,9 @@ requirements:
 - id: TR-tdc-008
   system: tdc
   gdd: design/gdd/tuning-data-config.md
-  requirement: "Latch classes Round/Action/Use honoured by every consumer"
+  requirement: "Latch classes Session/Round/Action/Use honoured by every consumer"
   created: 2026-10-25
-  revised: ""
+  revised: "2026-10-25"
   status: active
 
 - id: TR-tdc-009
@@ -126,6 +126,14 @@ requirements:
   system: tdc
   gdd: design/gdd/tuning-data-config.md
   requirement: "Client tuning check rides Session's single acknowledgement (no TDC RPC/timer)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-012
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "Soft-reference asset keys (`*Asset` suffix, e.g. Crowd StateTree and motion-profile assets) have a schema type, a canonical `TuningHash` form and a validator rule"
   created: 2026-10-25
   revised: ""
   status: active
@@ -222,6 +230,22 @@ requirements:
   system: roster
   gdd: design/gdd/participant-state-roster.md
   requirement: "Server-only `OnViewRebound(ParticipantId)` raised after `RebindView` (seamless arrival, rejoin) so feature team-view parts rebuild; carries no `EventSeq`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-013
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "`PublicHandle` is a random 32-bit value from a server-only random source, unique in the match, never reused, carrying no order (Roster R3)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-014
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "C-TeamView teammate entry carries Team-audience `bReconnecting` + `ReconnectEndCause`, set on Disconnected during Active and cleared only by an event (Rejoined/GraceExpired/Cleared), never by a timer (Roster R6)"
   created: 2026-10-25
   revised: ""
   status: active
@@ -349,9 +373,9 @@ requirements:
 - id: TR-cpa-003
   system: cpa
   gdd: design/gdd/character-pool-appearance.md
-  requirement: "Server-private streams from `GetServerSubSeed(AppearanceDeal)`; DRBG-class primitive for Replace/Take"
+  requirement: "Server-private streams from `GetServerSubSeed(AppearanceDeal)` (`FSecretStream`, SipHash counter mode) for Replace; `Take` reserved (no draw)"
   created: 2026-10-25
-  revised: ""
+  revised: "2026-10-25"
   status: active
 
 - id: TR-cpa-004
@@ -421,9 +445,9 @@ requirements:
 - id: TR-session-005
   system: session
   gdd: design/gdd/session-travel.md
-  requirement: "Single round acknowledgement (seed, layout hash, tuning hash, pool hash) within the travel deadline"
+  requirement: "Single round acknowledgement (seed, LayoutAttempt, layout hash, public-key `ClientHash`, pool hash; `TuningHash` never replicated) within the travel deadline, then the second-stage `ServerWorldReady` / `OnParticipantWorldReady`"
   created: 2026-10-25
-  revised: ""
+  revised: "2026-10-25"
   status: active
 
 - id: TR-session-006
@@ -462,6 +486,22 @@ requirements:
   system: session
   gdd: design/gdd/session-travel.md
   requirement: "Leak-surface checklist (PlayerState fields, ping, join timing) enforced via the allowlist"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-011
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "128-bit `RejoinToken` from server OS entropy, delivered by owner-only RPC, required on rejoin and supersede (Session rule 6)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-012
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Engine connection timeouts as backstop: `ConnectionTimeout >= max(SessionHardTimeoutSec, T_prep_max) + 30`, `InitialConnectTimeout >= PendingLoginTimeoutSec + 10`, validated at `OpenSession` (Session rule 19, F7)"
   created: 2026-10-25
   revised: ""
   status: active
@@ -738,6 +778,14 @@ requirements:
   revised: ""
   status: active
 
+- id: TR-lsc-010
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Per-court public `ClueTag` as a pure function of published geometry, rule version in `GeneratorKitVersion`, V-CLUE Reject predicate reading `ClueMatchMaxCount`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
 - id: TR-scl-001
   system: scl
   gdd: design/gdd/shared-character-locomotion.md
@@ -757,9 +805,9 @@ requirements:
 - id: TR-scl-003
   system: scl
   gdd: design/gdd/shared-character-locomotion.md
-  requirement: "Possession parity and stop-and-blend hand-over; `ForceNetUpdate` deferral"
+  requirement: "Possession parity and stop-and-blend hand-over; possession causes no forced net update of its own (`ForceNetUpdate` suppressed)"
   created: 2026-10-25
-  revised: ""
+  revised: "2026-10-25"
   status: active
 
 - id: TR-scl-004
@@ -850,6 +898,14 @@ requirements:
   revised: ""
   status: active
 
+- id: TR-scl-015
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "Server-side idle gaze layer for every pawn kind after `IdleGazeDelaySec` of unchanged look input (deadzone `IdleGazeLookDeadzoneDegPerSec`); changes only the replicated `HeadLook`; server-only counter stream keyed by stable pawn ordinal (SCL R8.9)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
 - id: TR-camera-001
   system: camera
   gdd: design/gdd/camera-system.md
@@ -909,9 +965,9 @@ requirements:
 - id: TR-camera-008
   system: camera
   gdd: design/gdd/camera-system.md
-  requirement: "Eye-mask trace cost bounded at 60 pawns: the same line-of-sight traces at every range in rate bands (15 Hz near, 5 Hz beyond EyeMaskRangeCm), never a distance cutoff (CS-R5, F3)"
+  requirement: "Eye-mask trace cost bounded at 60 pawns: the same line-of-sight traces at every range in rate bands (60 Hz within EyeMaskNearCm, 15 Hz to EyeMaskRangeCm, 5 Hz beyond), never a distance cutoff (CS-R5, F3)"
   created: 2026-10-25
-  revised: ""
+  revised: "2026-10-25"
   status: active
 
 - id: TR-crowd-001
@@ -990,6 +1046,14 @@ requirements:
   system: crowd
   gdd: design/gdd/crowd-npc-behaviour.md
   requirement: "Baseline and Tell Matrix rates as data with calibration counters"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-011
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "Follower drives `Move`/`Look` through a virtual input layer with device profiles; a recordable input stream is replayable through a bot client for parity tests (CNB-R3.4, F6, AC-CNB-27/28)"
   created: 2026-10-25
   revised: ""
   status: active
@@ -1082,6 +1146,14 @@ requirements:
   revised: ""
   status: active
 
+- id: TR-con-012
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "A pawn killed while concealed re-opens at the death write carrying `FDeathState.bDiedConcealed = true`; every non-owner client keeps the body presentation-hidden (CR-10a, CON-R9)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
 - id: TR-asn-001
   system: asn
   gdd: design/gdd/assassination-defence-reversal.md
@@ -1166,6 +1238,22 @@ requirements:
   system: asn
   gdd: design/gdd/assassination-defence-reversal.md
   requirement: "`FStrikeResult` and `FDefenceResult` travel as entries of the per-connection batched owner reply RPC (`ClientCommandReplies`) with a command sequence (ASN-R19, IIF R6)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-012
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "Server lunge warps to the fixed `WarpPoint`, never re-tracks the victim; `UMotionWarpingComponent::WarpTargets` not replicated, targets set locally from replicated state (ASN-R16)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-013
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "Defence cooldown end carried owner-only as `CooldownEndServerTime` on a PlayerController component (`UDefenceOwnerComponent`, ASN-R18)"
   created: 2026-10-25
   revised: ""
   status: active
@@ -1309,9 +1397,9 @@ requirements:
 - id: TR-citygen-003
   system: citygen
   gdd: design/gdd/procedural-city-generator.md
-  requirement: "Twelve-stage pipeline with integer pre-validator; time-sliced"
+  requirement: "S1-S12 + G-PRE pipeline on one off-game-thread worker task over pure data, integer pre-validator; client Manifest build and server validation time-sliced"
   created: 2026-10-25
-  revised: ""
+  revised: "2026-10-25"
   status: active
 
 - id: TR-citygen-004
@@ -1402,6 +1490,14 @@ requirements:
   revised: ""
   status: active
 
+- id: TR-tmk-007
+  system: tmk
+  gdd: design/gdd/teammate-markers.md
+  requirement: "Marker retire hold aligned to contact via Team-only `RetireAtServerTime` written only in the retiring C-TeamView update (TM-R6, F6)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
 - id: TR-hud-001
   system: hud
   gdd: design/gdd/hud.md
@@ -1458,6 +1554,14 @@ requirements:
   revised: ""
   status: active
 
+
+- id: TR-hud-008
+  system: hud
+  gdd: design/gdd/hud.md
+  requirement: "HUD cost: game thread <= 0.3 ms, render thread <= 0.2 ms; no widget constructed during `Active` (AC-HUD-22)"
+  created: 2026-10-25
+  revised: ""
+  status: active
 
 - id: TR-png-001
   system: png

@@ -3244,7 +3244,7 @@ constants:
     added: 2026-10-24
     revised: ""
   - name: ReachDetourMult
-    status: derived
+    status: active
     source: design/gdd/level-socket-contract.md
     referenced_by:
       - design/gdd/level-socket-contract.md

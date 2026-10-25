@@ -184,7 +184,7 @@ The viewer is resolved from `RealViewer` (the connection's PlayerController) thr
  TG_PostPhysics  ADR-0002 drain ─► Concealment resolver ─► IConcealmentCullSource::SetCullState
                                     (commit t0: record Visible→CullPending, deadline on grid)
                                     (HideExit / Broken: record →Visible, same slot)
-                 ADR-0002 staging ─► death write (non-concealment cull ⇒ →Visible; KilledConcealed stays)
+                 ADR-0002 staging ─► death write (any cull ⇒ →Visible; killed-concealed carries bDiedConcealed)
  TG_PostUpdateWork  FConcealmentCullTickFunction: deadline ≤ now ⇒ Culled; for each denied
                     connection: FindActorChannelRef(Pawn)->Close(Relevancy)
                     UTeamPositionFeedComponent: entries for teammates with no channel on that connection
@@ -384,3 +384,6 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 
 User scope decisions (2026-10-25: "accept all recommendations"); decision unchanged, Status unchanged (Accepted).
 - Budget note — user decision 2026-10-25: two more owner-only C-TeamView payloads ride the PlayerController (no relevancy, cull or pawn change): the Informant Pings part (≤ 50 B/s per teammate connection at defaults, bursts ≤ 200 B; PNG F4) and the teammate `bReconnecting` bit (change-only). `FRoundResult` grows by 6 bytes, sent once at `Ended`. Opponent connections receive none of the team data. Inside the 50 KB/s per-client budget; no pawn-line change.
+
+Architecture review 2026-10-25b (`docs/architecture/architecture-review-2026-10-25b.md`); text corrections only, decision unchanged, Status unchanged (Accepted).
+- Diagram: the retired `KilledConcealed` interim replaced by the §5.7 rule (killed-concealed victims re-open at the death write with `FDeathState.bDiedConcealed`).

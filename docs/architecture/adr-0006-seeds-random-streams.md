@@ -125,6 +125,8 @@ All primitives live in `StealthFoundation` as plain C++ (no `UObject`, no `UWorl
 | 12 | `TieRank` | secret | Round R12 tie rank | `ServerTickIndex` (low 32 bits) |
 | **13** | **`CrowdBehaviour`** | secret | Crowd CNB-R14 | layout attempt |
 | **14** | **`BushSpotPick`** | secret | Concealment CON-R12 / F4 blind-strike spot pick (consumer ADR-0018, stream ADR-0017 §7, tag `CON_SPOT`) | layout attempt (amendment 2026-10-24) |
+| **15** | **`PublicHandle`** | secret | Roster R3 `PublicHandle` (random 32-bit, unique in the match, never reused, no order; consumer ADR-0005 `URosterStore` registration, carrier ADR-0001 §4.3; tag `PSR_HANDLE`) | registration counter (counter-as-Attempt; a draw equal to 0 or to any handle already issued in the match is discarded and the counter advances) (amendment 2026-10-25b) |
+| **16** | **`IdleGaze`** | secret | SCL R8.9 idle head-scan layer (every pawn kind; tag `SCL_GAZE`) | layout attempt; per-layout sub-seed + counter tuple `(PawnOrdinal, SweepIndex)` keyed by the pawn's stable ordinal, never by kind, binding or controller (amendment 2026-10-25b) |
 
 **Two consumption shapes, fixed per domain** (TD-ADR item 5):
 - **Counter-as-Attempt** (F5's rule for domains 7-12, including `AmbientSchedule`): each draw event uses its own sub-seed `GetServerSubSeed(Domain, counter)` and an `FSecretStream(SubSeed, tag)` for the few draws inside that event. CNB-R14's "schedule draws use `AmbientSchedule` the same way" is read as "counter-based", satisfied by this shape; Session F5 is the contract owner, so its shape wins over a second reading.
@@ -204,7 +206,9 @@ template<class TStream, class T> void FisherYates(TStream&, TArrayView<T>);  // 
 enum class ESeedDomain : uint32 { Layout = 1, ObjectiveSites = 2, AppearanceDeal = 3, PlayerPlacement = 4,
     NpcRoutes = 5, SpawnOrder = 6, EmergencePick = 7, RespawnPick = 8, AmbientSchedule = 9,
     StageSignal = 10, SeqOrder = 11, TieRank = 12, CrowdBehaviour = 13,
-    BushSpotPick = 14 /* amendment 2026-10-24, ADR-0017 */ };   // append-only
+    BushSpotPick = 14 /* amendment 2026-10-24, ADR-0017 */,
+    PublicHandle = 15 /* amendment 2026-10-25b, Roster R3 */,
+    IdleGaze = 16 /* amendment 2026-10-25b, SCL R8.9 */ };   // append-only
 class IEntropySource { public: virtual bool Fill(TArrayView<uint8> Out) = 0; };
 uint64 SipHash24(const uint8 Key[16], TConstArrayView<uint8> Message);
 struct FSecretStream {                                  // keyed-hash DRBG (SipHash counter mode)
@@ -336,3 +340,7 @@ Inter-ADR amendment pass; decision unchanged, Status unchanged (Proposed).
 - Guideline 5: sanctioned unit-fraction mapping for continuous server-only draws, converted to integer ticks/ms at the point of use — requested by ADR-0016 (§9); wording confirmed by technical-director.
 - `CrowdBehaviour = 13`: already registered here (the Session F5 GDD sync is the GDD owner's).
 - Cross-reference only: this ADR's requested ADR-0007 include-lint rule landed as rule (j) (letter (i) was taken); Related note annotated.
+
+## Amendments (architecture review 2026-10-25b)
+Architecture review 2026-10-25b (`docs/architecture/architecture-review-2026-10-25b.md`); decision unchanged (append-only registry extended), Status unchanged (Accepted).
+- §4 domain registry and Key Interfaces enum: appended `PublicHandle = 15` (Roster R3 requires a server-only random source for the only participant reference clients receive; no domain existed) and `IdleGaze = 16` (SCL R8.9, decision D14, names an ADR-0006 counter-based stream keyed by the pawn's stable ordinal; no domain existed). Both follow the existing consumption shapes; golden vectors for both are added with the implementing stories. Session F5's table is the GDD owner's to sync.

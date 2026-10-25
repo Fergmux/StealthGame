@@ -157,7 +157,7 @@ Rules:
 - The view **never** holds a locked site, an opponent site, opponent progress other than `RivalPrelimCount`, hold progress of anyone, or the final before the team's own preliminaries are complete (OC-5, SP-1). The final's completion is **not** written to the view: the round-end step presents it (Round).
 - **Every member** of team T, Active or Informant, receives the same view (Team audience includes the team's informants, IVP R3).
 - **Width:** about 12 bytes plus 4 per live site; written at most a few times per round per controller.
-- **Clue (`FClueTag`)**: `{AreaType, FeatureKind}` taken from LSC's per-court public `ClueTag` record (LSC change request 8; GDD OQ3). Until LSC publishes `ClueTag`, `FeatureKind = None` and the clue is area type only (the GDD's stated fallback). The phrase ("A court in the market, by the water steps") is built client-side from a localised phrase table; no string travels.
+- **Clue (`FClueTag`)**: `{AreaType, FeatureKind}` taken from LSC's per-court public `ClueTag` record (LSC change request 8; GDD OQ3). LSC now publishes `ClueTag` (LSC R3 court row and V-CLUE, 2026-10-25; ADR-0014 §7.4); if a court's record carries no feature, `FeatureKind = None` and the clue is area type only (the GDD's stated fallback). The phrase ("A court in the market, by the water steps") is built client-side from a localised phrase table; no string travels.
 
 ### 5. Tend predicate, hold duration and completion gate (OC-6 to OC-11, OC-14)
 
@@ -389,7 +389,7 @@ private:
 ## Risks
 - **R1 Claim vs physical occupancy diverge** (a pawn tends from a face another body physically blocks): the IIF's reach/facing check governs Begin; claims only cap concurrent holds at 4. Mitigation: AC-OC-31 and a PIE crowding test; if playtests show confusion, add a physical overlap test at the claimed face (server-only, kind-blind).
 - **R2 Rebind event fires before the new controller's component is ready**: the handler checks the component exists and, if not, writes on the controller's `BeginPlay`-time registration notice (component default is empty, so nothing wrong is ever shown); AC-OC-15 covers rejoin.
-- **R3 `ClueTag` not delivered by LSC**: area-type-only clue (GDD OQ3 fallback); AC-OC-13 still holds.
+- **R3 `ClueTag` missing for a court** (delivered by the LSC GDD 2026-10-25; risk retained for implementation slippage): area-type-only clue (GDD OQ3 fallback); AC-OC-13 still holds.
 - **R4 Two writes in a frame sent separately** (OBJ-V2 fails under push model with immediate flush): both writes are within one drain before replication runs, so the risk is only a test artefact; if observed, write views once at drain end from a dirty-team set.
 - **R5 Host reads `FSiteAssignment`**: accepted (IVP R10) until the Dedicated Server; code discipline and the include guard keep it out of presentation.
 - **R6 `ActivePhaseStart` vs `ServerNow` precision**: both doubles on the server; integer-ms conversion at use keeps the grid exact.
@@ -450,4 +450,7 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 - §6 — user decision 2026-10-25: the `RivalPrelimCount` signal is ON by default in MVP (confirmed).
 
 Technical Setup 2026-10-25 (Technical Director gate findings; architecture-review re-check N3); decision unchanged, Status unchanged (Accepted).
-- §5 step 3, Amendments: the `TimerFired(StageSignal)` mapping onto ADR-0002 §2a's `FTimerPayload` is `Subject` = **none** (no court: the release is keyed only by the round-global ordinal, AC-OC-10, and naming a court would let the draw or the log couple to a site), `Generation` = 0, `Seq` = ordinal `k`, `Phase` = **viewing team** (the opponent of the completer; the team whose `RivalPrelimCount` rises). This supersedes the architecture-review fix line above that read "`Subject` = court fixture, `Phase` = team"; ADR-0002's table is corrected to match.
+- §7 step 3, Amendments: the `TimerFired(StageSignal)` mapping onto ADR-0002 §2a's `FTimerPayload` is `Subject` = **none** (no court: the release is keyed only by the round-global ordinal, AC-OC-10, and naming a court would let the draw or the log couple to a site), `Generation` = 0, `Seq` = ordinal `k`, `Phase` = **viewing team** (the opponent of the completer; the team whose `RivalPrelimCount` rises). This supersedes the architecture-review fix line above that read "`Subject` = court fixture, `Phase` = team"; ADR-0002's table is corrected to match.
+
+Architecture review 2026-10-25b (`docs/architecture/architecture-review-2026-10-25b.md`); text corrections only, decision unchanged, Status unchanged (Accepted).
+- Section reference in the StageSignal amendment corrected (§7 step 3); `ClueTag` text updated now that the LSC GDD delivers it.

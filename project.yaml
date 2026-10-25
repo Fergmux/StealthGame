@@ -59,7 +59,7 @@ naming:
 # Budgets from docs/architecture/adr-0022-rendering-performance-budgets.md §4
 # (art bible 8.x.16) at the reference preset: RTX 3060-class PC, 1080p, every
 # sg.* group at 3. All are ASSUMED/PROPOSED until the 3060-class captures
-# (spikes R1-R3, RC-1, RC-2) replace them; ADR-0022 is still Proposed.
+# (spikes R1-R3, RC-1, RC-2) replace them; ADR-0022 is Accepted (2026-10-25), conditional on those spikes.
 # Not schema keys, recorded here for readers (ADR-0022 §4.2-4.5):
 #   CPU game thread (listen host and client) <= 12.0 ms p95;
 #   render/RHI thread <= 12.0 ms p95; GPU 14.4 ms + >= 2.0 ms headroom;

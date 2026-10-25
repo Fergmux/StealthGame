@@ -785,7 +785,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 ### Engine API Constraints (5.8.4)
 
 - **`AddToPlayerScreen` widgets sit in the `Player` slot (100), below `AddToViewport` widgets (200); a camera fade is applied inside the scene render and can never cover UMG** — source: ADR-0021
-- **Common UI routing requires `UCommonGameViewportClient`; the CommonUI plugin is not yet enabled in `StealthGame.uproject`**; `UCommonUIActionRouterBase::OnActiveInputModeChanged` is the input-mode event — source: ADR-0021
+- **Common UI routing requires `UCommonGameViewportClient`; the CommonUI plugin is enabled in `StealthGame.uproject` (since 2026-10-25)**; `UCommonUIActionRouterBase::OnActiveInputModeChanged` is the input-mode event — source: ADR-0021
 - **A custom `UDPICustomScalingRule` result is cached per viewport size outside the editor; `SetApplicationScale` is process-wide** — source: ADR-0021
 - **`r.Substrate` is ReadOnly with default 0 for existing projects (this project has Substrate off); `r.MegaLights.EnableForProject` default 0; `r.RayTracing` default 0; the project sets `r.SkinCache.DefaultBehavior=0` (Exclusive)** — source: ADR-0022
 - **CVar priority: a `DefaultEngine.ini [SystemSettings]` value overrides any `sg.*` group; `UGameUserSettings` persists `sg.*` in a user-editable file** — source: ADR-0022
