@@ -12,7 +12,7 @@ Engine: Unreal Engine 5.8 (installed 5.8.4)
 | [Input & Interaction Framework](input-interaction-framework/EPIC.md) | Core | Input & Interaction Framework | design/gdd/input-interaction-framework.md | 95 stories | Ready |
 | [Character Pool & Appearance](character-pool-appearance/EPIC.md) | Core | Character Pool & Appearance | design/gdd/character-pool-appearance.md | Not yet created | Ready |
 | [Round & Match Framework](round-match-framework/EPIC.md) | Core | Round & Match Framework | design/gdd/round-match-framework.md | 92 stories | Ready |
-| [Level Socket Contract](level-socket-contract/EPIC.md) | Core | Level Socket Contract | design/gdd/level-socket-contract.md | Not yet created | Ready |
+| [Level Socket Contract](level-socket-contract/EPIC.md) | Core | Level Socket Contract | design/gdd/level-socket-contract.md | 45 stories | Ready |
 | [Shared Character & Locomotion](shared-character-locomotion/EPIC.md) | Core | Shared Character & Locomotion | design/gdd/shared-character-locomotion.md | 55 stories | Ready |
 | [Camera System](camera-system/EPIC.md) | Core | Camera System | design/gdd/camera-system.md | 25 stories | Ready |
 | [Crowd & NPC Behaviour](crowd-npc-behaviour/EPIC.md) | Feature | Crowd & NPC Behaviour | design/gdd/crowd-npc-behaviour.md | 39 stories | Ready |

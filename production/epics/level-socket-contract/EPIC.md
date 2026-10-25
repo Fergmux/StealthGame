@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/level-socket-contract.md
 > **Architecture Module**: Layout Service (LSC) in `StealthGameplay/Core` (`ULayoutService` world subsystem, provider registry, Graybox provider, client Manifest builder)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories level-socket-contract`
+> **Stories**: 45 stories (see the Stories table below; 42 Ready, 3 Blocked)
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 8 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -63,3 +63,64 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 - Visual/Feel and UI stories have retained screenshots in `production/qa/evidence/`
   (a lead sign-off too for Visual/Feel)
 - Stories embed Control Manifest version 2026-10-25e and every governing ADR's conditional gate has reported before dependent work is marked Done
+
+## Stories
+
+Created by `/create-stories` on 2026-10-25 at `story_granularity: balanced` (2-4 acceptance criteria per story). Build order follows ADR-0014's Migration Plan (service core, Manifest, navmesh, predicates and Selection, graybox, runtime services) with the two conditioning spikes first. QL-STORY-READY ran (qa-lead, two passes): 44 of 45 stories ADEQUATE after criteria revisions, story 037 GAPS (accepted, blocked).
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Layout service skeleton, provider registry and Round isolation | Logic | Ready | ADR-0014 |
+| 002 | Layout service state machine and time-sliced work driver | Logic | Ready | ADR-0014 |
+| 003 | Attempt loop: timeout, total budget and reseed | Logic | Ready | ADR-0014 |
+| 004 | Abort paths and Event Log header | Logic | Ready | ADR-0014 |
+| 005 | Fallback travel to the graybox and host-loss abort | Integration | Ready | ADR-0014 |
+| 006 | Formulas D1, D2, D3 and D4 pass their test vectors | Logic | Ready | ADR-0014 |
+| 007 | Formulas D5, D6, D6b and D9 pass their test vectors | Logic | Ready | ADR-0014 |
+| 008 | Layout Manifest struct and LayoutHash (D7) | Logic | Ready | ADR-0014 |
+| 009 | Chunked Manifest replication, idempotent handler and late join | Integration | Ready | ADR-0014, ADR-0003 |
+| 010 | Spike: Manifest wire size and behaviour under loss | Integration | Ready | ADR-0014 |
+| 011 | Spike R4: graybox runtime navmesh timing and freeze counters | Integration | Ready | ADR-0014 |
+| 012 | Navmesh lock lifecycle and freeze | Integration | Blocked (spike R4, story 011) | ADR-0014 |
+| 013 | Client geometry builder, inert decoration and zero replicated actors | Logic | Ready | ADR-0014 |
+| 014 | Socket records, determinism and required data | Logic | Ready | ADR-0014 |
+| 015 | World measure backend: navmesh paths, nav-grid bound and ViewBlock traces | Integration | Blocked (spike R4, story 011) | ADR-0014 |
+| 016 | Predicates V-EMERGE and alley shape (witness sets) | Logic | Ready | ADR-0014 |
+| 017 | Predicates V-NAV, V-AREA, V-SIGHT, V-ROUTE and V-TRAV | Logic | Ready | ADR-0014 |
+| 018 | Predicates V-SEP, V-REACH, V-RESPAWN, V-ZONE and V-ZONEFILL | Logic | Ready | ADR-0014 |
+| 019 | Predicates V-COURT, V-POOL, V-BUSH and V-CLUE with the court ClueTag | Logic | Ready | ADR-0014 |
+| 020 | CrowdRoute graph with pre-baked path polylines | Logic | Ready | ADR-0014 |
+| 021 | Selection: combos, V-FAIR and the single final (with D8) | Logic | Ready | ADR-0014 |
+| 022 | Selection draw: secret streams and the two-stage uniform draw | Logic | Ready | ADR-0014 |
+| 023 | Server-only query API and leak blindness | Integration | Ready | ADR-0014, ADR-0003 |
+| 024 | Preparing handshake and hash acknowledgement | Integration | Ready | ADR-0014 |
+| 025 | Spawn gate and no world view before Active | Integration | Ready | ADR-0014 |
+| 026 | Graybox provider, editor-only markers and the opaque bake | Logic | Ready | ADR-0014 |
+| 027 | Graybox Validate button, commandlet parity and CI gate | Logic | Ready | ADR-0014 |
+| 028 | Graybox map authoring and Graybox.Validates | Config/Data | Ready | ADR-0014 |
+| 029 | Round-start placement: one function, zone fill and density cap | Logic | Ready | ADR-0014 |
+| 030 | Emergence: kind-blind request, clear check and uniform pick | Logic | Ready | ADR-0014 |
+| 031 | Emergence: kill decoupling and exit-cancel rate bound | Integration | Ready | ADR-0014 |
+| 032 | Emergence presentation: no visible pop | Visual/Feel | Ready | ADR-0014 |
+| 033 | PickRespawnPawn: eligibility, unseen test and uniform draw | Logic | Ready | ADR-0019, ADR-0014 |
+| 034 | PickRespawnPawn: starvation widening and region membership | Logic | Ready | ADR-0019, ADR-0014 |
+| 035 | Informant respawn takeover: integration | Integration | Ready | ADR-0019, ADR-0014 |
+| 036 | Crowd and Objectives contract tests | Integration | Ready | ADR-0014 |
+| 037 | BushSite derivation and server/client parity | Integration | Blocked (design gap: graybox BushSite source undefined) | ADR-0014 |
+| 038 | Batch audits: bush and emergence uncorrelated with roles | Logic | Ready | ADR-0014 |
+| 039 | Packaged-client leak scan: markers and role strings | Integration | Ready | ADR-0014 |
+| 040 | Graybox sun azimuth lock and cornice shade bands (OI-4) | Visual/Feel | Ready | ADR-0014 (V-POOL) |
+| 041 | Graybox per-area shade ratios by grey card (OI-6) | Visual/Feel | Ready | N/A (art bible 4.5) |
+| 042 | Bush and planting value band: leg-and-forearm read test (OI-2) | Visual/Feel | Ready | N/A (art bible 3.6, 4.1) |
+| 043 | Bush greyscale and colour-swatch identification tests (VA-4) | Visual/Feel | Ready | N/A (human test) |
+| 044 | Static-figure, sun-pool beacon and paired-capture tests | Visual/Feel | Ready | N/A (human test) |
+| 045 | Graybox fairness playtest (per-zone win interval) | Integration | Ready | ADR-0014 |
+
+### Notes from story creation (for the GDD and epic owners)
+
+- **TR-lsc-010 is missing from this epic's requirements table** (the registry has 10 entries; the table lists 9). Story 019 covers it (court `ClueTag`, V-CLUE).
+- **Art-bible items assigned here:** OI-4 (story 040), OI-6 (story 041) and OI-2 (story 042) are art-bible "graybox" checks and the graybox map is delivered by this epic (story 028); GDD AC-45..49 are the VA-4/VA-3/VA-1/VA-5 human tests (stories 043, 044). Stories 040-044 have no registry TR (`TR-lsc-???`).
+- **Spikes first:** stories 010 (Manifest wire size) and 011 (navmesh R4) condition stories 012 and 015 (011) and the Generator epic (010). Story 012 and 015 stay Blocked until story 011 reports.
+- **Design gap blocking story 037:** GDD R2.7 gives the graybox an empty Manifest, but R2.6 and ADR-0014 derive `BushSite` records from the Manifest; where graybox bush sites reach clients is undefined.
+- **GDD defects found by the QA review** (to fix in the GDD): AC-30 D4 row uses T = 12 (Formulas section says T = 9, S = 0.225); AC-5 ack tuple and `OnLayoutReady` order disagree with R4.4/R4.5; AC-13 asks for at least 2,000 cancellations, unreachable at the 25% cap (story 031 uses at least 300); AC-55's sample size gives a fair zone only about 66% chance to pass (story 045 uses a two-tier rule); AC-47's "fails at 3 or more" wording; R8.5 vs AC-44 sub-seed list.
+- **Cross-epic prerequisite:** the ADR-0007 module skeleton (`production/epics/tuning-data-config/EPIC.md`); until it lands, code and tests go under `Source/StealthGame/`.
