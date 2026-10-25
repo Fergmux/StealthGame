@@ -6,6 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "Dom/JsonObject.h"
+#include "HAL/PlatformProcess.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -89,6 +90,50 @@ namespace StealthBuildTest
 		}
 		return FString::Printf(TEXT("missing [%s] extra [%s]"),
 			*FString::Join(Missing, TEXT(", ")), *FString::Join(Extra, TEXT(", ")));
+	}
+
+	/**
+	 * Path of the bash used to run the project's CI shell scripts: the STEALTH_BASH environment
+	 * variable when set, else Git for Windows' bash. Never a bare "bash" from PATH, which on Windows
+	 * can resolve to the WSL launcher. Empty when none is found.
+	 */
+	inline FString FindBash()
+	{
+		const FString FromEnv = FPlatformMisc::GetEnvironmentVariable(TEXT("STEALTH_BASH"));
+		if (!FromEnv.IsEmpty() && FPaths::FileExists(FromEnv))
+		{
+			return FromEnv;
+		}
+		for (const TCHAR* EnvVar : { TEXT("ProgramW6432"), TEXT("ProgramFiles") })
+		{
+			const FString Root = FPlatformMisc::GetEnvironmentVariable(EnvVar);
+			const FString Candidate = FPaths::Combine(Root, TEXT("Git/bin/bash.exe"));
+			if (!Root.IsEmpty() && FPaths::FileExists(Candidate))
+			{
+				return Candidate;
+			}
+		}
+		return FPaths::FileExists(TEXT("/bin/bash")) ? FString(TEXT("/bin/bash")) : FString();
+	}
+
+	/** Result of one script run. */
+	struct FScriptRun
+	{
+		bool bLaunched = false;
+		int32 ExitCode = -1;
+		FString Output;
+	};
+
+	/** Runs a project-relative bash script with optional extra arguments and captures its output. */
+	inline FScriptRun RunBashScript(const FString& Bash, const FString& RelativeScript, const FString& ExtraArgs = FString())
+	{
+		FScriptRun Run;
+		const FString Script = ProjectPath(RelativeScript);
+		const FString Args = FString::Printf(TEXT("\"%s\" %s"), *Script, *ExtraArgs);
+		FString StdErr;
+		Run.bLaunched = FPlatformProcess::ExecProcess(*Bash, *Args, &Run.ExitCode, &Run.Output, &StdErr);
+		Run.Output += StdErr;
+		return Run;
 	}
 
 	/** Parses the project's .uproject. Returns null when it cannot be read or parsed. */

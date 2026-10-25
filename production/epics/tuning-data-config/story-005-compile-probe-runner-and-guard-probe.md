@@ -1,12 +1,12 @@
 # Story 005: Compile-probe runner with the ADR-0007 guard probe and its positive control
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -66,14 +66,13 @@
 
 ## Files
 
-- `tools/ci/compile-probes/ServerHeaderInPresentation.cpp`
-- `tools/ci/compile-probes/run-probes.ps1` (or `.sh`)
-- `tools/ci/compile-probes/gate-probes.sh`
-- `tools/ci/compile-probes/selftest/` (canned observation fixtures and the selftest script)
-- `Source/StealthFoundation/Public/Server/StealthGuardProbeTarget.h` (placeholder Server header, name proposed)
-- `Source/StealthFoundation/Private/Tests/Build/CompileProbesTest.cpp` (G2 wrapper)
-
----
+- `tools/ci/compile-probes/ServerHeaderInPresentation.cpp` (probe; headers EXPECT-ERROR, TARGET-MODULE, CONTROL-MODULE)
+- `tools/ci/compile-probes/run-probes.ps1` (runner: disposable worktree, overlay, baseline build, `-SingleFile` per probe and control; observations only)
+- `tools/ci/compile-probes/gate-probes.sh` (gate: 0 PASS / 1 FAIL / 2 NOT ASSESSED)
+- `tools/ci/compile-probes/selftest/run-selftest.sh` and `tools/ci/compile-probes/selftest/fixtures/*.obs` (12 canned cases)
+- `Source/StealthFoundation/Public/Server/StealthGuardProbeTarget.h` (placeholder Server header, guard first)
+- `Source/StealthFoundation/Private/Tests/Build/CompileProbesTest.cpp` (test `StealthGame.Build.CompileProbes`)
+- `Source/StealthFoundation/Private/Tests/Build/StealthBuildFileTestUtils.h` (added `FindBash`, `RunBashScript`)
 
 ## QA Test Cases
 
@@ -93,7 +92,7 @@
 **Required evidence**:
 - Integration: the wrapper automation test `StealthGame.Build.CompileProbes` (`Source/StealthFoundation/Private/Tests/Build/CompileProbesTest.cpp`) and the selftest under `tools/ci/compile-probes/selftest/` must exist and pass per commit (G2); the real UBT `-SingleFile` run on a disposable worktree is DEFERRED to the nightly job and its observation is recorded in the story (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Build.CompileProbes` + selftest, 2026-10-25); real UBT `-SingleFile` run observed locally (gate PASS)
 
 ---
 
@@ -102,3 +101,15 @@
 - Depends on: `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`, `production/epics/tuning-data-config/story-002-gameplay-presentation-module-skeletons.md`, `production/epics/tuning-data-config/story-003-split-prototype-composition-root.md`
 - Unlocks: `production/epics/tuning-data-config/story-023-nightly-workflow.md`, `production/epics/tuning-data-config/story-054-validated-tuning-frozen-immutable.md`, `production/epics/tuning-data-config/story-068-server-key-not-on-client.md`
 - Open verification claims from the plan's Note lines: UBT `-SingleFile` behaviour is verified from source [V `BuildMode.cs:880-943`] but not yet observed in this project; the disposable copy is a git worktree, never the developer tree (open details: overlaying uncommitted changes, whether `Content/` is needed).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing. Per-commit: `StealthGame.Build.CompileProbes` runs the gate selftest (12 cases: clean pass; probe compiled, wrong error text, probe not compiled, control failed/not compiled/missing, mixed -> FAIL; no probes, empty/missing file, baseline build failed -> NOT ASSESSED) and checks the EXPECT-ERROR text is the guard #error text. Real run (first observation of UBT `-SingleFile` in this project, ADR-0008 Verification 4): probe in StealthPresentation failed with `C1189 #error "Server-only header included from StealthPresentation ..."`, positive control compiled in StealthGame, gate PASS (`probe-run.txt`).
+**Decisions recorded**: pairing convention = optional `// CONTROL-MODULE:` (default StealthGame) and optional `// CONTROL-FILE:` (relative to tools/ci/compile-probes/, default the probe itself), for stories 054/068. Disposable copy = `git worktree add --detach` of HEAD outside the tree (`%TEMP%`) with `GIT_LFS_SKIP_SMUDGE=1`, the developer `Source/` and `.uproject` overlaid with robocopy (uncommitted code under test); `Content/` is not needed (LFS pointers suffice for a code-only compile). Runner is PowerShell; gate and selftest are bash.
+**Engine findings (new)**: (1) `UnrealBuildTool.exe` run directly fails on this machine (needs .NET 10; only <=9 installed): use `Build.bat`, which selects the bundled .NET. (2) UBT compiles a `-SingleFile` only when the file is in the makefile source list; the "source directory added" check did not reliably notice the new CompileProbes/ folder ("Target is up to date", 0 actions, exit 0), so the runner touches the module Build.cs before each compile and treats "exit 0 without a Compile action" as `not-compiled` (FAIL). Both failure modes were watched to fail the gate before the fix.
+**Deviations**: Nightly wiring is story 023 (DEFERRED as planned). Manifest Version updated to 2026-10-25f.
+**Test Evidence**: `production/qa/evidence/story-005-compile-probe-runner-and-guard-probe/test-run.txt` (build `Result: Succeeded`; 17/17 `StealthGame.` tests Success), `probe-run.txt` (real probe run and gate output), `stamp.txt`
+**Run result**: N/A — CI tooling and a build self-test; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): two runner defects found and fixed during the real run (direct UBT call, stale makefile false pass)

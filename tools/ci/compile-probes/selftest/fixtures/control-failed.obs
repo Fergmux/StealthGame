@@ -1,0 +1,4 @@
+OBSERVATION probes-found=1
+OBSERVATION baseline-build=succeeded
+OBSERVATION probe=ServerHeaderInPresentation.cpp role=probe module=StealthPresentation outcome=failed-expected
+OBSERVATION probe=ServerHeaderInPresentation.cpp role=control module=StealthGame outcome=failed

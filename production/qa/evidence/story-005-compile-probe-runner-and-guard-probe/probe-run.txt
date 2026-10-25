@@ -1,0 +1,22 @@
+Real UBT -SingleFile run (first observation in this project), 2026-10-25:
+Command: powershell -ExecutionPolicy Bypass -File tools/ci/compile-probes/run-probes.ps1 -Out Saved/CompileProbes/observations.obs; bash tools/ci/compile-probes/gate-probes.sh Saved/CompileProbes/observations.obs
+OBSERVATION probes-found=1
+OBSERVATION baseline-build=succeeded
+OBSERVATION probe=ServerHeaderInPresentation.cpp role=probe module=StealthPresentation outcome=failed-expected
+OBSERVATION probe=ServerHeaderInPresentation.cpp role=control module=StealthGame outcome=compiled
+GATE probe ServerHeaderInPresentation.cpp: PASS - failed with the expected text; control compiled
+GATE compile-probes: PASS (1 probe(s))
+gate exit=0
+Probe compile (StealthPresentation):
+  Invalidating makefile for StealthGameEditor (StealthPresentation.Build.cs modified)
+  [1/1] Compile [x64] ServerHeaderInPresentation.cpp
+  C:\Users\fergm\AppData\Local\Temp\stealth-probes-20261025-061545\Source\StealthFoundation\Public\StealthServerOnlyGuard.h(8,1): fatal error C1189: #error:  "Server-only header included from StealthPresentation (ADR-0007, IVP R10)"
+  Result: Failed (OtherCompilationError)
+Positive control (StealthGame):
+  Invalidating makefile for StealthGameEditor (source file removed)
+  [1/1] Compile [x64] ServerHeaderInPresentation.cpp
+  Result: Succeeded
+
+Earlier runs that the gate correctly FAILED (watched to fail):
+  1) UnrealBuildTool.exe called directly -> '.NET 10 not installed' -> probe failed-other, control failed -> GATE FAIL (runner fixed to call Build.bat)
+  2) UBT reused the baseline makefile -> 'Target is up to date', 0 actions, exit 0 -> probe compiled -> GATE FAIL (runner then detected this as not-compiled, and touches the module Build.cs to force a rescan)
