@@ -81,10 +81,22 @@
 		},
 		{
 			"Name": "Mover",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "NetworkPrediction",
+			"Enabled": false
+		},
+		{
+			"Name": "CommonUI",
+			"Enabled": true
+		},
+		{
+			"Name": "StateTree",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayStateTree",
 			"Enabled": true
 		}
 	]
