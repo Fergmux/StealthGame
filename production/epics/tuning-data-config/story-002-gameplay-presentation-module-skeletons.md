@@ -1,12 +1,12 @@
 # Story 002: Gameplay and Presentation module skeletons with the presentation guard define
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -70,13 +70,11 @@
 - `Source/StealthGameplay/Core/.gitkeep`
 - `Source/StealthGameplay/Features/.gitkeep`
 - `Source/StealthPresentation/StealthPresentation.Build.cs`
-- `Source/StealthPresentation/Public/StealthPresentationModule.h`
+- `Source/StealthPresentation/Public/StealthPresentationModule.h` (declares the non-Shipping probe `StealthPresentationSeesGuardDefine()`)
 - `Source/StealthPresentation/Private/StealthPresentationModule.cpp`
-- `Source/StealthGameEditor/StealthGameEditor.Build.cs` (private deps added)
-- `Source/StealthGameEditor/Private/Tests/Build/PresentationGuardDefineTest.cpp`
+- `Source/StealthGameEditor/StealthGameEditor.Build.cs` (private deps StealthGameplay, StealthPresentation added)
+- `Source/StealthGameEditor/Private/Tests/Build/PresentationGuardDefineTest.cpp` (test `StealthGame.Build.PresentationGuardDefineIsPrivate`)
 - `StealthGame.uproject`
-
----
 
 ## QA Test Cases
 
@@ -96,7 +94,7 @@
 **Required evidence**:
 - Integration: the named automation test `StealthGame.Build.PresentationGuardDefineIsPrivate` (`Source/StealthGameEditor/Private/Tests/Build/PresentationGuardDefineTest.cpp`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Build.PresentationGuardDefineIsPrivate`, 2026-10-25)
 
 ---
 
@@ -105,3 +103,13 @@
 - Depends on: `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`
 - Unlocks: `production/epics/tuning-data-config/story-003-split-prototype-composition-root.md`, `production/epics/tuning-data-config/story-005-compile-probe-runner-and-guard-probe.md`, `production/epics/tuning-data-config/story-012-include-lint-rules-a-c.md`, `production/epics/tuning-data-config/story-092-no-hardcoded-gameplay-scan.md`
 - Open verification claims from the plan's Note lines: none (no Note line on 002). The ADR-0007 item (1) check is this story's own test.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: `StealthGame.Build.PresentationGuardDefineIsPrivate`: Presentation probe true, Editor-module probe false, Build.cs inspection with a seeded PublicDefinitions control, Core/Features folders, both modules loaded). ADR-0007 Verification Required item (1) observed under the editor build (unity + shared PCH).
+**Deviations**: Test hosted in StealthGameEditor as the story directs (the Editor module is the dependent module until story 003). StealthGameplay/StealthPresentation also list Core/CoreUObject/Engine (needed for the module header and log category). Presentation UI deps (UMG, CommonUI, Slate, SlateCore) left for the HUD work, as the story says. Manifest Version updated to 2026-10-25f.
+**Test Evidence**: `production/qa/evidence/story-002-gameplay-presentation-module-skeletons/test-run.txt` (build `Result: Succeeded`; 14/14 `StealthGame.` tests Success) and `stamp.txt`
+**Run result**: N/A — module skeletons and a build-define self-test; nothing player-visible changes
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

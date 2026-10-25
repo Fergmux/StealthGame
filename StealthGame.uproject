@@ -19,6 +19,16 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "StealthGameplay",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "StealthPresentation",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "StealthGameEditor",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"
