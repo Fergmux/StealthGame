@@ -4,9 +4,9 @@
 > **GDD**: design/gdd/objectives-chain.md
 > **Architecture Module**: Objectives in `StealthGameplay/Features` (chain data asset, per-team progress, `UObjectiveTeamViewComponent`)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories objectives-chain`
+> **Stories**: 23 stories (see Stories below)
 > **Engine Risk**: MEDIUM (highest among governing ADRs; engine 5.8, installed 5.8.4)
-> **Control Manifest**: 2026-10-25e
+> **Control Manifest**: 2026-10-25f
 > **Build Order**: 15 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
 
 ## Overview
@@ -60,4 +60,36 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 - Logic and Integration stories have passing tests in the test root (`Source/<Module>/Private/Tests/`)
 - Visual/Feel and UI stories have retained screenshots in `production/qa/evidence/`
   (a lead sign-off too for Visual/Feel)
-- Stories embed Control Manifest version 2026-10-25e and every governing ADR's conditional gate has reported before dependent work is marked Done
+- Stories embed Control Manifest version 2026-10-25f and every governing ADR's conditional gate has reported before dependent work is marked Done
+
+## Stories
+
+Written by `/create-stories objectives-chain` (story_granularity `balanced`, 2-4 acceptance criteria per story). All 23 are Ready: the epic has no spike, and ADR-0020's conditional gate (Objectives Chain GDD re-review; game-designer sign-off on the two GDD interpretations) is recorded as cleared in the GDD (Approved 2026-10-25; OC-7 carries the 2026-10-24 sign-off; `InteractSecOverride` removed by the user 2026-10-25). ADR-0020's verification items OBJ-V1, OBJ-V2 and OBJ-V3 are acceptance criteria of stories 011 and 002, so they report when those stories close. Cross-epic upstream gates (for example ADR-0001 spikes S1, S2, S14) still apply at Done, per the Definition of Done above.
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Objectives tuning rows and invariants I-OC1 to I-OC3 | Logic | Ready | ADR-0020 |
+| 002 | Chain data types and the Cacao chain asset | Logic | Ready | ADR-0020 |
+| 003 | Core chain validation and court binding | Logic | Ready | ADR-0020 |
+| 004 | Core site state and per-team progress | Logic | Ready | ADR-0020 |
+| 005 | Service shell and composition-root wiring | Integration | Ready | ADR-0020 |
+| 006 | Fixture claims and the interact-target owner | Logic | Ready | ADR-0020 |
+| 007 | Interact predicate and feint/decoy parity | Logic | Ready | ADR-0020 |
+| 008 | Completion gate and stage effects | Logic | Ready | ADR-0020 |
+| 009 | Final completion and win declaration | Logic | Ready | ADR-0020 |
+| 010 | Team view struct and builder | Logic | Ready | ADR-0020 |
+| 011 | Team view component and replication | Integration | Ready | ADR-0020 |
+| 012 | Rejoin, view rebind and round reset | Logic | Ready | ADR-0020 |
+| 013 | Clue function and the too-broad clue log | Logic | Ready | ADR-0020 |
+| 014 | Rival signal delay draw and release grid | Logic | Ready | ADR-0020 |
+| 015 | Rival signal release scheduling and idle behaviour | Logic | Ready | ADR-0020 |
+| 016 | Presentation view helpers and the tend-cue ring rule | Logic | Ready | ADR-0020 |
+| 017 | Stall metrics (F5) and the tend posterior band (F3) | Logic | Ready | ADR-0020 |
+| 018 | Stall-pressure and cross-system checks | Integration | Ready | ADR-0020 |
+| 019 | PIE-2 team view contents, ingress and informant parity | Integration | Ready | ADR-0020 |
+| 020 | PIE-2 hidden-site oracle and completion world signature | Integration | Ready | ADR-0020 |
+| 021 | PIE-2 end-to-end Cacao chain | Integration | Ready | ADR-0020 |
+| 022 | Prototype retirement and static scans | Logic | Ready | ADR-0020 |
+| 023 | Playtest advisory metrics (pacing, exposure, tend share) | Integration | Ready | ADR-0020 |
+
+Story files: `production/epics/objectives-chain/story-NNN-<slug>.md`. ADR-0002 (queue, `TimerFired`, latch) and ADR-0006 (secret stream, integer draws) are secondary ADRs of stories 005, 008, 009, 014 and 015.

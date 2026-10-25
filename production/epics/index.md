@@ -16,10 +16,10 @@ Engine: Unreal Engine 5.8 (installed 5.8.4)
 | [Shared Character & Locomotion](shared-character-locomotion/EPIC.md) | Core | Shared Character & Locomotion | design/gdd/shared-character-locomotion.md | 55 stories | Ready |
 | [Camera System](camera-system/EPIC.md) | Core | Camera System | design/gdd/camera-system.md | 25 stories | Ready |
 | [Crowd & NPC Behaviour](crowd-npc-behaviour/EPIC.md) | Feature | Crowd & NPC Behaviour | design/gdd/crowd-npc-behaviour.md | 39 stories | Ready |
-| [Concealment (Bushes)](concealment-bushes/EPIC.md) | Feature | Concealment (Bushes) | design/gdd/concealment-bushes.md | Not yet created | Ready |
+| [Concealment (Bushes)](concealment-bushes/EPIC.md) | Feature | Concealment (Bushes) | design/gdd/concealment-bushes.md | 35 stories | Ready |
 | [Assassination & Defence Reversal](assassination-defence-reversal/EPIC.md) | Feature | Assassination & Defence Reversal | design/gdd/assassination-defence-reversal.md | Not yet created | Ready |
 | [NPC-Kill Penalty & Informants](npc-kill-penalty-informants/EPIC.md) | Feature | NPC-Kill Penalty & Informants | design/gdd/npc-kill-penalty-informants.md | 22 stories | Ready |
-| [Objectives Chain](objectives-chain/EPIC.md) | Feature | Objectives Chain | design/gdd/objectives-chain.md | Not yet created | Ready |
+| [Objectives Chain](objectives-chain/EPIC.md) | Feature | Objectives Chain | design/gdd/objectives-chain.md | 23 stories | Ready |
 | [Procedural City Generator](procedural-city-generator/EPIC.md) | Feature | Procedural City Generator | design/gdd/procedural-city-generator.md | Not yet created | Ready |
 | [Informant Pings & Team Communication](informant-pings-team-comms/EPIC.md) | Feature | Informant Pings & Team Communication | design/gdd/informant-pings-team-comms.md | Not yet created | Ready |
 | [Teammate Markers](teammate-markers/EPIC.md) | Presentation | Teammate Markers | design/gdd/teammate-markers.md | Not yet created | Ready |
