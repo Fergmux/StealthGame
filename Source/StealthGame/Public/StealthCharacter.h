@@ -30,6 +30,8 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual bool CanJumpInternal_Implementation() const override;
+	/** APawn's relevancy, unless a non-Shipping spike hook replaces it (THROWAWAY, IVP spike S9). */
+	virtual bool IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const override;
 
 	// ---- Queries -------------------------------------------------------------------------
 

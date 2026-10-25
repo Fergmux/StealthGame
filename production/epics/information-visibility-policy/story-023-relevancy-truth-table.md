@@ -1,7 +1,7 @@
 # Story 023: The cull predicate equals owner OR ally OR NOT concealed across all 72 combinations (provisional on S9)
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: provisional pending spike story-004 (S9, relevancy override replacing Super and L27 based-on clause); implement after S9 reports. Includes the PlayerController->FViewerId server-side cache and the pure cull predicate (owner or ally or not concealed)
+> **Status**: Ready — unblocked 2026-10-25: spike S9 reported PASS (production/qa/spikes/2026-10-25_S9.md): the override that replaces Super, the RealViewer → viewer cache with unknown-viewer deny, and the explicit close stay closed for 60 s; L27 holds by construction (the override never consults IsBasedOnActor; a real pawn-on-pawn base could only be forced, see the report).
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M

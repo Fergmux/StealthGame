@@ -264,11 +264,11 @@ stories:
     name: "Spike S9, the explicit channel close lands at the deadline and the channel stays closed"
     file: "production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "network-programmer"
     estimate_days: 2.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-022"
     name: "CI workflow runs the T0 lint and the same gate"
     file: "production/epics/tuning-data-config/story-022-ci-workflow-t0-lint-step.md"

@@ -1,7 +1,7 @@
 # Story 028: An attack on a culled pawn resolves against capsules identically by spot or id, and the victim re-opens only at the death write
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: [Dep:Assassination] needs assassination-defence-reversal Attack(TargetSpot/TargetPawn) resolver; spikes story-004 (S9), story-005 (S10) and S15 (blind-attack oracle, Assassination's) have not reported
+> **Status**: Blocked — BLOCKED: [Dep:Assassination] needs assassination-defence-reversal Attack(TargetSpot/TargetPawn) resolver; spikes story-005 (S10) and S15 (blind-attack oracle, Assassination's) have not reported (S9 reported PASS 2026-10-25, production/qa/spikes/2026-10-25_S9.md)
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L

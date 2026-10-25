@@ -1,7 +1,7 @@
 # Story 030: A concealed player who disconnects stays culled and becomes culled for former allies at one boundary
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spike story-004 (S9) has not reported; needs ReleaseToCrowd/ClearBinding events from participant-state-roster.
+> **Status**: Blocked — BLOCKED: needs ReleaseToCrowd/ClearBinding events from participant-state-roster (S9 reported PASS 2026-10-25, production/qa/spikes/2026-10-25_S9.md).
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M

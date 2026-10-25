@@ -1,12 +1,12 @@
 # Story 004: Spike S9, the explicit channel close lands at the deadline and the channel stays closed
 
 > **Epic**: Information Visibility Policy
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -35,7 +35,7 @@ The concealment cull is the one permitted exception to pawn parity, and on the l
 
 *From the story's spike definition (ADR-0003 Verification Required, S9):*
 
-- [ ] GIVEN the legacy NetDriver, a throwaway IsNetRelevantFor override that replaces Super and an explicit per-connection FindActorChannelRef->Close(EChannelCloseReason::Relevancy) at a deadline on the global boundary grid, under StealthLeak1 and StealthLeak2 with at least 3 clients, WHEN a pawn is culled for the non-ally connections (including several pawns in one server frame, and a pawn standing on a culled pawn per L27), THEN every non-ally connection loses the pawn at the first grid boundary at or after t0 + ConcealCullDelayMs (+- one server frame), all same-frame culls land at one boundary, no channel for the culled pawn re-appears on any denied connection for at least 60 s (no relevancy-timeout or forced-relevant-frame re-creation; E10 and the ForceNetRelevant ban), the E15 NetClientTicksPerSecond >= MaxConnections x MaxFps startup assertion holds, and the verdict is written to production/qa/spikes/.
+- [x] GIVEN the legacy NetDriver, a throwaway IsNetRelevantFor override that replaces Super and an explicit per-connection FindActorChannelRef->Close(EChannelCloseReason::Relevancy) at a deadline on the global boundary grid, under StealthLeak1 and StealthLeak2 with at least 3 clients, WHEN a pawn is culled for the non-ally connections (including several pawns in one server frame, and a pawn standing on a culled pawn per L27), THEN every non-ally connection loses the pawn at the first grid boundary at or after t0 + ConcealCullDelayMs (+- one server frame), all same-frame culls land at one boundary, no channel for the culled pawn re-appears on any denied connection for at least 60 s (no relevancy-timeout or forced-relevant-frame re-creation; E10 and the ForceNetRelevant ban), the E15 NetClientTicksPerSecond >= MaxConnections x MaxFps startup assertion holds, and the verdict is written to production/qa/spikes/.
 
 ---
 
@@ -65,8 +65,13 @@ The concealment cull is the one permitted exception to pawn parity, and on the l
 
 ## Files
 
-- `production/qa/spikes/<date>_S9.md` (the verdict)
-- Throwaway spike code (prototype or harness): `Source/StealthGame/Private/Spikes/` or `Source/StealthTestHarness/Private/Scenarios/`
+- `production/qa/spikes/2026-10-25_S9.md` (the verdict)
+- `Source/StealthTestHarness/Private/Scenarios/StealthHarnessScenarioS9.cpp` (T3 scenario `S9`: cull records, global grid, `TG_PostUpdateWork` cull tick with explicit close, per-frame channel monitor, L27 staging, negative control, E15 check)
+- `Source/StealthGame/Public/Server/Spikes/StealthSpikeHooks.h`, `Source/StealthGame/Private/Spikes/StealthSpikeHooks.cpp` (non-Shipping relevancy hook)
+- `Source/StealthGame/Public/StealthCharacter.h`, `Source/StealthGame/Private/StealthCharacter.cpp` (`IsNetRelevantFor` delegates to the hook when one is installed; APawn's otherwise)
+- `tools/ci/mp/analyze_s9.py`
+- `docs/architecture/adr-0003-replication-relevancy-concealment-cull.md` (amendment: S9 reported)
+- Evidence: `production/qa/evidence/story-004-spike-s9-cull-latency-and-explicit-channel-close/`
 
 ---
 
@@ -86,7 +91,7 @@ The concealment cull is the one permitted exception to pawn parity, and on the l
 **Required evidence**:
 - Integration: a written spike report `production/qa/spikes/<date>_S9.md` with capture artefacts (a documented measurement).
 
-**Status**: [ ] Not yet created
+**Status**: [x] Spike report `production/qa/spikes/2026-10-25_S9.md` (PASS with CONCERNS) with capture artefacts
 
 ---
 
@@ -94,3 +99,16 @@ The concealment cull is the one permitted exception to pawn parity, and on the l
 
 - Depends on: None
 - Unlocks: `production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md`, `production/epics/information-visibility-policy/story-006-spike-s12-cull-delay-vs-measured-l99.md`, `production/epics/information-visibility-policy/story-023-relevancy-truth-table.md`, `production/epics/information-visibility-policy/story-024-concealment-cull-audience.md`, `production/epics/information-visibility-policy/story-025-concealment-cull-timing.md`, `production/epics/information-visibility-policy/story-028-blind-spot-attack-on-culled.md`, `production/epics/information-visibility-policy/story-030-release-to-crowd-while-concealed.md`, `production/epics/information-visibility-policy/story-044-raw-bunch-schema-parity.md`, `production/epics/information-visibility-policy/story-052-strike-id-oracle-parity.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Verdict**: PASS (CONCERNS recorded) — StealthLeak1 and StealthLeak2, 3 client processes: all 10 explicit closes per run in the first server frame at/after the grid deadline (≤ 2.5 ms late), 4 same-frame commits on one boundary, 0 channel frames on denied connections for 62 s, 0 forced-relevant requests, allies kept the pawn, E15 holds with 10 connections. Negative control (override only) lingered 4.6-5.2 s and was detected.
+**Criteria**: 1/1 (AC-1)
+**Decisions**: L27 staged by forcing the base relation (stock characters slide off capsules even with `CanCharacterStepUpOn = ECB_Yes`); E15 evaluated with the design's MaxConnections 10 and also reported against the engine's `GameSession.MaxPlayers` 16 (fails) — production assertion input left to story 023/035 (ADR-0003 amendment); spike hook placed in the prototype `AStealthCharacter` behind `!UE_BUILD_SHIPPING` (story allows prototype throwaway code); public header under `Public/Server/` per the include lint (rule a/b).
+**Deviations**: none.
+**Test Evidence**: report + evidence folder (analysis JSON and gzipped records of runs s9c-stealthleak1 and s9c-stealthleak2).
+**Run result**: N/A — headless multi-process measurement; the hook is inert unless the harness installs it
+**Reviewed by**: focused self-review (unattended run): override only replaces Super while a scenario is installed; tick function and hook removed in OnFinish.
+**Unblocks**: story-023 → Ready; story-024/025/027/028/030/033/044/052 keep their other gates (S10, S12, S15, other epics) with the S9 part cleared in their status notes.

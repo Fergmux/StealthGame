@@ -21,6 +21,7 @@
 
 #if !UE_BUILD_SHIPPING
 #include "Spikes/StealthIdentitySpike.h" // THROWAWAY SPIKE hook (ADR-0001 S1/S2/S14, 2026-10-25)
+#include "Server/Spikes/StealthSpikeHooks.h" // THROWAWAY SPIKE hook (IVP S9, 2026-10-25)
 #endif
 
 namespace
@@ -125,6 +126,22 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 			PlayerInputComponent->BindKey(EKeys::G, IE_Released, this, &AStealthCharacter::OnInteractReleased);
 		}
 	}
+}
+
+bool AStealthCharacter::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const
+{
+#if !UE_BUILD_SHIPPING
+	// SPIKE (IVP S9): the harness may replace relevancy entirely; no-op unless a scenario installs it.
+	if (const StealthSpikeHooks::FRelevancyOverride& Override = StealthSpikeHooks::GetRelevancyOverride())
+	{
+		const TOptional<bool> Decision = Override(this, RealViewer, ViewTarget);
+		if (Decision.IsSet())
+		{
+			return Decision.GetValue();
+		}
+	}
+#endif
+	return Super::IsNetRelevantFor(RealViewer, ViewTarget, SrcLocation);
 }
 
 bool AStealthCharacter::CanJumpInternal_Implementation() const

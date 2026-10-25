@@ -1,7 +1,7 @@
 # Story 027: On a BushEnter swap the body and its shadow, reflection, Lumen and decals hide on the same rendered frame on ally and opponent clients
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: [Dep:Concealment] needs the concealment-bushes BushEnter swap and client latch built; also S9/S10 not reported
+> **Status**: Blocked — BLOCKED: [Dep:Concealment] needs the concealment-bushes BushEnter swap and client latch built; S10 not reported (S9 reported PASS 2026-10-25, production/qa/spikes/2026-10-25_S9.md)
 > **Layer**: Foundation
 > **Type**: Visual/Feel
 > **Estimate**: M

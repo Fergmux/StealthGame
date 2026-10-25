@@ -1,7 +1,7 @@
 # Story 024: A culled concealed player pawn has no actor on any non-ally client and stays relevant to its owner and allies (provisional on S9)
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spike story-004 (S9) has not reported (the cull tick and explicit channel close are specified from S9's result)
+> **Status**: Blocked — BLOCKED: spike story-005 (S10 re-open and NetGUID) has not reported. S9 (story-004) reported PASS 2026-10-25 (production/qa/spikes/2026-10-25_S9.md): the cull tick and explicit per-connection close are specified from it
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L

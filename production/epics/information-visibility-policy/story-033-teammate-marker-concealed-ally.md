@@ -1,7 +1,7 @@
 # Story 033: The teammate marker tracks a concealed or unresolved ally and opponents create no marker
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: [Dep:Teammate Markers] needs teammate-markers marker widgets and the concealment cull (story-024); spike S9 unreported.
+> **Status**: Blocked — BLOCKED: [Dep:Teammate Markers] needs teammate-markers marker widgets and the concealment cull (story-024) (S9 reported PASS 2026-10-25, production/qa/spikes/2026-10-25_S9.md).
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M

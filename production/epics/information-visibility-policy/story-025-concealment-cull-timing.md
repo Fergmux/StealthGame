@@ -1,7 +1,7 @@
 # Story 025: Each cull lands at the first global grid point at or after t0 + 250 ms, with withheld acks shifting nothing and early exit cancelling it (provisional on S9, S12)
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spike story-004 (S9) and story-006 (S12) have not reported
+> **Status**: Blocked — BLOCKED: spike story-006 (S12) has not reported. S9 (story-004) reported PASS 2026-10-25 (production/qa/spikes/2026-10-25_S9.md)
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L

@@ -1,0 +1,231 @@
+{
+ "run": "s9c-stealthleak2",
+ "profile": "StealthLeak2",
+ "iris": 0,
+ "e15": {
+  "netClientTicksPerSecond": 2400.0,
+  "maxConnections": 10,
+  "maxFps": 240.0,
+  "holds": 1,
+  "sessionMaxPlayers": 16,
+  "holdsWithSessionMaxPlayers": 0
+ },
+ "viewerTeams": {
+  "C1": 1,
+  "C3": 0,
+  "C2": 1
+ },
+ "subjects": {
+  "210": {
+   "label": "npc1",
+   "team": 255,
+   "denied": 3,
+   "allowed": 0
+  },
+  "218": {
+   "label": "npc2",
+   "team": 255,
+   "denied": 3,
+   "allowed": 0
+  },
+  "226": {
+   "label": "npc3",
+   "team": 255,
+   "denied": 3,
+   "allowed": 0
+  },
+  "138": {
+   "label": "playerC1",
+   "team": 1,
+   "denied": 1,
+   "allowed": 2
+  },
+  "242": {
+   "label": "controlOverrideOnly",
+   "team": 255,
+   "denied": 3,
+   "allowed": 0
+  }
+ },
+ "grid": {
+  "commit": 21.400336,
+  "deadline": 21.698368,
+  "gridOrigin": 15.898368,
+  "period": 0.06666666666666667,
+  "deadlineIsGridPoint": true,
+  "deadlineMinusEarliest": 0.048031999999999186,
+  "firstGridPointAtOrAfterEarliest": true
+ },
+ "closes": {
+  "count": 13,
+  "explicit": 10,
+  "hadChannel": 13,
+  "serverFrames": [
+   16017
+  ],
+  "lateByMaxS": 0.001035,
+  "frameDeltaMaxS": 0.002872,
+  "allLandWithinOneFrame": true
+ },
+ "clientLossMs": {
+  "explicit": {
+   "n": 10,
+   "min": 103.0919998884201,
+   "p10": 103.42200100421906,
+   "median": 104.06850092113018,
+   "p90": 105.59599846601486,
+   "p99": 105.84500059485435,
+   "max": 105.84500059485435
+  },
+  "control": {
+   "n": 3,
+   "min": 4754.037000238895,
+   "p10": 4754.037000238895,
+   "median": 4837.012998759747,
+   "p90": 5277.440000325441,
+   "p99": 5277.440000325441,
+   "max": 5277.440000325441
+  },
+  "neverLost": []
+ },
+ "allowedClientsThatLostTheSubject": [],
+ "clientReentries": [],
+ "channelGoneSinceDeadlineS": {
+  "explicit": {
+   "n": 10,
+   "min": 0.001035,
+   "p10": 0.001035,
+   "median": 0.001035,
+   "p90": 0.001035,
+   "p99": 0.001035,
+   "max": 0.001035
+  },
+  "control": {
+   "n": 3,
+   "min": 4.653042,
+   "p10": 4.653042,
+   "median": 4.734229,
+   "p90": 5.176867,
+   "p99": 5.176867,
+   "max": 5.176867
+  }
+ },
+ "channelReappeared": [],
+ "forceRelevantRequests": 0,
+ "summary": [
+  {
+   "label": "npc1",
+   "explicitClose": 1,
+   "monitoredFrames": 19045,
+   "deniedFramesWithChannel": {
+    "C1": 0,
+    "C3": 0,
+    "C2": 0
+   },
+   "allowedFramesMissing": {}
+  },
+  {
+   "label": "npc2",
+   "explicitClose": 1,
+   "monitoredFrames": 19045,
+   "deniedFramesWithChannel": {
+    "C1": 0,
+    "C3": 0,
+    "C2": 0
+   },
+   "allowedFramesMissing": {}
+  },
+  {
+   "label": "npc3",
+   "explicitClose": 1,
+   "monitoredFrames": 19045,
+   "deniedFramesWithChannel": {
+    "C1": 0,
+    "C3": 0,
+    "C2": 0
+   },
+   "allowedFramesMissing": {}
+  },
+  {
+   "label": "playerC1",
+   "explicitClose": 1,
+   "monitoredFrames": 19045,
+   "deniedFramesWithChannel": {
+    "C3": 0
+   },
+   "allowedFramesMissing": {
+    "C1": 0,
+    "C2": 0
+   }
+  },
+  {
+   "label": "controlOverrideOnly",
+   "explicitClose": 0,
+   "monitoredFrames": 19045,
+   "deniedFramesWithChannel": {
+    "C1": 1548,
+    "C3": 1419,
+    "C2": 1395
+   },
+   "allowedFramesMissing": {}
+  }
+ ],
+ "observedSecondsAfterDeadline": 62.000286,
+ "l27": {
+  "L27a viewer C2 on culled subject": {
+   "activeSamples": 39,
+   "basedSamples": 39
+  },
+  "L27b culled subject on viewer C3": {
+   "activeSamples": 40,
+   "basedSamples": 40
+  }
+ },
+ "events": [
+  {
+   "ev": "startRound",
+   "st": 15.898368
+  },
+  {
+   "ev": "crowd",
+   "st": 17.398891
+  },
+  {
+   "ev": "standOn",
+   "label": "L27a viewer C2 on culled subject",
+   "top": "146",
+   "bottom": "210",
+   "st": 26.70008
+  },
+  {
+   "ev": "releaseBase",
+   "label": "L27a viewer C2 on culled subject",
+   "st": 36.700509
+  },
+  {
+   "ev": "standOn",
+   "label": "L27b culled subject on viewer C3",
+   "top": "218",
+   "bottom": "142",
+   "st": 41.700366
+  },
+  {
+   "ev": "releaseBase",
+   "label": "L27b culled subject on viewer C3",
+   "st": 51.703955
+  },
+  {
+   "ev": "parkViewers",
+   "st": 56.69997
+  }
+ ],
+ "serverFps": {
+  "n": 83,
+  "min": 286.8,
+  "p10": 293.3,
+  "median": 310.2,
+  "p90": 597.1,
+  "p99": 1462.7,
+  "max": 1508.0
+ }
+}

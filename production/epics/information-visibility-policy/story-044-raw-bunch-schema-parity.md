@@ -1,7 +1,7 @@
 # Story 044: Raw-bunch schema parity holds, structural leak count S = 0
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spikes story-001 (S1 multi-process capture mechanism), story-005 (S10) and story-004 (S9) have not reported; needs AStealthPawn
+> **Status**: Blocked — BLOCKED: spike story-005 (S10) has not reported; needs AStealthPawn. S1 reported PASS 2026-10-25 with the capture mechanism chosen (production/qa/spikes/2026-10-25_S1-multiprocess.md; ADR-0008 amendment) and S9 reported PASS (production/qa/spikes/2026-10-25_S9.md)
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
