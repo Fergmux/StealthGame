@@ -1,12 +1,12 @@
 # Story 003: Split the prototype module into the ADR-0007 composition root
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -64,12 +64,9 @@
 
 ## Files
 
-- `Source/StealthGame/StealthGame.Build.cs`
-- `Source/StealthGameEditor/StealthGameEditor.Build.cs`
-- `Source/StealthGame.Target.cs` (only if the build requires a change)
-- `Source/StealthGameEditor.Target.cs` (only if the build requires a change)
-
----
+- `Source/StealthGame/StealthGame.Build.cs` (private deps StealthFoundation, StealthGameplay, StealthPresentation)
+- `Source/StealthGameEditor/StealthGameEditor.Build.cs` (private deps on all runtime modules: StealthFoundation, StealthGameplay, StealthPresentation, StealthGame)
+- `Source/StealthGame.Target.cs`, `Source/StealthGameEditor.Target.cs`: unchanged (the build did not require a change)
 
 ## QA Test Cases
 
@@ -89,7 +86,7 @@
 **Required evidence**:
 - Integration: a build plus automation regression run of the existing prototype tests (no new test file is named by the plan); record the run output (12 pass lines) and the clean `git diff --stat` of the test sources in the story's completion note (qa.level is full)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Regression run recorded (12/12 prototype tests pass, test sources byte-unchanged; 2026-10-25)
 
 ---
 
@@ -98,3 +95,13 @@
 - Depends on: `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`, `production/epics/tuning-data-config/story-002-gameplay-presentation-module-skeletons.md`
 - Unlocks: `production/epics/tuning-data-config/story-005-compile-probe-runner-and-guard-probe.md`, `production/epics/tuning-data-config/story-019-cqtest-headless-proof.md`, `production/epics/tuning-data-config/story-021-per-commit-gate-script.md`, `production/epics/tuning-data-config/story-041-schema-generator-commandlet.md`
 - Open verification claims from the plan's Note lines: none (no Note line on 003).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: StealthGameEditor Win64 Development `Result: Succeeded`; exactly 12 `StealthGame.Rules.*`/`StealthGame.EditorTools.*` tests `Result={Success}` (6 + 6); `git diff --stat d1aab3e` on `StealthRulesTests.cpp` and `*Spec.cpp` is empty; no prototype class moved; `IMPLEMENT_PRIMARY_GAME_MODULE` stays in StealthGame)
+**Deviations**: None. Target.cs files untouched (the .uproject entries were enough for UBT). Manifest Version updated to 2026-10-25f.
+**Test Evidence**: `production/qa/evidence/story-003-split-prototype-composition-root/test-run.txt` (run output, the 12-count and the clean diff) and `stamp.txt`
+**Run result**: N/A — dependency wiring only; no gameplay code, asset or map changed, and the unchanged prototype tests cover the behaviour
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

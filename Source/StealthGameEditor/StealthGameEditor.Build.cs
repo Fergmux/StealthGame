@@ -7,6 +7,6 @@ public class StealthGameEditor : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "ToolsetRegistry" });
-		PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "StealthGame", "StealthGameplay", "StealthPresentation" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "StealthFoundation", "StealthGameplay", "StealthPresentation", "StealthGame" });
 	}
 }

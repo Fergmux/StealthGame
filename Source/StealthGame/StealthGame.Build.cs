@@ -11,5 +11,8 @@ public class StealthGame : ModuleRules
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "NetCore",
 			"AIModule", "GameplayTasks", "NavigationSystem", "DeveloperSettings"
 		});
+
+		// ADR-0007 composition root: StealthGame wires the production modules together.
+		PrivateDependencyModuleNames.AddRange(new string[] { "StealthFoundation", "StealthGameplay", "StealthPresentation" });
 	}
 }
