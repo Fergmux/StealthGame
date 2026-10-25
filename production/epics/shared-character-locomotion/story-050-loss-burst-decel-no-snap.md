@@ -1,7 +1,7 @@
 # Story 050: A 2 s loss burst brakes the pawn by the baseline, with no dead stop and no snap
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Blocked — BLOCKED: the net-emulation spike (story 045; ADR-0010 spike ST1 "starvation braking cadence", part of the net-emulation spike) has not reported; AC-SCL-23 is tagged [SPIKE] and the choice between the engine's 4 Hz forced-update stepping and a per-frame zero-input update is decided by it
+> **Status**: Ready — unblocked 2026-10-25: spike 045 reported the ST1 cadence (production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md): engine forced updates step at 4.0 Hz with MAXCLIENTUPDATEINTERVAL 0.25 s and keep the last acceleration; the engine floor for a "per-frame" interval is DeltaSeconds + 60 ms (13 Hz at 120 fps). The choice is made by this story's AC-23 result, as planned.
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L

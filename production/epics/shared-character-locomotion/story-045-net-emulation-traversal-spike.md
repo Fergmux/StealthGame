@@ -1,12 +1,12 @@
 # Story 045: Net-emulation and traversal spike report (unblocks Exit B and starvation)
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *Derived from ADR-0010 Verification Required and GDD OQ2/OQ3 (the GDD has no acceptance criterion for the spike itself; its [SPIKE] ACs 12, 13, 23, 24, 25 wait on this report):*
 
-- [ ] GIVEN a 3-client PIE session at PktLag 100 / PktLoss 1 %, WHEN the spike is run on the prototype's sample traversal and CMC and its report is written to `production/qa/spikes/`, THEN the report contains: the starvation forced-update cadence in Hz (ST1); the traversal end-position error distribution under the profile with n ≥ 100 per kind (vault, climb) against the 64 cm (`PawnSmoothSnapThresholdCm / 4`) bound; a binary decision on proxy root motion (`RepRootMotion` versus follow replicated movement, E12); the sample's movement-mode name during traversal; and the final traversal heights (vault 0.8 m, climb 1.6 m, optional 1.2 m hurdle), each answered with a number or a decision.
+- [x] GIVEN a 3-client PIE session at PktLag 100 / PktLoss 1 %, WHEN the spike is run on the prototype's sample traversal and CMC and its report is written to `production/qa/spikes/`, THEN the report contains: the starvation forced-update cadence in Hz (ST1); the traversal end-position error distribution under the profile with n ≥ 100 per kind (vault, climb) against the 64 cm (`PawnSmoothSnapThresholdCm / 4`) bound; a binary decision on proxy root motion (`RepRootMotion` versus follow replicated movement, E12); the sample's movement-mode name during traversal; and the final traversal heights (vault 0.8 m, climb 1.6 m, optional 1.2 m hurdle), each answered with a number or a decision.
 
 *QA clarification (create-stories 2026-10-25, not a GDD change):* the spike has no pass or fail; the ST1 fallback decision is made by the AC-23/24 results (stories 050/051), not by this spike.
 
@@ -59,8 +59,12 @@
 
 ## Files
 
-- `production/qa/spikes/` net-emulation and traversal spike report (new)
-- `production/qa/evidence/` captures referenced by the report (new)
+- `production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md` (the report: five items answered)
+- `Source/StealthTestHarness/Private/Tests/PIE/Spikes/NetEmulationTraversalSpike.cpp` (CQTest spike `StealthSpike.Locomotion.PIE.NetEmulationTraversal`, methods `Starvation` and `Traversal`; measurement only, outside the per-commit gate)
+- `tools/ci/mp/analyze_scl045.py`
+- `docs/architecture/adr-0010-shared-pawn-cmc-possession.md` (amendment: spike reported)
+- Evidence: `production/qa/evidence/story-045-net-emulation-traversal-spike/`
+- No game code changed (the spike stages the map's course in PIE worlds only; no asset saved)
 
 ---
 
@@ -82,7 +86,7 @@ Test: spike report completeness (ADR-0010 Verification Required, GDD OQ2/OQ3)
 **Required evidence**:
 - Integration: the spike report file with the five answered items in `production/qa/spikes/`, with its capture logs in `production/qa/evidence/`; no automated test (a measurement)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Spike report `production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md` with capture records in `production/qa/evidence/story-045-net-emulation-traversal-spike/`
 
 ---
 
@@ -90,3 +94,15 @@ Test: spike report completeness (ADR-0010 Verification Required, GDD OQ2/OQ3)
 
 - Depends on: `production/epics/tuning-data-config/EPIC.md` (Exit A: net-emulation profiles in the harness, ADR-0008); the prototype build
 - Unlocks: `production/epics/shared-character-locomotion/story-047-traversal-eligibility-matrix.md`, `story-048-traversal-start-parity.md`, `story-049-traversal-under-emulation.md`, `story-050-loss-burst-decel-no-snap.md`, `story-051-loss-recovery-no-catch-up.md`, `story-053-npc-tell-baseline-non-zero.md`, `story-055-net-emulation-pass-exit.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 — (1) ST1 cadence 4.0 Hz at MAXCLIENTUPDATEINTERVAL 0.25 s (per-frame alternative floored by the engine at DeltaSeconds + 60 ms = 13.6 Hz); (2) end-position errors n = 102 vault, 102 climb (+30 hurdle) all within 64 cm (owner max 3.5 cm, proxy max 30.7 cm); (3) E12 = follow replicated movement; (4) MOVE_Flying; (5) heights 0.8 / 1.6 / 1.2 m final (sample Hurdle / Mantle / Hurdle).
+**Decisions**: CQTest PIE per the AC (multi-process traversal is story 049); spike test named `StealthSpike.*` to stay out of the per-commit gate; the map's traversable blocks staged to the kit heights in every PIE world (blocks cannot be spawned: ledge splines are authored per instance); n counts completed traversals with a 70-round ceiling; proxy end taken after the server's end (a one-frame mode flicker on loss is not the end).
+**Deviations**: none against the AC; no game code changed, as the story requires.
+**Test Evidence**: report + evidence folder; the spike's own automation run: both methods `Result={Success}`.
+**Run result**: N/A — headless measurement (`-nullrhi`); the spike changes nothing player-visible
+**Reviewed by**: focused self-review (unattended run): CDO tweaks (NpcCount, MAXCLIENTUPDATEINTERVAL) restored in AFTER_ALL; staging touches PIE worlds only (`git status Content` clean).
+**Unblocks**: SCL stories 047, 048, 049, 050, 051, 053, 055 → Ready (status notes cite the report).

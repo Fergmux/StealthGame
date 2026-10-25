@@ -1,7 +1,7 @@
 # Story 053: NPCs actually run, vault and climb in the Crowd reference scene
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Blocked — BLOCKED: the net-emulation / traversal spike (story 045) has not reported and the traversal stories (048, 049) are not built; the vault and climb counts cannot be greater than zero until traversal exists (Exit B)
+> **Status**: Ready — unblocked 2026-10-25: spike 045 reported (production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md); still depends on the traversal stories 048/049 (now Ready) being built first.
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: S

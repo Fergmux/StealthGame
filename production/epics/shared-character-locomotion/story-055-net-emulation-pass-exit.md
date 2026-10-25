@@ -1,7 +1,7 @@
 # Story 055: Net-emulation pass over traversal, the look path and pawn replication (epic exit criterion)
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Blocked — BLOCKED: the net-emulation / traversal spike (story 045) has not reported and the traversal story 049 it depends on is itself Blocked; this is the epic's cross-cutting exit criterion and the final gate of Exit B
+> **Status**: Ready — unblocked 2026-10-25: spike 045 reported (production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md) and story 049 is Ready; build 049 first.
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M

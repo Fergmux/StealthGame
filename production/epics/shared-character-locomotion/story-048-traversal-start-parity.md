@@ -1,7 +1,7 @@
 # Story 048: An NPC vault and a player vault look identical to an observer
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Blocked — BLOCKED: the net-emulation / traversal spike (story 045; ADR-0010 "traversal under net emulation") has not reported; AC-SCL-13 is tagged [SPIKE] and the proxy root-motion policy (E12) and the movement mode during traversal are undecided until it does (Exit B)
+> **Status**: Ready — unblocked 2026-10-25: spike 045 reported (production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md); E12 decision = proxies follow replicated movement (no proxy root-motion montage), movement mode during traversal = MOVE_Flying.
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L

@@ -1,7 +1,7 @@
 # Story 049: Traversal converges on every client under 100 ms lag and 1 % loss
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Blocked — BLOCKED: the net-emulation / traversal spike (story 045; ADR-0010 "traversal under net emulation at 100 ms / 1 % loss") has not reported; AC-SCL-25 is tagged [SPIKE] and this story is the epic's Exit B proof (Exit B is gated on that spike so a failed spike cannot hold up Exit A)
+> **Status**: Ready — unblocked 2026-10-25: spike 045 reported (production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md); end-position errors under 100 ms / 1 % loss are recorded there against the 64 cm bound (Exit B proof is this story).
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L

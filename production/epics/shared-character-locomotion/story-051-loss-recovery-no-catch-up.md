@@ -1,7 +1,7 @@
 # Story 051: Recovery from a 2.5 s burst never produces a catch-up sprint
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Blocked — BLOCKED: the net-emulation spike (story 045; ADR-0010 spike ST1 and the movement-time discrepancy settings) has not reported; AC-SCL-24 is tagged [SPIKE] and the starvation threshold and catch-up cap are provisional until it does
+> **Status**: Ready — unblocked 2026-10-25: spike 045 reported (production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md); forced updates stop at MaxClientForcedUpdateDuration (observed last step 1.36-1.38 s after starvation began).
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M

@@ -1,7 +1,7 @@
 # Story 047: Traversal eligibility matrix (F5) from body facing
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Blocked — BLOCKED: the net-emulation / traversal spike (story 045; ADR-0010 "traversal under net emulation", GDD OQ2/OQ3) has not reported; AC-SCL-12 is tagged [SPIKE] and the final traversal heights are provisional until it does (Exit B of the epic's Build Order and Gates)
+> **Status**: Ready — unblocked 2026-10-25: the net-emulation / traversal spike (story 045) reported (production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md); the kit heights vault 0.8 m, climb 1.6 m and the optional 1.2 m hurdle are final (sample actions Hurdle, Mantle, Hurdle).
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M

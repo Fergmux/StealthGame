@@ -255,11 +255,11 @@ stories:
     name: "Net-emulation and traversal spike report (unblocks Exit B and starvation)"
     file: "production/epics/shared-character-locomotion/story-045-net-emulation-traversal-spike.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "ue-replication-specialist"
     estimate_days: 2.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "ivp-004"
     name: "Spike S9, the explicit channel close lands at the deadline and the channel stays closed"
     file: "production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md"
