@@ -43,3 +43,14 @@ D17 Wording sweep: "Exiled" -> D11 wording (title "Informant"; subtitles "Too ma
 D18 /ux-review verdicts NEEDS REVISION (hud, main-menu, pause-menu, interaction-patterns) ACCEPTED with revisions applied (reports in production/design-closeout/ux-review-*.md). Remaining advisories go to UI implementation stories.
 D19 HUD-UX-23 rejection plate layer = L1 (ADR-0021 is authoritative); HUD GDD updated to L1.
 D20 HUD-UX-24 world-anchored teammate markers and ping rings are exempt from the centre-empty rule (they are owner-side, world-anchored, and already budgeted by Teammate Markers F-rules); HUD GDD + hud UX spec record the exemption.
+
+# Rulings on /review-all-gdds 2026-10-25 (FAIL, 7 blocking)
+D21 C-B1 AC-ASN-35: align the AC to ASN-R23 + HUD F10 — bystander clients may show the round-end banner up to 0.15 s (the documented lead) before the deciding strike's DeathServerTime; the AC asserts that bound, not "never before".
+D22 C-B5 timer due tolerance: Round R12 defines epsilon = 1 ms — an item is due when DueServerTime <= NowServerTime + 1 ms. IIF R8/F1 and their ACs cite Round's epsilon; Round AC 711 tests it.
+D23 S-B1 bReconnecting: Roster clears bReconnecting only on an event — successful rejoin (emit "{Ally} — back"), removal/elimination/round end (silent clear), or grace expiry (emit "{Ally} — disconnected", never "back"). No timer-only clear. Informant who stays disconnected stays flagged until one of those events. Superseding rejoin keeps the flag until the rejoin completes.
+D24 S-B2 supersede: when Session accepts a superseding connection it raises OnParticipantDisconnected(Reason = Superseded) for the old connection at that instant; grace runs from that instant; the old pawn goes through the standard disconnect hold (Round R17 / Roster) until the rejoiner possesses; then the rejoin completes normally.
+D25 D-W5 ping tracking: one active ring per sender (a new ping replaces the sender's previous ring) on top of the existing refill bucket.
+D26 D-W6 ping from a bush: a concealed player (inside a bush) cannot ping; the input is rejected silently-to-others with the owner-only rejection tone.
+D27 D-W7 idle gaze making camping cheaper: accepted; the >20 s stand remains a tell and the bush/court camping rules are unchanged.
+D28 D-W8 Crowd tell list gets a "Ping" row: pinging plays no pawn animation and changes no replicated pawn state → no tell (verified against IVP).
+D29 D-W9/D-W10 pacing + exile naming: Pillar 4 thresholds and Round pacing cite Objectives F1 (~9 min median); "exile" is reserved for the NPC-kill removal; the other use is renamed per D11 wording.
