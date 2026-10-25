@@ -381,3 +381,6 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 - §5.2, §5.7, Key Interfaces — user decision 2026-10-25: a killed-concealed victim re-opens at the death write with `bDiedConcealed = true`; the interim `KilledConcealed` cull reason and `MarkKilledConcealed` are retired.
 - §7, Key Interfaces — user decision 2026-10-25: the fallback feed entry carries a wrapping `uint8 Seq` advanced every feed tick (Markers CR-11c / OQ14); `B_feed = N_u · 13 B · h` ≤ 104 B/s (IVP F6).
 - Key renames — user decision 2026-10-25 (TDC CR-10): `ConcealServerCullEnabled` is `bConcealServerCull`.
+
+User scope decisions (2026-10-25: "accept all recommendations"); decision unchanged, Status unchanged (Accepted).
+- Budget note — user decision 2026-10-25: two more owner-only C-TeamView payloads ride the PlayerController (no relevancy, cull or pawn change): the Informant Pings part (≤ 50 B/s per teammate connection at defaults, bursts ≤ 200 B; PNG F4) and the teammate `bReconnecting` bit (change-only). `FRoundResult` grows by 6 bytes, sent once at `Ended`. Opponent connections receive none of the team data. Inside the 50 KB/s per-client budget; no pawn-line change.

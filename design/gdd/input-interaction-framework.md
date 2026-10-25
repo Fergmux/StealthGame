@@ -1,6 +1,6 @@
 # Input & Interaction Framework
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`FActionState.StartServerTime` adopted; `LatencyWarnRttSec` retired in favour of HUD's `HudLatencyWarnRttSec`)
+> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`FActionState.StartServerTime` adopted; `LatencyWarnRttSec` retired in favour of HUD's `HudLatencyWarnRttSec`; scope: keyboard walk-slower modifier R15a, `IA_Ping` for Informant Pings, `ShowTeamNames` deferred to VS)
 > **Author**: design-system pipeline (autonomous) + game-designer, ux-designer, gameplay-programmer, ue-replication-specialist, systems-designer, art-director, qa-lead, creative-director
 > **Last Updated**: 2026-10-24
 > **Last Verified**: 2026-10-24
@@ -183,7 +183,7 @@ Nothing auto-resumes after a preemptor ends. Attack recovery and lockout (`Attac
 
 **R13. Input contexts.** Mapping contexts are UX only; the server validates regardless.
 
-- `IMC_Common` (always): Move, Look, Camera toggle, Shoulder swap (local, effective in third person only; Camera CS-R10), pause/menu.
+- `IMC_Common` (always): Move, Look, Walk slower (R15a; local modifier of Move's magnitude, never a command), Ping (Informant Pings PNG-R3; a controller-level team RPC, never a pawn command), Camera toggle, Shoulder swap (local, effective in third person only; Camera CS-R10), pause/menu. (`ShowTeamNames`, Teammate Markers CR-4, is VS by user decision 2026-10-25.)
 - `IMC_Active`: Run, Traverse, Interact, Prepare, Attack, Hide.
 - `IMC_Informant`: no gameplay actions. Presses of the former Active keys are caught *locally* and show an owner-only plate, "Informants can only observe" (2 s, at most once per 3 s, no sound). Nothing is sent to the server.
 
@@ -205,8 +205,12 @@ The context swaps on the owner's **presented own role** (HUD-R6a) and on possess
 | Hide (Slip in / out) | F | B / Circle | press (toggles Enter/Exit by state) |
 | Camera toggle | V | Y / Triangle | press |
 | Shoulder swap (3P only; local, never a command) | X (middle mouse alternate) | D-pad Right | press |
+| Walk slower (local Move-magnitude modifier, never a command; R15a) | Left Ctrl (pace 0.8), Left Alt (pace 0.9) | none (the left stick already gives the pace set) | hold (modifier) |
+| Ping (team-only place ping; Informant Pings PNG-R3; controller RPC, never a pawn command) | G | D-pad Up | press |
 
 Prepare is deliberately *not* right mouse. Right-mouse-hold is the strongest block/parry mental model in games, and that pulls the defence toward a reflex reading. It also keeps Strike and Brace on different hands. Hide has its own key so that an objective next to a bush is never ambiguous.
+
+**R15a. Keyboard walk-slower modifier** (added by user decision 2026-10-25; Crowd OQ3 closed). Keyboard Move is digital and always gave magnitude 1.0, so the crowd's slower paces 0.8 and 0.9 (SCL R5.1 pace set) were NPC-only for keyboard players and Crowd had to keep NPCs at full pace (Crowd R3.1 interim rule). The client-local input action `IA_WalkSlower` (an Axis1D action in `IMC_Common`, so informants have it too) scales the **keyboard** Move vector before it is sent: held Left Ctrl → magnitude 0.8, held Left Alt → 0.9, both → 0.8, neither → 1.0. It never reaches the server as a command, adds no replicated field and no RPC: the server sees only an ordinary `Move` magnitude that SCL quantises to the shared pace set (SCL R5.1), exactly as for a stick or an NPC. It has no effect while Run is held (Run has no scale), it does not touch gamepad input (the stick already covers the set), and pressing or releasing it mid-walk changes speed through SCL's baseline acceleration and braking, never a snap. A pace change away from a stop or a leg boundary is a player's choice that NPCs do not make (Crowd changes pace only at stops and leg boundaries); it is a chosen deviation under Pillar 2, like any other, and no rule hides it.
 
 **R16. Hold vs toggle alternative (accessibility, provisional).** A client-local setting may translate press/press into Begin/End for Prepare, Interact and Run. The second press sends End, so early release stays available and stance durations are equivalent. The server stream is identical to hold mode, the setting is never replicated, and caps and cooldowns are unchanged. MVP ships hold only; the decision is an open question for Settings & Accessibility. The guard applies: no accessibility feature may give directional or player-only information or alter durations.
 
@@ -610,7 +614,8 @@ Every element below is **owner-only**, screen-space, and derived from data the o
 | Prepare meaning, cooldown, `AttackAttemptLockoutSec`, victim resolution, `FActionState`, `Countering`, `Reversed`, presentation gating | design/gdd/assassination-defence-reversal.md | ASN-R3, R9, R14, R18, R19, R21, R23 | designed (in review); reconciled |
 | Hide transition length, `Exit(Side)`, `BushEnter`/`BushExit`, re-entry `Cooldown`, concealment from Attack | design/gdd/concealment-bushes.md | CON-R4a, R8, R12 | designed (in review); reconciled |
 | Interact duration, every-court ingress, full-fixture refusal, `TendCueDelaySec`, `AllowNoEffect` decoys, no stacking | design/gdd/objectives-chain.md | OC-6, OC-7, OC-8, OC-14 | designed (in review); reconciled |
-| `IsMarkedAlly(Pawn)`; `ShowTeamNames` (pending) | design/gdd/teammate-markers.md | TM-R10, CR-4, OQ11 | designed (in review) |
+| `IsMarkedAlly(Pawn)`; `ShowTeamNames` (VS, user decision 2026-10-25) | design/gdd/teammate-markers.md | TM-R10, CR-4, OQ11 | designed (in review) |
+| PNG-R3, PNG-R4 (`IA_Ping`, controller-level `ServerTeamPing`) | design/gdd/informant-pings-team-comms.md | Core Rules | Binding row here; meaning there | designed (pending independent review) |
 | UI 1-8 layout, anchors, layering | design/gdd/hud.md | HUD-R6, HUD-R12, CR-HUD-3 | designed (in review) |
 | Baseline and Tell Matrix rows (brace, tend, bush, strike, run, traversal, informant) | design/gdd/crowd-npc-behaviour.md | | designed |
 | Audiences `Owner`/`All` | design/gdd/information-visibility-policy.md | | designed |
@@ -672,7 +677,7 @@ Every element below is **owner-only**, screen-space, and derived from data the o
 | IVP CR 2 | R12 relevancy bans amended (concealment and relation only); R7.4 culled `PawnRef` resolves as `TargetSpot` with no distinct reply | APPLIED (R12, R10) |
 | HUD CR-HUD-3 | Downstream HUD row "presenter of UI 1-8 (anchors and layering per HUD)"; UI 5/6 cite HUD anchors; plate cooldown keys stay IIF-owned | APPLIED (Dependencies, Interactions, UI 5, UI 6) |
 | Teammate Markers CR-4 | `IsMarkedAlly(Pawn)` meaning in R10; list Teammate Markers in Dependencies | APPLIED (R10, Dependencies) |
-| Teammate Markers CR-4 | New local `ShowTeamNames` hold action | PENDING-USER (scope; already listed in active.md as teammate-markers OQ11, CD recommends moving it to VS) — not added |
+| Teammate Markers CR-4 | New local `ShowTeamNames` hold action | DEFERRED to VS by user decision 2026-10-25 (TM OQ11) — not added in MVP |
 | Crowd CR 4 | AI court `Interact` bypasses only the human ingress site check; NPCs never `Attack` (T6); OQ5 answered by R7 + F2 | APPLIED for T6 and OQ5 (R17, OQ5); the bypass is ALREADY DONE in a stronger form (ingress accepts every court for every source, so no AI exemption exists) |
 | LSC CR 11 | UI 3 objective prompts from Objectives' Team-audience data | DECLINED as superseded by Objectives OC-6 / IVP R7.4a ruling D (prompt identical at every court; team data colours the ring only) |
 | TDC CR 9 / migration | `ObjectiveInteractRange` maps to `InteractRangeCm` | ALREADY DONE (Tuning Knobs) |
@@ -685,7 +690,9 @@ Every element below is **owner-only**, screen-space, and derived from data the o
 | ADR-0011 sync 2026-10-24 | R8: hold timers are `ScheduleAt` due-time items; condition cancels are `HoldTimer(ConditionCancel)` | APPLIED (R8) |
 | ADR-0011 / ADR-0021 sync 2026-10-24 | R13 / OQ7: CVar name `EnhancedInput.IgnoreHeldDigitalActionKeysOnFlush`; context swaps on the owner's presented own role (HUD-R6a) | APPLIED (R13, flush edge case, OQ7 mostly answered) |
 | ADR-0011 / ADR-0016 sync 2026-10-24 | R17: AI path-following no longer feeds `Move`; Crowd's follower issues `Move` (input emulation) | APPLIED (R17, R8 commanded-displacement wording) |
-| ADR-0021 sync 2026-10-24 | Add the local `ShowTeamNames` action (TM CR-4) | PENDING-USER (unchanged: already listed in active.md as teammate-markers OQ11; scope, CD recommends VS) — not added |
+| ADR-0021 sync 2026-10-24 | Add the local `ShowTeamNames` action (TM CR-4) | RESOLVED by user decision 2026-10-25: deferred to VS with the Teammate Markers hold (TM OQ11) — not added in MVP |
+| User decision 2026-10-25 (scope; Crowd OQ3, design-review crowd-npc-behaviour) | Keyboard "walk slower" modifier so NPC paces 0.8/0.9 are reproducible | APPLIED (R15a, R13 `IMC_Common`, R15 row, AC 76; SCL R5.1 keyboard sentence; ADR-0011 amendment) |
+| User decision 2026-10-25 (scope; Informant Pings to MVP) | `IA_Ping` binding in `IMC_Common`; the ping is not a pawn command | APPLIED (R13, R15 row; the RPC and its rules live in informant-pings-team-comms.md PNG-R3/R4) |
 | ADR-0007/0008 sync 2026-10-24 | Test root follows the module layout | APPLIED (AC tags) |
 
 ## Acceptance Criteria
@@ -819,6 +826,7 @@ Every element below is **owner-only**, screen-space, and derived from data the o
 73. *R5/F2, Logic, U `SameFrameTapIsShortBrace`*: **GIVEN** `Prepare(Begin)` and `Prepare(End)` in the same mailbox in one frame **WHEN** the drain resolves **THEN** the brace executes and ends via `DebounceExpiry` within [0.10, 0.10 + dt) s, never at the cap.
 74. *F6, Logic, U `InteractGraceOnArrival`*: **GIVEN** a pawn decelerating from walk speed when Interact executes **WHEN** it travels 12 cm within the first 0.25 s and then stops **THEN** the hold continues; **AND GIVEN** 20 cm of commanded travel after 0.25 s **THEN** it cancels `Moved`.
 75. *Tuning, Logic, U `KnobRegistryConformance`*: **GIVEN** the IIF tuning data asset **WHEN** TDC's schema test (AC-3a) and doc lint (AC-3b) run **THEN** every key in the Tuning Knobs table is present with its default, hard and safe ranges, Audience and Latch; **AND** every key ends with a CR-15 suffix.
+76. *R15a, Integration, P `WalkSlowerModifier`* (user decision 2026-10-25): **GIVEN** a keyboard walker holding W **WHEN** it holds Left Ctrl, then Left Alt, then both, then neither, for 3 s each **THEN** the server-received Move magnitude is 0.8, 0.9, 0.8 and 1.0, SCL's quantised pace is 0.8 / 0.9 / 0.8 / 1.0 (112 / 126 / 112 / 140 cm/s at defaults), every speed change follows the baseline acceleration or braking (no step above it), no RPC other than `ServerMove` is sent, and holding Run with Left Ctrl gives run speed; **AND** an informant gets the same paces; **AND** the gamepad stick's magnitudes are unchanged by the modifier.
 
 ## Open Questions
 

@@ -475,3 +475,6 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 - §4, Related — user decision 2026-10-25: the touch half of the shared idle overlay stays off in MVP (no touchable-prop records, Crowd CR 8 declined); the sit/browse verb is declined for MVP (CNB OQ2).
 - §4 device profiles — user decision 2026-10-25: no client-reported input-device field in MVP; the device mix comes from the coordinator's manual playtest sheet (ADR-0023).
 - user decision 2026-10-25: `NpcCount` default 50 (was ~40, user-locked default changed by the user), so 5v5 has 60 characters; Crowd F2 per-NPC rates scale by 40/50 (interval keys × 1.25: run 405 s, vault/climb 1443/3409 s, brace 3000 s, decoy 13,125 s, reversal 395 s, head hold 600 s; bush 315 s); F5 ≈ 0.74 ms mean at 60 pawns; the spike is a 60-character spike.
+
+User scope decisions (2026-10-25: "accept all recommendations"); decision unchanged, Status unchanged (Accepted).
+- §4 pace — user decision 2026-10-25: the keyboard walk-slower modifier exists (IIF R15a), so Crowd's interim full-pace rule is lifted: `CrowdFullPacePct` default 55 and C4 group-drift pace matching active (Crowd R3.1, T16 "Yes"). The follower's pace decision (`ECrowdDecision::Pace`) already draws from the shared set; only the tuning default changes.

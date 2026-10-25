@@ -1,6 +1,6 @@
 # Tuning Data & Config
 
-> **Status**: Reviewed - MAJOR REVISION NEEDED 2026-10-24 (all blocking revisions applied by the reviewer; independent re-review required before Approved); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`NpcCount` default 50; `NpcKillStrikeLimit` hard minimum 2 with a test-preset flag; new keys `LayoutExactRefineMaxCount`, `CrowdMotionProfileAsset`, `CrowdFullStateTreeAsset`, `CrowdRestrictedStateTreeAsset`; `LatencyWarnRttSec` retired; CR-10 renames applied; Shipping presets Default-only confirmed; stays a GDD — OQ-1, OQ-6, OQ-12 closed)
+> **Status**: Reviewed - MAJOR REVISION NEEDED 2026-10-24 (all blocking revisions applied by the reviewer; independent re-review required before Approved); reconciled 2026-10-24; ADR-synced 2026-10-24; user scope decisions 2026-10-25 registered (Informant Pings owner keys and I-PNG-1; Crowd `CrowdFullPacePct` default 55 with the walk-slower modifier); user decisions applied 2026-10-25 (`NpcCount` default 50; `NpcKillStrikeLimit` hard minimum 2 with a test-preset flag; new keys `LayoutExactRefineMaxCount`, `CrowdMotionProfileAsset`, `CrowdFullStateTreeAsset`, `CrowdRestrictedStateTreeAsset`; `LatencyWarnRttSec` retired; CR-10 renames applied; Shipping presets Default-only confirmed; stays a GDD — OQ-1, OQ-6, OQ-12 closed)
 > **Design Review**: MAJOR REVISION NEEDED 2026-10-24 (27 revisions applied: 19 blocking, 8 recommended groups; log: design/gdd/reviews/tuning-data-config-review-log.md)
 > **Author**: design pipeline (autonomous run) + specialist agents (creative-director, systems-designer, ue-replication-specialist, engine-programmer, qa-lead)
 > **Last Updated**: 2026-10-24
@@ -117,6 +117,7 @@ Registration index per CR-15. The owner's Tuning Knobs table is authoritative fo
 | Objectives Chain (15) | 11 (incl. `ObjectiveInteractSec`) | All (owner ring), ServerOnly | Action, Round, Use | I-OC1 (warning), I-OC2, I-OC3 | |
 | Procedural City Generator (16) | 32 (`CityGen*`; recounted 2026-10-24, C-W16) | ServerOnly | Round | I-PCG-1 to I-PCG-4 | does not use `TargetRoundMinutes` (OQ-7 answered); its table states Owner, Audience and Latch once in the preamble, accepted (as for LSC) |
 | Teammate Markers (17) | 7 (1 user setting) | `Client` (= All) | Use | I-TM-1 | `TeammateMarkerEdgeInsetPct` replaced by HUD's `HudSafeMarginPct`; `TeammateMarkerDeathHoldCapSec` removed |
+| Informant Pings & Team Communication (20; MVP since 2026-10-25) | 5 (`PingLifetimeSec`, `PingBucketSize`, `PingBucketPerSec`, `PingRangeCm`, `PingRangeSlackCm`; owner name `InformantPings`) | `PingLifetimeSec` Client; `PingBucketSize`, `PingBucketPerSec`, `PingRangeCm` All (the client mirrors the bucket and range); `PingRangeSlackCm` ServerOnly | Use, Round | I-PNG-1 (warn) | registered by user decision 2026-10-25 (system moved to MVP) |
 | HUD (18) | 21 | `Client` (= All) | Use | I-HUD-1 to I-HUD-7 | owns `HudLatencyWarnRttSec` (IIF UI-7 threshold); `HudReadHoldMult` (renamed from `HudReadHoldScale` by the HUD owner at reconciliation) is a CR-14-adjacent multiplier tied to text scale (VS) |
 | Tuning Data & Config (1) | `BlindGuessWarnPct` (schema constant), catalog `HostSelectable` flags | ServerOnly | -- | I-1 to I-5 | |
 
@@ -273,6 +274,7 @@ TDC defines three numeric rules (validation, canonical hash, derived design indi
 | I-HUD-5 | HUD | `ExileBeatSec >= HudResultPlateInSec + 0.5` | reject |
 | I-HUD-6 | HUD | `HudRemovalCardDelaySec + HudRemovalCardInSec <= DeathFallSec + NoPawnFadeSec` | reject |
 | I-HUD-7 | HUD | `HudBannerMinPlateSec <= HudBannerMaxDelaySec` | reject |
+| I-PNG-1 | Informant Pings | `PingBucketPerSec <= 0.5` when `PingLifetimeSec >= 6` (bounds the cadence of one sender's rings; user decision 2026-10-25) | warn |
 
   A preset that fails an owner invariant falls down the CR-6 ladder exactly like one that fails I-1 to I-5. Invariants may span owners and audiences (for example I-TM-1 reads a ServerOnly and a public key): the validator is server-side and sees every key.
 - **Warnings (not rejections)**: any value outside its safe range (the value is kept); I-4 breach in a non-selectable preset.
@@ -348,6 +350,7 @@ Hard = the dependent cannot be finished or run without a TDC key or the accessor
 | Procedural City Generator (16) | size limits, retry budget | own keys (registered, see Registered Owner Keys) | Hard |
 | HUD (18) | public values for owner-only displays (strike limit, defence timing); its own presentation timings | 21 HUD keys (`Client`) | Hard |
 | Teammate Markers (17) | marker presentation values (client-only consumer) | 7 Teammate Markers keys (`Client`) | Soft |
+| Informant Pings & Team Communication (20) | ping lifetime, rate budget and range | 5 `InformantPings` keys | Hard |
 | Telemetry & Analytics (26) | `TuningHash`, `PresetId` as dimensions | none | Soft |
 | Anti-Cheat & Info-Leak Security (27) | audience flags as leak-audit input | none | Soft |
 | Dedicated Server (28) | data assets cooked into the server target | none | Soft |
@@ -484,6 +487,8 @@ Some prototype clamps are looser than the hard ranges here: cooldown minimum 1 s
 | Generator CR-3 | register `CityGen*` keys (ServerOnly, Round); four invariants; OQ-7 answer | APPLIED (I-PCG-1 to 4; OQ-7 closed) |
 | SCL CR-2 | retire `InformantMaxSpeedCmPerSec`; register keys incl. the review's new keys; I-SCL-1 to 12 (now to 14) | APPLIED (three are offline checks) |
 | Teammate Markers CR-5 | invariant on `TeammateMarkerFeedStaleSec`; soft-consumer list; register `Client` keys | APPLIED (I-TM-1) |
+| User decision 2026-10-25 (scope; Informant Pings to MVP) | register the five `InformantPings` keys and I-PNG-1 | APPLIED (Registered Owner Keys row, Owner invariants row, Downstream row) |
+| User decision 2026-10-25 (scope; Crowd OQ3) | `CrowdFullPacePct` default 100 → 55 now that the keyboard walk-slower modifier exists (IIF R15a) | ALREADY DONE in the owner's table (Crowd Tuning Knobs); no TDC rule changes (the key count is unchanged) |
 | Round CR-4, CR-14 | register Round keys; `DisconnectGraceSec` hard 3-120; `G_eff` clamp warning; invariants on `MinPlayersPerTeamCount` and `EndedAutoResetSec`; `NpcCount >= max(2 x TeamSize, 24 - P)` | APPLIED (I-RMF-1/2, W-RMF-3/4); the `NpcCount` rule is I-2 plus the rewritten I-3 |
 | Round CR-4 | F6 computed watchdog replaces a watchdog invariant | ALREADY DONE (TDC had no watchdog invariant; recorded as runtime, not a preset rule) |
 | Round CR-4 | dry-run `PreviewPreset(PresetName)` for R5 check 5 | APPLIED (Downstream row, provisional interface; runs CR-6 without freezing or publishing) |

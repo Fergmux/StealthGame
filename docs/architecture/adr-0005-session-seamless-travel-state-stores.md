@@ -416,3 +416,6 @@ Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.
 
 User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
 - §4 — user decision 2026-10-25: Round CR-13(d) world-ready stage adopted as `ServerWorldReady(FAckEpoch)` → `OnParticipantWorldReady` (Session rule 11, Round P7).
+
+User scope decisions (2026-10-25: "accept all recommendations"); decision unchanged, Status unchanged (Accepted).
+- Disconnect path — user decision 2026-10-25: Session rule 24 now allows one Team-audience bit about a teammate, `bReconnecting`, which the Roster push step derives from the `Connection` projection Session already writes through `NotifyConnectionChanged`. Session gains no new output, RPC or replicated field, and nothing reaches non-teammates (welcome-message suppression and the frozen name list are unchanged).

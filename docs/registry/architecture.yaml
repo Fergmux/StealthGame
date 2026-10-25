@@ -70,7 +70,8 @@ state_ownership:
     owner_system: information-visibility-policy
     adr: docs/architecture/adr-0001-crowd-identity-rules.md
     # old interface (2026-10-25, before user decision 2026-10-25): "UTeamViewComponentBase subclasses on each AStealthPlayerController (owner-only relevancy); Roster part URosterTeamViewComponent {OwnerPart, Teammates[<=4]}; feature parts (e.g. UObjectiveTeamViewComponent); presentation reads via FindComponentByClass on its own controller"
-    interface: "UTeamViewComponentBase subclasses on each AStealthPlayerController (owner-only relevancy); Roster part URosterTeamViewComponent {OwnerPart {Handle, Team, State, RoundEpoch, WrongTargetTally, LastResultSeq, T_due (last three Owner-only)}, Teammates[<=4] {Handle, State, PawnRef, bIsConcealed, RetireAtServerTime (Team)}}; feature parts (e.g. UObjectiveTeamViewComponent); presentation reads via FindComponentByClass on its own controller"
+    # old interface (2026-10-25, before the user scope decision 2026-10-25): Teammates[<=4] {Handle, State, PawnRef, bIsConcealed, RetireAtServerTime (Team)}; feature parts (e.g. UObjectiveTeamViewComponent)
+    interface: "UTeamViewComponentBase subclasses on each AStealthPlayerController (owner-only relevancy); Roster part URosterTeamViewComponent {OwnerPart {Handle, Team, State, RoundEpoch, WrongTargetTally, LastResultSeq, T_due (last three Owner-only)}, Teammates[<=4] {Handle, State, PawnRef, bIsConcealed, RetireAtServerTime, bReconnecting (Team)}}; feature parts UObjectiveTeamViewComponent and UTeamPingViewComponent (Informant Pings); presentation reads via FindComponentByClass on its own controller"
     # old write_access (2026-10-24): "each part written only by its owning system (Roster part by Roster push step; feature parts by the feature); audiences ratified by the Visibility Policy"
     write_access: "each part written only by its owning system (Roster part by Roster push step; feature parts by the feature); the Roster part's teammate IsConcealed input comes only through URosterStore::SetTeammateConcealed(FParticipantId, bool), whose only caller is Concealment (ADR-0001 §5); audiences ratified by the Visibility Policy"
     referenced_by:
@@ -641,6 +642,31 @@ state_ownership:
 #
 # pattern options: signal | direct_call | event_bus | shared_resource | rpc | none
 
+  # --- user scope decisions 2026-10-25 ---
+  - state: team_ping_view
+    status: active
+    owner_system: informant-pings-team-comms
+    adr: docs/architecture/adr-0001-crowd-identity-rules.md
+    interface: "UTeamPingViewComponent::View (FTeamPingView {Entries[TeamSize] fixed-size, per-element delta {SenderHandle, PingSeq, Point (FVector_NetQuantize10), ServerTime}}) on each team member's AStealthPlayerController (C-TeamView part, Team audience, change-only); presentation reads it via FindComponentByClass on its own controller and paints rings in the HUD L0 leaf (ADR-0021 amendment)"
+    write_access: informant-pings-only (server ServerTeamPing handler; cleared at OnRosterReset, travel and Round's round-end step)
+    referenced_by:
+      - docs/architecture/adr-0001-crowd-identity-rules.md
+      - docs/architecture/adr-0011-pawn-command-interface-input.md
+      - docs/architecture/adr-0021-ui-hud-layering-commonui.md
+      - docs/architecture/adr-0002-resolution-queue-round-end-staging.md
+    added: 2026-10-25
+    revised: ""
+  - state: round_team_summary
+    status: active
+    owner_system: round-match-framework
+    adr: docs/architecture/adr-0002-resolution-queue-round-end-staging.md
+    interface: "FRoundPublicState.FRoundResult.TeamSummary[2] (FRoundTeamSummary {uint8 StepsCompleted, uint8 EliminatedCount, uint8 WrongTargetCount}); zero before Ended; published in the round-end step only; read by the HUD round summary (HUD-E21)"
+    write_access: round-only (latch step computes, round-end step publishes)
+    referenced_by:
+      - docs/architecture/adr-0002-resolution-queue-round-end-staging.md
+      - docs/architecture/adr-0021-ui-hud-layering-commonui.md
+    added: 2026-10-25
+    revised: ""
 interfaces:
   # --- from adr-registry-staging\ADR-0001 ---
   - contract: team_audience_delivery
@@ -1586,6 +1612,20 @@ interfaces:
 # Register a budget when an ADR explicitly claims a frame time allocation.
 # The registry lets /architecture-review verify the total doesn't exceed the target.
 
+  # --- user scope decisions 2026-10-25 ---
+  - contract: team_ping_send
+    status: active
+    pattern: direct_call
+    producer: input-interaction-framework
+    consumers:
+      - informant-pings-team-comms
+    adr: docs/architecture/adr-0011-pawn-command-interface-input.md
+    signal_signature: "AStealthPlayerController::ServerTeamPing(FNetTeamPing {FVector_NetQuantize10 Point}) reliable Server RPC from IA_Ping (IMC_Common); not a pawn command (never ServerPawnCommand, action slot, queue or FActionState); validated by phase, role, range from the eye pivot, then a ParticipantId-keyed token bucket; silent drop on failure (failures spend no token)"
+    referenced_by:
+      - docs/architecture/adr-0011-pawn-command-interface-input.md
+      - docs/architecture/adr-0001-crowd-identity-rules.md
+    added: 2026-10-25
+    revised: ""
 performance_budgets:
   # --- from adr-registry-staging\ADR-0002 ---
   - system: resolution-queue
@@ -3281,4 +3321,16 @@ forbidden_patterns:
     description: "Carrying T_due anywhere but the owner's C-TeamView owner part (no reply entry, no pawn field, no client derivation)"
     why: "Owner-only fact; one carrier (ADR-0001 §6 option (a), user decision 2026-10-25)"
     adr: docs/architecture/adr-0001-crowd-identity-rules.md
+    added: 2026-10-25
+  - pattern: ping_on_pawn
+    status: active
+    description: "Sending, storing or presenting a team ping through the pawn (pawn RPC, pawn field, ActionPose, gesture, ForceNetUpdate, world sound or effect) or naming a pawn in a ping"
+    why: "Any body-side or All-audience trace of a ping is a player-only behaviour (Pillar 1; Informant Pings PNG-R9)"
+    adr: docs/architecture/adr-0011-pawn-command-interface-input.md
+    added: 2026-10-25
+  - pattern: free_text_team_chat_in_mvp
+    status: active
+    description: "Adding in-game free-text team chat or in-engine voice in the MVP"
+    why: "Text on the wire is forbidden (ADR-0021); in-engine voice/chat disabled (IVP L11); deferred to VS by user decision 2026-10-25 (PNG-R11)"
+    adr: docs/architecture/adr-0021-ui-hud-layering-commonui.md
     added: 2026-10-25

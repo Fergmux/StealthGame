@@ -130,7 +130,7 @@ Every layer below 100 is `HitTestInvisible`, not focusable, has no input binding
 - **`IsMarkedAlly`** (TM-R10) is needed by the IIF client (Core, ADR-0011 §9 Attack payload and the strike hint), which cannot include Presentation. Decision: a consumer-owned View interface in Core, `IAllyMarkerQuery { bool IsMarkedAlly(const APawn*) const; }` (`StealthGameplay/Public/View/Core/`), implemented by the markers presenter and injected into `UPawnCommandClient` by the bootstrap (weak). With no presentation bound (headless runs) it answers false; the server's teammate rule (ASN-R9) is unaffected.
 - **`OnAllyMarkerRetired(PublicHandle)`** (TM-R14) is a native client-local delegate on the markers presenter, consumed by the HUD presenter in the same module (HUD-R10). Never replicated, never called by server code.
 - **Reset/travel** (TM-R6.5): the bootstrap is re-bound when a new local controller arrives (ADR-0005 replaces controllers at travel); the model is cleared with no hold or fade on `Phase = Reset` and on travel start.
-- **`ShowTeamNames`** (TM-R11 hold) is a local UI input action in `IMC_Common`; `UPawnCommandClient` raises a client-local `OnLocalUiAction(ShowTeamNames, bPressed)` that the markers presenter subscribes to; it is never sent to the server (TM CR-4 to IIF; GDD sync, Related).
+- **`ShowTeamNames`** (TM-R11 hold; **deferred to the Vertical Slice by user decision 2026-10-25**, not bound in MVP) is a local UI input action in `IMC_Common`; `UPawnCommandClient` raises a client-local `OnLocalUiAction(ShowTeamNames, bPressed)` that the markers presenter subscribes to; it is never sent to the server (TM CR-4 to IIF; GDD sync, Related).
 
 ### 6. DPI and scale (F1, HUD-R16, TM F1)
 
@@ -360,3 +360,8 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 - §2 data inputs — user decision 2026-10-25: the presenter reads `T_due` and `{WrongTargetTally, LastResultSeq}` from the C-TeamView owner part (ADR-0001 §5-§6); HUD-E11 shows a live "Returning in {s}" countdown, static "Returning" only at `s ≤ 0`.
 - §2 — user decision 2026-10-25: `FStrikeResult.ContactServerTime` is the attacker plate's show-time input (HUD F2); the positional matcher remains for the defender and as fallback.
 - §2 — user decision 2026-10-25: the latency icon threshold key is `HudLatencyWarnRttSec` only; `InformantKilled` removal-card suppression confirmed; the wrong-target tally confirmed.
+
+User scope decisions (2026-10-25: "accept all recommendations"); decision unchanged in substance, Status unchanged (Accepted).
+- §1, L0 leaf — user decision 2026-10-25: the L0 world-anchor leaf also paints Informant Pings' ground rings, edge rings and sender labels (HUD-E22; PNG-R7), beneath the teammate markers, from the own controller's `UTeamPingViewComponent`, with the same projection, clamp and collapse rules as markers; pre-created, no per-ping widget.
+- §2 view-models — user decision 2026-10-25: `FHudViewModel` gains the round summary (HUD-E21: two string-table lines filled from `FRoundResult.TeamSummary`, shown with the end banner at F10) and the team feed's reconnecting/back line types (HUD-R10a, from the teammate `bReconnecting` bit). No text on the wire: the numbers arrive as integers and the strings are local.
+- §5 — user decision 2026-10-25: `ShowTeamNames` is deferred to VS (TM OQ11); the markers presenter keeps focus labels and adds the "· reconnecting" label suffix (TM-R11).

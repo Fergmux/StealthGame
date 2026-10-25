@@ -1,6 +1,6 @@
 # Session & Travel
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (world-ready second stage of the round acknowledgement, Round CR-13 (d))
+> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (world-ready second stage of the round acknowledgement, Round CR-13 (d); scope: teammate-only reconnecting indicator in MVP, rule 24 amended, OQ7 closed)
 > **Author**: design-system pipeline (autonomous) + network-programmer, ue-replication-specialist, systems-designer, creative-director, qa-lead
 > **Last Updated**: 2026-10-24
 > **Last Verified**: 2026-10-24
@@ -130,9 +130,9 @@ Anchor moments, each mapped to an acceptance criterion: (1) **a new city, everyo
 
     | Surface | Lobby (`Open`) | Preparing / Active / Ended | Session end |
     |---|---|---|---|
-    | Join/leave notices | "Name joined" / "Name left", to everyone (inherent: the lobby knows who is present) | **none, to anyone**. An optional teammate-only notice is a VS HUD item and uses audience Team | "The session has ended." to everyone, simultaneously |
+    | Join/leave notices | "Name joined" / "Name left", to everyone (inherent: the lobby knows who is present) | **none to non-teammates**. Teammates only, during `Active`: "{Ally} — reconnecting" / "{Ally} — back" (HUD-R10a), driven by the one-bit Team-audience C-TeamView flag `bReconnecting` (Roster R6; MVP by user decision 2026-10-25) | "The session has ended." to everyone, simultaneously |
     | Player list | names, `n / capacity`, ready flags; team shown only to teammates (Roster/Visibility) | a **frozen name list** captured when Preparing starts: no counts, no status, no team for non-teammates; entries are never added or removed mid-round | — |
-    | Connection data of others (ping, address, connection state, join time) | not shown | not shown and **not replicated** to non-owners | — |
+    | Connection data of others (ping, address, connection state, join time) | not shown | not shown and **not replicated** to non-owners, except the teammate-only `bReconnecting` bit (no ping, address, time or reason) | — |
     | Rejection messages | shown only to the rejected client | shown only to the rejected client | — |
 
 25. **Leak-surface checklist owned here and enforced through the Visibility Policy's replicated-property allowlist** (each item has an acceptance criterion):
@@ -499,7 +499,7 @@ MVP UI is minimal and functional, because Lobby UI is Vertical Slice. It needs:
 - **Minimal lobby panel**: participant names, `n / capacity`, and a host-only Start control (owned by Round's start flow). Join and leave lines appear in a small lobby log.
 - **Status overlays** (local client only): "Connecting...", "Loading the city...", "Connection lost. Reconnecting..." with a Cancel option, and "The session has ended." with an OK button that returns to the menu.
 - **Rejection messages**, one plain sentence per reason code: `Full` "This session is full."; `InProgress` "This round has already begun."; `Busy` "The session is changing cities. Trying again..."; `VersionMismatch` "Your game version does not match the host's."; `ParamsMismatch` "Your game could not match the host's city. Please restart the game."; `Refused` "You cannot rejoin this session."
-- **No in-round element** may show joins, leaves, connection states, pings or counts of other participants (rule 24). Language rules are in the Player Fantasy section.
+- **No in-round element** may show joins, leaves, connection states, latency pings (network ping values) or counts of other participants (rule 24), except the teammate-only reconnecting and back lines (HUD-R10a, user decision 2026-10-25), which never reach an opponent. Language rules are in the Player Fantasy section.
 
 > **📌 UX Flag — Session & Travel**: This system has UI requirements. In Pre-Production, run `/ux-design` for the Host/Join menu, the lobby panel and the connection overlays before writing epics. Stories should cite `design/ux/[screen].md`. Lobby UI (VS) will supersede the lobby panel.
 
@@ -555,6 +555,7 @@ MVP UI is minimal and functional, because Lobby UI is Vertical Slice. It needs:
 | ADR-0005 sync 2026-10-24 | Rule 7: client options are "never read" (new-player initialisation without the engine default), allowlist gains `RejoinToken` (rule 6) | APPLIED (rule 7 and the unknown-options edge case) |
 | ADR-0005 sync 2026-10-24 | Rule 2 `[verify]` (host skips `PreLogin`) verified (E2); rule 15/22 verify tags (PlayerState recreation, login pawn spawn, inactive-player override); OQ 2 and OQ 11 | APPLIED (tags replaced by the verified facts; OQ 11 answered, OQ 2 mostly answered, keepalive cadence still open) |
 | ADR-0006 sync 2026-10-24 | F5: register domain `CrowdBehaviour = 13` (Crowd CNB-R14, keyed by `LayoutAttempt`); `H64` = SipHash-2-4; ADR-0006's 2026-10-24 amendment appends `BushSpotPick = 14` (ADR-0017) | APPLIED (F5 Domain and Attempt rows; H64 sentence) |
+| User decision 2026-10-25 (scope; OQ7) | Teammate-only reconnecting indicator in MVP | APPLIED (rule 24 table rows, UI Requirements line, OQ7 closed; the bit is derived by the Roster from the existing `NotifyConnectionChanged` projection, so Session gains no new output) |
 ## Acceptance Criteria
 
 *qa-lead consulted. qa-lead independently re-computed the F5 golden vectors. The ambiguities it flagged are resolved in the rules: the `Refused` reason code for a kicked key, manual rejoin after `ParamsMismatch`, the spawn-order threshold, and the rule-3 test method.*
@@ -664,7 +665,7 @@ Any criterion without [10P] is verified only at its stated client count, and the
 | 4 | Measured client packet rate, burst-outage distribution on Wi-Fi, and map load time: they confirm or revise the Soft, Hard, window and travel defaults (F3, F4, F7) | network-programmer (net-emulation spike) | Spike report |
 | 5 | **Answered by Round R17.1 (2026-10-24)**: Round adopts the hand-over at Soft (`bHandOverOnUnresponsive`, default on) with a blended hand-back; provisional pending the net spike and the Crowd GDD, which must still meet rule 25f. | -- | closed (Crowd GDD confirms the baseline) |
 | 6 | **Answered by the Procedural City Generator (R-G7, LSC R2.2; reconciliation 2026-10-24)**: clients run no generator; they build from the replicated `FLayoutManifest` with no RNG and verify `LayoutHash`. Rule 14 and the single acknowledgement are unchanged; the `?Seed=` URL option is parsed only by Session, never by the Generator. | -- | closed |
-| 7 | Should the MVP show a teammate-only "teammate reconnecting" indicator? CD-GDD-ALIGN recommends considering it for Fellowship. It is Pillar-1 safe because it uses audience Team only. Moving it from VS into MVP is a scope change and is left as a pending user decision. Until the user decides, external team voice is a **stated MVP playtest requirement**, and the protocol records team-side confusion after disconnects. | user (scope) / ux-designer | Pending user decision |
+| 7 | **CLOSED — decided by the user 2026-10-25:** the teammate-only reconnecting indicator is MVP (Team audience: Roster R6 `bReconnecting`, HUD-R10a lines, Teammate Markers TM-R11 label suffix; rule 24 amended). External team voice stays a stated MVP playtest requirement for nuance; the in-game hooks are the reconnect line and the team ping (Informant Pings). | user (scope) / ux-designer | closed 2026-10-25 |
 | 8 | Host latency advantage: is it measurable in playtests? If it is, should hosting rotate per round or session for fairness until the Dedicated Server? | producer + game-designer | After the first 10-player playtest |
 | 9 | The provisional `RejoinToken` (rule 6) must be implemented before the first playtest outside the team (Roster R3; creative-director 2026-10-24). Open: token lifetime across sessions, and the authenticated online-subsystem identity that replaces both key and token | security-engineer + network-programmer | Token: before the first external playtest; platform id: Alpha |
 | 10 | Ten-player behaviour (capacity race, nine simultaneous travel acknowledgements, bandwidth) is unverified until a full-capacity test, as required by the build handoff | qa-lead | First 10-player test |

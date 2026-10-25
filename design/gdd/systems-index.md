@@ -2,7 +2,7 @@
 
 > **Status**: Under Review -- TD-SYSTEM-BOUNDARY CONCERNS (applied), PR-SCOPE OPTIMISTIC (partly applied, see Pending), CD-SYSTEMS CONCERNS (mostly applied, see Creative Director Note under Priority Tiers)
 > **Created**: 2026-10-24
-> **Last Updated**: 2026-10-24 (revision 2: boundary changes from TD-SYSTEM-BOUNDARY and PR-SCOPE applied)
+> **Last Updated**: 2026-10-25 (revision 3: user scope decisions of 2026-10-25 — Informant Pings & Team Communication moved to MVP; MVP HUD gains a text-only round summary and a teammate-reconnecting line; keyboard walk-slower modifier; Teammate Markers effort M; `ShowTeamNames` hold moved to VS) — revision 2 (2026-10-24): boundary changes from TD-SYSTEM-BOUNDARY and PR-SCOPE applied
 > **Source Concept**: design/gdd/game-concept.md (user-locked rules: GAME_BUILD_HANDOFF.md "Confirmed game rules" and the confirmed decisions in production/session-state/active.md)
 
 ---
@@ -28,12 +28,13 @@ System-by-system rationale (why each exists, which pillar it serves):
 - **Crowd & NPC Behaviour** -- NPC population, baseline behaviour catalogue incl. a gaze catalogue (the "normal" that Pillar 2 measures deviation from) and the **Baseline and Tell Matrix** (one row per advantage: visible deviation, whether NPCs ever do it, owning system), route following, red herrings, NPC replacement after a kill (subscribes to `OnPawnKilled`), identity parity.
 - **Concealment (Bushes)** -- hide/leave rules, per-viewer invisibility, blind-attack vulnerability via `IsConcealedFrom(viewer)`, what breaks concealment (listens to generic Attack action events), enforcement per the Visibility Policy.
 - **Assassination & Defence Reversal** -- targeting, range (about 2 m), one-strike resolution, hold-to-prepare defence (about 4 s, 60 s cooldown from activation, not while running or in parkour), reversal (attacker eliminated, becomes informant), in-encounter ordering, kill confirmation; answers "NPC or player?" via a server-only Roster lookup and emits `OnPawnKilled(victim, killer, victimKind)`.
-- **NPC-Kill Penalty & Informants** -- strike counter (removal on the third NPC kill, "Exiled"), informant role (walk and observe, targetable, killing one is not an NPC kill, respawns at spawn as informant, cannot see concealed players, not counted for elimination); MVP informant communication is external voice or team chat.
+- **NPC-Kill Penalty & Informants** -- strike counter (removal on the third NPC kill, "Exiled"), informant role (walk and observe, targetable, killing one is not an NPC kill, respawns at spawn as informant, cannot see concealed players, not counted for elimination); MVP informant communication is the in-game team ping (system 20, MVP since the user decision of 2026-10-25) plus external voice.
 - **Objectives Chain** -- objective definition, two team-specific preliminary stages, one shared final objective, locked-stage access, about 3 s interaction, and the **Stall pressure** rule (anti-camping mechanism as a testable rule, never a timer, never a reveal).
 - **Procedural City Generator** -- seeded modular-kit assembly implementing the Level Socket Contract, server-only dynamic navigation, validation and reject-and-reseed; built last, designed with the contract.
 - **Teammate Markers** -- teammate-only overhead markers created only on teammates' clients (security-critical, needed for the first blending test).
-- **HUD** -- strike counter, defence indicator, objective progress, kill confirmation, removal message; depends on owner-only view-state interfaces each feature exposes, nothing that identifies a non-ally person.
-- **Lobby UI, Informant Pings & Team Communication, Post-Round Reveal & Results, Diegetic Audio, Event Feedback & Cues, Settings & Accessibility** -- Vertical Slice. Pillar-1 rules that live in these systems (footstep parity, informant communication in MVP) are stated in the MVP GDDs that own the pawn and the informant role.
+- **HUD** -- strike counter, defence indicator, objective progress, kill confirmation, removal message, a text-only end-of-round summary at `Ended` and a teammate-reconnecting feed line (both MVP by user decision 2026-10-25); depends on owner-only view-state interfaces each feature exposes, nothing that identifies a non-ally person.
+- **Informant Pings & Team Communication** (MVP since the user decision of 2026-10-25) -- a momentary, place-based, team-only ground ring that any Active player or informant can drop where they look; the informant's in-game channel to the team (Fellowship). No in-game text chat or voice in MVP; pinging changes nothing an opponent can see or receive (Pillar 1).
+- **Lobby UI, Post-Round Reveal & Results, Diegetic Audio, Event Feedback & Cues, Settings & Accessibility** -- Vertical Slice. Pillar-1 rules that live in these systems (footstep parity) are stated in the MVP GDDs that own the pawn.
 - **Onboarding & Practice Mode, Telemetry & Analytics, Anti-Cheat & Info-Leak Security, Dedicated Server** -- Alpha. **Matchmaking** and **Progression & Cosmetics** -- Full Vision (the latter is a scope-only anti-pillar item, listed so it is not silently forgotten; guard: any cosmetic must enter the NPC appearance deck at equal weight or be cut). **Settings & Accessibility guard**: no accessibility feature may give directional or player-only information beyond the default presentation (parity review by the Visibility Policy owner).
 
 ---
@@ -63,7 +64,7 @@ The `#` column is the recommended design order. Planned design-doc paths are lis
 | 17 | Teammate Markers | UI | MVP | In Review | design/gdd/teammate-markers.md | Participant State & Roster, Information Visibility Policy, Concealment (Bushes), Camera System, Tuning Data & Config |
 | 18 | HUD | UI | MVP | In Review | design/gdd/hud.md | Participant State & Roster, Round & Match Framework, Information Visibility Policy, Assassination & Defence Reversal, NPC-Kill Penalty & Informants, Objectives Chain, Concealment (Bushes), Input & Interaction Framework, Tuning Data & Config, Teammate Markers (soft), Camera System (soft), Session & Travel (soft) |
 | 19 | Lobby UI (inferred) | UI | Vertical Slice | Not Started | design/gdd/lobby-ui.md | Session & Travel, Round & Match Framework |
-| 20 | Informant Pings & Team Communication | Gameplay | Vertical Slice | Not Started | design/gdd/informant-pings-team-comms.md | NPC-Kill Penalty & Informants, Teammate Markers, Information Visibility Policy |
+| 20 | Informant Pings & Team Communication | Gameplay | MVP | In Review | design/gdd/informant-pings-team-comms.md | Participant State & Roster, Information Visibility Policy, Round & Match Framework, Input & Interaction Framework, Camera System, HUD, NPC-Kill Penalty & Informants, Tuning Data & Config, Teammate Markers (soft), Session & Travel (soft) |
 | 21 | Post-Round Reveal & Results (inferred) | UI | Vertical Slice | Not Started | design/gdd/post-round-reveal.md | Round & Match Framework, Information Visibility Policy |
 | 22 | Diegetic Audio (inferred) | Audio | Vertical Slice | Not Started | design/gdd/diegetic-audio.md | Shared Character & Locomotion, Crowd & NPC Behaviour, Assassination & Defence Reversal, Information Visibility Policy |
 | 23 | Event Feedback & Cues (inferred) | UI | Vertical Slice | Not Started | design/gdd/event-feedback-cues.md | Assassination & Defence Reversal, NPC-Kill Penalty & Informants, HUD, Diegetic Audio, Information Visibility Policy (soft) |
@@ -102,11 +103,13 @@ The `#` column is the recommended design order. Planned design-doc paths are lis
 | **Alpha** | All features present in rough form. Complete mechanical scope, placeholder content OK. | Alpha milestone | Design THIRD |
 | **Full Vision** | Polish, edge cases, nice-to-haves, and content-complete features. | Beta / Release | Design as needed |
 
-MVP is 18 systems; Vertical Slice 6; Alpha 4; Full Vision 2. Several MVP systems are deliberately small (Tuning Data & Config, Session & Travel, Level Socket Contract, Camera System, Teammate Markers): they exist to give a contract an owner, not to add features. The user-locked MVP content (the 7 items in the concept's MVP Definition) is unchanged. The concept's PR-SCOPE re-scope is applied as a **build order only**: graybox map and mannequin-variant pool first, then camera toggle and traversal replication, then the Meshy pool swap, then the generator.
+MVP is 19 systems; Vertical Slice 5; Alpha 4; Full Vision 2 (Informant Pings & Team Communication moved from Vertical Slice to MVP by the user 2026-10-25). Several MVP systems are deliberately small (Tuning Data & Config, Session & Travel, Level Socket Contract, Camera System, Teammate Markers): they exist to give a contract an owner, not to add features. The user-locked MVP content (the 7 items in the concept's MVP Definition) is unchanged; the user added four MVP items on 2026-10-25 (informant ping, text-only round summary, teammate-reconnecting indicator, keyboard walk-slower modifier; concept MVP Definition). The concept's PR-SCOPE re-scope is applied as a **build order only**: graybox map and mannequin-variant pool first, then camera toggle and traversal replication, then the Meshy pool swap, then the generator.
 
 **Decided by the user 2026-10-25** (formerly pending): PR-SCOPE adjustment 6 declined (Tuning Data & Config stays a GDD; ADR-0004 covers the implementation); adjustment 4 confirmed as a tier move (Lobby UI is Vertical Slice; MVP keeps direct join plus start/reset inside Round & Match and Session & Travel); adjustment 9 declined (the Generator, Character Pool and traversal GDDs are not held for the three spikes; they stay *provisional on spike results*).
 
-> **Creative Director Note** (MVP): CD-SYSTEMS returned CONCERNS (9). Applied as GDD requirements: Look in the pawn command interface and a gaze catalogue (Pillar 1), the Baseline and Tell Matrix in the Crowd GDD (Pillar 2), the third-person camera sees no more than body line of sight (Pillar 2), shared emergence sockets (Pillar 1), the Stall pressure rule in Objectives (Pillar 4), the deck-only appearance rule, and future-tier guards. NOT applied (scope, always-ask): a minimal in-game informant ping in MVP and a text-only end-of-round summary in the MVP HUD; until decided, the MVP playtest protocol must use external voice and record that the in-game informant hook is untested until Vertical Slice.
+> **Creative Director Note** (MVP): CD-SYSTEMS returned CONCERNS (9). Applied as GDD requirements: Look in the pawn command interface and a gaze catalogue (Pillar 1), the Baseline and Tell Matrix in the Crowd GDD (Pillar 2), the third-person camera sees no more than body line of sight (Pillar 2), shared emergence sockets (Pillar 1), the Stall pressure rule in Objectives (Pillar 4), the deck-only appearance rule, and future-tier guards. Concerns 1-2 were **decided by the user 2026-10-25 ("accept all recommendations")**: the minimal in-game informant ping is MVP (system 20) and the text-only end-of-round summary is in the MVP HUD (HUD-R14, Round `FRoundResult` team aggregates). The MVP playtest protocol now records the in-game informant hook as tested; external team voice remains a stated requirement for nuance (no in-game text chat in MVP).
+
+**Also decided by the user 2026-10-25 (scope):** the teammate-reconnecting indicator is MVP (HUD feed line + marker label, Team audience; Session OQ7 closed); a keyboard walk-slower modifier is MVP (IIF/SCL; Crowd's interim full-pace rule lifted); the `ShowTeamNames` hold action moves to VS (focus labels stay MVP; Teammate Markers OQ11); Teammate Markers effort S → M (OQ12); the strike-hint off option waits for playtest data (HUD OQ12); the informant awaiting audio bed is VS (Penalty OQ-NKP-12).
 
 > **Producer Note** (PR-SCOPE: OPTIMISTIC): the 8-10 week MVP estimate was made before the design work was counted; revised expected estimate is 10-12 weeks for all 7 MVP items (16+ pessimistic), with a named "MVP-core" checkpoint at about week 6 (round, assassination/informants, objectives, crowd, bushes on a graybox map, 2-client PIE) as a planned fallback playtest build -- a checkpoint, not a substitute for the locked MVP.
 
@@ -138,7 +141,7 @@ MVP is 18 systems; Vertical Slice 6; Alpha 4; Full Vision 2. Several MVP systems
 14. **NPC-Kill Penalty & Informants** -- depends on: Participant State & Roster, Assassination & Defence Reversal, Shared Character & Locomotion, Round & Match Framework, Information Visibility Policy, Tuning Data & Config, Level Socket Contract, Crowd & NPC Behaviour, Character Pool & Appearance, Input & Interaction Framework (soft), Camera System (soft).
 15. **Objectives Chain** -- depends on: Input & Interaction Framework, Round & Match Framework, Level Socket Contract, Participant State & Roster, Information Visibility Policy, Tuning Data & Config.
 16. **Procedural City Generator** -- depends on: Level Socket Contract, Round & Match Framework (ordering only, via Level Socket Contract), Tuning Data & Config, Session & Travel (soft), Shared Character & Locomotion (soft, values). (Round does not depend on it: Round's Preparing phase waits for a "layout ready" callback defined in the Level Socket Contract.)
-17. **Informant Pings & Team Communication** (Vertical Slice) -- depends on: NPC-Kill Penalty & Informants, Teammate Markers, Information Visibility Policy.
+17. **Informant Pings & Team Communication** (MVP since 2026-10-25) -- depends on: Participant State & Roster, Information Visibility Policy, Round & Match Framework, Input & Interaction Framework, Camera System, HUD, NPC-Kill Penalty & Informants, Tuning Data & Config, Teammate Markers (soft), Session & Travel (soft). (Listed in the Feature layer by its index row; it draws in the HUD's L0 layer, so it is built after HUD's layer root.)
 
 ### Presentation Layer (depends on features)
 
@@ -160,7 +163,7 @@ MVP is 18 systems; Vertical Slice 6; Alpha 4; Full Vision 2. Several MVP systems
 30. **Progression & Cosmetics** (Full Vision) -- depends on: Character Pool & Appearance, Participant State & Roster.
 
 **Bottleneck systems** (many dependents; changes ripple): Round & Match Framework, Participant State & Roster, Information Visibility Policy, Tuning Data & Config, Shared Character & Locomotion, Input & Interaction Framework.
-**Leaf systems** (no dependents; safe to design late): Telemetry & Analytics, Anti-Cheat & Info-Leak Security, Matchmaking, Progression & Cosmetics, Onboarding & Practice Mode, Settings & Accessibility, Post-Round Reveal & Results, Event Feedback & Cues, Lobby UI, Procedural City Generator.
+**Leaf systems** (no dependents; safe to design late): Informant Pings & Team Communication (MVP, soft VS dependents only), Telemetry & Analytics, Anti-Cheat & Info-Leak Security, Matchmaking, Progression & Cosmetics, Onboarding & Practice Mode, Settings & Accessibility, Post-Round Reveal & Results, Event Feedback & Cues, Lobby UI, Procedural City Generator.
 
 ---
 
@@ -186,9 +189,10 @@ Design order equals the `#` column in the enumeration table.
 | 14 | NPC-Kill Penalty & Informants | MVP | Feature | game-designer | M |
 | 15 | Objectives Chain | MVP | Feature | game-designer, level-designer | M |
 | 16 | Procedural City Generator | MVP | Feature | level-designer, systems-designer | L |
-| 17 | Teammate Markers | MVP | Presentation | ux-designer, ue-umg-specialist | S |
+| 17 | Teammate Markers | MVP | Presentation | ux-designer, ue-umg-specialist | M (re-estimated from S by user decision 2026-10-25; F4 edge spreading cuttable) |
 | 18 | HUD | MVP | Presentation | ux-designer, ue-umg-specialist | M |
-| 19-24 | Lobby UI, Informant Pings & Team Comms, Post-Round Reveal, Diegetic Audio, Event Feedback & Cues, Settings & Accessibility | Vertical Slice | Presentation/Polish | ux-designer, audio-director, accessibility-specialist | S-M each |
+| 20 | Informant Pings & Team Communication | MVP (user decision 2026-10-25) | Feature | game-designer, ux-designer | S |
+| 19, 21-24 | Lobby UI, Post-Round Reveal, Diegetic Audio, Event Feedback & Cues, Settings & Accessibility | Vertical Slice | Presentation/Polish | ux-designer, audio-director, accessibility-specialist | S-M each |
 | 25-28 | Onboarding & Practice Mode, Telemetry & Analytics, Anti-Cheat & Security, Dedicated Server | Alpha | Polish | game-designer, analytics-engineer, security-engineer, network-programmer | S-L |
 | 29-30 | Matchmaking, Progression & Cosmetics | Full Vision | Polish | network-programmer, economy-designer | L |
 
@@ -235,14 +239,14 @@ No hard cycles. Soft cycles identified in the problem domain were removed or con
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 30 |
-| Design docs started | 18 |
-| Design docs reviewed | 18 (one review + fix pass each; all NEEDS/MAJOR REVISION with revisions applied; independent re-reviews pending per the Re-review policy) |
+| Design docs started | 19 (Informant Pings & Team Communication added 2026-10-25) |
+| Design docs reviewed | 19 (one review + fix pass each; all NEEDS/MAJOR REVISION with revisions applied; independent re-reviews pending per the Re-review policy; Informant Pings: lean review NEEDS REVISION 2026-10-25, revisions applied) |
 | Design docs reconciled (cross-GDD change requests routed) | 18 (2026-10-24) |
 | Design docs approved | 0 |
-| MVP systems designed | 18/18 |
-| Vertical Slice systems designed | 0/6 |
+| MVP systems designed | 19/19 |
+| Vertical Slice systems designed | 0/5 |
 
-*Updated 2026-10-24 by the design-pipeline orchestrator.*
+*Updated 2026-10-25 (phase-2 scope pass: row 20 moved to MVP and designed). Previously updated 2026-10-24 by the design-pipeline orchestrator.*
 
 ---
 

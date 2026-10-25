@@ -2,7 +2,7 @@
 
 > **Engine**: Unreal Engine 5.8 (installed 5.8.4, CL 58902052)
 > **Last Updated**: 2026-10-25
-> **Manifest Version**: 2026-10-25b (same-day regeneration after the user decisions of 2026-10-25; see "Changes in 2026-10-25b" at the end)
+> **Manifest Version**: 2026-10-25c (same-day update after the user scope decisions of 2026-10-25; see "Changes in 2026-10-25c" and "Changes in 2026-10-25b" at the end)
 > **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016, ADR-0017, ADR-0018, ADR-0019, ADR-0020, ADR-0021, ADR-0022, ADR-0023 (all **Accepted** 2026-10-25; several conditionally, see "Conditional acceptance")
 > **Status**: Active — regenerate with `/create-control-manifest update` when ADRs change
 
@@ -212,6 +212,9 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **A redirector is committed together with the moved asset and its referencers** — source: ADR-0009
 - **Before the first commit the template's Godot/Unity ignore sections are removed and `build/`/`bin/` anchored or removed (`git check-ignore -v Build/Scripts/x.cs` prints nothing); `.gitattributes` lists one pattern per line** — source: ADR-0009
 - **Commits use Conventional Commits with a story/task ID and a design-doc/ADR reference** — source: ADR-0009
+- **The Roster teammate entry carries Team-audience `bReconnecting`, derived only by the Roster push step from Session's `Connection` projection (true while `Disconnected` inside `DisconnectGraceSec` during `Active`; false otherwise)** — source: ADR-0001, ADR-0005 (user decision 2026-10-25)
+- **`UTeamPingViewComponent` (`FTeamPingView`, a fixed-size array with one slot per team member, no `RoundEpoch` of its own) is a C-TeamView part written only by the Informant Pings server handler, cleared at `OnRosterReset`, travel and Round's round-end step** — source: ADR-0001, ADR-0002 (user decision 2026-10-25)
+- **`FRoundResult.TeamSummary[2]` is computed in the latch step and published only in the round-end step (all zero before)** — source: ADR-0002 (user decision 2026-10-25)
 
 ### Forbidden Approaches
 
@@ -295,6 +298,8 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never initialise a repository, commit, push, or change `.gitignore`/`.gitattributes` (agents) without explicit user instruction** — source: ADR-0009
 - **Never use Make Writable; never save an asset on the never-resave list (reject a commit modifying one); never run redirector fix-up on sample folders** — source: ADR-0009
 - **Never commit `Binaries/`, `Intermediate/`, `DerivedDataCache/`, `Saved/`, `_snapshots/`, `_backup_pre_rebase/`; never commit binaries to plain Git without LFS** — source: ADR-0009
+- **Never add a teammate connection field other than the one `bReconnecting` bit (no ping, time, reason or address), and never send it to a non-teammate** — source: ADR-0001, ADR-0005 (user decision 2026-10-25)
+- **Never write a non-zero `TeamSummary` (or any per-team count) into `FRoundPublicState` before `Ended`** — source: ADR-0002 (user decision 2026-10-25)
 
 ### Performance Guardrails
 
@@ -407,6 +412,8 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **A pawn with α = 0 or blocked from the eye produces a `TargetSpot` in the aim ray** — source: ADR-0015
 - **Pawnless viewers use the client-local `AStealthNeutralViewActor`** — source: ADR-0015
 - **Every sight test (camera mask, aim world test, LSC sight predicates) uses the `ViewBlock` channel** — source: ADR-0015
+- **`IA_WalkSlower` (`IMC_Common`; Left Ctrl 0.8, Left Alt 0.9) only scales the keyboard Move vector on the owning client before `ServerMove`; SCL quantises the received magnitude to the shared pace set** — source: ADR-0011 (user decision 2026-10-25)
+- **`IA_Ping` (`IMC_Common`) sends only `AStealthPlayerController::ServerTeamPing(FNetTeamPing {Point})` (point only), reliable, validated server-side in order by phase, role, range from the eye pivot (`PingRangeCm + PingRangeSlackCm`) and then its own `ParticipantId`-keyed token bucket (`PingBucketSize`, `PingBucketPerSec`, tolerance 0.05 token); failures drop silently and only an accepted ping spends a token; the ping point is the `ViewBlock` aim-ray hit dropped to walkable ground, range measured from the eye pivot on client and server** — source: ADR-0011 (user decision 2026-10-25)
 
 ### Forbidden Approaches
 
@@ -482,6 +489,9 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never introduce a second "sight" trace channel; never use GPU occlusion queries or scene depth for sight tests** — source: ADR-0015
 - **Never add aim assist, snapping, magnetism, slowdown, zoom, shake or FOV punches to the camera** — source: ADR-0015
 - **Never disable the mask in first person; never add a server-side per-viewer view check in MVP** (deferred to ADR-0025) — source: ADR-0015
+- **Never route a ping through `ServerPawnCommand`, the action slot, the resolution queue or `FActionState`, never name a pawn in it, and never change the sender's pawn (no RPC, field, pose, gesture, `ForceNetUpdate`, world sound or effect)** — Pillar 1 — source: ADR-0011, ADR-0001 (user decision 2026-10-25)
+- **Never send the walk-slower modifier to the server as a command or field, and never apply it to gamepad input** — source: ADR-0011 (user decision 2026-10-25)
+- **Never bind `ShowTeamNames` in the MVP** (deferred to VS) — source: ADR-0011, ADR-0021 (user decision 2026-10-25)
 
 ### Performance Guardrails
 
@@ -594,6 +604,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 
 **Telemetry probes and detectors**
 - **Probe call sites are on the path every pawn takes; detectors run the same code at the same cadence for every Shared Pawn, read only published server state, keep one exposure clock per subject key (pawn + binding epoch) and close open records on a binding change** — source: ADR-0023
+- **Crowd pace: `CrowdFullPacePct` 55 and C4 group-drift pace matching active (the interim full-pace rule is lifted because IIF R15a exists)** — source: ADR-0016 (user decision 2026-10-25)
 
 ### Forbidden Approaches
 
@@ -718,6 +729,9 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **A fallback is applied to every client through shipped config** — source: ADR-0022
 - **Each owner ADR's code declares its `Stealth.Budget.<Line>` Insights scope** — source: ADR-0022
 - **Config keys ADR-0022 pins change only by a user-approved config change recorded against ADR-0022** — source: ADR-0022
+- **Team ping rings, edge rings and sender labels are painted by the L0 world-anchor leaf from the own controller's `UTeamPingViewComponent`, beneath markers, collapsed with L0; each `(SenderHandle, PingSeq)` is shown once, for `PingLifetimeSec` from its `ServerTime` on `EstimatedServerNow()`; entries present at a rebuild are marked shown** — source: ADR-0021 (user decision 2026-10-25)
+- **The round summary (HUD-E21) is two string-table lines filled from the integer `FRoundResult.TeamSummary`, shown with the end banner at its F10 time, only in `Ended`** — source: ADR-0021 (user decision 2026-10-25)
+- **Team feed reconnecting/back lines come only from the teammate `bReconnecting` bit (HUD-R10a); the marker label adds "· reconnecting" and the marker shape never changes** — source: ADR-0021 (user decision 2026-10-25)
 
 ### Forbidden Approaches
 
@@ -745,6 +759,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never enable dynamic resolution, MegaLights, hardware ray tracing or Substrate, or change a scalability group at runtime outside the shipped preset applier** — cost, leak surface, and load-adaptive scaling correlates with who is on screen — source: ADR-0022
 - **Never cite PIE/editor numbers as budget evidence** — source: ADR-0022
 - **Never apply a fallback through gameplay tuning or a per-client heuristic** — source: ADR-0022
+- **Never add free-text team chat or in-engine voice in the MVP; never give a ping a feed line, plate or per-ping widget** — source: ADR-0021 (user decision 2026-10-25)
 
 ### Performance Guardrails
 
@@ -858,3 +873,13 @@ Regenerated after the user decisions of 2026-10-25 (recorded as "user decision 2
 - Presentation: GPU character lines measured at 60 characters.
 - Global: user-pending list replaced by "decided, implement as specified"; conditional-acceptance rows for ADR-0016/0017/0019 updated.
 - Tuning (ADR-0004, no separate rule line): `NpcKillStrikeLimit` hard minimum 2 (`bTestAllowsStrikeLimitOne` test presets only); `LatencyWarnRttSec` retired; TDC CR-10 renames; `LayoutExactRefineMaxCount`; `NpcCount` 50.
+
+## Changes in 2026-10-25c
+
+Updated after the user's scope decisions of 2026-10-25 ("accept all recommendations"; recorded as "User scope decisions (2026-10-25)" Amendments in ADR-0001, 0002, 0003, 0004, 0005, 0011, 0016, 0021). Rules added or changed:
+- Foundation: teammate `bReconnecting` bit (Roster push step only; never to non-teammates); `UTeamPingViewComponent` C-TeamView part and its writer/clears; `FRoundResult.TeamSummary` computed at the latch, published only at the round-end step.
+- Core: `IA_WalkSlower` client-local keyboard pace modifier; `IA_Ping` → `ServerTeamPing` controller RPC with server validation; pings never touch the pawn or the command path; `ShowTeamNames` not bound in MVP.
+- Feature: Crowd `CrowdFullPacePct` 55 and C4 active (interim full-pace rule lifted).
+- Presentation: L0 ping rings; text-only round summary from integers + string tables; reconnecting/back feed lines and the marker label suffix; no free-text chat or in-engine voice in MVP.
+- Tuning (ADR-0004, no separate rule line): new owner `InformantPings` (`PingLifetimeSec`, `PingBucketSize`, `PingBucketPerSec`, `PingRangeCm`, `PingRangeSlackCm`) and invariant I-PNG-1.
+- Budget (ADR-0003): ping part ≤ 50 B/s per teammate connection; `FRoundResult` +6 bytes at `Ended`.

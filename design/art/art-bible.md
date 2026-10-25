@@ -1208,7 +1208,7 @@ cultural knowledge. Deity and ritual glyphs are never used in functional UI
 | Teammate marker, informant state | Same silhouette, **outline only (no fill)**: a 3 px Turquoise stroke with the Obsidian keyline on **both sides** of the stroke (outside and inside), because a hollow interior over bright ground otherwise fails the dual-edge test (Teammate Markers CR-7) | Turquoise | Fill is the second axis: filled = active, hatched = concealed, outline = informant. These are states **of the marked player**, independent of the viewer: the outline is how every ally sees an informant ally |
 | **Danger / finality** | **Upward-pointing triangle**, solid, with a stepped base (two steps) | Cochineal | The orientation is opposite to the ally marker: ally points *down* at a head, danger points *up* |
 | Wrong-target tally square (replaces the strike counter pip; confirmed by the user 2026-10-25) | **Square**, `L` squares, filled up to min(n, L), outline-only beyond | Cochineal (filled) / Bone (outline) | Plus the line "Wrong targets: {n}" (7.3 row 3) |
-| **Sighting ping** (informant) | **Open ring with a gap** (a "broken circle", 60 degree gap), placed on the ground; world radius **>= 4 m**, screen minimum **32 px**, static, **no centre mark**; age shown by stepped stroke weight (6 / 4 / 3 px at thirds of its life, *proposed*), then expiry (start 8 s) | Marigold with a mandatory Obsidian keyline (3 px, 4 px beyond 20 m) | A place, never a person |
+| **Sighting ping** (team ping: any teammate, Active or informant, may place one; seen by allies only; Informant Pings PNG-R1, user decision 2026-10-25) | **Open ring with a gap** (a "broken circle", 60 degree gap), placed on the ground; world radius **>= 4 m**, screen minimum **32 px**, static, **no centre mark**; age shown by stepped stroke weight (6 / 4 / 3 px at thirds of its life, *proposed*), then expiry (start 8 s) | Marigold with a mandatory Obsidian keyline (3 px, 4 px beyond 20 m) | A place, never a person |
 | Objective progress | **Stepped bar** (own bar 3 steps, rival bar 2 steps; 7.3 row 5) | Marigold | The steps echo a pyramid and are readable as quantity without colour |
 | Neutral interact prompt | Square plate with stepped corners, Bone outline | Bone | |
 | **Defence ring** (brace indicator; added from 7.5, states per 7.3 row 4) | Circle: empty when ready; on **Protected** (server-confirmed) an inner stepped square appears at once and the ring fills in four stepped segments over the protected window (never shrinks or closes); square removed at the end; Bone Dim linear sweep while cooling | Bone / Bone Dim, **no signal hue** | Self only. Duration, so a circle is permitted |
@@ -1850,8 +1850,9 @@ visual identity is what the table in 5.2 permits. Direction:
   behaviour is itself a visible tell to opponents and is a **flag for the
   game-designer**. Art's requirement is that informants collide, queue and
   yield exactly as citizens do.
-- Sightings are drawn on the informant's own screen as place pings (3.4),
-  never as a mark on a character.
+- Sightings are drawn on the screens of the sender's team as place pings (3.4),
+  never as a mark on a character (any teammate may ping; Informant Pings,
+  user decision 2026-10-25).
 
 ### 5.4 Expression and pose style: composed, not stiff and not expressive
 

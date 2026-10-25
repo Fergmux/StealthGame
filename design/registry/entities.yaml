@@ -175,6 +175,8 @@ entities:
     source: design/gdd/session-travel.md
     referenced_by:
       - design/gdd/session-travel.md
+      - design/gdd/hud.md
+      - design/gdd/teammate-markers.md
       - design/gdd/character-pool-appearance.md
       - design/gdd/information-visibility-policy.md
       - design/gdd/objectives-chain.md
@@ -182,8 +184,9 @@ entities:
       - design/gdd/round-match-framework.md
     values: [Connected, Unresponsive, Traveling, Disconnected, Rejoining, Expired]
     owner_rule: "Session is the sole writer of the Roster Connection projection (NotifyConnectionChanged)"
+    teammate_exposure: "only the one-bit Team-audience C-TeamView bReconnecting (Disconnected inside DisconnectGraceSec during Active), derived by the Roster push step; never to non-teammates (user decision 2026-10-25, Session rule 24 amended)"
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: c_team_view
     status: active
     source: design/gdd/participant-state-roster.md
@@ -197,7 +200,10 @@ entities:
       - design/gdd/objectives-chain.md
       - design/gdd/round-match-framework.md
       - design/gdd/teammate-markers.md
-    content: "per-viewer team view: owner {PublicHandle, Team, State, RoundEpoch, WrongTargetTally, LastResultSeq, T_due} (last three Owner-only, user decision 2026-10-25); teammate {PublicHandle, State, PawnRef, IsConcealed, RetireAtServerTime} (RetireAtServerTime Team, user decision 2026-10-25); IVP R8 fallback feed entries {PublicHandle, Pos, Seq}"
+      - design/gdd/informant-pings-team-comms.md
+      - design/gdd/session-travel.md
+    # was: teammate {PublicHandle, State, PawnRef, IsConcealed, RetireAtServerTime}; bReconnecting and the ping part added by user scope decision 2026-10-25
+    content: "per-viewer team view: owner {PublicHandle, Team, State, RoundEpoch, WrongTargetTally, LastResultSeq, T_due} (last three Owner-only, user decision 2026-10-25); teammate {PublicHandle, State, PawnRef, IsConcealed, RetireAtServerTime, bReconnecting} (RetireAtServerTime and bReconnecting Team, user decisions 2026-10-25); IVP R8 fallback feed entries {PublicHandle, Pos, Seq}; feature parts FObjectiveTeamView (Objectives) and FTeamPingView (Informant Pings, one slot per team member)"
     rule: "all presentation on every machine (including the listen host) reads only its viewer C-TeamView"
     # owner tally/T_due fields, teammate RetireAtServerTime and feed Seq added by user decision 2026-10-25; bPawnBound declined
     added: 2026-10-24
@@ -579,6 +585,35 @@ entities:
     hash: "LayoutHash = FNV1a64 over the manifest bytes (LSC D7); a desync detector, not a security check"
     replication: "the contract spawns zero replicated actors; geometry is built locally from the Manifest"
     added: 2026-10-24
+    revised: ""
+  - name: team_ping
+    status: active
+    source: design/gdd/informant-pings-team-comms.md
+    referenced_by:
+      - design/gdd/informant-pings-team-comms.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    definition: "momentary, place-only, team-only ground ring (art bible 3.4 sighting ping, radius >= 4 m); one per sender; Active and Informant senders alike; never names a pawn"
+    carrier: "ServerTeamPing on AStealthPlayerController (not a pawn command) -> C-TeamView part UTeamPingViewComponent FTeamPingView{Entries[TeamSize] fixed-size {SenderHandle, PingSeq, Point, ServerTime}}; RPC payload is the point only; audience Team (IVP TeamPing row)"
+    keys: "PingLifetimeSec 8, PingBucketSize 2, PingBucketPerSec 0.5, PingRangeCm 6000, PingRangeSlackCm 150; invariant I-PNG-1 (warn)"
+    input: "IA_Ping in IMC_Common (G / D-pad Up)"
+    added: 2026-10-25
+    revised: ""
+  - name: round_team_summary
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+    definition: "FRoundResult.TeamSummary[2] = FRoundTeamSummary{StepsCompleted 0-3, EliminatedCount, WrongTargetCount}; computed at the latch, published only in the round-end step (zero before Ended); team aggregates only"
+    presentation: "HUD-E21 text-only round summary under the end banner (MVP, user decision 2026-10-25)"
+    added: 2026-10-25
     revised: ""
 
 
@@ -4140,5 +4175,80 @@ constants:
     audience: ServerOnly
     latch: Round
     note: "catalog flag per preset; lowers NpcKillStrikeLimit hard minimum to 1 in non-selectable test presets only; compiled out of Shipping (user decision 2026-10-25)"
+    added: 2026-10-25
+    revised: ""
+  - name: PingLifetimeSec
+    status: active
+    source: design/gdd/informant-pings-team-comms.md
+    referenced_by:
+      - design/gdd/informant-pings-team-comms.md
+      - design/gdd/tuning-data-config.md
+    value: 8.0
+    unit: s
+    hard_range: 4.0-12.0
+    safe_range: 6.0-10.0
+    audience: Client
+    latch: Use
+    note: "ring lifetime (art bible start 8 s); PNG F3"
+    added: 2026-10-25
+    revised: ""
+  - name: PingBucketSize
+    status: active
+    source: design/gdd/informant-pings-team-comms.md
+    referenced_by:
+      - design/gdd/informant-pings-team-comms.md
+      - design/gdd/tuning-data-config.md
+    value: 2
+    unit: count
+    hard_range: 1-5
+    safe_range: 2-3
+    audience: All
+    latch: Round
+    note: "ping burst; PNG F1 (client mirrors)"
+    added: 2026-10-25
+    revised: ""
+  - name: PingBucketPerSec
+    status: active
+    source: design/gdd/informant-pings-team-comms.md
+    referenced_by:
+      - design/gdd/informant-pings-team-comms.md
+      - design/gdd/tuning-data-config.md
+    value: 0.5
+    unit: per s
+    hard_range: 0.1-2.0
+    safe_range: 0.33-0.5
+    audience: All
+    latch: Round
+    note: "ping refill; PNG F1; I-PNG-1 warns above 0.5 when PingLifetimeSec >= 6"
+    added: 2026-10-25
+    revised: ""
+  - name: PingRangeCm
+    status: active
+    source: design/gdd/informant-pings-team-comms.md
+    referenced_by:
+      - design/gdd/informant-pings-team-comms.md
+      - design/gdd/tuning-data-config.md
+    value: 6000
+    unit: cm
+    hard_range: 2000-15000
+    safe_range: 4000-8000
+    audience: All
+    latch: Round
+    note: "client aim range and server range check; PNG F2"
+    added: 2026-10-25
+    revised: ""
+  - name: PingRangeSlackCm
+    status: active
+    source: design/gdd/informant-pings-team-comms.md
+    referenced_by:
+      - design/gdd/informant-pings-team-comms.md
+      - design/gdd/tuning-data-config.md
+    value: 150
+    unit: cm
+    hard_range: 50-400
+    safe_range: 100-200
+    audience: ServerOnly
+    latch: Round
+    note: "server range tolerance; PNG F2"
     added: 2026-10-25
     revised: ""

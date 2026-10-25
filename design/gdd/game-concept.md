@@ -3,6 +3,8 @@
 *Created: 2026-10-24*
 *Status: Reviewed — NEEDS REVISION 2026-10-25 (/design-review, full mode; revisions below applied by the reviewer, none touch a user-confirmed rule; an independent re-review is required before Approved). Director gates CD-PILLARS (CONCERNS → revisions applied), AD-CONCEPT-VISUAL (STRONG), PR-SCOPE (OPTIMISTIC), TD-FEASIBILITY (see Technical Considerations). Items the review left for the user are listed under "Review Follow-ups (2026-10-25)". Review log: `design/gdd/reviews/game-concept-review-log.md`.*
 
+*User decisions 2026-10-25 applied: `NpcCount` ~50 (changed by the user from ~40); MVP Definition items 8-11 (informant ping, round summary, reconnect indicator, walk-slower key).*
+
 *Sources: `GAME_BUILD_HANDOFF.md` (the user's outline, authoritative for confirmed rules) and the user's answers recorded in `production/session-state/active.md` on 2026-10-24.*
 
 > **Title note.** Tezcatlipoca — "Smoking Mirror" — is the Mexica deity of night, sorcery, deception and hidden identity. The title is a working name, not a branding decision.
@@ -128,7 +130,7 @@ Walk at crowd pace, scan figures, and decide: move toward the objective, close o
 
 ### Short-Term (5-15 minutes)
 
-One round. Each team works through two preliminary objective stages that force suspicious interactions in semi-public spaces (exposure is the price of progress), then both teams converge on the shared final target where contact is unavoidable. "One more round" is meant to live in a post-round reveal: who was who, and the read you almost made. The reveal is a Vertical Slice system (Post-Round Reveal & Results), not in the MVP list below; MVP rounds end with the result banner only.
+One round. Each team works through two preliminary objective stages that force suspicious interactions in semi-public spaces (exposure is the price of progress), then both teams race for the one shared final target. A team learns the final court's location only once its own preliminaries are done (Objectives Chain SP-1), so contact at the final comes from the race and from region knowledge, not from a public meeting point. "One more round" is meant to live in a post-round reveal: who was who, and the read you almost made. The reveal is a Vertical Slice system (Post-Round Reveal & Results), not in the MVP list below; MVP rounds end with the result banner only.
 
 ### Session-Level (about 40-60 minutes)
 
@@ -246,7 +248,7 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 | Consideration | Assessment |
 | ---- | ---- |
 | **Recommended Engine** | Unreal Engine 5.8 — the user's choice (project already exists in UE 5.8); C++ for server-authoritative rules, Blueprint for presentation and tuning. Foundation: Epic's Game Animation Sample (motion matching, replicated traversal on CharacterMovementComponent) |
-| **Key Technical Challenges** | ~50 motion-matched characters at parity (Pillar 1); per-viewer visibility for bushes; server-seeded runtime layout with navmesh; replicated traversal and assassination sync |
+| **Key Technical Challenges** | ~60 motion-matched characters (10 players + 50 NPCs) at parity (Pillar 1); per-viewer visibility for bushes; server-seeded runtime layout with navmesh; replicated traversal and assassination sync |
 | **Art Style** | 3D stylised-realistic ("Held Breath") |
 | **Art Pipeline Complexity** | High (custom 3D) mitigated by AI generation: Meshy MCP → Blender MCP (normalise, rig/retarget prep) → Unreal MCP |
 | **Audio Needs** | Moderate — diegetic city ambience; footsteps at player/NPC parity; reversal/kill stingers |
@@ -272,7 +274,7 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 - 5v5 with ~50 NPCs may make enemies too easy or too hard to read — crowd density and NPC behaviour variety are the tuning knobs.
 - Objectives may force reveals too strongly (everyone camps objective sites) or too weakly.
-- No time limit + elimination win + full bush invisibility + a known final site create a camping incentive (Pillar 4 must be enforced through objective structure, e.g. final site hidden until preliminaries are done).
+- No time limit + elimination win + full bush invisibility + a known final site create a camping incentive (Pillar 4 must be enforced through objective structure). The final site is now hidden until a team completes its preliminaries (Objectives Chain SP-1), but a whole team can still post campers across the candidate final courts; the structural counters and the playtest metrics (`ObjectiveEndShare`, final-dwell, kills near final candidates) are tracked in the Objectives Chain GDD and are first-5v5-playtest gate items.
 - Informant respawn loop could be griefable (informants body-blocking or spamming pings).
 - Teammate markers in small test configurations (2v2) may reveal enemies by elimination.
 
@@ -299,7 +301,9 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 ### Open Questions
 
-- Does the final objective site stay hidden until a team completes its preliminaries? (Prototype the anti-camping pressure.)
+- ~~Does the final objective site stay hidden until a team completes its preliminaries?~~ Resolved in design: yes (Objectives Chain SP-1); whether that is enough anti-camping pressure is a playtest question.
+- Do NPCs ever enter bushes? If not, entering a bush is itself a visible confession and a blind-strike target; the downstream Concealment GDD currently models NPC bush use as a red herring (T5, 0.19/min), so this is decided in design and the concept's Technical Considerations flag stands only as a reminder to keep it deliberate.
+- What is the minimum supported team size for friend groups (private-lobby fallback), and does `NpcCount` scale with it? (Extends the 2v2 measurement caveat; see Review Follow-ups.)
 - What is the right crowd count for readability at 5v5? (Perf spike + blending playtest.)
 - Kill-removal wording: "Arrested" or "Exiled"? (Narrative decision; default "Exiled" in prototype.)
 - How do informants communicate beyond pings and team chat? (Voice out of first scope.)
@@ -308,24 +312,34 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 ## MVP Definition
 
-**Core hypothesis**: Reading and exploiting crowd anonymity under objective pressure is tense and fun in online 2v2–5v5 play.
+**Core hypothesis**: Reading and exploiting crowd anonymity under objective pressure is tense and fun in online 2v2–5v5 play. As written this cannot be falsified, so it is split into two testable halves:
+
+- **MVP hypothesis (reading beats chance).** In mechanics-verified rounds a human who watches a suspect before striking hits a rival player on the first strike materially more often than a random pick among non-allies would (base rate `TeamSize / (TeamSize + NpcCount)` = 5/55 ≈ 0.09 at 5v5 with 50 NPCs, higher at smaller teams). Kill threshold for the prototype's PROCEED/PIVOT decision: if informed first-strike accuracy is not clearly above the base rate (set the exact margin before the first playtest), reading is not a skill and the concept needs rework.
+- **Vertical Slice hypothesis (the 5v5 race is tense and fun).** At the first 10-player test: at least 70 % of at least 20 rounds end by objective with a median duration near the ~12 min target, `ObjectiveEndShare` reported per team-size bucket (only 4v4 and larger count for Pillar 4, per the cross-review), and a post-session survey on tension and wanting another round. The exact thresholds are set in the test plan, not here.
 
 **Required for MVP** (user-specified, from the handoff checklist; build order is by risk — see below):
 
 1. Networked round framework: two teams of up to five, active/informant/round-ended states, objective and elimination victories, server-authoritative state
 2. Motion-matched locomotion with a small traversal set, first/third-person toggle, replicated
-3. Shared character pool with ~40 wandering NPCs and teammate-only markers
+3. Shared character pool with ~50 wandering NPCs (`NpcCount` 50) and teammate-only markers
 4. Assassination, prepared-defence reversal, NPC-kill removal, informants
 5. One complete objective chain (two preliminary stages per team + shared final)
 6. Seeded modular city layout from a small kit, identical on all clients
 7. Bush concealment, per viewer
+
+**Added to MVP by the user (decision 2026-10-25, "accept all recommendations"):**
+
+8. In-game informant ping: a momentary, place-based, team-only ground ring any Active player or informant can drop where they look (`design/gdd/informant-pings-team-comms.md`); no sticky tracking marker (decision 4 stands). Team chat stays outside the game in MVP (external voice is a stated playtest requirement); in-game text chat and voice are Vertical Slice candidates.
+9. Text-only end-of-round summary at `Ended`: the round result plus per-team totals (steps completed, members eliminated for the round, wrong targets), released only when the round ends (HUD-R14, Round `FRoundResult`).
+10. Teammate-reconnecting indicator: a team-only line and marker label while an ally is reconnecting inside the grace (Session, HUD, Teammate Markers).
+11. Keyboard "walk slower" modifier, so keyboard players can walk at the crowd's slower paces (input and locomotion; the crowd's slower paces return).
 
 **Build order (risk-first, per PR-SCOPE):** MVP-core first — (1) round framework, (4) assassination/informants, (5) objective chain on a hand-built graybox map, (3) crowd with mannequin-variant pool, (7) bushes — verified in 2-client PIE; then (2) camera toggle and traversal replication; then (3) Meshy pool swap once one Meshy character retargets end-to-end; then (6) procedural layout.
 
 **Explicitly NOT in MVP** (defer to later):
 
 - Matchmaking, lobbies beyond direct join, progression, cosmetics
-- Built-in voice chat
+- Built-in voice chat and in-game text chat (external team voice is the MVP playtest requirement; the in-game ping is MVP)
 - Dedicated servers
 - Large kits, multiple districts, elaborate parkour
 
@@ -333,10 +347,10 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 | Tier | Content | Features | Timeline |
 | ---- | ---- | ---- | ---- |
-| **MVP** | Graybox → small kit, 1 objective chain, mannequin → Meshy pool | The 7 items above, 2-client verified | 8–10 weeks expected (5 optimistic, 16+ pessimistic) |
-| **Vertical Slice** | One polished district (kit-based), 3 objective variants | Core + invite/lobby join, 10-player test, layout validation hardening | +2–3 months |
-| **Alpha** | Full kit, several objective types | All features rough; dedicated server (source-built engine); onboarding; private-lobby fallback product | +3–4 months |
-| **Full Vision** | Multiple districts, polished | Matchmaking, progression decision, polish | 18–24 months total |
+| **MVP** | Graybox → small kit, 1 objective chain, mannequin → Meshy pool | The 7 items above, mechanics verified in 2-client PIE (this checks the rules, not the 5v5 hypothesis; the 10-player test is a Vertical Slice item) | 8–10 weeks expected (5 optimistic, 16+ pessimistic; low confidence) |
+| **Vertical Slice** | One polished district (kit-based), 3 objective variants | Core + invite/lobby join, 10-player test, layout validation hardening, post-round reveal, sensitivity read of the Mexica framing (a named exit gate) | +2–3 months after MVP |
+| **Alpha** | Full kit, several objective types | All features rough; dedicated server (source-built engine); onboarding; private-lobby fallback product | +3–4 months after the Vertical Slice (cumulative about 7–11 months from the start) |
+| **Full Vision** | Multiple districts, polished | Matchmaking, progression decision, polish | 18–24 months total (cumulative, solo developer plus AI agents; the Alpha-to-Full-Vision remainder is unplanned) |
 
 ---
 
@@ -347,21 +361,35 @@ Decided autonomously while the user was away (logged in `production/session-logs
 1. **PR-SCOPE re-scope** (always-ask category, not applied): the producer recommends moving procedural layout to the vertical slice, using mannequin variants instead of Meshy characters in the MVP, and deferring traversal and the camera toggle to an "MVP-plus". Applied only as a *build order*; all 7 MVP items remain. — *Confirmed by the user 2026-10-25.*
 2. **Pillar rewordings** (CD-PILLARS): adopted "Every Advantage Is a Tell", "One Strike, Lasting Consequence", "A Race, Not a Hunt", the widened Pillar 1, and two new anti-pillars. — *Confirmed by the user 2026-10-25.*
 3. **Kill confirmation**: the attacker learns after the attack whether the target was a player or an NPC. — *Confirmed by the user 2026-10-25.*
-4. **Informant communication**: momentary player-sent pings + team chat only; no sticky tracking marker. — *Confirmed by the user 2026-10-25.*
+4. **Informant communication**: momentary player-sent pings + team chat only; no sticky tracking marker. — *Confirmed by the user 2026-10-25.* The ping is MVP (user decision 2026-10-25); team chat is external voice in MVP.
 5. **Visual anchor**: "Held Breath". — *Confirmed by the user 2026-10-25.*
 6. **Working title**: "Smoking Mirror". — *Confirmed by the user 2026-10-25.*
+
+---
+
+## Review Follow-ups (2026-10-25)
+
+Findings of the `/design-review` that the reviewer did not apply because they touch a user-confirmed item, belong in another document, or need the user's call. Full list: `design/gdd/reviews/game-concept-review-log.md`.
+
+1. **Pillar 3 wording** ("every mistake sticks" overclaims, given the two free wrong strikes; "mistakes accumulate" is suggested). Not applied: pillar wording was confirmed by the user (Pending Decision 2).
+2. **Pillar 4 validation wording** ("most playtest rounds should end by objective"): suggested measurable form is at least 70 % of at least 20 rounds, per team-size bucket. Not applied to the pillar text (same reason); the Vertical Slice hypothesis above already carries the measurable form.
+3. **Pillar 1 parity verification**: the concept gives a design test but no verification path. Recommended for the test plan: an automated player-versus-NPC parity diff (pawn class, anim graph, LOD and significance, footstep set, replicated properties visible to non-team clients), a net-emulation correction-snap comparison, and a blind clip test whose identification accuracy is statistically indistinguishable from chance.
+4. **Measurable rewrites of the Visual Identity "Test:" lines, the 10-second test and the feedback-latency claims** (tester counts, thresholds, p95 latency): belong in the art bible and test plan, not the concept.
+5. **Fellowship ranked #2**: since the user moved the informant ping into MVP (2026-10-25), its MVP delivery is teammate markers, shared steps, the team ping, the reconnect line and the round summary; a coordination playtest target (for example pings per informant-minute and pings followed by an ally strike near the ring) is still recommended. Aesthetic ranking is a creative call.
+6. **Informant agency and "huntable" framing**: informants being targetable is a confirmed rule; whether the reduced role is engaging enough (about 10 minutes of ping and chat after an early elimination) is a playtest metric to log, not a concept change.
+7. **The pitch sells a hunt while Pillar 4 says "not a hunt"**: consider putting the race into the 10-second test line when the pitch is next revised.
 
 ---
 
 ## Next Steps
 
 - [x] Concept director gates (CD-PILLARS, AD-CONCEPT-VISUAL, TD-FEASIBILITY, PR-SCOPE)
-- [ ] Fill in CLAUDE.md technology stack based on engine choice (`/setup-engine`)
-- [ ] `/art-bible` — start with the character-pool uniformity spec
-- [ ] `/design-review design/gdd/game-concept.md`
+- [x] Fill in CLAUDE.md technology stack based on engine choice (`/setup-engine`)
+- [x] `/art-bible` — `design/art/art-bible.md`
+- [x] `/design-review design/gdd/game-concept.md` — NEEDS REVISION 2026-10-25, revisions applied; re-review pending (a fresh session)
 - [ ] **Prototype core idea** (`/prototype`) — the parallel build in `Source/StealthGame` is the prototype
-- [ ] If prototype PROCEEDS: `/map-systems`
-- [ ] `/design-system` per system
+- [x] `/map-systems` — `design/gdd/systems-index.md` (done in the parallel pipeline; the PROCEED/PIVOT call on the prototype is still open)
+- [x] `/design-system` per MVP system (18 GDDs in `design/gdd/`)
 - [ ] `/vertical-slice` in Pre-Production
 - [ ] `/playtest-report`
 - [ ] `/sprint-plan new`
