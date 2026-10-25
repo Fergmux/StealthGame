@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/shared-character-locomotion.md
 > **Architecture Module**: Shared Pawn (SCL) and Animation & significance (SCL R10-R12) in `StealthGameplay/Core` (`AStealthPawn : ACharacter`, `UStealthPawnFactory`, AnimBP, tier function)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories shared-character-locomotion`
+> **Stories**: 55 stories written (47 Ready, 8 Blocked); see the Stories table below
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 9 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -71,3 +71,65 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 - Visual/Feel and UI stories have retained screenshots in `production/qa/evidence/`
   (a lead sign-off too for Visual/Feel)
 - Stories embed Control Manifest version 2026-10-25e and every governing ADR's conditional gate has reported before dependent work is marked Done
+
+## Stories
+
+Exit A (locomotion, look path, animation, net parity, factory and possession lifecycle): stories 001-044 except the Blocked ones marked below. Exit B (traversal replication): stories 045-049 and 053, 055, gated on the net-emulation spike (story 045). Starvation stories 050-051 are also gated on that spike. Story 044 is gated on spike R3 (RTX 3060-class hardware).
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | One Shared Pawn class with an identical default subobject set | Logic | Ready | ADR-0010 |
+| 002 | Body constants published: step height, floor angle, capsule, kerb and block heights | Logic | Ready | ADR-0010 |
+| 003 | Every SCL tuning key registered with its audience and latch, invariants enforced | Logic | Ready | ADR-0004 |
+| 004 | Class parity scan: no observable path branches on controller kind, with a negative control | Logic | Ready | ADR-0001 |
+| 005 | Remove the sample AnimBP's IsLocallyControlled branch for every pawn | Logic | Ready | ADR-0013 |
+| 006 | Every Shared Pawn comes from one spawn site | Integration | Ready | ADR-0010 |
+| 007 | A rejected bind destroys the pawn before FinishSpawning | Integration | Ready | ADR-0010 |
+| 008 | NPC and player pawns have identical first bunches | Integration | Ready | ADR-0003 |
+| 009 | Stop floor: every stop to rest lasts at least StopMinSec (D2) | Logic | Ready | ADR-0010 |
+| 010 | Speed tiers, pace quantisation and effective-gait clamps | Integration | Ready | ADR-0010 |
+| 011 | Release-to-stop baseline, identical for AI and for owner prediction | Integration | Ready | ADR-0010 |
+| 012 | Turn shaping, latched reversal and pivot | Integration | Ready | ADR-0010 |
+| 013 | IsRunning with hysteresis | Logic | Ready | ADR-0010 |
+| 014 | Informants walk only, cannot traverse, and SCL refuses the traversal mode | Logic | Ready | ADR-0010 |
+| 015 | Planted brace: step-into-stance entry, then no translation and no yaw | Integration | Ready | ADR-0010 |
+| 016 | Commanded displacement is separate from external displacement | Integration | Ready | ADR-0010 |
+| 017 | Idle turn-in-place after a held look beyond the yaw limit | Integration | Ready | ADR-0010 |
+| 018 | AI path following enters only through Move | Integration | Ready | ADR-0010 |
+| 019 | NPC pace distribution matches the quantised player pace set | Integration | Ready | ADR-0010 |
+| 020 | Contact brush reaction is the same for every pair of pawns | Integration | Ready | ADR-0013 |
+| 021 | One look path: HeadLook stays inside the envelope under a 700 deg/s spin | Integration | Ready | ADR-0001 |
+| 022 | RemoteViewPitch16 written from HeadLook for every pawn, clamped | Integration | Ready | ADR-0003 |
+| 023 | Observers render a continuous eased head, never 9 degree steps | Integration | Ready | ADR-0003 |
+| 024 | Idle gaze layer: four idle pawns are indistinguishable (D14) | Integration | Ready | ADR-0006 |
+| 025 | Idle gaze look-input deadzone (D31) | Logic | Ready | ADR-0006 |
+| 026 | A disconnect never destroys a pawn; a crowd AI possesses it in the same frame | Integration | Ready | ADR-0010 |
+| 027 | Stop-and-blend hand-over between player and AI | Integration | Ready | ADR-0010 |
+| 028 | Informant respawn takes over an unseen crowd pawn | Integration | Ready | ADR-0010 |
+| 029 | NPC and player pawns have the same Owner, Controller and PlayerState shape on the wire | Integration | Ready | ADR-0001 |
+| 030 | Pawn replication settings are equal for NPC and player and pinned to the parity values | Integration | Ready | ADR-0003 |
+| 031 | No dormancy, owner-only relevancy or class priority on any pawn | Integration | Ready | ADR-0003 |
+| 032 | The pawn's replicated set equals the allowlist, with no multicast RPC | Logic | Ready | ADR-0003 |
+| 033 | ActionPose writes reach observers on the same schedule for NPC and player pawns | Integration | Ready | ADR-0003 |
+| 034 | Pawn replication stays within 36 KB/s per client with 59 pawns walking | Integration | Ready | ADR-0022 |
+| 035 | Observers never see a snap, and smoothing is the same for NPC and player pawns | Integration | Ready | ADR-0003 |
+| 036 | The listen host sees a remote player's pawn as smoothly as an NPC | Integration | Ready | ADR-0003 |
+| 037 | Animation significance tier formula with hysteresis and hold | Logic | Ready | ADR-0013 |
+| 038 | Tier caps and a client-local tie key that cannot order players apart from NPCs | Logic | Ready | ADR-0013 |
+| 039 | Tier application: an AI pawn and a player pawn at equal depth are tiered identically | Integration | Ready | ADR-0013 |
+| 040 | No rendered pawn is ever frozen or unposed | Integration | Ready | ADR-0013 |
+| 041 | Identical body and animation set; no sprint, crouch or jump assets; time-based search | Logic | Ready | ADR-0013 |
+| 042 | Toggling first and third person changes nothing an observer can see | Integration | Ready | ADR-0001 |
+| 043 | Footsteps come from one step clock, identical for every pawn | Integration | Ready | ADR-0013 |
+| 044 | Animation stays within 4 ms at the reference scene on RTX 3060-class hardware | Integration | Blocked (spike R3) | ADR-0013 |
+| 045 | Net-emulation and traversal spike report (unblocks Exit B and starvation) | Integration | Ready | ADR-0010 |
+| 046 | Kit coping heights match the pawn's traversal capability heights | Logic | Ready | ADR-0010 |
+| 047 | Traversal eligibility matrix (F5) from body facing | Logic | Blocked (spike 045) | ADR-0010 |
+| 048 | An NPC vault and a player vault look identical to an observer | Integration | Blocked (spike 045) | ADR-0010 |
+| 049 | Traversal converges on every client under 100 ms lag and 1 % loss | Integration | Blocked (spike 045) | ADR-0010 |
+| 050 | A 2 s loss burst brakes the pawn by the baseline, with no dead stop and no snap | Integration | Blocked (spike 045) | ADR-0010 |
+| 051 | Recovery from a 2.5 s burst never produces a catch-up sprint | Integration | Blocked (spike 045) | ADR-0010 |
+| 052 | Crowd's Tell Matrix has an SCL-owned row for every SCL tell | Logic | Ready | ADR-0001 |
+| 053 | NPCs actually run, vault and climb in the Crowd reference scene | Integration | Blocked (spike 045) | ADR-0001 |
+| 054 | Blind observers cannot tell a walking NPC from a walking player | Visual/Feel | Ready | ADR-0001 |
+| 055 | Net-emulation pass over traversal, the look path and pawn replication (exit criterion) | Integration | Blocked (spike 045) | ADR-0010 |
