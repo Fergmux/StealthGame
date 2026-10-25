@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/camera-system.md
 > **Architecture Module**: Camera (client) in `StealthGameplay/Core` (custom `APlayerCameraManager`, eye-origin visibility mask, aim ray, view state)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories camera-system`
+> **Stories**: 25 stories (see the Stories table below)
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 10 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -54,6 +54,38 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 - **Estimate**: about 4 bottom-up days (human-paced yardstick, `production/estimates/2026-10-25_mvp-rebaseline.md`, Method B work packages); planning figure about 2.4 days after the uniform 0.6 calibration. Low confidence: no sprint history exists, so run the 2-week calibration spike and re-baseline.
 - **Acceptance criteria in the GDD**: about 40 (counted as GIVEN-form criteria in the Acceptance Criteria section).
 - **MVP build order**: risk-first per `design/gdd/systems-index.md`: graybox map and mannequin-variant pool first, then camera toggle and traversal replication, then the Meshy pool swap, then the generator.
+
+## Stories
+
+Granularity `balanced` (2-4 acceptance criteria per story; GDD criteria with several independent cases are split into sub-criteria; criteria derived from an ADR where the GDD has none are labelled "derived"). Story 011 is the mask spike (ADR-0015 OQ5/OQ10, ADR-0022 RC-3); 015 and 022 are Blocked on it, and 022 also on a RTX 3060-class machine and ADR-0022 R1-R3. QL-STORY-READY: 10 ADEQUATE (001, 003, 005, 010, 012, 013, 014, 018, 019, 022), 15 GAPS accepted as written (002, 004, 006, 007, 008, 009, 011, 015, 016, 017, 020, 021, 023, 024, 025; their QA Test Cases read "not yet defined", and the gap notes are in each story), 0 INADEQUATE. TR-camera-??? marks stories whose requirement has no registry entry (001, 003, 009, 010, 019).
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Camera tuning keys and invariants | Logic | Ready | ADR-0015 |
+| 002 | View envelope pure function | Logic | Ready | ADR-0015 |
+| 003 | Stick look response and no aim assist | Logic | Ready | ADR-0015 |
+| 004 | Camera manager shell, controller defaults and remote-controller POV | Integration | Ready | ADR-0015 |
+| 005 | Look wiring into control rotation | Integration | Ready | ADR-0015 |
+| 006 | Eye pivot, boom and collision | Logic | Ready | ADR-0015 |
+| 007 | ViewBlock channel and collision profiles | Config/Data | Ready | ADR-0015 |
+| 008 | Toggle blend, Reduce camera motion and remembered mode | Integration | Ready | ADR-0015 |
+| 009 | First-person own-head hide | Visual/Feel | Ready | ADR-0015 |
+| 010 | Field of view | Logic | Ready | ADR-0015 |
+| 011 | Camera mask spike (OQ5 / OQ10) | Integration | Ready | ADR-0015 |
+| 012 | Eye mask core | Logic | Ready | ADR-0015 |
+| 013 | Mask on the live world and IsEyeMaskVisible | Integration | Ready | ADR-0015 |
+| 014 | Concealed and informant view | Integration | Ready | ADR-0015 |
+| 015 | Mask apply path | Visual/Feel | Blocked (story 011 spike) | ADR-0015 |
+| 016 | Aim ray | Integration | Ready | ADR-0015 |
+| 017 | View state, neutral view and published fade | Integration | Ready | ADR-0015 |
+| 018 | Dying hold and ViewRelease | Integration | Ready | ADR-0015 |
+| 019 | Grade hooks | Integration | Ready | ADR-0015 |
+| 020 | Audio listener at the eye | Integration | Ready | ADR-0015 |
+| 021 | Camera mode not observable | Integration | Ready | ADR-0015 |
+| 022 | Mask performance acceptance on 3060-class hardware | Integration | Blocked (story 011 spike; 3060-class capture, ADR-0022 R1-R3) | ADR-0015 |
+| 023 | Playtests: scout parity, read parity and own-pawn finding | Integration | Ready | ADR-0015 |
+| 024 | Presentation include check and Tell Matrix review | Logic | Ready | ADR-0015 |
+| 025 | Retire the prototype camera | Integration | Ready | ADR-0015 |
 
 ## Definition of Done
 

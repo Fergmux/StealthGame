@@ -5,7 +5,7 @@ Engine: Unreal Engine 5.8 (installed 5.8.4)
 
 | Epic | Layer | System | GDD | Stories | Status |
 |------|-------|--------|-----|---------|--------|
-| [Tuning Data & Config](tuning-data-config/EPIC.md) | Foundation | Tuning Data & Config | design/gdd/tuning-data-config.md | Not yet created | Ready |
+| [Tuning Data & Config](tuning-data-config/EPIC.md) | Foundation | Tuning Data & Config | design/gdd/tuning-data-config.md | 100 stories | Ready |
 | [Participant State & Roster](participant-state-roster/EPIC.md) | Foundation | Participant State & Roster | design/gdd/participant-state-roster.md | 60 stories | Ready |
 | [Session & Travel](session-travel/EPIC.md) | Foundation | Session & Travel | design/gdd/session-travel.md | 93 stories | Ready |
 | [Information Visibility Policy](information-visibility-policy/EPIC.md) | Foundation | Information Visibility Policy | design/gdd/information-visibility-policy.md | 55 stories | Ready |
@@ -14,7 +14,7 @@ Engine: Unreal Engine 5.8 (installed 5.8.4)
 | [Round & Match Framework](round-match-framework/EPIC.md) | Core | Round & Match Framework | design/gdd/round-match-framework.md | Not yet created | Ready |
 | [Level Socket Contract](level-socket-contract/EPIC.md) | Core | Level Socket Contract | design/gdd/level-socket-contract.md | Not yet created | Ready |
 | [Shared Character & Locomotion](shared-character-locomotion/EPIC.md) | Core | Shared Character & Locomotion | design/gdd/shared-character-locomotion.md | 55 stories | Ready |
-| [Camera System](camera-system/EPIC.md) | Core | Camera System | design/gdd/camera-system.md | Not yet created | Ready |
+| [Camera System](camera-system/EPIC.md) | Core | Camera System | design/gdd/camera-system.md | 25 stories | Ready |
 | [Crowd & NPC Behaviour](crowd-npc-behaviour/EPIC.md) | Feature | Crowd & NPC Behaviour | design/gdd/crowd-npc-behaviour.md | Not yet created | Ready |
 | [Concealment (Bushes)](concealment-bushes/EPIC.md) | Feature | Concealment (Bushes) | design/gdd/concealment-bushes.md | Not yet created | Ready |
 | [Assassination & Defence Reversal](assassination-defence-reversal/EPIC.md) | Feature | Assassination & Defence Reversal | design/gdd/assassination-defence-reversal.md | Not yet created | Ready |
