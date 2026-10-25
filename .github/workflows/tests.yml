@@ -1,0 +1,71 @@
+name: Automated Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run UE Automation Tests
+    # Unreal Engine cannot run on GitHub-hosted runners. This job requires a
+    # SELF-HOSTED Windows runner with Unreal Engine 5.8 installed, and the
+    # UE_ROOT environment variable set on the runner to the engine folder
+    # (e.g. C:/Program Files/Epic Games/UE_5.8). The `windows` label keeps the
+    # job off any Linux self-hosted runner. Until such a runner is registered,
+    # this job stays queued -- that is "not run", not a pass.
+    runs-on: [self-hosted, windows]
+
+    # The quoted "{0}" in each `shell:` below: the Windows runner passes bash
+    # its script path unquoted, so with plain `shell: bash` every step fails
+    # ("No such file or directory") when the runner's folder has a space.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      # Binaries/ is gitignored, so a fresh checkout has no compiled game
+      # module: without this step the editor stops with "The game module could
+      # not be found" before running any test. UnrealBuildTool.exe, not
+      # Build.bat -- from bash, Build.bat fails on an engine path with spaces.
+      - name: Build Editor Target
+        run: |
+          "$UE_ROOT/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe" StealthGameEditor Win64 Development \
+            -Project="${{ github.workspace }}/StealthGame.uproject"
+        shell: bash --noprofile --norc -eo pipefail "{0}"
+
+      # -stdout -FullStdOutLogOutput: without them the editor prints nothing
+      # here, and the results are only in Saved/Logs/.
+      # `^StealthGame.` is a prefix match, the same filter as commands.test in
+      # project.yaml (ADR-0008). The editor exits 255 both when a test fails
+      # and when nothing matched, so the output is checked explicitly.
+      - name: Run Automation Tests
+        run: |
+          "$UE_ROOT/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "${{ github.workspace }}/StealthGame.uproject" \
+            -nullrhi -nosound \
+            -ExecCmds="Automation RunTests ^StealthGame.; Quit" \
+            -unattended -stdout -FullStdOutLogOutput 2>&1 | tee automation-output.log || true
+          if grep -q "No automation tests matched" automation-output.log; then
+            echo "::error::No automation tests matched ^StealthGame. -- NOT ASSESSED, failing the job"
+            exit 1
+          fi
+          if ! grep -q "Test Completed" automation-output.log; then
+            echo "::error::No test completion lines found -- the run did not execute tests"
+            exit 1
+          fi
+          if grep -q "Result={Fail}" automation-output.log; then
+            echo "::error::One or more automation tests failed"
+            exit 1
+          fi
+        shell: bash --noprofile --norc -eo pipefail "{0}"
+
+      - name: Upload Logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-logs
+          path: |
+            Saved/Logs/
+            automation-output.log
