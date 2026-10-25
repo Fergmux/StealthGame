@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/input-interaction-framework.md
 > **Architecture Module**: Pawn Command Interface (IIF) in `StealthGameplay/Core` (`UPawnCommandComponent`, action hub, Enhanced Input contexts)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories input-interaction-framework`
+> **Stories**: 95 stories written (91 Ready, 4 Blocked), see the Stories table below
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 5 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -60,6 +60,106 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 - **Estimate**: about 8 bottom-up days (human-paced yardstick, `production/estimates/2026-10-25_mvp-rebaseline.md`, Method B work packages); planning figure about 4.8 days after the uniform 0.6 calibration. Low confidence: no sprint history exists, so run the 2-week calibration spike and re-baseline.
 - **Acceptance criteria in the GDD**: about 80 (counted as GIVEN-form criteria in the Acceptance Criteria section).
 - **MVP build order**: risk-first per `design/gdd/systems-index.md`: graybox map and mannequin-variant pool first, then camera toggle and traversal replication, then the Meshy pool swap, then the generator.
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Command and reply types match the ADR key interfaces | Logic | Ready | ADR-0011 |
+| 002 | FPawnCommandCore runs headless with an injected clock and stub queue | Logic | Ready | ADR-0011 |
+| 003 | UActionHub registers predicates weakly and fires native events only | Logic | Ready | ADR-0011 |
+| 004 | One batched ClientCommandReplies per connection per drain, null sink discards | Integration | Ready | ADR-0011 |
+| 005 | AC 1 EntryPointSet | Logic | Ready | ADR-0011 |
+| 006 | AC 2 NoCallerIdentityParameter | Logic | Ready | ADR-0011 |
+| 007 | IA_* actions and IMC contexts exist and the trigger lint passes | Config/Data | Ready | ADR-0011 |
+| 008 | Spike V1 reports Enhanced Input edge behaviour on this project's contexts | Integration | Ready | ADR-0011 |
+| 009 | Spike V2 reports ClientSetPossessionEpoch always precedes ClientRestart | Integration | Ready | ADR-0011 |
+| 010 | Spike V3 reports server NetGUID resolution of a culled pawn | Integration | Ready | ADR-0011 |
+| 011 | Spike V5 reports Common UI Menu-mode switch yields a synchronous End | Integration | Ready | ADR-0011 |
+| 012 | AC 4 EdgesNotRepeat | Logic | Ready | ADR-0011 |
+| 013 | AC 5 FlushSendsEnd | Integration | Blocked | ADR-0011 |
+| 014 | AC 29 CameraToggleLocal | Logic | Ready | ADR-0011 |
+| 015 | AC 30 DefaultBindings | Integration | Ready | ADR-0011 |
+| 016 | AC 31 (MVP clause only; the VS deferred gate ToggleStreamParity is out of scope) | Logic | Ready | ADR-0011 |
+| 017 | AC 76, client scaling clause: IA_WalkSlower scales keyboard Move to 0.8 / 0.9 / 0.8 / 1.0 | Logic | Ready | ADR-0011 |
+| 018 | AC 76 WalkSlowerModifier, server-side clause: received magnitude, SCL pace, accel/brake, only ServerMove | Integration | Ready | ADR-0011 |
+| 019 | D37: the sample's Ctrl jog toggle is removed; Ctrl only drives walk-slower | Integration | Ready | ADR-0011 |
+| 020 | AC 6 IngressClampAndDrop | Logic | Ready | ADR-0011 |
+| 021 | AC 7 IngressNeverDropsMatchedEnd | Logic | Ready | ADR-0011 |
+| 022 | AC 59 TransportBucketAndAbuseLog | Logic | Ready | ADR-0011 |
+| 023 | AC 60 ImpossiblePayloadDisconnects | Integration | Ready | ADR-0011 |
+| 024 | AC 70 HostIngressParity | Logic | Ready | ADR-0011 |
+| 025 | AC 79 PossessionEpochGate | Logic | Ready | ADR-0011 |
+| 026 | AC 3 BoundUnboundSameEvents | Logic | Ready | ADR-0011 |
+| 027 | AC 8 StageTwoAtResolution | Logic | Ready | ADR-0011 |
+| 028 | AC 9 AllowNoEffectParity | Logic | Ready | ADR-0011 |
+| 029 | AC 10 RejectionCodeSet | Logic | Ready | ADR-0011 |
+| 030 | AC 11 AttackNeverRejectedByTarget | Logic | Ready | ADR-0011 |
+| 031 | AC 34 TokenBucketDefaults | Logic | Ready | ADR-0011 |
+| 032 | AC 12 AiNoExemption | Logic | Ready | ADR-0011 |
+| 033 | AC 13 LegalityMatrix | Logic | Ready | ADR-0011 |
+| 034 | AC 14 BraceClampsRunTraverse | Logic | Ready | ADR-0011 |
+| 035 | AC 20 SlotPriority | Logic | Ready | ADR-0011 |
+| 036 | AC 62 LockoutOccupiesSlot | Logic | Ready | ADR-0011 |
+| 037 | AC 32 HoldCompletionEpsilon | Logic | Ready | ADR-0002 |
+| 038 | AC 15 InteractEarlyReleaseResets | Logic | Ready | ADR-0011 |
+| 039 | AC 16 InteractCancelMatrix | Logic | Ready | ADR-0011 |
+| 040 | AC 37 InteractHysteresis | Logic | Ready | ADR-0011 |
+| 041 | AC 74 InteractGraceOnArrival | Logic | Ready | ADR-0011 |
+| 042 | AC 17 PrepareCooldownStampedAtExecution | Logic | Ready | ADR-0011 |
+| 043 | AC 18 PrepareMashNoReset | Logic | Ready | ADR-0011 |
+| 044 | AC 19 DebounceMerge | Logic | Ready | ADR-0002 |
+| 045 | AC 33 BraceWindowBounds | Logic | Ready | ADR-0002 |
+| 046 | AC 73 SameFrameTapIsShortBrace | Logic | Ready | ADR-0002 |
+| 047 | AC 63 ForcedRunCancelsBrace | Logic | Ready | ADR-0011 |
+| 048 | AC 78 PlantedBraceIgnoresMove | Logic | Ready | ADR-0010 |
+| 049 | AC 77 ReversalConsumesBrace | Logic | Ready | ADR-0011 |
+| 050 | AC 69 HoldTimerKeyOrder | Logic | Ready | ADR-0002 |
+| 051 | AC 64 WrongPhaseCommands | Logic | Ready | ADR-0002 |
+| 052 | AC 39 NoBraceOrTendInBush | Logic | Ready | ADR-0011 |
+| 053 | AC 40 BraceSampledAtExecution | Integration | Ready | ADR-0011 |
+| 054 | AC 41 ConcealmentHearsAttack | Integration | Ready | ADR-0011 |
+| 055 | AC 42 ObjectivesCompletion | Integration | Ready | ADR-0011 |
+| 056 | AC 43 AssassinationCooldownNoReset | Integration | Ready | ADR-0011 |
+| 057 | AC 44 RosterLegalityClass | Integration | Ready | ADR-0011 |
+| 058 | AC 45 RoundQueueOrder | Integration | Ready | ADR-0002 |
+| 059 | AC 38 CrowdBrushDoesNotCancelTend | Integration | Ready | ADR-0011 |
+| 060 | AC 71 HiddenSiteProbe | Integration | Ready | ADR-0011 |
+| 061 | AC 21 PawnRefSameAsSpot | Logic | Ready | ADR-0011 |
+| 062 | AC 22 StalePawnRefFallsBack | Logic | Ready | ADR-0011 |
+| 063 | AC 72 PawnRefGate | Logic | Ready | ADR-0011 |
+| 064 | AC 61 NoAllyAttackNoAimAssist | Integration | Ready | ADR-0011 |
+| 065 | AC 23 NoLookEvent | Logic | Ready | ADR-0011 |
+| 066 | AC 25 EventHubOrder | Logic | Ready | ADR-0011 |
+| 067 | AC 26 NoEventRelay | Integration | Ready | ADR-0011 |
+| 068 | AC 27 NoOwnerDataOnPawn | Logic | Ready | ADR-0003 |
+| 069 | AC 56 ForceNetUpdateOnWrite | Logic | Ready | ADR-0003 |
+| 070 | AC 24 ReleaseBaselineStop | Integration | Ready | ADR-0010 |
+| 071 | AC 55 ContextSwapOnStateAndPossession | Integration | Blocked | ADR-0011 |
+| 072 | AC 28 InformantPlate | UI | Ready | ADR-0011 |
+| 073 | AC 49 StrikeHintParity | UI | Ready | ADR-0021 |
+| 074 | AC 65 BraceProtectedOnlyOnConfirm | UI | Ready | ADR-0021 |
+| 075 | AC 66 PromptLegality | UI | Ready | ADR-0021 |
+| 076 | AC 67 RejectionPlate | UI | Ready | ADR-0021 |
+| 077 | AC 68 LatencyIcon | UI | Ready | ADR-0021 |
+| 078 | AC 35 RingMonotonicClamp | Logic | Ready | ADR-0011 |
+| 079 | AC 57 RingResyncAndLateConfirm | Logic | Ready | ADR-0011 |
+| 080 | AC 36 LatencyBudget | Integration | Ready | ADR-0011 |
+| 081 | AC 58 LookLatency | Integration | Ready | ADR-0011 |
+| 082 | AC 46 ActionPoseParityObserved | Integration | Ready | ADR-0003 |
+| 083 | AC 47 RejectionTimingIdentityBlind | Integration | Ready | ADR-0011 |
+| 084 | AC 48 PawnReplicatedValueParity | Integration | Ready | ADR-0003 |
+| 085 | AC 54 LookParityObserved | Integration | Ready | ADR-0003 |
+| 086 | AC 51 CommandCostPer50Pawns | Integration | Ready | ADR-0011 |
+| 087 | AC 52 ActionPoseBandwidth | Integration | Ready | ADR-0003 |
+| 088 | AC 53 OwnerStatusBandwidth | Integration | Ready | ADR-0011 |
+| 089 | AC 75 KnobRegistryConformance | Logic | Ready | ADR-0011 |
+| 090 | AC 50 TellMatrixRows | Integration | Ready | ADR-0011 |
+| 091 | Hand-over window test | Integration | Blocked | ADR-0011 |
+| 092 | Common UI mid-brace single End | Integration | Blocked | ADR-0011 |
+| 093 | Static scan and prototype retirement | Logic | Ready | ADR-0011 |
+| 094 | AStealthPlayerController carries the command transport and the client builder shell | Integration | Ready | ADR-0011 |
+| 095 | Server command log, outgoing-RPC spy and shared stub doubles exist in the test harness | Integration | Ready | ADR-0011 |
 
 ## Definition of Done
 

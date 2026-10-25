@@ -32,6 +32,8 @@ project:
 modes:
   rigor: full
   automation: autonomous
+  # 2026-10-25 main-session decision D41: balanced granularity for the remaining epics (fine produced ~95 stories per epic).
+  story_granularity: balanced
 
 engine:
   name: "Unreal"
