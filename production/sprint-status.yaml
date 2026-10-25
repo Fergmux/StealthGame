@@ -102,11 +102,11 @@ stories:
     name: "CQTest listen server with three clients runs headless under -nullrhi"
     file: "production/epics/tuning-data-config/story-019-cqtest-headless-proof.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "qa-lead"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "scl-001"
     name: "One Shared Pawn class with an identical default subobject set"
     file: "production/epics/shared-character-locomotion/story-001-pawn-class-default-subobjects.md"

@@ -1,0 +1,29 @@
+Command: powershell -ExecutionPolicy Bypass -File tools/dev/cycle.ps1 -Tests -NoLaunch (2026-10-25)
+  (runs: UnrealEditor-Cmd.exe StealthGame.uproject -ExecCmds="Automation RunTests StealthGame.; Quit" -unattended -nullrhi -stdout -FullStdOutLogOutput)
+Build: StealthGameEditor Win64 Development — Result: Succeeded
+Tests (StealthGame. filter): 25/25 Success; wall time build+tests 68 s
+  Result={Success} Name={CompileProbes} Path={StealthGame.Build.CompileProbes}
+  Result={Success} Name={FoundationLayout} Path={StealthGame.Build.FoundationLayout}
+  Result={Success} Name={HarnessModuleExclusions} Path={StealthGame.Build.HarnessModuleExclusions}
+  Result={Success} Name={IncludeLintAbc} Path={StealthGame.Build.IncludeLintAbc}
+  Result={Success} Name={LintFramework} Path={StealthGame.Build.LintFramework}
+  Result={Success} Name={PresentationGuardDefineIsPrivate} Path={StealthGame.Build.PresentationGuardDefineIsPrivate}
+  Result={Success} Name={ShippingSymbolCheck} Path={StealthGame.Build.ShippingSymbolCheck}
+  Result={Success} Name={exports an engine static mesh to FBX} Path={StealthGame.EditorTools.AssetToolset.ExportAssetToFile.exports an engine static mesh to FBX}
+  Result={Success} Name={raises when the asset is null} Path={StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the asset is null}
+  Result={Success} Name={raises when the path has no extension} Path={StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the path has no extension}
+  Result={Success} Name={returns an empty list when no play session is running} Path={StealthGame.EditorTools.PlayToolset.ListPlayInstances.returns an empty list when no play session is running}
+  Result={Success} Name={raises when no play session is running} Path={StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when no play session is running}
+  Result={Success} Name={raises when the command is empty} Path={StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when the command is empty}
+  Result={Success} Name={OneServerAndThreeClientWorldsAreUp} Path={StealthGame.Harness.PIE.ListenServerThreeClients.OneServerAndThreeClientWorldsAreUp}
+  Result={Success} Name={FakeClockAdvancesOnlyWhenTold} Path={StealthGame.Harness.FakeClockAdvancesOnlyWhenTold}
+  Result={Success} Name={FaultSinkTeardownAssertion} Path={StealthGame.Harness.FaultSinkTeardownAssertion}
+  Result={Success} Name={LogCaptureAssertsWarningByKey} Path={StealthGame.Harness.LogCaptureAssertsWarningByKey}
+  Result={Success} Name={ModuleLoadsInDevelopment} Path={StealthGame.Harness.ModuleLoadsInDevelopment}
+  Result={Success} Name={NegativeControlDetected} Path={StealthGame.Harness.NegativeControlDetected}
+  Result={Success} Name={Assassination} Path={StealthGame.Rules.Assassination}
+  Result={Success} Name={Defence} Path={StealthGame.Rules.Defence}
+  Result={Success} Name={EliminationVictory} Path={StealthGame.Rules.EliminationVictory}
+  Result={Success} Name={NpcKillRemoval} Path={StealthGame.Rules.NpcKillRemoval}
+  Result={Success} Name={ObjectiveStages} Path={StealthGame.Rules.ObjectiveStages}
+  Result={Success} Name={TeamsAndMovement} Path={StealthGame.Rules.TeamsAndMovement}

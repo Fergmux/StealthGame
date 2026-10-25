@@ -3,7 +3,7 @@ using UnrealBuildTool;
 // ADR-0007 section 1 / ADR-0008 sections 1 and 3: the multi-client and multi-process test harness.
 // Excluded from Shipping and Test by the .uproject TargetConfigurationDenyList; never listed in a
 // Target.cs ExtraModuleNames and never a dependency of a runtime module. Private dependencies are
-// the runtime modules that exist so far; StealthGame and CQTest join with story tdc-019.
+// all runtime modules, including the composition root StealthGame (AStealthGameMode for T2 tests).
 public class StealthTestHarness : ModuleRules
 {
 	public StealthTestHarness(ReadOnlyTargetRules Target) : base(Target)
@@ -12,7 +12,17 @@ public class StealthTestHarness : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"Core", "CoreUObject", "Engine", "StealthFoundation", "StealthGameplay", "StealthPresentation"
+			"Core", "CoreUObject", "Engine", "NetCore", "StealthFoundation", "StealthGameplay", "StealthPresentation", "StealthGame"
 		});
+
+		// ADR-0008 section 1, T2: CQTest's in-process PIE network tests exist only in editor builds
+		// (ENABLE_PIE_NETWORK_TEST needs WITH_EDITOR). UnrealEd loads the fixture map (story tdc-019).
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(new string[] { "CQTest", "UnrealEd" });
+		}
+
+		// CQTest's PIENetworkComponent.h includes Iris replication headers.
+		SetupIrisSupport(Target);
 	}
 }

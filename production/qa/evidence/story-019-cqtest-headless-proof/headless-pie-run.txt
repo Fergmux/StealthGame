@@ -1,0 +1,46 @@
+# ADR-0008 Verification 1: CQTest PIE network test headless under -nullrhi (2026-10-25)
+# Command: "C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" StealthGame.uproject -ExecCmds="Automation RunTests StealthGame.Harness.PIE; Quit" -unattended -nullrhi -stdout -FullStdOutLogOutput
+# Isolated run: process exit 0, 25 s wall including editor start-up. Log excerpt (LogCqTest steps, PIE start, joins, result):
+2008:[2026.10.25-06.46.23:681][  0]Cmd: MAP LOAD FILE="../../../../../../Users/fergm/Documents/Unreal Projects/StealthGame/Content/StealthGame/Maps/L_Prototype.umap" TEMPLATE=0 SHOWPROGRESS=1 FEATURELEVEL=4
+2471:[2026.10.25-06.46.39:513][586]LogAutomationCommandLine: Display: Found 1 automation tests based on 'StealthGame.Harness.PIE'
+2482:[2026.10.25-06.46.39:520][587]LogCqTest: Before Test
+2483:[2026.10.25-06.46.39:528][588]LogCqTest: Running Stop PIE
+2484:[2026.10.25-06.46.39:536][589]LogCqTest: Running Load fixture map
+2485:[2026.10.25-06.46.39:536][589]Cmd: MAP LOAD FILE="../../../../../../Users/fergm/Documents/Unreal Projects/StealthGame/Content/StealthGame/Maps/L_Prototype.umap" TEMPLATE=0 SHOWPROGRESS=0 FEATURELEVEL=4
+2498:[2026.10.25-06.46.39:814][590]LogCqTest: Running Start PIE
+2549:[2026.10.25-06.46.39:936][590]LogWorld: Bringing World /Game/StealthGame/Maps/UEDPIE_0_L_Prototype.L_Prototype up for play (max tick rate 0) at 2026.10.25-06.46.39
+2571:[2026.10.25-06.46.39:994][590]PIE: Server logged in
+2627:[2026.10.25-06.46.40:054][590]PIE: Client logged in
+2682:[2026.10.25-06.46.40:096][590]PIE: Client logged in
+2737:[2026.10.25-06.46.40:138][590]PIE: Client logged in
+2754:[2026.10.25-06.46.40:181][591]LogCqTest: Starting Set Worlds
+2794:[2026.10.25-06.46.40:214][594]LogNet: Welcomed by server (Level: /Game/StealthGame/Maps/UEDPIE_0_L_Prototype, Game: /Script/StealthGame.StealthGameMode)
+2804:[2026.10.25-06.46.40:302][594]LogWorld: Bringing World /Game/StealthGame/Maps/UEDPIE_1_L_Prototype.L_Prototype up for play (max tick rate 0) at 2026.10.25-06.46.40
+2809:[2026.10.25-06.46.40:302][594]LogNet: Welcomed by server (Level: /Game/StealthGame/Maps/UEDPIE_0_L_Prototype, Game: /Script/StealthGame.StealthGameMode)
+2819:[2026.10.25-06.46.40:390][594]LogWorld: Bringing World /Game/StealthGame/Maps/UEDPIE_2_L_Prototype.L_Prototype up for play (max tick rate 0) at 2026.10.25-06.46.40
+2824:[2026.10.25-06.46.40:391][594]LogNet: Welcomed by server (Level: /Game/StealthGame/Maps/UEDPIE_0_L_Prototype, Game: /Script/StealthGame.StealthGameMode)
+2834:[2026.10.25-06.46.40:481][594]LogWorld: Bringing World /Game/StealthGame/Maps/UEDPIE_3_L_Prototype.L_Prototype up for play (max tick rate 0) at 2026.10.25-06.46.40
+2839:[2026.10.25-06.46.40:486][594]LogCqTest: Finished Set Worlds after 305 milliseconds
+2878:[2026.10.25-06.46.40:684][595]LogCqTest: Running Setup Packet Settings
+2879:[2026.10.25-06.46.40:711][596]LogCqTest: Running Connect Clients to Server
+2894:[2026.10.25-06.46.40:739][597]LogCqTest: Starting Await Clients Ready
+2895:[2026.10.25-06.46.40:739][597]LogCqTest: Finished Await Clients Ready after 0 milliseconds
+2916:[2026.10.25-06.46.40:759][598]LogCqTest: Running Record ready frame
+2917:[2026.10.25-06.46.40:767][599]LogCqTest: RunTest
+2918:[2026.10.25-06.46.40:775][600]LogCqTest: Starting Settle frames
+2925:[2026.10.25-06.46.41:018][628]LogCqTest: Finished Settle frames after 243 milliseconds
+2926:[2026.10.25-06.46.41:026][629]LogCqTest: Running Server world
+2927:[2026.10.25-06.46.41:033][630]LogCqTest: Starting Client game state replicated
+2928:[2026.10.25-06.46.41:033][630]LogCqTest: Finished Client game state replicated after 0 milliseconds
+2929:[2026.10.25-06.46.41:042][631]LogCqTest: Running Client worlds
+2930:[2026.10.25-06.46.41:049][632]LogCqTest: Running World census
+2931:[2026.10.25-06.46.41:058][633]LogCqTest: Running After Test
+2932:[2026.10.25-06.46.41:067][634]LogCqTest: Running Restore Editor State
+3018:[2026.10.25-06.46.41:367][635]LogCqTest: Tearing Down Test
+3023:[2026.10.25-06.46.41:384][636]LogAutomationController: Display: Test Completed. Result={Success} Name={OneServerAndThreeClientWorldsAreUp} Path={StealthGame.Harness.PIE.ListenServerThreeClients.OneServerAndThreeClientWorldsAreUp}
+3037:[2026.10.25-06.46.41:387][637]LogAutomationCommandLine: Display: **** TEST COMPLETE. EXIT CODE: 0 ****
+
+# Watched to fail (mutation, reverted): census assertion changed to expect 4 client worlds; same command:
+3023:[2026.10.25-06.47.32:484][637]LogAutomationController: Error: Test Completed. Result={Fail} Name={OneServerAndThreeClientWorldsAreUp} Path={StealthGame.Harness.PIE.ListenServerThreeClients.OneServerAndThreeClientWorldsAreUp}
+3198:[2026.10.25-06.47.32:486][638]LogAutomationController: Error: exactly three distinct client PIE worlds [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\PIE\ListenServerThreeClientsTest.cpp(134)]
+3222:[2026.10.25-06.47.32:488][638]LogAutomationCommandLine: Display: **** TEST COMPLETE. EXIT CODE: -1 ****
