@@ -1,12 +1,12 @@
 # Story 006: Spike S12, the cull delay and un-cull lead are recomputed from measured L99
 
 > **Epic**: Information Visibility Policy
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -60,8 +60,10 @@ IVP F3 fixes the concealment cull delay at `D_cull = q * ceil((L99 + 1/f_net) / 
 
 ## Files
 
-- `production/qa/spikes/<date>_S12.md` (the verdict)
-- Throwaway measurement code reusing story-004's rig
+*Changed by /dev-story (2026-10-25).*
+
+- `production/qa/spikes/2026-10-25_S12.md` (the verdict)
+- Measurement on story 005's rig (`Source/StealthTestHarness/Private/Scenarios/StealthHarnessScenarioS10.cpp`) with packet timing (`Spikes/Session/StealthSpikeMeasure.{h,cpp}`, `StealthTimingIpConnection.h`); analyser `tools/ci/mp/analyze_net.py`
 
 ---
 
@@ -81,7 +83,7 @@ IVP F3 fixes the concealment cull delay at `D_cull = q * ceil((L99 + 1/f_net) / 
 **Required evidence**:
 - Integration: a written spike report `production/qa/spikes/<date>_S12.md` with the measurements (a documented measurement).
 
-**Status**: [ ] Not yet created
+**Status**: [x] Report with the measurements — `production/qa/spikes/2026-10-25_S12.md`
 
 ---
 
@@ -89,3 +91,14 @@ IVP F3 fixes the concealment cull delay at `D_cull = q * ceil((L99 + 1/f_net) / 
 
 - Depends on: `production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md`, `production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md`
 - Unlocks: `production/epics/information-visibility-policy/story-025-concealment-cull-timing.md`, `production/epics/information-visibility-policy/story-029-uncull-lead-bound.md`
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Verdict**: CONFIRMED 250/250 — L99 (packet-level p99 one-way server→client, 3 clients, 640 s per profile on the cycling cull rig) = 133.4 ms under StealthLeak1 and StealthLeak2; F3 D_cull = 50·ceil((133.4 + 66.7)/50) = 250 ms; F4 T_uncull = 133.4 + 66.7 + 20 (story 005's T_reopen p99) = 220 ms ≤ 250 ms. No TDC/Concealment change request. CONCERN: at the data level 1-2 % of re-opens are delayed one resend (end-to-end p99 ≈ 0.4 s under StealthLeak2); recorded for story 029.
+**Criteria**: 1/1 (AC-1)
+**Decisions**: L99 measured at the client's packet processing time (includes 60 fps frame quantisation); T_reopen taken as story 005's measured p99 (≈ 20 ms) — story 005 reported FAIL on other questions, but its T_reopen measurement stands.
+**Deviations**: none.
+**Test Evidence**: `production/qa/evidence/story-006-spike-s12-cull-delay-vs-measured-l99/` (per-run packet analysis JSON, launch lines).
+**Run result**: N/A — headless latency measurement; nothing player-visible.
+**Reviewed by**: focused self-review (unattended run).
+**Unblocks**: IVP story 025 → Ready (S12 was its only open gate); stories 029 and concealment 027 keep their S10/Concealment gates.

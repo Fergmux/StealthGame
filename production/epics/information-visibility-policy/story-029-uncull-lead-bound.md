@@ -1,7 +1,7 @@
 # Story 029: The un-culled pawn exists on the non-ally client before the exit-transition's outward leaf-plane instant
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: [Dep:Concealment] needs the Concealment exit-transition asset (concealment-bushes); spikes story-005 (S10, T_reopen) and story-006 (S12) have not reported.
+> **Status**: Blocked — BLOCKED: [Dep:Concealment] needs the Concealment exit-transition asset (concealment-bushes); spikes story-005 (S10, T_reopen) and story-006 (S12) have not reported. Update 2026-10-25: S12 reported (production/qa/spikes/2026-10-25_S12.md, 250/250 confirmed, measured L99 133.4 ms, T_reopen p99 ~20 ms); S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) and needs a superseding ADR to ADR-0003, so this story stays blocked.
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M

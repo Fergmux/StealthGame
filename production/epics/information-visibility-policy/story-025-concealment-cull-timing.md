@@ -1,7 +1,7 @@
 # Story 025: Each cull lands at the first global grid point at or after t0 + 250 ms, with withheld acks shifting nothing and early exit cancelling it (provisional on S9, S12)
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spike story-006 (S12) has not reported. S9 (story-004) reported PASS 2026-10-25 (production/qa/spikes/2026-10-25_S9.md)
+> **Status**: Ready — unblocked 2026-10-25: spike story-006 (S12) reported (production/qa/spikes/2026-10-25_S12.md): ConcealCullDelayMs = 250 ms and T_uncull = 250 ms confirmed from measured L99 = 133.4 ms under StealthLeak1/2. S9 (story-004) reported PASS 2026-10-25 (production/qa/spikes/2026-10-25_S9.md).
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
