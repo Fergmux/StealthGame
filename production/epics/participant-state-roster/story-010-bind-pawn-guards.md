@@ -1,12 +1,12 @@
 # Story 010: BindPawn rejects an already-bound participant, an in-use pawn and a round-ended participant
 
 > **Epic**: Participant State & Roster
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -31,6 +31,7 @@
 - Forbidden: Never call `RestartPlayer` or `SpawnDefaultPawnFor` (ADR-0005, ADR-0010)
 - Forbidden: Never pass Event Log content, `DealDigest`, server sub-seeds, bindings or mailbox order to `UE_LOG`/`UE_LOGF`/`ensureMsgf`/`checkf`/`ClientMessage`/`TRACE_*`/`CSV_*`/`SCOPE_CYCLE_COUNTER` names (ADR-0007)
 - Guardrail: Queue drain + staging + teardown + Roster flush: <= 0.5 ms listen-host game thread (ADR-0002)
+- Required (manifest 2026-10-25f, ADR-0005 Technical Setup 2026-10-25b): `FRosterCore::RequestTransition` is the only writer of lifecycle state with the R8 precedence; mutations on the server game thread with FIFO dispatch after the outermost call and EventSeq +1 per event; O(1) allocation-free queries through a pre-sized binding table; client queries return 0/false/NotTargetable(Stale) and fault (re-read at implementation; 2026-10-25g adds nothing for the Roster)
 
 ---
 
@@ -38,7 +39,7 @@
 
 *From GDD `design/gdd/participant-state-roster.md`, scoped to this story:*
 
-- [ ] **AC-PSR-22** [Core] `StealthGame.Roster.BindPawnGuards`: GIVEN, in turn, a participant that already has a live pawn, a pawn that is BoundLive or Retired, and a RoundEnded participant, WHEN `BindPawn` is called, THEN `Rejected_AlreadyBound` / `Rejected_PawnInUse` / `Rejected_WrongState` and the binding table is unchanged (R9, I3).
+- [x] **AC-PSR-22** [Core] `StealthGame.Roster.BindPawnGuards`: GIVEN, in turn, a participant that already has a live pawn, a pawn that is BoundLive or Retired, and a RoundEnded participant, WHEN `BindPawn` is called, THEN `Rejected_AlreadyBound` / `Rejected_PawnInUse` / `Rejected_WrongState` and the binding table is unchanged (R9, I3).
 
 ---
 
@@ -80,10 +81,13 @@
 planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
 checks scope against it.*
 
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (changed: binding table, `BindPawn`, result codes, core test seam for lifecycle and Retired fixtures)
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp` (changed)
-- `Source/StealthFoundation/Private/Roster/StealthRosterDeps.h` (changed: pawn handle and liveness provider if not complete from story 001)
-- `Source/StealthFoundation/Private/Tests/Roster/StealthBindPawnGuardsTest.cpp` (new: class `FRosterBindPawnGuardsTest`, test name `StealthGame.Roster.BindPawnGuards`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (`FRosterCore`, `FParticipantRecord` and its X-macro field list, result/event/call enums, core test seams under `WITH_STEALTH_TEST_SEAMS`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp`
+- `Source/StealthFoundation/Private/Roster/StealthRosterDeps.h` (pawn handle, `IRosterPawnLiveness`, `IRosterAuthority`, `IRosterThreadCheck`, `IRosterRandom`, `IRosterRoundPhase` (D43), `FRosterCoreDeps`; clock and fault sink reuse `IStealthClock`/`IStealthFaultSink`)
+- `Source/StealthFoundation/Public/View/StealthRosterTypes.h` (`FParticipantId`, `FIdentityKey`, `EParticipantState`, `ERosterTeam`)
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h` (appended `RosterNotAuthority`=5, `RosterWrongThread`=6, `RosterLiveBindingCleared`=7, `RosterUnrecognisedState`=8)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterTestFixture.h` (shared fakes and fixture; reuses `FFakeStealthClock`, `FStealthRecordingFaultSink`)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthBindPawnGuardsTest.cpp` (test `StealthGame.Roster.BindPawnGuards`)
 
 ---
 
@@ -109,7 +113,7 @@ checks scope against it.*
 **Required evidence**:
 - Logic: automated test `Source/StealthFoundation/Private/Tests/Roster/StealthBindPawnGuardsTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). `qa.level` is full, so the test is required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Roster.BindPawnGuards`, 2026-10-25)
 
 ---
 
@@ -117,3 +121,14 @@ checks scope against it.*
 
 - Depends on: `production/epics/participant-state-roster/story-008-registration-and-team-events.md`
 - Unlocks: `production/epics/participant-state-roster/story-011-tombstone-generation-and-release.md`, `production/epics/participant-state-roster/story-012-clear-binding-while-live.md`, `production/epics/participant-state-roster/story-014-transition-active-to-informant.md`, `production/epics/participant-state-roster/story-024-stale-epoch-rejected.md`, `production/epics/participant-state-roster/story-029-reclaim-core.md`, `production/epics/participant-state-roster/story-031-legality-class-and-adoption.md`, `production/epics/participant-state-roster/story-043-player-pawn-bound-before-visible.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (participant-state-roster batch 001-014: one core built and closed together)
+**Criteria**: 1/1 passing (AC-PSR-22: AlreadyBound, PawnInUse for BoundLive and Retired, WrongState for RoundEnded, each with the snapshot unchanged; extras: null/destroyed/pending-kill PawnInUse, precedence StaleEpoch > WrongState > PawnInUse, UnknownParticipant; no event; the control bind applies)
+**Decisions**: The whole R9 BindPawn precedence is one function. The binding table is keyed by the full handle (ObjectKey + Generation) and reserved at BeginMatch (`FRosterCoreDeps::PawnTableCapacity`); the open-addressing and two-probe budget remains story 033's.
+**Deviations**: None. Manifest Version updated to 2026-10-25g.
+**Test Evidence**: `production/qa/evidence/story-010-bind-pawn-guards/full-suite.txt` (build `Result: Succeeded`; 84/84 `StealthGame.` tests Success, 70 existing + 14 Roster) and `stamp.txt`
+**Run result**: N/A — plain-C++ server core with no world, actor or screen; nothing a player can see until the facade (story 061) and the C-TeamView push step (story 062) exist
+**Reviewed by**: focused code review (self-applied, unattended run): one defect fixed (StrikeLimit release aliasing, story 014); `TryReclaim`, `DisposeLivePawnOnElimination` and `EmitStateChanged` extracted to keep methods short; `RequestTransition` kept as one function by design (the R8 precedence in one place)

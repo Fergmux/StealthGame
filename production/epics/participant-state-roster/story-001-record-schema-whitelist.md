@@ -1,12 +1,12 @@
 # Story 001: Participant record fields equal the R3 whitelist exactly
 
 > **Epic**: Participant State & Roster
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,6 +32,7 @@
 - Forbidden: Never promote prototype code (`Source/StealthGame`) into a production module before its governing ADR is Accepted; promotion is a rewrite, not a file move (ADR-0007)
 - Forbidden: Never let a `Public/View/` header include a `Server/` header (ADR-0007)
 - Guardrail: Tests: per-commit pipeline <= 10 min (ADR-0008)
+- Required (manifest 2026-10-25f, ADR-0005 Technical Setup 2026-10-25b): `FRosterCore::RequestTransition` is the only writer of lifecycle state with the R8 precedence; mutations on the server game thread with FIFO dispatch after the outermost call and EventSeq +1 per event; O(1) allocation-free queries through a pre-sized binding table; client queries return 0/false/NotTargetable(Stale) and fault (re-read at implementation; 2026-10-25g adds nothing for the Roster)
 
 ---
 
@@ -39,7 +40,7 @@
 
 *From GDD `design/gdd/participant-state-roster.md`, scoped to this story:*
 
-- [ ] **AC-PSR-01** [Core] `StealthGame.Roster.RecordSchemaWhitelist`: GIVEN the participant record type, WHEN its reflected fields are enumerated, THEN they equal R3's field set exactly, with no strike, defence, concealment or objective field (R1, R3).
+- [x] **AC-PSR-01** [Core] `StealthGame.Roster.RecordSchemaWhitelist`: GIVEN the participant record type, WHEN its reflected fields are enumerated, THEN they equal R3's field set exactly, with no strike, defence, concealment or objective field (R1, R3).
 
 ---
 
@@ -77,11 +78,13 @@
 planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
 checks scope against it.*
 
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (new: `FRosterCore`, `FParticipantRecord`)
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp` (new)
-- `Source/StealthFoundation/Private/Roster/StealthRosterDeps.h` (new: injected dependency interfaces and the opaque pawn handle)
-- `Source/StealthFoundation/Public/View/StealthRosterTypes.h` (new: `FParticipantId`, `FIdentityKey`; `Stealth` prefix, unique name per ADR-0007)
-- `Source/StealthFoundation/Private/Tests/Roster/StealthRecordSchemaWhitelistTest.cpp` (new: class `FRosterRecordSchemaWhitelistTest`, test name `StealthGame.Roster.RecordSchemaWhitelist`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (`FRosterCore`, `FParticipantRecord` and its X-macro field list, result/event/call enums, core test seams under `WITH_STEALTH_TEST_SEAMS`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp`
+- `Source/StealthFoundation/Private/Roster/StealthRosterDeps.h` (pawn handle, `IRosterPawnLiveness`, `IRosterAuthority`, `IRosterThreadCheck`, `IRosterRandom`, `IRosterRoundPhase` (D43), `FRosterCoreDeps`; clock and fault sink reuse `IStealthClock`/`IStealthFaultSink`)
+- `Source/StealthFoundation/Public/View/StealthRosterTypes.h` (`FParticipantId`, `FIdentityKey`, `EParticipantState`, `ERosterTeam`)
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h` (appended `RosterNotAuthority`=5, `RosterWrongThread`=6, `RosterLiveBindingCleared`=7, `RosterUnrecognisedState`=8)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterTestFixture.h` (shared fakes and fixture; reuses `FFakeStealthClock`, `FStealthRecordingFaultSink`)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRecordSchemaWhitelistTest.cpp` (test `StealthGame.Roster.RecordSchemaWhitelist`)
 
 ---
 
@@ -111,7 +114,7 @@ checks scope against it.*
 **Required evidence**:
 - Logic: automated test `Source/StealthFoundation/Private/Tests/Roster/StealthRecordSchemaWhitelistTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). `qa.level` is full, so the test is required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Roster.RecordSchemaWhitelist`, 2026-10-25)
 
 ---
 
@@ -119,3 +122,14 @@ checks scope against it.*
 
 - Depends on: None within this epic. Cross-epic: `production/epics/tuning-data-config/EPIC.md` (StealthFoundation module skeleton, test harness and CI)
 - Unlocks: `production/epics/participant-state-roster/story-002-begin-match-and-register.md`, `production/epics/participant-state-roster/story-003-off-game-thread-mutation-rejected.md`, `production/epics/participant-state-roster/story-037-team-view-serialized-size.md`, `production/epics/participant-state-roster/story-039-no-rpc-carries-participant-id.md`, `production/epics/participant-state-roster/story-040-player-state-replicated-allowlist.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (participant-state-roster batch 001-014: one core built and closed together)
+**Criteria**: 1/1 passing (AC-PSR-01: record fields equal the checked-in R3 expected-name fixture, 13 record fields plus 3 Connection sub-fields, types where R3 gives them; deny-list strike/defence/conceal/objective/MatchId/RoundEpoch/Tally/RespawnDue; `FParticipantId` and `FIdentityKey` distinct class types, 128-bit key)
+**Decisions**: Enumeration by an X-macro (`STEALTH_ROSTER_RECORD_FIELDS`) that both declares the members and emits the name/type list; no hand-kept second list. MatchId/RoundEpoch/EventSeq live on `FRosterCore` (deny side). The binding row is the record field `PawnBinding` (live pawn); tombstones live in the core's table. UE naming: `bInRound`, `DisconnectedAtMs`. Clock and fault sink reuse the TDC seams (`IStealthClock`, `IStealthFaultSink`) instead of the planned `IRosterClock`/`IRosterFaultSink`.
+**Deviations**: Built together with stories 002-014 in one core (decision D41 shared commit). Manifest Version updated to 2026-10-25g.
+**Test Evidence**: `production/qa/evidence/story-001-record-schema-whitelist/full-suite.txt` (build `Result: Succeeded`; 84/84 `StealthGame.` tests Success, 70 existing + 14 Roster) and `stamp.txt`
+**Run result**: N/A — plain-C++ server core with no world, actor or screen; nothing a player can see until the facade (story 061) and the C-TeamView push step (story 062) exist
+**Reviewed by**: focused code review (self-applied, unattended run): one defect fixed (StrikeLimit release aliasing, story 014); `TryReclaim`, `DisposeLivePawnOnElimination` and `EmitStateChanged` extracted to keep methods short; `RequestTransition` kept as one function by design (the R8 precedence in one place)

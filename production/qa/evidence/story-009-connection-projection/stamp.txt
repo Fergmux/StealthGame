@@ -1,0 +1,8 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Roster/StealthRosterCore.h edfc1ff43b6f152bba6899cc3d5a52643dda8ffc
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp 7ebe844b8103bca2119c4af5680dbb0e1bfd52a4
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Roster/StealthRosterDeps.h c51d2575b451409dd617fc43e2332b64b01c2cbc
+Reviewed-Content-Hash: Source/StealthFoundation/Public/View/StealthRosterTypes.h 8e5c8f0ee7dd15b47a6a32aaeb707612e1d1324c
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthFaultSink.h 9f57ff78a6d1783b79f00d1212fa8b12c376a1e6
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Roster/StealthRosterTestFixture.h f5ae831c7d0a726c5222182c8953cab17bf33cb3
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Roster/StealthConnectionProjectionTest.cpp 436383cd3218aa6d2b1a04ee90535e75f39e9f3c
+Story: production/epics/participant-state-roster/story-009-connection-projection.md

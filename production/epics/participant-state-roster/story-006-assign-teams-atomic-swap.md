@@ -1,12 +1,12 @@
 # Story 006: A batch swap of two players across full teams applies atomically
 
 > **Epic**: Participant State & Roster
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -29,6 +29,7 @@
 - Forbidden: Never put team, state, connection, appearance or pawn data on a PlayerState; never give NPCs a PlayerState (ADR-0001)
 - Forbidden: Never store anything authoritative on a PlayerController, PlayerState, GameMode or GameState; never carry match state across travel on them (ADR-0005)
 - Guardrail: Session: silence clocks and ack bookkeeping inside the 0.5 ms line (ADR-0005)
+- Required (manifest 2026-10-25f, ADR-0005 Technical Setup 2026-10-25b): `FRosterCore::RequestTransition` is the only writer of lifecycle state with the R8 precedence; mutations on the server game thread with FIFO dispatch after the outermost call and EventSeq +1 per event; O(1) allocation-free queries through a pre-sized binding table; client queries return 0/false/NotTargetable(Stale) and fault (re-read at implementation; 2026-10-25g adds nothing for the Roster)
 
 ---
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/participant-state-roster.md`, scoped to this story:*
 
-- [ ] **AC-PSR-08** [Core] `StealthGame.Roster.AssignTeamsAtomicSwap`: GIVEN teams 5/5, WHEN one batch swaps A (team 0) with F (team 1), THEN `Applied` and still 5/5. WHEN the same two moves are sent one at a time, THEN the first returns `Rejected_TeamFull` (F5).
+- [x] **AC-PSR-08** [Core] `StealthGame.Roster.AssignTeamsAtomicSwap`: GIVEN teams 5/5, WHEN one batch swaps A (team 0) with F (team 1), THEN `Applied` and still 5/5. WHEN the same two moves are sent one at a time, THEN the first returns `Rejected_TeamFull` (F5).
 
 ---
 
@@ -71,9 +72,13 @@
 planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
 checks scope against it.*
 
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (changed: `AssignTeams` valid path, final-state validation helper)
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp` (changed)
-- `Source/StealthFoundation/Private/Tests/Roster/StealthAssignTeamsAtomicSwapTest.cpp` (new: class `FRosterAssignTeamsAtomicSwapTest`, test name `StealthGame.Roster.AssignTeamsAtomicSwap`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (`FRosterCore`, `FParticipantRecord` and its X-macro field list, result/event/call enums, core test seams under `WITH_STEALTH_TEST_SEAMS`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp`
+- `Source/StealthFoundation/Private/Roster/StealthRosterDeps.h` (pawn handle, `IRosterPawnLiveness`, `IRosterAuthority`, `IRosterThreadCheck`, `IRosterRandom`, `IRosterRoundPhase` (D43), `FRosterCoreDeps`; clock and fault sink reuse `IStealthClock`/`IStealthFaultSink`)
+- `Source/StealthFoundation/Public/View/StealthRosterTypes.h` (`FParticipantId`, `FIdentityKey`, `EParticipantState`, `ERosterTeam`)
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h` (appended `RosterNotAuthority`=5, `RosterWrongThread`=6, `RosterLiveBindingCleared`=7, `RosterUnrecognisedState`=8)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterTestFixture.h` (shared fakes and fixture; reuses `FFakeStealthClock`, `FStealthRecordingFaultSink`)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthAssignTeamsAtomicSwapTest.cpp` (test `StealthGame.Roster.AssignTeamsAtomicSwap`)
 
 ---
 
@@ -99,7 +104,7 @@ checks scope against it.*
 **Required evidence**:
 - Logic: automated test `Source/StealthFoundation/Private/Tests/Roster/StealthAssignTeamsAtomicSwapTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). `qa.level` is full, so the test is required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Roster.AssignTeamsAtomicSwap`, 2026-10-25)
 
 ---
 
@@ -107,3 +112,14 @@ checks scope against it.*
 
 - Depends on: `production/epics/participant-state-roster/story-005-locked-roster-is-frozen.md`
 - Unlocks: `production/epics/participant-state-roster/story-007-assign-teams-all-or-nothing.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (participant-state-roster batch 001-014: one core built and closed together)
+**Criteria**: 1/1 passing (AC-PSR-08: batch swap A<->F on 5/5 Applied and still 5/5; the first single move on a fresh 5/5 fixture Rejected_TeamFull with the store unchanged)
+**Decisions**: The full R5 order is implemented once in `ValidateTeamBatch` (locked, unknown, invalid, full); the final-state F5 overlay counts non-Dormant records only.
+**Deviations**: None. Manifest Version updated to 2026-10-25g.
+**Test Evidence**: `production/qa/evidence/story-006-assign-teams-atomic-swap/full-suite.txt` (build `Result: Succeeded`; 84/84 `StealthGame.` tests Success, 70 existing + 14 Roster) and `stamp.txt`
+**Run result**: N/A — plain-C++ server core with no world, actor or screen; nothing a player can see until the facade (story 061) and the C-TeamView push step (story 062) exist
+**Reviewed by**: focused code review (self-applied, unattended run): one defect fixed (StrikeLimit release aliasing, story 014); `TryReclaim`, `DisposeLivePawnOnElimination` and `EmitStateChanged` extracted to keep methods short; `RequestTransition` kept as one function by design (the R8 precedence in one place)

@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/participant-state-roster.md
 > **Architecture Module**: Roster in `StealthFoundation` (game-instance `ParticipantRecord` store, C-Public and C-TeamView carriers)
 > **Status**: Ready
-> **Stories**: 60 stories (54 Ready, 6 Blocked), see Stories below
+> **Stories**: 62 stories (14 Complete, 42 Ready, 6 Blocked), see Stories below; 061 and 062 added 2026-10-25 for decision D43
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 2 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -66,20 +66,20 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | [Participant record fields equal the R3 whitelist exactly](story-001-record-schema-whitelist.md) (AC-PSR-01) | Logic | Ready | ADR-0005 |
-| 002 | [BeginMatch and registration assign ids, handles and reject a full roster](story-002-begin-match-and-register.md) (AC-PSR-05) | Logic | Ready | ADR-0005 |
-| 003 | [Mutation from a worker thread is rejected and faulted](story-003-off-game-thread-mutation-rejected.md) (AC-PSR-03) | Logic | Ready | ADR-0002 |
-| 004 | [Every roster call on a client is rejected or answers not-targetable and faults](story-004-client-calls-rejected.md) (AC-PSR-02) | Logic | Ready | ADR-0010 |
-| 005 | [A locked roster rejects registration, removal and team changes but reclaims known keys](story-005-locked-roster-is-frozen.md) (AC-PSR-06) | Logic | Ready | ADR-0005 |
-| 006 | [A batch swap of two players across full teams applies atomically](story-006-assign-teams-atomic-swap.md) (AC-PSR-08) | Logic | Ready | ADR-0005 |
-| 007 | [An invalid team batch changes nothing and fires no event](story-007-assign-teams-all-or-nothing.md) (AC-PSR-09) | Logic | Ready | ADR-0005 |
-| 008 | [Registration, team, removal and reclaim each fire exactly one sequenced event](story-008-registration-and-team-events.md) (AC-PSR-55) | Logic | Ready | ADR-0002 |
-| 009 | [Session connection states project onto Connection fields only](story-009-connection-projection.md) (AC-PSR-46) | Logic | Ready | ADR-0005 |
-| 010 | [BindPawn rejects an already-bound participant, an in-use pawn and a round-ended participant](story-010-bind-pawn-guards.md) (AC-PSR-22) | Logic | Ready | ADR-0010 |
-| 011 | [Tombstones respect generations and ReleaseToCrowd needs a disconnected participant](story-011-tombstone-generation-and-release.md) (AC-PSR-24) | Logic | Ready | ADR-0010 |
-| 012 | [Clearing a live binding during Active faults, but level-teardown clears are silent](story-012-clear-binding-while-live.md) (AC-PSR-25) | Logic | Ready | ADR-0010 |
-| 013 | [ResolveVictimKind answers the full pawn-state matrix and never yields Npc for NotTargetable](story-013-resolve-victim-kind-matrix.md) (AC-PSR-26) | Logic | Ready | ADR-0010 |
-| 014 | [Active to Informant applies for each entering reason with the correct pawn disposition](story-014-transition-active-to-informant.md) (AC-PSR-14) | Logic | Ready | ADR-0005 |
+| 001 | [Participant record fields equal the R3 whitelist exactly](story-001-record-schema-whitelist.md) (AC-PSR-01) | Logic | Complete | ADR-0005 |
+| 002 | [BeginMatch and registration assign ids, handles and reject a full roster](story-002-begin-match-and-register.md) (AC-PSR-05) | Logic | Complete | ADR-0005 |
+| 003 | [Mutation from a worker thread is rejected and faulted](story-003-off-game-thread-mutation-rejected.md) (AC-PSR-03) | Logic | Complete | ADR-0002 |
+| 004 | [Every roster call on a client is rejected or answers not-targetable and faults](story-004-client-calls-rejected.md) (AC-PSR-02) | Logic | Complete | ADR-0010 |
+| 005 | [A locked roster rejects registration, removal and team changes but reclaims known keys](story-005-locked-roster-is-frozen.md) (AC-PSR-06) | Logic | Complete | ADR-0005 |
+| 006 | [A batch swap of two players across full teams applies atomically](story-006-assign-teams-atomic-swap.md) (AC-PSR-08) | Logic | Complete | ADR-0005 |
+| 007 | [An invalid team batch changes nothing and fires no event](story-007-assign-teams-all-or-nothing.md) (AC-PSR-09) | Logic | Complete | ADR-0005 |
+| 008 | [Registration, team, removal and reclaim each fire exactly one sequenced event](story-008-registration-and-team-events.md) (AC-PSR-55) | Logic | Complete | ADR-0002 |
+| 009 | [Session connection states project onto Connection fields only](story-009-connection-projection.md) (AC-PSR-46) | Logic | Complete | ADR-0005 |
+| 010 | [BindPawn rejects an already-bound participant, an in-use pawn and a round-ended participant](story-010-bind-pawn-guards.md) (AC-PSR-22) | Logic | Complete | ADR-0010 |
+| 011 | [Tombstones respect generations and ReleaseToCrowd needs a disconnected participant](story-011-tombstone-generation-and-release.md) (AC-PSR-24) | Logic | Complete | ADR-0010 |
+| 012 | [Clearing a live binding during Active faults, but level-teardown clears are silent](story-012-clear-binding-while-live.md) (AC-PSR-25) | Logic | Complete | ADR-0010 |
+| 013 | [ResolveVictimKind answers the full pawn-state matrix and never yields Npc for NotTargetable](story-013-resolve-victim-kind-matrix.md) (AC-PSR-26) | Logic | Complete | ADR-0010 |
+| 014 | [Active to Informant applies for each entering reason with the correct pawn disposition](story-014-transition-active-to-informant.md) (AC-PSR-14) | Logic | Complete | ADR-0005 |
 | 015 | [A Disconnect transition is rejected while the participant is connected](story-015-transition-disconnect-requires-disconnected.md) (AC-PSR-15) | Logic | Ready | ADR-0005 |
 | 016 | [The first entering reason is kept and later reasons are no-ops](story-016-transition-first-reason-wins.md) (AC-PSR-16) | Logic | Ready | ADR-0005 |
 | 017 | [No revival and no round-ended-to-informant transitions are possible](story-017-transition-no-revival-no-late-events.md) (AC-PSR-17) | Logic | Ready | ADR-0005 |
@@ -126,6 +126,8 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 | 058 | [Roster identity and team state survive seamless and hard travel unchanged](story-058-mp-travel-persistence.md) (AC-PSR-40a) | Integration | Blocked | ADR-0005 |
 | 059 | [A client rejoining within grace reclaims its record, pawn and informant status](story-059-mp-rejoin-within-grace.md) (AC-PSR-40b) | Integration | Blocked | ADR-0005 |
 | 060 | [Host loss empties every client's roster store](story-060-mp-host-loss.md) (AC-PSR-40c) | Integration | Blocked | ADR-0005 |
+| 061 | [URosterStore wraps FRosterCore and BeginMatch/EndMatch run on every session exit path](story-061-roster-store-facade-and-match-lifetime.md) (D43) | Integration | Ready | ADR-0005 |
+| 062 | [URosterTeamViewComponent and the Roster push step write C-TeamView change-only, once per frame](story-062-team-view-component-and-push-step.md) (D43) | Integration | Ready | ADR-0001 |
 
 ## Definition of Done
 

@@ -1205,141 +1205,141 @@ stories:
     name: "Participant record fields equal the R3 whitelist exactly"
     file: "production/epics/participant-state-roster/story-001-record-schema-whitelist.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-002"
     name: "BeginMatch and registration assign ids, handles and reject a full roster"
     file: "production/epics/participant-state-roster/story-002-begin-match-and-register.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-003"
     name: "Mutation from a worker thread is rejected and faulted"
     file: "production/epics/participant-state-roster/story-003-off-game-thread-mutation-rejected.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-004"
     name: "Every roster call on a client is rejected or answers not-targetable and faults"
     file: "production/epics/participant-state-roster/story-004-client-calls-rejected.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-005"
     name: "A locked roster rejects registration, removal and team changes but reclaims known keys"
     file: "production/epics/participant-state-roster/story-005-locked-roster-is-frozen.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-006"
     name: "A batch swap of two players across full teams applies atomically"
     file: "production/epics/participant-state-roster/story-006-assign-teams-atomic-swap.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-007"
     name: "An invalid team batch changes nothing and fires no event"
     file: "production/epics/participant-state-roster/story-007-assign-teams-all-or-nothing.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-008"
     name: "Registration, team, removal and reclaim each fire exactly one sequenced event"
     file: "production/epics/participant-state-roster/story-008-registration-and-team-events.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-009"
     name: "Session connection states project onto Connection fields only"
     file: "production/epics/participant-state-roster/story-009-connection-projection.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-010"
     name: "BindPawn rejects an already-bound participant, an in-use pawn and a round-ended participant"
     file: "production/epics/participant-state-roster/story-010-bind-pawn-guards.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-011"
     name: "Tombstones respect generations and ReleaseToCrowd needs a disconnected participant"
     file: "production/epics/participant-state-roster/story-011-tombstone-generation-and-release.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-012"
     name: "Clearing a live binding during Active faults, but level-teardown clears are silent"
     file: "production/epics/participant-state-roster/story-012-clear-binding-while-live.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-013"
     name: "ResolveVictimKind answers the full pawn-state matrix and never yields Npc for NotTargetable"
     file: "production/epics/participant-state-roster/story-013-resolve-victim-kind-matrix.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-014"
     name: "Active to Informant applies for each entering reason with the correct pawn disposition"
     file: "production/epics/participant-state-roster/story-014-transition-active-to-informant.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "psr-015"
     name: "A Disconnect transition is rejected while the participant is connected"

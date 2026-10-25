@@ -1,12 +1,12 @@
 # Story 002: BeginMatch and registration assign ids, handles and reject a full roster
 
 > **Epic**: Participant State & Roster
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -31,6 +31,7 @@
 - Forbidden: Never use `FMath::Rand`, `FMath::FRand`, `FMath::RandRange`, `FRandomStream`, `std::rand`, `<random>` engines or time-seeded randomness in gameplay or server code (ADR-0006)
 - Forbidden: Never use wall-clock time as a test pass/fail predicate; never use wall-clock waits, unseeded randomness or shared mutable state in tests (ADR-0008)
 - Guardrail: Random streams: hidden draws well under 0.05 ms/frame (ADR-0006)
+- Required (manifest 2026-10-25f, ADR-0005 Technical Setup 2026-10-25b): `FRosterCore::RequestTransition` is the only writer of lifecycle state with the R8 precedence; mutations on the server game thread with FIFO dispatch after the outermost call and EventSeq +1 per event; O(1) allocation-free queries through a pre-sized binding table; client queries return 0/false/NotTargetable(Stale) and fault (re-read at implementation; 2026-10-25g adds nothing for the Roster)
 
 ---
 
@@ -38,7 +39,7 @@
 
 *From GDD `design/gdd/participant-state-roster.md`, scoped to this story:*
 
-- [ ] **AC-PSR-05** [Core] `StealthGame.Roster.BeginMatchAndRegister`: GIVEN `BeginMatch(5)`, WHEN keys K1..K10 then K11 register, THEN:
+- [x] **AC-PSR-05** [Core] `StealthGame.Roster.BeginMatchAndRegister`: GIVEN `BeginMatch(5)`, WHEN keys K1..K10 then K11 register, THEN:
   - ids are 0..9 in order;
   - each new record is `RoundEnded` / `None` / `Connected`;
   - K11 gets `Rejected_RosterFull`;
@@ -83,11 +84,14 @@
 planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
 checks scope against it.*
 
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (changed: `BeginMatch`, `RegisterParticipant`, `RemoveParticipant`, result codes)
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp` (changed)
-- `Source/StealthFoundation/Private/Roster/StealthRosterDeps.h` (changed only if the random-source interface needs a draw shape for 32-bit handles and 64-bit match ids)
-- `Source/StealthFoundation/Public/View/StealthRosterTypes.h` (changed only if result enums are shared with clients; server-only result codes stay in the core header)
-- `Source/StealthFoundation/Private/Tests/Roster/StealthBeginMatchAndRegisterTest.cpp` (new: class `FRosterBeginMatchAndRegisterTest`, test name `StealthGame.Roster.BeginMatchAndRegister`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (`FRosterCore`, `FParticipantRecord` and its X-macro field list, result/event/call enums, core test seams under `WITH_STEALTH_TEST_SEAMS`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp`
+- `Source/StealthFoundation/Private/Roster/StealthRosterDeps.h` (pawn handle, `IRosterPawnLiveness`, `IRosterAuthority`, `IRosterThreadCheck`, `IRosterRandom`, `IRosterRoundPhase` (D43), `FRosterCoreDeps`; clock and fault sink reuse `IStealthClock`/`IStealthFaultSink`)
+- `Source/StealthFoundation/Public/View/StealthRosterTypes.h` (`FParticipantId`, `FIdentityKey`, `EParticipantState`, `ERosterTeam`)
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h` (appended `RosterNotAuthority`=5, `RosterWrongThread`=6, `RosterLiveBindingCleared`=7, `RosterUnrecognisedState`=8)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterTestFixture.h` (shared fakes and fixture; reuses `FFakeStealthClock`, `FStealthRecordingFaultSink`)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthBeginMatchAndRegisterTest.cpp` (test `StealthGame.Roster.BeginMatchAndRegister`)
+- `docs/architecture/adr-0006-seeds-random-streams.md` (amendment: domain 17 `MatchId`, decision D46)
 
 ---
 
@@ -113,7 +117,7 @@ checks scope against it.*
 **Required evidence**:
 - Logic: automated test `Source/StealthFoundation/Private/Tests/Roster/StealthBeginMatchAndRegisterTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). `qa.level` is full, so the test is required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Roster.BeginMatchAndRegister`, 2026-10-25)
 
 ---
 
@@ -121,3 +125,14 @@ checks scope against it.*
 
 - Depends on: `production/epics/participant-state-roster/story-001-record-schema-whitelist.md`
 - Unlocks: `production/epics/participant-state-roster/story-004-client-calls-rejected.md`, `production/epics/participant-state-roster/story-005-locked-roster-is-frozen.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (participant-state-roster batch 001-014: one core built and closed together)
+**Criteria**: 1/1 passing (AC-PSR-05: ids 0..9; RoundEnded/None/Connected; K11 Rejected_RosterFull with no EventSeq; id 10 after RemoveParticipant(3); second BeginMatch resets id/EventSeq/RoundEpoch and draws a different MatchId; handles unique, non-zero and not in id order with the seeded source; BeginMatch(0)/(6) Rejected_InvalidTeamSize)
+**Decisions**: `IRosterRandom::Draw(Domain, Counter)` is the single seam for both draws; `ERosterRandomDomain` values equal ADR-0006 `ESeedDomain` (15 PublicHandle; 17 MatchId added to ADR-0006 per decision D46). Handle draws discard 0 and repeats (counter advances); MatchId draws discard 0 and the previous match's id with a lifetime counter.
+**Deviations**: One shared `ERosterResult` enum for every call instead of per-call result enums. Manifest Version updated to 2026-10-25g.
+**Test Evidence**: `production/qa/evidence/story-002-begin-match-and-register/full-suite.txt` (build `Result: Succeeded`; 84/84 `StealthGame.` tests Success, 70 existing + 14 Roster) and `stamp.txt`
+**Run result**: N/A — plain-C++ server core with no world, actor or screen; nothing a player can see until the facade (story 061) and the C-TeamView push step (story 062) exist
+**Reviewed by**: focused code review (self-applied, unattended run): one defect fixed (StrikeLimit release aliasing, story 014); `TryReclaim`, `DisposeLivePawnOnElimination` and `EmitStateChanged` extracted to keep methods short; `RequestTransition` kept as one function by design (the R8 precedence in one place)

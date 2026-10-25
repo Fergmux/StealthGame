@@ -1,12 +1,12 @@
 # Story 005: A locked roster rejects registration, removal and team changes but reclaims known keys
 
 > **Epic**: Participant State & Roster
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -30,6 +30,7 @@
 - Forbidden: Never let Session spawn, free, hide or possess a pawn, or call `RequestTransition` (ADR-0005)
 - Forbidden: Never disable, skip or reseed a failing test to pass a gate; never mark a gate Done that was never watched to fail (ADR-0008)
 - Guardrail: Session: silence clocks and ack bookkeeping inside the 0.5 ms line (ADR-0005)
+- Required (manifest 2026-10-25f, ADR-0005 Technical Setup 2026-10-25b): `FRosterCore::RequestTransition` is the only writer of lifecycle state with the R8 precedence; mutations on the server game thread with FIFO dispatch after the outermost call and EventSeq +1 per event; O(1) allocation-free queries through a pre-sized binding table; client queries return 0/false/NotTargetable(Stale) and fault (re-read at implementation; 2026-10-25g adds nothing for the Roster)
 
 ---
 
@@ -37,7 +38,7 @@
 
 *From GDD `design/gdd/participant-state-roster.md`, scoped to this story:*
 
-- [ ] **AC-PSR-06** [Core] `StealthGame.Roster.LockedRosterIsFrozen`: GIVEN teams locked, WHEN a new key registers, or a Dormant record's key registers, or `RemoveParticipant`, `AssignTeams` or `SetTeamSize` is called, THEN each returns `Rejected_TeamsLocked`, `RosterCount(T)` is unchanged, and a known non-Dormant key still returns `Reclaimed` (R4, R5, F3).
+- [x] **AC-PSR-06** [Core] `StealthGame.Roster.LockedRosterIsFrozen`: GIVEN teams locked, WHEN a new key registers, or a Dormant record's key registers, or `RemoveParticipant`, `AssignTeams` or `SetTeamSize` is called, THEN each returns `Rejected_TeamsLocked`, `RosterCount(T)` is unchanged, and a known non-Dormant key still returns `Reclaimed` (R4, R5, F3).
 
 ---
 
@@ -75,9 +76,13 @@
 planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
 checks scope against it.*
 
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (changed: lock flag, `SetTeamsLocked`, `SetTeamSize`, `RemoveParticipant`, `AssignTeams` locked branch, core test seam for Dormant)
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp` (changed)
-- `Source/StealthFoundation/Private/Tests/Roster/StealthLockedRosterIsFrozenTest.cpp` (new: class `FRosterLockedRosterIsFrozenTest`, test name `StealthGame.Roster.LockedRosterIsFrozen`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (`FRosterCore`, `FParticipantRecord` and its X-macro field list, result/event/call enums, core test seams under `WITH_STEALTH_TEST_SEAMS`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp`
+- `Source/StealthFoundation/Private/Roster/StealthRosterDeps.h` (pawn handle, `IRosterPawnLiveness`, `IRosterAuthority`, `IRosterThreadCheck`, `IRosterRandom`, `IRosterRoundPhase` (D43), `FRosterCoreDeps`; clock and fault sink reuse `IStealthClock`/`IStealthFaultSink`)
+- `Source/StealthFoundation/Public/View/StealthRosterTypes.h` (`FParticipantId`, `FIdentityKey`, `EParticipantState`, `ERosterTeam`)
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h` (appended `RosterNotAuthority`=5, `RosterWrongThread`=6, `RosterLiveBindingCleared`=7, `RosterUnrecognisedState`=8)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterTestFixture.h` (shared fakes and fixture; reuses `FFakeStealthClock`, `FStealthRecordingFaultSink`)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthLockedRosterIsFrozenTest.cpp` (test `StealthGame.Roster.LockedRosterIsFrozen`)
 
 ---
 
@@ -103,7 +108,7 @@ checks scope against it.*
 **Required evidence**:
 - Logic: automated test `Source/StealthFoundation/Private/Tests/Roster/StealthLockedRosterIsFrozenTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). `qa.level` is full, so the test is required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Roster.LockedRosterIsFrozen`, 2026-10-25)
 
 ---
 
@@ -111,3 +116,14 @@ checks scope against it.*
 
 - Depends on: `production/epics/participant-state-roster/story-002-begin-match-and-register.md`
 - Unlocks: `production/epics/participant-state-roster/story-006-assign-teams-atomic-swap.md`, `production/epics/participant-state-roster/story-008-registration-and-team-events.md`, `production/epics/participant-state-roster/story-025-undersized-rosters-and-lock.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (participant-state-roster batch 001-014: one core built and closed together)
+**Criteria**: 1/1 passing (AC-PSR-06: locked: new key, Dormant key, RemoveParticipant, AssignTeams, SetTeamSize each Rejected_TeamsLocked with RosterCount(0/1) unchanged; known non-Dormant key Reclaimed with the same id; plus the unlocked SetTeamSize checks and Rejected_UnassignedParticipants)
+**Decisions**: Dormant record built through the real Lobby projection (story 009, same batch) instead of a Dormant seam. The AC wins over R4 for the locked SetTeamSize code (GDD gap: R4 names none). `SetTeamsLocked(true)` when locked is NoOp_Unchanged. Single `TryReclaim` seam for story 029. RemoveParticipant order: UnknownParticipant before TeamsLocked.
+**Deviations**: Teams assigned through the real `AssignTeams` (story 006, same batch) instead of the seam. Manifest Version updated to 2026-10-25g.
+**Test Evidence**: `production/qa/evidence/story-005-locked-roster-is-frozen/full-suite.txt` (build `Result: Succeeded`; 84/84 `StealthGame.` tests Success, 70 existing + 14 Roster) and `stamp.txt`
+**Run result**: N/A — plain-C++ server core with no world, actor or screen; nothing a player can see until the facade (story 061) and the C-TeamView push step (story 062) exist
+**Reviewed by**: focused code review (self-applied, unattended run): one defect fixed (StrikeLimit release aliasing, story 014); `TryReclaim`, `DisposeLivePawnOnElimination` and `EmitStateChanged` extracted to keep methods short; `RequestTransition` kept as one function by design (the R8 precedence in one place)

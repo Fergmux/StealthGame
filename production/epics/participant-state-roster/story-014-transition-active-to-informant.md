@@ -1,12 +1,12 @@
 # Story 014: Active to Informant applies for each entering reason with the correct pawn disposition
 
 > **Epic**: Participant State & Roster
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: L
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,6 +32,7 @@
 - Forbidden: Never mutate gameplay state outside the drain; never resolve inline in an RPC body or AI source (ADR-0002)
 - Forbidden: Never put team, state, connection, appearance or pawn data on a PlayerState; never give NPCs a PlayerState (ADR-0001)
 - Guardrail: Queue drain + staging + teardown + Roster flush: <= 0.5 ms listen-host game thread (ADR-0002)
+- Required (manifest 2026-10-25f, ADR-0005 Technical Setup 2026-10-25b): `FRosterCore::RequestTransition` is the only writer of lifecycle state with the R8 precedence; mutations on the server game thread with FIFO dispatch after the outermost call and EventSeq +1 per event; O(1) allocation-free queries through a pre-sized binding table; client queries return 0/false/NotTargetable(Stale) and fault (re-read at implementation; 2026-10-25g adds nothing for the Roster)
 
 ---
 
@@ -39,7 +40,7 @@
 
 *From GDD `design/gdd/participant-state-roster.md`, scoped to this story:*
 
-- [ ] **AC-PSR-14** [Core] `StealthGame.Roster.Transition.ActiveToInformant` (parameterised over Assassinated, ReversedAgainst, StrikeLimit, and Disconnect with Connection = Disconnected): GIVEN Active with a live pawn, WHEN the request is made, THEN it returns `Applied`. Before the call returns, the state is `Informant`, the reason and `LastEventSeq` are written, and the pawn is Retired, so `ResolveVictimKind` = `NotTargetable(AlreadyResolved)`; for `StrikeLimit` the pawn is instead `Unbound`, so `ResolveVictimKind` = `Npc`, and the participant has no live pawn (R8, Penalty CR-3). Exactly one `OnParticipantStateChanged` is then dispatched (R8).
+- [x] **AC-PSR-14** [Core] `StealthGame.Roster.Transition.ActiveToInformant` (parameterised over Assassinated, ReversedAgainst, StrikeLimit, and Disconnect with Connection = Disconnected): GIVEN Active with a live pawn, WHEN the request is made, THEN it returns `Applied`. Before the call returns, the state is `Informant`, the reason and `LastEventSeq` are written, and the pawn is Retired, so `ResolveVictimKind` = `NotTargetable(AlreadyResolved)`; for `StrikeLimit` the pawn is instead `Unbound`, so `ResolveVictimKind` = `Npc`, and the participant has no live pawn (R8, Penalty CR-3). Exactly one `OnParticipantStateChanged` is then dispatched (R8).
 
 ---
 
@@ -82,10 +83,13 @@
 planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
 checks scope against it.*
 
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (changed: `RequestTransition`, result-code enum, legal-transition table, `OnParticipantStateChanged` payload, internal retire and count helpers)
-- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp` (changed)
-- `Source/StealthFoundation/Public/View/StealthRosterTypes.h` (changed only for wire-safe enums, for example the participant state enum used later by C-TeamView; server-only result codes stay in the core header)
-- `Source/StealthFoundation/Private/Tests/Roster/StealthTransitionActiveToInformantTest.cpp` (new: class `FRosterTransitionActiveToInformantTest`, test name `StealthGame.Roster.Transition.ActiveToInformant`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (`FRosterCore`, `FParticipantRecord` and its X-macro field list, result/event/call enums, core test seams under `WITH_STEALTH_TEST_SEAMS`)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp`
+- `Source/StealthFoundation/Private/Roster/StealthRosterDeps.h` (pawn handle, `IRosterPawnLiveness`, `IRosterAuthority`, `IRosterThreadCheck`, `IRosterRandom`, `IRosterRoundPhase` (D43), `FRosterCoreDeps`; clock and fault sink reuse `IStealthClock`/`IStealthFaultSink`)
+- `Source/StealthFoundation/Public/View/StealthRosterTypes.h` (`FParticipantId`, `FIdentityKey`, `EParticipantState`, `ERosterTeam`)
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h` (appended `RosterNotAuthority`=5, `RosterWrongThread`=6, `RosterLiveBindingCleared`=7, `RosterUnrecognisedState`=8)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterTestFixture.h` (shared fakes and fixture; reuses `FFakeStealthClock`, `FStealthRecordingFaultSink`)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthTransitionActiveToInformantTest.cpp` (test `StealthGame.Roster.Transition.ActiveToInformant`)
 
 ---
 
@@ -111,7 +115,7 @@ checks scope against it.*
 **Required evidence**:
 - Logic: automated test `Source/StealthFoundation/Private/Tests/Roster/StealthTransitionActiveToInformantTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). `qa.level` is full, so the test is required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Roster.Transition.ActiveToInformant`, 2026-10-25)
 
 ---
 
@@ -119,3 +123,14 @@ checks scope against it.*
 
 - Depends on: `production/epics/participant-state-roster/story-009-connection-projection.md`, `production/epics/participant-state-roster/story-010-bind-pawn-guards.md`, `production/epics/participant-state-roster/story-011-tombstone-generation-and-release.md`
 - Unlocks: `production/epics/participant-state-roster/story-015-transition-disconnect-requires-disconnected.md`, `production/epics/participant-state-roster/story-016-transition-first-reason-wins.md`, `production/epics/participant-state-roster/story-017-transition-no-revival-no-late-events.md`, `production/epics/participant-state-roster/story-018-transition-unknown-id-rejected.md`, `production/epics/participant-state-roster/story-019-batch-only-reasons-rejected-singly.md`, `production/epics/participant-state-roster/story-020-informant-kill-is-not-a-transition.md`, `production/epics/participant-state-roster/story-021-retire-at-server-time-source.md`, `production/epics/participant-state-roster/story-022-reset-all-batch.md`, `production/epics/participant-state-roster/story-023-end-round-all-batch-idempotent.md`, `production/epics/participant-state-roster/story-024-stale-epoch-rejected.md`, `production/epics/participant-state-roster/story-028-reentrant-listener-ordering.md`, `production/epics/participant-state-roster/story-029-reclaim-core.md`, `production/epics/participant-state-roster/story-031-legality-class-and-adoption.md`, `production/epics/participant-state-roster/story-035-elimination-trigger-core.md`, `production/epics/participant-state-roster/story-036-transition-log-ring.md`, `production/epics/participant-state-roster/story-045-pie-elimination-leak-diff.md`, `production/epics/participant-state-roster/story-055-simultaneous-resolution.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (participant-state-roster batch 001-014: one core built and closed together)
+**Criteria**: 1/1 passing (AC-PSR-14 for Assassinated, ReversedAgainst, StrikeLimit and Disconnect: Applied; state, reason and LastEventSeq written before dispatch (inspected by a listener at dispatch); pawn Retired -> NotTargetable(AlreadyResolved) with RetireAtServerTime defaulting to the call time, or released for StrikeLimit -> Npc (D42) with no live pawn; exactly one OnParticipantStateChanged with payload counts [1,1]/[1,0]; edge: Disconnect without the generation Rejected_StaleConnection)
+**Decisions**: All eleven R8 steps in one function; legal single transitions as a constexpr table (story 027's CSV target). InformantKilled is never an entering reason (D10). LastEventSeq = the queued event's EventSeq (open point confirmed). The StrikeLimit case caught a real aliasing defect (`ReleaseBindingInternal` took the record's own PawnBinding by reference and cleared it before erasing the row); fixed by passing the handle by value; the test was watched failing, then passing.
+**Deviations**: None. Manifest Version updated to 2026-10-25g.
+**Test Evidence**: `production/qa/evidence/story-014-transition-active-to-informant/full-suite.txt` (build `Result: Succeeded`; 84/84 `StealthGame.` tests Success, 70 existing + 14 Roster) and `stamp.txt`
+**Run result**: N/A — plain-C++ server core with no world, actor or screen; nothing a player can see until the facade (story 061) and the C-TeamView push step (story 062) exist
+**Reviewed by**: focused code review (self-applied, unattended run): one defect fixed (StrikeLimit release aliasing, story 014); `TryReclaim`, `DisposeLivePawnOnElimination` and `EmitStateChanged` extracted to keep methods short; `RequestTransition` kept as one function by design (the R8 precedence in one place)

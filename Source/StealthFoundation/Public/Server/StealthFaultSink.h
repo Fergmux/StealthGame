@@ -18,6 +18,14 @@ enum class EStealthFault : uint8
 	RejectedTuning = 3,
 	/** A message carrying an out-of-date epoch was ignored (Detail: the stale epoch). */
 	StaleEpoch = 4,
+	/** A server-only Roster call ran without authority (GDD participant-state-roster R2; Detail: ERosterCall). */
+	RosterNotAuthority = 5,
+	/** A Roster mutator ran off the game thread (R2, I7; Detail: ERosterCall). */
+	RosterWrongThread = 6,
+	/** A live pawn binding was cleared by a Destroyed EndPlay during Round phase Active (R9; Detail: participant id). */
+	RosterLiveBindingCleared = 7,
+	/** A Roster query met a record state it does not recognise and answered not-targetable (R10; Detail: ERosterCall). */
+	RosterUnrecognisedState = 8,
 };
 
 /**
