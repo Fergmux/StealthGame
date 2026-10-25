@@ -1,12 +1,12 @@
 # Story 052: Round and Session stubs for TDC tests
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -33,7 +33,7 @@
 
 *From the story plan and amendments (bootstrap story, no GDD AC), scoped to this story:*
 
-- [ ] Test-only stubs in `FND/Public/Server/Testing/` exist and a self-test (`StealthGame.Harness.TuningStubsSelfTest`) shows each records exactly the calls made on it: `FStubRound` (calls BeginResolve, receives OnTuningReady/OnTuningFailed, holds a Round Event Log header buffer, releases pawns at a common tick), `FStubSession` (records the single acknowledgement per participant, reports accepted/rejected, deadline path, exposes `RejoinWindowSec` and `AcceptCommand(participant)` returning false until that participant's tuning is valid), and `FStubActionConsumer` (captures `DefenceDurationSec` into an action record at start and ends the action at start plus the captured value, never re-reading it).
+- [x] Test-only stubs in `FND/Public/Server/Testing/` exist and a self-test (`StealthGame.Harness.TuningStubsSelfTest`) shows each records exactly the calls made on it: `FStubRound` (calls BeginResolve, receives OnTuningReady/OnTuningFailed, holds a Round Event Log header buffer, releases pawns at a common tick), `FStubSession` (records the single acknowledgement per participant, reports accepted/rejected, deadline path, exposes `RejoinWindowSec` and `AcceptCommand(participant)` returning false until that participant's tuning is valid), and `FStubActionConsumer` (captures `DefenceDurationSec` into an action record at start and ends the action at start plus the captured value, never re-reading it).
 
 ---
 
@@ -95,7 +95,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/StubsSelfTest.cpp` must exist and pass (`StealthGame.Harness.TuningStubsSelfTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Harness.TuningStubsSelfTest`)
 
 ---
 
@@ -104,3 +104,14 @@
 - Depends on: `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`, `production/epics/tuning-data-config/story-007-stealth-clock-interface.md`
 - Unlocks: `production/epics/tuning-data-config/story-053-fallback-failed.md`, `production/epics/tuning-data-config/story-054-validated-tuning-frozen-immutable.md`, `production/epics/tuning-data-config/story-074-client-hash-handoff.md`, `production/epics/tuning-data-config/story-076-no-pawn-before-ready.md`, `production/epics/tuning-data-config/story-079-self-check-fault.md`, `production/epics/tuning-data-config/story-080-rejoin-snapshot.md`, `production/epics/tuning-data-config/story-081-travel-epoch.md`, `production/epics/tuning-data-config/story-083-full-hash-not-replicated.md`, `production/epics/tuning-data-config/story-084-round-log-header.md`, `production/epics/tuning-data-config/story-085-hot-reload-pie.md`, `production/epics/tuning-data-config/story-099-selfcheck-and-disconnect-seams.md`
 - Open verification claims: the plan Note says the stubs are replaced by the real epics' integration tests (a lifecycle note, not an engine claim). Open items found while writing: the Round header buffer's field list (story 084), the value of `RejoinWindowSec` (Session GDD), and the test-file folder (`Tests/Tuning` per plan versus `Tests/Harness`).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (FStubRound records phase, BeginResolve (forwarded once to the injected target), OnTuningReady(hash), ReleasePawns at the fake clock's common tick 107, further phases and OnTuningFailed(SnapshotFault) exactly and in order, returns to Lobby on failure, and reads back its opaque header buffer; FStubSession records four acknowledgements in order, including a second from the same participant and a deadline; AcceptCommand is false until accepted; RejoinWindowSec is the supplied value; a new epoch clears readiness; FStubActionConsumer captures DefenceDurationSec 4 at start and ends at start + 4 after a live change to 5, with one live read)
+**Decisions**: the test stays at the plan path Tests/Tuning/StubsSelfTest.cpp; ETuningFailReason lives in StealthTuningPipelineCore.h (core vocabulary); the Round stub records EnterPhase (Lobby/Preparing/Playing/Ended) so story 054 can drive a round to Ended; ParticipantId is int32 as in the Session spike; the Event Log header stays an opaque byte buffer until story 084
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/StubsSelfTest.cpp`; `production/qa/evidence/story-052-round-session-stubs/stamp.txt`; full suite 70/70 green (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded, tests exit=0)
+**Run result**: N/A — test-only stubs; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

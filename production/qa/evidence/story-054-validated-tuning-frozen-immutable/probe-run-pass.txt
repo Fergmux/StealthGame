@@ -1,0 +1,12 @@
+OBSERVATION probes-found=2
+OBSERVATION baseline-build=succeeded
+OBSERVATION probe=MutateValidatedTuning.cpp role=probe module=StealthFoundation outcome=failed-expected
+OBSERVATION probe=MutateValidatedTuning.cpp role=control module=StealthFoundation outcome=compiled
+OBSERVATION probe=ServerHeaderInPresentation.cpp role=probe module=StealthPresentation outcome=failed-expected
+OBSERVATION probe=ServerHeaderInPresentation.cpp role=control module=StealthGame outcome=compiled
+GATE probe MutateValidatedTuning.cpp: PASS - failed with the expected text; control compiled
+GATE probe ServerHeaderInPresentation.cpp: PASS - failed with the expected text; control compiled
+GATE compile-probes: PASS (2 probe(s))
+gate exit=0
+MutateValidatedTuning.cpp(18,30): error C3892: 'Tuning': you cannot assign to a variable that is const
+MutateValidatedTuning.cpp(19,29): error C3892: 'Held': you cannot assign to a variable that is const

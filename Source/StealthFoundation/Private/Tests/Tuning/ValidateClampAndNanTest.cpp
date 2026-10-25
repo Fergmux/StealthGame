@@ -156,7 +156,12 @@ bool FTuningValidateClampAndNanTest::RunTest(const FString& Parameters)
 		FTuningPipelineCore::RunF1(Schema, Values, NoFlag, Report);
 		Capture.Stop();
 		TestEqual(FString::Printf(TEXT("values on the hard %s: no change"), bMax ? TEXT("maximum") : TEXT("minimum")), Report.Changes.Num(), 0);
-		TestEqual(FString::Printf(TEXT("values on the hard %s: no warning"), bMax ? TEXT("maximum") : TEXT("minimum")), Capture.GetWarnings().Num(), 0);
+		// No F-1 (clamp/default) warning. A hard bound outside the key's safe range gets the story tdc-049
+		// safe-range warning instead, a different warning (AC-26), counted separately.
+		const int32 F1Warnings = Capture.GetWarnings().FilterByPredicate([](const FString& Line) { return Line.Contains(TEXT("Tuning F-1:")); }).Num();
+		TestEqual(FString::Printf(TEXT("values on the hard %s: no F-1 warning"), bMax ? TEXT("maximum") : TEXT("minimum")), F1Warnings, 0);
+		TestEqual(FString::Printf(TEXT("values on the hard %s: every other warning is a safe-range note"), bMax ? TEXT("maximum") : TEXT("minimum")),
+			Capture.GetWarnings().Num() - F1Warnings, Report.SafeRange.Num());
 		for (const FTuningSchemaRow& Row : Schema)
 		{
 			TestEqual(FString::Printf(TEXT("%s unchanged on its bound"), *FString(Row.Key)), Row.Get(Values), Row.Get(Before));

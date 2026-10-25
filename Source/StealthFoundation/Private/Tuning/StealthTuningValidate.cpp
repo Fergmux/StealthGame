@@ -1,5 +1,6 @@
-// Story tdc-046: the F-1 validation stage (GDD F-1, CR-6 a/b; ADR-0004 section 3). See
-// Server/StealthTuningPipelineCore.h.
+// Story tdc-046: the F-1 validation stage (GDD F-1, CR-6 a/b; ADR-0004 section 3); story tdc-049: the
+// safe-range warning in the same pass (CR-15.5); stories tdc-048/055: invariant evaluation (CR-6 c).
+// See Server/StealthTuningPipelineCore.h.
 
 #include "Server/StealthTuningPipelineCore.h"
 
@@ -57,6 +58,18 @@ void FTuningPipelineCore::RunF1(TConstArrayView<FTuningSchemaRow> Schema, FSteal
 		const double Effective = ApplyF1(Row, Authored, Options, Action);
 		if (Action == ETuningF1Action::Kept)
 		{
+			// Story tdc-049: kept inside the hard range but outside the safe range: one warning, value kept.
+			// A key F-1 changed is judged only by its clamp warning (one warning per key), even when its
+			// effective value (a hard bound or the default) also lies outside the safe range.
+			if (IsOutsideSafeRange(Row, Authored))
+			{
+				FTuningSafeRangeNote& Note = OutReport.SafeRange.AddDefaulted_GetRef();
+				Note.Key = Row.Key;
+				Note.Value = Authored;
+				Note.SafeMin = Row.SafeMin;
+				Note.SafeMax = Row.SafeMax;
+				LogSafeRange(Row, Note);
+			}
 			continue;
 		}
 		Row.Set(Values, Effective);
@@ -67,6 +80,61 @@ void FTuningPipelineCore::RunF1(TConstArrayView<FTuningSchemaRow> Schema, FSteal
 		Change.Action = Action;
 		LogF1Change(Row, Change);
 	}
+}
+
+bool FTuningPipelineCore::IsOutsideSafeRange(const FTuningSchemaRow& Row, double Value)
+{
+	if (Row.TypeTag == StealthTuningTypeTag::Bool || (Row.bHasSentinel && Value == Row.Sentinel))
+	{
+		return false;
+	}
+	return Value < Row.SafeMin || Value > Row.SafeMax;
+}
+
+void FTuningPipelineCore::LogSafeRange(const FTuningSchemaRow& Row, const FTuningSafeRangeNote& Note)
+{
+	const FString Key(Row.Key);
+	const FString Value = FormatTuningValue(Row.TypeTag, Note.Value);
+	const FString SafeMin = FormatTuningValue(Row.TypeTag, Note.SafeMin);
+	const FString SafeMax = FormatTuningValue(Row.TypeTag, Note.SafeMax);
+	UE_LOGF(LogStealthFoundation, Warning, "Tuning safe range: key %ls value %ls kept, outside the safe range [%ls, %ls] (CR-15.5)", *Key, *Value, *SafeMin, *SafeMax);
+}
+
+ETuningCheck FTuningPipelineCore::EvaluateInvariants(TConstArrayView<FTuningInvariant> Rows, const FStealthServerTuning& Values, const FTuningDerived& Derived,
+	const FTuningCheckContext& Context, TArray<FTuningInvariantFinding>& OutFindings)
+{
+	ETuningCheck Worst = ETuningCheck::Pass;
+	const FString PresetText = Context.PresetId.ToString();
+	for (const FTuningInvariant& Row : Rows)
+	{
+		if (Row.bOffline || Row.Check == nullptr)
+		{
+			continue;
+		}
+		const ETuningCheck Result = Row.Check(Values, Derived, Context);
+		if (Result == ETuningCheck::Pass)
+		{
+			continue;
+		}
+		FTuningInvariantFinding& Finding = OutFindings.AddDefaulted_GetRef();
+		Finding.Id = Row.Id;
+		Finding.Clause = Result == ETuningCheck::Reject ? Row.RejectClause : Row.WarnClause;
+		Finding.Result = Result;
+		Worst = FMath::Max(Worst, Result);
+
+		const FString Id(Row.Id);
+		const TCHAR* const Severity = Result == ETuningCheck::Reject ? TEXT("reject") : TEXT("warn");
+		if (Finding.Clause != nullptr)
+		{
+			const FString Clause(Finding.Clause);
+			UE_LOGF(LogStealthFoundation, Warning, "Tuning invariant %ls %ls (clause: %ls) in preset %ls", *Id, Severity, *Clause, *PresetText);
+		}
+		else
+		{
+			UE_LOGF(LogStealthFoundation, Warning, "Tuning invariant %ls %ls in preset %ls", *Id, Severity, *PresetText);
+		}
+	}
+	return Worst;
 }
 
 void FTuningPipelineCore::LogF1Change(const FTuningSchemaRow& Row, const FTuningF1Change& Change)

@@ -1,12 +1,12 @@
 # Story 044: AC-3a SchemaComplete: rows, pins, mirrors and reflection hygiene
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From GDD `design/gdd/tuning-data-config.md` AC-3a, scoped to this story:*
 
-- [ ] **AC-3a (CR-3)**: GIVEN the compiled schema, WHEN the schema test runs in the editor, THEN all of the following hold: every row has a default, hard min/max, audience and latch class, and each default lies inside its hard range; key names are unique, and every key ends with a CR-15 suffix (booleans start with `b`); the metadata mirrors equal the schema; the `Default` preset and the C++ initialisers both equal the Default column of Canonical Tunables; reflection finds only `bool`, `int32`, `float` and enum fields, no `Config` property and no `Config` or per-object-config class flag. (`StealthGame.Tuning.SchemaComplete`)
+- [x] **AC-3a (CR-3)**: GIVEN the compiled schema, WHEN the schema test runs in the editor, THEN all of the following hold: every row has a default, hard min/max, audience and latch class, and each default lies inside its hard range; key names are unique, and every key ends with a CR-15 suffix (booleans start with `b`); the metadata mirrors equal the schema; the C++ initialisers equal the Default column of Canonical Tunables (the `Default` preset ASSET half of this clause moved to story 056, readiness fix 2026-10-25: the asset does not exist until 056); reflection finds only `bool`, `int32`, `float` and enum fields, no `Config` property and no `Config` or per-object-config class flag. (`StealthGame.Tuning.SchemaComplete`)
 
 ---
 
@@ -88,12 +88,24 @@
 **Required evidence**:
 - Logic: `Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp` (`StealthGame.Tuning.SchemaComplete`) must exist and pass, with its negative controls (seeded out-of-range default, empty table) detected.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.SchemaComplete`)
 
 ---
 
 ## Dependencies
 
-- Depends on: `production/epics/tuning-data-config/story-041-schema-generator-commandlet.md`, `production/epics/tuning-data-config/story-043-schema-fingerprint-version-bump.md`, `production/epics/tuning-data-config/story-056-default-preset-assets-and-catalog.md`
+- Depends on: `production/epics/tuning-data-config/story-041-schema-generator-commandlet.md`, `production/epics/tuning-data-config/story-043-schema-fingerprint-version-bump.md` (story 056 dropped 2026-10-25: the Default preset asset pin moved to 056, readiness fix; decision log)
 - Unlocks: `production/epics/tuning-data-config/story-091-no-variant-keys.md`, `production/epics/tuning-data-config/story-094-safe-range-lint-baseline.md`
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-3a as amended by the readiness fix: non-empty table and not a bootstrap build; every row complete with accessors, owner, latch, hard min <= max and default inside the hard range; keys unique case-insensitively and ending with their CR-15.2 Unit suffix (b prefix for bools, Mode for enums); every compiled field equals its reflected metadata mirror and the compiled fingerprint equals the reflected one; the checked-in .inl equals the in-memory RenderTable text; the compiled Default column, a default FStealthServerTuning and the UStealthTuningData class default object equal the committed GDD Default column for all eight keys, and every schema key has a pin; reflection over both faces, the preset class and their sub-structs finds only bool/int32/float/enum keys and no CPF_Config; UStealthTuningData and UStealthTuningCatalog carry no Config/PerObjectConfig/DefaultConfig/GlobalUserConfig/ProjectUserConfig flag)
+**Negative controls**: DefaultOutsideHardRange, EmptyBootstrapTable and StaleCheckedInTable each "control detected" (test log). EmptyBootstrapTable is what makes a STEALTH_TUNING_SCHEMA_BOOTSTRAP=1 build unable to pass CI (closes story 042's dependency on this test)
+**Decisions**: readiness fix: the Default preset ASSET pin moved to story 056 (the asset does not exist yet; 056 now carries the clause and the file) and the dependency on 056 was dropped (decision log 2026-10-25). The checks take a row view (CheckRows) and texts (CheckText) so the controls feed the same code; the test writes no file
+**Deviations**: the Default-asset half of GDD AC-3a is deferred to story 056 (recorded in both stories)
+**Test Evidence**: `Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp`; `production/qa/evidence/story-044-schema-complete/stamp.txt`; full suite 70/70 green (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded, tests exit=0)
+**Run result**: N/A — editor schema test; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

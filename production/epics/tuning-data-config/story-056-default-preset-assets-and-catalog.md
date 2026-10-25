@@ -37,6 +37,7 @@ Exit B-2 of the epic. CR-2 says tuning lives in cooked data assets of one class 
 *From the story plan and amendments (the GDD has no single criterion for the asset set), scoped to this story:*
 
 - [ ] `Default` (every value equal to the Default column), `Playtest` (identical values to Default, HostSelectable) and `Solo` (Default values except TeamSize 1, non-selectable) preset assets and the catalog asset exist under `Content/StealthGame/Tuning/`; the catalog check passes; a smoke check records each preset loading (no values invented beyond these rules).
+- [ ] (moved from story 044, readiness fix 2026-10-25) `StealthGame.Tuning.SchemaComplete` (`Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp`) is extended to load `DA_TuningDefault` by explicit path (never saving it) and assert every value equals the GDD Default column pins (`SchemaCompleteTestData::GddDefaults`), with a negative control (a seeded differing value is detected); this is the `Default` preset half of GDD AC-3a.
 
 ---
 
@@ -64,7 +65,7 @@ Exit B-2 of the epic. CR-2 says tuning lives in cooked data assets of one class 
 - `production/epics/tuning-data-config/story-057-asset-manager-primary-types.md`: the Asset Manager primary types and the `AlwaysCook` rule
 - `production/epics/tuning-data-config/story-058-tuning-store-default-preset.md`: loading these assets through the game-instance store
 - `production/epics/tuning-data-config/story-065-catalog-clean.md`: per-preset cleanliness in CI, with a seeded dirty fixture
-- `production/epics/tuning-data-config/story-044-schema-complete.md`: pinning the `Default` preset and the initialisers to the GDD Default column by test
+- `production/epics/tuning-data-config/story-044-schema-complete.md`: pinning the C++ initialisers to the GDD Default column by test (the `Default` asset pin is now this story's, see Acceptance Criteria)
 - `production/epics/tuning-data-config/story-064-presets-cooked.md`: the cooked-build load of `Playtest`
 
 ---
@@ -77,6 +78,7 @@ Exit B-2 of the epic. CR-2 says tuning lives in cooked data assets of one class 
 - `Content/StealthGame/Tuning/DA_TuningPlaytest.uasset`
 - `Content/StealthGame/Tuning/DA_TuningSolo.uasset`
 - `Content/StealthGame/Tuning/DA_TuningCatalog.uasset`
+- `Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp` (the Default asset pin, moved from story 044)
 - `production/qa/smoke-<date>.md`
 
 ---
@@ -105,5 +107,5 @@ Exit B-2 of the epic. CR-2 says tuning lives in cooked data assets of one class 
 ## Dependencies
 
 - Depends on: `production/epics/tuning-data-config/story-040-canonical-keys-and-faces.md`
-- Unlocks: `production/epics/tuning-data-config/story-044-schema-complete.md`, `production/epics/tuning-data-config/story-058-tuning-store-default-preset.md`, `production/epics/tuning-data-config/story-064-presets-cooked.md`, `production/epics/tuning-data-config/story-065-catalog-clean.md`
+- Unlocks: `production/epics/tuning-data-config/story-058-tuning-store-default-preset.md`, `production/epics/tuning-data-config/story-064-presets-cooked.md`, `production/epics/tuning-data-config/story-065-catalog-clean.md`
 - Open verification claims: the plan Note says the ADR-0009 lock and single-writer rule applies and that prototype values are only a source for defaults pinned by test (never migrated). ADR-0009 Verification Required (1) to (3) remain [U]. Open items found while writing: the `bHostSelectable` value of the `Default` catalog entry, and whether a repository with lock support exists when this story runs.

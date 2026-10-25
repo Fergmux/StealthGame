@@ -1,12 +1,12 @@
 # Story 055: AC-30 mechanism: owner-invariant rows with Pass/Warn/Reject and context
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -36,7 +36,7 @@ Exit B-2 of the epic. The Formulas table of the TDC GDD lists many owner invaria
 
 *From the story plan (GDD AC-30 is split: this story is the mechanism half, the aggregate half is story 096), scoped to this story:*
 
-- [ ] **AC-30 (mechanism half, test `StealthGame.Tuning.OwnerInvariantMechanism`)**: over a synthetic schema fixture, a reject-class row that alone is broken rejects the preset and the report names exactly that invariant ID; a warn-class row accepts the preset with exactly one warning naming the ID; mixed rows (reject clause and warn clause) report the worst result and name the clause; context-dependent rows (bIsPublic, PresetId == Solo) behave per scope; offline rows are not evaluated at preset load.
+- [x] **AC-30 (mechanism half, test `StealthGame.Tuning.OwnerInvariantMechanism`)**: over a synthetic schema fixture, a reject-class row that alone is broken rejects the preset and the report names exactly that invariant ID; a warn-class row accepts the preset with exactly one warning naming the ID; mixed rows (reject clause and warn clause) report the worst result and name the clause; context-dependent rows (bIsPublic, PresetId == Solo) behave per scope; offline rows are not evaluated at preset load.
 
 ---
 
@@ -94,7 +94,7 @@ Exit B-2 of the epic. The Formulas table of the TDC GDD lists many owner invaria
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/OwnerInvariantMechanismTest.cpp` must exist and pass (`StealthGame.Tuning.OwnerInvariantMechanism`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.OwnerInvariantMechanism`)
 
 ---
 
@@ -103,3 +103,15 @@ Exit B-2 of the epic. The Formulas table of the TDC GDD lists many owner invaria
 - Depends on: `production/epics/tuning-data-config/story-048-invariants-i1-i5.md`
 - Unlocks: `production/epics/tuning-data-config/story-096-owner-invariants-full-schema-closure.md`
 - Open verification claims: the plan Note says the real per-owner rows are added by each owner epic (TDC CR-15.6) and that full-schema closure is story 096 (a scope statement, not an engine claim). Open items found while writing: the injection point for a substituted invariant table, and the clause-naming scheme for mixed rows.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (over a synthetic invariant table injected through FTuningResolveInput::Invariants: the baseline passes with no warning; a broken reject-class row alone rejects the preset (Default active) and the report names exactly X-REJ-1; a warn-class row accepts with exactly one warning, naming X-WARN-1; the mixed row reports Warn naming the warn clause at 52 and Reject naming the reject clause at 48 (worst wins); the bIsPublic row rejects in a HostSelectable preset and warns in a non-selectable one; the Solo row is not applicable in Solo and warns elsewhere; the offline row's call counter stays 0 and the real preset-load table holds no offline row; a static_assert pins the const-only Check signature)
+**Decisions**: FTuningInvariant gains optional RejectClause/WarnClause (findings carry the clause of the produced result; the Id stays the exact GDD ID) and bOffline (GetTuningInvariants() returns non-offline rows, GetTuningOfflineInvariants() lists offline ones, EvaluateInvariants skips offline rows of an injected table); the invariant-table injection point is FTuningResolveInput::Invariants (test seams only)
+**Files changed beyond the list**: `Source/StealthFoundation/Public/Server/StealthTuningInvariants.h`, `Source/StealthFoundation/Private/Tuning/StealthTuningValidate.cpp`, `Source/StealthFoundation/Public/Server/StealthTuningPipelineCore.h`
+**Deviations**: None (no real owner row added; story 096 closes the full schema)
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/OwnerInvariantMechanismTest.cpp`; `production/qa/evidence/story-055-owner-invariant-mechanism/stamp.txt`; full suite 70/70 green (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded, tests exit=0)
+**Run result**: N/A — validator core; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

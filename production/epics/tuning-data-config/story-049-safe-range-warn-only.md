@@ -1,12 +1,12 @@
 # Story 049: AC-26 SafeRangeWarnOnly
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From GDD `design/gdd/tuning-data-config.md` AC-26, scoped to this story:*
 
-- [ ] **AC-26 (CR-15.5)**: GIVEN a non-selectable preset with `NpcCount` 60 (inside the hard range, outside the safe range), WHEN validated, THEN the value stays 60, one safe-range warning names the key and the preset is accepted. (`StealthGame.Tuning.SafeRangeWarnOnly`)
+- [x] **AC-26 (CR-15.5)**: GIVEN a non-selectable preset with `NpcCount` 60 (inside the hard range, outside the safe range), WHEN validated, THEN the value stays 60, one safe-range warning names the key and the preset is accepted. (`StealthGame.Tuning.SafeRangeWarnOnly`)
 
 ---
 
@@ -86,7 +86,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/SafeRangeWarnOnlyTest.cpp` (`StealthGame.Tuning.SafeRangeWarnOnly`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.SafeRangeWarnOnly`)
 
 ---
 
@@ -95,3 +95,15 @@
 - Depends on: `production/epics/tuning-data-config/story-046-f1-validate-clamp-nan.md`
 - Unlocks: None
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story). Open points: the `FallbackLevel` 0 assertion depends on story 050 (not a listed dependency), and the behaviour for a clamped value that also lies outside its safe range.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (NpcCount 60 stays 60 with exactly one safe-range warning naming NpcCount and no F-1 change; 45 and 50 on the safe bounds give no warning; NpcCount 0 still clamps to 6 with only its clamp warning; end to end through Resolve() (story 050 landed in the same batch) a non-selectable preset with NpcCount 60 is accepted at FallbackLevel 0 with one warning in the whole resolve, which settles the open FallbackLevel 0 point)
+**Decisions**: a key F-1 changed is judged by its clamp warning only, never a second safe-range warning for its effective value (one warning per key; comment in RunF1); sentinel values and bools never warn; the note is recorded in FTuningF1Report::SafeRange. The story 046 test's hard-bound case now asserts no F-1 warning and that every other warning is a safe-range note (a hard bound outside the safe range now legitimately warns, CR-15.5)
+**Files changed beyond the list**: `Source/StealthFoundation/Private/Tests/Tuning/ValidateClampAndNanTest.cpp`, `Source/StealthFoundation/Public/Server/StealthTuningPipelineCore.h`
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/SafeRangeWarnOnlyTest.cpp`; `production/qa/evidence/story-049-safe-range-warn-only/stamp.txt`; full suite 70/70 green (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded, tests exit=0)
+**Run result**: N/A — validator core; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

@@ -1,12 +1,12 @@
 # Story 048: AC-17 InvariantBoundaries: invariants I-1 to I-5
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From the plan amendment for story 048 (REVISED), scoped to this story (the whole-preset and FallbackLevel clause is story 097):*
 
-- [ ] (GDD AC-17, invariant-table half, test `StealthGame.Tuning.InvariantBoundaries`): over a test schema fixture holding only I-1..I-5 (owner invariants excluded), non-HostSelectable test presets except where stated, `NpcKillStrikeLimit` 1 with `bTestAllowsStrikeLimitOne` so I-4 cannot interfere (except the HostSelectable bullet, which uses limit 2 and no flag), and the I-5 pair being a fixture range pair `FixtureMinSec`/`FixtureMaxSec`: the invariant table returns Pass/Warn/Reject exactly as the GDD AC-17 bullets state for every listed value (DefenceDurationSec 5 with cooldown 40 pass and 39.9 reject; TeamSize 5/NpcCount 10 warn I-3 and 9 reject I-2; TeamSize 1/NpcCount 10 warn I-3; TeamSize 4/NpcCount 8 warn and 7 reject; HostSelectable TeamSize 1/NpcCount 21 reject I-3 and 22 pass I-4 0.085; Min greater than Max reject I-5; authored DefenceDurationSec 7.5 clamps to 5 and passes with cooldown 40). The end-to-end clause "each rejection rejects the whole preset at FallbackLevel 1" is story 097.
+- [x] (GDD AC-17, invariant-table half, test `StealthGame.Tuning.InvariantBoundaries`): over a test schema fixture holding only I-1..I-5 (owner invariants excluded), non-HostSelectable test presets except where stated, `NpcKillStrikeLimit` 1 with `bTestAllowsStrikeLimitOne` so I-4 cannot interfere (except the HostSelectable bullet, which uses limit 2 and no flag), and the I-5 pair being a fixture range pair `FixtureMinSec`/`FixtureMaxSec`: the invariant table returns Pass/Warn/Reject exactly as the GDD AC-17 bullets state for every listed value (DefenceDurationSec 5 with cooldown 40 pass and 39.9 reject; TeamSize 5/NpcCount 10 warn I-3 and 9 reject I-2; TeamSize 1/NpcCount 10 warn I-3; TeamSize 4/NpcCount 8 warn and 7 reject; HostSelectable TeamSize 1/NpcCount 21 reject I-3 and 22 pass I-4 0.085; Min greater than Max reject I-5; authored DefenceDurationSec 7.5 clamps to 5 and passes with cooldown 40). The end-to-end clause "each rejection rejects the whole preset at FallbackLevel 1" is story 097.
 
 ---
 
@@ -93,7 +93,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/InvariantBoundariesTest.cpp` (`StealthGame.Tuning.InvariantBoundaries`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.InvariantBoundaries`)
 
 ---
 
@@ -102,3 +102,16 @@
 - Depends on: `production/epics/tuning-data-config/story-047-derived-indicators.md`, `production/epics/tuning-data-config/story-046-f1-validate-clamp-nan.md`
 - Unlocks: `production/epics/tuning-data-config/story-050-resolve-fallback-to-default.md`, `production/epics/tuning-data-config/story-055-owner-invariant-mechanism.md`, `production/epics/tuning-data-config/story-065-catalog-clean.md`, `production/epics/tuning-data-config/story-094-safe-range-lint-baseline.md`, `production/epics/tuning-data-config/story-097-invariants-reject-whole-preset.md`, `production/epics/tuning-data-config/story-098-derived-indicators-preset-scope.md`
 - Open verification claims from the plan Note lines: none. The plan Note ("Check functions are pure, take const input and never write a value (CR-6)") is a rule, not an open claim. Open design points: the I-3 Character Pool key supply in the fixture, range-pair recognition, and the fixture row-selection mechanism.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (every AC-17 bullet value through F-1, F-3 and rows I-1..I-5 selected by Id: DefenceDurationSec 5 with cooldown 40 all Pass, with 39.9 I-1 Reject; TeamSize 5/NpcCount 10 I-3 Warn, 9 I-2 Reject; 1/10 I-3 Warn; 4/8 I-3 Warn, 4/7 I-2 Reject; HostSelectable 1/21 I-3 Reject, 1/22 all Pass with BlindGuessSuccess 0.085; fixture pair Min > Max I-5 Reject, Min == Max Pass; authored 7.5 clamps to 5 with one clamp warning and passes with cooldown 40; every row leaves the value set unchanged)
+**Negative controls**: InvariantRowWritesAValue and InvariantRowWrongSeverity both detected
+**Decisions**: I-3's deck floor reads provisional constants StealthTuningPendingOwnerKeys (4 x 6) until Character Pool registers the keys (tech debt TD-TDC-I3 in docs/tech-debt-register.md); I-5 recognises pairs as <Prefix>Min<Unit>/<Prefix>Max<Unit> rows of the context's schema view (FTuningCheckContext gains a Schema view; documented in the header); the I-5 fixture pair maps onto two face fields no I-1..I-4 row reads; rows are selected by Id from GetTuningInvariants(); FTuningPipelineCore::EvaluateInvariants (StealthTuningValidate.cpp) evaluates a table and logs each Warn/Reject naming its Id
+**Files changed beyond the list**: `Source/StealthFoundation/Public/Server/StealthTuningPipelineCore.h`, `Source/StealthFoundation/Private/Tuning/StealthTuningValidate.cpp` (EvaluateInvariants), `docs/tech-debt-register.md` (TD-TDC-I3)
+**Deviations**: None (the whole-preset/FallbackLevel 1 clause stays with story 097)
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/InvariantBoundariesTest.cpp`; `production/qa/evidence/story-048-invariants-i1-i5/stamp.txt`; full suite 70/70 green (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded, tests exit=0)
+**Run result**: N/A — validator core; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

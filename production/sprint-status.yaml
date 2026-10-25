@@ -645,11 +645,11 @@ stories:
     name: "AC-3a SchemaComplete: rows, pins, mirrors and reflection hygiene"
     file: "production/epics/tuning-data-config/story-044-schema-complete.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-045"
     name: "AC-5 HashStableAndSensitive: FNV-1a-64 over the F-2 byte stream"
@@ -685,81 +685,81 @@ stories:
     name: "AC-17 InvariantBoundaries: invariants I-1 to I-5"
     file: "production/epics/tuning-data-config/story-048-invariants-i1-i5.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-049"
     name: "AC-26 SafeRangeWarnOnly"
     file: "production/epics/tuning-data-config/story-049-safe-range-warn-only.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-050"
     name: "AC-6a FallbackToDefault: Resolve() and the preset-source seam"
     file: "production/epics/tuning-data-config/story-050-resolve-fallback-to-default.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-051"
     name: "AC-6b FallbackToSchema"
     file: "production/epics/tuning-data-config/story-051-fallback-to-schema.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-052"
     name: "Round and Session stubs for TDC tests"
     file: "production/epics/tuning-data-config/story-052-round-session-stubs.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-053"
     name: "AC-6c FallbackFailed"
     file: "production/epics/tuning-data-config/story-053-fallback-failed.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-054"
     name: "AC-32 FrozenImmutable: FValidatedTuning has no mutator"
     file: "production/epics/tuning-data-config/story-054-validated-tuning-frozen-immutable.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-055"
     name: "AC-30 mechanism: owner-invariant rows with Pass/Warn/Reject and context"
     file: "production/epics/tuning-data-config/story-055-owner-invariant-mechanism.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-056"
     name: "Default, Playtest and Solo preset assets and the catalog"

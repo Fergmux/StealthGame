@@ -1,12 +1,12 @@
 # Story 050: AC-6a FallbackToDefault: Resolve() and the preset-source seam
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From GDD `design/gdd/tuning-data-config.md` AC-6a, scoped to this story:*
 
-- [ ] **AC-6a (CR-6)**: GIVEN a requested preset violating I-1 (`DefenceDurationSec` 5, `DefenceCooldownSec` 35), WHEN resolved, THEN the whole preset is rejected, `Default` is active and `FallbackLevel` is 1. (`StealthGame.Tuning.FallbackToDefault`)
+- [x] **AC-6a (CR-6)**: GIVEN a requested preset violating I-1 (`DefenceDurationSec` 5, `DefenceCooldownSec` 35), WHEN resolved, THEN the whole preset is rejected, `Default` is active and `FallbackLevel` is 1. (`StealthGame.Tuning.FallbackToDefault`)
 
 ---
 
@@ -93,7 +93,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/FallbackToDefaultTest.cpp` (`StealthGame.Tuning.FallbackToDefault`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.FallbackToDefault`)
 
 ---
 
@@ -102,3 +102,15 @@
 - Depends on: `production/epics/tuning-data-config/story-048-invariants-i1-i5.md`, `production/epics/tuning-data-config/story-045-hasher-golden.md`
 - Unlocks: `production/epics/tuning-data-config/story-051-fallback-to-schema.md`, `production/epics/tuning-data-config/story-054-validated-tuning-frozen-immutable.md`, `production/epics/tuning-data-config/story-058-tuning-store-default-preset.md`, `production/epics/tuning-data-config/story-097-invariants-reject-whole-preset.md`, `production/epics/tuning-data-config/story-098-derived-indicators-preset-scope.md`
 - Open verification claims from the plan Note lines: none. The plan Note (`ITuningPresetSource` is the injectable loader seam) is a design statement, not an open claim. Open design points: the `bTestAllowsStrikeLimitOne` carrier, the "corrupted" definition (to be written in the seam header), and where `FValidatedTuning` is first declared.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (requested preset DefenceDurationSec 5 / DefenceCooldownSec 35 rejected as a whole with exactly one Reject finding, I-1; Default active, FallbackLevel 1, frozen PresetId Default, Revision 0, SchemaVersion TuningSchemaVersion; every active value equals Default's (no partial application); TuningHash and ClientHash equal the story 045 hasher over the active values; a missing requested preset lands on the same rung (Missing outcome); a valid request is used at level 0; a substituted schema view (DefenceCooldownSec hard minimum 40) is honoured)
+**Decisions**: the F-1 flag reaches each rung through ITuningPresetSource::GetF1Options (keeps the ADR Load signature); "corrupted" = Load returns no value, documented once in the ITuningPresetSource header; Failed = null Validated (IsFailed()); FValidatedTuning is first declared here (StealthValidatedTuning.h, const members, const accessors) and proven immutable by story 054; FValidationReport records every rung (PresetId, level, outcome, F-1 changes and safe-range notes, findings by Id); the Schema and Invariants substitution seams compile only under WITH_STEALTH_TEST_SEAMS; a test-local fake source (StealthTuningFakePresetSource.h) is shared by the resolve tests. The core has no fault path, so no fault-sink teardown check applies
+**Files changed beyond the list**: `Source/StealthFoundation/Private/Tests/Tuning/StealthTuningFakePresetSource.h`
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/FallbackToDefaultTest.cpp`; `production/qa/evidence/story-050-resolve-fallback-to-default/stamp.txt`; full suite 70/70 green (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded, tests exit=0)
+**Run result**: N/A — validator core; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

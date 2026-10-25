@@ -1,12 +1,12 @@
 # Story 051: AC-6b FallbackToSchema
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From GDD `design/gdd/tuning-data-config.md` AC-6b, scoped to this story:*
 
-- [ ] **AC-6b (CR-6)**: GIVEN the injectable loader returns a corrupted `Default` and the requested preset fails, THEN schema defaults apply with `FallbackLevel` 2. AND GIVEN `Default` itself is requested and corrupted, THEN `FallbackLevel` is 2 and `PresetId` is `SchemaDefaults`. (`StealthGame.Tuning.FallbackToSchema`)
+- [x] **AC-6b (CR-6)**: GIVEN the injectable loader returns a corrupted `Default` and the requested preset fails, THEN schema defaults apply with `FallbackLevel` 2. AND GIVEN `Default` itself is requested and corrupted, THEN `FallbackLevel` is 2 and `PresetId` is `SchemaDefaults`. (`StealthGame.Tuning.FallbackToSchema`)
 
 ---
 
@@ -85,7 +85,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/FallbackToSchemaTest.cpp` (`StealthGame.Tuning.FallbackToSchema`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.FallbackToSchema`)
 
 ---
 
@@ -94,3 +94,14 @@
 - Depends on: `production/epics/tuning-data-config/story-050-resolve-fallback-to-default.md`
 - Unlocks: `production/epics/tuning-data-config/story-053-fallback-failed.md`
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (requested preset fails I-1 and Default is corrupted: schema defaults apply, FallbackLevel 2, PresetId SchemaDefaults, rungs Rejected/Missing/Accepted, one fallback warning; Default requested and corrupted: Default loaded once (repeated rung skipped), FallbackLevel 2, PresetId SchemaDefaults; "default" requested in another case behaves the same; in every case each active value equals the generated table's Default column)
+**Decisions**: the schema-defaults rung builds values from the schema view's Default column (BuildSchemaDefaults), validated with bIsPublic true (it stands in for Default) and no F-1 flag
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/FallbackToSchemaTest.cpp`; `production/qa/evidence/story-051-fallback-to-schema/stamp.txt`; full suite 70/70 green (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded, tests exit=0)
+**Run result**: N/A — validator core; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

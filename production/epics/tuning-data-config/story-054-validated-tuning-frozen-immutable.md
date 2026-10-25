@@ -1,12 +1,12 @@
 # Story 054: AC-32 FrozenImmutable: FValidatedTuning has no mutator
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -36,7 +36,7 @@ Exit B-2 of the epic. CR-7 freezes the validated tuning at `Preparing` and stamp
 
 *From GDD `design/gdd/tuning-data-config.md`, scoped to this story:*
 
-- [ ] **AC-32 (CR-7)**: GIVEN a frozen set, WHEN any server system attempts to modify it outside the PIE hot-reload path, THEN the API offers no mutator (const access, compile-level), and the frozen hash is unchanged at `Ended`. (`StealthGame.Tuning.FrozenImmutable`)
+- [x] **AC-32 (CR-7)**: GIVEN a frozen set, WHEN any server system attempts to modify it outside the PIE hot-reload path, THEN the API offers no mutator (const access, compile-level), and the frozen hash is unchanged at `Ended`. (`StealthGame.Tuning.FrozenImmutable`)
 
 ---
 
@@ -98,7 +98,7 @@ Exit B-2 of the epic. CR-7 freezes the validated tuning at `Preparing` and stamp
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/FrozenImmutableTest.cpp` must exist and pass (`StealthGame.Tuning.FrozenImmutable`); the probe pair `tools/ci/compile-probes/MutateValidatedTuning.cpp` and its control must be reported by the story 005 runner (mutation fails, control compiles)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.FrozenImmutable`)
 
 ---
 
@@ -107,3 +107,16 @@ Exit B-2 of the epic. CR-7 freezes the validated tuning at `Preparing` and stamp
 - Depends on: `production/epics/tuning-data-config/story-050-resolve-fallback-to-default.md`, `production/epics/tuning-data-config/story-005-compile-probe-runner-and-guard-probe.md`, `production/epics/tuning-data-config/story-052-round-session-stubs.md`
 - Unlocks: None
 - Open verification claims: the plan Note says the compile probe depends on story 005 (its `-SingleFile=` behaviour is [V `BuildMode.cs:880-943`], observed in 005). Open items found while writing: the expected compiler error substring, the probe's `TARGET-MODULE`, and where `StealthValidatedTuning.h` is first created (050 versus this story).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (static_asserts: FValidatedTuning is not copy-, move- or otherwise assignable, each of the eight accessors is a const member function returning a value or a const reference, the result holds TSharedPtr<const FValidatedTuning> convertible to TSharedRef<const FValidatedTuning>; at run time a round on FStubRound is driven Preparing (resolve, freeze, OnTuningReady) to Playing to Ended, and TuningHash, every frozen value and the hasher's hash of the frozen values are unchanged at Ended, a second resolve producing a distinct object; compile probes: MutateValidatedTuning.cpp failed with the expected text and its const-read control compiled, gate PASS (2 probes) in `production/qa/evidence/story-054-validated-tuning-frozen-immutable/probe-run-pass.txt`)
+**Watched to fail**: the first probe run used a guessed EXPECT-ERROR (C3490) and the gate reported FAIL "failed with a different message" (`probe-run1-wrong-expect.txt`); the observed MSVC text, error C3892 "you cannot assign to a variable that is const", was then copied into the probe header
+**Decisions**: probe TARGET-MODULE and CONTROL-MODULE StealthFoundation; the control lives at `tools/ci/compile-probes/controls/ReadValidatedTuningControl.cpp` (the runner globs only the top-level *.cpp, so a control beside the probe would be read as a probe); the header was created in story 050 and finalised here; const_cast is noted in the test as a code-review matter
+**Files changed beyond the list**: the control path is `tools/ci/compile-probes/controls/ReadValidatedTuningControl.cpp` (the proposed name, one folder down)
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/FrozenImmutableTest.cpp`; `production/qa/evidence/story-054-validated-tuning-frozen-immutable/` (stamp, probe runs, full suite); full suite 70/70 green (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded, tests exit=0)
+**Run result**: N/A — immutable value type and compile probes; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

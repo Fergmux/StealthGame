@@ -1,12 +1,12 @@
 # Story 053: AC-6c FallbackFailed
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -36,7 +36,7 @@ Exit B-2 of the epic. CR-6 defines the fallback ladder: requested preset, then `
 
 *From GDD `design/gdd/tuning-data-config.md`, scoped to this story:*
 
-- [ ] **AC-6c (CR-6)**: GIVEN every rung fails, WHEN resolved against a Round stub, THEN the pipeline is `Failed`, the stub receives the `Failed` result and `TuningLoadFailed` is logged. (`StealthGame.Tuning.FallbackFailed`)
+- [x] **AC-6c (CR-6)**: GIVEN every rung fails, WHEN resolved against a Round stub, THEN the pipeline is `Failed`, the stub receives the `Failed` result and `TuningLoadFailed` is logged. (`StealthGame.Tuning.FallbackFailed`)
 
 ---
 
@@ -94,7 +94,7 @@ Exit B-2 of the epic. CR-6 defines the fallback ladder: requested preset, then `
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/FallbackFailedTest.cpp` must exist and pass (`StealthGame.Tuning.FallbackFailed`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.FallbackFailed`)
 
 ---
 
@@ -103,3 +103,15 @@ Exit B-2 of the epic. CR-6 defines the fallback ladder: requested preset, then `
 - Depends on: `production/epics/tuning-data-config/story-051-fallback-to-schema.md`, `production/epics/tuning-data-config/story-052-round-session-stubs.md`
 - Unlocks: `production/epics/tuning-data-config/story-084-round-log-header.md`
 - Open verification claims: the plan has no Note line for this story. Open items found while writing: the representation of `Failed` in `FTuningResolveResult`, and how often `TuningLoadFailed` is logged.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (requested preset missing, Default corrupted, schema defaults substituted to DefenceDurationSec 5 / DefenceCooldownSec 35: the pipeline is Failed (null frozen set, no accepted rung, rungs Missing/Missing/Rejected by I-1); FStubRound receives exactly one OnTuningFailed(LoadFailed) and no OnTuningReady and returns to Lobby; TuningLoadFailed is logged, observed once per failed resolve)
+**Negative control**: UnsubstitutedSchemaDoesNotFail detected (the same inputs with the real schema land on the schema defaults at FallbackLevel 2)
+**Decisions**: Failed is a null Validated (FTuningResolveResult::IsFailed), no separate flag; the store's Failed state belongs to story 058; the core has no fault path, so no fault-sink teardown check
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/FallbackFailedTest.cpp`; `production/qa/evidence/story-053-fallback-failed/stamp.txt`; full suite 70/70 green (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded, tests exit=0)
+**Run result**: N/A — validator core; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left
