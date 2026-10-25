@@ -317,3 +317,6 @@ Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-2
 
 Architecture review 2026-10-25b (`docs/architecture/architecture-review-2026-10-25b.md`); decision unchanged in substance (D3 stands), Status unchanged (Accepted).
 - §4, the diagram, Guidelines 2 and 5, Consequences, R9 and Performance Implications harmonised with Closeout D3 (they still described the rate-1 host as the default; finding shared by the technical-director and unreal-specialist consultations). The SCL R11.5 constraint (host pose updates every frame, only evaluation tiered; the rate-1 override applies on the host) is stated in §4, and the 5.8.4 `ShouldTickAnimation` note is added to R9.
+
+Technical Setup 2026-10-25b (architecture-review closure, `docs/architecture/architecture-review-2026-10-25b.md`); decision unchanged, Status unchanged (Accepted).
+- §1 (Inputs the AnimBP may read; TR-scl-005, TR-scl-015): `HeadLook` and `RemoteViewPitch16` are produced by the filter and the idle-gaze layer owned by ADR-0010 §8.1 (F6 filter, observer interpolation, idle gaze); this ADR only consumes them through one look-at solver on the head and neck chain (SCL R8.7) and adds no look logic of its own.

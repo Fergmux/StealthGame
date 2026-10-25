@@ -1,13 +1,13 @@
 # Architecture Traceability Index
-Last Updated: 2026-10-25 (architecture review 2026-10-25b: full re-run; 13 new TR-IDs; coverage re-verified row by row)
+Last Updated: 2026-10-25 (Technical Setup 2026-10-25b fix pass: the 21 partial rows closed by ADR amendments; before that, architecture review 2026-10-25b: full re-run; 13 new TR-IDs; coverage re-verified row by row)
 Engine: Unreal Engine 5.8 (installed 5.8.4)
 Source review: `docs/architecture/architecture-review-2026-10-25b.md` (full mode, workflow full; supersedes the counts of `architecture-review-2026-10-25.md`)
 
 ## Coverage Summary
 - Total requirements: 214 (201 from tr-registry v3, including the 24 Pings IDs; **13 new IDs registered by the 2026-10-25b review**: TR-roster-013/014, TR-tdc-012, TR-session-011/012, TR-scl-015, TR-lsc-010, TR-crowd-011, TR-con-012, TR-asn-012/013, TR-tmk-007, TR-hud-008)
-- Covered by an Accepted ADR (✅): **193 (90 %)** — all 23 ADRs Accepted 2026-10-25 (several conditional on spikes; see each ADR's Status and `control-manifest.md`)
+- Covered by an Accepted ADR (✅): **214 (100 %)** (193 at the 2026-10-25b review + 21 closed by the Technical Setup 2026-10-25b amendments) — all 23 ADRs Accepted 2026-10-25 (several conditional on spikes; see each ADR's Status and `control-manifest.md`)
 - Covered by a Proposed ADR (🟡): 0
-- Partial (⚠️): **21** — the previous index's "201/201 covered" overstated coverage: the 2026-10-25b row-by-row check found ADR text that covers only part of 18 existing rows, and 3 of the new rows are partial (see Known Gaps)
+- Partial (⚠️): **0** (was 21 at the 2026-10-25b review; all closed by the Technical Setup 2026-10-25b amendments) — at the review, the previous index's "201/201 covered" overstated coverage: the 2026-10-25b row-by-row check found ADR text that covers only part of 18 existing rows, and 3 of the new rows were partial (see Known Gaps)
 - Gaps (❌): **0** — two requirements with no ADR (TR-roster-013 `PublicHandle` random source, Foundation; the TR-scl-015 idle-gaze stream, Core) were closed in-review by an append-only ADR-0006 amendment (domains 15 and 16)
 
 "Accepted" here means the ADR text is the governing decision. A conditionally accepted ADR still gates implementation on its named spikes; stories inherit those conditions through `/story-readiness`.
@@ -27,15 +27,15 @@ Source review: `docs/architecture/architecture-review-2026-10-25b.md` (full mode
 | TR-tdc-009 | tuning-data-config.md | Tuning | No back doors: no `Config` properties, no ini/CVar overrides in Shipping; Shipping always resolves `Default` | ADR-0004 | ✅ Accepted |
 | TR-tdc-010 | tuning-data-config.md | Tuning | PIE-only hot-reload re-validation, debounced, routed to the PIE server world | ADR-0004 | ✅ Accepted |
 | TR-tdc-011 | tuning-data-config.md | Tuning | Client tuning check rides Session's single acknowledgement (no TDC RPC/timer) | ADR-0004 | ✅ Accepted |
-| TR-tdc-012 | tuning-data-config.md | Tuning | Soft-reference asset keys (`*Asset` suffix, e.g. Crowd StateTree and motion-profile assets) have a schema type, a canonical `TuningHash` form and a validator rule | ADR-0004 | ⚠️ Partial (ADR-0004 schema types, `typeTag` and canonical hash form cover no soft reference) |
+| TR-tdc-012 | tuning-data-config.md | Tuning | Soft-reference asset keys (`*Asset` suffix, e.g. Crowd StateTree and motion-profile assets) have a schema type, a canonical `TuningHash` form and a validator rule | ADR-0004 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0004 §1/§3/§5/§6 `SoftRef` type, typeTag 4, lower-cased path hash, Reject rule) |
 | TR-roster-001 | participant-state-roster.md | Roster | Game-instance store of `ParticipantRecord`s surviving seamless and hard travel; `BeginMatch`/`EndMatch` | ADR-0005 | ✅ Accepted |
-| TR-roster-002 | participant-state-roster.md | Roster | Single writer of lifecycle state through `RequestTransition` with the legal-transition table and result precedence; batch-only reset/end | ADR-0005 | ⚠️ Partial (legal-transition table, R8 result precedence and batch-only reset are GDD content housed in ADR-0005's store; no ADR states them) |
-| TR-roster-003 | participant-state-roster.md | Roster | Game-thread-only mutation; events queued and dispatched FIFO after the outermost call; `EventSeq` +1 per event | ADR-0002, ADR-0005 | ⚠️ Partial (`EventSeq` +1 per event unstated) |
+| TR-roster-002 | participant-state-roster.md | Roster | Single writer of lifecycle state through `RequestTransition` with the legal-transition table and result precedence; batch-only reset/end | ADR-0005 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0005 §2: `RequestTransition` single writer, GDD transition table normative, R8 precedence, `ResetAll`/`EndRoundAll` batch only) |
+| TR-roster-003 | participant-state-roster.md | Roster | Game-thread-only mutation; events queued and dispatched FIFO after the outermost call; `EventSeq` +1 per event | ADR-0002, ADR-0005 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0005 §2: FIFO dispatch after outermost call, `EventSeq` +1 per event of any type) |
 | TR-roster-004 | participant-state-roster.md | Roster | Pawn binding states with bind-before-visible spawn and crowd-adoption paths; tombstones | ADR-0010 | ✅ Accepted |
-| TR-roster-005 | participant-state-roster.md | Roster | O(1) allocation-free server queries; on clients return 0/false and report to the fault sink | ADR-0010 | ⚠️ Partial (O(1) lookup structure and the client fault-sink rule unstated) |
+| TR-roster-005 | participant-state-roster.md | Roster | O(1) allocation-free server queries; on clients return 0/false and report to the fault sink | ADR-0005, ADR-0010 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0005 §2: pre-sized `PawnBindingTable` (AC-PSR-28), client 0/false + fault sink) |
 | TR-roster-006 | participant-state-roster.md | Roster | Carriers C-Public (PlayerState allowlist), C-TeamView (owner-only PlayerController), C-Server (never replicated) | ADR-0001 | ✅ Accepted |
 | TR-roster-007 | participant-state-roster.md | Roster | Engine PlayerState defaults disabled or constant; frozen in-round `PlayerArray`; no PlayerState byte change on a transition | ADR-0001 | ✅ Accepted |
-| TR-roster-008 | participant-state-roster.md | Roster | Opponent counts never leave the server before `Ended` | ADR-0001, ADR-0002 | ⚠️ Partial (only implied by ADR-0002 §8 `TeamSummary` and ADR-0001 §5) |
+| TR-roster-008 | participant-state-roster.md | Roster | Opponent counts never leave the server before `Ended` | ADR-0005, ADR-0001, ADR-0002 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0005 §2 + ADR-0001 §5 cross-ref: only `TeamSummary[2]` at the round-end step) |
 | TR-roster-009 | participant-state-roster.md | Roster | All presentation, incl. the listen host, reads only C-TeamView and public structs | ADR-0001, ADR-0007 | ✅ Accepted |
 | TR-roster-010 | participant-state-roster.md | Roster | Disconnect/reclaim keyed by IdentityKey; epoch token and connection generation guard every timer | ADR-0005 | ✅ Accepted |
 | TR-roster-011 | participant-state-roster.md | Roster | Pawn replication configuration identical for NPC and player and invariant under possession | ADR-0001 | ✅ Accepted |
@@ -75,14 +75,14 @@ Source review: `docs/architecture/architecture-review-2026-10-25b.md` (full mode
 | TR-round-003 | round-match-framework.md | Round | Drain once per frame in `TG_PostPhysics`; due-time heap; resolvers per item type; inline follow-ons; Roster events flushed before the next item | ADR-0002 | ✅ Accepted |
 | TR-round-004 | round-match-framework.md | Round | Single-assignment latch and the two-step round end (latch step; round-end step at the deciding strike's death write) | ADR-0002 | ✅ Accepted |
 | TR-round-005 | round-match-framework.md | Round | Objective and elimination wins; no draw, no clock | ADR-0002 | ✅ Accepted |
-| TR-round-006 | round-match-framework.md | Round | Preparing readiness sequence, spawn gate and watchdog | ADR-0005, ADR-0014 | ⚠️ Partial (Round P1-P7 sequencer, `PreparingWatchdogSec`, abort codes and the P5b gate in no ADR) |
-| TR-round-007 | round-match-framework.md | Round | Disconnect policy: blend hand-over, guarded grace timer, forfeit/void | ADR-0005, ADR-0010 | ⚠️ Partial (grace/forfeit/void decision logic deferred to the GDD by ADR-0002 §8.1) |
-| TR-round-008 | round-match-framework.md | Round | Server-only Event Log ring with release classes; never through logs or traces | ADR-0007 | ⚠️ Partial (Event Log ring entry types, release classes and writer interface have no owning ADR) |
-| TR-round-009 | round-match-framework.md | Round | `FRoundPublicState` identical bytes for every viewer; `ActiveAtServerTime` zeroed in Active; bounded late-loader reveal | ADR-0003 | ⚠️ Partial (byte-identical public round struct details beyond ADR-0003 §6) |
+| TR-round-006 | round-match-framework.md | Round | Preparing readiness sequence, spawn gate and watchdog | ADR-0002, ADR-0005, ADR-0014 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0002 §8.6/§8.8: P1-P7, P5b gate, `PreparingWatchdogSec`, closed abort-code set) |
+| TR-round-007 | round-match-framework.md | Round | Disconnect policy: blend hand-over, guarded grace timer, forfeit/void | ADR-0002, ADR-0005, ADR-0010 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0002 §8.7/§8.8: guarded `GraceExpiry` timer, `G_eff`, forfeit/void partition, void latches) |
+| TR-round-008 | round-match-framework.md | Round | Server-only Event Log ring with release classes; never through logs or traces | ADR-0002, ADR-0007, ADR-0023 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0002 §8.9 owns the ring (`FRoundEventLog`, `IRoundLogWriter::Append`, release classes); ADR-0007 lint names, ADR-0023 consumer) |
+| TR-round-009 | round-match-framework.md | Round | `FRoundPublicState` identical bytes for every viewer; `ActiveAtServerTime` zeroed in Active; bounded late-loader reveal | ADR-0002, ADR-0003, ADR-0005 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0002 §8.10: `Phase` 0 `Unknown`, `PhaseChangeCount`, zeroed times, `InitGameState` re-seed, `RevealPawnWaitMaxSec`) |
 | TR-round-010 | round-match-framework.md | Round | Host commands on the game instance with a net-mode check | ADR-0005 | ✅ Accepted |
 | TR-round-011 | round-match-framework.md | Round | Single shuffled spawn list in one frame, server-secret order | ADR-0006 | ✅ Accepted |
 | TR-round-012 | round-match-framework.md | Round | Playtest instrumentation (brace timing, run share, final camping, team-size bucket) in the Event Log | ADR-0023 | ✅ Accepted |
-| TR-ivp-001 | information-visibility-policy.md | IVP | `CanViewerKnow` server query, default deny, seven viewer classes | ADR-0001 | ⚠️ Partial (`CanViewerKnow` signature, viewer classes and fact matrix defined only in architecture.md API Boundaries) |
+| TR-ivp-001 | information-visibility-policy.md | IVP | `CanViewerKnow` server query, default deny, seven viewer classes | ADR-0003, ADR-0001 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0003 Key Interfaces: `CanViewerKnow`/`GetViewerClass`, seven `EViewerClass`, IVP R3 matrix normative, default deny on every carrier) |
 | TR-ivp-002 | information-visibility-policy.md | IVP | One carrier kind per audience | ADR-0001 | ✅ Accepted |
 | TR-ivp-003 | information-visibility-policy.md | IVP | UE default overrides of R5 (pawn links, Instigator, possession ForceNetUpdate, RemoteViewPitch16, spectator) | ADR-0001 | ✅ Accepted |
 | TR-ivp-004 | information-visibility-policy.md | IVP | Concealment hybrid: quantised server cull for non-allies + client presentation hide | ADR-0003 | ✅ Accepted |
@@ -99,15 +99,15 @@ Source review: `docs/architecture/architecture-review-2026-10-25b.md` (full mode
 | TR-lsc-004 | level-socket-contract.md | LSC | Server nav build, Validate and Select within attempt/total budgets; ≤ 33 ms slices | ADR-0014 | ✅ Accepted |
 | TR-lsc-005 | level-socket-contract.md | LSC | Reseed and graybox fallback travel | ADR-0014 | ✅ Accepted |
 | TR-lsc-006 | level-socket-contract.md | LSC | Shared emergence sockets; `PickRespawnPawn` of an unseen crowd pawn | ADR-0014, ADR-0019 | ✅ Accepted |
-| TR-lsc-007 | level-socket-contract.md | LSC | Round-start placement and spawn gate | ADR-0014 | ⚠️ Partial (spawn/relevancy gate before `Connected` unspecified; only the possession half is in ADR-0010 §3.2) |
+| TR-lsc-007 | level-socket-contract.md | LSC | Round-start placement and spawn gate | ADR-0014, ADR-0003, ADR-0010 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0003 per-connection spawn gate in `IsNetRelevantFor` before §5.4; ADR-0014 §7.1 spawn half; ADR-0010 §3.1 AI control until `Connected`) |
 | TR-lsc-008 | level-socket-contract.md | LSC | Pillar-1 placement constraints (no area type for spawns/objectives) | ADR-0014 | ✅ Accepted |
 | TR-lsc-009 | level-socket-contract.md | LSC | Server-only query API for site assignment and team spawns | ADR-0014 | ✅ Accepted |
-| TR-lsc-010 | level-socket-contract.md | LSC | Per-court public `ClueTag` as a pure function of published geometry, rule version in `GeneratorKitVersion`, V-CLUE Reject predicate reading `ClueMatchMaxCount` | ADR-0014, ADR-0020 | ⚠️ Partial (ADR-0014 exposes `ClueTag` but lists no V-CLUE predicate) |
+| TR-lsc-010 | level-socket-contract.md | LSC | Per-court public `ClueTag` as a pure function of published geometry, rule version in `GeneratorKitVersion`, V-CLUE Reject predicate reading `ClueMatchMaxCount` | ADR-0014, ADR-0020 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0014 §5.1 V-CLUE Reject predicate on `ClueMatchMaxCount`) |
 | TR-scl-001 | shared-character-locomotion.md | SCL | One Shared Pawn class; one spawn factory; takeover function | ADR-0010 | ✅ Accepted |
 | TR-scl-002 | shared-character-locomotion.md | SCL | Disconnect never destroys a pawn (`PawnLeavingGame` override, same-frame AI possession) | ADR-0010 | ✅ Accepted |
 | TR-scl-003 | shared-character-locomotion.md | SCL | Possession parity and stop-and-blend hand-over; possession causes no forced net update of its own (`ForceNetUpdate` suppressed) | ADR-0003, ADR-0010 | ✅ Accepted |
 | TR-scl-004 | shared-character-locomotion.md | SCL | CMC locomotion, speed tiers, state restrictions, replicated traversal set (spike) | ADR-0010 | ✅ Accepted |
-| TR-scl-005 | shared-character-locomotion.md | SCL | One look path; `RemoteViewPitch16` written from `Look` for every pawn | ADR-0001, ADR-0003 | ⚠️ Partial (SCL R8 `HeadLook` filter placed in the pawn tick by ADR-0001/0016, but its rules have no owning ADR) |
+| TR-scl-005 | shared-character-locomotion.md | SCL | One look path; `RemoteViewPitch16` written from `Look` for every pawn | ADR-0010, ADR-0001, ADR-0003, ADR-0013 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0010 §8.1 owns the `HeadLook` filter: rate limit, yaw byte, observer filter, head hold, `RemoteViewPitch16` for every pawn) |
 | TR-scl-006 | shared-character-locomotion.md | SCL | One AnimBP, motion-matching database, chooser and pose set; `ActionPose`-driven states | ADR-0013 | ✅ Accepted |
 | TR-scl-007 | shared-character-locomotion.md | SCL | Significance-only tiers by screen height; caps; client-local tie key; server always-ticks pose | ADR-0013 | ✅ Accepted |
 | TR-scl-008 | shared-character-locomotion.md | SCL | ≤ 4 ms animation at 60 characters; ≤ 36 KB/s pawn replication per client (working values, `NpcCount` 50) | ADR-0013, ADR-0003 | ✅ Accepted (bandwidth line is ADR-0003, not ADR-0022) |
@@ -200,7 +200,7 @@ Source review: `docs/architecture/architecture-review-2026-10-25b.md` (full mode
 | TR-round-013 | round-match-framework.md | Round | Event Log ring bound; kill timeline protected from eviction; `TruncatedCount`; telemetry section | ADR-0023, ADR-0007 | ✅ Accepted (re-check 2026-10-25: ADR-0023 §1, §5, R-4 and its GDD row now follow Round R19) |
 | TR-ivp-012 | information-visibility-policy.md | IVP | Owner-only clock-exchange RPC pair, timestamps only | ADR-0002 | ✅ Accepted |
 | TR-scl-014 | shared-character-locomotion.md | SCL | Engine CMC net settings pinned and boot-tested against SCL keys (I-SCL-15) | ADR-0010, ADR-0004 | ✅ Accepted |
-| TR-scl-015 | shared-character-locomotion.md | SCL | Server-side idle gaze layer for every pawn kind after `IdleGazeDelaySec` of unchanged look input (deadzone `IdleGazeLookDeadzoneDegPerSec`); changes only the replicated `HeadLook`; server-only counter stream keyed by stable pawn ordinal (SCL R8.9) | ADR-0006, ADR-0001, ADR-0016 | ⚠️ Partial (stream: ADR-0006 domain 16, added by review 2026-10-25b; layer rules sit in the unowned `HeadLook` filter, see TR-scl-005) |
+| TR-scl-015 | shared-character-locomotion.md | SCL | Server-side idle gaze layer for every pawn kind after `IdleGazeDelaySec` of unchanged look input (deadzone `IdleGazeLookDeadzoneDegPerSec`); changes only the replicated `HeadLook`; server-only counter stream keyed by stable pawn ordinal (SCL R8.9) | ADR-0010, ADR-0006, ADR-0001, ADR-0016 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0010 §8.1 idle-gaze layer on ADR-0006 domain 16) |
 | TR-con-011 | concealment-bushes.md | Concealment | Unbiased secret-stream spot pick (`BushSpotPick` domain) | ADR-0017, ADR-0006 | ✅ Accepted |
 | TR-con-012 | concealment-bushes.md | Concealment | A pawn killed while concealed re-opens at the death write carrying `FDeathState.bDiedConcealed = true`; every non-owner client keeps the body presentation-hidden (CR-10a, CON-R9) | ADR-0003, ADR-0017, ADR-0018 | ✅ Accepted |
 | TR-asn-011 | assassination-defence-reversal.md | Assassination | Owner results as entries of the batched `ClientCommandReplies` RPC | ADR-0011, ADR-0018 | ✅ Accepted |
@@ -219,46 +219,46 @@ Source review: `docs/architecture/architecture-review-2026-10-25b.md` (full mode
 | TR-png-011 | informant-pings-team-comms.md | Pings | PNG-R6: the carrier is the C-TeamView part `UTeamPingViewComponent` with `FTeamPingView`, a fixed-size array with one slot per team member (slot i = Roster team slot i, never compacted or reordered), each `{SenderHandle, PingSeq, Point, ServerTime}`; no stage, court, site, clue or `RoundEpoch` data; pushed change-only, coalesced per server frame | ADR-0001, ADR-0003 | ✅ Accepted |
 | TR-png-012 | informant-pings-team-comms.md | Pings | PNG-R6, PNG-R9, IVP `TeamPing` row: team-only delivery by relevancy (owner-only PlayerController); opponent machines hold no ping part, entry, RPC, widget or sound, the host included when it is an opponent; the part is on the replicated-property allowlist with Team audience only on `AStealthPlayerController` | ADR-0001, ADR-0003 | ✅ Accepted |
 | TR-png-013 | informant-pings-team-comms.md | Pings | PNG-R6 (ruling D25): one active ring per sender; a new accepted ping overwrites the sender's slot and replaces its ring at once on every client; the replacing ping still spends a token and nothing is refunded | ADR-0001, ADR-0021 | ✅ Accepted |
-| TR-png-014 | informant-pings-team-comms.md | Pings | PNG-R7, F3: a teammate shows a ring for each new `(SenderHandle, PingSeq)` whose age `EstimatedServerNow() - ServerTime` is below `PingLifetimeSec`; age is shown by stepped stroke weight at thirds (never opacity), negative ages clamp to 0, stale arrivals are never shown; the sender sees its ring only from the server echo; one 2D UI tick on arrival | ADR-0021, ADR-0002 | ⚠️ Partial (dedupe, stale-arrival, stroke and age-clamp rules not in ADR-0021) |
+| TR-png-014 | informant-pings-team-comms.md | Pings | PNG-R7, F3: a teammate shows a ring for each new `(SenderHandle, PingSeq)` whose age `EstimatedServerNow() - ServerTime` is below `PingLifetimeSec`; age is shown by stepped stroke weight at thirds (never opacity), negative ages clamp to 0, stale arrivals are never shown; the sender sees its ring only from the server echo; one 2D UI tick on arrival | ADR-0021, ADR-0002 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0021 §2/§4 `FTeamPingRingModel`: dedupe, stale arrivals, stepped stroke, age clamp, echo-only own ring) |
 | TR-png-015 | informant-pings-team-comms.md | Pings | PNG-R7, VA-PNG-2: rings draw in HUD L0 beneath teammate markers with no depth test, collapse with L0 in the `Neutral` view, and clamp off-screen or behind-camera rings to the safe rectangle as unlabelled edge rings using the Teammate Markers F3 clamp, bias ramp and hysteresis | ADR-0021, ADR-0015 | ✅ Accepted |
-| TR-png-016 | informant-pings-team-comms.md | Pings | PNG-R7: the ring label is the sender's C-Public `DisplayName` by `SenderHandle` ('Ally' if unresolved); it is dropped at that ally's `OnAllyMarkerRetired` while the ring stays to expiry; the sender's own screen keeps its own-name label | ADR-0021 | ⚠️ Partial (`DisplayName` lookup, 'Ally' fallback and label drop at `OnAllyMarkerRetired` not in ADR-0021) |
-| TR-png-017 | informant-pings-team-comms.md | Pings | PNG-R8: a ping creates no team-feed line, plate, card or counter in the MVP | ADR-0021 | ⚠️ Partial (ADR-0021 feed-line list does not state that Pings add none) |
-| TR-png-018 | informant-pings-team-comms.md | Pings | PNG-R9: pinging is invisible outside the team: no pawn gesture, pose, sound, `ActionPose`, replicated pawn field, `ForceNetUpdate` or relevancy change, nothing on `FRoundPublicState`, C-Public or any All-audience carrier, no world audio/VFX; the handler reads only the sender's own pawn (Crowd Tell Matrix Ping row: no tell) | ADR-0011, ADR-0002, ADR-0003, ADR-0001 | ⚠️ Partial (no ADR-0008 parity-test row for AC-PNG-01/-02) |
-| TR-png-019 | informant-pings-team-comms.md | Pings | PNG-R10: every ping part is cleared at `OnRosterReset`, at travel (`InvalidateAllBindings`) and in Round's round-end step; clients hide every ring on entering `Ended`; a HUD rebuild marks present entries shown (no replay); a disconnected sender's ring expires normally | ADR-0002, ADR-0001, ADR-0005, ADR-0007, ADR-0021 | ⚠️ Partial (ring rebuild without replay and hide on `Ended` not in ADR-0021) |
-| TR-png-020 | informant-pings-team-comms.md | Pings | PNG-R11, PNG-R12: no in-game text chat or in-engine voice in the MVP (no free text on the wire); every ping string avoids the banned vocabulary and the binding label reads 'Ping' | ADR-0021, ADR-0003 | ⚠️ Partial (in-engine voice/chat disabled is stated in no ADR) |
+| TR-png-016 | informant-pings-team-comms.md | Pings | PNG-R7: the ring label is the sender's C-Public `DisplayName` by `SenderHandle` ('Ally' if unresolved); it is dropped at that ally's `OnAllyMarkerRetired` while the ring stays to expiry; the sender's own screen keeps its own-name label | ADR-0021 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0021 §4/§5 `DisplayName` label, 'Ally' fallback, drop at `OnAllyMarkerRetired`) |
+| TR-png-017 | informant-pings-team-comms.md | Pings | PNG-R8: a ping creates no team-feed line, plate, card or counter in the MVP | ADR-0021 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0021 §4: no ping feed line, plate, card or counter) |
+| TR-png-018 | informant-pings-team-comms.md | Pings | PNG-R9: pinging is invisible outside the team: no pawn gesture, pose, sound, `ActionPose`, replicated pawn field, `ForceNetUpdate` or relevancy change, nothing on `FRoundPublicState`, C-Public or any All-audience carrier, no world audio/VFX; the handler reads only the sender's own pawn (Crowd Tell Matrix Ping row: no tell) | ADR-0011, ADR-0002, ADR-0003, ADR-0001, ADR-0008 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0008 §1 T2/§3 rows for AC-PNG-01/-02, T3 raw-bunch parity, negative controls) |
+| TR-png-019 | informant-pings-team-comms.md | Pings | PNG-R10: every ping part is cleared at `OnRosterReset`, at travel (`InvalidateAllBindings`) and in Round's round-end step; clients hide every ring on entering `Ended`; a HUD rebuild marks present entries shown (no replay); a disconnected sender's ring expires normally | ADR-0002, ADR-0001, ADR-0005, ADR-0007, ADR-0021 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0021 §4: hide on `Ended`, rebuild marks shown without replay) |
+| TR-png-020 | informant-pings-team-comms.md | Pings | PNG-R11, PNG-R12: no in-game text chat or in-engine voice in the MVP (no free text on the wire); every ping string avoids the banned vocabulary and the binding label reads 'Ping' | ADR-0007, ADR-0011, ADR-0021, ADR-0003 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0007 §1 voice/chat modules and plugins banned + ini pins (T0 lint); ADR-0011 §9 'Ping' label, no free text) |
 | TR-png-021 | informant-pings-team-comms.md | Pings | F4: ping bandwidth stays within 80 B/s per receiving teammate connection (about 50 B/s steady at defaults) and 0 B to opponent connections; one changed slot costs at most 32 B (per-element delta; a dynamic array without a fast-array serializer is not allowed) | ADR-0003, ADR-0001 | ✅ Accepted |
 | TR-png-022 | informant-pings-team-comms.md | Pings | Tuning Knobs: the five keys of owner `InformantPings` (`PingLifetimeSec`, `PingBucketSize`, `PingBucketPerSec`, `PingRangeCm`, `PingRangeSlackCm`) with their audiences and latches, and the cross-field warning I-PNG-1, are registered in the tuning schema | ADR-0004 | ✅ Accepted |
 | TR-png-023 | informant-pings-team-comms.md | Pings | PNG-R5, AC-PNG-13: server-only statistics of accepted pings and drops by reason, split by role class, feed playtest telemetry; never per person in any client-visible form | ADR-0023 | ✅ Accepted (ADR-0023 Technical Setup amendment) |
-| TR-png-024 | informant-pings-team-comms.md | Pings | Game Feel, AC-PNG-14: own ring visible p95 <= own RTT + 50 ms after the press; a teammate shows it within its one-way delay plus one server frame of acceptance | ADR-0001, ADR-0002, ADR-0008 | ⚠️ Partial (own-ring latency target and echo-only display in no ADR; no ADR-0008 row for AC-PNG-14) |
+| TR-png-024 | informant-pings-team-comms.md | Pings | Game Feel, AC-PNG-14: own ring visible p95 <= own RTT + 50 ms after the press; a teammate shows it within its one-way delay plus one server frame of acceptance | ADR-0008, ADR-0021, ADR-0001, ADR-0002 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0008 nightly T2 `StealthGame.Pings.PIE.EchoLatency` (p95 <= RTT + 50 ms)) |
 
 ## Known Gaps
-No requirement lacks an ADR (214/214). 21 rows are partial; each closes with a one-paragraph amendment to the named ADR (or a story-level decision where the GDD is normative):
+No requirement lacks an ADR (214/214) and no row is partial. The 21 rows the 2026-10-25b review marked partial were closed by "Technical Setup 2026-10-25b" amendments (Amendments sections; no Status line changed):
 
-| TR-ID | What is missing | Suggested owner |
-|---|---|---|
-| TR-tdc-012 | ADR-0004 schema types, `typeTag` and canonical hash form cover no soft reference | ADR-0004 |
-| TR-roster-002 | legal-transition table, R8 result precedence and batch-only reset are GDD content housed in ADR-0005's store; no ADR states them | ADR-0005 (name Roster R8 table normative) |
-| TR-roster-003 | `EventSeq` +1 per event unstated | ADR-0005 |
-| TR-roster-005 | O(1) lookup structure and the client fault-sink rule unstated | ADR-0005 / ADR-0010 |
-| TR-roster-008 | only implied by ADR-0002 §8 `TeamSummary` and ADR-0001 §5 | ADR-0001 |
-| TR-round-006 | Round P1-P7 sequencer, `PreparingWatchdogSec`, abort codes and the P5b gate in no ADR | ADR-0005 or a Round ADR |
-| TR-round-007 | grace/forfeit/void decision logic deferred to the GDD by ADR-0002 §8.1 | ADR-0002 §8.1 / Round ADR |
-| TR-round-008 | Event Log ring entry types, release classes and writer interface have no owning ADR | ADR-0023 or a Round Event Log ADR |
-| TR-round-009 | byte-identical public round struct details beyond ADR-0003 §6 | ADR-0003 §6 |
-| TR-ivp-001 | `CanViewerKnow` signature, viewer classes and fact matrix defined only in architecture.md API Boundaries | ADR-0001 (or a new IVP ADR) |
-| TR-lsc-007 | spawn/relevancy gate before `Connected` unspecified; only the possession half is in ADR-0010 §3.2 | ADR-0010 / ADR-0003 |
-| TR-lsc-010 | ADR-0014 exposes `ClueTag` but lists no V-CLUE predicate | ADR-0014 |
-| TR-scl-005 | SCL R8 `HeadLook` filter placed in the pawn tick by ADR-0001/0016, but its rules have no owning ADR | ADR-0010 (HeadLook filter) |
-| TR-scl-015 | stream: ADR-0006 domain 16, added by review 2026-10-25b; layer rules sit in the unowned `HeadLook` filter, see TR-scl-005 | ADR-0010 (HeadLook filter) |
-| TR-png-014 | dedupe, stale-arrival, stroke and age-clamp rules not in ADR-0021 | ADR-0021 |
-| TR-png-016 | `DisplayName` lookup, 'Ally' fallback and label drop at `OnAllyMarkerRetired` not in ADR-0021 | ADR-0021 |
-| TR-png-017 | ADR-0021 feed-line list does not state that Pings add none | ADR-0021 |
-| TR-png-018 | no ADR-0008 parity-test row for AC-PNG-01/-02 | ADR-0008 |
-| TR-png-019 | ring rebuild without replay and hide on `Ended` not in ADR-0021 | ADR-0021 |
-| TR-png-020 | in-engine voice/chat disabled is stated in no ADR | ADR-0003 / ADR-0021 |
-| TR-png-024 | own-ring latency target and echo-only display in no ADR; no ADR-0008 row for AC-PNG-14 | ADR-0021 / ADR-0008 |
+| TR-ID | Closed by |
+|---|---|
+| TR-tdc-012 | ADR-0004 §1/§3/§5/§6 `SoftRef` type, typeTag 4, lower-cased path hash, Reject rule |
+| TR-roster-002 | ADR-0005 §2: `RequestTransition` single writer, GDD transition table normative, R8 precedence, `ResetAll`/`EndRoundAll` batch only |
+| TR-roster-003 | ADR-0005 §2: FIFO dispatch after outermost call, `EventSeq` +1 per event of any type |
+| TR-roster-005 | ADR-0005 §2: pre-sized `PawnBindingTable` (AC-PSR-28), client 0/false + fault sink |
+| TR-roster-008 | ADR-0005 §2 + ADR-0001 §5 cross-ref: only `TeamSummary[2]` at the round-end step |
+| TR-round-006 | ADR-0002 §8.6/§8.8: P1-P7, P5b gate, `PreparingWatchdogSec`, closed abort-code set |
+| TR-round-007 | ADR-0002 §8.7/§8.8: guarded `GraceExpiry` timer, `G_eff`, forfeit/void partition, void latches |
+| TR-round-008 | ADR-0002 §8.9 owns the ring (`FRoundEventLog`, `IRoundLogWriter::Append`, release classes); ADR-0007 lint names, ADR-0023 consumer |
+| TR-round-009 | ADR-0002 §8.10: `Phase` 0 `Unknown`, `PhaseChangeCount`, zeroed times, `InitGameState` re-seed, `RevealPawnWaitMaxSec` |
+| TR-ivp-001 | ADR-0003 Key Interfaces: `CanViewerKnow`/`GetViewerClass`, seven `EViewerClass`, IVP R3 matrix normative, default deny on every carrier |
+| TR-lsc-007 | ADR-0003 per-connection spawn gate in `IsNetRelevantFor` before §5.4; ADR-0014 §7.1 spawn half; ADR-0010 §3.1 AI control until `Connected` |
+| TR-lsc-010 | ADR-0014 §5.1 V-CLUE Reject predicate on `ClueMatchMaxCount` |
+| TR-scl-005 | ADR-0010 §8.1 owns the `HeadLook` filter: rate limit, yaw byte, observer filter, head hold, `RemoteViewPitch16` for every pawn |
+| TR-scl-015 | ADR-0010 §8.1 idle-gaze layer on ADR-0006 domain 16 |
+| TR-png-014 | ADR-0021 §2/§4 `FTeamPingRingModel`: dedupe, stale arrivals, stepped stroke, age clamp, echo-only own ring |
+| TR-png-016 | ADR-0021 §4/§5 `DisplayName` label, 'Ally' fallback, drop at `OnAllyMarkerRetired` |
+| TR-png-017 | ADR-0021 §4: no ping feed line, plate, card or counter |
+| TR-png-018 | ADR-0008 §1 T2/§3 rows for AC-PNG-01/-02, T3 raw-bunch parity, negative controls |
+| TR-png-019 | ADR-0021 §4: hide on `Ended`, rebuild marks shown without replay |
+| TR-png-020 | ADR-0007 §1 voice/chat modules and plugins banned + ini pins (T0 lint); ADR-0011 §9 'Ping' label, no free text |
+| TR-png-024 | ADR-0008 nightly T2 `StealthGame.Pings.PIE.EchoLatency` (p95 <= RTT + 50 ms) |
 
-Closed earlier: TR-con-005 and TR-pen-006 (user decisions 2026-10-25), TR-round-013 (re-check 2026-10-25).
+Closed earlier: the 21 partials above (Technical Setup 2026-10-25b), TR-con-005 and TR-pen-006 (user decisions 2026-10-25), TR-round-013 (re-check 2026-10-25).
 
 Not traced as TRs (non-GDD sources): art bible 8.x budgets (ADR-0022), game-concept VCS concern and coding standards (ADR-0009).
 

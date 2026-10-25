@@ -126,7 +126,7 @@ Third person is user-locked, and Pillar 2 forbids it from becoming a peeking too
 
 **4.5 Modes.** In **third person** (free boom ≥ 25 cm, with the 35 cm re-enable hysteresis) the mask hides and dithers. In **first person** and close-3P below 25 cm the evaluator still runs in **flag-only** mode — it computes `IsEyeMaskVisible` with the same cone and probes but writes no visibility or dither — so IIF (Strike hint, `PawnRef`) and SCL tiering use one geometric definition of "rendered" in both modes (CS-R1 "the mask sets the flag"; the 108° horizontal FOV cap keeps every on-screen 1P pawn inside the 110° cone, so flag-only adds no hide the eye would not have). The cost is the same in both modes, which also keeps frame time from hinting at the mode in a shared capture.
 
-**4.6 Server.** No mask, no view check, no camera-mode field in the MVP (CS-R5c). The mask is a consistency rule for honest clients, not a security boundary; a modified client gains only what replicated positions already give it (CS-R5 residual). Server-side view filtering is ADR-0025 (Alpha).
+**4.6 Server.** No mask, no view check, no camera-mode field in the MVP (CS-R5c). The mask is a consistency rule for honest clients, not a security boundary; a modified client gains only what replicated positions already give it (CS-R5 residual). Server-side view filtering is ADR-0025 (Alpha), a deferred placeholder that does not exist yet (not written, not accepted); nothing in this ADR depends on it and the MVP ships without it.
 
 **4.7 Partial masking** (the whole-pawn-reveal residual, CS-R5b) is not built; the spike costs it. The extension point is the per-pawn α and the CPD slot: a per-section or screen-space clip would add a second CPD value, not a new path.
 
@@ -282,7 +282,7 @@ public:
 - **Description**: Server culls pawns not visible from each viewer's eye.
 - **Pros**: A real security boundary against wall hacks.
 - **Cons**: Must filter all 60 characters identically for every viewer to avoid a P1 leak; ~10 × 60 eye traces per server tick on the listen host; interacts with ADR-0003's cull path.
-- **Rejection Reason**: Out of MVP scope; deferred to ADR-0025 (Alpha) as the GDD states.
+- **Rejection Reason**: Out of MVP scope; deferred to ADR-0025 (Alpha, a placeholder not yet written) as the GDD states.
 
 ## Consequences
 
@@ -333,7 +333,7 @@ public:
 | input-interaction-framework.md | R10 Attack payload from one aim ray; R14 toggle local | §5, §7.1 |
 
 ## Performance Implications
-- **CPU (client)**: mask ≤ 0.5 ms game thread target (async submission + result handling; ≤ 160 traces per frame cap; typical ≈ 75); boom 2 traces/frame; aim ray ≤ 4 traces per query (on Attack and Strike-hint refresh). Inside architecture.md's "camera eye-mask traces + misc 1.0 ms" line. Physics trace work on task threads ≤ ~1.2 ms worst case [U spike].
+- **CPU (client)**: mask ≤ 0.5 ms game thread target (async submission + result handling; ≤ 160 traces per frame cap; typical ≈ 75); boom 2 traces/frame; aim ray ≤ 4 traces per query (on Attack and Strike-hint refresh). Inside architecture.md's "camera eye-mask traces + misc 1.0 ms" line. Physics trace work on task threads about 1.5 ms worst case (295 traces at about 5 µs per trace; camera GDD F3/OQ10 and ADR-0022 §4.2 use the same figure; the game-thread share target stays 0.5 ms) [U spike].
 - **CPU (server)**: none beyond the eye-only POV per remote controller (a few vector ops); no mask, no traces.
 - **GPU**: dithered pawns use the shared masked material path (ADR-0022); hidden pawns cost nothing.
 - **Memory**: negligible (per-target mask state ~64 bytes × ≤ 60 targets).
@@ -351,7 +351,7 @@ public:
 
 ## Related
 - Depends on: ADR-0001, ADR-0003, ADR-0004, ADR-0007, ADR-0010, ADR-0011.
-- Enables: ADR-0013, ADR-0014 (`ViewBlock`), ADR-0016 (`EvaluateViewEnvelope`), ADR-0017, ADR-0018, ADR-0021, ADR-0022; ADR-0025 (server view check, Alpha).
+- Enables: ADR-0013, ADR-0014 (`ViewBlock`), ADR-0016 (`EvaluateViewEnvelope`), ADR-0017, ADR-0018, ADR-0021, ADR-0022; ADR-0025 (server view check, Alpha; deferred placeholder, not written, so it is not an Enables edge that can be checked today).
 - Design: `design/gdd/camera-system.md` (CS-R1..CS-R15, F1-F6, OQ4, OQ5, OQ9, OQ10), `design/gdd/input-interaction-framework.md` (R10, R14), `design/gdd/shared-character-locomotion.md` (R9, R11), `docs/architecture/architecture.md` (Required ADRs row ADR-015; TR-camera-001..008).
 
 ### GDD Sync (not applied by this ADR; for the GDD owners)
@@ -377,3 +377,7 @@ Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-2
 - Verification (3), §4.3 per-frame cap, R-2, Alternatives, Build order, spike report: worst case is **295 traces per frame** (59 other characters x 5 probes at `NpcCount` 50), replacing 245 (49 pawns); "50 pawns" / "50 characters" become 60 characters (5v5 + 50 NPCs). `EyeMaskTracesPerFrameMax` stays 160, so the worst case drains in two frames (one extra frame of delay); GT target stays 0.5 ms (camera re-review xdoc).
 - D6 (camera, 2026-10-25): the AC-CS-05 oracle and the mask both use the **capsule axis origin**; the mask gains hysteresis `CameraMaskOffHysteresisCm` = 10 (mask off at 20 cm, back on at 30 cm; amended 2026-10-25 by the cross-review fix C-W25 to off below 25 cm, on above 35 cm, since the geometric minimum free boom length is about 21 cm) as a registered TDC key; hide latency beyond 60 m is a stated limit (Game Feel); AC-CS-23 is a document-review AC, not automated. The `FEyeMaskCore` applies the off/on thresholds with this hysteresis and uses the capsule-axis origin for the 3P probe origin comparison.
 - Camera CS-R8: Informant Pings (`IA_Ping`) is a consumer of `GetAimRay()` (the aim query, §4.3 steps 1-2): Pings take the ray and run their own world-only ping-point rule (PNG-R3: drop at most 300 cm to a walkable surface, nothing sent on no hit), never `FAimRay.WorldPoint` (range-clamped and HideVolume-snapped); the client sends only the resulting point in `ServerTeamPing` (ADR-0011; corrected by architecture review 2026-10-25b); no new camera API, trace channel or replicated field.
+
+Technical Setup 2026-10-25b (architecture-review closure, `docs/architecture/architecture-review-2026-10-25b.md`); decision unchanged, Status unchanged (Accepted).
+- Performance, CPU (client) (LOW inconsistency; review "Minor internal ADR inconsistencies"): the task-thread physics figure was "≤ ~1.2 ms" here while ADR-0022 §4.2 and the camera GDD (F3, OQ10) size the 295-trace worst case (59 other characters x 5 probes at `NpcCount` 50) at about 1.5 ms (295 x ~5 µs). The body now reads "about 1.5 ms". The later, sized figure governs because 1.2 ms predated the 60-character recount (245 traces, 49 pawns). The game-thread share is unchanged: mask ≤ 0.5 ms GT target (submission + result handling), `EyeMaskTracesPerFrameMax` 160 (the worst case drains in two frames); the extra 1.5 ms is worker-thread time and is not charged to the 12.0 ms game-thread table (ADR-0022 §4.2). If the spike shows the GT share over 0.5 ms, the §4.3.6 synchronous fallback applies as before.
+- §4.6, §Enables, Alternatives (LOW inconsistency): ADR-0025 (server-side view check, Alpha) is a deferred placeholder. It has not been written or accepted, and this ADR has no dependency on it (the same convention as ADR-0004's treatment of ADR-0024/ADR-0025). The mask remains a consistency rule for honest clients, not a security boundary (CS-R5 residual). The §4.6 body, the Rejection Reason line and the Enables line now say so; the traceability row `camera-system.md CS-R5 (c)` is open against a future ADR-0025, not against an existing one.

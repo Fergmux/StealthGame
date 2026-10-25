@@ -449,3 +449,95 @@ A concurrent session is creating epics and stories (`production/epics/`, created
 4. **Rerun trigger:** re-run `/architecture-review` after each ADR amendment above to verify coverage improves.
 
 Autonomous mode: the closing question was not asked. Recommended next step: write the missing amendments, then `/gate-check pre-production`. All pre-gate items are ✅ and no gap is open. CONCERNS is advisory.
+
+---
+
+## Fix pass 2026-10-25b
+
+Run after this review, unattended, under the user's blanket authorisation. Each item was closed by a "Technical Setup 2026-10-25b" block appended to the owning ADR's Amendments section, with rows added to its "GDD Requirements Addressed" table where it has one. Requirement text was taken from the GDDs by section. **No ADR Status block changed:** each Status block was checked against `HEAD` and is byte-identical. Decisions are logged in `production/session-logs/decision-log.md` (category `architecture`, skill `technical-setup`). No new ADR was written, as "Required ADRs" allowed.
+
+### Foundation partials
+
+| Item | Result | Where |
+|---|---|---|
+| TR-tdc-012 soft-reference keys | **RESOLVED** | ADR-0004 §1/§2/§3/§5/§6: fifth schema type `SoftRef`, `_Server` only, Latch `Round`, `typeTag` 4. Canonical hash is `u16le(len)` followed by the lower-cased UTF-8 asset path; redirectors are not followed. Reject rule covers null path, sub-object, unresolved, wrong class, StateTree schema and profile validity, through an injectable `ITuningAssetProbe`. Assets are loaded async at session open (never `LoadSynchronous` in gameplay) and cooked via the Asset Manager. The hash form was chosen here because the GDD names the keys but gives no form. |
+| TR-roster-002 | **RESOLVED** | ADR-0005 §2: `RequestTransition` is the single writer, and the GDD legal-transition table is normative. Lists the R8 precedence order. Reset/end happen only as `ResetAll`/`EndRoundAll`. |
+| TR-roster-003 | **RESOLVED** | ADR-0005 §2: game-thread-only mutation; FIFO dispatch after the outermost call; `EventSeq` +1 per event of any type; lists the calls that emit no event. |
+| TR-roster-005 | **RESOLVED** | ADR-0005 §2: pre-sized `PawnBindingTable` keyed by `FPawnHandle` (AC-PSR-28: 0 allocations, at most 2 probes). Every query on a client returns 0/false and reports to the fault sink. |
+| TR-roster-008 | **RESOLVED** | ADR-0005 §2, plus a cross-reference in ADR-0001 §5: no opponent count leaves the server before `Ended`. After that, the only carrier is `TeamSummary[2]` at the round-end step. |
+
+### Core partials
+
+| Item | Result | Where |
+|---|---|---|
+| TR-scl-005 head-look filter | **RESOLVED** | ADR-0010 new §8.1 is the owner. Covers: one look path; the F6 filter (keys `LookYawLimitDeg` 70, `LookPitchLimitDeg` 20, `LookMaxRateDegPerSec` 140, `LookEaseSec` 0.15); server-only pawn tick; yaw byte; `RemoteViewPitch16` for every pawn; the observer filter; head hold. ADR-0013 got a consumer cross-reference. |
+| TR-scl-015 idle gaze | **RESOLVED** | ADR-0010 §8.1: `IdleGazeDelaySec` 3 and deadzone 0.5°/s. The sweep draws from ADR-0006 domain 16, keyed by `(PawnOrdinal, SweepIndex)`, and changes only `HeadLook`. One path for every pawn kind. Two details the GDD leaves open (the sign draw, and possession re-baselining) were decided here and logged for the SCL owner to confirm. |
+| TR-ivp-001 visibility query API | **RESOLVED** | ADR-0003 Key Interfaces and amendment: `CanViewerKnow` and `GetViewerClass` (server only), the seven `EViewerClass` values in computation order, and IVP R3 as the normative matrix. Default deny applies to properties, RPCs and logs, with the fault-sink cases. |
+| TR-round-006 Preparing sequencer | **RESOLVED** | ADR-0002 §8.6/§8.8: P1-P7, the P5b gate, `PreparingWatchdogSec` 150 (`PreparingWatchdogEff` per F6), and the closed set of 13 abort codes. A Preparing abort never latches. |
+| TR-round-007 grace/forfeit/void | **RESOLVED** | ADR-0002 §8.7/§8.8: a `TimerFired(GraceExpiry)` item guarded by epoch and `ConnectionGeneration`; `G_eff`; the R15 forfeit/void partition. A void calls `TryTerminate` then `Latch`, with no `RoundEndStep`. |
+| TR-round-008 Event Log | **RESOLVED** | ADR-0002 §8.9 owns the ring: `FRoundEventLog` (plain C++, Foundation `Public/Server/`); `RoundLogMaxEntriesCount` 4096; entry types and release classes; single writer `IRoundLogWriter::Append`; never logged or traced. ADR-0023 has a consumer line, and ADR-0007 §3.2(i)/§6 has a cross-reference adding the type names to the lint. |
+| TR-round-009 public round struct | **RESOLVED** | ADR-0002 §8.10: `Phase` 0 = `Unknown`; `PhaseChangeCount`; `ActiveAtServerTime` and `PhaseEnteredServerTime` zeroed in `Active`; identical bytes for every viewer; `InitGameState` re-seed from `URoundMatchStore`; reveal bounded by `RevealPawnWaitMaxSec`. Cross-references in ADR-0003 §6 and ADR-0005 §2. |
+| TR-lsc-007 nothing spawned or relevant before `Connected` | **RESOLVED** | ADR-0003: a per-connection spawn-gate latch in `IsNetRelevantFor`, checked before every §5.4 clause and ANDed with the §5.5 cull. ADR-0014 §7.1 covers the spawn half (placement served only in `Published`). ADR-0010 §3.1 forces AI control for a participant who is not `Connected`. Reconciled reading: Round P6 still spawns an AI-driven pawn for an unconnected participant, but that pawn has no human possession and no relevancy to that client until `Connected`. |
+| TR-lsc-010 V-CLUE | **RESOLVED** | ADR-0014 §5.1: Reject when more than `ClueMatchMaxCount` (3) courts share an `ObjectiveCourt`'s `ClueTag`. `ClueTag` is a pure function of geometry, versioned in `GeneratorKitVersion`. |
+
+### Open conflict
+
+| Item | Result | Where |
+|---|---|---|
+| Conflict 2: concealed-ping refusal to the HUD | **RESOLVED** | See the route below. |
+
+The conflict-2 route, as stated in ADR-0007 §4/§2/Key Interfaces, ADR-0011 §9/§2 and ADR-0021 §4/Key Interfaces:
+- **New interface.** Pings `Public/View/` gains `IPingClientView`, implemented by `UTeamPingViewComponent`. It exposes `GetConcealedRefusalSeq()`, which is monotonic, owner-only and not replicated, and `GetBucketMirrorTokens()`. `FStealthClientViewHandles` gains `PingView`.
+- **Client gate.** The pure `FTeamPingClientGate::Evaluate` is fed plain arguments by `AStealthPlayerController`. Those include `PresentedRole` and Concealment's `IsOwnPawnConcealedForPing()`, which is true for Concealed and for Emerging (D26/D33).
+- **Server.** The server re-checks `IsInBushOrTransition` and drops silently, with no reply of any kind.
+- **Presenter.** The presenter turns a change in the sequence number into one owner-only "Not now" plate and the `PingConcealedRefused` 2D tone, through the existing `RejectPlateCooldownSec` limiter. Nothing about the refusal reaches any other connection.
+
+### Pings presentation partials
+
+| Item | Result | Where |
+|---|---|---|
+| TR-png-014 ring creation and age | **RESOLVED** | ADR-0021 §2/§4 `FTeamPingRingModel`: `(SenderHandle, PingSeq)` dedupe, stale arrivals never shown, stroke stepped at thirds (never opacity), negative age clamped to 0, own ring shown only from the echo, one UI tick. |
+| TR-png-016 ring label | **RESOLVED** | ADR-0021 §4/§5: label is `DisplayName` by `SenderHandle`, falling back to 'Ally'. The label is dropped at `OnAllyMarkerRetired` while the ring stays. The sender keeps its own-name label. |
+| TR-png-017 no feed item | **RESOLVED** | ADR-0021 §4: no ping feed line, plate, card or counter. The refusal plate is the owner's input feedback, not a ping item. |
+| TR-png-018 parity rows | **RESOLVED** | ADR-0008 §1 T2/§3: rows for AC-PNG-01/-02, nightly T3 raw-bunch parity, and three injected-leak negative controls. |
+| TR-png-019 clears, hide, rebuild | **RESOLVED** | ADR-0021 §4: rings hidden on `Ended`; a rebuild marks rings shown without replay; a disconnected sender's ring expires normally. |
+| TR-png-020 no chat or voice | **RESOLVED** | ADR-0007 §1 bans the voice modules (`Voice`, `VoiceChat`, `AudioCapture`) and the voice plugins (`AudioCapture`, `VoiceChat`, `EOSVoiceChat`). It also pins `bHasVoiceEnabled=False` and `[Voice] bEnabled=False`, enforced by a T0 lint. ADR-0011 §9 sets the 'Ping' label and allows no free text on the wire. |
+| TR-png-024 own-ring latency | **RESOLVED** | ADR-0008: nightly T2 `StealthGame.Pings.PIE.EchoLatency`. Own ring at p95 <= RTT + 50 ms; teammate within one-way delay + one server frame. |
+
+### LOW internal ADR inconsistencies
+
+| Item | Result | Where |
+|---|---|---|
+| ADR-0023 memory (1.5 vs 1.1 MB) and 50-pawn sizing | **RESOLVED** | Resized for 60 characters: 120 subject keys, about 1.6 MB, distance checks 60 × 16, 59 traces per strike. Body and Performance line agree. |
+| ADR-0015 physics (≤ 1.2 vs about 1.5 ms) | **RESOLVED** | Now about 1.5 ms of task-thread time (295 traces). The figure comes from ADR-0022 and Camera F3, not ADR-0015's closeout. The 0.5 ms game-thread target is unchanged. |
+| ADR-0015 cites ADR-0025 without a caveat | **RESOLVED** | Flagged as a deferred, unwritten placeholder in §4.6, the Rejection Reason line and the Enables line. |
+| Ping handler has no budget line | **RESOLVED** | ADR-0022: charged to the Queue/Roster 0.5 ms line. |
+| IIF double count (ADR-0011 vs ADR-0022) | **RESOLVED** | ADR-0022: IIF is charged to the Queue/Roster line only, and misc no longer lists it. The total stays at 12.0 ms. |
+| ADR-0011 has no back-reference to the reply-sink table | **RESOLVED** | ADR-0011 §8 back-references ADR-0002 §2a `FReplySinkId`. |
+| ADR-0012 CPA-V4 `COND_InitialOnly` expectation | **RESOLVED** | The value is retained and not re-sent on takeover. A re-send happens only on a relevancy re-open. |
+| `p.EnableCharacterAccelerationReplication=1` in no ADR | **RESOLVED** | ADR-0003 §1 config table: kept on, applied identically to every Character (checked against the 5.8.4 source). ADR-0008 leak inventory: pawn-parity rows compare acceleration, with a negative control. |
+| ADR-0008: PIE hard-travels without `net.AllowPIESeamlessTravel` | **RESOLVED** | ADR-0008 §1/§5: S3/S4 evidence comes only from T3 Gauntlet multi-process runs. |
+
+### Still open (not in this pass's scope)
+
+| Item | Result | Note |
+|---|---|---|
+| Engine MEDIUM 3: listen-host `ServerReplicateActors` cost | **OPEN** | Measurement work in RC-1 (host uncapped and at its frame cap). No ADR text can close it. |
+| architecture.md thin Pings Data Flow (LOW) | **OPEN** | architecture.md was not in scope. The new ADR text supplies the edges. |
+| `_snapshots/` rule "until VCS exists" (control-manifest l.212, ADR-0009 l.184) | **OPEN** | Left as the user's process choice. Not an ADR inconsistency of this review. |
+| GDD-owner notes (Crowd CNB-R15 "50-character spike"; Session F5 domains 15/16; SCL idle-gaze sign and possession re-baseline; Round `PhaseChangeCount` location and a parked `HostCommand` discarded at a void) | **OPEN** | Design-side follow-ups. The ADR choices are logged and provisional until the GDD owners confirm them. |
+
+### Result after the fix pass
+
+| | Before | After |
+|---|---|---|
+| Requirements covered | 193/214 | **214/214** |
+| Partial rows | 21 | 0 |
+| Gaps | 0 | 0 |
+| Open conflicts | 2 | 0 |
+
+- **Conflicts:** conflict 2 is resolved. The second open item in the conflict table was the N1 leftover, the missing reply-sink back-reference, which is now done.
+- **Traceability:** `docs/architecture/requirements-traceability.md` is updated.
+- **Expected verdict:** **PASS** on re-run. The remaining items are measurement and design-owner follow-ups, not ADR coverage.
+- **Next step:** this report was not re-scored by a fresh `/architecture-review` run. Run one to confirm before `/gate-check`.
+- **Manifest:** `control-manifest.md` was regenerated after this pass as version **2026-10-25f**. TD-MANIFEST returned CONCERNS (six precision fixes), and all were applied before the write.

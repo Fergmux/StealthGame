@@ -471,3 +471,6 @@ Cross-review fix 2026-10-25 (`design/gdd/gdd-cross-review-2026-10-25.md` S-B1, r
 
 Architecture review 2026-10-25b (`docs/architecture/architecture-review-2026-10-25b.md`); text corrections only, decision unchanged, Status unchanged (Accepted).
 - Depends On and risk table: ADR-0009 and the Iris pin recorded as done. §5 teammate entry and the `FTeamViewTeammateEntry` sketch now carry `bReconnecting` and `ReconnectEndCause` (already decided in the amendments above; the struct had not been updated), and the stale timer-based clearing text is replaced by Roster R6's event-only rule.
+
+Technical Setup 2026-10-25b (architecture-review closure, `docs/architecture/architecture-review-2026-10-25b.md`); decision unchanged, Status unchanged (Accepted).
+- §5 (TR-roster-008; Roster R6 binding rule): C-TeamView carries only own-team Roster data (the owner part and at most four teammate entries) and MUST have no opponent count or any opponent-derived field. Opponent counts never leave the server before `Ended`, and the only carrier after is `FRoundResult.TeamSummary[2]` (ADR-0002 §8 (a)). The full rule is stated once, in ADR-0005 Amendments 2026-10-25b (§2 and §4 round-end step); TR-roster-002, -003 and -005 are housed in ADR-0005 §2 (`FRosterCore`), not here.
