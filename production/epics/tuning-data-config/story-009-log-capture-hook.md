@@ -1,12 +1,12 @@
 # Story 009: Log-capture hook asserting warnings by key
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *Bootstrap criterion (no GDD), from `tdc-plan.md`:*
 
-- [ ] A test-only `FStealthLogCapture` (an FOutputDevice RAII scope under `WITH_STEALTH_TEST_SEAMS`) records `LogStealthFoundation` warnings and lets a test assert "exactly one warning naming key K with authored value A and effective value E" (test `StealthGame.Harness.LogCaptureAssertsWarningByKey`).
+- [x] A test-only `FStealthLogCapture` (an FOutputDevice RAII scope under `WITH_STEALTH_TEST_SEAMS`) records `LogStealthFoundation` warnings and lets a test assert "exactly one warning naming key K with authored value A and effective value E" (test `StealthGame.Harness.LogCaptureAssertsWarningByKey`).
 
 ---
 
@@ -86,7 +86,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Harness/LogCaptureTest.cpp` (test `StealthGame.Harness.LogCaptureAssertsWarningByKey`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Harness.LogCaptureAssertsWarningByKey`, 2026-10-25)
 
 ---
 
@@ -96,3 +96,16 @@
 - Unlocks: `production/epics/tuning-data-config/story-046-f1-validate-clamp-nan.md`, `production/epics/tuning-data-config/story-058-tuning-store-default-preset.md`, `production/epics/tuning-data-config/story-059-preset-not-selectable.md`, `production/epics/tuning-data-config/story-060-preset-case-insensitive.md`, `production/epics/tuning-data-config/story-061-preset-malformed.md`
 - Sequencing note (not a plan dependency): needs the `WITH_STEALTH_TEST_SEAMS` define of `production/epics/tuning-data-config/story-008-fault-sink-and-test-seams-define.md`.
 - Open verification claims from the plan's Note lines: none (no Note line on 009). The rendered format of authored and effective values in warnings is open (story 046).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: one matching warning passes; zero fails; two fails; a different key fails; `NpcCountMax` does not satisfy `NpcCount` (whole-token keys) and values are whole tokens too (`13` is not `3`, `2.5` is not `2`); a non-`LogStealthFoundation` warning and a `Log`-verbosity line are ignored; nothing is recorded after `Stop()` or scope exit, and a capture opened later does not see earlier warnings; nested scopes both record, the inner one only while open; fault teardown clean)
+**Decisions**: `FStealthLogCapture` registers with `GLog` as an unbuffered, lock-guarded device (`CanBeUsedOnMultipleThreads`), armed only after `AddOutputDevice` returns so a backlog replay is never recorded. Query API `ExpectExactlyOneWarning(K, A, E)` returns `FStealthLogMatchResult` (`Passed()`, `Matches`, `Describe()`), plus `CountWarnings`/`FindWarnings`/`ContainsToken`. Token rule: neighbours must not be letters, digits or `_`; a trailing `.` is a boundary unless a digit follows; a numeric token preceded by `-` is a different token.
+**Finding for later stories (058-061, 046)**: a warning declared with `AddExpectedMessage` is demoted to `Verbose` by the automation framework's `GWarn` filter before any `GLog` device sees it (`AutomationTest.cpp` `FAutomationTestMessageFilter::Serialize`), so a capture can never record it. Observed: the first run of this test failed with nothing captured. Tests that use the capture must therefore NOT declare expected messages; they derive from `FStealthLogCaptureTestBase` (in the same header; `SuppressLogWarnings()` true) via `IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST`, and the capture's assertion is the check. Log errors still fail the test.
+**Open for story 046**: how authored/effective values are rendered in the real validation warnings (`3` vs `3.0`); the capture matches tokens literally.
+**Deviations**: Added `FStealthLogCaptureTestBase` to the story's header (needed, see finding). Synthetic warnings use `UE_LOGF` with `%ls` for `TCHAR*` (5.8: `%s` is a UTF-8 string in `UE_LOGF`).
+**Test Evidence**: `production/qa/evidence/story-009-log-capture-hook/test-run.txt` (build `Result: Succeeded`; 22/22 `StealthGame.` tests Success; watched-to-fail note) and `stamp.txt`
+**Run result**: N/A — test-seam helper; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

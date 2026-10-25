@@ -1,12 +1,12 @@
 # Story 010: Negative-control helper: the suite passes only if the inner check fails
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *Bootstrap criterion (no GDD), from `tdc-plan.md`:*
 
-- [ ] A `FStealthNegativeControl` helper runs an inner check expected to fail and makes its enclosing test fail when the inner check passes (control not detected); a self-test proves both directions (test `StealthGame.Harness.NegativeControlDetected`).
+- [x] A `FStealthNegativeControl` helper runs an inner check expected to fail and makes its enclosing test fail when the inner check passes (control not detected); a self-test proves both directions (test `StealthGame.Harness.NegativeControlDetected`).
 
 ---
 
@@ -87,7 +87,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Harness/NegativeControlTest.cpp` (test `StealthGame.Harness.NegativeControlDetected`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Harness.NegativeControlDetected`, 2026-10-25)
 
 ---
 
@@ -97,3 +97,14 @@
 - Unlocks: None (no later story lists 010 as a dependency in the plan or amendments; later gate stories use the helper without declaring it)
 - Sequencing note (not a plan dependency): needs the `WITH_STEALTH_TEST_SEAMS` define of `production/epics/tuning-data-config/story-008-fault-sink-and-test-seams-define.md`.
 - Open verification claims from the plan's Note lines: none (no Note line on 010).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: (a) failing inner check -> detected, inner failure kept, `Report` adds no error and the enclosing test has no errors; (b) passing inner check -> result "control not detected: <name>", observed through the returned value (Report would add that error); edges: an assertion-style inner failure (`AddFailure`) is detected; an inner check with no assertions is not detected; the helper used several times in one test, runs independent, `RunAndReport` on a detected control; fault teardown clean)
+**Decisions**: API `FStealthNegativeControl(Name)`, `Run(TFunctionRef<void(FStealthCheckContext&)>) -> FStealthNegativeControlResult` (`bDetected`, `InnerFailures`, `Describe()`), explicit `static Report(FAutomationTestBase&, Result)` and `RunAndReport`. The inner check reports into `FStealthCheckContext` (`TestTrue`/`TestFalse`/`TestEqual`/`AddFailure`), never the real test. `check()` in an inner check is out of scope (it aborts the process); documented in the header.
+**Deviations**: None
+**Test Evidence**: `production/qa/evidence/story-010-negative-control-helper/test-run.txt` (build `Result: Succeeded`; 22/22 `StealthGame.` tests Success) and `stamp.txt`
+**Run result**: N/A — test-seam helper; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

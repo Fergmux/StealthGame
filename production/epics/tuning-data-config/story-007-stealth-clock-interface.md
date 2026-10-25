@@ -1,12 +1,12 @@
 # Story 007: IStealthClock and an injectable fake clock
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *Bootstrap criterion (no GDD), from `tdc-plan.md`:*
 
-- [ ] `IStealthClock` (`GetServerTimeSeconds()`, `GetServerTickIndex()`) exists in `FND/Public/Server/`, and a `FFakeStealthClock` test double advances only when told, so a core given the fake clock never reads wall-clock time (test `StealthGame.Harness.FakeClockAdvancesOnlyWhenTold`).
+- [x] `IStealthClock` (`GetServerTimeSeconds()`, `GetServerTickIndex()`) exists in `FND/Public/Server/`, and a `FFakeStealthClock` test double advances only when told, so a core given the fake clock never reads wall-clock time (test `StealthGame.Harness.FakeClockAdvancesOnlyWhenTold`).
 
 ---
 
@@ -87,7 +87,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Harness/FakeClockTest.cpp` (test `StealthGame.Harness.FakeClockAdvancesOnlyWhenTold`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Harness.FakeClockAdvancesOnlyWhenTold`, 2026-10-25)
 
 ---
 
@@ -97,3 +97,14 @@
 - Unlocks: `production/epics/tuning-data-config/story-018-replication-system-assertion.md`, `production/epics/tuning-data-config/story-052-round-session-stubs.md`, `production/epics/tuning-data-config/story-085-hot-reload-pie.md`
 - Sequencing note (not a plan dependency): needs the `WITH_STEALTH_TEST_SEAMS` define of `production/epics/tuning-data-config/story-008-fault-sink-and-test-seams-define.md` to compile the fake.
 - Open verification claims from the plan's Note lines: none (no Note line on 007). The return types of the interface members are open (see Implementation Notes).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: `IStealthClock` with `GetServerTimeSeconds()`/`GetServerTickIndex()` in `Public/Server/` (guard first); `FFakeStealthClock` under `WITH_STEALTH_TEST_SEAMS`; test reads, runs unrelated work (no sleep), reads again: identical; explicit `AdvanceSeconds`/`AdvanceTicks`/`Advance` change exactly the advanced quantity by exactly the amount; a stand-in core's result follows only the injected clock; two fakes independent; fault teardown clean)
+**Decisions**: return types `double` seconds and `uint64` tick index, per ADR-0002 (`ServerNow()` is the world's double `TimeSeconds`; `FQueueKey::ServerTickIndex` is `uint64`) rather than the story's suggested `int64`. Seconds and ticks advance independently (no invented tick length); `Advance(Seconds, Ticks)` lets each test state the relation. A negative `AdvanceSeconds` raises an `ensure` and is clamped to 0 (server time never runs backwards).
+**Deviations**: None
+**Test Evidence**: `production/qa/evidence/story-007-stealth-clock-interface/test-run.txt` (build `Result: Succeeded`; 22/22 `StealthGame.` tests Success) and `stamp.txt`
+**Run result**: N/A — test-seam interface; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found
