@@ -1,12 +1,12 @@
 # Story 003: Spike S3: stores and views survive two seamless travels in multi-process standalone
 
 > **Epic**: Session & Travel
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -64,12 +64,16 @@
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story (2026-10-25). Spike code is throwaway and lives in the harness module; the multi-process run is the T3 launcher (`run-mp.ps1`), not a Gauntlet node (see Deviations).*
 
-- `production/qa/spikes/<date>_S3-seamless-travel.md`
-- `Source/StealthTestHarness/Private/Tests/MP/Session/SeamlessPersistenceMpTest.cpp`
-- `Config/DefaultEngine.ini (TransitionMap in GameMapsSettings, applied by this story)`
-- Module placement follows ADR-0007 section 2 (`Public/Server/` for server-only headers with the guard include first, `Public/View/` for client-safe ones); confirm before creating a header.
+- `production/qa/spikes/2026-10-25_S3-seamless-travel.md`
+- `Config/DefaultEngine.ini` (`TransitionMap=/Engine/Maps/Entry.Entry` in GameMapsSettings)
+- `Source/StealthTestHarness/Private/Spikes/Session/StealthSpikeSession.{h,cpp}` (stand-in stores, spike game mode, controller, PlayerState)
+- `Source/StealthTestHarness/Private/Spikes/Session/StealthSpikeMeasure.{h,cpp}`, `StealthTimingIpConnection.h` (RTT/packet sink the spike controller feeds; used by story 002)
+- `Source/StealthTestHarness/Private/Scenarios/StealthHarnessScenarioSession.cpp` (scenarios S3, S4, Soak)
+- `Source/StealthTestHarness/Private/Scenarios/StealthHarnessRun.{h,cpp}` (tolerated disconnects, reconnect notification, frame cap)
+- `Source/StealthTestHarness/StealthTestHarness.Build.cs` (OnlineSubsystemUtils)
+- `tools/ci/mp/run-mp.ps1` (`-ServerUrlOptions`, `-IdentityKeys`, `-MaxFps`, `-PacketTiming`, `-RenderClient`), `tools/ci/mp/analyze_s3.py`
 
 ---
 
@@ -95,7 +99,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/Tests/MP/Session/SeamlessPersistenceMpTest.cpp` — `StealthGame.Session.MP.SeamlessPersistence` (multi-process Gauntlet node), OR a documented playtest in `production/qa/evidence/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Documented multi-process run — scenario `S3` + `tools/ci/mp/analyze_s3.py`; report and evidence below
 
 Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation name `StealthGame.Session.MP.SeamlessPersistence`, T3 multi-process node named `StealthGame.Session.MP.SeamlessPersistence` (Gauntlet); wrap the file in `#if WITH_DEV_AUTOMATION_TESTS`; tests use an injected clock and entropy, no wall-clock time as a pass predicate, no shared mutable state, and assert zero unexpected faults at teardown.
 
@@ -107,3 +111,14 @@ Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation n
 - Cross-epic: Epic `tuning-data-config` (`production/epics/tuning-data-config/EPIC.md`): the ADR-0007 module skeleton (StealthFoundation, StealthGameplay, StealthPresentation, StealthTestHarness), test harness and CI must exist before the files below can be created at those paths. Until it lands, write the code and tests under `Source/StealthGame/` (Private/Tests/) and move them when the skeleton arrives.
 - Cross-epic: Epic `participant-state-roster` (`production/epics/participant-state-roster/EPIC.md`): the registration API (RegisterParticipant, RebindView, NotifyConnectionChanged, IsRoundScopeReset, InvalidateAllBindings) is a peer epic built in the same window; use a fake Roster behind the interface for Logic tests.
 - Unlocks: `production/epics/session-travel/story-053-same-map-lobby-travel.md`, `production/epics/session-travel/story-054-field-scope-across-travel.md`, `production/epics/session-travel/story-057-anchor-new-city-together.md`
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Verdict**: PASS — two seamless round travels (plus a carried-PlayerState travel and a hard travel), host + 2 client processes under StealthLeak1: all four stores equal their pre-travel content at each first round tick; every participant acknowledged its owner-only C-TeamView with the server's hash before the tick; same-map travel through `/Engine/Maps/Entry` works in 5.8.4 (LobbyMap/MatchMap need not be distinct); hard travel exercised as the fallback. Report: `production/qa/spikes/2026-10-25_S3-seamless-travel.md`.
+**Criteria**: 1/1 (AC-1)
+**Decisions**: TransitionMap = the engine's empty `/Engine/Maps/Entry` (no project map asset to create or keep); stand-in stores in the harness (the production stores do not exist yet); the spike treats connection closes during its own hard travel as travel (finding 3, ADR-0005 amendment candidate).
+**Deviations**: ADVISORY — evidence is the T3 harness run through `tools/ci/mp/run-mp.ps1` with an analyser, not a Gauntlet node named `StealthGame.Session.MP.SeamlessPersistence` (the story allows a documented run; the production re-proof with Gauntlet is participant-state-roster story 058).
+**Test Evidence**: `production/qa/evidence/story-003-spike-s3-seamless-travel-persistence/` (analysis JSON + gzipped records of runs s3-c and s3-d).
+**Run result**: N/A — headless multi-process measurement (-nullrhi); the outcome is store content and acknowledgements, not a screen.
+**Reviewed by**: focused self-review (unattended run): stores are created only in harness processes; spike game mode selected only by URL option; no production code path changed besides the TransitionMap setting.
+**Unblocks**: session-travel story 053 and participant-state-roster story 058 → Ready; IVP story 002 and teammate-markers story 025 keep their other gates (status notes updated).

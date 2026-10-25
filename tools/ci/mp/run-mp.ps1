@@ -32,7 +32,15 @@ param(
   [string]$ExtraArgs = '',
   [int]$TimeoutSeconds = 420,
   [int]$ServerBootSeconds = 30,
-  [string]$CookedExe = ''
+  [string]$CookedExe = '',
+  # Session-travel spikes (stories 002-004): options appended to the host's map URL (e.g. the spike game mode),
+  # a distinct ?IdentityKey= per client (same format as FStealthConnectionEventHook::IdentityKeyForSlot),
+  # a frame cap on every process, packet timing (UStealthTimingIpConnection), and one rendering client.
+  [string]$ServerUrlOptions = '',
+  [switch]$IdentityKeys,
+  [int]$MaxFps = 0,
+  [switch]$PacketTiming,
+  [int]$RenderClient = 0
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path (Split-Path (Split-Path $PSScriptRoot))
@@ -50,9 +58,13 @@ if ($Capture) { $common += @('-StealthNetCapture', '-LogCmds="LogRepProperties V
 if ($Trims -ge 0) { $common += "-StealthHarnessTrims=$Trims" }
 if ($NpcCount -ge 0) { $common += "-ini:Game:[/Script/StealthGame.StealthSettings]:NpcCount=$NpcCount" }
 if ($ExtraArgs) { $common += $ExtraArgs }
+if ($MaxFps -gt 0) { $common += "-StealthHarnessMaxFps=$MaxFps" }
+if ($PacketTiming) { $common += '-StealthPacketTiming' }
 
-function Start-Role([string]$url, [string]$role, [string]$profileName, [string[]]$roleArgs) {
-  $a = @($(if ($CookedExe) { $null } else { "`"$proj`"" }), $url) + $common + $roleArgs + @("-abslog=`"$out\$role.log`"")
+function Start-Role([string]$url, [string]$role, [string]$profileName, [string[]]$roleArgs, [bool]$roleRenders = $false) {
+  $roleCommon = $common
+  if ($roleRenders -and -not $Render) { $roleCommon = @($common | Where-Object { $_ -ne '-nullrhi' }) + @('-windowed', '-ResX=640', '-ResY=360') }
+  $a = @($(if ($CookedExe) { $null } else { "`"$proj`"" }), $url) + $roleCommon + $roleArgs + @("-abslog=`"$out\$role.log`"")
   if ($profileName) { $a += "-PktEmulationProfile=$profileName" }
   $p = Start-Process -FilePath $exe -ArgumentList ($a -join ' ') -PassThru
   "$role pid=$($p.Id) args: $($a -join ' ')" | Out-File (Join-Path $out 'launch.txt') -Append -Encoding utf8
@@ -60,13 +72,16 @@ function Start-Role([string]$url, [string]$role, [string]$profileName, [string[]
 }
 
 $procs = @()
-$procs += Start-Role '/Game/StealthGame/Maps/L_Prototype?listen' 'server' $ServerProfile @('-StealthHarnessRole=server')
+$procs += Start-Role "/Game/StealthGame/Maps/L_Prototype?listen$ServerUrlOptions" 'server' $ServerProfile @('-StealthHarnessRole=server')
 $serverLog = Join-Path $out 'server.log'
 $deadline = (Get-Date).AddSeconds([Math]::Max($ServerBootSeconds, 10) * 4)
 do { Start-Sleep -Seconds 2; $ready = (Test-Path $serverLog) -and (Select-String -Path $serverLog -Pattern 'Listen.*on port|IpNetDriver listening|LogNet: GameNetDriver' -Quiet) } until ($ready -or (Get-Date) -gt $deadline)
 Start-Sleep -Seconds 3
 for ($i = 1; $i -le $Clients; $i++) {
-  $procs += Start-Role "127.0.0.1?Name=C$i" "client$i" $ClientProfile @('-StealthHarnessRole=client', "-StealthHarnessClient=$i")
+  $clientUrl = "127.0.0.1?Name=C$i"
+  $clientArgs = @('-StealthHarnessRole=client', "-StealthHarnessClient=$i")
+  if ($IdentityKeys) { $key = $i.ToString('x8') + '5374656c' + ('0' * 16); $clientUrl += "?IdentityKey=$key"; $clientArgs += "-IdentityKey=$key" }
+  $procs += Start-Role $clientUrl "client$i" $ClientProfile $clientArgs ($RenderClient -eq $i)
   Start-Sleep -Seconds 2
 }
 

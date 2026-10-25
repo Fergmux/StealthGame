@@ -1,7 +1,7 @@
 # Story 053: LobbyMap equal to MatchMap completes a seamless same-map travel and admission returns to Open
 
 > **Epic**: Session & Travel
-> **Status**: Blocked — BLOCKED: spike S3 (story 003, ADR-0005 verification: seamless and same-map travel in multi-process standalone) has not reported; the GDD marks same-map lobby travel provisional pending that spike
+> **Status**: Ready — unblocked 2026-10-25: spike S3 reported PASS (production/qa/spikes/2026-10-25_S3-seamless-travel.md): same-map seamless travel through the configured TransitionMap (/Engine/Maps/Entry) works in 5.8.4, so same-map lobby travel is no longer provisional on the engine side.
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M

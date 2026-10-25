@@ -1,7 +1,7 @@
 # Story 058: Roster identity and team state survive seamless and hard travel unchanged
 
 > **Epic**: Participant State & Roster
-> **Status**: Blocked — BLOCKED: spike S3 (seamless and hard travel, multi-process standalone) has not reported. Unblocks when S3 reports (PlayerController/PlayerState replacement, re-bind, C-TeamView re-push, same-map travel through the transition map, game-instance stores intact).
+> **Status**: Ready — unblocked 2026-10-25: spike S3 reported PASS (production/qa/spikes/2026-10-25_S3-seamless-travel.md): controller/PlayerState replaced on seamless arrival (E5), re-bind by key on seamless and hard travel, owner-only team view re-pushed and acknowledged before the first round tick, same-map travel through /Engine/Maps/Entry, all four game-instance stores intact. Note S3 finding 3: Session must treat connection closes during its own hard travel as travel.
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L

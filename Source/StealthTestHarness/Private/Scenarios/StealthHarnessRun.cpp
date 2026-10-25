@@ -2,6 +2,7 @@
 #include "Scenarios/StealthHarnessRun.h"
 
 #include "StealthTestHarnessModule.h"
+#include "Spikes/Session/StealthSpikeMeasure.h"
 
 #include "Engine/Engine.h"
 #include "Engine/NetConnection.h"
@@ -157,6 +158,7 @@ namespace StealthHarness
 			*Q(ScenarioName), (int32)bKnownScenario, *Q(bServerProcess ? TEXT("server") : TEXT("client")), ClientIndex, ExpectedClients,
 			FPlatformProcess::GetCurrentProcessId(), *Q(FCommandLine::Get())));
 
+		FMeasure::InstallIfRequested();
 		PostEngineInitHandle = FCoreDelegates::GetOnPostEngineInit().AddRaw(this, &FRun::OnPostEngineInit);
 		WorldInitHandle = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &FRun::OnWorldInit);
 		TickHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateRaw(this, &FRun::Tick));
@@ -178,6 +180,15 @@ namespace StealthHarness
 	void FRun::OnPostEngineInit()
 	{
 		// Every module is loaded now and no net driver exists yet.
+		FMeasure::InstallIfRequested(); // idempotent: classes loaded after module startup are patched here
+		// -StealthHarnessMaxFps=N caps every frame (t.MaxFPS), so measured packet rates match a frame-capped game.
+		if (const int32 MaxFps = IntParam(TEXT("MaxFps"), 0); MaxFps > 0)
+		{
+			if (IConsoleVariable* MaxFpsVar = IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS")))
+			{
+				MaxFpsVar->Set(static_cast<float>(MaxFps), ECVF_SetByCommandline);
+			}
+		}
 		const int32 Trims = IntParam(TEXT("Trims"), -1);
 		if (Trims >= 0)
 		{
@@ -447,6 +458,7 @@ namespace StealthHarness
 				}
 			}
 		}
+		FMeasure::Flush(/*bForce*/ true);
 		if (File.IsValid())
 		{
 			File->Flush();
@@ -467,6 +479,8 @@ namespace StealthHarness
 		{
 			return true;
 		}
+		FMeasure::NoteFrame(DeltaSeconds);
+		FMeasure::Flush(/*bForce*/ false);
 		if (Now - ProcessStart > MaxSeconds)
 		{
 			Finish(TEXT("max-seconds ceiling"), /*bAbnormal*/ true);
@@ -480,41 +494,60 @@ namespace StealthHarness
 
 		UWorld* World = FindGameWorld();
 		UNetDriver* Driver = World ? World->GetNetDriver() : nullptr;
-		if (!World || !Driver)
+		if (!bServerProcess)
 		{
-			if (!bServerProcess && bWasConnected)
+			const bool bConnected = World && Driver && World->GetNetMode() == NM_Client && Driver->ServerConnection != nullptr
+				&& Driver->ServerConnection->GetConnectionState() == USOCK_Open;
+			const bool bReady = bConnected && World->GetFirstPlayerController() != nullptr && World->GetGameState() != nullptr;
+			if (!bReady)
 			{
-				Finish(TEXT("server connection lost"));
+				if (bWasConnected && !bConnected)
+				{
+					if (!Scenario->ClientToleratesDisconnect(*this))
+					{
+						Finish(TEXT("server connection lost"));
+						return true;
+					}
+					OfflineSince = OfflineSince < 0.0 ? Now : OfflineSince;
+					if (Now - OfflineSince > IntParam(TEXT("OfflineCeiling"), 120))
+					{
+						Finish(TEXT("offline ceiling"), /*bAbnormal*/ true); // a tolerated disconnect that never came back
+						return true;
+					}
+					Scenario->TickClientOffline(*this, World, Now - ClientConnectedAt);
+				}
+				return true; // still joining, loading or travelling (a seamless travel keeps the connection)
 			}
+			OfflineSince = -1.0;
+			if (LastServerConnection.Get() != Driver->ServerConnection)
+			{
+				LastServerConnection = Driver->ServerConnection;
+				++ClientConnections;
+				if (!bWasConnected)
+				{
+					bWasConnected = true;
+					ClientConnectedAt = Now;
+				}
+				// The login URL's ?Name= is replaced by the online identity's nickname: name the player C<n> explicitly
+				// (only when it differs, so a rejoin with an adopted PlayerState changes no replicated field).
+				APlayerController* PC = World->GetFirstPlayerController();
+				const FString Wanted = FString::Printf(TEXT("C%d"), ClientIndex);
+				if (!PC->PlayerState || PC->PlayerState->GetPlayerName() != Wanted)
+				{
+					PC->SetName(Wanted);
+				}
+				Write(TEXT("connected"), FString::Printf(TEXT("\"n\":%d,%s"), ClientConnections, *ServerTimeFields(World)));
+				Scenario->OnClientConnected(*this, World);
+			}
+		}
+		else if (!World || !Driver)
+		{
 			return true;
 		}
 		const ENetMode NetMode = World->GetNetMode();
 		if (bServerProcess && NetMode != NM_ListenServer && NetMode != NM_DedicatedServer)
 		{
 			return true;
-		}
-		if (!bServerProcess)
-		{
-			if (NetMode != NM_Client || Driver->ServerConnection == nullptr || Driver->ServerConnection->GetConnectionState() != USOCK_Open)
-			{
-				if (bWasConnected)
-				{
-					Finish(TEXT("server connection lost"));
-				}
-				return true;
-			}
-			if (World->GetFirstPlayerController() == nullptr || World->GetGameState() == nullptr)
-			{
-				return true; // still joining
-			}
-			if (!bWasConnected)
-			{
-				bWasConnected = true;
-				ClientConnectedAt = Now;
-				// The login URL's ?Name= is replaced by the online identity's nickname: name the player C<n> explicitly.
-				World->GetFirstPlayerController()->SetName(FString::Printf(TEXT("C%d"), ClientIndex));
-				Write(TEXT("connected"), ServerTimeFields(World));
-			}
 		}
 		if (!bBootWritten)
 		{

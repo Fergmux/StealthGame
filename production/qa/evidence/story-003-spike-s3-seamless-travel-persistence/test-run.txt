@@ -1,0 +1,2 @@
+Build: tools/dev/cycle.ps1 -NoLaunch (StealthGameEditor Win64 Development) -> Result: Succeeded
+Automation RunTests ^StealthGame. (headless -nullrhi) on that build: 46/46 Success, exit 0

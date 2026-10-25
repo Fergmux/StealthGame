@@ -1,7 +1,7 @@
 # Story 002: Spike S2, PlayerState trims hold across seamless travel and rejoin
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: needs the session-travel epic's seamless-travel and retained-PlayerState rejoin stories built (ADR-0005; also ADR-0005 spike S3), which the prototype lacks; run when they land.
+> **Status**: Blocked — BLOCKED: needs the session-travel epic's seamless-travel and retained-PlayerState rejoin stories built (ADR-0005), which the prototype lacks; run when they land. (ADR-0005 spike S3 reported PASS 2026-10-25: production/qa/spikes/2026-10-25_S3-seamless-travel.md — the S3 part of this gate is cleared.)
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M

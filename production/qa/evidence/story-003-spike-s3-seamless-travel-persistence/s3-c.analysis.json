@@ -1,0 +1,269 @@
+{
+ "run": "s3-c",
+ "travels": [
+  {
+   "n": 1,
+   "seamless": true,
+   "storesEqual": {
+    "session": true,
+    "roster": true,
+    "round": true,
+    "tuning": true
+   },
+   "storeDiffs": {},
+   "allAckedBeforeFirstTick": true,
+   "expectedParticipants": 3,
+   "acks": [
+    {
+     "id": 0,
+     "acked": 1,
+     "match": 1
+    },
+    {
+     "id": 1,
+     "acked": 1,
+     "match": 1
+    },
+    {
+     "id": 2,
+     "acked": 1,
+     "match": 1
+    }
+   ],
+   "T_srvload_s": 5.904,
+   "travelToFirstTick_s": 7.659,
+   "rebinds": [
+    {
+     "id": 0,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 5.905
+    },
+    {
+     "id": 2,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 6.084
+    },
+    {
+     "id": 1,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 6.978
+    }
+   ],
+   "hostBoundFirst": true,
+   "clientTravelToAck_s": {
+    "client1": 7.195,
+    "client2": 6.861
+   }
+  },
+  {
+   "n": 2,
+   "seamless": true,
+   "storesEqual": {
+    "session": true,
+    "roster": true,
+    "round": true,
+    "tuning": true
+   },
+   "storeDiffs": {},
+   "allAckedBeforeFirstTick": true,
+   "expectedParticipants": 3,
+   "acks": [
+    {
+     "id": 0,
+     "acked": 1,
+     "match": 1
+    },
+    {
+     "id": 1,
+     "acked": 1,
+     "match": 1
+    },
+    {
+     "id": 2,
+     "acked": 1,
+     "match": 1
+    }
+   ],
+   "T_srvload_s": 5.575,
+   "travelToFirstTick_s": 7.056,
+   "rebinds": [
+    {
+     "id": 0,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 5.576
+    },
+    {
+     "id": 1,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 6.283
+    },
+    {
+     "id": 2,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 6.39
+    }
+   ],
+   "hostBoundFirst": true,
+   "clientTravelToAck_s": {
+    "client1": 6.571,
+    "client2": 6.635
+   }
+  },
+  {
+   "n": 3,
+   "seamless": true,
+   "storesEqual": {
+    "session": true,
+    "roster": true,
+    "round": true,
+    "tuning": true
+   },
+   "storeDiffs": {},
+   "allAckedBeforeFirstTick": true,
+   "expectedParticipants": 2,
+   "acks": [
+    {
+     "id": 0,
+     "acked": 1,
+     "match": 1
+    },
+    {
+     "id": 1,
+     "acked": 1,
+     "match": 1
+    }
+   ],
+   "T_srvload_s": 5.849,
+   "travelToFirstTick_s": 7.04,
+   "rebinds": [
+    {
+     "id": 0,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 5.849
+    },
+    {
+     "id": 1,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 6.44
+    },
+    {
+     "id": 2,
+     "pcReplaced": true,
+     "psReplaced": false,
+     "adopted": true,
+     "dt_s": 42.455
+    }
+   ],
+   "hostBoundFirst": true,
+   "clientTravelToAck_s": {
+    "client1": 6.629
+   }
+  },
+  {
+   "n": 4,
+   "seamless": false,
+   "storesEqual": {
+    "session": true,
+    "roster": true,
+    "round": true,
+    "tuning": true
+   },
+   "storeDiffs": {},
+   "allAckedBeforeFirstTick": true,
+   "expectedParticipants": 3,
+   "acks": [
+    {
+     "id": 0,
+     "acked": 1,
+     "match": 1
+    },
+    {
+     "id": 1,
+     "acked": 1,
+     "match": 1
+    },
+    {
+     "id": 2,
+     "acked": 1,
+     "match": 1
+    }
+   ],
+   "T_srvload_s": 19.351,
+   "travelToFirstTick_s": 34.36,
+   "rebinds": [
+    {
+     "id": 0,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 18.124
+    },
+    {
+     "id": 1,
+     "pcReplaced": true,
+     "psReplaced": true,
+     "adopted": false,
+     "dt_s": 32.775
+    },
+    {
+     "id": 2,
+     "pcReplaced": true,
+     "psReplaced": false,
+     "adopted": false,
+     "dt_s": 32.893
+    }
+   ],
+   "hostBoundFirst": true,
+   "clientTravelToAck_s": {
+    "client1": 33.981,
+    "client2": 34.15
+   }
+  }
+ ],
+ "carriedPlayerStates": [
+  {
+   "guid": "150",
+   "fromPrevious": 1
+  }
+ ],
+ "adoptions": [
+  {
+   "guid": "150",
+   "pc": "StealthSpikePlayerController_4"
+  }
+ ],
+ "retained": [
+  "150"
+ ],
+ "engineMessagesOnClients": {
+  "client1": 0,
+  "client2": 0
+ },
+ "clientEnds": {
+  "client1": [
+   "server connection lost"
+  ],
+  "client2": [
+   "server connection lost"
+  ]
+ },
+ "serverEnd": [
+  "scenario complete"
+ ]
+}

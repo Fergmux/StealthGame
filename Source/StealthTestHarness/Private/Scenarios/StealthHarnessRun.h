@@ -43,6 +43,18 @@ namespace StealthHarness
 		/** Client frame tick while connected; ClientSeconds counts from the first connected frame. */
 		virtual void TickClient(FRun& Run, UWorld* World, double ClientSeconds) {}
 
+		/**
+		 * Client: true while the scenario expects the server connection to go away (a rejoin, a hard travel); the run
+		 * then keeps going instead of ending with "server connection lost".
+		 */
+		virtual bool ClientToleratesDisconnect(FRun& Run) const { return false; }
+
+		/** Client tick while not connected (only after a first connection, and only while ClientToleratesDisconnect). World may be null. */
+		virtual void TickClientOffline(FRun& Run, UWorld* World, double ClientSeconds) {}
+
+		/** Client: a (new) server connection is ready: the first join, a rejoin, or the reconnect of a hard travel. */
+		virtual void OnClientConnected(FRun& Run, UWorld* World) {}
+
 		/** Called once when the run finishes for any reason, before the exit request: release world hooks here. */
 		virtual void OnFinish(FRun& Run) {}
 	};
@@ -132,6 +144,11 @@ namespace StealthHarness
 		double LastTruth = 0.0;
 		double AllJoinedAt = -1.0;
 		double ClientConnectedAt = -1.0;
+		/** The server connection the client last saw ready (a new one means a rejoin or a hard-travel reconnect). */
+		TWeakObjectPtr<UNetConnection> LastServerConnection;
+		int32 ClientConnections = 0;
+		/** Since when a tolerated disconnect has lasted (-1 while connected). */
+		double OfflineSince = -1.0;
 		bool bBootWritten = false;
 		bool bFinished = false;
 		bool bWasConnected = false;
