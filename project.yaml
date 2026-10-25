@@ -56,9 +56,29 @@ naming:
   files: PascalCase
   scenes: PascalCase
 
+# Budgets from docs/architecture/adr-0022-rendering-performance-budgets.md §4
+# (art bible 8.x.16) at the reference preset: RTX 3060-class PC, 1080p, every
+# sg.* group at 3. All are ASSUMED/PROPOSED until the 3060-class captures
+# (spikes R1-R3, RC-1, RC-2) replace them; ADR-0022 is still Proposed.
+# Not schema keys, recorded here for readers (ADR-0022 §4.2-4.5):
+#   CPU game thread (listen host and client) <= 12.0 ms p95;
+#   render/RHI thread <= 12.0 ms p95; GPU 14.4 ms + >= 2.0 ms headroom;
+#   texture streaming pool <= 1000 MB (r.Streaming.PoolSize=1000);
+#   cooked installed package <= 3 GB (producer to confirm).
+# memory_ceiling_mb stays null: ADR-0022 sets no total-memory ceiling
+# ("reported only" until R1/R2).
+performance:
+  target_framerate: 60
+  frame_budget_ms: 16.67
+  draw_call_limit: 1500        # non-Nanite mesh draw calls, main view (ADR-0022 §4.5)
+  memory_ceiling_mb: null
+  enforce: warn
+
 commands:
   # TODO: confirm these for your UE version and project — adjust via /settings
+  # test: `^` makes the filter a prefix match (AutomationCommandline.cpp:216,
+  # UE 5.8.4), so only StealthGame.* tests run (ADR-0008 §2 Selection).
   build: '"C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/DotNET/AutomationTool/AutomationTool.exe" BuildCookRun -project="$(pwd -W 2>/dev/null || pwd)/StealthGame.uproject" -platform=Win64 -build -cook'
-  test: '"C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W 2>/dev/null || pwd)/StealthGame.uproject" -ExecCmds="Automation RunTests StealthGame.; Quit" -unattended -nullrhi -stdout -FullStdOutLogOutput'
+  test: '"C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W 2>/dev/null || pwd)/StealthGame.uproject" -ExecCmds="Automation RunTests ^StealthGame.; Quit" -unattended -nullrhi -stdout -FullStdOutLogOutput'
   run: '"C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" "$(pwd -W 2>/dev/null || pwd)/StealthGame.uproject" -game -windowed -ResX=1280 -ResY=720'
   smoke: '"C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W 2>/dev/null || pwd)/StealthGame.uproject" -game -nullrhi -unattended -stdout -ExecCmds="Quit"'

@@ -1,6 +1,6 @@
 # Unreal Engine 5.8 — Networking Module Reference
 
-**Last verified:** 2026-10-18 (Iris status: release notes and plugin flag); 2026-10-17 (UE 5.8 changes block); 2026-02-13 (rest of file, written against 5.7)
+**Last verified:** 2026-10-25 (`COND_InitialOnly` comment and debug-log example, against 5.8.4 source); 2026-10-18 (Iris status: release notes and plugin flag); 2026-10-17 (UE 5.8 changes block); 2026-02-13 (rest of file, written against 5.7)
 **Knowledge Gap:** UE 5.7-5.8 networking improvements (Iris production-ready in 5.8)
 
 > **UE 5.8 changes:** Iris "is now production-ready for licensees in UE
@@ -96,7 +96,8 @@ DOREPLIFETIME_CONDITION(AMyCharacter, Ammo, COND_OwnerOnly);
 // Skip owner (replicate to everyone else)
 DOREPLIFETIME_CONDITION(AMyCharacter, TeamID, COND_SkipOwner);
 
-// Only when changed
+// Only on the initial bunch (later changes are not sent)
+// CoreNetTypes.h: "This property will only attempt to send on the initial bunch"
 DOREPLIFETIME_CONDITION(AMyCharacter, Score, COND_InitialOnly);
 ```
 
@@ -413,7 +414,9 @@ SetReplicationFrequency(10.0f); // Update 10 times per second (default 100)
 // NetEmulation PktLag=100 - Simulate 100ms latency
 
 // Draw debug for replication:
-UE_LOG(LogNet, Warning, TEXT("Replicating Health: %d"), Health);
+// UE 5.8: prefer UE_LOGF (UE_LOG "will eventually be deprecated"); format is a
+// plain literal, TCHAR strings use %ls — e.g. AutomationCommandline.cpp:203
+UE_LOGF(LogNet, Warning, "Replicating Health: %d", Health);
 ```
 
 ---

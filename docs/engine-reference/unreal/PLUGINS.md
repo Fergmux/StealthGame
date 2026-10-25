@@ -1,6 +1,6 @@
 # Unreal Engine 5.8 — Optional Plugins & Systems
 
-**Last verified:** 2026-10-17 (5.8 status flags, Mover, Iris, AI Assistant, MCP Server, Raw Input); 2026-02-13 (rest of file, written against 5.7)
+**Last verified:** 2026-10-25 (Motion Warping and StateTree flags, 5.8.4 install); 2026-10-17 (5.8 status flags, Mover, Iris, AI Assistant, MCP Server, Raw Input); 2026-02-13 (rest of file, written against 5.7)
 
 This document indexes **optional plugins and systems** available in Unreal Engine 5.8.
 These are NOT part of the core engine but are commonly used for specific game types.
@@ -42,6 +42,8 @@ engine's word.
 | Game Input (Windows) | `GameInputWindows/GameInputWindows.uplugin` | Beta |
 | OpenXR | `Runtime/OpenXR/OpenXR.uplugin` | none |
 | Enhanced Input, MetaSound | `EnhancedInput/EnhancedInput.uplugin`, `Runtime/Metasound/Metasound.uplugin` | none; enabled by default |
+| Motion Warping | `Animation/MotionWarping/MotionWarping.uplugin` | **Beta** (`IsBetaVersion: true`, `VersionName 0.1`); not enabled by default — read from the 5.8.4 install 2026-10-25 |
+| StateTree / Gameplay StateTree | `Runtime/StateTree/StateTree.uplugin`, `Runtime/GameplayStateTree/GameplayStateTree.uplugin` | none (`IsBetaVersion: false`) — read 2026-10-25 |
 
 ---
 

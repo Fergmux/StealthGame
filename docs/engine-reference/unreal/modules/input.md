@@ -1,12 +1,14 @@
 # Unreal Engine 5.8 — Input Module Reference
 
-**Last verified:** 2026-10-17 (UE 5.8 changes block); 2026-02-13 (rest of file, written against 5.7)
+**Last verified:** 2026-10-25 (flush CVar name, against 5.8.4 source); 2026-10-17 (UE 5.8 changes block); 2026-02-13 (rest of file, written against 5.7)
 **Knowledge Gap:** UE 5.7+ uses Enhanced Input as default (legacy input deprecated); UE 5.8 unifies it with Common UI input
 
 > **UE 5.8 changes:** Enhanced Input and Common Input/UI are unified,
 > which "removes the need for duplicate data assets"; there is a new Input
 > Debugger for Enhanced Input UI. Fixes ship behind CVars that "will be removed
-> in a future release": `EnhancedInput.IgnoreHeldKeysOnFlush` (default true) and
+> in a future release": `EnhancedInput.IgnoreHeldDigitalActionKeysOnFlush` (default
+> true; registered name verified in `EnhancedPlayerInput.cpp:47-49`, 5.8.4 — the
+> release notes' shorter `IgnoreHeldKeysOnFlush` is not a console name) and
 > `EnhancedInput.CorrectTouchBoolActionKeys` (default on). The Raw Input plugin
 > is deprecated (`"DeprecatedEngineVersion": "5.8"`) in favour of the Game Input
 > for Windows plugin (`GameInputWindows`, Beta); the release notes say to set

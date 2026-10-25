@@ -1,6 +1,6 @@
 # Unreal Engine 5.8 — Breaking Changes
 
-**Last verified:** 2026-10-17 (UE 5.8 Changes, Substrate/MegaLights versions, Platform-Specific, Migration Checklist); 2026-02-13 (rest of file, written against 5.7)
+**Last verified:** 2026-10-25 (Enhanced Input flush CVar name, against 5.8.4 source); 2026-10-17 (UE 5.8 Changes, Substrate/MegaLights versions, Platform-Specific, Migration Checklist); 2026-02-13 (rest of file, written against 5.7)
 
 This document tracks breaking API changes and behavioral differences between Unreal Engine 5.3
 (likely in model training) and Unreal Engine 5.8 (current version). Organized by risk level.
@@ -30,7 +30,7 @@ the 5.8 engine source; the sources are listed at the end of this file.
 - **Zen cooked output**: Zenserver as Cooked Output Store is on by default; an existing project with the Zen store disabled stays off until it is enabled in project settings. `AllowRemoteNetworkService` became `RemoteNetworkService` (`None` / `Unsecured` / `GeneratedStaticKey`, not true/false).
 - **Lumen**: height fog is now applied to reflection ray hits by default (`r.Lumen.HeightFog 1`).
 - **Audio voice limit**: `au.EnableRelativeRenderCostVoiceLimit` is on by default, so fewer sounds may play under the same voice count; revisit voice-count tuning.
-- **Enhanced Input fixes behind CVars**: held keys are ignored on flush (`EnhancedInput.IgnoreHeldKeysOnFlush`, default true) and touch bool action keys are corrected (`EnhancedInput.CorrectTouchBoolActionKeys`, default on). Both CVars "will be removed in a future release".
+- **Enhanced Input fixes behind CVars**: held digital action keys are ignored on flush (`EnhancedInput.IgnoreHeldDigitalActionKeysOnFlush`, default true; the C++ variable is `CVarIgnoreHeldKeysOnFlush` but that is not the console name — verified `Plugins/EnhancedInput/Source/EnhancedInput/Private/EnhancedPlayerInput.cpp:47-49`, 5.8.4) and touch bool action keys are corrected (`EnhancedInput.CorrectTouchBoolActionKeys`, default on). Both CVars "will be removed in a future release".
 - **Blueprint local variables**: a function local variable with the same name as a member variable can inherit the wrong default; rename such locals.
 
 ---

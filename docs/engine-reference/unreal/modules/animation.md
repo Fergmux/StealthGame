@@ -1,6 +1,6 @@
 # Unreal Engine 5.8 — Animation Module Reference
 
-**Last verified:** 2026-10-17 (UE 5.8 changes block); 2026-02-13 (rest of file, written against 5.7)
+**Last verified:** 2026-10-25 (Motion Warping Beta flag); 2026-10-17 (UE 5.8 changes block); 2026-02-13 (rest of file, written against 5.7)
 **Knowledge Gap:** UE 5.4-5.8 animation authoring improvements, Control Rig 2.0
 
 > **UE 5.8 changes:** Smart names are deprecated — `FSmartName`,
@@ -8,7 +8,12 @@
 > names and their mappings are no longer used")` (`Engine/Source/Runtime/Engine/Classes/Animation/SmartName.h`).
 > Non-reflected deprecated Animation, Control Rig, Persona and Live Link APIs
 > from 5.0-5.6 were removed (e.g. `UMotionWarpingComponent::GetCharacterOwner`
-> → `GetOwnerAdapter()->GetActor()`). Control Rig Physics and the RigMapper
+> → `GetOwnerAdapter()->GetActor()`). The Motion Warping plugin is still
+> **Beta** in 5.8.4 (`MotionWarping.uplugin`: `IsBetaVersion: true`, `VersionName
+> 0.1`; verified 2026-10-25), so any design that relies on it carries Beta risk;
+> its replicated `WarpTargets` member is protected, so a
+> `DISABLE_REPLICATED_PROPERTY_FAST` on it belongs on the engine-upgrade checklist.
+> Control Rig Physics and the RigMapper
 > retargeting tool are Beta; Animation Mixing in Sequencer and Direct Mesh
 > Controls are Experimental. Source: UE 5.8 release notes, https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-8-release-notes?application_version=5.8
 

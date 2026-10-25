@@ -1,6 +1,6 @@
 # Unreal Engine 5.8 — Deprecated APIs
 
-**Last verified:** 2026-10-17 (Deprecated in UE 5.8, Gameplay Ability System row, summary); 2026-02-13 (rest of file, written against 5.7)
+**Last verified:** 2026-10-25 (Networking row: `DOREPLIFETIME` not deprecated, against 5.8.4 source); 2026-10-17 (Deprecated in UE 5.8, Gameplay Ability System row, summary); 2026-02-13 (rest of file, written against 5.7)
 
 Quick lookup table for deprecated APIs and their replacements.
 Format: **Don't use X** → **Use Y instead**
@@ -109,7 +109,7 @@ Notes column says otherwise.
 
 | Deprecated | Replacement | Notes |
 |------------|-------------|-------|
-| `DOREPLIFETIME()` (basic) | `DOREPLIFETIME_CONDITION()` | Conditional replication for optimization |
+| *(none listed)* | — | `DOREPLIFETIME()` is **not** deprecated: it is a live macro in 5.8.4 (`#define DOREPLIFETIME(c,v) DOREPLIFETIME_WITH_PARAMS(c,v,FDoRepLifetimeParams())`, `Engine/Public/Net/UnrealNetwork.h:259`, no deprecation marker). Use `DOREPLIFETIME_CONDITION()` / `DOREPLIFETIME_WITH_PARAMS_FAST()` when a condition or push model is wanted, not as a replacement. (Corrected 2026-10-25.) |
 
 ---
 

@@ -6,7 +6,7 @@
 | **Installed at pin time** | 5.8.4 (CL 58902052) at C:/Program Files/Epic Games/UE_5.8 — probed 2026-10-24 from Engine/Build/Build.version; one hotfix newer than the 5.8.3 recorded below |
 | **Release Date** | June 2026 (5.8.0); latest hotfix 5.8.3, September 2026 |
 | **Project Pinned** | 2026-10-17 |
-| **Last Docs Verified** | 2026-10-17 (release timeline, 5.8 release notes, and the 5.8 changes recorded in this directory); 2026-02-13 (rest of directory, written against 5.7) |
+| **Last Docs Verified** | 2026-10-25 (review corrections checked against the 5.8.4 source: Enhanced Input flush CVar name, `DOREPLIFETIME` not deprecated, `COND_InitialOnly` comment, `UE_LOGF` example, Motion Warping Beta and StateTree flags); 2026-10-17 (release timeline, 5.8 release notes, and the 5.8 changes recorded in this directory); 2026-02-13 (rest of directory, written against 5.7) |
 | **LLM Knowledge Cutoff** | May 2025 |
 
 ## Knowledge Gap Warning

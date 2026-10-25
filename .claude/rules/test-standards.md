@@ -18,10 +18,20 @@ paths:
     reusing a name fails to link — test name
     `<Project>.[System].[Scenario]` — the project's test command,
     `Automation RunTests <Project>.`, runs every test whose name contains
-    `<Project>.` (a substring match, not a prefix). `<Project>.` is the root
+    `<Project>.` (a substring match, not a prefix; a leading `^`, as in
+    `RunTests ^<Project>.`, makes it a prefix match — this project's
+    `commands.test` uses `^StealthGame.` per ADR-0008). `<Project>.` is the root
     that filter in `commands.test` uses: the project name, or the distinct root
     `/setup-engine` chose when the project's name is also an engine area
     (`Audio`, `Core`, `Input`, …) — name tests under whichever it is
+  - **Unreal CQTest exemption (ADR-0008):** CQTest network tests declared with
+    `NETWORK_TEST_CLASS(<Scenario>, "<Project>.<System>.PIE")` are named by
+    scenario and are **exempt from the `F[System][Scenario]Test` class-name
+    rule**. CQTest appends the class and method, so the full test name is
+    `<Project>.<System>.PIE.<Scenario>.<Method>` (e.g.
+    `StealthGame.HUD.PIE.StrikeTargetParity.NpcVsPlayer`); the method name
+    states the expected result. The test-name root rule still applies. Gauntlet
+    multi-process nodes are named `<Project>.<System>.MP.<Scenario>`
 - Every test must have a clear arrange/act/assert structure
 - Unit tests must not depend on external state (filesystem, network, database)
 - Integration tests must clean up after themselves

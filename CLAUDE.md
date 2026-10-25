@@ -11,8 +11,10 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 - **Build System**: Unreal Build Tool (UBT)
 - **Asset Pipeline**: Unreal Content Pipeline
 
-> **Note**: Engine-specialist agents exist for Godot, Unity, and Unreal with
-> dedicated sub-specialists. Use the set matching your engine.
+> **Note**: This project uses the Unreal specialist set: `unreal-specialist`
+> (code and shaders), `ue-umg-specialist` (UI), and `ue-gas-specialist`,
+> `ue-blueprint-specialist`, `ue-replication-specialist` (see `specialists:` in
+> `project.yaml`). Do not route Unreal work to the Godot or Unity specialists.
 
 ## Project Structure
 
@@ -23,7 +25,7 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 <!-- ENGINE-REFERENCE-IMPORT: the line below is engine-specific. /setup-engine
      rewrites it to @docs/engine-reference/<engine>/VERSION.md for the chosen
      engine, so a Unity or Unreal project stops loading the Godot reference every
-     session. It defaults to Godot (the template's example engine); skills that
+     session. Set to Unreal for this project by /setup-engine; skills that
      need the pinned version read docs/engine-reference/<engine>/VERSION.md on
      demand regardless of this import. -->
 @docs/engine-reference/unreal/VERSION.md
