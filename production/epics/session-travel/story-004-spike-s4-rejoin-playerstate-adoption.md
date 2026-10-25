@@ -1,12 +1,12 @@
 # Story 004: Spike S4: retained PlayerState adopted on rejoin with no visible change to other clients
 
 > **Epic**: Session & Travel
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -64,11 +64,12 @@
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story (2026-10-25). The spike game classes and scenario landed with story 003's commit (shared spike code); this story adds the analyser and the report.*
 
-- `production/qa/spikes/<date>_S4-rejoin-adoption.md`
-- `Source/StealthTestHarness/Private/Tests/MP/Session/RejoinAdoptionMpTest.cpp`
-- Module placement follows ADR-0007 section 2 (`Public/Server/` for server-only headers with the guard include first, `Public/View/` for client-safe ones); confirm before creating a header.
+- `production/qa/spikes/2026-10-25_S4-rejoin-adoption.md`
+- `Source/StealthTestHarness/Private/Scenarios/StealthHarnessScenarioSession.cpp` (scenario `S4`)
+- `Source/StealthTestHarness/Private/Spikes/Session/StealthSpikeSession.{h,cpp}` (Login reclaim stash, InitPlayerState adoption, supersede, retained PlayerState and body)
+- `tools/ci/mp/analyze_s4.py`
 
 ---
 
@@ -94,7 +95,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/Tests/MP/Session/RejoinAdoptionMpTest.cpp` — `StealthGame.Session.MP.RejoinAdoption` (multi-process Gauntlet node), OR a documented playtest in `production/qa/evidence/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Documented multi-process run with raw-bunch capture — scenario `S4` + `tools/ci/mp/analyze_s4.py`; report and evidence below
 
 Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation name `StealthGame.Session.MP.RejoinAdoption`, T3 multi-process node named `StealthGame.Session.MP.RejoinAdoption` (Gauntlet); wrap the file in `#if WITH_DEV_AUTOMATION_TESTS`; tests use an injected clock and entropy, no wall-clock time as a pass predicate, no shared mutable state, and assert zero unexpected faults at teardown.
 
@@ -105,3 +106,14 @@ Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation n
 - Depends on: `production/epics/session-travel/story-001-harness-connection-event-hook.md`
 - Cross-epic: Epic `tuning-data-config` (`production/epics/tuning-data-config/EPIC.md`): the ADR-0007 module skeleton (StealthFoundation, StealthGameplay, StealthPresentation, StealthTestHarness), test harness and CI must exist before the files below can be created at those paths. Until it lands, write the code and tests under `Source/StealthGame/` (Private/Tests/) and move them when the skeleton arrives.
 - Unlocks: `production/epics/session-travel/story-024-no-default-pawn-spawn-on-login.md`, `production/epics/session-travel/story-056-roster-rebind-both-paths.md`, `production/epics/session-travel/story-060-rejoin-keeps-same-record-and-role.md`, `production/epics/session-travel/story-072-pawn-shape-stable-across-rejoin.md`, `production/epics/session-travel/story-077-silent-drop-and-rejoin-presentation.md`
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Verdict**: PASS (CONCERNS recorded) — mid-round rejoin with 3 clients under StealthLeak1, raw-bunch capture on the non-owners: 0 PlayerState channel opens/closes, 0 player-array changes, 0 `ClientReceiveLocalizedMessage` (any client, any phase); distinct `-IdentityKey=` clients never superseded (0) while the supersede control produced exactly 1; PlayerState adoption in `InitPlayerState` works (same NetGUID), fallback not needed. CONCERN: one property-less (Role/RemoteRole, 41-bit) PlayerState bunch reaches non-owners at the adoption — a timing trace recorded for the IVP leak catalogue (story 047). Report: `production/qa/spikes/2026-10-25_S4-rejoin-adoption.md`.
+**Criteria**: 1/1 (AC-1)
+**Decisions**: run with ADR-0001 trims 3 (the target PlayerState/pawn conditions); supersede control added so the "never supersede" result is known to be detectable.
+**Deviations**: ADVISORY — evidence is the T3 harness run (`run-mp.ps1 -Capture`) with an analyser, not a Gauntlet node named `StealthGame.Session.MP.RejoinAdoption`; production re-proof is participant-state-roster stories 057/059.
+**Test Evidence**: `production/qa/evidence/story-004-spike-s4-rejoin-playerstate-adoption/` (analysis JSON of runs s4-a and s4-b, gzipped capture records).
+**Run result**: N/A — headless multi-process capture (-nullrhi); the outcome is wire-level (bunches, arrays, RPCs), not a screen.
+**Reviewed by**: focused self-review (unattended run): supersede detaches the old controller's PlayerState before closing it so its destruction cannot deactivate the adopted PlayerState; pending reclaim is cleared after every Login.
+**Unblocks**: participant-state-roster story 057 → Ready; teammate-markers story 025 → Ready (S3 and S4 both reported); participant-state-roster story 059 keeps its S8 gate.

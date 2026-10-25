@@ -1,7 +1,7 @@
 # Story 025: Travel and viewer-rejoin rebuild
 
 > **Epic**: Teammate Markers
-> **Status**: Blocked — BLOCKED: session-travel spikes S3 (seamless-travel persistence) and S4 (rejoin PlayerState adoption) have not reported (`production/epics/session-travel/story-003-spike-s3-seamless-travel-persistence.md`, `story-004-spike-s4-rejoin-playerstate-adoption.md`); seamless-travel evidence is Gauntlet-only (ADR-0008).
+> **Status**: Ready — unblocked 2026-10-25: session-travel spikes S3 (production/qa/spikes/2026-10-25_S3-seamless-travel.md, PASS) and S4 (production/qa/spikes/2026-10-25_S4-rejoin-adoption.md, PASS with a role-only PlayerState bunch CONCERN) have reported. Its in-epic dependencies (stories 008, 016) still order the work.
 > **Layer**: Presentation
 > **Type**: Integration
 > **Estimate**: M

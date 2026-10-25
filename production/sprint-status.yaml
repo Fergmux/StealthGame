@@ -434,11 +434,11 @@ stories:
     name: "Spike S4: retained PlayerState adopted on rejoin with no visible change to other clients"
     file: "production/epics/session-travel/story-004-spike-s4-rejoin-playerstate-adoption.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "network-programmer"
     estimate_days: 2.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: must-have
     sprint2_estimate_days: 3.0

@@ -1,7 +1,7 @@
 # Story 057: Two client processes on one machine with distinct identity keys get distinct records
 
 > **Epic**: Participant State & Roster
-> **Status**: Blocked — BLOCKED: spike S4 (reconnect, null-subsystem keys) has not reported. Unblocks when S4 reports (two clients on one machine with `-IdentityKey=` and no online subsystem, retained PlayerState re-attached, supersede).
+> **Status**: Ready — unblocked 2026-10-25: spike S4 reported PASS (production/qa/spikes/2026-10-25_S4-rejoin-adoption.md): two clients on one machine with distinct -IdentityKey= never superseded (control superseded exactly once), retained PlayerState re-attached through InitPlayerState adoption. Depends on story 029 (reclaim core) for ordering.
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M

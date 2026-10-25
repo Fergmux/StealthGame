@@ -1,0 +1,91 @@
+{
+ "run": "s4-a",
+ "rejoinerBinds": [
+  {
+   "psGuid": "24",
+   "adopted": 0,
+   "pc": "StealthSpikePlayerController_3",
+   "t": 17365217.192626
+  },
+  {
+   "psGuid": "24",
+   "adopted": 1,
+   "pc": "StealthSpikePlayerController_4",
+   "t": 17365262.158331
+  }
+ ],
+ "adoptions": [
+  {
+   "guid": "24",
+   "pc": "StealthSpikePlayerController_4"
+  }
+ ],
+ "retained": [
+  "24",
+  "4"
+ ],
+ "adoptedSameGuid": true,
+ "supersedesBeforeControl": 0,
+ "supersedesAfterControl": 0,
+ "t_connect_s": 16.982,
+ "window_s": [
+  17365230.435,
+  17365269.027
+ ],
+ "nonOwnerObservers": {
+  "client2": {
+   "rejoinerPsOpenClose": 0,
+   "anyPsOpenClose": 0,
+   "rejoinerPsBunches": 1,
+   "rejoinerPsBunchesBaseline": 3,
+   "rejoinerPsProps": [
+    "Actor.RemoteRole",
+    "Actor.Role"
+   ],
+   "rejoinerPsPropsBaseline": [
+    "Actor.RemoteRole",
+    "Actor.Role",
+    "PlayerState.PlayerNamePrivate",
+    "StealthPlayerState.Team"
+   ],
+   "playerArrayChangesInWindow": 0,
+   "playerArrayChangesWholeRunAfterFirst": 0,
+   "localizedMessageRpcs": 0,
+   "localizedMessageOverride": 0,
+   "rxBunches": 25276
+  },
+  "client3": {
+   "rejoinerPsOpenClose": 0,
+   "anyPsOpenClose": 0,
+   "rejoinerPsBunches": 1,
+   "rejoinerPsBunchesBaseline": 4,
+   "rejoinerPsProps": [
+    "Actor.RemoteRole",
+    "Actor.Role"
+   ],
+   "rejoinerPsPropsBaseline": [
+    "Actor.RemoteRole",
+    "Actor.Role",
+    "PlayerState.PlayerNamePrivate",
+    "StealthPlayerState.Team"
+   ],
+   "playerArrayChangesInWindow": 0,
+   "playerArrayChangesWholeRunAfterFirst": 2,
+   "localizedMessageRpcs": 0,
+   "localizedMessageOverride": 0,
+   "rxBunches": 18997
+  }
+ },
+ "ownerLocalizedMessages": 0,
+ "clientEnds": {
+  "client1": [
+   "server connection lost"
+  ],
+  "client2": [
+   "server connection lost"
+  ],
+  "client3": [
+   "offline ceiling"
+  ]
+ }
+}

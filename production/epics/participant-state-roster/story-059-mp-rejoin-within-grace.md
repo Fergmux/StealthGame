@@ -1,7 +1,7 @@
 # Story 059: A client rejoining within grace reclaims its record, pawn and informant status
 
 > **Epic**: Participant State & Roster
-> **Status**: Blocked — BLOCKED: spikes S4 (reconnect, null-subsystem keys) and S8 (`PawnLeavingGame` override hand-over) have not reported (and S3 for the travel harness). Unblocks when S4 and S8 report and the multi-process harness is available.
+> **Status**: Blocked — BLOCKED: spike S8 (PawnLeavingGame override hand-over) has not reported. S3 (production/qa/spikes/2026-10-25_S3-seamless-travel.md) and S4 (production/qa/spikes/2026-10-25_S4-rejoin-adoption.md) reported PASS 2026-10-25 and the multi-process harness exists (tools/ci/mp/run-mp.ps1); unblocks when S8 reports.
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L

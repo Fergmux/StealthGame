@@ -1,0 +1,101 @@
+{
+ "run": "s4-b",
+ "rejoinerBinds": [
+  {
+   "psGuid": "18",
+   "adopted": 0,
+   "pc": "StealthSpikePlayerController_2",
+   "t": 17366186.439079
+  },
+  {
+   "psGuid": "18",
+   "adopted": 1,
+   "pc": "StealthSpikePlayerController_4",
+   "t": 17366231.807207
+  },
+  {
+   "psGuid": "18",
+   "adopted": 1,
+   "pc": "StealthSpikePlayerController_5",
+   "t": 17366259.790946
+  }
+ ],
+ "adoptions": [
+  {
+   "guid": "18",
+   "pc": "StealthSpikePlayerController_4"
+  },
+  {
+   "guid": "18",
+   "pc": "StealthSpikePlayerController_5"
+  }
+ ],
+ "retained": [
+  "18",
+  "26"
+ ],
+ "adoptedSameGuid": true,
+ "supersedesBeforeControl": 0,
+ "supersedesAfterControl": 1,
+ "t_connect_s": 17.102,
+ "window_s": [
+  17366199.745,
+  17366238.608
+ ],
+ "nonOwnerObservers": {
+  "client2": {
+   "rejoinerPsOpenClose": 0,
+   "anyPsOpenClose": 0,
+   "rejoinerPsBunches": 1,
+   "rejoinerPsBunchesBaseline": 4,
+   "rejoinerPsProps": [
+    "Actor.RemoteRole",
+    "Actor.Role"
+   ],
+   "rejoinerPsPropsBaseline": [
+    "Actor.RemoteRole",
+    "Actor.Role",
+    "PlayerState.PlayerNamePrivate",
+    "StealthPlayerState.Team"
+   ],
+   "playerArrayChangesInWindow": 0,
+   "playerArrayChangesWholeRunAfterFirst": 1,
+   "localizedMessageRpcs": 0,
+   "localizedMessageOverride": 0,
+   "rxBunches": 44179
+  },
+  "client3": {
+   "rejoinerPsOpenClose": 0,
+   "anyPsOpenClose": 0,
+   "rejoinerPsBunches": 1,
+   "rejoinerPsBunchesBaseline": 3,
+   "rejoinerPsProps": [
+    "Actor.RemoteRole",
+    "Actor.Role"
+   ],
+   "rejoinerPsPropsBaseline": [
+    "Actor.RemoteRole",
+    "Actor.Role",
+    "PlayerState.PlayerNamePrivate",
+    "StealthPlayerState.Team"
+   ],
+   "playerArrayChangesInWindow": 0,
+   "playerArrayChangesWholeRunAfterFirst": 1,
+   "localizedMessageRpcs": 0,
+   "localizedMessageOverride": 0,
+   "rxBunches": 37424
+  }
+ },
+ "ownerLocalizedMessages": 0,
+ "clientEnds": {
+  "client1": [
+   "server connection lost"
+  ],
+  "client2": [
+   "server connection lost"
+  ],
+  "client3": [
+   "server connection lost"
+  ]
+ }
+}
