@@ -1,7 +1,7 @@
 # Story 030: Informant return timing
 
 > **Epic**: Teammate Markers
-> **Status**: Blocked — BLOCKED: ADR-0003 spikes S9 and S10 have not reported (the marker leaves on the retiring C-TeamView update and the takeover pawn arrives through a re-opened channel), and ADR-0019's amendment requests to owning ADRs are outstanding (conditional acceptance); the npc-kill-penalty-informants epic has no stories yet.
+> **Status**: Blocked — BLOCKED: ADR-0003 spikes S9 and S10 have not reported (the marker leaves on the retiring C-TeamView update and the takeover pawn arrives through a re-opened channel), and ADR-0019's amendment requests to owning ADRs are outstanding (conditional acceptance); the npc-kill-penalty-informants epic has no stories yet. Update 2026-10-25: spike S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) — the in-flight cull/un-cull race can leave a client without the pawn (~1-2 % under loss), the re-created pawn renders one un-evaluated frame, and presentation times need ADR-0002's clock estimator; a superseding ADR to ADR-0003 must decide the fixes before this story can proceed.
 > **Layer**: Presentation
 > **Type**: Integration
 > **Estimate**: M

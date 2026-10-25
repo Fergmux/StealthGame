@@ -356,10 +356,10 @@ stories:
     name: "Spike S10, a re-opened pawn is a new actor that presents correctly from replicated state"
     file: "production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: "network-programmer"
     estimate_days: 1.0
-    blocker: ""
+    blocker: "awaiting lead sign-off of the S10 frame sequence; spike FAIL needs a superseding ADR to ADR-0003"
     completed: ""
     carryover_to_sprint: 2
     sprint2_priority: should-have
@@ -367,11 +367,11 @@ stories:
     name: "Spike S12, the cull delay and un-cull lead are recomputed from measured L99"
     file: "production/epics/information-visibility-policy/story-006-spike-s12-cull-delay-vs-measured-l99.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "network-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: should-have
   - id: "iif-007"

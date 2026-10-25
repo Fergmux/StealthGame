@@ -1,7 +1,7 @@
 # Story 024: A culled concealed player pawn has no actor on any non-ally client and stays relevant to its owner and allies (provisional on S9)
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spike story-005 (S10 re-open and NetGUID) has not reported. S9 (story-004) reported PASS 2026-10-25 (production/qa/spikes/2026-10-25_S9.md): the cull tick and explicit per-connection close are specified from it
+> **Status**: Blocked — BLOCKED: spike story-005 (S10 re-open and NetGUID) has not reported. S9 (story-004) reported PASS 2026-10-25 (production/qa/spikes/2026-10-25_S9.md): the cull tick and explicit per-connection close are specified from it Update 2026-10-25: spike S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) — the in-flight cull/un-cull race can leave a client without the pawn (~1-2 % under loss), the re-created pawn renders one un-evaluated frame, and presentation times need ADR-0002's clock estimator; a superseding ADR to ADR-0003 must decide the fixes before this story can proceed.
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L

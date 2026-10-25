@@ -1,7 +1,7 @@
 # Story 027: On a BushEnter swap the body and its shadow, reflection, Lumen and decals hide on the same rendered frame on ally and opponent clients
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: [Dep:Concealment] needs the concealment-bushes BushEnter swap and client latch built; S10 not reported (S9 reported PASS 2026-10-25, production/qa/spikes/2026-10-25_S9.md)
+> **Status**: Blocked — BLOCKED: [Dep:Concealment] needs the concealment-bushes BushEnter swap and client latch built; S10 not reported (S9 reported PASS 2026-10-25, production/qa/spikes/2026-10-25_S9.md) Update 2026-10-25: spike S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) — the in-flight cull/un-cull race can leave a client without the pawn (~1-2 % under loss), the re-created pawn renders one un-evaluated frame, and presentation times need ADR-0002's clock estimator; a superseding ADR to ADR-0003 must decide the fixes before this story can proceed.
 > **Layer**: Foundation
 > **Type**: Visual/Feel
 > **Estimate**: M

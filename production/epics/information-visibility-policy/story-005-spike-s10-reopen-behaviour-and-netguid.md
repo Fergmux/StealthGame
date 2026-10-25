@@ -1,12 +1,12 @@
 # Story 005: Spike S10, a re-opened pawn is a new actor that presents correctly from replicated state
 
 > **Epic**: Information Visibility Policy
-> **Status**: Ready
+> **Status**: In Review — spike reported FAIL (production/qa/spikes/2026-10-25_S10.md); awaiting the lead's sign-off of the retained frame sequence (production/qa/evidence/s10-reopen-evidence.md) and the superseding ADR-0003 decision
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -64,9 +64,13 @@ When a culled pawn is re-opened (un-cull, or a death-write re-open) the client c
 
 ## Files
 
-- `production/qa/spikes/<date>_S10.md` (the verdict)
-- `production/qa/evidence/s10-reopen-evidence.md` and the frame sequence
-- Throwaway spike code reusing story-004's rig
+*Changed by /dev-story (2026-10-25).*
+
+- `production/qa/spikes/2026-10-25_S10.md` (the verdict)
+- `production/qa/evidence/s10-reopen-evidence.md` and `production/qa/evidence/story-005-spike-s10-reopen-behaviour-and-netguid/frames/`
+- `Source/StealthTestHarness/Private/Scenarios/StealthHarnessScenarioS10.cpp` (throwaway rig on S9's rule shape, with an optional race guard)
+- `Source/StealthTestHarness/Private/Spikes/Visibility/StealthSpikeActionStateComponent.{h,cpp}` (presentation stub, frame capture)
+- `tools/ci/mp/analyze_s10.py`, `tools/ci/mp/run-mp.ps1` (render client fix)
 
 ---
 
@@ -86,7 +90,7 @@ When a culled pawn is re-opened (un-cull, or a death-write re-open) the client c
 **Required evidence**:
 - Integration: a written spike report `production/qa/spikes/<date>_S10.md` plus the retained, lead-signed frame sequence in `production/qa/evidence/`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Report and frame sequence written; lead sign-off pending
 
 ---
 
@@ -94,3 +98,14 @@ When a culled pawn is re-opened (un-cull, or a death-write re-open) the client c
 
 - Depends on: `production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md`
 - Unlocks: `production/epics/information-visibility-policy/story-006-spike-s12-cull-delay-vs-measured-l99.md`, `production/epics/information-visibility-policy/story-024-concealment-cull-audience.md`, `production/epics/information-visibility-policy/story-027-concealment-local-hide-at-swap.md`, `production/epics/information-visibility-policy/story-028-blind-spot-attack-on-culled.md`, `production/epics/information-visibility-policy/story-029-uncull-lead-bound.md`, `production/epics/information-visibility-policy/story-044-raw-bunch-schema-parity.md`, `production/epics/information-visibility-policy/story-052-strike-id-oracle-parity.md`
+
+## Completion Notes
+**Status**: In Review (not closed) — 2026-10-25
+**Verdict**: FAIL (measured and recorded as the criterion asks): new client actor on every re-open and the same NetGUID every time (no allocation from re-opens), root exact, 0 crashes/ensures, T_reopen ≈ 11.5 ms median / 20 ms p99 (≤ 33 ms) — but (1) the in-flight race leaves ~1 % (StealthLeak1) / ~2 % (StealthLeak2) of race re-opens without the pawn on the client; (2) every re-open's first rendered frame shows an un-evaluated (collapsed) pose; (3) pose and death times are ~150 ms late with the engine's default server clock. A candidate race guard (re-open held until the close is acknowledged) removed every race failure. Needed design changes are listed in the report for a superseding ADR to ADR-0003.
+**Criteria**: the measurement criterion is met except the **lead sign-off** of the retained frame sequence (pending) — that is why the story is not Complete.
+**Decisions**: "safe" for the race = 0 crashes, ensures and faults, where a client left without a relevant pawn is a fault; registries absent on the prototype reported as a CONCERN; case B every 20th cycle so the crowd lasts the run.
+**Deviations**: none in scope.
+**Test Evidence**: `production/qa/evidence/story-005-spike-s10-reopen-behaviour-and-netguid/` (analysis JSON of 5 runs, launch lines, frames).
+**Run result**: OBSERVED — `production/qa/evidence/story-005-spike-s10-reopen-behaviour-and-netguid/frames/` (render client C3, culled → re-open frames; the first re-open frame shows the pop).
+**Reviewed by**: focused self-review (unattended run): fault counter made thread-safe (log devices can be called from any thread); relevancy hook removed in OnFinish; no forced relevancy or forced update used.
+**Dependents**: stay Blocked (S10 FAIL; a superseding ADR decides); their status notes cite this report.

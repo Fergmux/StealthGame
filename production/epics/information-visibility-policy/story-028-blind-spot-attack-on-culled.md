@@ -1,7 +1,7 @@
 # Story 028: An attack on a culled pawn resolves against capsules identically by spot or id, and the victim re-opens only at the death write
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: [Dep:Assassination] needs assassination-defence-reversal Attack(TargetSpot/TargetPawn) resolver; spikes story-005 (S10) and S15 (blind-attack oracle, Assassination's) have not reported (S9 reported PASS 2026-10-25, production/qa/spikes/2026-10-25_S9.md)
+> **Status**: Blocked — BLOCKED: [Dep:Assassination] needs assassination-defence-reversal Attack(TargetSpot/TargetPawn) resolver; spikes story-005 (S10) and S15 (blind-attack oracle, Assassination's) have not reported (S9 reported PASS 2026-10-25, production/qa/spikes/2026-10-25_S9.md) Update 2026-10-25: spike S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) — the in-flight cull/un-cull race can leave a client without the pawn (~1-2 % under loss), the re-created pawn renders one un-evaluated frame, and presentation times need ADR-0002's clock estimator; a superseding ADR to ADR-0003 must decide the fixes before this story can proceed.
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L

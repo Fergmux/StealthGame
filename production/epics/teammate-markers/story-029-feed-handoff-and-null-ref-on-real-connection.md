@@ -1,7 +1,7 @@
 # Story 029: Feed handoff and null-reference semantics on a real connection
 
 > **Epic**: Teammate Markers
-> **Status**: Blocked — BLOCKED: ADR-0003 conditional gates: spike S9 (cull latency and explicit channel close) and spike S10 (re-open behaviour and NetGUID) have not reported (`production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md`, `story-005-spike-s10-reopen-behaviour-and-netguid.md`). The feed entry's removal only after the channel-open acknowledgement rests on both.
+> **Status**: Blocked — BLOCKED: ADR-0003 conditional gates: spike S9 (cull latency and explicit channel close) and spike S10 (re-open behaviour and NetGUID) have not reported (`production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md`, `story-005-spike-s10-reopen-behaviour-and-netguid.md`). The feed entry's removal only after the channel-open acknowledgement rests on both. Update 2026-10-25: spike S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) — the in-flight cull/un-cull race can leave a client without the pawn (~1-2 % under loss), the re-created pawn renders one un-evaluated frame, and presentation times need ADR-0002's clock estimator; a superseding ADR to ADR-0003 must decide the fixes before this story can proceed.
 > **Layer**: Presentation
 > **Type**: Integration
 > **Estimate**: M

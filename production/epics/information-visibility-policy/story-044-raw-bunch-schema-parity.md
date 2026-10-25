@@ -1,7 +1,7 @@
 # Story 044: Raw-bunch schema parity holds, structural leak count S = 0
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spike story-005 (S10) has not reported; needs AStealthPawn. S1 reported PASS 2026-10-25 with the capture mechanism chosen (production/qa/spikes/2026-10-25_S1-multiprocess.md; ADR-0008 amendment) and S9 reported PASS (production/qa/spikes/2026-10-25_S9.md)
+> **Status**: Blocked — BLOCKED: spike story-005 (S10) has not reported; needs AStealthPawn. S1 reported PASS 2026-10-25 with the capture mechanism chosen (production/qa/spikes/2026-10-25_S1-multiprocess.md; ADR-0008 amendment) and S9 reported PASS (production/qa/spikes/2026-10-25_S9.md) Update 2026-10-25: spike S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) — the in-flight cull/un-cull race can leave a client without the pawn (~1-2 % under loss), the re-created pawn renders one un-evaluated frame, and presentation times need ADR-0002's clock estimator; a superseding ADR to ADR-0003 must decide the fixes before this story can proceed.
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L

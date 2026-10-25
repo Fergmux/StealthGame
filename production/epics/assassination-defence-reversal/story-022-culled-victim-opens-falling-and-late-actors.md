@@ -1,7 +1,7 @@
 # Story 022: A culled victim re-opens already falling, and late actors seek and never snap
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Blocked — BLOCKED: spike S10 (re-open creates a new client actor; NetGUID reuse and AnimBP initialisation from replicated state) has not reported. S10 is the Visibility Policy epic's `production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md` (needs S9, story 004, first); this epic's Build Order and Gates names S10 as conditioning ADR-0018. Unblock when that story reports, then re-run `/story-readiness`.
+> **Status**: Blocked — BLOCKED: spike S10 (re-open creates a new client actor; NetGUID reuse and AnimBP initialisation from replicated state) has not reported. S10 is the Visibility Policy epic's `production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md` (needs S9, story 004, first); this epic's Build Order and Gates names S10 as conditioning ADR-0018. Unblock when that story reports, then re-run `/story-readiness`. Update 2026-10-25: spike S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) — the in-flight cull/un-cull race can leave a client without the pawn (~1-2 % under loss), the re-created pawn renders one un-evaluated frame, and presentation times need ADR-0002's clock estimator; a superseding ADR to ADR-0003 must decide the fixes before this story can proceed.
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
