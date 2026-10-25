@@ -127,6 +127,7 @@ All primitives live in `StealthFoundation` as plain C++ (no `UObject`, no `UWorl
 | **14** | **`BushSpotPick`** | secret | Concealment CON-R12 / F4 blind-strike spot pick (consumer ADR-0018, stream ADR-0017 §7, tag `CON_SPOT`) | layout attempt (amendment 2026-10-24) |
 | **15** | **`PublicHandle`** | secret | Roster R3 `PublicHandle` (random 32-bit, unique in the match, never reused, no order; consumer ADR-0005 `URosterStore` registration, carrier ADR-0001 §4.3; tag `PSR_HANDLE`) | registration counter (counter-as-Attempt; a draw equal to 0 or to any handle already issued in the match is discarded and the counter advances) (amendment 2026-10-25b) |
 | **16** | **`IdleGaze`** | secret | SCL R8.9 idle head-scan layer (every pawn kind; tag `SCL_GAZE`) | layout attempt; per-layout sub-seed + counter tuple `(PawnOrdinal, SweepIndex)` keyed by the pawn's stable ordinal, never by kind, binding or controller (amendment 2026-10-25b) |
+| **17** | **`MatchId`** | secret | Roster R3 `MatchId` (random 64-bit, combined with `RoundEpoch` into the epoch token; consumer ADR-0005 `URosterStore::BeginMatch`; tag `PSR_MATCH`) | MatchId draw counter of the store (counter-as-Attempt, kept for the store's lifetime; a draw equal to 0 or to the previous match's id is discarded and the counter advances) (amendment 2026-10-25, decision D46) |
 
 **Two consumption shapes, fixed per domain** (TD-ADR item 5):
 - **Counter-as-Attempt** (F5's rule for domains 7-12, including `AmbientSchedule`): each draw event uses its own sub-seed `GetServerSubSeed(Domain, counter)` and an `FSecretStream(SubSeed, tag)` for the few draws inside that event. CNB-R14's "schedule draws use `AmbientSchedule` the same way" is read as "counter-based", satisfied by this shape; Session F5 is the contract owner, so its shape wins over a second reading.
@@ -208,7 +209,8 @@ enum class ESeedDomain : uint32 { Layout = 1, ObjectiveSites = 2, AppearanceDeal
     StageSignal = 10, SeqOrder = 11, TieRank = 12, CrowdBehaviour = 13,
     BushSpotPick = 14 /* amendment 2026-10-24, ADR-0017 */,
     PublicHandle = 15 /* amendment 2026-10-25b, Roster R3 */,
-    IdleGaze = 16 /* amendment 2026-10-25b, SCL R8.9 */ };   // append-only
+    IdleGaze = 16 /* amendment 2026-10-25b, SCL R8.9 */,
+    MatchId = 17 /* amendment 2026-10-25, decision D46, Roster R3 */ };   // append-only
 class IEntropySource { public: virtual bool Fill(TArrayView<uint8> Out) = 0; };
 uint64 SipHash24(const uint8 Key[16], TConstArrayView<uint8> Message);
 struct FSecretStream {                                  // keyed-hash DRBG (SipHash counter mode)
@@ -344,3 +346,7 @@ Inter-ADR amendment pass; decision unchanged, Status unchanged (Proposed).
 ## Amendments (architecture review 2026-10-25b)
 Architecture review 2026-10-25b (`docs/architecture/architecture-review-2026-10-25b.md`); decision unchanged (append-only registry extended), Status unchanged (Accepted).
 - §4 domain registry and Key Interfaces enum: appended `PublicHandle = 15` (Roster R3 requires a server-only random source for the only participant reference clients receive; no domain existed) and `IdleGaze = 16` (SCL R8.9, decision D14, names an ADR-0006 counter-based stream keyed by the pawn's stable ordinal; no domain existed). Both follow the existing consumption shapes; golden vectors for both are added with the implementing stories. Session F5's table is the GDD owner's to sync.
+
+## Amendments (story phase 2026-10-25)
+Decision D46 (`production/design-closeout/2026-10-25_rereview-followups.md`); decision unchanged (append-only registry extended), Status unchanged (Accepted).
+- §4 domain registry and Key Interfaces enum: appended `MatchId = 17` (Roster R3 requires a server-only random 64-bit `MatchId` at `BeginMatch`; no domain existed). Counter-as-Attempt like domain 15; the Roster core's `IRosterRandom` seam names both draws (`ERosterRandomDomain` values equal the `ESeedDomain` values), and the `URosterStore` facade (story psr-061) maps them to `GetServerSubSeed`. Golden vectors are added with that facade story. Session F5's table is the GDD owner's to sync.
