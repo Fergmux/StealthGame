@@ -1,0 +1,308 @@
+{
+ "run": "s1-negctl-b",
+ "identityTrims": 17,
+ "serverProfile": "StealthLeak2",
+ "iris": 0,
+ "serverConditions": {
+  "Actor.Owner": "OwnerOnly",
+  "Pawn.RemoteViewPitch16": "SkipOwner",
+  "Pawn.PlayerState": "None",
+  "Pawn.Controller": "OwnerOnly",
+  "CBP_SandboxCharacter_C.CharacterInputState": "SkipOwner"
+ },
+ "events": [
+  {
+   "ev": "startRound",
+   "st": 16.325731
+  },
+  {
+   "ev": "crowd",
+   "st": 17.826374
+  },
+  {
+   "ev": "placed",
+   "st": 18.828809
+  },
+  {
+   "ev": "takeover",
+   "player": "C1",
+   "newBody": "142",
+   "formerBody": "114",
+   "st": 23.828198
+  },
+  {
+   "ev": "takeover",
+   "player": "C2",
+   "newBody": "114",
+   "formerBody": "122",
+   "st": 29.829072
+  },
+  {
+   "ev": "placed",
+   "st": 35.830177
+  },
+  {
+   "ev": "kill",
+   "st": 41.830261
+  },
+  {
+   "ev": "takeover",
+   "player": "C1",
+   "newBody": "184",
+   "formerBody": "142",
+   "st": 47.826927
+  }
+ ],
+ "txBunches": {
+  "nonOwner/npc": 69782,
+  "nonOwner/player": 6811,
+  "owner/npc": 3,
+  "owner/player": 26
+ },
+ "txIdentitySends": {
+  "nonOwner/npc/Pawn.PlayerState": 7,
+  "nonOwner/player/Pawn.PlayerState": 28,
+  "owner/npc/Actor.Owner": 3,
+  "owner/npc/Pawn.Controller": 3,
+  "owner/npc/Pawn.PlayerState": 3,
+  "owner/player/Actor.Owner": 6,
+  "owner/player/Pawn.Controller": 6,
+  "owner/player/Pawn.PlayerState": 6
+ },
+ "clients": {
+  "C1": {
+   "receipts": {
+    "owner/player": 417,
+    "nonOwner/npc": 22945,
+    "nonOwner/player": 1646,
+    "transitionOwner/npc": 74
+   },
+   "identityToNonOwner": 8,
+   "identityToNonOwnerSteady": 6,
+   "identityToTransitionOwner": {
+    "Actor.Owner": 2,
+    "Pawn.PlayerState": 2,
+    "Pawn.Controller": 2
+   },
+   "identityByProp": {
+    "Pawn.PlayerState": 8
+   },
+   "identityExamples": [
+    {
+     "t": 17345483.774604,
+     "guid": "72",
+     "kind": "host",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345483.803318,
+     "guid": "96",
+     "kind": "C3",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345483.852388,
+     "guid": "104",
+     "kind": "C2",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.787985,
+     "guid": "122",
+     "kind": "C2",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.794251,
+     "guid": "126",
+     "kind": "host",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    }
+   ]
+  },
+  "C2": {
+   "receipts": {
+    "owner/player": 405,
+    "nonOwner/npc": 22472,
+    "nonOwner/player": 1682,
+    "transitionOwner/npc": 2
+   },
+   "identityToNonOwner": 10,
+   "identityToNonOwnerSteady": 6,
+   "identityToTransitionOwner": {
+    "Actor.Owner": 1,
+    "Pawn.PlayerState": 1,
+    "Pawn.Controller": 1
+   },
+   "identityByProp": {
+    "Pawn.PlayerState": 10
+   },
+   "identityExamples": [
+    {
+     "t": 17345484.128419,
+     "guid": "6",
+     "kind": "C1",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.286449,
+     "guid": "96",
+     "kind": "C3",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.292992,
+     "guid": "72",
+     "kind": "host",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.786158,
+     "guid": "114",
+     "kind": "C1",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.792122,
+     "guid": "126",
+     "kind": "host",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    }
+   ]
+  },
+  "C3": {
+   "receipts": {
+    "owner/player": 391,
+    "nonOwner/npc": 22743,
+    "nonOwner/player": 3325
+   },
+   "identityToNonOwner": 12,
+   "identityToNonOwnerSteady": 6,
+   "identityToTransitionOwner": {},
+   "identityByProp": {
+    "Pawn.PlayerState": 12
+   },
+   "identityExamples": [
+    {
+     "t": 17345483.896524,
+     "guid": "72",
+     "kind": "host",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.060123,
+     "guid": "6",
+     "kind": "C1",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.07591,
+     "guid": "104",
+     "kind": "C2",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.786259,
+     "guid": "126",
+     "kind": "host",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    },
+    {
+     "t": 17345484.792131,
+     "guid": "114",
+     "kind": "C1",
+     "prop": "Pawn.PlayerState",
+     "inFlight": false,
+     "open": 1
+    }
+   ]
+  }
+ },
+ "nonOwnerParentUnion": {
+  "npc": {
+   "Actor.Instigator": 169,
+   "Actor.RemoteRole": 271,
+   "Actor.ReplicatedMovement": 68040,
+   "Actor.Role": 265,
+   "Character.ReplicatedBasedMovement": 67101,
+   "Character.ReplicatedMovementMode": 172,
+   "Character.bProxyIsCharacterMovementActive": 169,
+   "Pawn.PlayerState": 6,
+   "Pawn.RemoteViewPitch16": 2,
+   "StealthCharacter.AppearanceIndex": 169,
+   "StealthCharacter.bDying": 3
+  },
+  "player": {
+   "Actor.Instigator": 18,
+   "Actor.RemoteRole": 45,
+   "Actor.ReplicatedMovement": 3889,
+   "Actor.Role": 39,
+   "CBP_SandboxCharacter_C.CharacterInputState": 58,
+   "Character.ReplicatedBasedMovement": 3889,
+   "Character.ReplicatedMovementMode": 18,
+   "Character.bProxyIsCharacterMovementActive": 18,
+   "Pawn.PlayerState": 24,
+   "Pawn.RemoteViewPitch16": 4167,
+   "StealthCharacter.AppearanceIndex": 18,
+   "StealthCharacter.HeldUntilServerTime": 2,
+   "StealthCharacter.bConcealed": 4
+  }
+ },
+ "nonOwnerBunchBits": {
+  "npc": {
+   "n": 68085,
+   "min": 0,
+   "p10": 273,
+   "median": 279,
+   "p90": 303,
+   "p99": 309,
+   "max": 492
+  },
+  "player": {
+   "n": 6635,
+   "min": 0,
+   "p10": 43,
+   "median": 303,
+   "p90": 333,
+   "p99": 336,
+   "max": 606
+  }
+ },
+ "nonOwnerRpcs": {},
+ "nonOwnerSubobjects": {},
+ "remeasure": {
+  "nonOwner/npc/Pawn.RemoteViewPitch16": 2,
+  "nonOwner/player/CBP_SandboxCharacter_C.CharacterInputState": 58,
+  "nonOwner/player/Pawn.RemoteViewPitch16": 4167,
+  "owner/player/CBP_SandboxCharacter_C.CharacterInputState": 3,
+  "owner/player/Pawn.RemoteViewPitch16": 3
+ }
+}

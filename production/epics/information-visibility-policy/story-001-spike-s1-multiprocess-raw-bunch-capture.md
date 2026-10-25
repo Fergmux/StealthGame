@@ -1,12 +1,12 @@
 # Story 001: Spike S1, multi-process raw-bunch capture shows no identity pointers to non-owners
 
 > **Epic**: Information Visibility Policy
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -35,7 +35,7 @@ The 2026-10-25 spike report (`production/qa/spikes/2026-10-25_S1-S2-S14.md`) pro
 
 *From the story's spike definition (spike story; criterion written for the S1 condition left open in ADR-0001's Amendments):*
 
-- [ ] GIVEN a Development build with one listen-server process and at least three separate client processes on one machine (two machines if available) under net profile StealthLeak2 (PktLag 100 ms, 2 % loss), and 2 player and 2 NPC pawns in view of a third client, WHEN the non-owning client's received bunches (and the server's per-connection send changelists) are captured across spawn, takeover and AI hand-over, THEN PlayerState, Controller and Owner appear in no non-owner changelist for either pawn kind; the negative control (APawn::PlayerState at COND_None) is detected by the same capture; the winning capture mechanism (NetTrace analysis or a harness-only UNetConnection/replicator receive hook) is recorded as an ADR-0008 amendment; and the verdict (byte-level where the mechanism allows, with the two non-pointer differentiators of the 2026-10-25 report, RemoteViewPitch16 and CharacterInputState, re-measured) is written to production/qa/spikes/.
+- [x] GIVEN a Development build with one listen-server process and at least three separate client processes on one machine (two machines if available) under net profile StealthLeak2 (PktLag 100 ms, 2 % loss), and 2 player and 2 NPC pawns in view of a third client, WHEN the non-owning client's received bunches (and the server's per-connection send changelists) are captured across spawn, takeover and AI hand-over, THEN PlayerState, Controller and Owner appear in no non-owner changelist for either pawn kind; the negative control (APawn::PlayerState at COND_None) is detected by the same capture; the winning capture mechanism (NetTrace analysis or a harness-only UNetConnection/replicator receive hook) is recorded as an ADR-0008 amendment; and the verdict (byte-level where the mechanism allows, with the two non-pointer differentiators of the 2026-10-25 report, RemoteViewPitch16 and CharacterInputState, re-measured) is written to production/qa/spikes/.
 
 ---
 
@@ -65,12 +65,14 @@ The 2026-10-25 spike report (`production/qa/spikes/2026-10-25_S1-S2-S14.md`) pro
 
 ## Files
 
-*The code and test files this story creates or changes (`/dev-story` replaces this list with what it changed):*
-
-- `production/qa/spikes/<date>_S1-multiprocess.md` (the verdict)
-- `Source/StealthTestHarness/Private/Capture/` or `tools/ci/` capture tooling (the mechanism is decided here; TDC-A creates the module skeleton)
-- `Config/DefaultEngine.ini` (`[PacketSimulationProfile.StealthLeak2]` if absent)
-- `docs/architecture/adr-0008-test-automation-leak-parity.md` (amendment recording the winning mechanism; ADR edits go through `/architecture-decision`)
+- `production/qa/spikes/2026-10-25_S1-multiprocess.md` (the verdict)
+- `Source/StealthTestHarness/Private/Capture/StealthNetCapture.{h,cpp}` (the chosen capture mechanism: harness-only `UStealthCaptureActorChannel` receive/send hook)
+- `Source/StealthTestHarness/Private/Scenarios/StealthHarnessScenarioS1.cpp` (T3 scenario `S1`); runner `StealthHarnessRun.{h,cpp}` from story tdc-017 (adds the 0.1 s pawn truth and the C<n> naming used here)
+- `Source/StealthGame/Private/Spikes/StealthIdentitySpike.{h,cpp}` (spike bit 16: the negative control, pawn PlayerState back to `COND_None`)
+- `tools/ci/mp/analyze_s1.py`
+- `docs/architecture/adr-0008-test-automation-leak-parity.md` (amendment: the winning mechanism), `docs/architecture/adr-0001-crowd-identity-rules.md` (amendment: S1 multi-process reported)
+- `Config/DefaultEngine.ini` profile `StealthLeak2` (story tdc-017)
+- Evidence: `production/qa/evidence/story-001-spike-s1-multiprocess-raw-bunch-capture/`
 
 ---
 
@@ -92,7 +94,7 @@ The 2026-10-25 spike report (`production/qa/spikes/2026-10-25_S1-S2-S14.md`) pro
 **Required evidence**:
 - Integration: a written spike report `production/qa/spikes/<date>_S1-multiprocess.md` citing the capture artefacts and the negative-control run (a documented measurement, not a unit test).
 
-**Status**: [ ] Not yet created
+**Status**: [x] Spike report `production/qa/spikes/2026-10-25_S1-multiprocess.md` (PASS) with capture artefacts and the negative-control run
 
 ---
 
@@ -100,3 +102,16 @@ The 2026-10-25 spike report (`production/qa/spikes/2026-10-25_S1-S2-S14.md`) pro
 
 - Depends on: None (may run on the prototype; harness integration follows once tuning-data-config Exit A delivers the module skeleton and harness)
 - Unlocks: `production/epics/information-visibility-policy/story-002-spike-s2-seamless-travel-and-rejoin-playerstate-trims.md`, `production/epics/information-visibility-policy/story-003-spike-s14-s1-rejoin-and-pawnrecovery-possession.md`, `production/epics/information-visibility-policy/story-008-spike-fixed-width-netserialize-byte-capture.md`, `production/epics/information-visibility-policy/story-018-engine-default-overrides.md`, `production/epics/information-visibility-policy/story-043-transport-classifier-auc.md`, `production/epics/information-visibility-policy/story-044-raw-bunch-schema-parity.md`, `production/epics/information-visibility-policy/story-055-clock-exchange-owner-only-audit.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Verdict**: PASS — 0 identity-pointer sends to non-owner connections and 0 steady-state non-owner receipts, player and NPC pawns, across spawn, takeover, AI hand-over and kill; negative control detected (35 non-owner PlayerState sends; every client received it); mechanism recorded (ADR-0008 amendment); RemoteViewPitch16 and CharacterInputState re-measured (still player-only, recorded).
+**Criteria**: 1/1 (AC-1; byte level = bunch payload bits, see the report's CONCERNS on per-property bits and pointer NetGUID class)
+**Decisions**: capture = harness-only `UActorChannel` hook bracketing the engine's replication log points (not NetTrace: no headless per-bunch property export); profile applied on every process (symmetric); 12 NPCs (`-NpcCount 12`) to keep the host at ~200 fps under VeryVerbose logging; one machine (no second machine available); uncooked Development editor binary in `-game` mode instead of a cooked build (Gauntlet/cook are tdc-020/023).
+**Deviations**: none against the AC beyond the recorded limits (one machine; uncooked).
+**Test Evidence**: report + evidence folder (analysis JSON and gzipped records of runs s1-trims-b and s1-negctl-b).
+**Run result**: N/A — headless multi-process measurement (`-nullrhi`); nothing player-visible changes
+**Reviewed by**: focused self-review (unattended run): capture only installs with `-StealthNetCapture`, collects on the game thread only, removes its output device on pre-exit; harness excluded from Shipping/Test.
+**Unblocks (S1 side)**: story-018 and story-044 now wait only on their other gates (S13/S14 and S10 respectively); story-002/003/043/055 are blocked on other epics or spikes (unchanged).

@@ -1,7 +1,7 @@
 # Story 018: Effective replication settings override the engine defaults for player and NPC pawns alike (provisional on S1, S13, S14)
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spikes story-001 (S1 multi-process), story-003 (S14 rejoin/PawnRecovery) and story-007 (S13) have not reported, and AStealthPawn (shared-character-locomotion) is not built. AC is tagged [S1][S13][S14] and provisional pending those spikes
+> **Status**: Blocked — BLOCKED: spikes story-003 (S14 rejoin/PawnRecovery) and story-007 (S13) have not reported, and AStealthPawn (shared-character-locomotion) is not built. S1 (story-001) reported PASS 2026-10-25 (production/qa/spikes/2026-10-25_S1-multiprocess.md). AC is tagged [S1][S13][S14] and provisional pending the other two
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M

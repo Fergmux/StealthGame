@@ -11,6 +11,7 @@
  *   2  ADR-0001 §4.3: APlayerState engine-default trims (table) + PlayerState Owner -> COND_OwnerOnly, ping updates off
  *   4  ADR-0001 §4.3 strict allowlist: prototype AStealthPlayerState::Team / LifeState -> COND_OwnerOnly
  *   8  ADR-0001 §8 fallback: PlayerState / Controller / Owner DISABLED on AStealthCharacter (overrides 1)
+ *  16  NEGATIVE CONTROL (IVP story-001, ADR-0008 §3/§6): after bit 1, APawn::PlayerState back to COND_None
  */
 
 #include "CoreMinimal.h"
@@ -27,6 +28,7 @@ namespace StealthSpike
 		PlayerStateEngineTrims = 2,
 		PlayerStatePrototypeFieldsOwnerOnly = 4,
 		PawnLinkDisabled = 8,
+		PawnPlayerStateNegativeControl = 16,
 	};
 
 	/** Current value of stealth.Spike.IdentityTrims. */

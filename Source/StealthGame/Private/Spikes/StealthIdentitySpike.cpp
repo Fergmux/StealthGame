@@ -33,7 +33,8 @@ namespace StealthSpike
 		TEXT(" 1 = pawn PlayerState/Controller/Owner COND_OwnerOnly (ADR-0001 4.1)\n")
 		TEXT(" 2 = PlayerState engine-default trims + PlayerState Owner OwnerOnly + ping off (4.3)\n")
 		TEXT(" 4 = prototype PlayerState Team/LifeState OwnerOnly (strict 4.3 allowlist)\n")
-		TEXT(" 8 = 8 fallback: pawn PlayerState/Controller/Owner disabled (overrides 1)"),
+		TEXT(" 8 = 8 fallback: pawn PlayerState/Controller/Owner disabled (overrides 1)\n")
+		TEXT("16 = negative control: with 1, pawn PlayerState back to COND_None (IVP story-001)"),
 		ECVF_Default);
 
 	int32 GetIdentityTrims()
@@ -56,6 +57,11 @@ namespace StealthSpike
 			ResetReplicatedLifetimeProperty(ThisClass, APawn::StaticClass(), FName(TEXT("PlayerState")), COND_OwnerOnly, OutLifetimeProps);
 			ResetReplicatedLifetimeProperty(ThisClass, APawn::StaticClass(), FName(TEXT("Controller")), COND_OwnerOnly, OutLifetimeProps);
 			ResetReplicatedLifetimeProperty(ThisClass, AActor::StaticClass(), FName(TEXT("Owner")), COND_OwnerOnly, OutLifetimeProps);
+			if (Trims & PawnPlayerStateNegativeControl)
+			{
+				// Negative control (IVP story-001): the capture must detect PlayerState reaching non-owners.
+				ResetReplicatedLifetimeProperty(ThisClass, APawn::StaticClass(), FName(TEXT("PlayerState")), COND_None, OutLifetimeProps);
+			}
 		}
 		UE_LOG(LogStealthSpike, Log, TEXT("[Spike] ApplyPawnTrims(%s) trims=%d"), *GetNameSafe(ThisClass), Trims);
 	}

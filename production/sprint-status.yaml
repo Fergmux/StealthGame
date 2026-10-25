@@ -138,11 +138,11 @@ stories:
     name: "Spike S1, multi-process raw-bunch capture shows no identity pointers to non-owners"
     file: "production/epics/information-visibility-policy/story-001-spike-s1-multiprocess-raw-bunch-capture.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "network-programmer"
     estimate_days: 2.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-005"
     name: "Compile-probe runner with the ADR-0007 guard probe and its positive control"
     file: "production/epics/tuning-data-config/story-005-compile-probe-runner-and-guard-probe.md"
