@@ -93,6 +93,23 @@ printf '%s\n' "$commit_out" | sed 's/^/    /'
 # Remove the seeded file again: the staged tree is clean once more.
 git -C "$repo" rm -q -f --cached Source/StealthFoundation/Public/Server/StealthNoGuard.h; rm -rf "$repo/Source/StealthFoundation"
 
+# A config file carrying an Android File Server SecurityToken= line is rejected (decision D52, config-secrets.sh).
+mkdir -p "$repo/Config"
+printf '[/Script/AndroidFileServerEditor.AndroidFileServerRuntimeSettings]\nSecurityToken=SELFTESTTOKEN\n' > "$repo/Config/DefaultEngine.ini"
+git -C "$repo" add -A >/dev/null 2>&1
+head_before="$(git -C "$repo" rev-parse HEAD)"
+try_commit "$repo" "chore: seeded config secret"
+head_after="$(git -C "$repo" rev-parse HEAD)"
+if [ "$commit_rc" -ne 0 ] && [ "$head_before" = "$head_after" ] \
+   && printf '%s' "$commit_out" | grep -Fq "Config/DefaultEngine.ini:2 secret SecurityToken= line" \
+   && printf '%s' "$commit_out" | grep -Fq "PRE-COMMIT: REJECTED"; then
+  report config-secret-commit-rejected 0 ""
+else
+  report config-secret-commit-rejected 1 "rc=$commit_rc out=$commit_out"
+fi
+printf '%s\n' "$commit_out" | sed 's/^/    /'
+git -C "$repo" rm -q -f --cached Config/DefaultEngine.ini; rm -rf "$repo/Config"
+
 # ---- check contract: a new check needs no change to the hook body ---------------------------------------------
 echo "// again" >> "$repo/Source/StealthGameplay/Public/View/StealthSafeView.h"
 git -C "$repo" add -A >/dev/null 2>&1
@@ -124,8 +141,9 @@ if [ "$clean_ok" -eq 0 ] && [ "$commit_rc" -ne 0 ] && printf '%s' "$commit_out" 
   report crlf-shims-still-work 0 ""; else report crlf-shims-still-work 1 "clean rc=$clean_ok seeded rc=$commit_rc out=$commit_out"; fi
 
 # ---- the hook's rule list is the per-commit gate's rule list -----------------------------------------------------
-gate_rules="$(grep -o "'[a-z-]*\.sh'" "$proj/tools/ci/gate-per-commit.ps1" | head -5 | tr -d "'" | sort | tr '\n' ' ')"
-hook_rules="$( (cd "$lint" && ls include-lint-*.sh; echo vcs-conformance.sh) | sort | tr '\n' ' ')"
+gate_rules="$(grep -m1 '^\$LintRules' "$proj/tools/ci/gate-per-commit.ps1" | grep -o "'[a-z-]*\.sh'" | tr -d "'" | sort | tr '\n' ' ')"
+hook_named="$(grep -m1 '^for rule in ' "$proj/tools/ci/hooks/pre-commit.sh" | grep -o '/[a-z-]*\.sh"' | tr -d '/"')"
+hook_rules="$( (cd "$lint" && ls include-lint-*.sh; printf '%s\n' $hook_named) | sort | tr '\n' ' ')"
 if [ -n "$gate_rules" ] && [ "$gate_rules" = "$hook_rules" ]; then report hook-rules-match-gate-rules 0 ""; else report hook-rules-match-gate-rules 1 "gate: $gate_rules hook: $hook_rules"; fi
 
 selftest_result

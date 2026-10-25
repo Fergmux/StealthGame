@@ -1,0 +1,28 @@
+SELFTEST clean-config-passes ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST token-in-default-engine-reported ok
+    Config/DefaultEngine.ini:7 secret SecurityToken= line in a config file (D52: never commit the Android File Server token; delete the line, AndroidFileServer stays disabled)
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST token-in-platform-ini-reported ok
+    Config/Windows/WindowsEngine.ini:3 secret SecurityToken= line in a config file (D52: never commit the Android File Server token; delete the line, AndroidFileServer stays disabled)
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST token-spaced-lowercase-reported ok
+    Config/DefaultGame.ini:3 secret SecurityToken= line in a config file (D52: never commit the Android File Server token; delete the line, AndroidFileServer stays disabled)
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST commented-and-array-token-reported ok
+    Config/DefaultEngine.ini:7 secret SecurityToken= line in a config file (D52: never commit the Android File Server token; delete the line, AndroidFileServer stays disabled)
+    Config/DefaultEngine.ini:8 secret SecurityToken= line in a config file (D52: never commit the Android File Server token; delete the line, AndroidFileServer stays disabled)
+    GATE: FAIL (2 finding(s); 3 file(s) scanned)
+SELFTEST token-value-not-echoed ok
+SELFTEST mention-without-assignment-passes ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST outside-config-ini-ignored ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST no-config-not-assessed ok
+    config-secrets: no Config/ folder under /tmp/tmp.0T4uGVsaP5/no-config
+    GATE: NOT ASSESSED (0 file(s) scanned; an empty or broken lint scope is not a pass)
+SELFTEST empty-config-not-assessed ok
+    GATE: NOT ASSESSED (0 file(s) scanned; an empty or broken lint scope is not a pass)
+SELFTEST real-repo-clean ok
+    GATE: PASS (6 file(s) scanned, 0 findings)
+SELFTEST RESULT: PASS (11 cases)

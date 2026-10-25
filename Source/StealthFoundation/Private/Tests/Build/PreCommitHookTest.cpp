@@ -23,6 +23,7 @@ namespace PreCommitHookTestData
 		TEXT("installer-status-installed"), TEXT("installer-refuses-foreign-hookspath"),
 		TEXT("installer-force-replaces"), TEXT("installer-uninstall"), TEXT("installer-powershell-twin"),
 		TEXT("no-staged-files-passes"), TEXT("clean-commit-accepted"), TEXT("seeded-lint-violation-rejected"),
+		TEXT("config-secret-commit-rejected"),
 		TEXT("check-contract-reject-aborts"), TEXT("check-contract-not-assessed-aborts"),
 		TEXT("check-contract-pass-and-env"), TEXT("crlf-shims-still-work"), TEXT("hook-rules-match-gate-rules"),
 	};

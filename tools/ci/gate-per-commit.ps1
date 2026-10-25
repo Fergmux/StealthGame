@@ -1,6 +1,7 @@
 <#
 Per-commit gate (ADR-0008 section 8; story tdc-021). Stages, in order, each one stopping the run on failure:
-  1. T0 lint      tools/ci/lint/gate.sh over the include lint rules (a-j) and the VCS conformance check
+  1. T0 lint      tools/ci/lint/gate.sh over the include lint rules (a-j), the VCS conformance check and the
+                  config secret check (no SecurityToken= in Config/*.ini, decision D52)
   2. Build        Build.bat (as tools/dev/cycle.ps1; UnrealBuildTool.exe called directly lacks the dotnet environment) StealthGameEditor Win64 Development
   3. Automation   UnrealEditor-Cmd.exe <uproject> -nullrhi -nosound -ExecCmds="Automation RunTests ^StealthGame.; Quit"
                   -unattended -stdout -FullStdOutLogOutput   (prefix filter, all T1 and T2 tests; never RunFilter)
@@ -51,8 +52,8 @@ $proj = Join-Path $repo 'StealthGame.uproject'
 $BudgetSeconds = 600
 $ExitPass = 0; $ExitFail = 1; $ExitNotAssessed = 2
 
-# Lint rule scripts the gate runs (T0): include lint rules a-j and the VCS conformance check.
-$LintRules = @('include-lint-abc.sh', 'include-lint-def.sh', 'include-lint-gh.sh', 'include-lint-ij.sh', 'vcs-conformance.sh')
+# Lint rule scripts the gate runs (T0): include lint rules a-j, the VCS conformance check and the config secret check (D52).
+$LintRules = @('include-lint-abc.sh', 'include-lint-def.sh', 'include-lint-gh.sh', 'include-lint-ij.sh', 'vcs-conformance.sh', 'config-secrets.sh')
 
 function ConvertTo-Slash([string]$p) { return ($p -replace '\\', '/') }
 
