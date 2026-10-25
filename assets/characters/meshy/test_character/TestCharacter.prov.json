@@ -1,0 +1,47 @@
+{
+  "asset": "TestCharacter (CPA story 003, the single Meshy test character of the mass-production gate, art bible 8.x.14)",
+  "roster_row": "k = 2, default variant (tilmatli knotted on the left shoulder, short tied hair at the nape, no accessory; default swatch S2 applied by the master material)",
+  "generated": "2026-10-25",
+  "operator": "Claude (unattended build run authorised by the user; Meshy budget pre-authorised: at most 60 credits for this story)",
+  "meshy_plan_at_generation": "paid plan, 2,860 monthly credits (tier name not exposed by the Meshy API; producer to verify the licence terms before ship, art bible 8.9 rule 2)",
+  "steps": [
+    {
+      "step": "reference render (no credit)",
+      "tool": "tools/asset-pipeline/render_body_base_reference.py (Blender 5.2.3, headless)",
+      "output": "TestCharacter_ref_body_base_front.png",
+      "rights": "rendered by us from Body_Base (built from the project's SKM_UEFN_Mannequin reference)"
+    },
+    {
+      "step": "image-to-image (dress the Body_Base render)",
+      "task_id": "01a171df-b711-767f-93e8-dc910f798c47",
+      "ai_model": "nano-banana-2",
+      "credits": 6,
+      "input": "TestCharacter_ref_body_base_front.png",
+      "output": "TestCharacter_ref_dressed.png",
+      "prompt": "Dress this exact grey mannequin figure as a plain adult Mexica commoner (macehualli) of Tenochtitlan, clothing as depicted in the Codex Mendoza and the Florentine Codex, shown as a realistic full-body 3D character reference. Keep EXACTLY the same pose (A-pose, arms hanging about 45 degrees away from the torso, hands relaxed), the same body proportions, the same long arm length, the same leg stance and the same framing. Front view, full body, plain white background, even flat lighting, no cast shadows. Clothing: one plain undyed cream cotton tilmatli cloak of matte woven cloth, tied in a single knot on the right shoulder, hanging straight to a straight hem just below the knee, with both arms and forearms bare and free; a plain undyed cotton maxtlatl loincloth beneath; flat simple woven-fibre cactli sandals with thin straps. Warm-brown skin, calm neutral adult face, dark straight hair tied in a low knot at the nape, bare neck visible below the chin. No jewelry, no ear spools, no headband, no feathers, no headdress, no face paint, no tattoos, no weapons, no carried items, no patterns, no dyed colours, no metal.",
+      "negative_prompt": null,
+      "note": "the model knotted the cloak on the figure's left shoulder, so the roster row was set to k = 2 (no second credit)"
+    },
+    {
+      "step": "image-to-3D (the one credit-bearing generation)",
+      "task_id": "01a171e0-2d5f-747c-a4bf-aa4b5d69bd07",
+      "ai_model": "meshy-6",
+      "credits": 30,
+      "settings": {"input_task_id": "01a171df-b711-767f-93e8-dc910f798c47", "pose_mode": "a-pose", "should_texture": true, "texture_resolution": "2k", "remove_lighting": true, "target_formats": ["glb", "fbx"]},
+      "texture_prompt": "Plain undyed cream cotton cloth, matte woven texture, no pattern, no dye; warm-brown skin; dark hair; natural fibre sandals. Flat even albedo, no baked shadows or highlights.",
+      "output": "meshy_original/TestCharacter_meshy_original.glb (unedited, kept as the rights evidence, art bible 8.9 rule 3) + _base_color.png"
+    },
+    {
+      "step": "auto-rig (landmarks only)",
+      "task_id": "01a171e9-d1a6-75da-8497-8d44b3e5a580",
+      "credits": 5,
+      "settings": {"input_task_id": "01a171e0-2d5f-747c-a4bf-aa4b5d69bd07", "height_meters": 1.656},
+      "output": "meshy_rig_landmarks/TestCharacter_meshy_rig.glb",
+      "use": "joint positions read as conform landmarks; its skeleton and weights are discarded (the shipped rig is the SK_UEFN_Mannequin armature copy)"
+    }
+  ],
+  "credits_total": 41,
+  "blender_source": "assets/characters/meshy/test_character/TestCharacter.blend (collections Meshy_Original, Work, Body_Proxy, Manny_Ref)",
+  "human_edits_summary": "scripted (tools/asset-pipeline/normalise_meshy_character.py): uniform scale, landmark inverse-skinning conform to the reference chains, cloak hem trimmed to 47 cm, voxel shell, hidden faces removed, decimated to 12k tris, UV0, bake + de-light to the 1.3.4 bands, rig to the UEFN armature copy with scripted weight correction, LOD1-3, FBX export. Report: TestCharacter_normalise_report.txt",
+  "checklist_signoff": "pending: T1 to T4 and the art-director sign-off are story 004 (and story 003 AC-3 after the UE import)"
+}

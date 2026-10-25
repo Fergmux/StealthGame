@@ -18,6 +18,13 @@ Definitions (they are the contract wording of art bible 1.3.2 after OI-1, keep t
   chains         distances between bone origins in the armature rest pose, through intermediate bones
                  (spine: pelvis..spine_05..neck_01; neck: neck_01..neck_02..head; hand: hand..middle_03),
                  the hand's straight-line distance is reported beside it (spike 2026-10-25 section 4).
+  arm extent     per side, the distance along the clavicle-to-hand axis (clavicle_<s> head -> middle_03_<s> head,
+                 rest pose) between the extreme vertices whose summed weight on that chain (clavicle, upper arm,
+                 forearm with twists, hand and everything under it) exceeds 0.5; compared with the same measure on
+                 the SKM_UEFN_Mannequin body mesh (70.40 cm both sides) within the chain tolerance. Shared with the
+                 editor validator of CPA story 008 (one definition). Note: it reads the skin weights as well as the
+                 geometry, so a weighting that lets the arm chain own the trapezius moves its near end (Body_Base's
+                 smoothed shoulders measure 73.6 cm, +4.6 %).
 """
 from mathutils import Vector
 
@@ -140,6 +147,40 @@ def max_influences(mesh_obj, bone_names, eps=1e-6):
         worst = max(worst, n)
         over += n > 4
     return worst, over
+
+
+def arm_chain_bones(arm_obj, side):
+    """Bones of one clavicle-to-hand chain: clavicle, upper arm, forearm (with twists), hand and every bone under
+    the hand (fingers, `weapon_<side>`), side 'l' or 'r'."""
+    root = arm_obj.data.bones["clavicle_" + side]
+    return {b.name for b in [root] + list(root.children_recursive)}
+
+
+def arm_extent_cm(mesh_obj, arm_obj, side, threshold=0.5):
+    """Skinned-vertex extent of one arm (cm): the shared Blender / editor metric of CPA stories 003 and 008.
+
+    Axis = unit vector from the `clavicle_<side>` head to the `middle_03_<side>` head in the armature rest pose
+    (the clavicle-to-hand chain, 80.74 cm of bone chain on SK_UEFN_Mannequin). The vertices whose summed weight on
+    the chain's bones (arm_chain_bones) exceeds `threshold` are projected onto the axis; the extent is the
+    distance between the extreme projections. Measured on the rest-pose mesh (modifiers not evaluated).
+    Returns (extent_cm, vertex_count).
+    """
+    import numpy as np
+    bones = arm_chain_bones(arm_obj, side)
+    idx = {g.index for g in mesh_obj.vertex_groups if g.name in bones}
+    aw = arm_obj.matrix_world
+    a = aw @ arm_obj.data.bones["clavicle_" + side].head_local
+    b = aw @ arm_obj.data.bones["middle_03_" + side].head_local
+    axis = (b - a).normalized()
+    mw = mesh_obj.matrix_world
+    proj = []
+    for v in mesh_obj.data.vertices:
+        if sum(g.weight for g in v.groups if g.group in idx) > threshold:
+            proj.append((mw @ v.co - a).dot(axis))
+    if not proj:
+        return 0.0, 0
+    p = np.array(proj)
+    return float(p.max() - p.min()) * 100.0, len(proj)
 
 
 def fbx_skeleton_nodes(path):

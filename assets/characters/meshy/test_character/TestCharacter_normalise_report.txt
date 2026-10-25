@@ -1,0 +1,65 @@
+TestCharacter normalisation (art bible 8.7 steps 2-11; CPA story 003)
+Blender 5.2.3 LTS; golden Source\StealthGameEditor\Private\Tests\CharacterPool\Golden\UefnReferenceChains.txt; script tools/asset-pipeline/normalise_meshy_character.py
+source GLB assets\characters\meshy\test_character\meshy_original\TestCharacter_meshy_original.glb; landmarks assets\characters\meshy\test_character\meshy_rig_landmarks\TestCharacter_meshy_rig.glb
+
+step 2 collections Meshy_Original (hidden, data untouched), Work, Body_Proxy, Manny_Ref
+step 3 uniform scale 0.87195 (bounding height 165.6 cm incl. hair and sandal); Meshy_Original: 155530 verts, 280504 faces
+   vertex classes (base colour vote): skin/other 53180, garment 81590, hair 5457
+   landmarks: Meshy auto-rig joints re-framed (scale 1.0); per segment the Meshy / reference length ratio (the conform applies its inverse):
+      torso              x0.9976
+      neck               x0.9094
+      head               x1.1358
+      chin_crown_ref_cm: (146.25, 165.51)
+      chin_crown_meshy_cm: (142.72, 164.6)
+      fingertip_l: ([57.05, -9.76, 86.96], [44.16, -6.38, 76.15])
+      clav_l             x0.9183
+      upper_l            x0.8338
+      fore_l             x1.0038
+      hand_l             x1.0893
+      thigh_l            x0.9205
+      calf_l             x1.0183
+      foot_l             x1.0000
+      fingertip_r: ([-57.01, -9.76, 86.95], [-44.1, -6.39, 76.09])
+      clav_r             x0.9346
+      upper_r            x0.8525
+      fore_r             x0.9902
+      hand_r             x1.0611
+      thigh_r            x0.9266
+      calf_r             x1.0110
+      foot_r             x1.0000
+   regions stored on TestCharacter_HighPoly: sandal vertices 5494 (leg skin L* 40.0)
+step 6 hem: garment below 47 cm cut from the voxel shell and capped (14370.0 faces; the generated cloak reached 26.1 cm; contract 44.4 to 59.6, measured hem in the T1 inputs below); the working high-poly loses the same garment (10831 vertices) before the bake
+step 6 retopology: voxel 0.6 cm -> hidden faces deleted (no escaping ray of 24) -> decimate (UV projected on the voxel shell first); LOD0 12000 tris, 7003 verts (contract 10000 to 14000)
+step 7 UV0: 1 layer, smart projection 89 deg, 8 px padding at 1024; packed density 4.40 texels/cm -> scaled to median 4.40 (contract 5.12, 4.6 to 5.6)
+step 8 bake (Cycles CPU, selected-to-active from TestCharacter_HighPoly): D / N / AO / region; de-light per region (source mean L*, output L* range, texels): {'garment': {'src_mean_L': 76.6, 'out_L': (56.0, 65.3), 'texels': 331305}, 'skin': {'src_mean_L': 39.4, 'out_L': (44.0, 52.0), 'texels': 300930}, 'hair': {'src_mean_L': 3.1, 'out_L': (14.4, 22.0), 'texels': 26202}, 'sandal': {'src_mean_L': 55.3, 'out_L': (40.0, 62.0), 'texels': 27256}}; garment share of covered texels 48.3 %; mask _M 512 R = garment, G = trim (empty: no trim authored yet), B = 0; ORM = AO / roughness {'garment': 0.8, 'skin': 0.57, 'hair': 0.68, 'sandal': 0.7} / metallic 0
+step 9 rig: parent `root` (copy of SK_UEFN_Mannequin's armature), nearest-face weights from Body_Proxy; garment vertices 3471 limited to ('pelvis', 'spine_', 'neck_', 'clavicle_', 'thigh_'); 4051 loose vertices smoothed; 267 hair vertices rigid to `head`; neck/trapezius correction on 55 vertices (arm-chain weight capped at 0.45 medial of where the reference mesh's arm chain starts, fading over 3 cm); <= 4 influences, normalised
+step 10 LODs: LOD0 12000 tris, LOD1 5700 tris, LOD2 2375 tris, LOD3 855 tris (ceilings {1: 6000, 2: 2500, 3: 900}); LOD2+ fingers -> hand, twists -> parent
+
+AC-2 arm extent (body_measure.arm_extent_cm: clavicle-to-hand axis, vertices weighted > 0.5 to the chain; reference = SKM_UEFN_Mannequin body mesh with its own weights)
+   Body_Proxy (Body_Base) on the same metric: l 73.62 cm, r 73.64 cm (its smoothed shoulder weights reach the neck; see the neck correction in step 9)
+   [PASS] arm_l LOD0: 69.55 cm (587 verts) vs reference 70.40 cm (1283 verts): -1.21 % (tolerance +/- 3.0 %)
+   [PASS] arm_l LOD1: 69.55 cm (261 verts) vs reference 70.40 cm (1283 verts): -1.20 % (tolerance +/- 3.0 %) [info]
+   [PASS] arm_l LOD2: 69.99 cm (96 verts) vs reference 70.40 cm (1283 verts): -0.58 % (tolerance +/- 3.0 %) [info]
+   [PASS] arm_l LOD3: 68.71 cm (42 verts) vs reference 70.40 cm (1283 verts): -2.39 % (tolerance +/- 3.0 %) [info]
+   [PASS] arm_r LOD0: 69.73 cm (524 verts) vs reference 70.40 cm (1283 verts): -0.95 % (tolerance +/- 3.0 %)
+   [PASS] arm_r LOD1: 70.43 cm (220 verts) vs reference 70.40 cm (1283 verts): +0.05 % (tolerance +/- 3.0 %) [info]
+   [FAIL] arm_r LOD2: 64.63 cm (67 verts) vs reference 70.40 cm (1283 verts): -8.20 % (tolerance +/- 3.0 %) [info]
+   [FAIL] arm_r LOD3: 62.10 cm (22 verts) vs reference 70.40 cm (1283 verts): -11.79 % (tolerance +/- 3.0 %) [info]
+
+Export (8.7 step 11, frozen preset build_body_base.FBX_EXPORT_PRESET)
+   [PASS] assets\characters\meshy\test_character\TestCharacter.fbx: 88 skeleton nodes (reference 88, root node type Root), Null nodes none; 12000 tris; 1 material slot; 1 UV layer; max influences 4 (0 vertices above 4)
+   [PASS] assets\characters\meshy\test_character\TestCharacter_LOD1.fbx: 88 skeleton nodes (reference 88, root node type Root), Null nodes none; 5700 tris; 1 material slot; 1 UV layer; max influences 4 (0 vertices above 4)
+   [PASS] assets\characters\meshy\test_character\TestCharacter_LOD2.fbx: 88 skeleton nodes (reference 88, root node type Root), Null nodes none; 2375 tris; 1 material slot; 1 UV layer; max influences 4 (0 vertices above 4)
+   [PASS] assets\characters\meshy\test_character\TestCharacter_LOD3.fbx: 88 skeleton nodes (reference 88, root node type Root), Null nodes none; 855 tris; 1 material slot; 1 UV layer; max influences 4 (0 vertices above 4)
+
+T1 inputs for story 004 (information; the audit is story 004's)
+   bounding: sole Z -0.01 cm, top Z 166.29 cm (hair included), X -58.4 to 58.5, Y -15.0 to 17.7
+   head height on the conformed high-poly (front-profile chin 146.25, crown minus 1 cm hair 165.39): 19.14 cm (contract 19.3 +/- 1)
+   garment: hem (lowest garment vertex) 46.9 cm (contract 44.4 to 59.6 per 1.3.2 OI-1 block); front envelope width 53.8 cm, side depth 32.7 cm
+   Body_Base deviation of bare-skin vertices (2969): mean 1.10 cm, p95 3.78 cm (conform test 1.3.2: mean <= 1.0, p95 <= 1.5; gate is story 053 / T1-5)
+   rest pose: armature `root` is Body_Base's (OI-1 reference frames, 0.0000 cm / 0.0000 deg in Body_Base_T1_report.txt); object transforms identity: True
+
+renders: production\qa\evidence\story-003-meshy-test-character-generate-normalise (conform-vs-body-base, lod0-four-view, lod0-vs-body-base, lod0-pose-set: proxy 1.3.5 poses in body_base_t1_audit.POSES order)
+
+script wall time 1.1 min; files: assets\characters\meshy\test_character\TestCharacter.fbx, assets\characters\meshy\test_character\TestCharacter_LOD1.fbx, assets\characters\meshy\test_character\TestCharacter_LOD2.fbx, assets\characters\meshy\test_character\TestCharacter_LOD3.fbx
+RESULT (AC-2 gates: arm extent L/R on LOD0, 88 skeleton nodes and <= 4 influences per file): PASS (0 failing: none)

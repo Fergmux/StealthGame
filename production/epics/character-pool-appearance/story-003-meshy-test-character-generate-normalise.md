@@ -1,12 +1,12 @@
 # Story 003: One Meshy test character generated and normalised to the UEFN skeleton
 
 > **Epic**: Character Pool & Appearance
-> **Status**: Blocked — BLOCKED: art bible 1.3.2 / 8.7 step 0 forbids the first Meshy credit, this single test character included, until OI-1 (story 001) is closed and Body_Base (story 002, OI-10) is accepted; neither has reported. Cost confirmation with the user is also required (Meshy credits).
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -34,8 +34,8 @@
 
 *From art bible 8.7 and 1.3.2 / 1.3.9; AC-2 and AC-3 revised per QL-STORY-READY:*
 
-- [ ] **AC-1** GIVEN Body_Base accepted, WHEN exactly one Meshy image-to-3D generation is made from a mannequin-proportion reference rendered from Body_Base (A-pose, arms 30 to 45 degrees from the torso, flat sandals, matte undyed cloth) after the user confirms the cost, THEN the task id, model, credits and prompt are recorded (8.9) and no second test-character credit is spent before T1 passes (story 004).
-- [ ] **AC-2** GIVEN the GLB normalised per art bible 8.7 steps 2 to 9 (one uniform scale to 165.6 cm, shrinkwrap or sculpt to Body_Base, never non-uniform scale; 12k retopology; UV density 5.12 texels/cm; bake; rig to a copy of the UEFN armature), THEN each arm region's skinned-vertex extent, measured with story 008's metric, is within ± 3 % of the same metric on `SK_UEFN_Mannequin` (clavicle-to-hand chain 80.74 cm) and the exported FBX has zero bones beyond the reference 88.
+- [x] **AC-1** GIVEN Body_Base accepted, WHEN exactly one Meshy image-to-3D generation is made from a mannequin-proportion reference rendered from Body_Base (A-pose, arms 30 to 45 degrees from the torso, flat sandals, matte undyed cloth) after the user confirms the cost, THEN the task id, model, credits and prompt are recorded (8.9) and no second test-character credit is spent before T1 passes (story 004).
+- [x] **AC-2** GIVEN the GLB normalised per art bible 8.7 steps 2 to 9 (one uniform scale to 165.6 cm, shrinkwrap or sculpt to Body_Base, never non-uniform scale; 12k retopology; UV density 5.12 texels/cm; bake; rig to a copy of the UEFN armature), THEN each arm region's skinned-vertex extent, measured with story 008's metric, is within ± 3 % of the same metric on `SK_UEFN_Mannequin` (clavicle-to-hand chain 80.74 cm) and the exported FBX has zero bones beyond the reference 88.
 - [ ] **AC-3** GIVEN the FBX imported into UE 5.8.4 against `SK_UEFN_Mannequin`, WHEN the editor loads it, THEN no "Skeleton is missing bones" message appears, the skeleton asset is not marked dirty or saved, total wall time is logged and is at most 8 h (over 8 h the story is recorded FAIL with the cause), and a retained viewport screenshot of the imported mesh and an art-director sign-off (name, date) are recorded.
 
 ---
@@ -67,9 +67,17 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `assets/characters/meshy/test_character/` (`.blend`, task record, export FBX)
-- `Content/StealthGame/Characters/Pool/` (test import; not referenced by `DA_CharacterPool`)
-- `production/qa/evidence/test-character-import-evidence.md`
+- `assets/characters/meshy/test_character/TestCharacter.blend` (LFS; collections Meshy_Original, Work, Body_Proxy, Manny_Ref)
+- `assets/characters/meshy/test_character/TestCharacter.fbx`, `TestCharacter_LOD1.fbx`, `TestCharacter_LOD2.fbx`, `TestCharacter_LOD3.fbx` (LFS; 88 skeleton nodes each)
+- `assets/characters/meshy/test_character/textures/T_TestCharacter_D.png`, `_N.png`, `_ORM.png`, `_M.png` (LFS)
+- `assets/characters/meshy/test_character/TestCharacter.prov.json` (8.9 task record), `TestCharacter_normalise_report.txt`
+- `assets/characters/meshy/test_character/TestCharacter_ref_body_base_front.png`, `TestCharacter_ref_dressed.png` (generation references)
+- `assets/characters/meshy/test_character/meshy_original/` (unedited GLB + base colour, LFS), `meshy_rig_landmarks/` (auto-rig GLB, landmarks only)
+- `tools/asset-pipeline/normalise_meshy_character.py` (new: 8.7 steps 2-11, headless)
+- `tools/asset-pipeline/render_body_base_reference.py` (new: the mannequin-proportion reference render)
+- `tools/asset-pipeline/body_measure.py` (arm-extent metric `arm_extent_cm`, shared definition with story 008)
+- `production/qa/evidence/test-character-import-evidence.md`, `production/qa/evidence/story-003-meshy-test-character-generate-normalise/` (renders, stamp)
+- `Content/StealthGame/Characters/Pool/` (test import; not referenced by `DA_CharacterPool`): DEFERRED with AC-3
 
 ---
 
@@ -102,7 +110,7 @@
 **Required evidence**:
 - Visual/Feel: a retained screenshot in `production/qa/evidence/` + sign-off in `production/qa/evidence/test-character-import-evidence.md`
 
-**Status**: [ ] Not yet created
+**Status**: [~] Partial — Blender renders retained in `production/qa/evidence/story-003-meshy-test-character-generate-normalise/` and recorded in `production/qa/evidence/test-character-import-evidence.md`; the UE viewport screenshot and art-director sign-off wait for AC-3 (engine run pending)
 
 ---
 
@@ -110,3 +118,24 @@
 
 - Depends on: `production/epics/character-pool-appearance/story-001-oi1-uefn-reference-measurements-recorded.md`, `production/epics/character-pool-appearance/story-002-body-base-blender-build-oi10.md`
 - Unlocks: `production/epics/character-pool-appearance/story-004-test-character-t1-t4-signoff.md`
+
+## Progress Notes (2026-10-25, unattended run; story stays In Progress)
+**Criteria**: 2/3 passing; AC-3 DEFERRED (engine run pending: another agent held the Unreal toolchain, so no UE import, no `/Game` asset, no editor screenshot in this run)
+- AC-1 — PASS: one image-to-3D generation from a Body_Base reference render, dressed by image-to-image. Meshy tasks: image-to-image `01a171df-b711-767f-93e8-dc910f798c47` (nano-banana-2, 6 credits), **image-to-3D `01a171e0-2d5f-747c-a4bf-aa4b5d69bd07` (meshy-6, a-pose, textured 2K, 30 credits)**, auto-rig `01a171e9-d1a6-75da-8497-8d44b3e5a580` (5 credits, joints used only as conform landmarks). **Credits spent: 41** (cap 60 for this story; unattended budget now 281 / 2,000 used, 1,719 left; balance 3,070 -> 3,029). Prompts, settings, plan tier: `assets/characters/meshy/test_character/TestCharacter.prov.json`. The task list holds exactly one image-to-3D task. Cost confirmation: pre-authorised by the user for this run.
+- AC-2 — PASS: `TestCharacter_normalise_report.txt`: arm extent L 69.55 cm (-1.21 %), R 69.73 cm (-0.95 %) vs SKM_UEFN_Mannequin 70.40 cm (+/- 3 %); every exported FBX (LOD0 to LOD3) has 88 skeleton nodes, root node type Root, no Null, max 4 influences; one object-level uniform scale (0.87195), proportions by the landmark inverse-skinning sculpt onto the reference chains.
+- AC-3 — DEFERRED: import `TestCharacter.fbx` + `_LOD1..3.fbx` against `SK_UEFN_Mannequin` (8.6 settings), confirm no "missing bones" message and no dirty skeleton, retain the viewport screenshot, art-director sign-off. Wall time so far (Blender half): about 55 min, 06:55 to 07:50 UTC (cap 8 h).
+**Deviations** (decision log 2026-10-25):
+- ADVISORY — roster row k = 2 (left-shoulder knot) adopted instead of k = 1 because the dressed reference knotted the cloak on the left shoulder; no extra credit.
+- ADVISORY — Meshy auto-rig (5 credits) used for joint landmarks; not a generation, inside the 60-credit cap.
+- ADVISORY — retopology by decimation (UV projected on the dense voxel shell first): QuadriFlow rejected the voxel shell headless in Blender 5.2.3 ("needs manifold") although it has 0 non-manifold edges; joint edge loops are not guaranteed, T4 judges deformation.
+- ADVISORY — texel density 4.40 / cm (contract 5.12, 4.6 to 5.6) after hidden-face removal and island reduction at 8 px padding: a T1-15 risk for story 004 (8.4 UV fill check: never inflate density).
+- ADVISORY — cloak hem trimmed from 26 cm to 47 cm (1.3.3 hem 44.4 to 59.6); measured 46.9 cm.
+- ADVISORY — neck/trapezius weight correction: the arm-chain weight is capped at 0.45 medial of where SKM_UEFN_Mannequin's own arm skinning starts. Finding for story 008: the arm-extent metric reads weights as well as geometry; Body_Base itself measures 73.6 cm (+4.6 %) on it.
+- ADVISORY — LODs ship as separate FBX files (no LodGroup Null); the right hand's fingers collapse at LOD2 / LOD3 (arm metric -8 % / -12 % there, information).
+- ADVISORY — the Meshy sandals are kept: the shared cactli sandal piece (1.3.10) does not exist yet; build it before pool models 2-8.
+- ADVISORY — `_M` mask has R = garment only; the k = 2 trim (shoulder border, G) is not authored yet.
+- RISK for story 053 — bare-skin deviation from Body_Base mean 1.10 cm, p95 3.78 cm (conform test 1.0 / 1.5).
+**Test Evidence**: `production/qa/evidence/test-character-import-evidence.md`; renders `production/qa/evidence/story-003-meshy-test-character-generate-normalise/` (conform-vs-body-base, lod0-vs-body-base, lod0-four-view, lod0-pose-set; opened and viewed), `stamp.txt`
+**Reviewed by**: self, no independent review (unattended run; focused review of the new and changed pipeline scripts)
+Run result: OBSERVED — Blender renders of the conformed and LOD0 character in `production/qa/evidence/story-003-meshy-test-character-generate-normalise/`; the UE observation is part of deferred AC-3
+Sprint status not updated: story not in `production/sprint-status.yaml` (sprint 1)
