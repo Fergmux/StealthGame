@@ -1,12 +1,12 @@
 # Story 016: Seeded violation per lint rule watched to fail
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -63,7 +63,8 @@
 
 ## Files
 
-- `tools/ci/lint/fixtures/seeded/` (the ten-seed fixture tree)
+
+- `tools/ci/lint/fixtures/seeded/**` (19 files; `seeds.txt` lists the one seed per rule)
 - `tools/ci/lint/selftest/seeded-controls.sh`
 - `Source/StealthFoundation/Private/Tests/Build/LintSeededControlsTest.cpp` (G2 wrapper)
 
@@ -87,7 +88,7 @@
 **Required evidence**:
 - Logic: `tools/ci/lint/selftest/seeded-controls.sh` (run by the T0 gate step) and the G2 wrapper `StealthGame.Build.LintSeededControls` (`Source/StealthFoundation/Private/Tests/Build/LintSeededControlsTest.cpp`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`tools/ci/lint/selftest/seeded-controls.sh` 24/24 cases; `StealthGame.Build.LintSeededControls`, 2026-10-25)
 
 ---
 
@@ -96,3 +97,14 @@
 - Depends on: `production/epics/tuning-data-config/story-012-include-lint-rules-a-c.md`, `production/epics/tuning-data-config/story-013-include-lint-rules-d-f.md`, `production/epics/tuning-data-config/story-014-include-lint-rules-g-h.md`, `production/epics/tuning-data-config/story-015-include-lint-rules-i-j.md`
 - Unlocks: None
 - Open verification claims from the plan's Note lines: none (no Note line on 016). The rule-script contract (repository-root argument, rule letter as rule id) is assumed from stories 012-015.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: the fixture tree gives exactly ten findings, one per rule id a-j, each `file:line` at the seed named in `seeds.txt`; the gate exits 1 `GATE: FAIL (10 finding(s)` on it and 0 `GATE: PASS` on the real tree (all four rule scripts); deleting any single seed in a temporary copy drops exactly that letter and keeps the other nine (10 removal cases); no rule scans a path under tools/ci/lint/fixtures)
+**Decisions**: the (f) seed is two same-name headers in two modules that yield ONE finding (one per extra module), so the tree has exactly ten; the seeded UE_LOGF with an Event Log argument is ADR-0007 Validation 7; the selftest runs the four rule scripts in parallel and decides with `gate.sh --obs` (a failing rule script adds a malformed line, so it reads NOT ASSESSED exactly as the gate would). Validation 4 is met for rules a-j.
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-013-016-include-lint-rules-d-j/test-run.txt` (build `Result: Succeeded`; 34/34 `StealthGame.` tests Success), `selftest-seeded-controls.txt`, `stamp.txt`
+**Run result**: N/A — CI tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no further defects found

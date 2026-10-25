@@ -1,0 +1,15 @@
+# Identifiers that must never appear in a log, check, ensure or trace macro argument
+# (ADR-0007 sections 3 and 6, include lint rule (i); story tdc-015).
+#
+# Format: one entry per line. "#" starts a comment. An entry ending in "*" is a PREFIX entry: it
+# matches any identifier token that starts with it (FEventLog* matches FEventLogEntry). Every other
+# entry matches the WHOLE identifier token only ("Binding" does not match "KeyBinding" or
+# "BindingCount"). Owner epics append their own names; the list is checked in review, never trimmed
+# to make a finding go away.
+FEventLog*
+FRoundEventLog*
+DealDigest
+ServerSubSeed
+FSecretStream
+MailboxOrder
+Binding

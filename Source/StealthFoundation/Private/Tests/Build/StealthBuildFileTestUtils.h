@@ -7,6 +7,7 @@
 #include "CoreMinimal.h"
 #include "Dom/JsonObject.h"
 #include "HAL/PlatformProcess.h"
+#include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -167,5 +168,51 @@ namespace StealthBuildTest
 			}
 		}
 		return Found;
+	}
+
+	/**
+	 * Shared body of the include-lint wrapper tests (G2): runs a lint selftest script, requires its
+	 * overall PASS line, every named case "ok" and every named seeded observation echoed, then runs
+	 * tools/ci/lint/gate.sh over the given rule scripts on the real tree and requires exit 0 and
+	 * "GATE: PASS". Returns false when bash cannot be found.
+	 */
+	inline bool RunLintSelftestSuite(FAutomationTestBase& Test, const FString& SelftestScript, const TArray<FString>& RuleScripts,
+		TConstArrayView<const TCHAR*> Cases, TConstArrayView<const TCHAR*> SeededObservations)
+	{
+		const FString Bash = FindBash();
+		if (!Test.TestFalse(TEXT("A bash for the CI scripts was found (set STEALTH_BASH to override)"), Bash.IsEmpty()))
+		{
+			return false;
+		}
+
+		const FScriptRun Selftest = RunBashScript(Bash, SelftestScript);
+		Test.AddInfo(Selftest.Output);
+		if (Test.TestTrue(TEXT("Selftest script launched"), Selftest.bLaunched))
+		{
+			Test.TestEqual(TEXT("Selftest exit code"), Selftest.ExitCode, 0);
+			Test.TestTrue(TEXT("Selftest reports PASS"), Selftest.Output.Contains(TEXT("SELFTEST RESULT: PASS")));
+			for (const TCHAR* Case : Cases)
+			{
+				Test.TestTrue(FString::Printf(TEXT("Selftest case %s ok"), Case), Selftest.Output.Contains(FString::Printf(TEXT("SELFTEST %s ok"), Case)));
+			}
+			for (const TCHAR* Observation : SeededObservations)
+			{
+				Test.TestTrue(FString::Printf(TEXT("Seeded violation reported: '%s'"), Observation), Selftest.Output.Contains(Observation));
+			}
+		}
+
+		FString GateArgs;
+		for (const FString& Rule : RuleScripts)
+		{
+			GateArgs += FString::Printf(TEXT("\"%s\" "), *ProjectPath(Rule));
+		}
+		const FScriptRun RealTree = RunBashScript(Bash, TEXT("tools/ci/lint/gate.sh"), GateArgs);
+		Test.AddInfo(RealTree.Output);
+		if (Test.TestTrue(TEXT("Gate on the real tree launched"), RealTree.bLaunched))
+		{
+			Test.TestEqual(TEXT("Real tree: gate exit code 0 (zero findings)"), RealTree.ExitCode, 0);
+			Test.TestTrue(TEXT("Real tree: GATE: PASS"), RealTree.Output.Contains(TEXT("GATE: PASS")));
+		}
+		return true;
 	}
 }

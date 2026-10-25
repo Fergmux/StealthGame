@@ -1,0 +1,2 @@
+# Fixture copy of the prototype exempt list.
+Source/StealthGame/Public/StealthMovementComponent.h

@@ -1,0 +1,28 @@
+SELFTEST d-seeded ok
+    Source/StealthGameplay/Core/StealthCoreBad.cpp:3 d Core file includes Features path "Features/Alarm/StealthAlarmFeature.h" (Core may not depend on Features)
+    Source/StealthGameplay/Private/Core/StealthResolvedBad.cpp:1 d Core file includes "StealthFeatureHelper.h", which resolves to the Features header Source/StealthGameplay/Features/StealthFeatureHelper.h
+    GATE: FAIL (2 finding(s); 3 file(s) scanned)
+SELFTEST d-clean ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST e-seeded ok
+    Source/StealthFoundation/Private/StealthUpward.cpp:1 e StealthFoundation includes "StealthGameplayThing.h", owned by module StealthGameplay (Source/StealthGameplay/Public/View/StealthGameplayThing.h); Foundation depends on no upper module
+    Source/StealthFoundation/Private/StealthUpward.cpp:2 e StealthFoundation includes "StealthPresentationThing.h", owned by module StealthPresentation (Source/StealthPresentation/Public/View/StealthPresentationThing.h); Foundation depends on no upper module
+    Source/StealthFoundation/Private/StealthUpward.cpp:3 e StealthFoundation includes "StealthProtoThing.h", owned by module StealthGame (Source/StealthGame/Public/StealthProtoThing.h); Foundation depends on no upper module
+    Source/StealthFoundation/Private/StealthUpward.cpp:4 e StealthFoundation includes "StealthGameplay/Direct.h" from a higher module (Foundation depends on no upper module)
+    GATE: FAIL (4 finding(s); 5 file(s) scanned)
+SELFTEST e-clean ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST f-seeded ok
+    Source/StealthPresentation/Private/StealthDupName.h:1 f header name 'StealthDupName.h' is also used in module StealthGameplay (Source/StealthGameplay/Private/StealthDupName.h); project header names must be unique across modules
+    Source/StealthPresentation/Private/stealthcasedup.h:1 f header name 'stealthcasedup.h' is also used in module StealthGameplay (Source/StealthGameplay/Private/StealthCaseDup.h); project header names must be unique across modules
+    GATE: FAIL (2 finding(s); 6 file(s) scanned)
+SELFTEST f-clean ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST f-prototype-exempt-allowed ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST f-prototype-unlisted-reported ok
+    Source/StealthGameplay/Public/View/StealthMovementComponent.h:1 f header name 'StealthMovementComponent.h' is also used in module StealthGame (Source/StealthGame/Public/StealthMovementComponent.h); project header names must be unique across modules
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST real-tree-zero-findings ok
+    GATE: PASS (61 file(s) scanned, 0 findings)
+SELFTEST RESULT: PASS (9 cases)

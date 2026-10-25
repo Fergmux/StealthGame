@@ -25,9 +25,16 @@
 #   lint_prototype_module                the prototype module (scanned only where a rule says so)
 #   lint_shrink_only <root> <rel-file> <rule> [<base-ref>]
 #                                        G3: findings for entries of <rel-file> absent at the base
+#   lint_includes <abs-file>...          "<abs-file><TAB><line><TAB><target>" per #include outside comments
+#   lint_module_files <root> <module>    every .h/.cpp/.inl under <root>/Source/<module>, sorted
+#   lint_is_exempt <root> <rel-path>     0 when <rel-path> is listed in prototype-exempt.txt (G3 list)
+#   lint_cpp_awk <rule.awk> <root> <abs-file>...
+#                                        runs a C++-aware rule (cpplex.awk + <rule.awk>) over the files
 
 # Repository root of this checkout (tools/ci/lint/ is three levels below it).
 LINT_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+# Folder of the shared lint helpers (emit.sh, cpplex.awk, the rule scripts).
+LINT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 lint_root() {
   if [ -n "${1:-}" ]; then
@@ -93,4 +100,50 @@ lint_shrink_only() {
       lint_finding "$rel" "$n" "$rule" "entry '$line' is not in the list at $base; the list may only shrink (G3)"
     fi
   done < "$file"
+}
+
+# Every #include outside comments, one line per include: "<abs-file><TAB><line><TAB><target>"
+# (target without the quotes or angle brackets). One awk run for any number of files.
+lint_includes() {
+  [ $# -gt 0 ] || return 0
+  LC_ALL=C awk '
+    FNR == 1 { inblock = 0 }
+    {
+      line = $0; out = ""
+      while (length(line) > 0) {
+        if (inblock) {
+          e = index(line, "*/"); if (e == 0) { line = ""; break }
+          line = substr(line, e + 2); inblock = 0
+        } else {
+          b = index(line, "/*"); s = index(line, "//")
+          if (s > 0 && (b == 0 || s < b)) { out = out substr(line, 1, s - 1); line = ""; break }
+          if (b == 0) { out = out line; line = ""; break }
+          out = out substr(line, 1, b - 1); line = substr(line, b + 2); inblock = 1
+        }
+      }
+      if (match(out, /^[ \t]*#[ \t]*include[ \t]*[<"][^>"]*[>"]/)) {
+        inc = substr(out, RSTART, RLENGTH); sub(/^[ \t]*#[ \t]*include[ \t]*[<"]/, "", inc); sub(/[>"]$/, "", inc)
+        printf "%s\t%d\t%s\n", FILENAME, FNR, inc
+      }
+    }' "$@" | tr -d '\r'
+}
+
+lint_module_files() {
+  local root="$1" module="$2"
+  [ -d "$root/Source/$module" ] || return 0
+  find "$root/Source/$module" -type f \( -name '*.h' -o -name '*.cpp' -o -name '*.inl' \) | LC_ALL=C sort
+}
+
+lint_is_exempt() {
+  local file="$1/tools/ci/lint/prototype-exempt.txt"
+  [ -f "$file" ] && tr -d '\r' < "$file" | grep -v '^#' | grep -Fxq -- "$2"
+}
+
+# Runs a C++-aware rule: cpplex.awk strips comments and string contents and calls the rule's
+# rule_file(path) once per file; the rule prints finding lines. -v root=<root> is set for the rule
+# and LINT_LIST (a rule-specific side file, optional) is passed as -v list=.
+lint_cpp_awk() {
+  local rule="$1" root="$2"; shift 2
+  [ $# -gt 0 ] || return 0
+  LC_ALL=C awk -v root="$root" -v list="${LINT_LIST:-}" -f "$LINT_DIR/cpplex.awk" -f "$LINT_DIR/$rule" "$@" | tr -d '\r'
 }

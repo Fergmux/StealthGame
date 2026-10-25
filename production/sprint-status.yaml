@@ -174,38 +174,38 @@ stories:
     name: "Include lint rules (d)-(f): core/features direction, foundation upward includes, unique header names"
     file: "production/epics/tuning-data-config/story-013-include-lint-rules-d-f.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-014"
     name: "Include lint rules (g)-(h): server UCLASS specifiers and presentation forbidden APIs"
     file: "production/epics/tuning-data-config/story-014-include-lint-rules-g-h.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-015"
     name: "Include lint rules (i)-(j): log arguments and generator random isolation"
     file: "production/epics/tuning-data-config/story-015-include-lint-rules-i-j.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-016"
     name: "Seeded violation per lint rule watched to fail"
     file: "production/epics/tuning-data-config/story-016-lint-seeded-violation-controls.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "qa-lead"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-017"
     name: "Net emulation profiles StealthLeak1, StealthLeak2, StealthClean"
     file: "production/epics/tuning-data-config/story-017-net-emulation-profiles.md"

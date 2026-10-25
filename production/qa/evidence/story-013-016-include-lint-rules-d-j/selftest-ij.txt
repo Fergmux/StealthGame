@@ -1,0 +1,23 @@
+SELFTEST i-seeded ok
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:4 i UE_LOG argument names forbidden identifier FEventLogEntry (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:5 i UE_LOGF argument names forbidden identifier DealDigest (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:6 i ensureMsgf argument names forbidden identifier ServerSubSeed (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:7 i checkf argument names forbidden identifier FSecretStream (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:8 i ClientMessage argument names forbidden identifier MailboxOrder (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:9 i TRACE_CPUPROFILER_EVENT_SCOPE_STR argument names forbidden identifier DealDigest (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:10 i CSV_SCOPED_TIMING_STAT argument names forbidden identifier FRoundEventLogTotals (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:11 i SCOPE_CYCLE_COUNTER argument names forbidden identifier Binding (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:13 i UE_LOGF argument names forbidden identifier Binding (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/StealthLogLeaks.cpp:14 i UE_LOG argument names forbidden identifier FEventLogEntry (tools/ci/lint/log-forbidden-identifiers.txt)
+    GATE: FAIL (10 finding(s); 1 file(s) scanned)
+SELFTEST i-clean ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST j-seeded ok
+    Source/StealthGameplay/Private/Features/CityGenerator/StealthCityGenTick.cpp:2 j CityGenerator file includes "Server/Random/StealthSubSeeds.h" (Generator isolation: no Public/Server/Random/ include)
+    Source/StealthGameplay/Private/Features/CityGenerator/StealthCityGenTick.cpp:3 j CityGenerator file includes "Public/Server/Random/StealthOtherSeeds.h" (Generator isolation: no Public/Server/Random/ include)
+    GATE: FAIL (2 finding(s); 2 file(s) scanned)
+SELFTEST j-clean ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST real-tree-zero-findings ok
+    GATE: PASS (63 file(s) scanned, 0 findings)
+SELFTEST RESULT: PASS (5 cases)

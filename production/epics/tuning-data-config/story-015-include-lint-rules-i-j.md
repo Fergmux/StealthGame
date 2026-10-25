@@ -1,12 +1,12 @@
 # Story 015: Include lint rules (i)-(j): log arguments and generator random isolation
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -65,9 +65,9 @@
 
 ## Files
 
-- `tools/ci/lint/include-lint-ij.sh`
-- `tools/ci/lint/log-forbidden-identifiers.txt`
-- `tools/ci/lint/selftest/` (fixtures for i and j with clean controls, and the selftest script)
+
+- `tools/ci/lint/include-lint-ij.sh`, `tools/ci/lint/rule-i.awk`, `tools/ci/lint/log-forbidden-identifiers.txt`
+- `tools/ci/lint/selftest/run-include-ij-selftest.sh`, `tools/ci/lint/selftest/include-ij/fixtures/**` (i/j seeded and clean fixtures)
 - `Source/StealthFoundation/Private/Tests/Build/IncludeLintIjTest.cpp` (G2 wrapper)
 
 ---
@@ -90,7 +90,7 @@
 **Required evidence**:
 - Logic: the selftest under `tools/ci/lint/selftest/` (run by the T0 gate step) and the G2 wrapper `StealthGame.Build.IncludeLintIj` (`Source/StealthFoundation/Private/Tests/Build/IncludeLintIjTest.cpp`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`tools/ci/lint/selftest/run-include-ij-selftest.sh` 5/5 cases; `StealthGame.Build.IncludeLintIj`, 2026-10-25)
 
 ---
 
@@ -100,3 +100,14 @@
 - Unlocks: `production/epics/tuning-data-config/story-016-lint-seeded-violation-controls.md`
 - Sequencing note (not a plan dependency): the G2 wrapper test needs the StealthFoundation module of `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`.
 - Open verification claims from the plan's Note lines: none (no Note line on 015). Open design points: how the forbidden-identifier file marks prefix entries, and whether test files are scanned.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: seeded (i) UE_LOG, UE_LOGF, ensureMsgf, checkf, ClientMessage, TRACE_CPUPROFILER_EVENT_SCOPE_STR, CSV_SCOPED_TIMING_STAT, SCOPE_CYCLE_COUNTER each naming a listed identifier (prefix entries FEventLogEntry and FRoundEventLogTotals, whole-token Binding), an argument spanning lines (reported at the token's line) and a nested call: 10 findings `:N i`; seeded (j) two CityGenerator includes of `Server/Random/`: `:2 j`, `:3 j`; clean controls give zero findings (`KeyBinding`, `BindingCount`, a forbidden name outside a macro, names in strings and comments, `MyFEventLog`, a CityGenerator file including other server headers, a non-generator file including Server/Random/); real tree `GATE: PASS (59 file(s) scanned, 0 findings)`; the real tree has no CityGenerator/ folder yet, so (j) is proved by the fixture, not the real-tree pass)
+**Decisions**: rule ids `i`/`j`; list-file format: a trailing `*` marks a prefix entry, every other entry is a whole-token match, `#` comments, documented in the file's first lines; log macros read code tokens only (a string is message text), TRACE_*/CSV_*/SCOPE_CYCLE_COUNTER also read the words inside string literals because they take names as strings; UE_CLOG, UE_LOGFMT, ensureAlwaysMsgf and verifyf are inspected too; tests under Private/Tests are scanned (inputs silent); (j) matches an include path with a `Server/Random/` segment (a Public header is included without the `Public/` prefix) and any CityGenerator folder of the five modules. Logged in the decision log.
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-013-016-include-lint-rules-d-j/test-run.txt` (build `Result: Succeeded`; 34/34 `StealthGame.` tests Success), `selftest-ij.txt`, `stamp.txt`
+**Run result**: N/A — CI tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no further defects found

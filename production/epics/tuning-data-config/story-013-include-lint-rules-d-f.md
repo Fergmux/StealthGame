@@ -1,12 +1,12 @@
 # Story 013: Include lint rules (d)-(f): core/features direction, foundation upward includes, unique header names
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -65,9 +65,11 @@
 
 ## Files
 
+
 - `tools/ci/lint/include-lint-def.sh`
-- `tools/ci/lint/selftest/` (fixtures for d, e, f with clean controls, and the selftest script)
-- `Source/StealthFoundation/Private/Tests/Build/IncludeLintDefTest.cpp` (G2 wrapper)
+- `tools/ci/lint/emit.sh` (added `lint_includes`, `lint_module_files`, `lint_is_exempt`, `lint_cpp_awk`, `LINT_DIR`; shared by the d-j rule scripts)
+- `tools/ci/lint/selftest/lib.sh`, `tools/ci/lint/selftest/run-include-def-selftest.sh`, `tools/ci/lint/selftest/include-def/fixtures/**` (d/e/f seeded and clean fixtures)
+- `Source/StealthFoundation/Private/Tests/Build/IncludeLintDefTest.cpp` (G2 wrapper), `Source/StealthFoundation/Private/Tests/Build/StealthBuildFileTestUtils.h` (added `RunLintSelftestSuite`)
 
 ---
 
@@ -89,7 +91,7 @@
 **Required evidence**:
 - Logic: the selftest under `tools/ci/lint/selftest/` (run by the T0 gate step) and the G2 wrapper `StealthGame.Build.IncludeLintDef` (`Source/StealthFoundation/Private/Tests/Build/IncludeLintDefTest.cpp`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`tools/ci/lint/selftest/run-include-def-selftest.sh` 9/9 cases; `StealthGame.Build.IncludeLintDef`, 2026-10-25)
 
 ---
 
@@ -99,3 +101,14 @@
 - Unlocks: `production/epics/tuning-data-config/story-016-lint-seeded-violation-controls.md`
 - Sequencing note (not a plan dependency): the G2 wrapper test needs the StealthFoundation module of `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`, and the real-tree scan is only meaningful once the Gameplay folders of story 002 exist.
 - Open verification claims from the plan's Note lines: none (no Note line on 013). Open design point: behaviour for a duplicate name inside one module.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: seeded (d) `Source/StealthGameplay/Core/StealthCoreBad.cpp:3 d` (include text) and `.../Private/Core/StealthResolvedBad.cpp:1 d` (resolved by header name to a Features header); seeded (e) four upward includes (Gameplay, Presentation, prototype StealthGame by resolution, and a module-named path) each `:N e`; seeded (f) `StealthDupName.h` and a case-only duplicate each `:1 f`; clean controls give zero findings (Features including Core, commented includes, a `Features` substring, `Public/Server/Core/`, a same-name pair inside ONE module, the prototype exempt list); real tree `GATE: PASS (57 file(s) scanned, 0 findings)`)
+**Decisions**: rule ids `d`/`e`/`f`; (d) covers any `Core/` path segment under StealthGameplay (Core/, Private/Core/, Public/View/Core/, Public/Server/Core/); an include counts as Features when its text has a `Features/` segment or it resolves by header name to a StealthGameplay header under `Features/`; (e) resolves includes by header name with a path-suffix match, plus module-named path segments; (f) compares every `.h` under the five modules and the prototype case-insensitively and reports ONE finding per extra module (at that module's first header); a duplicate name inside one module is NOT reported (AC says across modules; documented in the script header and covered by the f-seeded fixture); headers on `prototype-exempt.txt` are left out of (f) so the prototype's StealthMovementComponent.h may share a name with a future production header until the prototype is deleted (f-prototype-exempt-allowed / f-prototype-unlisted-reported). Logged in the decision log.
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-013-016-include-lint-rules-d-j/test-run.txt` (build `Result: Succeeded`; 34/34 `StealthGame.` tests Success), `selftest-def.txt`, `stamp.txt`
+**Run result**: N/A — CI tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no further defects found

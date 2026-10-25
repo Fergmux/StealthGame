@@ -1,0 +1,38 @@
+Command: powershell -ExecutionPolicy Bypass -File tools/dev/cycle.ps1 -Tests -NoLaunch (2026-10-25)
+Build: StealthGameEditor Win64 Development — Result: Succeeded
+Tests (StealthGame. filter): 34/34 Success (30 before this batch + IncludeLintDef, IncludeLintGh, IncludeLintIj, LintSeededControls)
+tests exit=0
+Success  StealthGame.Build.CompileProbes
+Success  StealthGame.Build.FoundationLayout
+Success  StealthGame.Build.HarnessModuleExclusions
+Success  StealthGame.Build.IncludeLintAbc
+Success  StealthGame.Build.IncludeLintDef
+Success  StealthGame.Build.IncludeLintGh
+Success  StealthGame.Build.IncludeLintIj
+Success  StealthGame.Build.LintFramework
+Success  StealthGame.Build.LintSeededControls
+Success  StealthGame.Build.PresentationGuardDefineIsPrivate
+Success  StealthGame.Build.ShippingSymbolCheck
+Success  StealthGame.EditorTools.AssetToolset.ExportAssetToFile.exports an engine static mesh to FBX
+Success  StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the asset is null
+Success  StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the path has no extension
+Success  StealthGame.EditorTools.PlayToolset.ListPlayInstances.returns an empty list when no play session is running
+Success  StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when no play session is running
+Success  StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when the command is empty
+Success  StealthGame.Harness.PIE.ListenServerThreeClients.OneServerAndThreeClientWorldsAreUp
+Success  StealthGame.Harness.FakeClockAdvancesOnlyWhenTold
+Success  StealthGame.Harness.FaultSinkTeardownAssertion
+Success  StealthGame.Harness.LogCaptureAssertsWarningByKey
+Success  StealthGame.Harness.ModuleLoadsInDevelopment
+Success  StealthGame.Harness.NegativeControlDetected
+Success  StealthGame.Locomotion.ClassParity.Blueprint
+Success  StealthGame.Locomotion.ClassParity.NegativeControl
+Success  StealthGame.Locomotion.ClassParity.Source
+Success  StealthGame.Locomotion.AnimBpNoLocalControlRead
+Success  StealthGame.Locomotion.PawnClassDefaults
+Success  StealthGame.Rules.Assassination
+Success  StealthGame.Rules.Defence
+Success  StealthGame.Rules.EliminationVictory
+Success  StealthGame.Rules.NpcKillRemoval
+Success  StealthGame.Rules.ObjectiveStages
+Success  StealthGame.Rules.TeamsAndMovement

@@ -1,0 +1,34 @@
+SELFTEST g-seeded ok
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:3 g server UCLASS must declare NotBlueprintType, NotBlueprintable
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:5 g server UCLASS must declare NotBlueprintType, NotBlueprintable
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:7 g server UCLASS must declare NotBlueprintType, NotBlueprintable
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:9 g server UINTERFACE must declare meta=(CannotImplementInterfaceInBlueprint)
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:11 g server UINTERFACE must declare meta=(CannotImplementInterfaceInBlueprint)
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:17 g member of a server type carries BlueprintReadOnly (server types are never Blueprint-exposed)
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:19 g member of a server type carries BlueprintReadWrite (server types are never Blueprint-exposed)
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:21 g member of a server type carries BlueprintCallable (server types are never Blueprint-exposed)
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:23 g member of a server type carries BlueprintPure (server types are never Blueprint-exposed)
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:25 g member of a server type carries BlueprintAssignable (server types are never Blueprint-exposed)
+    Source/StealthFoundation/Public/Server/StealthBadServerTypes.h:27 g member of a server type carries BlueprintReadOnly (server types are never Blueprint-exposed)
+    GATE: FAIL (11 finding(s); 1 file(s) scanned)
+SELFTEST g-clean ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST h-seeded ok
+    Source/StealthPresentation/Private/StealthBadHud.cpp:4 h presentation code uses TActorIterator (no world searches or game-mode access; ADR-0007 rule h)
+    Source/StealthPresentation/Private/StealthBadHud.cpp:5 h presentation code uses TActorRange (no world searches or game-mode access; ADR-0007 rule h)
+    Source/StealthPresentation/Private/StealthBadHud.cpp:6 h presentation code uses GetAllActorsOfClass (no world searches or game-mode access; ADR-0007 rule h)
+    Source/StealthPresentation/Private/StealthBadHud.cpp:7 h presentation code uses GetAllActorsWithInterface (no world searches or game-mode access; ADR-0007 rule h)
+    Source/StealthPresentation/Private/StealthBadHud.cpp:8 h presentation code uses GetPlayerControllerIterator (no world searches or game-mode access; ADR-0007 rule h)
+    Source/StealthPresentation/Private/StealthBadHud.cpp:9 h presentation code uses GetGameMode (no world searches or game-mode access; ADR-0007 rule h)
+    Source/StealthPresentation/Private/StealthBadHud.cpp:10 h presentation code uses GetAuthGameMode (no world searches or game-mode access; ADR-0007 rule h)
+    Source/StealthPresentation/Private/StealthBadHud.cpp:11 h GetPlayerState use needs a // LOCAL-PAWN-OK: <reason> annotation on the same line
+    Source/StealthPresentation/Private/StealthBadHud.cpp:12 h GetController use needs a // LOCAL-PAWN-OK: <reason> annotation on the same line
+    Source/StealthPresentation/Private/StealthBadHud.cpp:13 h GetController use has a LOCAL-PAWN-OK annotation with an empty reason
+    Source/StealthPresentation/Private/StealthBadHud.cpp:16 h presentation code uses GetGameMode (no world searches or game-mode access; ADR-0007 rule h)
+    Source/StealthPresentation/Private/StealthBadHud.cpp:17 h LOCAL-PAWN-OK annotation has an empty reason
+    GATE: FAIL (12 finding(s); 1 file(s) scanned)
+SELFTEST h-clean ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST real-tree-zero-findings ok
+    GATE: PASS (11 file(s) scanned, 0 findings)
+SELFTEST RESULT: PASS (5 cases)

@@ -1,0 +1,13 @@
+# One seeded violation per include lint rule (ADR-0007 section 3 a-j), story tdc-016.
+# Format: <rule letter> <repo-relative path inside this fixture tree>. Deleting the listed file
+# must make exactly that rule's finding disappear (tools/ci/lint/selftest/seeded-controls.sh).
+a Source/StealthFoundation/Public/StealthLooseHeader.h
+b Source/StealthFoundation/Public/Server/StealthNoGuard.h
+c Source/StealthGameplay/Public/View/StealthLeakyView.h
+d Source/StealthGameplay/Private/Core/StealthCoreUsesFeature.cpp
+e Source/StealthFoundation/Private/StealthUpwardInclude.cpp
+f Source/StealthPresentation/Private/StealthDupName.h
+g Source/StealthGameplay/Public/Server/StealthBadClass.h
+h Source/StealthPresentation/Private/StealthHudSearch.cpp
+i Source/StealthGameplay/Private/StealthLogLeak.cpp
+j Source/StealthGameplay/Private/Features/CityGenerator/StealthCityGenerator.cpp

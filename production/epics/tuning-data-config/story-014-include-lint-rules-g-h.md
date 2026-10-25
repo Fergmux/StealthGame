@@ -1,12 +1,12 @@
 # Story 014: Include lint rules (g)-(h): server UCLASS specifiers and presentation forbidden APIs
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -65,8 +65,9 @@
 
 ## Files
 
-- `tools/ci/lint/include-lint-gh.sh`
-- `tools/ci/lint/selftest/` (fixtures for g and h with clean controls, and the selftest script)
+
+- `tools/ci/lint/include-lint-gh.sh`, `tools/ci/lint/cpplex.awk` (shared C++ lexer), `tools/ci/lint/rule-g.awk`, `tools/ci/lint/rule-h.awk`
+- `tools/ci/lint/selftest/run-include-gh-selftest.sh`, `tools/ci/lint/selftest/include-gh/fixtures/**` (g/h seeded and clean fixtures)
 - `Source/StealthFoundation/Private/Tests/Build/IncludeLintGhTest.cpp` (G2 wrapper)
 
 ---
@@ -89,7 +90,7 @@
 **Required evidence**:
 - Logic: the selftest under `tools/ci/lint/selftest/` (run by the T0 gate step) and the G2 wrapper `StealthGame.Build.IncludeLintGh` (`Source/StealthFoundation/Private/Tests/Build/IncludeLintGhTest.cpp`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`tools/ci/lint/selftest/run-include-gh-selftest.sh` 5/5 cases; `StealthGame.Build.IncludeLintGh`, 2026-10-25)
 
 ---
 
@@ -99,3 +100,14 @@
 - Unlocks: `production/epics/tuning-data-config/story-016-lint-seeded-violation-controls.md`
 - Sequencing note (not a plan dependency): the G2 wrapper test needs the StealthFoundation module of `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`; the Presentation scan scope exists only after story 002.
 - Open verification claims from the plan's Note lines: none (no Note line on 014). Open design point: the meaning of "pawn expression" is handled conservatively (every call needs the annotation) because the inputs state a text lint cannot decide it.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: seeded (g) UCLASS with no specifiers / only one of the two / the other one, UINTERFACE with no meta and with an unrelated meta, each of BlueprintReadOnly, BlueprintReadWrite, BlueprintCallable, BlueprintPure, BlueprintAssignable on a member and a specifier list spanning lines: 11 findings `:N g`; seeded (h) each of the seven APIs, unannotated GetPlayerState/GetController, an empty-reason annotation (on a call and alone), and GetGameMode carrying an annotation (still flagged): 12 findings `:N h`; annotated lines and API names in comments/strings pass; correct UCLASS/UINTERFACE (also multi-line and shared meta list) and an Event-Log-like plain C++ type pass; real tree `GATE: PASS (11 file(s) scanned, 0 findings)`)
+**Decisions**: rule ids `g`/`h`; parsing is C++-aware (cpplex.awk blanks comments and string content, keeps offsets, so specifier lists are read to their balanced parenthesis); (g) UINTERFACE needs the `meta` token and `CannotImplementInterfaceInBlueprint` in the same list, any UPROPERTY/UFUNCTION in a Public/Server header is checked (the whole header is server types); (h) the LOCAL-PAWN-OK annotation must be on the same line and exempts only GetPlayerState/GetController, never the other APIs; an empty-reason annotation is a finding even with no call on the line; every call named GetPlayerState/GetController in Presentation source is in scope (text cannot decide 'pawn expression'). Logged in the decision log.
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-013-016-include-lint-rules-d-j/test-run.txt` (build `Result: Succeeded`; 34/34 `StealthGame.` tests Success), `selftest-gh.txt`, `stamp.txt`
+**Run result**: N/A — CI tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no further defects found
