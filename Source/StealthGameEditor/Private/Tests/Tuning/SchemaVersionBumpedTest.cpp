@@ -33,7 +33,7 @@ namespace SchemaVersionBumpedTestData
 			if (Entry.Version == CurrentVersion)
 			{
 				++CurrentEntries;
-				Ctx.TestTrue(FString::Printf(TEXT("the generated fingerprint 0x%016llx equals the history entry of version %d (0x%016llx): a tuning field changed without bumping TuningSchemaVersion and appending history"),
+				Ctx.TestTrue(FString::Printf(TEXT("the generated fingerprint 0x%016llx must equal the history entry of version %d (0x%016llx); it differs, so a tuning field changed without bumping TuningSchemaVersion and appending history"),
 					static_cast<unsigned long long>(Fingerprint), CurrentVersion, static_cast<unsigned long long>(Entry.Fingerprint)), Entry.Fingerprint == Fingerprint);
 			}
 			if (Index > 0)

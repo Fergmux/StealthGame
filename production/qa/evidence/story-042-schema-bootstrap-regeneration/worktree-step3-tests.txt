@@ -1,0 +1,4 @@
+﻿LogAutomationController: Display: Test Completed. Result={Success} Name={SchemaGenDeterministic} Path={StealthGame.Tuning.SchemaGenDeterministic}
+LogAutomationController: Display: Test Completed. Result={Success} Name={SchemaRowTypes} Path={StealthGame.Tuning.SchemaRowTypes}
+LogAutomationController: Error: Test Completed. Result={Fail} Name={SchemaVersionBumped} Path={StealthGame.Tuning.SchemaVersionBumped}
+LogAutomationController: Error: the generated fingerprint 0x4c690bb773a99a7f equals the history entry of version 1 (0x4250230bdd621e89): a tuning field changed without bumping TuningSchemaVersion and appending history [C:\Users\fergm\tdc042-wt\Source\StealthGameEditor\Private\Tests\Tuning\SchemaVersionBumpedTest.cpp(80)]

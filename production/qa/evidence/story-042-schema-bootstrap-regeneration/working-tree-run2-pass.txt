@@ -1,0 +1,13 @@
+STAGE bootstrap-build: C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat StealthGameEditor Win64 Development -Project=C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -WaitMutex (STEALTH_TUNING_SCHEMA_BOOTSTRAP=1)
+    removed UBT makefile C:\Users\fergm\Documents\Unreal Projects\StealthGame\Intermediate\Build\Win64\x64\StealthGameEditor\Development\Makefile.bin
+    Result: Succeeded
+STAGE generate: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -ExecCmds="Stealth.Tuning.SchemaGen,QUIT_EDITOR" -unattended -nullrhi -nosound -stdout (log: C:\Users\fergm\AppData\Local\Temp\stealth_regen_generate.log)
+    editor exit code 0 (ignored: the verdict is the summary line)
+    [2026.10.25-17.49.03:491][  0]LogStealthTuningSchemaGen: Display: STEALTH TUNING SCHEMA GEN: UNCHANGED C:/Users/fergm/Documents/Unreal Projects/StealthGame/Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl
+STAGE final-build: C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat StealthGameEditor Win64 Development -Project=C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -WaitMutex (STEALTH_TUNING_SCHEMA_BOOTSTRAP=)
+    removed UBT makefile C:\Users\fergm\Documents\Unreal Projects\StealthGame\Intermediate\Build\Win64\x64\StealthGameEditor\Development\Makefile.bin
+    Result: Succeeded
+STAGE verify: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -ExecCmds="Stealth.Tuning.SchemaVerify,QUIT_EDITOR" -unattended -nullrhi -nosound -stdout (log: C:\Users\fergm\AppData\Local\Temp\stealth_regen_verify.log)
+    editor exit code 0 (ignored: the verdict is the summary line)
+    [2026.10.25-17.50.06:423][  0]LogStealthTuningSchemaGen: Display: STEALTH TUNING SCHEMA VERIFY: PASS rows=8 bootstrap=0 fingerprint=0x4250230bdd621e89
+REGENERATE-TUNING-SCHEMA: PASS [verify] table regenerated, rebuilt without the define and verified

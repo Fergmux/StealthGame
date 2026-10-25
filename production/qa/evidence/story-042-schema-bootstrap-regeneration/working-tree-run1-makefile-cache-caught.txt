@@ -1,0 +1,15 @@
+STAGE bootstrap-build: C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat StealthGameEditor Win64 Development -Project=C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -WaitMutex -NoUBTMakefiles (STEALTH_TUNING_SCHEMA_BOOTSTRAP=1)
+    Result: Succeeded
+STAGE generate: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -ExecCmds="Stealth.Tuning.SchemaGen,QUIT_EDITOR" -unattended -nullrhi -nosound -stdout (log: C:\Users\fergm\AppData\Local\Temp\stealth_regen_generate.log)
+    editor exit code 0 (ignored: the verdict is the summary line)
+    [2026.10.25-17.45.42:944][  0]LogStealthTuningSchemaGen: Display: STEALTH TUNING SCHEMA GEN: WROTE C:/Users/fergm/Documents/Unreal Projects/StealthGame/Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl
+STAGE final-build: C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat StealthGameEditor Win64 Development -Project=C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -WaitMutex -NoUBTMakefiles (STEALTH_TUNING_SCHEMA_BOOTSTRAP=)
+    Result: Succeeded
+STAGE verify: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -ExecCmds="Stealth.Tuning.SchemaVerify,QUIT_EDITOR" -unattended -nullrhi -nosound -stdout (log: C:\Users\fergm\AppData\Local\Temp\stealth_regen_verify.log)
+    editor exit code 0 (ignored: the verdict is the summary line)
+    [2026.10.25-17.46.16:485][  0]LogStealthTuningSchemaGen: Error: this build compiled the empty bootstrap table (STEALTH_TUNING_SCHEMA_BOOTSTRAP=1 left set)
+    [2026.10.25-17.46.16:485][  0]LogStealthTuningSchemaGen: Error: compiled table has 0 row(s), reflection has 8
+    [2026.10.25-17.46.16:485][  0]LogStealthTuningSchemaGen: Error: compiled fingerprint differs from the reflected fingerprint
+    [2026.10.25-17.46.16:485][  1]LogStealthTuningSchemaGen: Error: STEALTH TUNING SCHEMA VERIFY: FAIL (3 error(s))
+    [2026.10.25-17.46.16:485][  1]LogStealthTuningSchemaGen: Error: STEALTH TUNING SCHEMA VERIFY: FAIL (3 error(s))
+REGENERATE-TUNING-SCHEMA: FAIL [verify] verification failed: [2026.10.25-17.46.16:485][  1]LogStealthTuningSchemaGen: Error: STEALTH TUNING SCHEMA VERIFY: FAIL (3 error(s))

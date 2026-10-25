@@ -1,0 +1,14 @@
+STAGE bootstrap-build: C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat StealthGameEditor Win64 Development -Project=C:\Users\fergm\tdc042-wt\StealthGame.uproject -WaitMutex (STEALTH_TUNING_SCHEMA_BOOTSTRAP=1)
+    removed UBT makefile C:\Users\fergm\tdc042-wt\Intermediate\Build\Win64\x64\StealthGameEditor\Development\Makefile.bin
+    Result: Succeeded
+STAGE generate: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe C:\Users\fergm\tdc042-wt\StealthGame.uproject -ExecCmds="Stealth.Tuning.SchemaGen,QUIT_EDITOR" -unattended -nullrhi -nosound -stdout (log: C:\Users\fergm\AppData\Local\Temp\stealth_regen_generate.log)
+    editor exit code 0 (ignored: the verdict is the summary line)
+    [2026.10.25-18.28.50:366][  0]LogStealthTuningSchemaGen: Display: STEALTH TUNING SCHEMA GEN: WROTE C:/Users/fergm/tdc042-wt/Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl
+STAGE final-build: C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat StealthGameEditor Win64 Development -Project=C:\Users\fergm\tdc042-wt\StealthGame.uproject -WaitMutex (STEALTH_TUNING_SCHEMA_BOOTSTRAP=)
+    removed UBT makefile C:\Users\fergm\tdc042-wt\Intermediate\Build\Win64\x64\StealthGameEditor\Development\Makefile.bin
+    Result: Succeeded
+STAGE verify: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe C:\Users\fergm\tdc042-wt\StealthGame.uproject -ExecCmds="Stealth.Tuning.SchemaVerify,QUIT_EDITOR" -unattended -nullrhi -nosound -stdout (log: C:\Users\fergm\AppData\Local\Temp\stealth_regen_verify.log)
+    editor exit code 0 (ignored: the verdict is the summary line)
+    [2026.10.25-18.29.33:909][  0]LogStealthTuningSchemaGen: Display: STEALTH TUNING SCHEMA VERIFY: PASS rows=8 bootstrap=0 fingerprint=0x4c690bb773a99a7f
+REGENERATE-TUNING-SCHEMA: PASS [verify] table regenerated, rebuilt without the define and verified
+script exit=0

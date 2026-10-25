@@ -1,7 +1,7 @@
 # Story 042: Bootstrap regeneration flow for the schema table
 
 > **Epic**: Tuning Data & Config
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: S
@@ -32,7 +32,7 @@
 
 *From the plan (Exit B-2), scoped to this story:*
 
-- [ ] A regeneration script sets `STEALTH_TUNING_SCHEMA_BOOTSTRAP=1`, builds the editor with an empty table, runs the commandlet to regenerate the table, rebuilds without the define, and succeeds even after a tuning field was renamed (the deadlock the guard exists for); a build with the define can never pass CI because SchemaComplete fails on an empty table.
+- [x] A regeneration script sets `STEALTH_TUNING_SCHEMA_BOOTSTRAP=1`, builds the editor with an empty table, runs the commandlet to regenerate the table, rebuilds without the define, and succeeds even after a tuning field was renamed (the deadlock the guard exists for); a build with the define can never pass CI because SchemaComplete fails on an empty table.
 
 ---
 
@@ -66,6 +66,8 @@
 - `tools/ci/regenerate-tuning-schema.ps1`
 - `Source/StealthFoundation/StealthFoundation.Build.cs` (define handling)
 - `tools/ci/` selftest and `Source/StealthFoundation/Private/Tests/Build/RegenerateTuningSchemaTest.cpp` (G2 additions, content open)
+- `tools/ci/selftest/regenerate-tuning-schema/*.cmd` (the G2 stub build and editor tools; the selftest itself is `regenerate-tuning-schema.ps1 -SelfTest`)
+- `Source/StealthGameEditor/Private/Tuning/StealthTuningSchemaGen.cpp` (adds the `Stealth.Tuning.SchemaVerify` console command the script's verify stage runs)
 
 ---
 
@@ -87,7 +89,7 @@
 **Required evidence**:
 - Integration: a documented run of `regenerate-tuning-schema.ps1` on a disposable copy (log retained under `production/qa/`) showing the renamed-field recovery and the nonzero exit on a failing commandlet; the story 044 test (`StealthGame.Tuning.SchemaComplete`) failing on the empty table. Plus, per G2, the selftest and the wrapper `StealthGame.Build.RegenerateTuningSchema` (content open, see Implementation Notes). qa.level is full, so these are required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created: disposable-worktree run logs, G2 selftest (8/8) and wrapper `StealthGame.Build.RegenerateTuningSchema` passing; the SchemaComplete-on-empty-table clause waits on story 044 (see Completion Notes)
 
 ---
 
@@ -96,3 +98,15 @@
 - Depends on: `production/epics/tuning-data-config/story-041-schema-generator-commandlet.md`
 - Unlocks: None
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story). Open: the define-passing mechanism and the G2 selftest/wrapper content.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing, one clause by dependency (AC-1: in a disposable git worktree of commit 08b491a, `TargetRoundMinutes` renamed to `TargetRoundLengthMinutes`: a normal editor build fails on the stale table (C2039 in `StealthTuningSchema.generated.inl`, the deadlock); `regenerate-tuning-schema.ps1` then exits 0: bootstrap build with the empty table, generator WROTE the table, rebuild without the define, verify PASS (rows=8, bootstrap=0, fingerprint 0x4c690bb773a99a7f); the regenerated table names only the new field. A seeded key without `Latch` meta makes the generator report FAIL and the script exit 1 at `[generate]`. A define left set is caught by the verify stage (watched for real on the first working-tree run: UBT reused its cached makefile, the "final" build kept the empty table, and verify failed with "this build compiled the empty bootstrap table"; fixed by deleting the makefile before each build). "A build with the define can never pass CI" is proven by `StealthGame.Tuning.SchemaComplete` failing on an empty table, which is story tdc-044 (not yet implemented): that clause is carried by the dependency, as the story's Implementation Notes say)
+**Decisions**: the define travels as the environment variable `STEALTH_TUNING_SCHEMA_BOOTSTRAP=1`, read by `StealthFoundation.Build.cs` into a PrivateDefinition (`=1` or `=0`, always defined); because UBT 5.8 caches the evaluated rules in `Intermediate/Build/Win64/x64/StealthGameEditor/Development/Makefile.bin` and reloads it even with `-NoUBTMakefiles` (checked in `Modes/BuildMode.cs` and `System/TargetMakefile.cs`), the script deletes that makefile before both builds so the next normal build also re-reads the rules; a fourth stage `verify` (`Stealth.Tuning.SchemaVerify`) fails unless the build is not bootstrap, the compiled table is non-empty and equals the reflection, and the checked-in file equals the generator text. G2 content (agreed here, unattended): `-SelfTest` drives the real stage logic with stub tools in 8 cases (full flow with the define set then removed, generator FAIL, editor without summary, failing bootstrap build, failing final build, define left set, caller-set define removed, dry run) and `StealthGame.Build.RegenerateTuningSchema` runs only that selftest plus a Build.cs check; neither replaces the worktree run
+**Watched to fail (story 043, end to end)**: in the same worktree, after the rename and regeneration, `StealthGame.Tuning.SchemaVersionBumped` failed ("generated fingerprint 0x4c690bb773a99a7f ... history entry of version 1 (0x4250230bdd621e89)") while SchemaGenDeterministic and SchemaRowTypes passed (`production/qa/evidence/story-042-schema-bootstrap-regeneration/worktree-step3-tests.txt`)
+**Deviations**: Advisory: not a per-commit or nightly step yet (wiring is story 023's call); the worktree checkout included Content (the sparse pattern did not apply), harmless
+**Test Evidence**: `production/qa/evidence/story-042-schema-bootstrap-regeneration/` (`worktree-step1-normal-build.txt`, `worktree-step2-regenerate.txt`, `worktree-rename-diff.txt`, `worktree-step3-tests.txt`, `worktree-step4-generator-failure.txt`, `working-tree-run1-makefile-cache-caught.txt`, `working-tree-run2-pass.txt`, `stamp.txt`); `Source/StealthFoundation/Private/Tests/Build/RegenerateTuningSchemaTest.cpp`; full suite 61/61 green after the message fix (cycle.ps1 -Tests -NoLaunch: Result: Succeeded, tests exit=0)
+**Run result**: N/A — build tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): two defects found and fixed before close: PowerShell functions returned their progress lines with the result (results now travel in script variables), and the makefile cache defeated the define (now deleted; caught by the verify stage)

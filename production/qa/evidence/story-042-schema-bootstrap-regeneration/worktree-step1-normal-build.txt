@@ -1,0 +1,141 @@
+﻿Using bundled DotNet SDK version: 10.0 win-x64
+Running UnrealBuildTool: dotnet "..\..\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" StealthGameEditor Win64 Development -Project=C:\Users\fergm\tdc042-wt\StealthGame.uproject -WaitMutex
+Log file: C:\Users\fergm\AppData\Local\UnrealBuildTool\Log.txt
+Determining max actions to execute in parallel (16 physical cores, 32 logical cores)
+  Executing up to 16 processes, one per physical core
+Using 'git status' to determine working set for adaptive non-unity build (C:\Users\fergm\tdc042-wt).
+Creating makefile for StealthGameEditor (no existing makefile)
+UbaServer - Listening on 0.0.0.0:1345
+UHT compiled-in object format Default
+Building StealthGameEditor...
+===== Toolchain Information =====
+Using ISPC compiler (C:\Program Files\Epic Games\UE_5.8\Engine\Source\ThirdParty\Intel\ISPC\bin\Windows\ispc.exe)
+  Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.24.0 (build commit  @ 20250404, LLVM 18.1.2) 
+Using Visual Studio 14.44.35229 toolchain (C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207) and Windows 10.0.22621.0 SDK (C:\Program Files (x86)\Windows Kits\10).
+===== End Toolchain Information =====
+Using Unreal Build Accelerator local executor to run 70 action(s)
+  CPU 16 physical cores, 32 logical cores
+  Memory 63.16 GB physical, 69.13 GB/76.04 GB committed
+  UBA Storage capacity 40 GB
+[1/70] Compile [x64] SharedPCH.UnrealEd.Project.ValApi.ValExpApi.Cpp20.cpp
+[2/70] Compile [x64] Module.StealthFoundation.cpp
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.generated.inl(23,120): error C2039: 'TargetRoundMinutes': is not a member of 'FRoundTuning_Server'
+		{ "TargetRoundMinutes", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Round_Server, &FRoundTuning_Server::TargetRoundMinutes>, &Set<&FStealthServerTuning::Round_Server, &FRoundTuning_Server::TargetRoundMinutes>, 12.0f, 5.0f, 30.0f, 8.0f, 15.0f, false, ETuningLatch::Round, "Round", "Minutes", false, 0.0 },
+		                                                                                                                     ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Public\Server\StealthTuningSubstructs.h(17,30): note: see declaration of 'FRoundTuning_Server'
+struct STEALTHFOUNDATION_API FRoundTuning_Server
+                             ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.generated.inl(23,120): error C2065: 'TargetRoundMinutes': undeclared identifier
+		{ "TargetRoundMinutes", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Round_Server, &FRoundTuning_Server::TargetRoundMinutes>, &Set<&FStealthServerTuning::Round_Server, &FRoundTuning_Server::TargetRoundMinutes>, 12.0f, 5.0f, 30.0f, 8.0f, 15.0f, false, ETuningLatch::Round, "Round", "Minutes", false, 0.0 },
+		                                                                                                                     ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.generated.inl(23,205): error C2039: 'TargetRoundMinutes': is not a member of 'FRoundTuning_Server'
+		{ "TargetRoundMinutes", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Round_Server, &FRoundTuning_Server::TargetRoundMinutes>, &Set<&FStealthServerTuning::Round_Server, &FRoundTuning_Server::TargetRoundMinutes>, 12.0f, 5.0f, 30.0f, 8.0f, 15.0f, false, ETuningLatch::Round, "Round", "Minutes", false, 0.0 },
+		                                                                                                                                                                                                          ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Public\Server\StealthTuningSubstructs.h(17,30): note: see declaration of 'FRoundTuning_Server'
+struct STEALTHFOUNDATION_API FRoundTuning_Server
+                             ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.generated.inl(23,205): error C2065: 'TargetRoundMinutes': undeclared identifier
+		{ "TargetRoundMinutes", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Round_Server, &FRoundTuning_Server::TargetRoundMinutes>, &Set<&FStealthServerTuning::Round_Server, &FRoundTuning_Server::TargetRoundMinutes>, 12.0f, 5.0f, 30.0f, 8.0f, 15.0f, false, ETuningLatch::Round, "Round", "Minutes", false, 0.0 },
+		                                                                                                                                                                                                          ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.generated.inl(16,43): error C2131: expression did not evaluate to a constant
+	inline constexpr FTuningSchemaRow Rows[] = {
+	                                         ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.generated.inl(16,43): note: a non-constant (sub-)expression was encountered
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.cpp(22,9): error C2672: 'MakeArrayView': no matching overloaded function found
+	return MakeArrayView(StealthTuningGenerated::Rows);
+	       ^
+C:\Program Files\Epic Games\UE_5.8\Engine\Source\Runtime\Core\Public\Containers\ArrayView.h(982,55): note: could be 'TArrayView<const InElementType,int32> MakeArrayView(std::initializer_list<_Elem>)'
+[[nodiscard]] constexpr TArrayView<const ElementType> MakeArrayView(std::initializer_list<ElementType> List UE_LIFETIMEBOUND)
+                                                      ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.cpp(22,9): note: 'TArrayView<const InElementType,int32> MakeArrayView(std::initializer_list<_Elem>)': could not deduce template argument for 'std::initializer_list<_Elem>' from 'const FTuningSchemaRow []'
+	return MakeArrayView(StealthTuningGenerated::Rows);
+	       ^
+C:\Program Files\Epic Games\UE_5.8\Engine\Source\Runtime\Core\Public\Containers\ArrayView.h(970,49): note: or       'TArrayView<T,int32> MakeArrayView(ElementType *,int32)'
+[[nodiscard]] constexpr TArrayView<ElementType> MakeArrayView(ElementType* Pointer UE_LIFETIMEBOUND, int32 Size)
+                                                ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.cpp(22,9): note: 'TArrayView<T,int32> MakeArrayView(ElementType *,int32)': expects 2 arguments - 1 provided
+	return MakeArrayView(StealthTuningGenerated::Rows);
+	       ^
+C:\Program Files\Epic Games\UE_5.8\Engine\Source\Runtime\Core\Public\Containers\ArrayView.h(954,30): note: or       'auto MakeArrayView(OtherRangeType &&)'
+[[nodiscard]] constexpr auto MakeArrayView(OtherRangeType&& Other UE_LIFETIMEBOUND)
+                             ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.cpp(22,9): note: the associated constraints are not satisfied
+	return MakeArrayView(StealthTuningGenerated::Rows);
+	       ^
+C:\Program Files\Epic Games\UE_5.8\Engine\Source\Runtime\Core\Public\Containers\ArrayView.h(952,2): note: the constraint was not satisfied
+	UE_REQUIRES(TIsContiguousContainer<CVUnqualifiedOtherRangeType>::Value && !TIsTArrayView_V<CVUnqualifiedOtherRangeType>)
+	^
+C:\Program Files\Epic Games\UE_5.8\Engine\Source\Runtime\Core\Public\Containers\ArrayView.h(934,30): note: or       'auto MakeArrayView(OtherRangeType &&)'
+[[nodiscard]] constexpr auto MakeArrayView(OtherRangeType&& Other)
+                             ^
+C:\Users\fergm\tdc042-wt\Source\StealthFoundation\Private\Tuning\StealthTuningSchema.cpp(22,9): note: the associated constraints are not satisfied
+	return MakeArrayView(StealthTuningGenerated::Rows);
+	       ^
+C:\Program Files\Epic Games\UE_5.8\Engine\Source\Runtime\Core\Public\Containers\ArrayView.h(932,2): note: the constraint was not satisfied
+	UE_REQUIRES(TIsContiguousContainer<CVUnqualifiedOtherRangeType>::Value && TIsTArrayView_V<CVUnqualifiedOtherRangeType>)
+	^
+[3/70] Compile [x64] ClassParityTest.cpp
+[4/70] Compile [x64] Module.StealthGameplay.gen.cpp
+[5/70] Compile [x64] PawnClassDefaultsTest.cpp
+[6/70] Compile [x64] PerModuleInline.gen.cpp
+[7/70] Compile [x64] StealthAnimInstance.cpp
+[8/70] Compile [x64] StealthGameplayModule.cpp
+[9/70] Compile [x64] StealthMotionWarpingComponent.cpp
+[10/70] Compile [x64] StealthPawn.cpp
+[11/70] Compile [x64] StealthPawnMovementComponent.cpp
+[12/70] Link [x64] UnrealEditor-StealthGameplay.lib
+[13/70] Compile [x64] PerModuleInline.gen.cpp
+[14/70] Compile [x64] StealthPresentationModule.cpp
+[15/70] Link [x64] UnrealEditor-StealthPresentation.lib
+[16/70] Compile [x64] Module.StealthGame.cpp
+[17/70] Link [x64] UnrealEditor-StealthGame.lib
+[18/70] Compile [x64] CharacterImport.cpp
+[19/70] Compile [x64] ClassParityAnimBpAudit.cpp
+[20/70] Compile [x64] InputAssetAuthoring.cpp
+[21/70] Compile [x64] InputAssetLint.cpp
+[22/70] Compile [x64] InputAssetsAndTriggerLintTest.cpp
+[23/70] Compile [x64] Module.StealthGameEditor.gen.cpp
+[24/70] Compile [x64] PerModuleInline.gen.cpp
+[25/70] Compile [x64] PresentationGuardDefineTest.cpp
+[26/70] Compile [x64] SchemaGenDeterministicTest.cpp
+[27/70] Compile [x64] SchemaVersionBumpedTest.cpp
+[28/70] Compile [x64] StealthAssetToolset.cpp
+[29/70] Compile [x64] StealthAssetToolsetSpec.cpp
+[30/70] Compile [x64] StealthGameEditorModule.cpp
+[31/70] Compile [x64] StealthPlayToolset.cpp
+[32/70] Compile [x64] StealthPlayToolsetSpec.cpp
+[33/70] Compile [x64] StealthTuningSchemaGen.cpp
+[34/70] Link [x64] UnrealEditor-StealthGameEditor.lib
+[35/70] Compile [x64] ConnectionEventHookPieTest.cpp
+[36/70] Compile [x64] HarnessModuleLoadsTest.cpp
+[37/70] Compile [x64] ListenServerThreeClientsTest.cpp
+[38/70] Compile [x64] Module.StealthTestHarness.gen.cpp
+[39/70] Compile [x64] NetEmulationTraversalSpike.cpp
+[40/70] Compile [x64] PerModuleInline.gen.cpp
+[41/70] Compile [x64] ReplicationSystemAssertedTest.cpp
+[42/70] Compile [x64] SmokeScenario.cpp
+[43/70] Compile [x64] SpikeV1EnhancedInputEdgesTest.cpp
+[44/70] Compile [x64] StealthConnectionEventHook.cpp
+[45/70] Compile [x64] StealthHarnessRun.cpp
+[46/70] Compile [x64] StealthHarnessScenarioRunner.cpp
+[47/70] Compile [x64] StealthHarnessScenarioS1.cpp
+[48/70] Compile [x64] StealthHarnessScenarioS10.cpp
+[49/70] Compile [x64] StealthHarnessScenarioS9.cpp
+[50/70] Compile [x64] StealthHarnessScenarioSession.cpp
+[51/70] Compile [x64] StealthNetCapture.cpp
+[52/70] Compile [x64] StealthSpikeActionStateComponent.cpp
+[53/70] Compile [x64] StealthSpikeMeasure.cpp
+[54/70] Compile [x64] StealthSpikeSession.cpp
+[55/70] Compile [x64] StealthTestHarnessModule.cpp
+[56/70] Link [x64] UnrealEditor-StealthTestHarness.lib
+[57/70] Compile Resource [x64] Default.rc2
+[58/70] Compile Resource [x64] Default.rc2
+[59/70] Compile Resource [x64] Default.rc2
+[60/70] Compile Resource [x64] Default.rc2
+[61/70] Compile Resource [x64] Default.rc2
+[62/70] Compile Resource [x64] Default.rc2
+Total time in Unreal Build Accelerator local executor: 254.88 seconds
+
+Result: Failed (OtherCompilationError)
+Total execution time: 262.79 seconds
+Trace written to file C:\Users\fergm\AppData\Local\UnrealBuildTool\Trace.uba with size 47.6kb

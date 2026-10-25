@@ -625,11 +625,11 @@ stories:
     name: "Bootstrap regeneration flow for the schema table"
     file: "production/epics/tuning-data-config/story-042-schema-bootstrap-regeneration.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: "qa-lead"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-043"
     name: "Schema fingerprint and the SchemaVersionBumped test"

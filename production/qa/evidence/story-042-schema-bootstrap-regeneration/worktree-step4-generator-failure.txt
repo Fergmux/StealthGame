@@ -1,0 +1,10 @@
+STAGE bootstrap-build: C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat StealthGameEditor Win64 Development -Project=C:\Users\fergm\tdc042-wt\StealthGame.uproject -WaitMutex (STEALTH_TUNING_SCHEMA_BOOTSTRAP=1)
+    removed UBT makefile C:\Users\fergm\tdc042-wt\Intermediate\Build\Win64\x64\StealthGameEditor\Development\Makefile.bin
+    Result: Succeeded
+STAGE generate: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe C:\Users\fergm\tdc042-wt\StealthGame.uproject -ExecCmds="Stealth.Tuning.SchemaGen,QUIT_EDITOR" -unattended -nullrhi -nosound -stdout (log: C:\Users\fergm\AppData\Local\Temp\stealth_regen_generate.log)
+    editor exit code 0 (ignored: the verdict is the summary line)
+    [2026.10.25-18.31.13:262][  0]LogStealthTuningSchemaGen: Error: SeededNoLatchCount: meta Latch must be Round, Action, Use or Session
+    [2026.10.25-18.31.13:262][  0]LogStealthTuningSchemaGen: Error: STEALTH TUNING SCHEMA GEN: FAIL (1 error(s))
+    [2026.10.25-18.31.13:262][  0]LogStealthTuningSchemaGen: Error: STEALTH TUNING SCHEMA GEN: FAIL (1 error(s))
+REGENERATE-TUNING-SCHEMA: FAIL [generate] generator failed: [2026.10.25-18.31.13:262][  0]LogStealthTuningSchemaGen: Error: STEALTH TUNING SCHEMA GEN: FAIL (1 error(s))
+script exit=1

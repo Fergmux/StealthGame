@@ -1,0 +1,6 @@
+Reviewed-Content-Hash: tools/ci/regenerate-tuning-schema.ps1 33f47c5682aeec21076ff943ce5798958b3e505c
+Reviewed-Content-Hash: Source/StealthFoundation/StealthFoundation.Build.cs 2442b3533902959eec0b51da6a452eddf3bc5d96
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tuning/StealthTuningSchema.cpp 853424f967a50c8ea05370b8b532448d624ba119
+Reviewed-Content-Hash: Source/StealthGameEditor/Private/Tuning/StealthTuningSchemaGen.cpp e3f98244f5b30b2a481fdf4d38d66781f75dc585
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/RegenerateTuningSchemaTest.cpp c12f4ef834ac11eb9e0fe20a64b3f4558ea28546
+Story: production/epics/tuning-data-config/story-042-schema-bootstrap-regeneration.md
