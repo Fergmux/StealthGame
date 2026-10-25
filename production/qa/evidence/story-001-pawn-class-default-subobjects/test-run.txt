@@ -1,0 +1,14 @@
+Command: powershell -ExecutionPolicy Bypass -File tools/dev/cycle.ps1 -Tests -NoLaunch (2026-10-25, tree = SCL-001 changes only)
+Build: StealthGameEditor Win64 Development — Result: Succeeded
+Tests (StealthGame. filter): 26/26 Success, 0 Fail, exit 0 (25 existing + StealthGame.Locomotion.PawnClassDefaults)
+  Success  StealthGame.Locomotion.PawnClassDefaults
+  Success  StealthGame.Build.* (7), StealthGame.EditorTools.* (6), StealthGame.Harness.* (6 incl. PIE.ListenServerThreeClients)
+  Success  StealthGame.Rules.* (6 prototype tests)
+Watched to fail first:
+  run 1: crash in the test helper (ClassReps not built: SetUpRuntimeReplicationData added) — test defect, fixed.
+  run 2: 1 failure, "No ACharacter::Restart / ACharacter::PawnClientRestart call" — the secondary source scan matched
+         a code comment; the scan now strips line comments (it demonstrably detects the token).
+Redirect check (editor, MCP ObjectTools.get_class, 2026-10-25):
+  CBP_SandboxCharacter CDO CharMoveComp -> /Script/StealthGame.StealthPrototypeMovementComponent
+  BP_CrowdCharacter    CDO CharMoveComp -> /Script/StealthGame.StealthPrototypeMovementComponent
+  (Config/DefaultEngine.ini [CoreRedirects] resolves the renamed prototype class; no new load error in the editor log.)

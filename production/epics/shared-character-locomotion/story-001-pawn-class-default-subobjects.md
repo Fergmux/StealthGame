@@ -1,12 +1,12 @@
 # Story 001: One Shared Pawn class with an identical default subobject set
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *Derived from ADR-0010 section 2 and Implementation Guidelines (no GDD acceptance criterion owns the class scaffold; AC-SCL-43 and AC-SCL-44 check it from the outside in stories 032 and 041):*
 
-- [ ] GIVEN the compiled `StealthGameplay` module, WHEN the `AStealthPawn` class default object and a spawned instance are reflected, THEN `AStealthPawn` derives from `ACharacter` with `UStealthMovementComponent` as its movement component, carries a non-replicated `UGameplayTasksComponent` and a `UStealthMotionWarpingComponent` (with `WarpTargets` replication disabled) as default subobjects, has `bUseControllerRotationYaw = false`, `bOrientRotationToMovement = true` and `bUseRVOAvoidance = false`, `AutoPossessAI = Disabled`, `AutoPossessPlayer = Disabled`, `SpawnDefaultController` overridden to do nothing, and its `Restart()` override neither calls `Super` nor changes velocity or movement mode.
+- [x] GIVEN the compiled `StealthGameplay` module, WHEN the `AStealthPawn` class default object and a spawned instance are reflected, THEN `AStealthPawn` derives from `ACharacter` with `UStealthMovementComponent` as its movement component, carries a non-replicated `UGameplayTasksComponent` and a `UStealthMotionWarpingComponent` (with `WarpTargets` replication disabled) as default subobjects, has `bUseControllerRotationYaw = false`, `bOrientRotationToMovement = true` and `bUseRVOAvoidance = false`, `AutoPossessAI = Disabled`, `AutoPossessPlayer = Disabled`, `SpawnDefaultController` overridden to do nothing, and its `Restart()` override neither calls `Super` nor changes velocity or movement mode.
 
 *QA clarification (create-stories 2026-10-25, not a GDD change):* the `Restart()` override is asserted through its observable consequence (velocity, movement mode and pending input vector unchanged after the call); "identical default subobjects" is a fixture list of (class, name, replicates) compared across two instances; a source scan for the `Super` call is secondary.
 
@@ -65,11 +65,16 @@
 
 *The code and test files this story creates or changes. `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Public/Server/Core/StealthPawn.h` (planned)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawn.cpp` (planned)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (skeleton only, planned)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMotionWarpingComponent.cpp` (planned)
-- `Source/StealthGameplay/Private/Tests/Locomotion/PawnClassDefaultsTest.cpp` (planned)
+- `Source/StealthGameplay/Public/View/Core/StealthPawn.h` (header in `View/Core/` per the ADR-0010 Key Interfaces amendment, architecture review 2026-10-25 Conflict 4; was planned under `Server/Core/`)
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h` (declares `UStealthMovementComponent`; file name avoids the prototype's `StealthMovementComponent.h`, ADR-0007 rule (f))
+- `Source/StealthGameplay/Public/View/Core/StealthMotionWarpingComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawn.cpp`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp` (skeleton: kind-blind defaults only)
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMotionWarpingComponent.cpp`
+- `Source/StealthGameplay/StealthGameplay.Build.cs` (MotionWarping public; GameplayTasks, AIModule private)
+- `Source/StealthGameplay/Private/Tests/Locomotion/PawnClassDefaultsTest.cpp` (test `StealthGame.Locomotion.PawnClassDefaults`)
+- `Source/StealthGame/Public/StealthMovementComponent.h`, `Private/StealthMovementComponent.cpp`, `Private/StealthCharacter.cpp` (prototype class renamed `UStealthPrototypeMovementComponent`; UHT forbids two `UStealthMovementComponent` classes)
+- `Config/DefaultEngine.ini` (`[CoreRedirects]` for the renamed prototype class)
 
 ---
 
@@ -93,11 +98,23 @@ Test: class and default-subobject parity (ADR-0010 section 2)
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Locomotion/PawnClassDefaultsTest.cpp`, test name `StealthGame.Locomotion.PawnClassDefaults` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.PawnClassDefaults`, 2026-10-25)
 
 ---
 
 ## Dependencies
 
-- Depends on: the module skeleton and `-nullrhi` test runner from `production/epics/tuning-data-config/EPIC.md` (Exit A, bootstrap; stories not yet written, path TBD)
+- Depends on: `production/epics/tuning-data-config/story-002-gameplay-presentation-module-skeletons.md` (module skeleton) and `production/epics/tuning-data-config/story-019-cqtest-headless-proof.md` (`-nullrhi` test runner), both Complete (readiness fix 2026-10-25: the TBD path is now known)
 - Unlocks: `production/epics/shared-character-locomotion/story-002-body-constants-published.md`, `story-004-class-parity-scan.md`, `story-006-single-spawn-site.md`, `story-009-stop-floor.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (`StealthGame.Locomotion.PawnClassDefaults`: CDO derives `ACharacter` with `UStealthMovementComponent`; `bUseControllerRotationYaw` false, `bOrientRotationToMovement` true, `bUseRVOAvoidance` false, `AutoPossessAI`/`AutoPossessPlayer` Disabled; `SpawnDefaultController` spawns nothing even with an AI controller class set; two spawned instances (one possessed by a `APlayerController` stand-in, one by `AAIController`) have the same (class, name, replicates) list and AI possession adds no component; exactly one non-replicated `UGameplayTasksComponent` (the default subobject); `UStealthMotionWarpingComponent.WarpTargets` lifetime row is `COND_Never` (control: the engine parent's row is replicated); `Restart()` keeps Velocity (140,0,0), `MOVE_Walking` and the pending input vector; `DispatchRestart(true)` (the `PawnClientRestart` path) keeps velocity and mode (control: `StopMovementImmediately` zeroes it); AI possession keeps velocity and mode; secondary source scan finds no `Super::Restart`/`ACharacter::Restart`/`SetDefaultMovementMode` call and no `NotifyRestarted`/`DispatchRestart` override, so `ReceiveRestarted` still fires)
+**Decisions** (logged): pawn and movement headers in `Public/View/Core/` (ADR-0010 amendment beats the story's planned `Server/Core/` path; a `Server/` UCLASS would also have to be `NotBlueprintable`, which the reparented `CBP_SandboxCharacter` cannot be); prototype `UStealthMovementComponent` renamed to `UStealthPrototypeMovementComponent` with a `[CoreRedirects]` entry (two UCLASSes of one name cannot coexist; prototype files keep their names so `prototype-exempt.txt` does not grow); production header named `StealthPawnMovementComponent.h` (the generated headers of two `StealthMovementComponent.h` files would collide on the composition root's include path); `AIControllerClass = nullptr` (no `AStealthCrowdController` yet, and `SpawnDefaultController` is a no-op, so no soft reference is needed); `AAIController` stands in for `AStealthCrowdController` in the test.
+**Deviations**: header paths and the prototype rename above (files outside the planned list: prototype movement component files, `StealthCharacter.cpp`, `DefaultEngine.ini`, `StealthGameplay.Build.cs`).
+**Test Evidence**: `production/qa/evidence/story-001-pawn-class-default-subobjects/test-run.txt` (build `Result: Succeeded`; 26/26 `StealthGame.` tests Success; watched to fail first) and `stamp.txt`
+**Run result**: N/A — class scaffold with no pawn spawned in any map yet (the factory is SCL-006); the renamed prototype class was checked live in the editor (both sample character CDOs resolve `StealthPrototypeMovementComponent` through the redirect)
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found
+**Readiness fixes**: Depends-on TBD replaced by the Complete TDC story paths; Manifest Version 2026-10-25e -> 2026-10-25f after reviewing "Changes in 2026-10-25f" (Core additions are the HeadLook filter, factory `ControlKind`, pings, appearance and camera rules: none applies to this scaffold); lint `ac_below_min` (1 < 3) accepted: the single criterion is compound and the QA clarification splits it into five checked facts.

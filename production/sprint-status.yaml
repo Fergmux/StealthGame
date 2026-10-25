@@ -111,11 +111,11 @@ stories:
     name: "One Shared Pawn class with an identical default subobject set"
     file: "production/epics/shared-character-locomotion/story-001-pawn-class-default-subobjects.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "scl-004"
     name: "Class parity scan: no observable path branches on controller kind, with a negative control"
     file: "production/epics/shared-character-locomotion/story-004-class-parity-scan.md"

@@ -10,5 +10,11 @@ public class StealthGameplay : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "StealthFoundation" });
+
+		// ADR-0010 Shared Pawn (story SCL-001): UStealthMotionWarpingComponent derives from a MotionWarping type in a
+		// public header, so MotionWarping is public; GameplayTasks and AIModule (AI possession in
+		// tests, the crowd controller later) stay private.
+		PublicDependencyModuleNames.Add("MotionWarping");
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayTasks", "AIModule" });
 	}
 }

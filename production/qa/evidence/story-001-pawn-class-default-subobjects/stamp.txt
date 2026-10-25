@@ -1,0 +1,9 @@
+Reviewed-Content-Hash: Source/StealthGameplay/Public/View/Core/StealthPawn.h a4d18c460cc9af8c7275ed8bf93f86fed3bb2e12
+Reviewed-Content-Hash: Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h 66aceaf5c90ef5b50ae0f6f30f5042700cfe371e
+Reviewed-Content-Hash: Source/StealthGameplay/Public/View/Core/StealthMotionWarpingComponent.h 170ad0d131b922d8593297936cf512a566c47ad6
+Reviewed-Content-Hash: Source/StealthGameplay/Private/Core/SharedPawn/StealthPawn.cpp bab2699b192e102e413d3c6b2834f82d97dd4c6f
+Reviewed-Content-Hash: Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp e551ef7cf5befc9ce7597ec00a800c5f214ddb51
+Reviewed-Content-Hash: Source/StealthGameplay/Private/Core/SharedPawn/StealthMotionWarpingComponent.cpp bbd902778d6dfcc7b707352daf0bc3a9bcdb8839
+Reviewed-Content-Hash: Source/StealthGameplay/Private/Tests/Locomotion/PawnClassDefaultsTest.cpp 21ea30bbbd2bd19d1a89a6040a69ec88025b8fab
+Reviewed-Content-Hash: Source/StealthGame/Public/StealthMovementComponent.h 1fb94d213ffadd1e98ad6c23ec1074f42fce5c72
+Story: production/epics/shared-character-locomotion/story-001-pawn-class-default-subobjects.md

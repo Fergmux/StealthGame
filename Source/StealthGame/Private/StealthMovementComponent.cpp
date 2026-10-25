@@ -2,14 +2,14 @@
 #include "StealthCharacter.h"
 #include "StealthSettings.h"
 
-UStealthMovementComponent::UStealthMovementComponent()
+UStealthPrototypeMovementComponent::UStealthPrototypeMovementComponent()
 {
 	// NPCs follow paths through the same acceleration model players use, so motion matching
 	// produces the same kind of starts, stops and turns for both (Pillar 1, TD-FEASIBILITY risk 1).
 	NavMovementProperties.bUseAccelerationForPaths = true;
 }
 
-float UStealthMovementComponent::GetMaxSpeed() const
+float UStealthPrototypeMovementComponent::GetMaxSpeed() const
 {
 	float Speed = Super::GetMaxSpeed();
 
@@ -27,7 +27,7 @@ float UStealthMovementComponent::GetMaxSpeed() const
 	return Speed;
 }
 
-void UStealthMovementComponent::SetMovementMode(EMovementMode NewMovementMode, uint8 NewCustomMode)
+void UStealthPrototypeMovementComponent::SetMovementMode(EMovementMode NewMovementMode, uint8 NewCustomMode)
 {
 	// The Game Animation Sample switches to MOVE_Flying for the duration of a traversal montage.
 	// Informants may not use parkour: refuse the switch and cancel the traversal.
