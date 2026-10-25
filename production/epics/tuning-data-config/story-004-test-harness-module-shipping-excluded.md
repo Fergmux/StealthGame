@@ -1,12 +1,12 @@
 # Story 004: StealthTestHarness module excluded from Shipping and Test
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -65,14 +65,12 @@
 
 ## Files
 
-- `Source/StealthTestHarness/StealthTestHarness.Build.cs`
+- `Source/StealthTestHarness/StealthTestHarness.Build.cs` (Private deps Core, CoreUObject, Engine, StealthFoundation, StealthGameplay, StealthPresentation)
 - `Source/StealthTestHarness/Private/StealthTestHarnessModule.cpp`
 - `Source/StealthTestHarness/Private/StealthTestHarnessModule.h`
-- `Source/StealthTestHarness/Private/Tests/HarnessModuleLoadsTest.cpp`
-- `Source/StealthFoundation/Private/Tests/Build/HarnessModuleExclusionsTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/HarnessModuleLoadsTest.cpp` (test `StealthGame.Harness.ModuleLoadsInDevelopment`)
+- `Source/StealthFoundation/Private/Tests/Build/HarnessModuleExclusionsTest.cpp` (test `StealthGame.Build.HarnessModuleExclusions`, also asserts the harness is loaded, non-vacuously)
 - `StealthGame.uproject`
-
----
 
 ## QA Test Cases
 
@@ -92,7 +90,7 @@
 **Required evidence**:
 - Integration: the named automation tests `StealthGame.Build.HarnessModuleExclusions` (`Source/StealthFoundation/Private/Tests/Build/HarnessModuleExclusionsTest.cpp`) and `StealthGame.Harness.ModuleLoadsInDevelopment` (`Source/StealthTestHarness/Private/Tests/HarnessModuleLoadsTest.cpp`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Build.HarnessModuleExclusions`, `StealthGame.Harness.ModuleLoadsInDevelopment`; 2026-10-25)
 
 ---
 
@@ -101,3 +99,14 @@
 - Depends on: `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`
 - Unlocks: `production/epics/tuning-data-config/story-006-shipping-symbol-check.md`, `production/epics/tuning-data-config/story-018-replication-system-assertion.md`, `production/epics/tuning-data-config/story-019-cqtest-headless-proof.md`
 - Open verification claims from the plan's Note lines: whether UBT and the runtime module loader honour `TargetConfigurationDenyList` in a cooked Development game is [U] (ADR-0007 Engine Compatibility Verification 2); the cooked observation belongs to stories 006 and 020.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: `StealthGame.Build.HarnessModuleExclusions`: deny list exactly {Shipping, Test}, no Target.cs ExtraModuleNames lists the harness, no foreign Build.cs names StealthTestHarness or StealthGameEditor, harness loaded; seeded-violation controls for each check detected inline. `StealthGame.Harness.ModuleLoadsInDevelopment` passes.)
+**Deviations**: Harness Private deps list StealthGameplay and StealthPresentation as well as StealthFoundation, because both exist now (story 002 landed first); ADR-0007 says "all runtime modules", StealthGame joins in story 019. The `IsModuleLoaded` assertion is repeated in the Foundation-hosted static test so a load failure is observable (the option the story offers), while the harness-hosted test keeps its planned name. Manifest Version updated to 2026-10-25f.
+**Open [U]**: cooked-Development honouring of the deny list is still unobserved (stories 006/020).
+**Test Evidence**: `production/qa/evidence/story-004-test-harness-module-shipping-excluded/test-run.txt` (build `Result: Succeeded`; 16/16 `StealthGame.` tests Success) and `stamp.txt`
+**Run result**: N/A — a test-only module and static checks; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

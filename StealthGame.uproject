@@ -29,6 +29,15 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "StealthTestHarness",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"TargetConfigurationDenyList": [
+				"Shipping",
+				"Test"
+			]
+		},
+		{
 			"Name": "StealthGameEditor",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"
