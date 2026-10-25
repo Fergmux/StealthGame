@@ -1,5 +1,5 @@
 # Architecture Traceability Index
-Last Updated: 2026-10-25 (Technical Setup 2026-10-25b fix pass: the 21 partial rows closed by ADR amendments; before that, architecture review 2026-10-25b: full re-run; 13 new TR-IDs; coverage re-verified row by row)
+Last Updated: 2026-10-25 (S10 resolution: TR-ivp-004 row annotated with ADR-0003 amendment "S10 resolution 2026-10-25", coverage unchanged; before that, Technical Setup 2026-10-25b fix pass: the 21 partial rows closed by ADR amendments; before that, architecture review 2026-10-25b: full re-run; 13 new TR-IDs; coverage re-verified row by row)
 Engine: Unreal Engine 5.8 (installed 5.8.4)
 Source review: `docs/architecture/architecture-review-2026-10-25b.md` (full mode, workflow full; supersedes the counts of `architecture-review-2026-10-25.md`)
 
@@ -85,7 +85,7 @@ Source review: `docs/architecture/architecture-review-2026-10-25b.md` (full mode
 | TR-ivp-001 | information-visibility-policy.md | IVP | `CanViewerKnow` server query, default deny, seven viewer classes | ADR-0003, ADR-0001 | ✅ Accepted (closed by Technical Setup 2026-10-25b: ADR-0003 Key Interfaces: `CanViewerKnow`/`GetViewerClass`, seven `EViewerClass`, IVP R3 matrix normative, default deny on every carrier) |
 | TR-ivp-002 | information-visibility-policy.md | IVP | One carrier kind per audience | ADR-0001 | ✅ Accepted |
 | TR-ivp-003 | information-visibility-policy.md | IVP | UE default overrides of R5 (pawn links, Instigator, possession ForceNetUpdate, RemoteViewPitch16, spectator) | ADR-0001 | ✅ Accepted |
-| TR-ivp-004 | information-visibility-policy.md | IVP | Concealment hybrid: quantised server cull for non-allies + client presentation hide | ADR-0003 | ✅ Accepted |
+| TR-ivp-004 | information-visibility-policy.md | IVP | Concealment hybrid: quantised server cull for non-allies + client presentation hide | ADR-0003 (incl. amendment "S10 resolution 2026-10-25": re-open guard, lost-pawn repair, warm-up; ADR-0002 §9 budget for re-open presentation; gate: S10 re-run, story ivp-056) | ✅ Accepted |
 | TR-ivp-005 | information-visibility-policy.md | IVP | Relevancy varies by concealment and relation only | ADR-0003 | ✅ Accepted |
 | TR-ivp-006 | information-visibility-policy.md | IVP | Single allowlist file, reflection audit and net-config audit on defaults and live instances | ADR-0003, ADR-0008 | ✅ Accepted |
 | TR-ivp-007 | information-visibility-policy.md | IVP | Leak catalogue with CRITICAL ship gate; per-commit canaries | ADR-0003, ADR-0008 | ✅ Accepted |

@@ -1,7 +1,7 @@
 # Story 028: At the swap server time the body, shadow and reflections vanish on the same frame for opponent and ally clients
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: spike R5 (`story-021-spike-r5-hidden-primitive-leaks.md`) and spikes S9/S10 (IVP `story-004-…`, `story-005-…`) have not reported Update 2026-10-25: spike S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) — the in-flight cull/un-cull race can leave a client without the pawn (~1-2 % under loss), the re-created pawn renders one un-evaluated frame, and presentation times need ADR-0002's clock estimator; a superseding ADR to ADR-0003 must decide the fixes before this story can proceed.
+> **Status**: Blocked — BLOCKED: spike R5 (`story-021-spike-r5-hidden-primitive-leaks.md`) and spikes S9/S10 (IVP `story-004-…`, `story-005-…`) have not reported Update 2026-10-25 (S10 resolution): the S10 FAIL is resolved by ADR-0003 amendment "S10 resolution 2026-10-25" (re-open guard with bounded timeout and fresh channel, lost-pawn repair, warm-up, ADR-0002 clock budget); the S10 gate is now **Blocked: story-056 (S10 fix + re-run)** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); other gates unchanged.
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: M

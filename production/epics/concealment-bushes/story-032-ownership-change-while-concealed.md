@@ -1,7 +1,7 @@
 # Story 032: A disconnect, grace expiry or rejoin never cancels or exposes a concealed pawn instantly
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: spikes S9 (`production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md`) and S10 (`production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md`) have not reported; the former-ally cull at the release boundary depends on them Update 2026-10-25: spike S10 reported FAIL (production/qa/spikes/2026-10-25_S10.md) — the in-flight cull/un-cull race can leave a client without the pawn (~1-2 % under loss), the re-created pawn renders one un-evaluated frame, and presentation times need ADR-0002's clock estimator; a superseding ADR to ADR-0003 must decide the fixes before this story can proceed.
+> **Status**: Blocked — BLOCKED: spikes S9 (`production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md`) and S10 (`production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md`) have not reported; the former-ally cull at the release boundary depends on them Update 2026-10-25 (S10 resolution): the S10 FAIL is resolved by ADR-0003 amendment "S10 resolution 2026-10-25" (re-open guard with bounded timeout and fresh channel, lost-pawn repair, warm-up, ADR-0002 clock budget); the S10 gate is now **Blocked: story-056 (S10 fix + re-run)** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); other gates unchanged.
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M

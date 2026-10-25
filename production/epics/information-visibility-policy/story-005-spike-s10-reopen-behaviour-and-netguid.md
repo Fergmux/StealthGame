@@ -1,7 +1,7 @@
 # Story 005: Spike S10, a re-opened pawn is a new actor that presents correctly from replicated state
 
 > **Epic**: Information Visibility Policy
-> **Status**: In Review — spike reported FAIL (production/qa/spikes/2026-10-25_S10.md); awaiting the lead's sign-off of the retained frame sequence (production/qa/evidence/s10-reopen-evidence.md) and the superseding ADR-0003 decision
+> **Status**: Complete — spike delivered its finding: FAIL (production/qa/spikes/2026-10-25_S10.md); lead sign-off recorded 2026-10-25 under the user's unattended authorisation; design fix decided by ADR-0003 amendment "S10 resolution 2026-10-25"; the fix and re-run are story-056
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
@@ -90,7 +90,7 @@ When a culled pawn is re-opened (un-cull, or a death-write re-open) the client c
 **Required evidence**:
 - Integration: a written spike report `production/qa/spikes/<date>_S10.md` plus the retained, lead-signed frame sequence in `production/qa/evidence/`.
 
-**Status**: [x] Report and frame sequence written; lead sign-off pending
+**Status**: [x] Report and frame sequence written; lead sign-off recorded 2026-10-25 (unattended authorisation, `production/qa/evidence/s10-reopen-evidence.md`)
 
 ---
 
@@ -100,12 +100,14 @@ When a culled pawn is re-opened (un-cull, or a death-write re-open) the client c
 - Unlocks: `production/epics/information-visibility-policy/story-006-spike-s12-cull-delay-vs-measured-l99.md`, `production/epics/information-visibility-policy/story-024-concealment-cull-audience.md`, `production/epics/information-visibility-policy/story-027-concealment-local-hide-at-swap.md`, `production/epics/information-visibility-policy/story-028-blind-spot-attack-on-culled.md`, `production/epics/information-visibility-policy/story-029-uncull-lead-bound.md`, `production/epics/information-visibility-policy/story-044-raw-bunch-schema-parity.md`, `production/epics/information-visibility-policy/story-052-strike-id-oracle-parity.md`
 
 ## Completion Notes
-**Status**: In Review (not closed) — 2026-10-25
-**Verdict**: FAIL (measured and recorded as the criterion asks): new client actor on every re-open and the same NetGUID every time (no allocation from re-opens), root exact, 0 crashes/ensures, T_reopen ≈ 11.5 ms median / 20 ms p99 (≤ 33 ms) — but (1) the in-flight race leaves ~1 % (StealthLeak1) / ~2 % (StealthLeak2) of race re-opens without the pawn on the client; (2) every re-open's first rendered frame shows an un-evaluated (collapsed) pose; (3) pose and death times are ~150 ms late with the engine's default server clock. A candidate race guard (re-open held until the close is acknowledged) removed every race failure. Needed design changes are listed in the report for a superseding ADR to ADR-0003.
-**Criteria**: the measurement criterion is met except the **lead sign-off** of the retained frame sequence (pending) — that is why the story is not Complete.
+**Completed**: 2026-10-25
+**Verdict**: FAIL — a valid spike outcome: the spike answered every question it was set and found that ADR-0003's re-open path is not safe as written. PASS parts: new client actor on every re-open and the same NetGUID every time (no allocation from re-opens), root exact, 0 crashes/ensures, T_reopen ≈ 11.5 ms median / 20 ms p99 (≤ 33 ms). FAIL parts: (1) the in-flight race leaves ~1 % (StealthLeak1) / ~2 % (StealthLeak2) of race re-opens without the pawn on the client; (2) every re-open's first rendered frame shows an un-evaluated (collapsed) pose; (3) pose and death times are ~150 ms late with the engine's default server clock. A candidate race guard (re-open held until the close is acknowledged) removed every race failure but held up to 8 s.
+**Criteria**: 1/1 — the measurement criterion is met (everything measured and recorded, verdict written, frame sequence retained and lead-signed). The criterion asks for the measurement, not for a PASS; the FAIL is the finding.
+**Lead sign-off**: recorded 2026-10-25 in `production/qa/evidence/s10-reopen-evidence.md` under the user's unattended authorisation (the user authorised every change and decision for this run): the retained strips show the one-frame collapsed pose they are cited for; the sign-off approves the evidence as a record of the FAIL, not the presentation.
 **Decisions**: "safe" for the race = 0 crashes, ensures and faults, where a client left without a relevant pawn is a fault; registries absent on the prototype reported as a CONCERN; case B every 20th cycle so the crowd lasts the run.
-**Deviations**: none in scope.
+**Design outcome**: ADR-0003 amendment "S10 resolution 2026-10-25" (S10-R1 to S10-R12): per-connection re-open guard on the in-sequence close acknowledgement, bounded by `ReopenAckTimeoutMs` (350 ms) with a forced fresh channel; client-reported lost-pawn repair through `NMT_ActorChannelFailure`; hidden-until-first-pose warm-up on every client pawn actor; S10's 16.7 ms pose bound replaced by ADR-0002 §9's unchanged estimator budget (p95 ≤ 15 ms, p99 ≤ 30 ms; ADR-0002 amendment "S10 resolution 2026-10-25"). Amended, not superseded: the core decision stands (see the amendment's rationale).
+**Deviations**: none in scope. The story text said a failure is handled by a superseding ADR; the amendment records why an amendment was used instead.
 **Test Evidence**: `production/qa/evidence/story-005-spike-s10-reopen-behaviour-and-netguid/` (analysis JSON of 5 runs, launch lines, frames).
 **Run result**: OBSERVED — `production/qa/evidence/story-005-spike-s10-reopen-behaviour-and-netguid/frames/` (render client C3, culled → re-open frames; the first re-open frame shows the pop).
 **Reviewed by**: focused self-review (unattended run): fault counter made thread-safe (log devices can be called from any thread); relevancy hook removed in OnFinish; no forced relevancy or forced update used.
-**Dependents**: stay Blocked (S10 FAIL; a superseding ADR decides); their status notes cite this report.
+**Dependents**: the S10 gate of every dependent now reads "Blocked: story-056 (S10 fix + re-run)" (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); they unblock when story-056 reports PASS.

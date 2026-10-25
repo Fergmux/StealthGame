@@ -136,7 +136,8 @@ state_ownership:
     owner_system: information-visibility-policy
     adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
     # old interface (2026-10-25, before user decision 2026-10-25): "Per-pawn server-only record {Visible|CullPending|Culled, CommitServerTime, CullDeadline, Reason}; written only through IConcealmentCullSource (SetCullState, MarkKilledConcealed) by Concealment; read by AStealthPawn::IsNetRelevantFor via UVisibilityPolicy"
-    interface: "Per-pawn server-only record {Visible|CullPending|Culled, CommitServerTime, CullDeadline, Reason}; written only through IConcealmentCullSource (SetCullState; MarkKilledConcealed retired 2026-10-25, a killed-concealed victim re-opens at the death write with bDiedConcealed) by Concealment; read by AStealthPawn::IsNetRelevantFor via UVisibilityPolicy"
+    # old interface (before S10 resolution 2026-10-25): "Per-pawn server-only record {Visible|CullPending|Culled, CommitServerTime, CullDeadline, Reason}; written only through IConcealmentCullSource (SetCullState; MarkKilledConcealed retired 2026-10-25, a killed-concealed victim re-opens at the death write with bDiedConcealed) by Concealment; read by AStealthPawn::IsNetRelevantFor via UVisibilityPolicy"
+    interface: "Per-pawn server-only record {Visible|CullPending|Culled, CommitServerTime, CullDeadline, Reason} plus per-connection pending-close entries {Connection, ClosedChannel, ChIndex, CloseSentServerTime, bStale} and an unverified flag (S10 resolution 2026-10-25); written only through IConcealmentCullSource (SetCullState; MarkKilledConcealed retired 2026-10-25) by Concealment and by the Policy's own cull tick; read by AStealthPawn::IsNetRelevantFor via UVisibilityPolicy (IsReopenHeld)"
     write_access: information-visibility-policy (state machine); concealment pushes inputs only
     referenced_by:
       - docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
@@ -1655,6 +1656,35 @@ interfaces:
       - docs/architecture/adr-0011-pawn-command-interface-input.md
     added: 2026-10-25
     revised: ""
+  # --- ADR-0003 amendment "S10 resolution 2026-10-25" ---
+  - contract: lost_pawn_repair_report
+    status: active
+    pattern: direct_call
+    producer: shared-character-locomotion
+    consumers:
+      - information-visibility-policy
+    adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
+    signal_signature: "Client AStealthPawn (OnActorChannelOpen count >= 2, then network destroy) queues a probe; next client tick sends NMT_ActorChannelFailure(LastOpenChIndex) only if that channel is still open for its NetGUID; server AStealthPlayerController::NotifyActorChannelFailure only queues; the Policy cull tick re-checks the slot, relevance and the unverified flag, then RequestFreshChannel (close + guarded re-open); valid reports over ChannelRepairMaxPerSec deferred, never dropped"
+    referenced_by:
+      - docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
+      - docs/architecture/adr-0017-concealment-per-viewer-presentation.md
+    added: 2026-10-25
+    revised: ""
+  - contract: client_pawn_warmup
+    status: active
+    pattern: shared_resource
+    producer: shared-character-locomotion
+    consumers:
+      - concealment-bushes
+      - animation-significance
+    adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
+    signal_signature: "Every client pawn actor starts warm-up hidden; hidden = latch OR NOT bPoseWarm; bPoseWarm set at the first OnBoneTransformsFinalized after RefreshPresentation with IsServerClockSynced(); warm-up mode AlwaysTickPoseAndRefreshBones at rate 1; failsafe ReopenWarmupMaxFrames"
+    referenced_by:
+      - docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
+      - docs/architecture/adr-0013-animation-motion-matching-significance.md
+      - docs/architecture/adr-0017-concealment-per-viewer-presentation.md
+    added: 2026-10-25
+    revised: ""
 performance_budgets:
   # --- from adr-registry-staging\ADR-0002 ---
   - system: resolution-queue
@@ -2690,6 +2720,17 @@ api_decisions:
       - docs/architecture/adr-0023-playtest-telemetry-hooks.md
     added: 2026-10-24
     revised: ""
+  # --- ADR-0003 amendment "S10 resolution 2026-10-25" ---
+  - purpose: reopen_close_ack_signal
+    status: active
+    api: "In-sequence close acknowledgement read every server frame from the closed channel's slot: acknowledged when Connection->Channels[ChIndex] != ClosedChannel or the same object is no longer Closing; entry made only if Closing is true after Close(); hold bounded by ReopenAckTimeoutMs (350 ms) then fresh channel"
+    not: "Close bunch packet ack alone; sampled OpenChannels scan; unbounded hold"
+    adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
+    reason: "Client processes reliable bunches in channel order, so only in-sequence release proves the close was processed (UChannel::ReceivedAcks / CleanUp, 5.8.4); S10 measured unbounded holds up to 8 s"
+    referenced_by:
+      - docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
+    added: 2026-10-25
+    revised: ""
 
 # Example:
 #
@@ -2794,7 +2835,9 @@ forbidden_patterns:
   # --- from adr-registry-staging\ADR-0003 ---
   - pattern: pawn_relevancy_super_or_kind_input
     status: active
-    description: "AStealthPawn::IsNetRelevantFor never calls Super and reads only the cull record and viewer relation; no dormancy, cull distance, owner relevancy or team relevancy on pawns"
+    # old description (before S10 resolution 2026-10-25): "AStealthPawn::IsNetRelevantFor never calls Super and reads only the cull record and viewer relation; no dormancy, cull distance, owner relevancy or team relevancy on pawns"
+    description: "AStealthPawn::IsNetRelevantFor never calls Super and reads only the spawn gate, the cull record (including its per-connection pending-close entries) and the viewer relation; no dormancy, cull distance, owner relevancy or team relevancy on pawns"
+    revised: "2026-10-25"
     why: "Engine Super clauses (controller, owner, based-on) keep concealed or player pawns relevant by kind"
     adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
     added: 2026-10-24
@@ -3362,4 +3405,11 @@ forbidden_patterns:
     description: "Adding in-game free-text team chat or in-engine voice in the MVP"
     why: "Text on the wire is forbidden (ADR-0021); in-engine voice/chat disabled (IVP L11); deferred to VS by user decision 2026-10-25 (PNG-R11)"
     adr: docs/architecture/adr-0021-ui-hud-layering-commonui.md
+    added: 2026-10-25
+  # --- ADR-0003 amendment "S10 resolution 2026-10-25" ---
+  - pattern: reopen_while_close_unacknowledged
+    status: active
+    description: "Re-opening a pawn to a connection whose previous close for that pawn is not acknowledged in sequence (except after ReopenAckTimeoutMs, on a fresh channel with the lost-pawn repair armed); adding a forced update at a hold's release"
+    why: "The new open can be processed before the late close, which then destroys the re-bound actor (S10: ~1-2 % of race re-opens lost the pawn); a release-time forced update sends a cull-correlated update to every connection"
+    adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
     added: 2026-10-25

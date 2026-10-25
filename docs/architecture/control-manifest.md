@@ -2,7 +2,7 @@
 
 > **Engine**: Unreal Engine 5.8 (installed 5.8.4, CL 58902052)
 > **Last Updated**: 2026-10-25
-> **Manifest Version**: 2026-10-25f (same-day update after the architecture review 2026-10-25b fixes and the "Technical Setup 2026-10-25b" amendments; see "Changes in 2026-10-25f" and the earlier change sections at the end)
+> **Manifest Version**: 2026-10-25g (same-day update after the S10 resolution amendments to ADR-0003, ADR-0002, ADR-0013 and ADR-0017; see "Changes in 2026-10-25g" and the earlier change sections at the end)
 > **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016, ADR-0017, ADR-0018, ADR-0019, ADR-0020, ADR-0021, ADR-0022, ADR-0023 (all **Accepted** 2026-10-25; several conditionally, see "Conditional acceptance")
 > **Status**: Active — regenerate with `/create-control-manifest update` when ADRs change
 
@@ -56,7 +56,9 @@ The user accepted all 23 ADRs on 2026-10-25. For the ADRs below the acceptance
 is **conditional**: every spike or verification item named in the ADR's earlier
 status text must still report before implementation depends on it, and a failed
 spike is handled by a superseding ADR (then a regenerated manifest), not by
-editing the ADR. A rule that rests on an unreported spike carries the spike ID in
+editing the ADR. Exception (2026-10-25): S10 failed inside mechanisms ADR-0003
+had handed to it and was resolved by ADR-0003's dated, gated amendment "S10
+resolution 2026-10-25"; its gate is now the S10 re-run (story ivp-056). A rule that rests on an unreported spike carries the spike ID in
 its text (for example "[U, R4]", "spike R2 decides", "provisional pending the
 50-character spike"), and each layer's Engine API Constraints ends with a
 **Spikes owning [U] claims** bullet. A story that depends on such a rule is not
@@ -65,14 +67,14 @@ ready until its spike has reported.
 | ADR | Outstanding gate(s) before dependent implementation |
 |---|---|
 | ADR-0001 | Spikes S1, S2, S14 (S7, S11 only if Iris is ever considered) |
-| ADR-0003 | Spikes S9, S10, S12, S13 |
+| ADR-0003 | Spike S13; the **S10 re-run** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`, after S10 FAIL; amendment "S10 resolution 2026-10-25"). S9 PASS, S12 confirmed 250/250 |
 | ADR-0010 | Traversal under net emulation, S8, S14, H1, P1 |
 | ADR-0011 | Engine Compatibility verification items (V1-V6); `input-interaction-framework.md` re-review |
 | ADR-0012 | CPA-V1..CPA-V5 |
 | ADR-0013 | R3 on RTX 3060-class hardware; ANIM-V1..ANIM-V6 |
 | ADR-0016 | 60-character spike (`NpcCount` 50 + 10 players; AC-CNB-26 capture on the reference host); §10 cost rule provisional until then |
-| ADR-0017 | S-CON-1, R5, S9/S10 (`FActionState.StartServerTime` and `FDeathState.bDiedConcealed` approved 2026-10-25) |
-| ADR-0018 | Through its dependencies: S1, S2, S10, S14; amendment requests to owning ADRs |
+| ADR-0017 | S-CON-1, R5, S10 re-run (story ivp-056) (`FActionState.StartServerTime` and `FDeathState.bDiedConcealed` approved 2026-10-25) |
+| ADR-0018 | Through its dependencies: S1, S2, S10 re-run (story ivp-056), S14; amendment requests to owning ADRs |
 | ADR-0019 | Amendment requests to owning ADRs (the `T_due` carrier was decided 2026-10-25: C-TeamView owner part) |
 | ADR-0020 | Objectives Chain GDD re-review; game-designer sign-off on the two GDD interpretations (§2, §5.3) — no spike |
 | ADR-0021 | UI-V1..UI-V4; HUD and Teammate Markers GDD re-reviews |
@@ -111,14 +113,17 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Every new replicated field, fact, audience, condition or replicated class ships with a Visibility Policy row and a signed-off allowlist row**; the reflection audit fails the build otherwise — source: ADR-0001, ADR-0003
 - **The game NetDriver runs the legacy replication system and the harness asserts it at startup** — source: ADR-0001
 - **Pawn net config is set only from tuning values, through the 5.5+ setters (`SetNetUpdateFrequency`, `SetMinNetUpdateFrequency`, `SetNetCullDistanceSquared`), identically for every pawn** — source: ADR-0003
-- **`AStealthPawn::IsNetRelevantFor` does not call `Super`**; its inputs are the per-connection spawn gate (checked first), the Policy's cull record and the viewer's relation — source: ADR-0003 (spawn gate: Technical Setup 2026-10-25b)
+- **`AStealthPawn::IsNetRelevantFor` does not call `Super`**; its inputs are the per-connection spawn gate (checked first), the Policy's per-connection pending-close entries (re-open hold, checked second), the Policy's cull record and the viewer's relation — source: ADR-0003 (spawn gate: Technical Setup 2026-10-25b; hold: S10 resolution 2026-10-25)
 - **`ForceNetUpdate()` on a pawn forwards only inside `FStealthForcedNetUpdate` with an allowed reason, at most once per pawn per frame**; the unscoped possession call is dropped and the 15 Hz cadence carries the change — source: ADR-0003, ADR-0001
 - **`PreReplication` writes `RemoteViewPitch16` from `HeadLook` for every pawn, after `Super`** — source: ADR-0003
 - **Every simulated proxy uses exponential smoothing with the same tuning values**, including the listen-server simulated smoothing times — source: ADR-0003
 - **Outcome-bearing replicated structs serialise to a fixed bit width** — source: ADR-0003
-- **The concealment cull lands on the global boundary grid and closes the channel explicitly per denied connection in the cull tick**, with no client acknowledgement wait; un-cull happens in the same server step as the state change — source: ADR-0003
+- **The concealment cull lands on the global boundary grid and closes the channel explicitly per denied connection in the cull tick**, with no client acknowledgement wait; un-cull returns the record to `Visible` in the same server step as the state change, and each connection's channel re-opens per the re-open guard below — source: ADR-0003
 - **The teammate fallback feed is added in the same frame a teammate's channel goes missing, to teammate connections only; every entry carries a `uint8 Seq` advanced on every feed tick** — source: ADR-0003
 - **Client code tolerates a relevancy destroy and initialises a re-created actor from replicated state only** — source: ADR-0003
+- **Re-open guard: every Policy relevancy close that actually sent a close bunch adds a per-(pawn, connection) pending-close entry; the pawn is not relevant to that connection until the closed channel's in-sequence acknowledgement (its slot no longer holds the closing channel), read every server frame in the cull tick, or until `ReopenAckTimeoutMs` (350 ms), after which it re-opens on a fresh channel and the pair is flagged unverified; a held re-open opens at the pawn's next regular consider (no forced update)** — source: ADR-0003 (S10 resolution 2026-10-25)
+- **Lost-pawn repair: a client pawn instance that received two channel opens and is then destroyed by the network queues a probe; on the next client tick it reports `NMT_ActorChannelFailure(LastOpenChIndex)` only if that channel is still open for its NetGUID and the connection is open; the server's `NotifyActorChannelFailure` only queues, and the cull tick re-checks the slot and repairs (close + guarded re-open) unverified pairs, deferring valid reports above `ChannelRepairMaxPerSec` (never dropping them)** — source: ADR-0003 (S10 resolution 2026-10-25)
+- **Every client pawn actor (every creation path and kind, the owner's included) starts warm-up hidden (hidden = latch OR NOT `bPoseWarm`) and is shown only after a bone-transform finalisation that follows its presentation apply with `IsServerClockSynced()` true (failsafe `ReopenWarmupMaxFrames`, counted)** — source: ADR-0003, ADR-0017 (S10 resolution 2026-10-25)
 - **`UVisibilityPolicy::CanViewerKnow(FViewerId, FSubjectRef, EFact)` and `GetViewerClass(FViewerId, FSubjectRef)` are server-only (`Public/Server/`); `Viewer` comes only from the server connection's PC → `FViewerId` cache, never from client input; `EViewerClass` has exactly seven values (`SelfActive`, `SelfInformant`, `Teammate`, `TeammateInformant`, `Opponent`, `OpponentInformant`, `PostRound`) computed in IVP R2 order; the compiled fact matrix equals IVP R3 row for row** — source: ADR-0003 (Technical Setup 2026-10-25b)
 - **Default deny: `CanViewerKnow` returns false and reports to the injected fault sink for an unlisted fact, an unknown viewer, a client call or an off-game-thread call; a fact/viewer pair with no matrix row is denied on properties (allowlist gate), RPCs (every client-facing RPC field maps to an R3 row) and logs** — source: ADR-0003 (Technical Setup 2026-10-25b)
 - **`AStealthPawn::IsNetRelevantFor` checks the per-connection spawn gate before every §5.4 clause: the gate is closed when the viewer-cache entry is created (login, rejoin, controller swap, new round epoch) and opens only when Session moves that connection to `Connected` for this round; while closed, every pawn (the connection's own included) is not relevant; the gate is a latch (cleared only at connection close, round-travel start and `Reset`), opening it calls no `ForceNetUpdate`, and it ANDs with the concealment cull** — source: ADR-0003 (Technical Setup 2026-10-25b)
@@ -270,6 +275,8 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never rely on the relevancy override alone to cull** — the channel closes 1-6 s late with jitter (a timing channel) — source: ADR-0003
 - **Never hide concealment client-side only or replicate a concealed flag** (internal development switch only); never use dormancy or distance culling for concealment — source: ADR-0003
 - **Never re-open a culled pawn in a strike's outcome slot; a killed-concealed victim re-opens only at the death write, with `bDiedConcealed = true`** — source: ADR-0003
+- **Never re-open a pawn to a connection whose previous close for it is unacknowledged in sequence (except after `ReopenAckTimeoutMs`); never detect the acknowledgement from a sampled `OpenChannels` scan or from the close bunch's packet ack alone; never add a forced update at a hold's release** — source: ADR-0003 (S10 resolution 2026-10-25)
+- **Never send `NMT_ActorChannelFailure` from inside `EndPlay` or channel cleanup, and never close a channel from inside `NotifyActorChannelFailure`; never drop a valid lost-pawn report for rate** — source: ADR-0003 (S10 resolution 2026-10-25)
 - **Never skip `FActionState.StartServerTime` in an `FActionState` write, and never send a feed entry without advancing its `Seq`** — source: ADR-0003, ADR-0017, ADR-0018
 - **Never mutate gameplay state outside the drain; never resolve inline in an RPC body or AI source** — source: ADR-0002
 - **Never order events with a feature-local clock, timestamp, tick-function order or `FTimerManager`** — cross-actor tick order is unspecified and join-order biased — source: ADR-0002
@@ -372,7 +379,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **CQTest `FPIENetworkComponent` + `FNetworkComponentBuilder`** for T2; `EAutomationTestFlags` is an enum class and every test needs an application-context flag; one `Automation RunTests` per `-ExecCmds` — source: ADR-0008
 - **Seamless travel is disabled in single-process PIE** unless `net.AllowPIESeamlessTravel=1`; travel results come from multi-process standalone — source: ADR-0005
 - **`FFileHelper::SaveStringToFile` with `EEncodingOptions::AutoDetect` switches to UTF-16 on non-ANSI text**; telemetry export uses `ForceUTF8WithoutBOM` — source: ADR-0023
-- **Spikes owning [U] claims**: S1, S2, S14 (ADR-0001); drain spawn/estimator (ADR-0002); S9, S10, S12, S13, fixed-width byte capture (ADR-0003); T-1 snapshot atomicity (ADR-0004); S3, S4, S5 (ADR-0005); harness CQTest headless and capture (ADR-0008) — source: ADR-0001..0008
+- **Spikes owning [U] claims**: S1, S2, S14 (ADR-0001); drain spawn/estimator (ADR-0002); S13, the S10 re-run (story ivp-056: probe condition, `OnBoneTransformsFinalized` on a hidden mesh under external tick control), fixed-width byte capture (ADR-0003); T-1 snapshot atomicity (ADR-0004); S3, S4, S5 (ADR-0005); harness CQTest headless and capture (ADR-0008) — source: ADR-0001..0008
 
 ---
 
@@ -444,6 +451,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Footsteps come only from `UStealthStepClockComponent` using the rendered smoothed position; every footstep uses `SC_Footsteps`, one sound class, one attenuation, one priority, no per-pawn parameter** — source: ADR-0013
 - **`C_anim` is measured per ADR-0013 §5 (GT + worker sum, p95, Insights) and reported with the GT share** — source: ADR-0013
 - **The AnimBP consumes `HeadLook` and `RemoteViewPitch16` through one head/neck look-at solver and adds no look logic** (the filter and idle gaze are ADR-0010 §8.1) — source: ADR-0013 (Technical Setup 2026-10-25b)
+- **Warm-up mode: from `PostNetInit` until warm, every newly created client pawn mesh uses `AlwaysTickPoseAndRefreshBones` with external update at rate 1, then returns to its tier (`AlwaysTickPose`); `AlwaysTickPose` alone never satisfies a reveal, because a mesh that is not rendered does not refresh bones** — source: ADR-0013, ADR-0017 (S10 resolution 2026-10-25)
 
 **Layout service**
 - **Round and every feature reach layout only through `UStealthLayoutService`** — source: ADR-0014
@@ -762,7 +770,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Fixed-width `NetSerialize`: return value means "mapped" (return `true`); `Identical` must compare every field incl. `Seq`; use `SerializeBits` (the base archive writes 32 bits for `SerializeInt`) and test width on `FNetBitWriter`** — source: ADR-0018
 - **Destroying a possessed pawn runs `AController::PawnPendingDestroy`** (behaviour differs by controller kind) — source: ADR-0018
 - **Push model: `Net.IsPushModelEnabled` defaults false; the registered sub-object list is off by default** — source: ADR-0020
-- **Spikes owning [U] claims**: 50-character crowd spike and verifications (1)-(8) (ADR-0016); S-CON-1, R5, S9/S10, OQ9 (ADR-0017); byte capture, S10, plate order (ADR-0018); takeover invisibility, H1 (ADR-0019); OBJ-V1..V3 (ADR-0020); TEL-V1..V3 (ADR-0023) — source: ADR-0016..0020, ADR-0023
+- **Spikes owning [U] claims**: 50-character crowd spike and verifications (1)-(8) (ADR-0016); S-CON-1, R5, S10 re-run, OQ9 (ADR-0017); byte capture, S10 re-run, plate order (ADR-0018); takeover invisibility, H1 (ADR-0019); OBJ-V1..V3 (ADR-0020); TEL-V1..V3 (ADR-0023) — source: ADR-0016..0020, ADR-0023
 
 ---
 
@@ -987,3 +995,13 @@ Updated after `docs/architecture/architecture-review-2026-10-25b.md` (its in-rev
 - Presentation: `FTeamPingRingModel` ring, label, hide and rebuild rules; concealed-ping refusal plate and tone through `PingView` (review conflict 2 resolved, ADR-0021/0011/0007).
 - Correction to history: "Changes in 2026-10-25d" said engine `ConnectionTimeout` was "120 s configured"; ADR-0005 now says the value is to be configured (engine base 60 s, `IpNetDriver` section), at least 111 s.
 - Review: TD-MANIFEST (technical-director) returned CONCERNS on the 2026-10-25f draft (six precision fixes: forfeit/void precondition, `ClearBinding` event, ping presenter access, relevancy inputs, Pings clear binding, ADR-0010 rationale; four optional completeness items); all were applied before the write. Unchanged rules are carried forward from 2026-10-25e.
+
+
+## Changes in 2026-10-25g
+
+Updated after spike S10's FAIL (`production/qa/spikes/2026-10-25_S10.md`) and its resolution, recorded as the "S10 resolution 2026-10-25" amendments in ADR-0003 (the decision; S10-R1 to S10-R12), ADR-0002 (budget unchanged, consumer binding), ADR-0013 (warm-up mode) and ADR-0017 (warm-up joins the latch; pose freshness at a reveal). Rules added or changed:
+- Conditional acceptance: ADR-0003's S10 gate is now the S10 re-run (story ivp-056); S9 and S12 recorded as reported; ADR-0017/0018 rows point at the re-run; the superseding-ADR rule gains the recorded exception.
+- Foundation: `IsNetRelevantFor` inputs gain the pending-close hold; the cull rule now says the record returns to `Visible` in the same step and channels re-open per the guard; new rules for the re-open guard (in-sequence close acknowledgement, `ReopenAckTimeoutMs` 350 ms, fresh channel, no forced update at release), the lost-pawn repair (`NMT_ActorChannelFailure` probe, server queues, cull tick repairs unverified pairs, defer never drop) and the warm-up; two Forbidden rules; the [U] list names the S10 re-run's open items.
+- Core: ADR-0013 warm-up mode (`AlwaysTickPoseAndRefreshBones` at rate 1 until warm).
+- Clock: no rule change. ADR-0002 §9's budget (p95 ≤ 15 ms, p99 ≤ 30 ms) now also bounds a re-opened pawn's pose and death-elapsed error at the evaluation instant; S10's 16.7 ms bound is retired; "stay hidden" is pawn presentation's unsynced fallback.
+- Review: rules taken from amendments that passed TD-ADR (CONCERNS, all applied) and engine validation (MINOR NOTES, applied); TD-MANIFEST not re-run (unattended run; rule text copied from the reviewed amendments). Unchanged rules are carried forward from 2026-10-25f.

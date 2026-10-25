@@ -1,7 +1,7 @@
 # Story 035: The prototype concealment code is retired and the networked behaviours it proved still hold
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: depends on blocked stories 012 (S-CON-1), 020, 022, 025, 026, 027, 028 (R5, S9/S10) and 032, 033, 034; nothing is retired until the production system it replaces is observed working
+> **Status**: Blocked — BLOCKED: depends on blocked stories 012 (S-CON-1), 020, 022, 025, 026, 027, 028 (R5, S9/S10) and 032, 033, 034; nothing is retired until the production system it replaces is observed working Update 2026-10-25 (S10 resolution): the S10 FAIL is resolved by ADR-0003 amendment "S10 resolution 2026-10-25" (re-open guard with bounded timeout and fresh channel, lost-pawn repair, warm-up, ADR-0002 clock budget); the S10 gate is now **Blocked: story-056 (S10 fix + re-run)** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); other gates unchanged.
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M

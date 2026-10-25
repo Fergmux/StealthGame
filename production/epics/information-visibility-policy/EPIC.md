@@ -78,7 +78,7 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 | 002 | Spike S2, PlayerState trims hold across seamless travel and rejoin | Integration | Blocked | ADR-0001 |
 | 003 | Spike S14 and S1, rejoin and PawnRecovery possession stay invisible to non-owners | Integration | Blocked | ADR-0001 |
 | 004 | Spike S9, the explicit channel close lands at the deadline and the channel stays closed | Integration | Ready | ADR-0003 |
-| 005 | Spike S10, a re-opened pawn is a new actor that presents correctly from replicated state | Integration | Ready | ADR-0003 |
+| 005 | Spike S10, a re-opened pawn is a new actor that presents correctly from replicated state | Integration | Complete (FAIL finding; fix in 056) | ADR-0003 |
 | 006 | Spike S12, the cull delay and un-cull lead are recomputed from measured L99 | Integration | Ready | ADR-0003 |
 | 007 | Spike S13, CMC cadence and corrections match for PC- and AI-possessed pawns | Integration | Ready | ADR-0003 |
 | 008 | Spike, fixed-width NetSerialize structs are sent with identical bit sizes on the legacy driver | Integration | Ready | ADR-0003 |
@@ -129,5 +129,6 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 | 053 | Pings, reconnect state and the round summary reach only their allowed audience | Integration | Blocked | ADR-0001 |
 | 054 | Pawn net config is equal across NPC, remote, host and just-taken-over pawns | Integration | Blocked | ADR-0003 |
 | 055 | The clock exchange RPCs are owner-only, timestamps-only and under 50 B/s | Integration | Blocked | ADR-0002 |
+| 056 | S10 fix, re-open guard, lost-pawn repair and warm-up implemented in the cull rig and S10 re-run to PASS | Integration | Ready | ADR-0003 (S10 resolution), ADR-0002 |
 
-Blocked stories name their blocker in the story header: an unreported spike (S1 multi-process, S2 travel and rejoin, S14 rejoin and PawnRecovery, S9, S10, S12, S13) or an epic that must land first. Spike stories 001-008 are the gates; stories 002 and 003 wait for the session-travel, participant-state-roster and shared-character-locomotion epics. Granularity is `fine`: one acceptance criterion per story (46 GDD criteria, one derived criterion for TR-ivp-012, eight spike criteria).
+Blocked stories name their blocker in the story header: an unreported spike (S1 multi-process, S2 travel and rejoin, S14 rejoin and PawnRecovery, S9, S12, S13; S10's gate is now story-056, the S10 fix and re-run, after S10 reported FAIL and ADR-0003 was amended 2026-10-25) or an epic that must land first. Spike stories 001-008 are the gates; stories 002 and 003 wait for the session-travel, participant-state-roster and shared-character-locomotion epics. Granularity is `fine`: one acceptance criterion per story (46 GDD criteria, one derived criterion for TR-ivp-012, eight spike criteria).

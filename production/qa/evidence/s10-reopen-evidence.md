@@ -24,6 +24,6 @@ The re-created pawn appears at the right place (root error ≤ 0.5 cm) but its f
 
 | Role | Name | Decision | Date |
 |---|---|---|---|
-| Lead (network/visual) | — | [ ] Approved | pending |
+| Lead (network/visual) | Lead sign-off under the user's unattended authorisation (recorded by the architecture-decision run) | [x] Approved — as evidence of the S10 FAIL (one collapsed first frame per re-open), not as acceptable presentation | 2026-10-25 |
 
-*Captured unattended; the lead has not reviewed it yet.*
+*Captured unattended. Signed off 2026-10-25 under the user's blanket authorisation for this unattended run: the strips show what the report cites them for. The presentation fix (hidden-until-first-pose warm-up) is ADR-0003 amendment "S10 resolution 2026-10-25" S10-R5; its own lead-signed strip is required by `production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`.*
