@@ -1,0 +1,38 @@
+Body_Base T1 audit (art bible 1.3.7 items 1-5, 17-18; 1.3.5 pose set)
+blend: assets\characters\body_base\Body_Base.blend  fbx: assets\characters\body_base\Body_Base.fbx
+Blender 5.2.3 LTS; golden: Source\StealthGameEditor\Private\Tests\CharacterPool\Golden\UefnReferenceChains.txt
+mesh: 12002 verts, 24000 tris, 1 material slot(s), 0 UV layer(s)
+
+[PASS] T1-1 stature: 165.52 cm (contract 165.6 +/- 2.0)
+[PASS] T1-2 head height: 19.26 cm (chin at 146.25; contract 19.3 +/- 1.0)
+       chain thigh                    39.05 cm  golden  39.05  dev  0.00 %
+       chain shin                     42.56 cm  golden  42.56  dev  0.01 %
+       chain foot                     15.15 cm  golden  15.15  dev  0.01 %
+       chain spine                    49.47 cm  golden  49.47  dev  0.01 %
+       chain clavicle_to_upperarm     15.51 cm  golden  15.51  dev  0.01 %
+       chain upperarm                 26.65 cm  golden  26.65  dev  0.01 %
+       chain forearm                  22.35 cm  golden  22.35  dev  0.00 %
+       chain hand                     16.23 cm  golden  16.23  dev  0.02 %
+       chain hand_straight            15.44 cm  golden  15.44  dev  0.00 %
+       chain neck                      9.95 cm  golden   9.95  dev  0.04 %
+[PASS] T1-3 bone chains: worst deviation 0.041 % (tolerance 3.0 %)
+[PASS] T1-4 shoulder/chest/hip (+ foot): shoulder_width 50.79 (51.0 +/- 2.0); chest_depth 27.53 (27.6 +/- 2.0); hip_width 34.71 (34.8 +/- 2.0); foot_length 26.15 (26.3 +/- 1.5)
+[PASS] T1-5 conformity to the UEFN reference body: mean 0.043 cm, p95 0.210 cm, max 0.472 cm (<= 1.0 / 1.5; Body_Base is the conform target, measured against the reference body it was built from)
+[PASS] T1-17 skeleton unmodified, zero extra bones, <= 4 influences: FBX skeleton nodes 88 (golden 88; root type Root); Null nodes none; names equal reference: True; parent hierarchy equals reference: True; max influences 4 (0 vertices above 4)
+[PASS] T1-18 rest pose, scale 1.0, origin at the ground: .blend vs reference: max bone offset 0.0000 cm, max rotation 0.0000 deg; exported FBX re-imported vs reference: 0.0009 cm, 0.0000 deg, mesh Z -0.01 to 165.51 cm; object transforms identity: True; sole Z -0.01 cm
+       FBX settings: {'UpAxis': 1, 'UpAxisSign': 1, 'FrontAxis': 2, 'FrontAxisSign': 1, 'CoordAxis': 0, 'CoordAxisSign': 1, 'UnitScaleFactor': 100.0}
+
+Pose set (1.3.5 proxy poses; intersections between body regions more than 6.0 cm apart along the surface; twist per joint)
+       idle              max intersection  0.87 cm (torso into arm_l); max joint twist  0.00 deg (lowerarm_r); crossing face pairs: crease 74, same-region fold 0; min face area ratio 0.236, faces below 0.25: 1
+       walk              max intersection  0.86 cm (torso into arm_r); max joint twist  0.00 deg (lowerarm_r); crossing face pairs: crease 71, same-region fold 1; min face area ratio 0.173, faces below 0.25: 5
+       run               max intersection  0.00 cm (-); max joint twist  0.00 deg (lowerarm_r); crossing face pairs: crease 12, same-region fold 264; min face area ratio 0.076, faces below 0.25: 21
+       brace             max intersection  0.00 cm (-); max joint twist  0.00 deg (lowerarm_r); crossing face pairs: crease 0, same-region fold 258; min face area ratio 0.018, faces below 0.25: 36
+       assassination     max intersection  0.00 cm (-); max joint twist  4.00 deg (spine_01); crossing face pairs: crease 0, same-region fold 79; min face area ratio 0.018, faces below 0.25: 16
+       vault             max intersection  0.00 cm (-); max joint twist  0.00 deg (lowerarm_r); crossing face pairs: crease 87, same-region fold 410; min face area ratio 0.034, faces below 0.25: 67
+       reversal_counter  max intersection  0.00 cm (-); max joint twist  6.00 deg (spine_01); crossing face pairs: crease 0, same-region fold 148; min face area ratio 0.064, faces below 0.25: 17
+[PASS] AC-2 pose set intersections: worst 0.87 cm (tolerance 1.0)
+[PASS] AC-2 pose set joint twist: worst 6.00 deg (tolerance 15.0)
+
+renders: production/qa/evidence/story-002-body-base-blender-build-oi10/body-base-four-view.png, body-base-pose-set.png (tiles in POSES order)
+
+RESULT: PASS (0 failing: none)

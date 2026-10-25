@@ -1,12 +1,13 @@
 # Story 002: Body_Base built in Blender to the UEFN reference (OI-10)
 
 > **Epic**: Character Pool & Appearance
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Manifest-Note**: current manifest is 2026-10-25f; its changes do not touch this story (readiness 2026-10-25)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -34,9 +35,9 @@
 
 *From art bible 1.3.9 and T1 items 1 to 5 and 17 to 18 (1.3.7), scoped to this story:*
 
-- [ ] **AC-1** GIVEN OI-1 closed (story 001), WHEN Body_Base is built in Blender (one unisex adult bare body, stature 165.6 cm ± 2, soles at Z = 0, origin between the feet, scale 1.0 applied, the UEFN reference A-pose, bone chains equal to `SK_UEFN_Mannequin`'s), THEN art bible T1 items 1 to 5 and 17 to 18 pass by script and the report is saved.
-- [ ] **AC-2** GIVEN skin weights transferred from the UEFN mannequin body mesh and hand-corrected, WHEN the 1.3.5 pose set is applied, THEN every vertex has at most 4 influences, the armature has exactly the reference's 88 bones (the armature object is not exported as a bone), no intersection exceeds 1.0 cm and no joint twists beyond 15 degrees.
-- [ ] **AC-3** GIVEN the accepted file, THEN `Body_Base.blend`, a four-view render and the T1 report are retained and the art-director sign-off (name, date) is recorded in `production/qa/evidence/body-base-evidence.md`; Body_Base is never exported to Unreal (it lives in each model's `.blend` as `Body_Proxy`).
+- [x] **AC-1** GIVEN OI-1 closed (story 001), WHEN Body_Base is built in Blender (one unisex adult bare body, stature 165.6 cm ± 2, soles at Z = 0, origin between the feet, scale 1.0 applied, the UEFN reference A-pose, bone chains equal to `SK_UEFN_Mannequin`'s), THEN art bible T1 items 1 to 5 and 17 to 18 pass by script and the report is saved.
+- [x] **AC-2** GIVEN skin weights transferred from the UEFN mannequin body mesh and hand-corrected, WHEN the 1.3.5 pose set is applied, THEN every vertex has at most 4 influences, the armature has exactly the reference's 88 bones (the armature object is not exported as a bone), no intersection exceeds 1.0 cm and no joint twists beyond 15 degrees.
+- [x] **AC-3** GIVEN the accepted file, THEN `Body_Base.blend`, a four-view render and the T1 report are retained and the art-director sign-off (name, date) is recorded in `production/qa/evidence/body-base-evidence.md`; Body_Base is never exported to Unreal (it lives in each model's `.blend` as `Body_Proxy`).
 
 ---
 
@@ -65,14 +66,16 @@
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
-- `assets/characters/body_base/Body_Base.blend`
+- `assets/characters/body_base/Body_Base.blend` (LFS)
+- `assets/characters/body_base/Body_Base.fbx` (LFS; preset proof and story-003 conform/weight donor, never imported to Unreal)
 - `assets/characters/body_base/Body_Base_T1_report.txt`
-- `tools/asset-pipeline/blender_bind_to_mannequin.py` (armature-export fix only)
+- `tools/asset-pipeline/build_body_base.py` (new: reproducible headless build)
+- `tools/asset-pipeline/body_base_t1_audit.py` (new: T1 items 1-5, 17-18, pose set, renders)
+- `tools/asset-pipeline/blender_bind_to_mannequin.py` (armature-export fix: no empty, Root node, 88-node check)
 - `production/qa/evidence/body-base-evidence.md`
-
----
+- `production/qa/evidence/story-002-body-base-blender-build-oi10-evidence.md`
+- `production/qa/evidence/story-002-body-base-blender-build-oi10/` (four-view and pose-set renders, stamp)
+- `design/art/art-bible.md` (8.x.17 OI-10 closed; 1.3.2 closing sentence)
 
 ## QA Test Cases
 
@@ -103,7 +106,7 @@
 **Required evidence**:
 - Visual/Feel: a retained four-view render in `production/qa/evidence/` + sign-off in `production/qa/evidence/body-base-evidence.md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created — renders in `production/qa/evidence/story-002-body-base-blender-build-oi10/`, sign-off in `production/qa/evidence/body-base-evidence.md` (2026-10-25)
 
 ---
 
@@ -111,3 +114,12 @@
 
 - Depends on: `production/epics/character-pool-appearance/story-001-oi1-uefn-reference-measurements-recorded.md`
 - Unlocks: `production/epics/character-pool-appearance/story-003-meshy-test-character-generate-normalise.md`, `production/epics/character-pool-appearance/story-045-tier-a-six-mannequin-variant-models.md`
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 3/3 passing — AC-1 `assets/characters/body_base/Body_Base_T1_report.txt` (T1 1-5, 17-18 PASS); AC-2 same report (max 4 influences, 88 FBX skeleton nodes with no Null, worst intersection 0.87 cm, worst joint twist 6.0 deg); AC-3 `.blend`, renders, report retained, sign-off in `production/qa/evidence/body-base-evidence.md`, nothing under `Content/`
+**Deviations**: ADVISORY — the "hand correction" is a scripted pass (smoothing + blend toward bone-heat weights at shoulders and hips; decision log 2026-10-25). ADVISORY — the pose set is a proxy (joint angles per motion in Blender); the real motion-matched clips are checked by T4 in the engine. DEFERRED (engine run pending) — the Unreal half of the FBX preset round trip (import onto `SK_UEFN_Mannequin` without the "missing bones" message, facing +X, 165.6 uu); the Blender half is verified (88 nodes, re-import matches the reference to 0.0009 cm). Story 003 depends on it. OUT OF SCOPE (awareness) — art bible 8.x.17 OI-10 row marked closed.
+**Test Evidence**: `production/qa/evidence/story-002-body-base-blender-build-oi10/body-base-four-view.png`, `body-base-pose-set.png` (opened and viewed), sign-off `production/qa/evidence/story-002-body-base-blender-build-oi10-evidence.md`
+**Reviewed by**: self, no independent review (unattended run; focused review of the four pipeline scripts)
+Run result: OBSERVED — Blender renders of Body_Base (four views, seven poses) in `production/qa/evidence/story-002-body-base-blender-build-oi10/`
+Sprint status not updated: story not in `production/sprint-status.yaml` (sprint 1)

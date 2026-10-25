@@ -1,0 +1,6 @@
+Reviewed-Content-Hash: tools/asset-pipeline/build_body_base.py 829fdef3f1dceb8e4e71cf6fb9f6449055d012c1
+Reviewed-Content-Hash: tools/asset-pipeline/body_base_t1_audit.py ceb3b8c4af40fe47bf733fc80052117fa250e36c
+Reviewed-Content-Hash: tools/asset-pipeline/body_measure.py e04684aae23287419b9624fa0f0617679003b763
+Reviewed-Content-Hash: tools/asset-pipeline/blender_bind_to_mannequin.py b705585b197bc37a056c56a7e76521006a51e043
+Reviewed-Content-Hash: assets/characters/body_base/Body_Base.blend fb530480fe5be1dd694466949c60cbcc751e6cc9
+Reviewed-Content-Hash: assets/characters/body_base/Body_Base.fbx 6b76367a98beea2a97ba52a96c9a9ebb3756c239

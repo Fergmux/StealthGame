@@ -278,7 +278,7 @@ documents; story 001 edits none of them):*
 build run authorised by the user; recorded in
 `production/session-logs/decision-log.md`). Body_Base (1.3.9) is built at
 165.6 cm on these chains (story 002); no working value remains in force.
-**OI-1 was a hard prerequisite for the first Meshy credit, including the single test character of the mass-production gate (8.x.14);** that prerequisite is now met, and OI-10 (Body_Base accepted) still gates the credit.
+**OI-1 was a hard prerequisite for the first Meshy credit, including the single test character of the mass-production gate (8.x.14);** that prerequisite is now met, and so is OI-10 (Body_Base accepted 2026-10-25, 8.x.17).
 
 *Alternatives considered:* a +/- 5 percent natural variation band (rejected,
 because a 9 cm height difference is visible at 20 m and is chosen by nobody),
@@ -3857,7 +3857,7 @@ the check that closes it. Section references say where the value is used.
 | OI-7 | Marigold-versus-world colour-vision simulation (hue 60 to 100, C\* 30 cap) not yet run | ux-designer with art-director | Protan, deutan and tritan captures per 4.7 test 3 | 4.1, 4.7, 6.4 |
 | OI-8 | GPU allocation table is assumed; R1 to R3 not yet run | technical-artist with performance-analyst | Run R1 to R3, replace the table, confirm >= 2.0 ms headroom; apply F1 / F2 if not | 8.x.14, 8.x.16 |
 | OI-9 | LOD3 (900 tris) retains head mass and leg gap, and the 8.5 thresholds, are ASSUMED | technical-artist | T1 items 16, 22, 23 on LOD3 of the first test model; T3 at 30 m on LOD3 | 1.3.5, 5.6, 8.5 |
-| OI-10 | Body_Base not yet built | technical-artist (accepted by T1 and the art-director) | Deliver per 1.3.9 | 1.3.9, 8.7 |
+| OI-10 | **CLOSED 2026-10-25.** Body_Base built at the UEFN reference (165.6 cm, 88 bones), T1 items 1-5 and 17-18 and the pose set pass by script (`assets/characters/body_base/Body_Base_T1_report.txt`), art-director sign-off in `production/qa/evidence/body-base-evidence.md`. Open sub-item: the Unreal side of the FBX preset round trip (engine run) | technical-artist (accepted by T1 and the art-director) | Delivered per 1.3.9 (`assets/characters/body_base/Body_Base.blend`) | 1.3.9, 8.7 |
 | OI-11 | **CLOSED 2026-10-25.** Character Pool & Appearance GDD (`design/gdd/character-pool-appearance.md`) is Approved (D35). Open sub-item: the T6 simulation check | game-designer / systems designer | T6 passes in simulation (the only remaining check) | 1.3.1, 1.3.7, 1.3.8 |
 | OI-12 | The contrast scalar (tone-curve slope at the 18 percent grey pivot) needs an implementation definition and measurement | technical-artist | Define the pivot and measure +/- 20 percent on a grey ramp; add to the grade-preset validator (2.12) | 2.1, 2.11 |
 | OI-13 | The camera and spawn-density rule that holds the 8 / 14 / 28 per-band caps (at most 8 figures at LOD0 screen height, 14 in the LOD1 band, the rest at LOD2 or beyond) is not written; until it is, the 266k character figure is a design-density case | level-design with game-designer | Write the rule (camera distance and FOV limits, crowd spawn spacing, maximum local density) in the crowd/city GDD; verify with a scripted per-band figure count over 50 seeds and in T5 | 1.3.5, 8.5, 8.x.2, 8.x.8, 8.x.16 |
@@ -3878,7 +3878,7 @@ waived.
 | OI-7 | Marigold and signal-colour lock (4.1 law 4, 4.7 test 3, 6.4 goods) | Before the UI palette (4.6) is frozen and before goods props are authored; scheduled: before UI palette freeze, first UI implementation story |
 | OI-8 | The mass-production gate (8.x.14): characters 2 to 8 and kit variants beyond one each | Mass-production gate |
 | OI-9 | LOD3 policy and the 8.5 thresholds for the pool | Test character T1 / T3 sign-off; before characters 2 to 8 |
-| OI-10 | The first Meshy credit (8.7 step 0(b)) and every character conformity check | Before the test character is generated |
+| OI-10 | **CLOSED 2026-10-25** (was: the first Meshy credit (8.7 step 0(b)) and every character conformity check) | Met 2026-10-25 |
 | OI-11 | The appearance-deal allocator story and test T6 (1.3.1, 1.3.7) | Before the allocator implementation story starts |
 | OI-12 | The grade-preset validator (2.12) and the state distinctness checks (2.11) | Before any grade preset is signed off |
 | OI-13 | The 266k character figure and the 800k split (8.x.2, 8.x.16); test T5 | With OI-8, before the mass-production gate lifts; scheduled: before spike R3 is trusted |
