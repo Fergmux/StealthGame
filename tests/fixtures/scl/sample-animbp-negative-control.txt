@@ -1,0 +1,24 @@
+# Negative control for AC-SCL-01 (stories SCL-004, SCL-005): the class parity Blueprint walk of the UNMODIFIED
+# Game Animation Sample Blueprints, recorded 2026-10-25 by StealthGame.Locomotion.ClassParity.Blueprint before
+# SCL-005 removed the local-control branches (that run FAILED with 17 hits, 0 allowed). Asset SHA-1 at recording:
+#   Content/Blueprints/ABP_SandboxCharacter.uasset 039368e7378676e48eecbf73e07984c21d353950
+#   Content/Blueprints/CBP_SandboxCharacter.uasset 98e55e91aee97d9925729a780596a531157e5a1f
+# (copies: _snapshots/2026-10-25_pre-scl005/, not tracked). Regenerate only from an unmodified sample.
+# Root	Scope	Location	Token
+/Game/Blueprints/ABP_SandboxCharacter.ABP_SandboxCharacter	Get_AOValue	Get_AOValue/K2Node_PropertyAccess_1	IsLocallyControlled
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	CanSprint	CanSprint/K2Node_CallFunction_4	IsLocallyControlled
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_1	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_2	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_49	GetController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_56	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_DynamicCast_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_FunctionEntry_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_1	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_2	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_3	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_4	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableSet_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupInput	SetupInput/K2Node_CallFunction_49	GetController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupInput	SetupInput/K2Node_DynamicCast_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupInput	SetupInput/K2Node_GetSubsystemFromPC_0	PlayerController

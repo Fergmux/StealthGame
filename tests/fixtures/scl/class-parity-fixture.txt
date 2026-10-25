@@ -1,0 +1,54 @@
+# Class parity scan fixture (AC-SCL-01; stories SCL-004, SCL-005). Read by
+# StealthGame.Locomotion.ClassParity.Source (C++), .Blueprint and .NegativeControl, and
+# StealthGame.Locomotion.AnimBpNoLocalControlRead. Format: see FStealthParityFixture::Parse in
+# Source/StealthFoundation/Public/Server/Testing/StealthClassParityScan.h.
+#
+# Forbidden symbols: ADR-0013 section 1 (IsLocallyControlled, IsPlayerControlled, GetController,
+# PlayerState, any local-control flag) plus IsBotControlled (SCL-004 QA clarification), the
+# controller-class and PlayerState types (ADR-0001 section 1, ADR-0010 "Kind-blind code") and Roster
+# queries. The local-control set is bounded by the flags enumerated in spikes S1/S2/S14
+# (production/qa/spikes/2026-10-25_S1-S2-S14.md section 3).
+
+local-control IsLocallyControlled
+local-control IsLocallyViewed
+local-control IsLocalController
+local-control IsLocalPlayerController
+forbid IsPlayerControlled
+forbid IsBotControlled
+forbid GetController
+forbid GetInstigatorController
+forbid GetPlayerState
+forbid PlayerState
+forbid APlayerState
+forbid PlayerController
+forbid APlayerController
+forbid AIController
+forbid AAIController
+forbid-cpp Controller
+forbid-prefix Roster
+forbid-prefix IRoster
+forbid-prefix URoster
+forbid-prefix FRoster
+
+# Scan roots. C++: the Shared Pawn, its movement and motion-warping components (Core/SharedPawn and
+# their View/Core headers) and the AnimInstance (Core/Animation, View/Animation). The step clock and
+# footstep code are added here when they exist (SCL-043; ADR-0013 section 6).
+root-cpp Source/StealthGameplay/Private/Core/SharedPawn
+root-cpp Source/StealthGameplay/Public/View/Core
+root-cpp Source/StealthGameplay/Private/Core/Animation
+root-cpp Source/StealthGameplay/Public/View/Animation
+
+# Blueprint roots: the pawn's Blueprint (CBP_SandboxCharacter, still parented to the prototype
+# AStealthCharacter until the reparent Content step) and the one AnimBP. Linked layers and Blueprint
+# parents are followed by the walker.
+root-bp /Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter
+root-bp /Game/Blueprints/ABP_SandboxCharacter.ABP_SandboxCharacter
+
+# R9 owner-local allowlist (SCL R9: camera, own head hide, input binding). root|scope|token|reason
+# CBP_SandboxCharacter SetupCamera / SetupInput read the pawn's own controller to bind the camera and
+# Enhanced Input; spike S14 found both reached only from EventPossessed -> EventPossessed_Client (an
+# owner-client call), so they change nothing another client or the host can observe of this body.
+allow /Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter|SetupCamera|GetController|R9 camera: owner-local camera setup (spike S14 section 3)
+allow /Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter|SetupCamera|PlayerController|R9 camera: casts its own controller to bind the camera (spike S14 section 3)
+allow /Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter|SetupInput|GetController|R9 input binding: owner-local Enhanced Input setup (spike S14 section 3)
+allow /Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter|SetupInput|PlayerController|R9 input binding: Enhanced Input subsystem of its own controller (spike S14 section 3)

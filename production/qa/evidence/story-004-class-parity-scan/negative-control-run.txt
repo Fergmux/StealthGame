@@ -1,0 +1,34 @@
+# StealthGame.Locomotion.ClassParity.* first run, 2026-10-25, on the UNMODIFIED sample Blueprints (before SCL-005).
+# Expected: ClassParity.Blueprint FAILS (negative control on the live sample); NegativeControl/AnimBp fail NOT ASSESSED (report not yet committed);
+# ClassParity.Source failed NOT ASSESSED on its own header roots (a FindFilesRecursive bug, fixed: fail-closed caught it).
+LogAutomationController: Error: Test Completed. Result={Fail} Name={Blueprint} Path={StealthGame.Locomotion.ClassParity.Blueprint}
+LogAutomationController: Error: Expected 'AC-SCL-01 Blueprint scan: no forbidden read outside the R9 allowlist (scanned 2, hits 17, allowed 0, not assessed 0, unused allowlist 0
+LogAutomationController: Error: Test Completed. Result={Fail} Name={NegativeControl} Path={StealthGame.Locomotion.ClassParity.NegativeControl}
+LogAutomationController: Error: NOT ASSESSED: negative-control report unreadable: tests/fixtures/scl/sample-animbp-negative-control.txt [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthGameEditor\Private\Tests\ClassParityAnimBpAudit.cpp(323)]
+LogAutomationController: Error: Test Completed. Result={Fail} Name={Source} Path={StealthGame.Locomotion.ClassParity.Source}
+LogAutomationController: Error: Expected 'AC-SCL-01 C++ scan: no forbidden read outside the R9 allowlist (scanned 4, hits 0, allowed 0, not assessed 2, unused allowlist 0
+LogAutomationController: Error: Test Completed. Result={Fail} Name={AnimBpNoLocalControlRead} Path={StealthGame.Locomotion.AnimBpNoLocalControlRead}
+LogAutomationController: Error: AnimBP graph reads a forbidden symbol: /Game/Blueprints/ABP_SandboxCharacter.ABP_SandboxCharacter	Get_AOValue	Get_AOValue/K2Node_PropertyAccess_1	IsLocallyControlled [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthGameEditor\Private\Tests\ClassParityAnimBpAudit.cpp(388)]
+LogAutomationController: Error: NOT ASSESSED: negative-control report unreadable: tests/fixtures/scl/sample-animbp-negative-control.txt [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthGameEditor\Private\Tests\ClassParityAnimBpAudit.cpp(399)]
+LogAutomationController: Display: Test Completed. Result={Success} Name={PawnClassDefaults} Path={StealthGame.Locomotion.PawnClassDefaults}
+
+## Blueprint walk written by the failing run (Saved/ClassParity/live-blueprint-refs.txt)
+# Class parity Blueprint walk (StealthGame.Locomotion.ClassParity.Blueprint)
+# Root	Scope	Location	Token
+/Game/Blueprints/ABP_SandboxCharacter.ABP_SandboxCharacter	Get_AOValue	Get_AOValue/K2Node_PropertyAccess_1	IsLocallyControlled
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	CanSprint	CanSprint/K2Node_CallFunction_4	IsLocallyControlled
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_1	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_2	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_49	GetController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_56	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_DynamicCast_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_FunctionEntry_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_1	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_2	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_3	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_4	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableSet_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupInput	SetupInput/K2Node_CallFunction_49	GetController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupInput	SetupInput/K2Node_DynamicCast_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupInput	SetupInput/K2Node_GetSubsystemFromPC_0	PlayerController

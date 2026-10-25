@@ -1,12 +1,12 @@
 # Story 004: Class parity scan: no observable path branches on controller kind, with a negative control
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From GDD `design/gdd/shared-character-locomotion.md`, scoped to this story:*
 
-- [ ] **AC-SCL-01** [U] `ClassParity`: GIVEN the Shared Pawn class, its components, AnimBP and audio code, WHEN a static scan and a reflection dump run, THEN no observable path branches on controller class, `IsPlayerControlled`, `PlayerState` presence or Roster state (only the R9 owner-local list), and every SCL tuning key has exactly one value (no per-kind variant).
+- [x] **AC-SCL-01** [U] `ClassParity` (scan half; the tuning-key clause is NOT ASSESSED, carried over to SCL-003, see Completion Notes): GIVEN the Shared Pawn class, its components, AnimBP and audio code, WHEN a static scan and a reflection dump run, THEN no observable path branches on controller class, `IsPlayerControlled`, `PlayerState` presence or Roster state (only the R9 owner-local list), and every SCL tuning key has exactly one value (no per-kind variant).
 
 *QA clarification (create-stories 2026-10-25, not a GDD change):* the forbidden-symbol list is ADR-0013 section 1 plus `IsBotControlled`, committed as a fixture; scan roots are the pawn C++ and Blueprint class (including `CBP_SandboxCharacter.CanSprint`), `UStealthMovementComponent`, `UStealthAnimInstance`, the AnimBP, and the step-clock and footstep code; assets are loaded read-only; the negative control on the sample snapshot must report at least one hit.
 
@@ -61,9 +61,12 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Tests/Locomotion/ClassParityTest.cpp` (planned)
-- `Source/StealthGameEditor/Private/Tests/ClassParityAnimBpAudit.cpp` (editor-side Blueprint walker, planned)
-- `tests/fixtures/scl/sample-animbp-negative-control.*` (fixture or report path; planned)
+- `Source/StealthFoundation/Public/Server/Testing/StealthClassParityScan.h` (shared fixture parser, C++ scanner and judge; test seam, `WITH_STEALTH_TEST_SEAMS`)
+- `Source/StealthGameplay/Private/Tests/Locomotion/ClassParityTest.cpp` (test `StealthGame.Locomotion.ClassParity.Source`)
+- `Source/StealthGameEditor/Private/Tests/ClassParityAnimBpAudit.cpp` (Blueprint walker; tests `StealthGame.Locomotion.ClassParity.Blueprint`, `.ClassParity.NegativeControl`, and SCL-005's `AnimBpNoLocalControlRead`)
+- `Source/StealthGameEditor/StealthGameEditor.Build.cs` (`BlueprintGraph` private dependency)
+- `tests/fixtures/scl/class-parity-fixture.txt` (forbidden symbols, local-control set, scan roots, R9 allowlist)
+- `tests/fixtures/scl/sample-animbp-negative-control.txt` (the walk of the unmodified sample, the committed negative control)
 
 ---
 
@@ -86,7 +89,7 @@ Test: class parity scan (AC-SCL-01)
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Locomotion/ClassParityTest.cpp`, test name `StealthGame.Locomotion.ClassParity` — must exist and pass; the recorded negative-control failure on the unmodified sample AnimBP is attached to the story's completion notes
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.ClassParity.Source`, `.Blueprint`, `.NegativeControl`, 2026-10-25); negative-control failure recorded
 
 ---
 
@@ -94,3 +97,21 @@ Test: class parity scan (AC-SCL-01)
 
 - Depends on: `production/epics/shared-character-locomotion/story-001-pawn-class-default-subobjects.md`, `story-003-tuning-keys-registered.md`
 - Unlocks: `production/epics/shared-character-locomotion/story-005-animbp-islocallycontrolled-removal.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (with SCL-005, one commit per D41)
+**Criteria**: AC-SCL-01 scan half passing; tuning-key clause NOT ASSESSED (carryover).
+- C++ scan (`ClassParity.Source`): comment-stripped identifier scan of `Private/Core/SharedPawn`, `Public/View/Core`, `Private/Core/Animation`, `Public/View/Animation` (8 files) with scope = enclosing function; 0 hits, 0 allowlist entries needed. Scanner self-checks (scope tracking, comments ignored) and a seeded `IsLocallyControlled()` branch detected (negative control).
+- Blueprint walk (`ClassParity.Blueprint`): `CBP_SandboxCharacter` and `ABP_SandboxCharacter` loaded read-only (packages asserted not dirty), every graph and node exported by reflection (owned subobjects such as anim property-access bindings included, comments excluded); 0 hits outside the allowlist, 15 references allowed (`SetupCamera` / `SetupInput` reading the pawn's own controller: R9 camera and input binding, owner-client only per spike S14), 0 not assessed, 0 stale entries.
+- Negative control (`ClassParity.NegativeControl`): (a) the committed walk of the unmodified sample (17 references: `ABP_SandboxCharacter.Get_AOValue` `IsLocallyControlled`, `CBP_SandboxCharacter.CanSprint` `IsLocallyControlled`, plus the 15 now-allowlisted owner-local reads) fails the judge; (b) a transient Blueprint seeded with an `IsLocallyControlled` call is caught by the walker. The live failing run on the unmodified sample is in `production/qa/evidence/story-004-class-parity-scan/negative-control-run.txt`.
+- Fail-closed: an unloadable root, a Blueprint with no graphs, a null graph or node, a missing or empty C++ root, an unreadable or malformed fixture/report are NOT ASSESSED and fail. Watched: the first run reported two header roots NOT ASSESSED (a `FindFilesRecursive` clear-list bug), fixed.
+- **NOT ASSESSED (carryover)**: "every SCL tuning key has exactly one value (no per-kind variant)" needs the SCL tuning schema from `story-003-tuning-keys-registered.md` (TDC Exit B, not in this sprint). The test prints the carryover line and claims nothing for it; SCL-003 must add the reflection-dump check.
+
+**Decisions** (logged): Blueprint walk by generic reflection export rather than per-node-type handlers (no node type can be skipped silently); negative control as a committed generated report (the sample `_snapshots/` are untracked) plus a seeded transient Blueprint; shared code in a Foundation test-seam header; forbidden list = ADR-0013 section 1 + `IsBotControlled` + controller/PlayerState types + `Roster*` prefixes; local-control set from spike S14 (`IsLocallyControlled`, `IsLocallyViewed`, `IsLocalController`, `IsLocalPlayerController`); `GetLocalRole` is not forbidden (role, not kind; audited in SCL-005).
+**Deviations**: the Blueprint pawn root is `CBP_SandboxCharacter`, still a child of the prototype `AStealthCharacter` (not yet of `AStealthPawn`); its native parent is not in the C++ roots until the reparent Content step. Test names split by scanner (`ClassParity.Source` / `.Blueprint` / `.NegativeControl`) under the planned `StealthGame.Locomotion.ClassParity` prefix.
+**Test Evidence**: `production/qa/evidence/story-004-class-parity-scan/test-run.txt` (build `Result: Succeeded`; all `StealthGame.` tests Success), `negative-control-run.txt`, `stamp.txt`
+**Run result**: N/A — a static scan and reflection test; nothing player-visible (the player-visible half is SCL-005)
+**Reviewed by**: focused code review (self-applied, unattended run): one defect fixed (unneeded `Kismet` editor dependency removed); the `FindFilesRecursive` defect was caught by the fail-closed test
+**Readiness**: depends on SCL-003 (Ready, not built): proceeded per the sprint plan, which schedules the scan half only and carries the tuning-key clause; Manifest Version 2026-10-25e -> 2026-10-25f (no 25f rule applies to the scan); lint `ac_below_min` accepted (one compound GDD criterion).

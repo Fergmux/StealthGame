@@ -1,0 +1,7 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/Testing/StealthClassParityScan.h 203b0a258b81e2b4f67a581b973cb949a3fb98dc
+Reviewed-Content-Hash: Source/StealthGameplay/Private/Tests/Locomotion/ClassParityTest.cpp 94eb66cfe332e1b74b5e48033a0fb5aeb9442315
+Reviewed-Content-Hash: Source/StealthGameEditor/Private/Tests/ClassParityAnimBpAudit.cpp 6dfc5812c3c4f5183fcb7b912f5be2e0ff1611d4
+Reviewed-Content-Hash: Source/StealthGameEditor/StealthGameEditor.Build.cs cb2f82db369616c0ae2caab980012924966caf88
+Reviewed-Content-Hash: tests/fixtures/scl/class-parity-fixture.txt 81be2f9bc0170ee434079e5c63959bc9a58d16f0
+Reviewed-Content-Hash: tests/fixtures/scl/sample-animbp-negative-control.txt 5c9f6570618d81ae8e15f218dedd4297b2608383
+Story: production/epics/shared-character-locomotion/story-004-class-parity-scan.md

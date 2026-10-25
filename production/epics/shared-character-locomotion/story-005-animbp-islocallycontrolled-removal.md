@@ -1,12 +1,12 @@
 # Story 005: Remove the sample AnimBP's IsLocallyControlled branch for every pawn
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *Derived from ADR-0013 section 1 (the GDD's AC-SCL-01 is the check; its negative control is built in story 004):*
 
-- [ ] GIVEN the derived AnimBP and `UStealthAnimInstance`, WHEN the story-004 class-parity scan runs, THEN it reports zero reads of `IsLocallyControlled`, `IsPlayerControlled`, `GetController`, `PlayerState` or any local-control flag in the AnimBP graph, linked layers and `UStealthAnimInstance` (the owner-local first-person head hide excepted and not an animation-state input), and the same scan run on the unmodified sample AnimBP still fails (negative control).
+- [x] GIVEN the derived AnimBP and `UStealthAnimInstance`, WHEN the story-004 class-parity scan runs, THEN it reports zero reads of `IsLocallyControlled`, `IsPlayerControlled`, `GetController`, `PlayerState` or any local-control flag in the AnimBP graph, linked layers and `UStealthAnimInstance` (the owner-local first-person head hide excepted and not an animation-state input), and the same scan run on the unmodified sample AnimBP still fails (negative control).
 
 ---
 
@@ -60,10 +60,11 @@
 
 ## Files
 
-- `Source/StealthGameplay/Public/View/Animation/StealthAnimInstance.h` (planned)
-- `Source/StealthGameplay/Private/Core/Animation/StealthAnimInstance.cpp` (planned)
-- `Content/` AnimBP and `CBP_SandboxCharacter` edit (by explicit path via MCP; no `.uasset` is written by this story file)
-- `Source/StealthGameplay/Private/Tests/Locomotion/ClassParityTest.cpp` (extended by story 004's file; no new test file)
+- `Source/StealthGameplay/Public/View/Animation/StealthAnimInstance.h`
+- `Source/StealthGameplay/Private/Core/Animation/StealthAnimInstance.cpp`
+- `Content/Blueprints/ABP_SandboxCharacter.uasset` (`Get_AOValue` branch removed; reparented to `UStealthAnimInstance`; saved by explicit path via MCP)
+- `Content/Blueprints/CBP_SandboxCharacter.uasset` (`CanSprint` branch removed; saved by explicit path via MCP)
+- `Source/StealthGameEditor/Private/Tests/ClassParityAnimBpAudit.cpp` (story 004's file; adds test `StealthGame.Locomotion.AnimBpNoLocalControlRead`)
 
 ---
 
@@ -85,7 +86,7 @@ Test: AnimBP and `UStealthAnimInstance` contain no local-control read (ADR-0013 
 **Required evidence**:
 - Logic: the `StealthGame.Locomotion.ClassParity` run (story 004) passing on the derived AnimBP; recorded failure on the unmodified sample; before/after snapshot paths in the completion notes
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.AnimBpNoLocalControlRead` and the `ClassParity` set, 2026-10-25); sample failure recorded; retained screenshots
 
 ---
 
@@ -93,3 +94,21 @@ Test: AnimBP and `UStealthAnimInstance` contain no local-control read (ADR-0013 
 
 - Depends on: `production/epics/shared-character-locomotion/story-004-class-parity-scan.md`, `story-001-pawn-class-default-subobjects.md`
 - Unlocks: `production/epics/shared-character-locomotion/story-039-tier-parity-ab.md`, `story-041-body-and-anim-set-parity.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (with SCL-004, one commit per D41)
+**Criteria**: 1/1 passing. `AnimBpNoLocalControlRead`: the AnimBP root (all graphs; no linked layers; native parent) has zero forbidden reads and the walk leaves the package untouched; negative control "UnmodifiedSampleAnimBp" detected from the committed sample walk. `ClassParity.Source` covers `UStealthAnimInstance` (0 hits). `ClassParity.Blueprint` passes on the live tree; `ClassParity.NegativeControl` still fails on the sample.
+**What was removed** (approach logged: graph edit in place over MCP with a snapshot; a C++-only neutralisation was rejected because the scan must find no read in the graph and `APawn::IsLocallyControlled` cannot be overridden without breaking CMC prediction and the camera):
+- `ABP_SandboxCharacter.Get_AOValue`: `IsLocallyControlled ? GetControlRotation : GetBaseAimRotation` -> `GetBaseAimRotation` for every pawn (the replicated path: controller view on authority and owner, `RemoteViewPitch` on proxies; ADR-0013's `HeadLook`/`RemoteViewPitch16` inputs replace it when SCL-021/022 land).
+- `CBP_SandboxCharacter.CanSprint`: `IsLocallyControlled ? GetPendingMovementInputVector : GetCurrentAcceleration` -> `GetCurrentAcceleration` for every pawn (CMC acceleration, a replicated-movement input). The sprint itself goes with the database pruning (SCL-041, R10/R5.1).
+- `ABP_SandboxCharacter` reparented from `UAnimInstance` to `UStealthAnimInstance`.
+
+**ANIM-V6**: both Blueprints compile on 5.8.4 (editor compile, headless load, PIE); `CBP_SandboxCharacter` keeps two pre-existing camera-rig deprecation warnings.
+**EventBeginPlay role binding** (audited): the `GetLocalRole == SimulatedProxy` binding is role-keyed, not kind-keyed, so it is no host tell; re-running it on role change after a takeover is carried to SCL-006/SCL-028 (logged).
+**Snapshots**: before `_snapshots/2026-10-25_pre-scl005/ABP_SandboxCharacter.uasset` (SHA-1 `039368e7378676e48eecbf73e07984c21d353950`) and `CBP_SandboxCharacter.uasset` (SHA-1 `98e55e91aee97d9925729a780596a531157e5a1f`); after = committed `Content/Blueprints/` versions. No never-resave asset dirty or saved.
+**Deviations**: edited the sample assets in place (snapshot first) instead of a duplicated "derived" AnimBP: the chooser tables and `CBP_SandboxCharacter` reference `ABP_SandboxCharacter_C` by class, so a duplicate would break them. The test lives in the editor module (graph types are editor-only).
+**Test Evidence**: `production/qa/evidence/story-005-animbp-islocallycontrolled-removal/test-run.txt`, `stamp.txt`, screenshots `00`-`04`; `production/qa/evidence/scl-005-animbp-islocallycontrolled-removal-evidence.md` (checklist; sign-off pending: lead-programmer, technical-artist)
+**Run result**: OBSERVED — PIE listen host + 1 client on `L_Prototype`, round running; the host renders the remote player's body beside AI crowd bodies on the one AnimBP with no animation or compile error (`02-host-remote-player-close.png`, `03-host-remote-player-beside-npc-1.png`); motion parity remains a playtest/ANIM-V3 check (still frames)
+**Reviewed by**: focused code review (self-applied, unattended run): no further defect

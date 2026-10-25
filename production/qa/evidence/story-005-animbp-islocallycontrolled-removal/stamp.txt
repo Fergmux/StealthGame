@@ -1,0 +1,6 @@
+Reviewed-Content-Hash: Source/StealthGameplay/Public/View/Animation/StealthAnimInstance.h df65d596c91c45139563bf77c4c1a51d4e401a16
+Reviewed-Content-Hash: Source/StealthGameplay/Private/Core/Animation/StealthAnimInstance.cpp 3ca17faa8de6956b5f34413ca4a1e47654750dd5
+Reviewed-Content-Hash: Content/Blueprints/ABP_SandboxCharacter.uasset b94ad9e1c8b5b9e1eea43d1fd00b970f6908baf5
+Reviewed-Content-Hash: Content/Blueprints/CBP_SandboxCharacter.uasset 37cae855506230520ed53786ce352e8c8abc03a7
+Reviewed-Content-Hash: Source/StealthGameEditor/Private/Tests/ClassParityAnimBpAudit.cpp 6dfc5812c3c4f5183fcb7b912f5be2e0ff1611d4
+Story: production/epics/shared-character-locomotion/story-005-animbp-islocallycontrolled-removal.md

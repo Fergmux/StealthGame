@@ -120,20 +120,20 @@ stories:
     name: "Class parity scan: no observable path branches on controller kind, with a negative control"
     file: "production/epics/shared-character-locomotion/story-004-class-parity-scan.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
-    blocker: "AC-SCL-01 key-uniqueness clause needs SCL-003 (TDC Exit B); scan half is in scope this sprint"
-    completed: ""
+    blocker: "Scan half done; AC-SCL-01 key-uniqueness clause NOT ASSESSED, carried over to SCL-003 (TDC Exit B)"
+    completed: "2026-10-25"
   - id: "scl-005"
     name: "Remove the sample AnimBP's IsLocallyControlled branch for every pawn"
     file: "production/epics/shared-character-locomotion/story-005-animbp-islocallycontrolled-removal.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "ivp-001"
     name: "Spike S1, multi-process raw-bunch capture shows no identity pointers to non-owners"
     file: "production/epics/information-visibility-policy/story-001-spike-s1-multiprocess-raw-bunch-capture.md"

@@ -1,0 +1,63 @@
+Command: powershell -ExecutionPolicy Bypass -File tools/dev/cycle.ps1 -Tests -NoLaunch (2026-10-25, final tree for SCL-004/005: SCL-005 assets saved, review fix applied)
+Build: StealthGameEditor Win64 Development — Result: Succeeded
+Tests (StealthGame. filter): 30/30 Success, 0 Fail, exit 0
+  Result={Success} Name={CompileProbes} Path={StealthGame.Build.CompileProbes}
+  Result={Success} Name={FoundationLayout} Path={StealthGame.Build.FoundationLayout}
+  Result={Success} Name={HarnessModuleExclusions} Path={StealthGame.Build.HarnessModuleExclusions}
+  Result={Success} Name={IncludeLintAbc} Path={StealthGame.Build.IncludeLintAbc}
+  Result={Success} Name={LintFramework} Path={StealthGame.Build.LintFramework}
+  Result={Success} Name={PresentationGuardDefineIsPrivate} Path={StealthGame.Build.PresentationGuardDefineIsPrivate}
+  Result={Success} Name={ShippingSymbolCheck} Path={StealthGame.Build.ShippingSymbolCheck}
+  Result={Success} Name={exports an engine static mesh to FBX} Path={StealthGame.EditorTools.AssetToolset.ExportAssetToFile.exports an engine static mesh to FBX}
+  Result={Success} Name={raises when the asset is null} Path={StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the asset is null}
+  Result={Success} Name={raises when the path has no extension} Path={StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the path has no extension}
+  Result={Success} Name={returns an empty list when no play session is running} Path={StealthGame.EditorTools.PlayToolset.ListPlayInstances.returns an empty list when no play session is running}
+  Result={Success} Name={raises when no play session is running} Path={StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when no play session is running}
+  Result={Success} Name={raises when the command is empty} Path={StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when the command is empty}
+  Result={Success} Name={OneServerAndThreeClientWorldsAreUp} Path={StealthGame.Harness.PIE.ListenServerThreeClients.OneServerAndThreeClientWorldsAreUp}
+  Result={Success} Name={FakeClockAdvancesOnlyWhenTold} Path={StealthGame.Harness.FakeClockAdvancesOnlyWhenTold}
+  Result={Success} Name={FaultSinkTeardownAssertion} Path={StealthGame.Harness.FaultSinkTeardownAssertion}
+  Result={Success} Name={LogCaptureAssertsWarningByKey} Path={StealthGame.Harness.LogCaptureAssertsWarningByKey}
+  Result={Success} Name={ModuleLoadsInDevelopment} Path={StealthGame.Harness.ModuleLoadsInDevelopment}
+  Result={Success} Name={NegativeControlDetected} Path={StealthGame.Harness.NegativeControlDetected}
+  Result={Success} Name={Blueprint} Path={StealthGame.Locomotion.ClassParity.Blueprint}
+  Result={Success} Name={NegativeControl} Path={StealthGame.Locomotion.ClassParity.NegativeControl}
+  Result={Success} Name={Source} Path={StealthGame.Locomotion.ClassParity.Source}
+  Result={Success} Name={AnimBpNoLocalControlRead} Path={StealthGame.Locomotion.AnimBpNoLocalControlRead}
+  Result={Success} Name={PawnClassDefaults} Path={StealthGame.Locomotion.PawnClassDefaults}
+  Result={Success} Name={Assassination} Path={StealthGame.Rules.Assassination}
+  Result={Success} Name={Defence} Path={StealthGame.Rules.Defence}
+  Result={Success} Name={EliminationVictory} Path={StealthGame.Rules.EliminationVictory}
+  Result={Success} Name={NpcKillRemoval} Path={StealthGame.Rules.NpcKillRemoval}
+  Result={Success} Name={ObjectiveStages} Path={StealthGame.Rules.ObjectiveStages}
+  Result={Success} Name={TeamsAndMovement} Path={StealthGame.Rules.TeamsAndMovement}
+
+Key lines:
+  control detected: ValueAboveMax
+  control detected: ValueAboveMax
+  scanned 2, hits 0, allowed 15, not assessed 0, unused allowlist 0
+  control detected: UnmodifiedSampleBlueprints
+  control detected: SeededIsLocallyControlledCall
+  control detected: SeededCppLocalControlBranch
+  C++ files scanned: Source/StealthGameplay/Private/Core/SharedPawn/StealthMotionWarpingComponent.cpp, Source/StealthGameplay/Private/Core/SharedPawn/StealthPawn.cpp, Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp, Source/StealthGameplay/Public/View/Core/StealthMotionWarpingComponent.h, Source/StealthGameplay/Public/View/Core/StealthPawn.h, Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h, Source/StealthGameplay/Private/Core/Animation/StealthAnimInstance.cpp, Source/StealthGameplay/Public/View/Animation/StealthAnimInstance.h
+  NOT ASSESSED (carryover): AC-SCL-01 'every SCL tuning key has exactly one value' needs the SCL tuning schema from story SCL-003 (TDC Exit B); this test does not claim it.
+  control detected: UnmodifiedSampleAnimBp
+
+Live Blueprint walk (Saved/ClassParity/live-blueprint-refs.txt): every remaining reference is on the R9 allowlist
+# Class parity Blueprint walk (StealthGame.Locomotion.ClassParity.Blueprint)
+# Root	Scope	Location	Token
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_1	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_2	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_49	GetController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_CallFunction_56	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_DynamicCast_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_FunctionEntry_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_1	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_2	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_3	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableGet_4	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupCamera	SetupCamera/K2Node_VariableSet_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupInput	SetupInput/K2Node_CallFunction_49	GetController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupInput	SetupInput/K2Node_DynamicCast_0	PlayerController
+/Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter	SetupInput	SetupInput/K2Node_GetSubsystemFromPC_0	PlayerController
