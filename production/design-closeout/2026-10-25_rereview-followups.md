@@ -66,3 +66,6 @@ D35 Approval: after second-round reviews, two cross-doc fix passes, and /review-
 # Technical Setup rulings
 D36 AC-PNG-10 blind-sort: three fresh-context reviewer agents (no access to the UI source/spec) may run the greyscale blind sort for MVP as a pre-screen; the criterion is marked ADVISORY until human reviewers run it at the first playtest, then BLOCKING again.
 D37 Walk-slower binding: keep Ctrl as walk-slower (per SCL/IIF); remove the Game Animation Sample's Ctrl jog toggle from the project's input mapping (not part of the design; gait is design-owned).
+D38 PROCEED/PIVOT margin for the MVP hypothesis: informed first-strike hit rate on a player must be >= 0.27 (3x the ~0.09 base rate) over >= 40 first strikes across playtest rounds -> PROCEED; 0.15-0.27 -> PIVOT (tune tells/crowd density); < 0.15 -> KILL-or-rethink review.
+D39 Elevator pitch reframed as a race ("two teams race through a crowd to one hidden target; every advantage you take is a tell"); pillar text untouched (user-confirmed). Pillar 3 "every mistake sticks" wording stays a user follow-up.
+D40 Lightweight Mexica cultural-framing check (desk review against codices/museum sources by a fresh agent + note for a human sensitivity read) scheduled in Pre-Production before any art-commit story.

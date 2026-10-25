@@ -15,7 +15,7 @@
 
 > It's an online 5v5 social stealth game where you hide among a crowd of identical-looking citizens in an Aztec-inspired city, race the other team through secret objectives, and assassinate rivals who give themselves away through how they move.
 
-10-second test: *"Two teams of assassins, one crowd that all looks the same, no radar — spot the person who doesn't belong before they spot you."*
+10-second test: *"Two teams race through a crowd that all looks the same to one hidden target — every advantage you take is a tell, and the people who don't belong can be spotted."* (Reframed 2026-10-25, decision D39, to match Pillar 4 "A Race, Not a Hunt".)
 
 ---
 
