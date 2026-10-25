@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/character-pool-appearance.md
 > **Architecture Module**: Character Pool (CPA) in `StealthGameplay/Core` (`UCharacterPoolData`, deck allocator, appearance application)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories character-pool-appearance`
+> **Stories**: 56 stories written 2026-10-25 (46 Ready, 10 Blocked); see the Stories table below
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 6 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -55,6 +55,69 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 - **Estimate**: about 11 bottom-up days (human-paced yardstick, `production/estimates/2026-10-25_mvp-rebaseline.md`, Method B work packages); planning figure about 6.6 days after the uniform 0.6 calibration. Low confidence: no sprint history exists, so run the 2-week calibration spike and re-baseline.
 - **Acceptance criteria in the GDD**: about 47 (counted as GIVEN-form criteria in the Acceptance Criteria section).
 - **MVP build order**: risk-first per `design/gdd/systems-index.md`: graybox map and mannequin-variant pool first, then camera toggle and traversal replication, then the Meshy pool swap, then the generator.
+
+## Stories
+
+Order: the Art Director's first visual stories (OI-1 and OI-10 test character on the UEFN mannequin reference, 165.6 cm) come first and gate any Meshy mass production; prototype Meshy citizens `SK_Citizen02-05` are throwaway (arms about 17 % short, extra root bone) and are retired in story 052. Exit A (Tier A mannequin-variant pool and allocator) does not wait on a Meshy credit; Exit B (stories 053, 054) is credit-gated and Blocked.
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | OI-1 closed: the UEFN mannequin measurements become the art-bible reference | Config/Data | Ready | ADR-0012 |
+| 002 | Body_Base built in Blender to the UEFN reference (OI-10) | Visual/Feel | Ready | ADR-0012 |
+| 003 | One Meshy test character generated and normalised to the UEFN skeleton | Visual/Feel | Blocked (OI-1 and OI-10 open; first Meshy credit) | ADR-0012 |
+| 004 | Test character passes T1 to T4 and is signed off (pipeline proof) | Visual/Feel | Ready | ADR-0012 |
+| 005 | Pool row schema, UCharacterPoolData and O(1) id lookup | Logic | Ready | ADR-0012 |
+| 006 | Swatch assignment is a rule (F-7), checked and rewritten by the validator | Logic | Ready | ADR-0012 |
+| 007 | Pool shape and material rules validator | Logic | Ready | ADR-0012 |
+| 008 | Pool mesh conformance validator (skeleton, arm geometry, LODs, uniform skin cache) | Logic | Ready | ADR-0012 |
+| 009 | Deck tuning keys registered with TDC and invariant I-3 | Logic | Ready | ADR-0012 |
+| 010 | Deck sizing (D, K, q, r) and the floor policy | Logic | Ready | ADR-0012 |
+| 011 | Valid-subset table and the model-stratified draw (F-4) | Logic | Ready | ADR-0012 |
+| 012 | Deal, shuffle, canonical order and the three domain-separated streams | Logic | Ready | ADR-0012 |
+| 013 | UAppearanceAllocator facade: opaque input, one-shot, call-order guard | Logic | Ready | ADR-0012 |
+| 014 | G-DECK statistical indistinguishability suite on the real allocator | Logic | Ready | ADR-0008 |
+| 015 | G-DECK rejects the biased allocators B1 to B4 and is calibrated nightly | Logic | Ready | ADR-0008 |
+| 016 | Art-bible T6 allocator invariants simulated over 10,000 matches (OI-11) | Logic | Ready | ADR-0012 |
+| 017 | No cross-round memory; Reset discards everything | Logic | Ready | ADR-0012 |
+| 018 | Card ledger core: CommitCard, VacateCard and the conservation invariants | Logic | Ready | ADR-0012 |
+| 019 | DrawReplacement is uniform over vacant cards and ordering-safe | Logic | Ready | ADR-0012 |
+| 020 | TakeNpcCard: informant adoption of an unobserved crowd pawn | Logic | Ready | ADR-0012 |
+| 021 | ReleaseCard (strike removal ordering) and RecoverOwnCard (own-card respawn) | Logic | Ready | ADR-0012 |
+| 022 | Ledger conservation under the full random event mix | Logic | Ready | ADR-0012 |
+| 023 | Disconnect, rejoin, no late join and host loss keep the ledger conserved | Integration | Ready | ADR-0012 |
+| 024 | Tier C fixture proves the allocator and validators are tier-independent | Logic | Ready | ADR-0012 |
+| 025 | UCharacterPoolSubsystem holds the pool resident for the session | Integration | Ready | ADR-0012 |
+| 026 | Spike CPA-V1: null-mesh pawn takes its look from the initial OnRep | Integration | Ready | ADR-0012 |
+| 027 | AppearanceId on the pawn: write once, replicate once, apply once | Integration | Blocked (CPA-V1) | ADR-0012 |
+| 028 | PoolHash and ContentDigest | Logic | Ready | ADR-0012 |
+| 029 | Spike CPA-V5: PoolHash identical across cooked client, cooked host and PIE | Integration | Ready | ADR-0012 |
+| 030 | Spike CPA-V4: initial-only re-sent on relevancy re-entry, retained across takeover | Integration | Ready | ADR-0012 |
+| 031 | Spike CPA-V2/V3: PSO precache and residency after warm-up in a cooked client | Integration | Ready | ADR-0012 |
+| 032 | UCharacterPoolWarmup: warm every pool row before the acknowledgement | Integration | Blocked (CPA-V2/V3) | ADR-0012 |
+| 033 | PoolHash rides in Session's single round acknowledgement, after warm-up | Integration | Blocked (CPA-V5) | ADR-0012 |
+| 034 | Appearance resolved before first replication; no default-look frame | Integration | Blocked (CPA-V1) | ADR-0012 |
+| 035 | No pool-asset load on reveal; a still-delayed pawn flags the round | Integration | Blocked (CPA-V2/V3) | ADR-0012 |
+| 036 | Relevancy re-entry restores the id; takeover keeps it; the host sees what clients see | Integration | Blocked (CPA-V4) | ADR-0012 |
+| 037 | Player and NPC pawns are indistinguishable to a remote client | Integration | Ready | ADR-0001 |
+| 038 | View-pitch and cadence parity; spawn and export order uncorrelated with player-ness | Integration | Ready | ADR-0001 |
+| 039 | The owner's hidden first-person body has no effect on what others see | Integration | Ready | ADR-0012 |
+| 040 | One presentation for every pawn class; no appearance-keyed audio or variation | Integration | Ready | ADR-0012 |
+| 041 | Visibility rows for AppearanceId and a log with no seed | Integration | Ready | ADR-0001 |
+| 042 | Shipping symbol audit and the character-pool lint set | Integration | Ready | ADR-0008 |
+| 043 | Pool evidence goes stale when pool membership changes | Logic | Ready | ADR-0012 |
+| 044 | M_Character_Master and the static material instances | Visual/Feel | Ready | ADR-0012 |
+| 045 | Tier A: six mannequin-variant models on the UEFN skeleton | Visual/Feel | Ready | ADR-0012 |
+| 046 | DA_CharacterPool authored with 12 rows and validated on real assets | Config/Data | Ready | ADR-0012 |
+| 047 | Tier A pool passes T1 to T4 (whole-pool gate) | Visual/Feel | Ready | ADR-0012 |
+| 048 | G-TWIN: four copies of one look read as an ordinary crowd | Visual/Feel | Ready | ADR-0012 |
+| 049 | G-VAR: the active models still differ at 8 m (paired-trial playtest) | Visual/Feel | Ready | ADR-0012 |
+| 050 | T5 crowd performance on the 3060-class reference PC | Integration | Blocked (ADR-0022 R1-R3) | ADR-0022 |
+| 051 | Network cost of AppearanceId recorded in a 10-client run | Integration | Ready | ADR-0012 |
+| 052 | Retire the prototype pool, dealer and per-pawn tint | Integration | Ready | ADR-0012 |
+| 053 | First six Meshy bodies pass or fail the Body_Base conform test (Tier B versus Tier C) | Visual/Feel | Blocked (test character, mass-production gate) | ADR-0012 |
+| 054 | Pool swap to Tier B or Tier C content (Exit B) | Visual/Feel | Blocked (story 053 verdict, mass-production gate) | ADR-0012 |
+| 055 | Cross-GDD tell-matrix review and the cosmetic/colour-aid checklist | Config/Data | Ready | ADR-0012 |
+| 056 | Pillar-1 playtest: participant counts per look fit the deck expectation | Integration | Ready | ADR-0008 |
 
 ## Definition of Done
 

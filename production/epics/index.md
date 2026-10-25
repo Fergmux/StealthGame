@@ -10,7 +10,7 @@ Engine: Unreal Engine 5.8 (installed 5.8.4)
 | [Session & Travel](session-travel/EPIC.md) | Foundation | Session & Travel | design/gdd/session-travel.md | 93 stories | Ready |
 | [Information Visibility Policy](information-visibility-policy/EPIC.md) | Foundation | Information Visibility Policy | design/gdd/information-visibility-policy.md | 55 stories | Ready |
 | [Input & Interaction Framework](input-interaction-framework/EPIC.md) | Core | Input & Interaction Framework | design/gdd/input-interaction-framework.md | 95 stories | Ready |
-| [Character Pool & Appearance](character-pool-appearance/EPIC.md) | Core | Character Pool & Appearance | design/gdd/character-pool-appearance.md | Not yet created | Ready |
+| [Character Pool & Appearance](character-pool-appearance/EPIC.md) | Core | Character Pool & Appearance | design/gdd/character-pool-appearance.md | 56 stories | Ready |
 | [Round & Match Framework](round-match-framework/EPIC.md) | Core | Round & Match Framework | design/gdd/round-match-framework.md | 92 stories | Ready |
 | [Level Socket Contract](level-socket-contract/EPIC.md) | Core | Level Socket Contract | design/gdd/level-socket-contract.md | 45 stories | Ready |
 | [Shared Character & Locomotion](shared-character-locomotion/EPIC.md) | Core | Shared Character & Locomotion | design/gdd/shared-character-locomotion.md | 55 stories | Ready |
