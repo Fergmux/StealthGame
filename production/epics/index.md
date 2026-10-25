@@ -23,4 +23,4 @@ Engine: Unreal Engine 5.8 (installed 5.8.4)
 | [Procedural City Generator](procedural-city-generator/EPIC.md) | Feature | Procedural City Generator | design/gdd/procedural-city-generator.md | 47 stories | Ready |
 | [Informant Pings & Team Communication](informant-pings-team-comms/EPIC.md) | Feature | Informant Pings & Team Communication | design/gdd/informant-pings-team-comms.md | 27 stories | Ready |
 | [Teammate Markers](teammate-markers/EPIC.md) | Presentation | Teammate Markers | design/gdd/teammate-markers.md | 34 stories | Ready |
-| [HUD](hud/EPIC.md) | Presentation | HUD | design/gdd/hud.md | Not yet created | Ready |
+| [HUD](hud/EPIC.md) | Presentation | HUD | design/gdd/hud.md | 60 stories | Ready |
