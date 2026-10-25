@@ -1,6 +1,10 @@
 #include "StealthPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
+#if !UE_BUILD_SHIPPING
+#include "Spikes/StealthIdentitySpike.h" // THROWAWAY SPIKE hook (ADR-0001 S1/S2/S14, 2026-10-25)
+#endif
+
 AStealthPlayerState::AStealthPlayerState()
 {
 }
@@ -13,6 +17,10 @@ void AStealthPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	DOREPLIFETIME(AStealthPlayerState, LifeState);
 	DOREPLIFETIME_CONDITION(AStealthPlayerState, NpcKills, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(AStealthPlayerState, LastDefenceActivationTime, COND_OwnerOnly);
+
+#if !UE_BUILD_SHIPPING
+	StealthSpike::ApplyPlayerStateTrims(StaticClass(), OutLifetimeProps); // SPIKE: no-op unless stealth.Spike.IdentityTrims is set
+#endif
 }
 
 void AStealthPlayerState::Reset()

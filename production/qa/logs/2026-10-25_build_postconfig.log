@@ -1,0 +1,26 @@
+﻿Using bundled DotNet SDK version: 10.0 win-x64
+Running UnrealBuildTool: dotnet "..\..\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" StealthGameEditor Win64 Development "-Project=C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject" -WaitMutex
+Log file: C:\Users\fergm\AppData\Local\UnrealBuildTool\Log.txt
+Determining max actions to execute in parallel (16 physical cores, 32 logical cores)
+  Executing up to 16 processes, one per physical core
+Using 'git status' to determine working set for adaptive non-unity build (C:\Users\fergm\Documents\Unreal Projects\StealthGame).
+Creating makefile for StealthGameEditor (.uproject file is newer)
+UbaServer - Listening on 0.0.0.0:1345
+Building StealthGameEditor...
+===== Toolchain Information =====
+Using ISPC compiler (C:\Program Files\Epic Games\UE_5.8\Engine\Source\ThirdParty\Intel\ISPC\bin\Windows\ispc.exe)
+  Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.24.0 (build commit  @ 20250404, LLVM 18.1.2) 
+Using Visual Studio 14.44.35229 toolchain (C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207) and Windows 10.0.22621.0 SDK (C:\Program Files (x86)\Windows Kits\10).
+===== End Toolchain Information =====
+Using Unreal Build Accelerator local executor to run 1 action(s)
+  CPU 16 physical cores, 32 logical cores
+  Memory 63.16 GB physical, 48.24 GB/71.86 GB committed
+  UBA Storage capacity 40 GB
+[1/1] WriteMetadata StealthGameEditor.target [NoUba]
+
+Total time in Unreal Build Accelerator local executor: 0.78 seconds
+Output binary: C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe
+
+Result: Succeeded
+Total execution time: 4.03 seconds
+Trace written to file C:\Users\fergm\AppData\Local\UnrealBuildTool\Trace.uba with size 3.2kb

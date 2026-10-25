@@ -1,0 +1,26 @@
+== SEND side (server): link parents per pawn channel by bNetOwner
+  bNetOwner=1 Controller  sends=5
+  bNetOwner=1 Owner       sends=5
+  bNetOwner=1 PlayerState sends=5
+  pawn channels with any send: owner=1 5, owner=0 46
+== RECEIVE side (clients): link parents on pawns this client never controlled (non-owner receipt)
+  NON-OWNER pie=1 kind=? Controller received 1 times
+  NON-OWNER pie=1 kind=? Owner received 1 times
+  NON-OWNER pie=1 kind=? PlayerState received 1 times
+  NON-OWNER pie=2 kind=? Controller received 1 times
+  NON-OWNER pie=2 kind=? Owner received 1 times
+  NON-OWNER pie=2 kind=? PlayerState received 1 times
+  owner pie=1 kind=player Controller received 1 times
+  owner pie=1 kind=player Owner received 1 times
+  owner pie=1 kind=player PlayerState received 1 times
+  owner pie=2 kind=npc/player Controller received 2 times
+  owner pie=2 kind=npc/player Owner received 2 times
+  owner pie=2 kind=npc/player PlayerState received 2 times
+== Non-owner received parent-index sets by server-truth kind (union over pawns):
+  ?            [4, 6, 7, 8, 9, 12, 13, 14, 21, 22, 26]
+  npc          [4, 6, 8, 9, 14, 21, 22, 26, 29]
+  npc/player   [4, 6, 8, 9, 10, 14, 21, 22, 26, 29, 31]
+  player       [4, 6, 8, 9, 14, 21, 22, 26, 27]
+  pawns analysed on clients: 92
+other PlayerState (both clients): RemoteRole x6, Role x6, PlayerNamePrivate x4
+own PlayerState (both clients): RemoteRole x3, Owner x2, Role x3, PlayerId x2, UniqueId x2, PlayerNamePrivate x2, Team x2, LifeState x2

@@ -19,6 +19,10 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Net/UnrealNetwork.h"
 
+#if !UE_BUILD_SHIPPING
+#include "Spikes/StealthIdentitySpike.h" // THROWAWAY SPIKE hook (ADR-0001 S1/S2/S14, 2026-10-25)
+#endif
+
 namespace
 {
 	/** Server-synchronised time, so client predictions use the same clock as server rules. */
@@ -63,6 +67,10 @@ void AStealthCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AStealthCharacter, bConcealed);
 	DOREPLIFETIME(AStealthCharacter, bRevealedUntilExit);
 	DOREPLIFETIME(AStealthCharacter, HeldUntilServerTime);
+
+#if !UE_BUILD_SHIPPING
+	StealthSpike::ApplyPawnTrims(StaticClass(), OutLifetimeProps); // SPIKE: no-op unless stealth.Spike.IdentityTrims is set
+#endif
 }
 
 void AStealthCharacter::BeginPlay()

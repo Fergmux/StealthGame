@@ -1,0 +1,45 @@
+== SEND side (server): link parents per pawn channel by bNetOwner
+  bNetOwner=0 Controller  sends=97
+  bNetOwner=0 Owner       sends=97
+  bNetOwner=0 PlayerState sends=17
+  bNetOwner=1 Controller  sends=7
+  bNetOwner=1 Owner       sends=7
+  bNetOwner=1 PlayerState sends=7
+  pawn channels with any send: owner=1 7, owner=0 49
+== RECEIVE side (clients): link parents on pawns this client never controlled (non-owner receipt)
+  NON-OWNER pie=1 kind=? Controller received 3 times
+  NON-OWNER pie=1 kind=? Owner received 3 times
+  NON-OWNER pie=1 kind=? PlayerState received 3 times
+  NON-OWNER pie=1 kind=npc Controller received 39 times
+  NON-OWNER pie=1 kind=npc Owner received 39 times
+  NON-OWNER pie=1 kind=npc/player Controller received 5 times
+  NON-OWNER pie=1 kind=npc/player Owner received 5 times
+  NON-OWNER pie=1 kind=npc/player PlayerState received 4 times
+  NON-OWNER pie=1 kind=player Controller received 3 times
+  NON-OWNER pie=1 kind=player Owner received 3 times
+  NON-OWNER pie=1 kind=player PlayerState received 3 times
+  NON-OWNER pie=2 kind=? Controller received 3 times
+  NON-OWNER pie=2 kind=? Owner received 3 times
+  NON-OWNER pie=2 kind=? PlayerState received 3 times
+  NON-OWNER pie=2 kind=npc Controller received 39 times
+  NON-OWNER pie=2 kind=npc Owner received 39 times
+  NON-OWNER pie=2 kind=player Controller received 4 times
+  NON-OWNER pie=2 kind=player Owner received 4 times
+  NON-OWNER pie=2 kind=player PlayerState received 4 times
+  owner pie=1 kind=player Controller received 2 times
+  owner pie=1 kind=player Owner received 2 times
+  owner pie=1 kind=player PlayerState received 2 times
+  owner pie=2 kind=npc/player Controller received 5 times
+  owner pie=2 kind=npc/player Owner received 5 times
+  owner pie=2 kind=npc/player PlayerState received 4 times
+  owner pie=2 kind=player Controller received 1 times
+  owner pie=2 kind=player Owner received 1 times
+  owner pie=2 kind=player PlayerState received 1 times
+== Non-owner received parent-index sets by server-truth kind (union over pawns):
+  ?            [4, 6, 7, 8, 9, 12, 13, 14, 21, 22, 26]
+  npc          [4, 6, 7, 8, 9, 13, 14, 21, 22, 26, 29]
+  npc/player   [4, 6, 7, 8, 9, 12, 13, 14, 21, 22, 26, 27]
+  player       [4, 6, 7, 8, 9, 10, 12, 13, 14, 21, 22, 26, 29, 31]
+  pawns analysed on clients: 98
+other PlayerState (both clients): RemoteRole x7, Owner x4, Role x7, PlayerId x4, CompressedPing x43, StartTime x2, UniqueId x4, PlayerNamePrivate x4, Team x4, LifeState x2
+own PlayerState (both clients): RemoteRole x3, Owner x2, Role x3, PlayerId x2, StartTime x2, UniqueId x2, PlayerNamePrivate x2, Team x2, LifeState x2
