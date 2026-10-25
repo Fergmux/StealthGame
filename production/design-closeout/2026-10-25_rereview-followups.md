@@ -70,3 +70,10 @@ D38 PROCEED/PIVOT margin for the MVP hypothesis: informed first-strike hit rate 
 D39 Elevator pitch reframed as a race ("two teams race through a crowd to one hidden target; every advantage you take is a tell"); pillar text untouched (user-confirmed). Pillar 3 "every mistake sticks" wording stays a user follow-up.
 D40 Lightweight Mexica cultural-framing check (desk review against codices/museum sources by a fresh agent + note for a human sensitivity read) scheduled in Pre-Production before any art-commit story.
 D41 story_granularity: balanced for remaining epics (fine yielded 95 stories/epic, ~1000 total); epics already split at fine keep their stories; dev-story may batch adjacent fine stories of one epic into one session and one commit listing all story IDs.
+
+# Story-phase rulings
+D42 AC-PSR-35(b): after a StrikeLimit release the pawn resolves Npc (R8/R9/AC-PSR-14 win); story 055 and the GDD AC are corrected.
+D43 Roster unowned work: add stories for the URosterStore facade + BeginMatch/EndMatch wiring on every session exit path, and for the C-TeamView component + push step; Round-phase input is an injected dependency of the Roster (seam).
+D44 PlayerState allowlist: ADR-0001 wording wins (PublicHandle + engine PlayerNamePrivate, which carries the display name); AC-PSR-44 text aligned.
+D45 ConnectionGeneration bumps only on entry to Disconnected (GDD, more specific); ADR-0005 amended to match.
+D46 ADR-0006 gets a MatchId seed domain row.
