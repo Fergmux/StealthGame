@@ -134,7 +134,7 @@ The Producer Note's "MVP-core at about week 6" (round, assassination/informants,
 | Walk-slower key collides with the sample's Ctrl jog toggle (first-playable controls: Ctrl toggles jog) and Alt has OS and PIE side effects | Medium | +1 day | Remap the jog toggle at implementation; test Alt in PIE and standalone |
 | 50 NPCs at 3060-class budget unmeasured (ADR-0022 4 ms animation budget) | Medium | +1 to +3 weeks | Measure early on target hardware; significance LOD levers already in ADR-0013 |
 | Traversal replication under 100 ms / 1 % loss unproven (SCL High-Risk row) | Medium | +1 to +2 weeks | Net-emulation spike before building traversal on it |
-| All 23 ADRs are still Proposed | Medium | Rework if a decision flips | Accept ADRs in build order, each before its code is promoted from the prototype |
+| ~~All 23 ADRs are still Proposed~~ — resolved: all 23 Accepted 2026-10-25 (several conditional on spikes) | Low | Rework if a spike fails a condition | Run the conditioning spikes before dependent stories |
 | Pings could expose Pillar 1 leaks via the controller carrier | Low | High | AC-PNG-01/-02/-03 are BLOCKING and use the opponent-as-host run |
 
 ### Dependencies
