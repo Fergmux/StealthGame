@@ -94,3 +94,44 @@ Reviewed-Content-Hash: design/gdd/teammate-markers.md fa6747053069b90ca709dd4b0b
 Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md d5494369a7ed46d882c863563dd3228f5d2281ab
 Reviewed-Content-Hash: design/gdd/game-concept.md 8dccb622e17a7f1dc58349dd2baa54d52fc36d32
 Reviewed-Content-Hash: design/art/art-bible.md 23373eb6ce1b1161988b4d931c1bbd545bd33f34
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (6 formulas, 6 upstream and 10 downstream dependencies, rig ADR-0015, mask spike OQ5 and trace budget OQ10; producer should verify before sprint planning)
+Specialists: none (lean, single-session)
+Blocking items: 2 (both fixed in the GDD text; verdict kept until a re-review) | Recommended: 7
+Summary: Second-round review. All 14 first-round blockers were checked against the text and are resolved, and the F1/F2/F4/F5/F6 worked examples, AC thresholds and registry-owned key values were re-derived and hold. Two new defects came from changes made after the first review: the worst-case pawn count was stale after the user raised `NpcCount` to 50 (59 other pawns, not 49), and the new Informant Pings GDD (#20) consumes `GetAimRay()` while Camera did not list it as a dependent.
+Prior verdict resolved: Yes (14 of 14 blockers; 17 recommended items applied or accepted)
+Findings:
+- [BLOCKING] F3 / AC-CS-13 / OQ10 / OQ5: the worst case was 49 pawns x 5 = 245 traces, from `NpcCount` 40. At `NpcCount` 50 with 10 players there are 60 characters, so 59 others and 295 traces (about 1.5 ms at 5 us). AC-CS-13 tested the wrong worst case.
+  - Fixed: F3, AC-CS-13 (59 dummies), OQ5, OQ10, CS-R5c and the Visual/Audio note now say 59 / 295 / 1.5 ms.
+- [BLOCKING] Dependencies / Interactions / Cross-References / CS-R8: Informant Pings & Team Comms (#20) lists Camera as a Hard dependency and uses `GetAimRay()` and the eye pivot, but Camera listed no such dependent (the bidirectional-dependency rule).
+  - Fixed: added to the Downstream table, the Interactions table and Cross-References. CS-R8 now states the `FAimRay` return contract (ADR-0015 §5) and the trace channels (`ViewBlock` for the world, an object-type Pawn query for pawns), and says Pings read only `Origin` and `Direction`.
+- [RECOMMENDED] AC-CS-05: the oracle is traced from the real eye socket, but the mask origin is the capsule axis (CS-R4) and the 1P camera sits 8 cm forward of it. "Zero false reveals" can fail by a few centimetres of head offset alone. Pick one oracle origin (the 1P lens position is the natural one) or add a stated tolerance. Not edited: it is a design choice for the author.
+- [RECOMMENDED] CS-R6 / CS-R5b: the mask turns off below 20 cm free length with no hysteresis, while the 60 cm head-hide has 15 cm. Alley flicker at 20 cm is possible. Add a hysteresis value as a tuning key. Not edited: it needs a new value.
+- [RECOMMENDED] AC-CS-23 is tagged [P] but is a document review ("when it is reviewed"). Retag it as a document or lint check.
+- [RECOMMENDED] Rules lacking ACs: strike-warp view hold and close third person. Fixed: AC-CS-40 and AC-CS-41 added.
+- [RECOMMENDED] F3 `fails` was undefined in the formula. Fixed: defined as consecutive failed tests, reset on `Pass`.
+- [RECOMMENDED] Dependency status columns go stale (they predate the reconciliation). Fixed: the source note now names the systems-index as authoritative. The statuses themselves were not refreshed.
+- [RECOMMENDED] Hide latency beyond 60 m: with `EyeMaskHideFailCount` 2 at 5 Hz a pawn that steps behind a wall stays drawn for up to 0.4 s (0.13 s at 15 Hz). It only keeps a pawn already seen, so it leaks nothing, but Game Feel only states the reveal bound. Add the hide bound to Game Feel.
+Cross-doc follow-ups (main session):
+- systems-index.md: Camera System row status to "Needs Revision" (this verdict), or "In Review" once the main session accepts the applied fixes.
+- shared-character-locomotion.md R9 still reads "user to confirm, Camera OQ9" and "first-person camera pitch -60 to +40" (its pitch line in the Camera change-request list); OQ9 was confirmed by the user 2026-10-25, so drop "user to confirm".
+- adr-0015-camera-los-envelope.md: Verification item (3) and the Consequences text use 245 traces and "50 pawns"; update to 295 traces and 60 characters. Check ADR-0022's mask cost line the same way.
+- informant-pings-team-comms.md: its Camera row says "no Camera change". Still true; Camera now lists Pings as a Hard-for-Pings dependent.
+- tuning-data-config.md: when the hysteresis for the 20 cm mask-off threshold is added, register it as a Camera key.
+Note: the target document was revised after this review, so it is deliberately not stamped below (a re-review must run in full).
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md 6df3690b6fb980c603a0a0be65d9a6224c0b57b9
+Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9557521fb4c45d124224835244
+Reviewed-Content-Hash: design/gdd/information-visibility-policy.md 9ce1d9677b38048e71176b7dd0b44959ce5c99f5
+Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c845e98d280ed6797f
+Reviewed-Content-Hash: design/gdd/assassination-defence-reversal.md d89bac971a0a37d20024e0b32fb89559467cf5ab
+Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
+Reviewed-Content-Hash: design/gdd/teammate-markers.md a99e945ffb425c4da6bd1094f01b6fd9ced99ff6
+Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 242977e3dcc0185347fd1053741e6f305c1e42fa
+Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526f8d2c6c107100ba7a2db673b
+Reviewed-Content-Hash: design/gdd/hud.md 05f2d8dac61a985f97a45a83f56d07c421369931
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+Reviewed-Content-Hash: design/art/art-bible.md ba9f28821285a7933cad48bee9f4ccf28499ac5e

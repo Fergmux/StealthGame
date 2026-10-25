@@ -140,6 +140,7 @@ No optional field, no conditional bit, no magnitude-packed vector. `NetSerialize
 **3.2 Applying a `DeathWrite`** (staging pass, one server step, identical for every victim kind; even after the latch; dropped on `Reset` by epoch):
 1. `FDeathState.DeathServerTime = DeathServerTime` inside `FStealthForcedNetUpdate(DeathWrite)`.
 2. `Disabled`: set the movement freeze flag through ADR-0010 §4.5 (the victim brakes by its own gait's baseline; traversal stops at its server position).
+   **The death write never interrupts the lunge (closeout 2026-10-25):** if the pawn receiving the freeze flag is the attacker of a `Strike` whose lunge (commanded displacement toward `WarpPoint`, SCL) is in progress, which is the case for the attacker of a reversal (its `DeathWrite` is staged at `ContactServerTime - StrikeNetLeadSec`, before contact), the lunge **runs to `ContactServerTime`**: the movement freeze flag is recorded at `T_dw` but takes effect at `ContactServerTime` (the lunge's own end, after which the pawn brakes by its gait baseline), so the server position at contact and the owner's/other clients' local warp agree and no early stop is observable. Replicated state (`FDeathState`, visibility) still changes at `T_dw`; only the locomotion freeze is deferred. SCL confirms the lunge has no death-write cancel path.
 3. Visibility: notify the Policy's death-write hook; a pawn culled for a reason other than concealment re-opens now, already carrying `DeathServerTime`; a killed-concealed pawn stays closed (ADR-0003 §5.7).
 4. Nothing else: no Roster, card, score or legality change (all decided in the slot).
 
@@ -448,3 +449,7 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 - §1.3 — user decision 2026-10-25: `TallyAfter`/`bExiled` no longer provisional (Penalty OQ-NKP-1 confirmed).
 - §3 step 3 — user decision 2026-10-25: the binding retirement passes the strike's `ContactServerTime` as the Team-audience `RetireAtServerTime` (Roster R6, Markers CR-13).
 - §5.2 — user decision 2026-10-25: the `InformantKilled` role-change reason is confirmed (Penalty CR-18 / OQ-NKP-12).
+
+Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-25_rereview-followups.md`); decision unchanged, Status unchanged (Accepted).
+- §3.2 step 2: the death write never interrupts the lunge; the movement freeze flag for a pawn in an in-progress `Strike` lunge (the reversal's attacker) takes effect at `ContactServerTime`, while `FDeathState` and visibility change at `T_dw` (ASN re-review xdoc: SCL + ADR-0018 confirm; the replication specialist re-verifies AC-ASN-05, 20, 21, 44, 45 against this).
+- §5.3 (closeout D8): `HudResultPlateMaxHoldBackSec` and `HudOwnRemovalHoldCapSec` have a **hard minimum of 1.25 s** in the TDC (ADR-0004 validates it), so the lost-data fallback in the show-time formula can never fire below the strike lead; `result_show_time` is `ContactServerTime`-based (HUD re-review xdoc).

@@ -2,7 +2,7 @@
 
 > **Engine**: Unreal Engine 5.8 (installed 5.8.4, CL 58902052)
 > **Last Updated**: 2026-10-25
-> **Manifest Version**: 2026-10-25c (same-day update after the user scope decisions of 2026-10-25; see "Changes in 2026-10-25c" and "Changes in 2026-10-25b" at the end)
+> **Manifest Version**: 2026-10-25d (same-day update after the re-review closeout of 2026-10-25; see "Changes in 2026-10-25d", "Changes in 2026-10-25c" and "Changes in 2026-10-25b" at the end)
 > **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016, ADR-0017, ADR-0018, ADR-0019, ADR-0020, ADR-0021, ADR-0022, ADR-0023 (all **Accepted** 2026-10-25; several conditionally, see "Conditional acceptance")
 > **Status**: Active — regenerate with `/create-control-manifest update` when ADRs change
 
@@ -213,7 +213,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Before the first commit the template's Godot/Unity ignore sections are removed and `build/`/`bin/` anchored or removed (`git check-ignore -v Build/Scripts/x.cs` prints nothing); `.gitattributes` lists one pattern per line** — source: ADR-0009
 - **Commits use Conventional Commits with a story/task ID and a design-doc/ADR reference** — source: ADR-0009
 - **The Roster teammate entry carries Team-audience `bReconnecting`, derived only by the Roster push step from Session's `Connection` projection (true while `Disconnected` inside `DisconnectGraceSec` during `Active`; false otherwise)** — source: ADR-0001, ADR-0005 (user decision 2026-10-25)
-- **`UTeamPingViewComponent` (`FTeamPingView`, a fixed-size array with one slot per team member, no `RoundEpoch` of its own) is a C-TeamView part written only by the Informant Pings server handler, cleared at `OnRosterReset`, travel and Round's round-end step** — source: ADR-0001, ADR-0002 (user decision 2026-10-25)
+- **`UTeamPingViewComponent` (`FTeamPingView`, a fixed-size array with one slot per team member, no `RoundEpoch` of its own) is a C-TeamView part written only by the Informant Pings server handler, cleared at `OnRosterReset`, travel and Round's round-end step; slot `i` always belongs to the sender with Roster team slot `i` (stable per team, never compacted, reordered or reassigned mid-round); `Point` is `FVector_NetQuantize10` (0.1 cm)** — source: ADR-0001, ADR-0002 (user decision 2026-10-25; closeout 2026-10-25)
 - **`FRoundResult.TeamSummary[2]` is computed in the latch step and published only in the round-end step (all zero before)** — source: ADR-0002 (user decision 2026-10-25)
 
 ### Forbidden Approaches
@@ -382,10 +382,10 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 
 **Animation and significance**
 - **Every Shared Pawn uses the one AnimBP, the one PoseSearch database set and the one chooser set** — source: ADR-0013
-- **Engine URO is off (`bEnableUpdateRateOptimizations = false`) for every pawn mesh; external tick-rate control is on for every pawn on non-authority clients (`AlwaysTickPose`, accumulated `ExternalDeltaTime`, alpha set every frame) and off on authority** — source: ADR-0013
+- **Engine URO is off (`bEnableUpdateRateOptimizations = false`) for every pawn mesh; external tick-rate control is on for every pawn on non-authority clients (`AlwaysTickPose`, accumulated `ExternalDeltaTime`, alpha set every frame) and off on authority except the listen host, which tiers every non-locally-controlled pawn with the clients' significance bands (uniform `TickPose` escalation, closeout D3; confirmed in R3)** — source: ADR-0013
 - **Tier inputs are only `h` (view depth and FOV) and Camera's eye-mask flag; ties break on the client-local `TierTieKey`** — source: ADR-0013
 - **Motion-matching search cadence is time-based (`SearchThrottleTime` in seconds)** — source: ADR-0013
-- **On authority every pawn uses `AlwaysTickPoseAndRefreshBones` at rate 1; root-motion, traversal and `PoseLocked` states run at rate 1 on every client; a D-culled pawn's montage position is re-derived from replicated state at promotion** — source: ADR-0013
+- **On authority (dedicated server, standalone, and the listen-host fallback) every pawn uses `AlwaysTickPoseAndRefreshBones` at rate 1; the listen host's default is the uniform `TickPose` escalation of ADR-0013 §4 (never by kind); root-motion, traversal and `PoseLocked` states run at rate 1 on every client; a D-culled pawn's montage position is re-derived from replicated state at promotion** — source: ADR-0013
 - **Footsteps come only from `UStealthStepClockComponent` using the rendered smoothed position; every footstep uses `SC_Footsteps`, one sound class, one attenuation, one priority, no per-pawn parameter** — source: ADR-0013
 - **`C_anim` is measured per ADR-0013 §5 (GT + worker sum, p95, Insights) and reported with the GT share** — source: ADR-0013
 
@@ -706,7 +706,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 
 - **Every HUD and marker layer is a UMG widget added with `AddToPlayerScreen` at its HUD-R4 ZOrder** — source: ADR-0021
 - **Widgets apply a view-model value only when it differs from the last applied value** — source: ADR-0021
-- **Layers below ZOrder 100 are `HitTestInvisible`, non-focusable, with no input bindings** — source: ADR-0021
+- **Layers below ZOrder 100 are `HitTestInvisible`, non-focusable, with no input bindings, and never host a button or a `UCommonActivatableWidget`; a Session status overlay that needs buttons shows its text on L4 (display only) and pushes a Menu-root modal (`UStealthStatusActionModal`) through `UStealthMenuStack::PushMenu`** — source: ADR-0021 (closeout 2026-10-25)
 - **All HUD widgets are created once at HUD init and toggled by visibility** — source: ADR-0021
 - **World-anchored drawing (markers, interact ring, context prompt) happens in `SStealthWorldAnchorLeaf::OnPaint` from the rendered frame's camera view; the leaf is volatile and never inside an invalidation or retainer box** — source: ADR-0021
 - **The screen fade is drawn by the HUD fade layer at ZOrder 20 from Camera's published fade** — source: ADR-0021
@@ -883,3 +883,12 @@ Updated after the user's scope decisions of 2026-10-25 ("accept all recommendati
 - Presentation: L0 ping rings; text-only round summary from integers + string tables; reconnecting/back feed lines and the marker label suffix; no free-text chat or in-engine voice in MVP.
 - Tuning (ADR-0004, no separate rule line): new owner `InformantPings` (`PingLifetimeSec`, `PingBucketSize`, `PingBucketPerSec`, `PingRangeCm`, `PingRangeSlackCm`) and invariant I-PNG-1.
 - Budget (ADR-0003): ping part ≤ 50 B/s per teammate connection; `FRoundResult` +6 bytes at `Ended`.
+
+## Changes in 2026-10-25d
+
+Updated after the re-review closeout of 2026-10-25 (`production/design-closeout/2026-10-25_rereview-followups.md`; recorded as "Closeout 2026-10-25" Amendments in ADR-0001, 0002, 0004, 0005, 0008, 0010, 0011, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0021, 0022). Rules added or changed:
+- Foundation: ping slot-index rule and 0.1 cm `FVector_NetQuantize10` ping point (ADR-0001); written S2 fallback for the PlayerState trims (ADR-0001 §8); ADR-0008 nightly calibration seeds derive from a `constexpr` base, no seed file.
+- Core: stop floor `d_eff = min(d, v / StopMinSec)` for every pawn (ADR-0010); the death write never interrupts a lunge (freeze flag takes effect at `ContactServerTime`, ADR-0018); the sample AnimBP's `IsLocallyControlled` branch is removed for every pawn (ADR-0013); the listen host adopts the uniform `TickPose` escalation (ADR-0013 §4, ADR-0022).
+- Feature: respawn region per team-spawn zone pair with the nearer-anchor cut (ADR-0014 §7.3, ADR-0019 §4.3); 40-byte graybox `LayoutHash` extract record (ADR-0014 §6); engine `ConnectionTimeout` at least 111 s, 120 s configured (ADR-0005); `Disconnect` accepted for an `Expired` connection (kick path).
+- Presentation: L4 stays display-only and status buttons live in a Menu-root modal; Pings in L0 (HUD-E22) and round summary in L3 (HUD-E21); mask worst case 295 traces (ADR-0015, ADR-0022).
+- Tuning (ADR-0004, no separate rule line): `StopMinSec` 0.5 s; `CameraMaskOffHysteresisCm` 10; hard minimum 1.25 s for `HudResultPlateMaxHoldBackSec` and `HudOwnRemovalHoldCapSec`; Crowd bush default 300 s; multi-occupant share cap `max(40 %, m0 + 10 pp)`; Shipping-cook preset exclusion deferred to a later ADR-0004 amendment.

@@ -63,3 +63,47 @@ Reviewed-Content-Hash: design/gdd/concealment-bushes.md 8340b1dca731c7a25bcbf91d
 Reviewed-Content-Hash: design/gdd/information-visibility-policy.md 1277ef682327977500e3667b7efde48695c916b5
 Reviewed-Content-Hash: design/gdd/round-match-framework.md 5d1f316101eefb952dc5c9f42e9247d2cbcd613d
 Reviewed-Content-Hash: design/gdd/input-interaction-framework.md 4f420c05e0a8e4119ade3ef7fff68f39eaff6e78
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (unchanged: 10 formulas, 12 upstream and 5 downstream dependencies; needs the UI ADR already written as ADR-0021; the index's M estimate still looks low)
+Specialists: none (lean mode, single-session analysis)
+Blocking items: 4 (3 fixed in place, 1 cross-document and open) | Recommended: 5
+Summary: All 13 blockers of the 2026-10-24 full review are confirmed resolved in the text (PresentedOwnState, F2 pending and never-drop rules, F10 floor and cap, Notice-slot countdown, fade layer, ring ticks, F1 at 16:10, rewritten ACs). The user decisions of 2026-10-25 (`ContactServerTime` in `FStrikeResult`, tally re-push, `T_due`, round summary, reconnecting lines, ping slot) are applied consistently with the sibling GDDs, and every formula example was recomputed and matches. What remained were stale remnants of the pre-decision text and one test gap, plus registry drift. Verdict stays NEEDS REVISION because the entity registry holds only 15 of the 21 HUD keys that TDC says are registered; no design-level defect was found.
+Prior verdict resolved: Yes (NEEDS REVISION 2026-10-24; all 13 blocking items verified against the current text)
+Findings:
+- [BLOCKING, fixed] Edge Cases (Timing): "FStrikeResult arrives before the matching FActionState: the plate stays Pending" contradicted F2 and ASN-R19, where the attacker's plate reads `FStrikeResult.ContactServerTime` and never waits; rewritten so only the defender's `FDefenceResult` and a time-less result wait.
+- [BLOCKING, fixed] HUD-R9 (Informant killed): said the user's confirmation of `InformantKilled` "stays open" although Penalty OQ-NKP-12 and CR-18 were approved 2026-10-25 (the Cross-References table and the status line already said so).
+- [BLOCKING, fixed] Acceptance Criteria: HUD-R9's `InformantKilled` path (no card, countdown after Camera's fade), the lost-death-state cap path (F4) and the round-ends-during-removal path had no AC; added AC-HUD-29 and the coverage line.
+- [BLOCKING, open, cross-doc] Entity registry: only 15 HUD keys are registered (`HudPersistentAreaLimitPct`, `HudResultPlateOutSec`, `HudRemovalCardHoldSec`, `HudRemovalCardOutSec`, `HudFeedLineCount`, `HudObjectiveStepSec` are missing) while TDC lists 21; the `result_show_time` formula entry still shows only the pre-decision expression (no result-carried `ContactServerTime` / fallback split).
+- [RECOMMENDED, fixed] States table: HUD-E22 (ping rings) was missing from `ActiveAlive` and `InformantBodied`, and HUD-E17 (first third-person hint, listed for IB in UI Requirements) from `InformantBodied`.
+- [RECOMMENDED, fixed] HUD-R13 priority list: the strike hint was "dropped, never queued" while a higher notice held the Notice slot, which is ambiguous for a level-triggered predicate; stated as level-triggered with priority-only slot choice (kind-blind, HUD-R3).
+- [RECOMMENDED, fixed] Dependencies and Cross-References: Informant Pings listed as "Designed (pending independent review)"; it is In Review (NEEDS REVISION 2026-10-25, revisions applied). Also noted that the HUD reads Pings' content (two-way link, not a cycle). Tuning Knobs: `HudLatencyWarnRttSec` note updated (IIF retired its duplicate key).
+- [RECOMMENDED, noted open] F1: the A_persist lint sums only the three reference clusters; informant brackets (E09) and the latency icon (E19) have no footprint, and the 16:10 margin is 0.4 points (7.6 % of 8 %). Open item added to F1 for the UX spec; no numbers invented.
+- [RECOMMENDED, open] Hard ranges for `HudResultPlateMaxHoldBackSec` and `HudOwnRemovalHoldCapSec` start at 1.2 while I-HUD-1 and I-HUD-2 need at least sum + 1/60 (up to 1.217 when `StrikeContactSec + BushStrikeEmergeSec` is at Assassination's 1.2 cap); harmless because the invariants reject, but TDC may want the hard minimum raised to 1.25.
+- [ADVISORY, pre-existing] OQ5 (exile word collision: "Exiled" card vs "Target exiled" plate) stays a blocker for the HUD UX spec, and OQ11 conditions (qa-lead pass, art-director sign-off on CR-HUD-8, audio cue list) stay before HUD epics.
+Specialist disagreements: none (no specialists).
+Registry values: searched the document for the HUD key names and for the neighbour keys it restates (`DefenceCooldownSec` 60, `DefenceDurationSec` 4, `StrikeContactSec` 0.4, `BushStrikeEmergeSec` 0.35, `AttackAttemptLockoutSec` 1.75, `DeathFallSec` 1.2, `NoPawnFadeSec` 0.5, `StrikeNetLeadSec` 0.15, `ExileBeatSec` 0.8, `InformantRespawnDelaySec` 15, `NpcKillStrikeLimit` 3, rival-signal 30-195 s): no conflicting value found against the registry or the owner GDDs.
+Dependency graph: all 12 upstream GDD files exist; downstream Event Feedback & Cues, Settings & Accessibility, Onboarding and Post-Round Reveal are not written (stated in the GDD).
+Cross-doc follow-ups (main session):
+- Registry (`design/registry/entities.yaml`): add the six missing HUD keys (values, ranges and units as in hud.md Tuning Knobs); update `result_show_time` to the result-carried `ContactServerTime` primary input with the matching-write fallback for `FDefenceResult`.
+- ADR-0021 layer table (`docs/architecture/adr-0021*.md`): L0 content should list the team ping rings and edge rings (HUD-E22, Informant Pings) and L3 the round summary (HUD-E21); its L1 content should list the stage card by its element split if the UX spec requires it.
+- TDC: optionally raise the hard minimum of `HudResultPlateMaxHoldBackSec` and `HudOwnRemovalHoldCapSec` to 1.25 (see the recommended item above).
+- Systems index row 18: HUD status stays In Review / Needs Revision; the main session decides the string. The row's Depends On could add Informant Pings only if Pings' own row stops listing HUD (avoid a two-way hard cycle in the index).
+- UX spec (`/ux-design`, design/ux/hud.md): footprints for E09 and E19 and a re-run of the F1 budget; OQ5 wording.
+Note: the target document was revised after this review, so it is deliberately not stamped below (a re-review must run in full).
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/assassination-defence-reversal.md d89bac971a0a37d20024e0b32fb89559467cf5ab
+Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
+Reviewed-Content-Hash: design/gdd/teammate-markers.md a99e945ffb425c4da6bd1094f01b6fd9ced99ff6
+Reviewed-Content-Hash: design/gdd/camera-system.md d304d3eb9b8ca59389014b2fd64e1318e1200f5a
+Reviewed-Content-Hash: design/gdd/objectives-chain.md ca652db3c9bb041fb11d0af194650394ce5140b0
+Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c845e98d280ed6797f
+Reviewed-Content-Hash: design/gdd/information-visibility-policy.md 9ce1d9677b38048e71176b7dd0b44959ce5c99f5
+Reviewed-Content-Hash: design/gdd/round-match-framework.md ab477269caa8bacab048c8719d3029a90a7ce89e
+Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9557521fb4c45d124224835244
+Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526f8d2c6c107100ba7a2db673b
+Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 63db04c802c6db06eb0ba3dac93f65fb9fa98068
+Reviewed-Content-Hash: design/gdd/session-travel.md 1e185cf338c1b17880a81bc7057dcb11fa8a0ee4

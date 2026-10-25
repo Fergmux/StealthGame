@@ -734,7 +734,7 @@ Total on screen 3.85 s at defaults. Shown at the local contact frame (PAT-FND-5)
 
 **Accessibility**: Text, not colour or spinner alone; a spinner, if used, has a static equivalent under Reduce motion. Messages persist until resolved (no timed auto-dismiss of actionable text).
 
-**Implementation Notes**: Note the exception to ADR-0021's "no input below 100": buttons on this overlay need Common UI routing; the ADR must state how input is routed on L4 [verify] (Open Questions P7).
+**Implementation Notes**: Note the exception to ADR-0021's "no input below 100": buttons on this overlay need Common UI routing; resolved by D15 (ADR-0021 L4 split): the overlay text stays display-only on L4 and its buttons are a Session-owned modal pushed at ZOrder 100 (Open Questions P7).
 
 ---
 
@@ -1124,7 +1124,7 @@ All UI sounds sit on the UI bus, which the player can mute knowing every in-roun
 | P4 | CONFLICT | IIF UI-5 says a quiet 2D owner-only tone plays with a rejection plate; HUD VA-HUD-6 lists every HUD cue and omits a rejection tone. Decide whether the tone exists. The accessibility SFX audit assumes it does and lists the plate as its twin. | audio-director, ux-designer | HUD re-review | Unresolved |
 | P5 | CONFLICT (wording) | HUD-R5 says the bottom-left slot stacks "brace indicator, tally, rejection plate (stacked upward)"; HUD-R13 and HUD-E15 say the rejection plate sits "beside" the brace indicator. The HUD UX spec must pick one layout. | ux-designer | HUD UX spec | Unresolved |
 | P6 | GAP | The `ShowTeamNames` hold input (TM CR-4) is pending user decision and is absent from IIF R15's default-binding table. PAT-WLD-2 works by focus alone until it exists. If added it needs a default binding, a toggle alternative and a place in the binding screen. | user, game-designer | Before Vertical Slice | Pending user |
-| P7 | GAP | ADR-0021 states every layer below 100 is hit-test-invisible with no input, but PAT-CRD-3 (status overlay with Cancel and OK buttons, owned by Session on L4) needs input. State how input is routed on L4 and whether a Common UI activatable is permitted there, given the ban on activatables below 100. | ue-umg-specialist, technical-director | ADR-0021 amendment | Unresolved |
+| P7 | GAP | ADR-0021 states every layer below 100 is hit-test-invisible with no input, but PAT-CRD-3 (status overlay with Cancel and OK buttons, owned by Session on L4) needs input. State how input is routed on L4 and whether a Common UI activatable is permitted there, given the ban on activatables below 100. | ue-umg-specialist, technical-director | ADR-0021 amendment | Resolved by D15 (ADR-0021 L4 split, 2026-10-25): layers below ZOrder 100 stay display-only; PAT-CRD-3's Cancel/OK buttons live on a Session-owned modal pushed at ZOrder 100 |
 | P8 | CONFLICT (accessibility) | The result plate default hold (3.0 s) is below the Standard-tier 5 s guideline; the library records it as a documented deviation mitigated by `HudReadHoldMult`. The HUD GDD should state the rationale. See accessibility F2. | ux-designer | HUD re-review | Unresolved |
 | P9 | GAP | The concealed grade has no non-visual twin and Reduce screen effects disables its vignette (accessibility F11). PAT-FBK-2 carries the gap until the Concealment GDD answers. | art-director, audio-director | Concealment re-review | Unresolved |
 | P10 | GAP | HUD-E19's latency icon and the `HudLatencyWarnRttSec` threshold specify no colour-independent shape; confirm in the HUD UX spec. | ux-designer | HUD UX spec | Unresolved |

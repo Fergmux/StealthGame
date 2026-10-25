@@ -41,3 +41,33 @@ Reviewed-Content-Hash: design/gdd/camera-system.md 8c0dbdd6b248a1b4df5a7a96d0f35
 Reviewed-Content-Hash: design/gdd/information-visibility-policy.md d8fd90df42d37734c67ecba262aefd4ca1d353b8
 Reviewed-Content-Hash: design/gdd/input-interaction-framework.md 90b88857c2a98e951356a90c5878a80f231c47ca
 Reviewed-Content-Hash: design/gdd/game-concept.md 8dccb622e17a7f1dc58349dd2baa54d52fc36d32
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (unchanged: 5 formulas, 8 upstream and 8+ downstream dependencies, ADR work for replication; producer should verify before sprint planning)
+Specialists: none (lean mode; single-session second-round review)
+Blocking items: 3 | Recommended: 4
+Summary: All 9 blocking items of the 2026-10-24 review are resolved in the text, and the 2026-10-25 user decisions (tally, `bDiedConcealed`, `StartServerTime`, `ContactServerTime`, `RetireAtServerTime`, victim `Disabled` at the death write, rear-counter declined) are integrated. Registry values (all `Assassination*`/`Strike*`/`Defence*`/`Counter*`/`Body*` keys) match; F1, F2, F3, F5 and the worked examples were recomputed by hand and hold. Remaining defects were stale text left by the decision integration and one scope gap in an AC; all are corrected in the GDD in this pass, but they were found in a lean single-session review and the creative director's request that the replication specialist re-verify AC-ASN-05, 20, 21, 44 and 45 is still outstanding, so this is not an approval.
+Prior verdict resolved: Yes (9 of 9 blocking items verified fixed; 12 recommended items verified applied)
+Findings:
+- [BLOCKING, fixed] VA-ASN-6: still said relevancy stays closed for non-allied viewers for a body killed while concealed, contradicting ASN-R10/R17/AC-ASN-44 and the user decision (re-open at the death write with `bDiedConcealed`, hidden on every non-owner client) -> rewritten to the decided route.
+- [BLOCKING, fixed] ASN-R16: said `FActionState` has no start-time field and derived the `BushStrike` start from `ContactServerTime`; `StartServerTime` was adopted in ASN-R21 -> now reads `StartServerTime`, derivation kept only as a consistency check; Cross-References row for ADR-0017 sync annotated as superseded.
+- [BLOCKING, fixed as clarification] ASN-R16/R21: the death write applied `Disabled`/death state to a reversed attacker at `ContactServerTime − StrikeNetLeadSec` while its lunge warp runs to contact, so server and client could disagree on where the attacker drops (up to roughly 0.15 s of lunge, tens of cm) -> stated that the death write never interrupts the lunge: for a reversed attacker it sets `FDeathState` and cancels input only, the warp to the fixed `WarpPoint` runs to `ContactServerTime`, then the body falls. Needs SCL / ADR-0018 confirmation (cross-doc follow-up).
+- [RECOMMENDED, fixed] AC-ASN-20: "same set of dirty replicated properties" was unsatisfiable across Owner/Team channels (Roster state differs for a kill versus a reversal) -> scoped to the All-audience (bystander) channel, Owner/Team data deferred to the ASN-R21 residuals and AC-ASN-05.
+- [RECOMMENDED, fixed] ASN-R21 Residuals: named "the target's team" only; on a reversal the attacker's team receives the Team-audience data -> now "the team of whichever pawn is eliminated".
+- [RECOMMENDED, fixed] F1 Output Range: "caps reach at 260 cm" was wrong for the default 240 cm warp limit (240 + 35 + 15 = 290) -> corrected with the values at the safe and hard minimum warp limits; TDC hard maximum 250 unchanged.
+- [RECOMMENDED, fixed] Edge Cases (strike spam) and OQ-ASN-3 still quoted the `NpcCount` 40 figures (0.34 rival kills, 8.6 NPC kills per rival kill); F5 and AC-ASN-32/33 use `NpcCount` 50 (0.276 / 10.7) -> aligned.
+- [RECOMMENDED, fixed] AC-ASN-35: ally marker line described an exit fade from the arrival of the retire update; ASN-R23 and TM-R6 now schedule it from `RetireAtServerTime` -> aligned.
+- [OPEN] Replication-specialist re-verification of AC-ASN-05, 20, 21, 44, 45 (creative-director request, 2026-10-24 log) is not done in lean mode; run it in the next full-mode pass or at ADR-0003/0018 acceptance.
+Cross-doc follow-ups (main session):
+- Systems index: set Assassination & Defence Reversal to Needs Revision (second review) with the date; this agent did not edit it.
+- SCL / ADR-0018: confirm the "death write never interrupts the lunge for a reversed attacker" clarification (ASN-R16) against the SCL `Disabled` timing and the server-side motion warp.
+- Dependencies/Cross-References carry sibling statuses ("Reviewed, NEEDS REVISION", Round and TDC "MAJOR REVISION NEEDED") as of 2026-10-24; refresh once the parallel second reviews land.
+- IVP L10 and Round staged-broadcast change requests (items 3, 13, 14) remain the siblings' to confirm; Roster R6 `RetireBinding`/`RetireAtServerTime` and TM-R6 are assumed adopted as the GDD states.
+- TDC: confirm I-ASN-1 reach cap wording (290 cm at default warp limit) when it restates the invariant.
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/assassination-defence-reversal.md d89bac971a0a37d20024e0b32fb89559467cf5ab
+Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
+Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9557521fb4c45d124224835244
+Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c845e98d280ed6797f

@@ -42,3 +42,38 @@ Reviewed-Content-Hash: design/gdd/participant-state-roster.md 7090ac55a320a45ab6
 Reviewed-Content-Hash: design/gdd/round-match-framework.md 0a20ed3e6deebf0dcc36a11ec171861efbd91583
 Reviewed-Content-Hash: design/gdd/game-concept.md 8dccb622e17a7f1dc58349dd2baa54d52fc36d32
 Reviewed-Content-Hash: design/gdd/systems-index.md 2adb098db430a1b7d1c77e1238171c3948bf08eb
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (unchanged: multi-system integration, 9 formulas plus a statistical gate, ADRs for pawn replication parity and the stream primitive; producer should verify before sprint planning)
+Specialists: none (lean, single session)
+Blocking items: 4 | Recommended: 5
+Summary: Second-round review. All 26 round-1 blockers are confirmed resolved in the text (knob names and TDC I-3/I-5, single Session acknowledgement, server-private streams, adoption-only informants, pawn-parity rules, no late join, Preparing disconnect, own-pawn exclusion, swatch floor by uniform valid-subset draw, T7 and calibration corrections, uniform replacement draw, goodness-of-fit AC-CP-12). Recomputed and confirmed: F-5 hypergeometric tables (D=60 and D=50), twin/shared-look/teammate-pair figures, F-8 T1 to T7 null expectations and the 0.8 / 4.7 / 0.15 percent calibration figures, 32 of 64 valid MVP subsets at K=6, F-2/F-3 examples and every AC-CP-01 triple. New blockers are cross-document drift introduced by the same-day sibling revisions and the 2026-10-25 user decisions, plus two untestable or inconsistent ACs. All four were revised in this session; they need an independent re-check, so the verdict stays NEEDS REVISION.
+Prior verdict resolved: Yes (26 of 26 blocking, 20 of 20 recommended verified present)
+Findings:
+- [BLOCKING] Core Rules CP-12b / States I-C5 / Edge Cases / AC-CP-12 / AC-CP-14 / OQ-14: the candidate set was described as "all unobserved crowd pawns" and the likelihood-ratio-1 claim as pawn-level; Penalty PEN-R7 and LSC R5b (user-confirmed 2026-10-25) restrict the pick to unseen pawns inside the team's respawn region. Revised: eligible set defined, claims narrowed to look level, AC-CP-12 now asserts uniformity over the eligible set with appearance-free predicates, pawn-level region effect handed to Penalty and LSC (OQ-14) [main]
+- [BLOCKING] Edge Cases (replacement backlog) and CP-12a: CPA invented a Crowd "backlog exceeds 3" rule and a `VacancyBacklog` log; Crowd CNB-R9.2 has neither (first scheduled entry at or after kill + 10 s, served by 60 s). Revised to match Crowd; OQ-10 closed [main]
+- [BLOCKING] Acceptance Criteria AC-CP-17: expected mean 255 and variance 10 * 208.25 * 40/49 hold only at D=50 but the test named no configuration and the shipping default is D=60. Revised to state the default (mean 305, variance 2541.7) and the F-8 reference values [main]
+- [BLOCKING] Acceptance Criteria AC-CP-32 vs F-9: AC capped the property at 150 B per client while F-9 and the Replication section give up to 180 B at D=60. Revised to 180 B [main]
+- [RECOMMENDED] Formulas F-8: "checked-in file" for the seed set contradicted the AC preamble (constexpr array, no file I/O); aligned, ADR-0008 to follow [main]
+- [RECOMMENDED] Formulas F-8: T2 to T6 at D=60 need recomputed null expectations; stated [main]
+- [RECOMMENDED] Acceptance Criteria AC-CP-24a: a 65 percent lower bound at 60 trials needs 47 of 60 (78.3 percent), so the 75 percent point estimate was not the binding rule; stated, per-tester clustering noted [main]
+- [RECOMMENDED] Core Rules CP-13c: "effective NPC count falls by 1" read as contradicting conservation after a kill-driven adoption; clarified [main]
+- [RECOMMENDED] Replication: "60 to 180 bytes" mixed payload-only and with-handles; aligned with F-9 (120 to 180) [main]
+Cross-doc follow-ups (main session):
+- NPC-Kill Penalty & Informants and Level Socket Contract: own the pawn-level Pillar-1 argument for the respawn-region candidate set (CPA OQ-14); CPA now claims look-level independence only.
+- systems-index.md: Character Pool & Appearance stays Needs Revision until an independent re-check of the four revised items (index not edited here).
+- ADR-0008 (test harness) should align with the constexpr seed array (no seed file); ADR-0012 already follows this GDD.
+- Crowd GDD: no change needed (CNB-R9.2 is the authority; CPA now cites it).
+Revisions: all four blocking and five recommended items revised in this session. The content hash of design/gdd/character-pool-appearance.md is deliberately not stamped below (it changed after review), so the next check reads NEW and a re-review runs.
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 63db04c802c6db06eb0ba3dac93f65fb9fa98068
+Reviewed-Content-Hash: design/gdd/session-travel.md 49b874ce7cbf748247815232fc587337df2e82e2
+Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
+Reviewed-Content-Hash: design/gdd/round-match-framework.md ab477269caa8bacab048c8719d3029a90a7ce89e
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bbbc02bdd9ba8
+Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 88399334ca7f9623f4f828a7ba51075673f039f6
+Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
+Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9

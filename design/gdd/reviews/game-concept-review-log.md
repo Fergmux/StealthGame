@@ -41,3 +41,41 @@ Reviewed-Content-Hash: design/gdd/gdd-cross-review-2026-10-24.md 883fe8df5607c35
 Reviewed-Content-Hash: docs/architecture/adr-0022-rendering-performance-budgets.md c90801c9524c12cc3459b32ce823f811c8fbcbb3
 Reviewed-Content-Hash: docs/architecture/adr-0014-layout-service-generation-navmesh.md ad20cc195c72eb51ad28a102236ee2c378056203
 Reviewed-Content-Hash: docs/architecture/adr-0006-seeds-random-streams.md 6132980d0c0b5bed4f47e14a96e5cd2680e45293
+
+## Review — 2026-10-25 — Verdict: APPROVED
+Review mode: lean · Workflow: full
+Scope signal: XL (unchanged; cross-cutting foundation document. Rough scope signal, producer should verify.)
+Specialists: none (lean mode, single-session analysis)
+Blocking items: 0 | Recommended: 3
+Summary: Second-round review of the revised concept. Every first-round revision was checked against the live registry, Tuning Data, Crowd, Objectives Chain, Penalty, HUD, Assassination GDDs and ADR-0001/0010/0022 and holds; no user-confirmed rule or pillar wording is contradicted. Five stale or missing text-sync items were found and fixed in place (MVP estimate and item count, session-length header, rival-signal omission, ADR pointer, NPC bush flag). Remaining open items are downstream (test plan, art bible, producer re-estimate) or user creative calls, none of which blocks the concept.
+Prior verdict resolved: Yes (first-round NEEDS REVISION: all applied revisions verified present and consistent; deferred items remain recorded under Review Follow-ups, with follow-up 3 now pointing at ADR-0008 and ADR-0023)
+Review standard: concept document, not a system GDD. The 8-section checklist (gdd-structure-check.sh reports 0 of 8 present) was not scored, as in the first round; the concept standard (pillars, MDA, loop, scope, feasibility, testable validation) was used. The Approved verdict applies to the text as stamped below: the second-round edits were text-sync only and were made before the hash was taken.
+Registry values: searched NpcCount, TeamSize, TargetRoundMinutes, defence and strike terms; the one line giving numbers (base rate 5/55 = 0.0909) matches Tuning Data F-3; no remaining NpcCount 40 except the historical note. Registry and Tuning Data changed since round one; no conflict.
+Dependency graph: no Dependencies section; all 18 system GDDs named by the systems index exist on disk. Cross-references cited in the concept resolve (CNB-R16, T5/T13, SP-1, OC-12, HUD-R14, PEN-R15, ADR-0001, 0003, 0006, 0007, 0010, 0014, 0022).
+Findings:
+- [FIXED] MVP/Scope Risks/Scope Tiers: estimate still read 8-10 weeks for "7 items" (producer note in the systems index says 10-12 weeks) and the user-added items 8-11 were not reflected; text now says 10-12 weeks for the 7 core items and that items 8-11 are unestimated
+- [FIXED] Core Loop: Session-Level header said 40-60 minutes while the body (3-5 rounds x 12 min) gives 36-60
+- [FIXED] Core Mechanics 4: user-confirmed rival-progress signal (OC-12) was absent from the concept; one sentence added
+- [FIXED] Technical Considerations: "To be ADR-001" (now ADR-0001, Proposed) and the NPC bush design flag (resolved in design by T5)
+- [FIXED] Review Follow-ups 3 / Next Steps: now cite ADR-0008 and ADR-0023 and the second-round result
+- [RECOMMENDED] Pillar 3 wording "every mistake sticks" overclaims given the free wrong strikes; confirmed pillar text, left for the user
+- [RECOMMENDED] Pillar 4 validation "most playtest rounds" is unmeasured in the pillar text; the VS hypothesis carries the measurable form; left for the user
+- [RECOMMENDED] Pitch (10-second test) sells a hunt, Pillar 4 says race; revise when the pitch is next touched
+- [NOTED, unchanged] Performance at 60 characters is unproven (RTX 5090 only, about 0.8 ms headroom); the concept states this plainly and keeps the NpcCount fallback explicit
+Cross-doc follow-ups (main session):
+- systems-index.md: set game-concept to Approved if the index tracks it; the Producer Note (line ~114) says all 7 MVP items and needs the user-added items 8-11 in the estimate
+- producer: re-estimate the MVP with items 8-11 before /sprint-plan
+- test plan / art bible: measurable rewrites of the Visual Identity tests and latency claims (concept Review Follow-ups 3-4)
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 242977e3dcc0185347fd1053741e6f305c1e42fa
+Reviewed-Content-Hash: design/gdd/objectives-chain.md 97f7640460f661ff7b7c2b4241a31d26ed6de168
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 89d049074c81e71b16f1269736cbe2016d977f9c
+Reviewed-Content-Hash: design/gdd/gdd-cross-review-2026-10-24.md 883fe8df5607c356f672029991ef4ac2214858dc
+Reviewed-Content-Hash: docs/architecture/adr-0022-rendering-performance-budgets.md c90801c9524c12cc3459b32ce823f811c8fbcbb3
+Reviewed-Content-Hash: docs/architecture/adr-0014-layout-service-generation-navmesh.md ad20cc195c72eb51ad28a102236ee2c378056203
+Reviewed-Content-Hash: docs/architecture/adr-0006-seeds-random-streams.md 6132980d0c0b5bed4f47e14a96e5cd2680e45293
+Reviewed-Content-Hash: docs/architecture/adr-0008-test-automation-leak-parity.md 4c9c47caf2e0b10ba63f10085b97e2d646c3ebea
+Reviewed-Content-Hash: docs/architecture/adr-0023-playtest-telemetry-hooks.md 3480d97ec0f1dc482562e2d96bcc3c4090d5b072
+Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bbbc02bdd9ba8

@@ -132,12 +132,12 @@ All values are **ASSUMED allocations** at the reference preset on an RTX 3060-cl
 
 | Line | GT budget (ms) | Owner ADR | Notes |
 |---|---|---|---|
-| Animation, GT share (the 4 ms line counts GT + workers) | 2.0 | ADR-0013 | `C_anim` ≤ 4.0 total |
+| Animation, GT share (the 4 ms line counts GT + workers) | 2.0 | ADR-0013 | `C_anim` ≤ 4.0 total. **Listen host (closeout D3, 2026-10-25):** the host tiers every non-locally-controlled pawn with the same significance bands and uniform `TickPose` escalation clients use (no host-only rate-1 posing for remote pawns); the line is confirmed in R3 with the listen host plus 9 remote clients |
 | CMC: ~50 server-simulated NPCs + simulated proxies | 3.0 | ADR-0010 | reported separately from animation (SCL R12); sized for ~40 NPCs, projects to ~3.75 ms at 50 — working value, re-verify at 60 characters in R3/RC-1 |
 | Crowd AI + nav (server) | 1.5 | ADR-0016 | p99 1.5, mean ≤ 0.8 |
 | Queue drain, resolvers, Roster, staged writes, CPA ledger | 0.5 | ADR-0002 (ADR-0012's 0.2 is inside it) | |
 | Replication (NetDriver, 10 connections, ~60 pawns, cull) | 1.5 | ADR-0003 | re-verify at 60 pawns |
-| Camera eye-mask traces (3P) + concealment/IIF/objectives misc | 1.0 | ADR-0015 (0.5 eye mask) + ADR-0017/0011/0020 (0.5 shared) | |
+| Camera eye-mask traces (3P) + concealment/IIF/objectives misc | 1.0 | ADR-0015 (0.5 eye mask) + ADR-0017/0011/0020 (0.5 shared) | Eye-mask worst case is **295 async traces per frame** (59 other characters x 5 probes at `NpcCount` 50, camera GDD F3), about **1.5 ms** of physics work at ~5 us per trace, almost all on task threads: the **GT share target stays 0.5 ms** (submission + result handling, `EyeMaskTracesPerFrameMax` 160, so the worst case drains in two frames); typical about 75 traces. If the spike shows GT over 0.5 ms the ADR-0015 §4.3.6 synchronous fallback applies (C3) |
 | UMG HUD + markers | 0.5 | ADR-0021 | |
 | Engine/world tick, layout runtime, telemetry, other | 2.0 | **ADR-0022** (ADR-0014's 0.1 layout line and ADR-0023's 0.15 telemetry line are inside it) | the residual line; GC is outside the 12.0 |
 | **Total** | **12.0** | | |
@@ -359,3 +359,7 @@ The prototype (`Source/StealthGame`, `L_Prototype`, `M_CrowdTint`) is feasibilit
 
 User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
 - user decision 2026-10-25: `NpcCount` default 50 (was ~40, user-locked default changed by the user), so 5v5 has 60 characters; reference scenes, R2, RC-3 and the character GPU line are measured at 60 characters (pass lines unchanged, conservative). The listen-host GT total 12.0 ms and the CMC 3.0 ms line were sized for 40-50 characters: the prototype slope (~0.19 ms per character) projects ~13.1 ms GT at 60 on the RTX 5090 before tiering and optimisation, so both are working values to re-verify in R3/RC-1 (technical-director + performance-analyst). The pawn replication line in SCL F9 rises to ≤ 36 KB/s per client (working value).
+
+Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-25_rereview-followups.md`); decision unchanged, Status unchanged (Accepted).
+- §4.2 eye-mask row: mask cost stated for the 295-trace worst case (59 x 5, about 1.5 ms physics, GT share target 0.5 ms unchanged, two-frame drain at the 160 cap), consistent with ADR-0015 and the camera GDD F3/OQ10 (camera re-review xdoc).
+- §4.2 animation row: closeout D3 adopted: the listen host tiers every non-locally-controlled pawn with the clients' significance bands and uniform `TickPose` escalation (no host-only rate-1 posing); R3 (listen host + 9 remote clients) confirms or measures it (SCL OQ16).

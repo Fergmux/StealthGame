@@ -45,3 +45,42 @@ Reviewed-Content-Hash: design/gdd/tuning-data-config.md 4c00659ec2fded9575197cc9
 Reviewed-Content-Hash: design/gdd/concealment-bushes.md dae06ab7f91d65fbb7e2c82c6d4fa3e7b710d877
 Reviewed-Content-Hash: design/gdd/session-travel.md 5a2f3d67fb9453d71eb9602429781de31d79777c
 Reviewed-Content-Hash: design/gdd/participant-state-roster.md 7090ac55a320a45ab62d598f7ec0661d468cc8e3
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (unchanged: 5 formulas, 9 upstream/peer dependencies; producer should verify before sprint planning)
+Specialists: none (lean, single session)
+Blocking items: 1 | Recommended: 8
+Summary: Second-round review. All 8 blocking and 12 recommended items of the 2026-10-24 full review are verified resolved in the text (rival signal in IVP ruling-B shape, F3 re-based on F1 and `NpcCount` 50, F4 `W_eff`, `Rejected_Latched`, SP-4 wording, AC rewrites); the F1, F3 and F4 arithmetic was recomputed and holds. One new blocking item: OC-14 still said the hold is `ObjectiveInteractSec` "unless a definition overrides it", which contradicts the user decision of 2026-10-25 that removed `InteractSecOverride` (a per-definition hold time is a timing oracle). It and the recommended items were fixed in place; a fix is not an approval, so an independent re-review decides.
+Prior verdict resolved: Yes (all 8 blocking items confirmed resolved)
+Findings:
+- [BLOCKING] OC-14: "unless a definition overrides it" contradicted the confirmed removal of `InteractSecOverride` -> fixed: no per-definition hold time exists, with the oracle rationale; AC-OC-01 gains a static check that `FObjectiveDef` has no hold-time field.
+- [RECOMMENDED] F2 Output Range: `E_court` minimum 6.5 s is wrong at the stated minima (1.5 + 0.5 + 2.0 + 1.5 = 5.5) -> fixed to 5.5.
+- [RECOMMENDED] F4 variable table: `W_eff` "≥ 100 (clamp)" contradicted I-OC2, AC-OC-22 and TDC CR-6 (reject, never repair) -> fixed.
+- [RECOMMENDED] Tuning Knobs `RivalSignalReleaseQuantumSec`: "must exceed 15.5 s" while the hard minimum is 10 s -> reworded "should exceed", safe range 20-45 respects it.
+- [RECOMMENDED] OC-2 `CompletionsRequiredCount`: no rule for values above 1 (cancel, second completer) -> values above 1 rejected at `Preparing` like `ObjectivesPerStageCount`; AC-OC-01 extended.
+- [RECOMMENDED] F3 N_npc: range 32-60 outside TDC safe range 35-50, and `r_N` is tuned for 50 (at 35 NPCs the same interval gives `P_full` 0.77) -> range corrected, rescale-with-`NpcCount` rule stated in F3 and Tuning Knobs interactions.
+- [RECOMMENDED] Cross-References change request 6: still ended at r_N 0.0057 / 10,500 s -> added the 2026-10-25 rescale to 13,125 s (r_N 0.0046).
+- [RECOMMENDED] Open Question 8: written before the MVP team ping (user scope decision 2026-10-25) -> rewritten (ping is a team-only place ring; Pings GDD to confirm it carries no stage or role data); Dependencies note lists Pings as a peer.
+- [RECOMMENDED] Acceptance Criteria: informants' share of the team view and rival count untested -> AC-OC-33 added.
+- [RECOMMENDED] Dependencies statuses are 2026-10-24 snapshots -> labelled, index named authoritative.
+Specialist disagreements: none (no specialists).
+Cross-doc follow-ups (main session, not applied): (1) systems-index "Depends On" list item 15 (line about Objectives Chain in the numbered dependency list) still omits Crowd and Session, which the table row 15 already lists; (2) entity registry has no entries for Objectives keys `ClueMatchMaxCount`, `ObjectivesPerStageCount`, `bRivalSignalEnabled`, `ObjectiveStallGapDefectSec`, `ObjectiveFinalDwellDefectSec` (TDC says 11 Objectives keys); (3) Informant Pings & Team Comms GDD: confirm a ping carries no stage, card or court-role data and no rule keyed to a court's role (Objectives OQ 8); (4) game-concept.md lines about a "median duration near the ~12 min target" (VS hypothesis) conflict with F1's about 9 min round, which Objectives treats as the non-binding target; consider rewording to "about 9 min, 7-11".
+Note: the target document was revised after this review, so it is deliberately not stamped below (a re-review must run in full).
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/information-visibility-policy.md 9ce1d9677b38048e71176b7dd0b44959ce5c99f5
+Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 242977e3dcc0185347fd1053741e6f305c1e42fa
+Reviewed-Content-Hash: design/gdd/round-match-framework.md 97e464757d41252679f8163bd3f90f68d509d23b
+Reviewed-Content-Hash: design/gdd/assassination-defence-reversal.md d89bac971a0a37d20024e0b32fb89559467cf5ab
+Reviewed-Content-Hash: design/gdd/teammate-markers.md f7107192fea0ee4dd407278a981b33fb8c31ac93
+Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
+Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9557521fb4c45d124224835244
+Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 63db04c802c6db06eb0ba3dac93f65fb9fa98068
+Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c845e98d280ed6797f
+Reviewed-Content-Hash: design/gdd/session-travel.md f6e4a60b76f7e3e99045662d1636bb3e226926f1
+Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
+Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526f8d2c6c107100ba7a2db673b
+Reviewed-Content-Hash: design/gdd/hud.md 224977e0b36ac631f3ab286857b5b707178bc4dd
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8

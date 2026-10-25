@@ -46,3 +46,44 @@ Reviewed-Content-Hash: design/gdd/session-travel.md 5a2f3d67fb9453d71eb960242978
 Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 8bf1dcd1acd4e451528d64eb7491c82b2479c26e
 Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md a0f62833f301166c838c3a9537e3cf1309486fde
 Reviewed-Content-Hash: design/gdd/systems-index.md d6cf3c42850f899304bd30a0c7b7f3b9420cc8d1
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: XL (unchanged: cross-cutting contract, 10 formulas, 12+ dependents, several ADRs; producer should verify)
+Specialists: none (lean, single-session)
+Blocking items: 6 | Recommended: 7
+Summary: All 14 prior blocking items are resolved in the text (respawn is an unseen takeover, streams are per-domain, V-SEP/V-ZONEFILL/V-AREA are satisfiable at NpcCount 50, States has any-state Aborted, ACs are deterministic). New problems are localised, not structural: the two teams' respawn regions can overlap (anchors may be about 34 m apart while regions are 45 m), the graybox LayoutHash format cannot detect a 1 cm move, AC-6 and the AC-30 D5/D8 vectors contradict the formulas, and two keys duplicate or mis-own registry entries. 17 revisions were applied in this session; a fresh re-review is still required.
+Prior verdict resolved: Yes (14 of 14 blocking items from 2026-10-24 verified fixed; 2 recommended items still open: D1 single-cell spread, NpcCount slack now answered by the 50 decision)
+Findings:
+- [BLOCKING] R3/R5b/V-RESPAWN/Edge Cases: Edge Case claimed regions cannot overlap ("70 m + both radii"), but V-SEP only bounds nearest start cells (anchors can be about 34 m apart), so a 45 m region can reach the enemy zone, contradicting "at their team's spawn" (fixed: RespawnRegion(zone, partner) cut by nearer-anchor rule; V-RESPAWN per usable pair; AC-14 adds RegionsDisjoint; AC-18 widening cut)
+- [BLOCKING] D7/AC-3: 9-byte grid record cannot express a graybox mesh at cm precision, so "hash changes when a mesh moves 1 cm" was impossible (fixed: 40-byte graybox record; ADR-0014 §6 owns the extract)
+- [BLOCKING] AC-6: "reaches R8.3 at 45 s whatever attempts remain" contradicts the invariant (6 x 7 = 42 s) (fixed: 42 s at defaults; 45 s only with an invariant-bypassing fixture)
+- [BLOCKING] AC-30 D5/D8 vectors: "N_C 14 passes, 13 fails" contradicts D5 (N_C >= 16); D8 vector used the pre-reconciliation 14/4 courts; D6 vector omitted A_z (fixed)
+- [BLOCKING] V-CLUE/Tuning Knobs: `ClueTagCourtsMaxCount` duplicates Objectives-owned `ClueMatchMaxCount` (registry, 3, ServerOnly) (fixed: V-CLUE reads `ClueMatchMaxCount`; LSC key dropped)
+- [BLOCKING] V-POOL/Tuning Knobs: `SunPoolSamplesMinCount` default 120 (30 m2) was below the 6 x 6 m rectangle (144 samples) and outside its own safe range 144-176 (fixed: 144, 36 m2; art 6.4 prop-free 6 x 6)
+- [RECOMMENDED] Tuning Knobs: `TraversalLandingClearCm` lumped with SCL-owned heights, but the registry names LSC as source (fixed: split row)
+- [RECOMMENDED] AC-55: >= 60 rounds gives about 30 appearances per zone, Wilson half-width 0.17, so a fair map fails 0.35-0.65 (fixed: >= 180 rounds, >= 45 per zone)
+- [RECOMMENDED] R5.1/AC-7/AC-50: PawnRecovery had no AC; "every NPC disappearance" and AC-50's "despawns" would include corpse cleanup (fixed)
+- [RECOMMENDED] Cross-References: row still "Provisional (not yet written)" for GDDs that now exist; CR list heading stale (fixed)
+- [RECOMMENDED] D3/D6: sample and pair ranges stale after the 10,800 m2 band; A_z bound used the NpcCount-35 share term (fixed)
+- [RECOMMENDED] OQ 11: T_contact >= 15 s implies start-set separation of about 70 m plus sight reach, the tightest zone constraint (noted; graybox plan to confirm first)
+- [RECOMMENDED] Dependencies: Telemetry (#26) and Anti-Cheat (#27) GDDs do not exist yet (Alpha tier); both soft (noted)
+Dependency graph: all hard and soft upstream/downstream GDDs exist except telemetry-analytics.md and anti-cheat-security.md (not started, Alpha).
+Registry values: searched the knob names, NpcCount 50, TeamSize 5, walk 140 / run 450, traversal heights, ZoneDensityMaxMult 1.5, InformantRespawnPathCm 4500, EmergenceWitnessRangeCm 3200; no value conflicts. Name/ownership conflicts: ClueTagCourtsMaxCount (fixed), TraversalLandingClearCm (fixed).
+Cross-doc follow-ups (main session):
+- design/registry/entities.yaml: team_spawn_zone.respawn_region should read "walkable cells within InformantRespawnPathCm (45 m path) of the anchor and nearer to it than to the other used anchor (cut per used pair)"; register `SunPoolSamplesMinCount` 144 if keys are registered later; clue key stays `ClueMatchMaxCount` (Objectives).
+- docs/architecture/adr-0014 §7.3: RespawnRegion cell set is precomputed per usable zone pair (nearer-anchor cut), not per zone; §6: define the graybox `GrayboxLayoutHash` extract record (LSC D7, 40 bytes: MeshIdHash, XYZ cm, rotation 0.01 deg, scale per mille).
+- design/gdd/npc-kill-penalty-informants.md and ADR-0019 §4.3: "respawn region" is now the partner-cut region; widening steps are cut by the same rule (no value change).
+- design/gdd/objectives-chain.md: V-CLUE now rejects a layout whose clue matches more than `ClueMatchMaxCount` courts; the edge case "layout logged ClueTooBroad, round proceeds" then covers only a slipped-through layout.
+- design/gdd/systems-index.md: row 8 status Needs Revision (set by main session); telemetry-analytics and anti-cheat-security GDDs absent.
+Receipt note: the target GDD was revised after this review, so its hash is intentionally not stamped; the next /design-review must run in full.
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
+Reviewed-Content-Hash: design/gdd/round-match-framework.md ab477269caa8bacab048c8719d3029a90a7ce89e
+Reviewed-Content-Hash: design/gdd/session-travel.md 1e185cf338c1b17880a81bc7057dcb11fa8a0ee4
+Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 252003e5936635dd0a55fb062f10b42713cbf39d
+Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md 0ecd59c878842ff54ca7fb1da7c30e07497e7efd
+Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bbbc02bdd9ba8
+Reviewed-Content-Hash: design/gdd/objectives-chain.md ca652db3c9bb041fb11d0af194650394ce5140b0
+Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910

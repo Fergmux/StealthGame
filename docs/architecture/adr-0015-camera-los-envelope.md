@@ -29,7 +29,7 @@ The third-person camera must show nothing the body's own eyes could not see, cam
 | **Knowledge Risk** | HIGH (Rendering: hide/shadow/ray-tracing/Lumen behaviour of hidden skinned meshes, dither on the shared character material, Substrate state unknown; architecture.md "Camera System — HIGH") |
 | **References Consulted** | `docs/engine-reference/unreal/VERSION.md`, `modules/rendering.md`, `modules/physics.md`, `modules/input.md`, `modules/audio.md`, `plugins/gameplay-camera-system.md`, `PLUGINS.md` (Gameplay Cameras: Experimental, enabled by default), `breaking-changes.md`, `deprecated-apis.md`; engine headers listed under "Verified engine facts" |
 | **Post-Cutoff APIs Used** | `USceneComponent::SetVisibility(bool, EVisibilityPropagation)` overload (the `bool` overload remains) [V]; `EFirstPersonPrimitiveType` exists (5.5+) but is **not** used (§7.3). Everything else is pre-cutoff API re-verified in 5.8.4 |
-| **Verification Required** | Spike OQ5/OQ10 (camera mask spike): (1) hide/show cost: `SetVisibility(false)` removes the skinned proxy from the scene (no mesh, shadow, Lumen or RT presence — verified in source) and showing re-creates it; measure re-add cost, toggles/s in a crowded street, and first-frame pose after re-add; (2) custom-primitive-data dither on the shared character material with TSR, Lumen and VSM at 50 pawns (skinned path verified in source; Nanite skinned and Substrate unverified); (3) worst-case 245 async `ViewBlock` traces per frame: game-thread cost ≤ 0.5 ms; (4) `bUseClientSideCameraUpdates=false` yields zero `ServerUpdateCamera` calls (AC-CS-27) and the server-side camera update for remote controllers stays at the eye-only POV; (5) the `SetViewTarget` override holds the neutral view across seamless travel and round reset; (6) `GetAudioListenerPosition` override places the listener at the eye (viewport path, backend-independent) |
+| **Verification Required** | Spike OQ5/OQ10 (camera mask spike): (1) hide/show cost: `SetVisibility(false)` removes the skinned proxy from the scene (no mesh, shadow, Lumen or RT presence — verified in source) and showing re-creates it; measure re-add cost, toggles/s in a crowded street, and first-frame pose after re-add; (2) custom-primitive-data dither on the shared character material with TSR, Lumen and VSM at 60 characters (skinned path verified in source; Nanite skinned and Substrate unverified); (3) worst-case 295 async `ViewBlock` traces (59 other characters x 5 probes) per frame: game-thread cost ≤ 0.5 ms; (4) `bUseClientSideCameraUpdates=false` yields zero `ServerUpdateCamera` calls (AC-CS-27) and the server-side camera update for remote controllers stays at the eye-only POV; (5) the `SetViewTarget` override holds the neutral view across seamless travel and round reset; (6) `GetAudioListenerPosition` override places the listener at the eye (viewport path, backend-independent) |
 
 ### Verified engine facts (5.8.4 source)
 
@@ -115,7 +115,7 @@ Third person is user-locked, and Pillar 2 forbids it from becoming a peeking too
 2. **Traces:** for every in-cone probe, one **`AsyncLineTraceByChannel(EAsyncTraceType::Test, P_m → probe, ViewBlock)`** [V], all probes of a target submitted together; the result arrives the next frame (F3's "+1 frame" timing); `Pass` = any probe unblocked.
 3. **Hysteresis and fade:** `Visible_t = Pass ∨ (Visible_{t−1} ∧ fails < EyeMaskHideFailCount (2))`; α moves toward 1/0 over `EyeMaskFadeSec` (0.10 s).
 4. **Rate bands at every range:** `EyeMaskNearHz` 60 within 20 m, `EyeMaskFarHz` 15 to 60 m, `EyeMaskBeyondHz` 5 beyond — the test **always** runs; distance changes only the rate. A target with no probe in the cone is not visible and costs no trace.
-5. **Per-frame cap:** at most `EyeMaskTracesPerFrameMax` (code constant, initial 160) traces are submitted per frame; due targets beyond the cap are deferred one frame in round-robin order of registry index (never by kind, team or distance-to-crosshair). Spike OQ10 sets the constant so the worst case (49 targets near, all probes in cone and blocked = 245) stays within one extra frame of delay.
+5. **Per-frame cap:** at most `EyeMaskTracesPerFrameMax` (code constant, initial 160) traces are submitted per frame; due targets beyond the cap are deferred one frame in round-robin order of registry index (never by kind, team or distance-to-crosshair). Spike OQ10 sets the constant so the worst case (59 targets near at `NpcCount` 50, all probes in cone and blocked = 295, so at most two frames to drain) stays within one extra frame of delay.
 6. **Fallback if the spike shows async submission or result handling over 0.5 ms GT:** synchronous `LineTraceTestByChannel` with early exit on the first clear probe for the near band only (GDD F3's original costing), async for the far and beyond bands.
 
 **4.4 Applying α (presentation, client only).** The camera never touches a pawn's components directly. It writes `MaskAlpha` into the pawn's **client-local presentation state** and the Shared Pawn's single apply function (ADR-0010 owns it) combines it with Concealment's client latch (ADR-0017) and the local head-hide (§7.4):
@@ -263,7 +263,7 @@ public:
 ### Alternative 4: Hide masked pawns with per-pawn material instances (opacity) instead of CPD + visibility
 - **Description**: A dynamic material instance per pawn drives a dither/opacity parameter all the way to 0.
 - **Pros**: No visibility toggling; one mechanism for fade and hide.
-- **Cons**: A dithered-to-zero pawn still casts its shadow and contributes to Lumen and ray tracing unless shadows are also toggled (CS-R5b forbids `CastShadow` toggling for VSM); per-pawn MIDs break batching and multiply PSO/material state across 50 pawns; a kind-blind guarantee then depends on every pawn having been given its MID identically.
+- **Cons**: A dithered-to-zero pawn still casts its shadow and contributes to Lumen and ray tracing unless shadows are also toggled (CS-R5b forbids `CastShadow` toggling for VSM); per-pawn MIDs break batching and multiply PSO/material state across 60 characters; a kind-blind guarantee then depends on every pawn having been given its MID identically.
 - **Rejection Reason**: Does not remove shadow/GI/RT presence and costs more; CPD for the fade plus `SetVisibility` at zero does both.
 
 ### Alternative 5: GPU occlusion queries or scene-depth tests instead of physics traces
@@ -281,7 +281,7 @@ public:
 ### Alternative 7: Server-side view check / per-viewer pawn filtering (CS-R5c)
 - **Description**: Server culls pawns not visible from each viewer's eye.
 - **Pros**: A real security boundary against wall hacks.
-- **Cons**: Must filter all 50 pawns identically for every viewer to avoid a P1 leak; ~10 × 50 eye traces per server tick on the listen host; interacts with ADR-0003's cull path.
+- **Cons**: Must filter all 60 characters identically for every viewer to avoid a P1 leak; ~10 × 60 eye traces per server tick on the listen host; interacts with ADR-0003's cull path.
 - **Rejection Reason**: Out of MVP scope; deferred to ADR-0025 (Alpha) as the GDD states.
 
 ## Consequences
@@ -302,7 +302,7 @@ public:
 
 ## Risks
 - **R-1 `SetVisibility(false)` leaves a ray-traced or Lumen footprint** — verified in source that it does not (the hidden component leaves the scene, §4.4) [V]; the spike capture with RT and Lumen on is kept only as confirmation.
-- **R-2 Mask trace cost over 0.5 ms GT at 49 near pawns** [U]. *Mitigation:* async traces, per-frame cap with round-robin deferral, near-band sync early-exit fallback (§4.3.6); GDD OQ10's remaining options (fewer probes for distant pawns) are a tuning change with the CD's limit that 3P reveal must not be noticeably worse than 1P culling.
+- **R-2 Mask trace cost over 0.5 ms GT at 59 near pawns** [U]. *Mitigation:* async traces, per-frame cap with round-robin deferral, near-band sync early-exit fallback (§4.3.6); GDD OQ10's remaining options (fewer probes for distant pawns) are a tuning change with the CD's limit that 3P reveal must not be noticeably worse than 1P culling.
 - **R-3 Visibility toggling churns render state**: every hide removes the skinned proxy from the scene and every show re-creates it [V], with VSM invalidation around the pawn. *Mitigation:* hysteresis (2 fails) and fade bound toggles; the spike measures re-add cost, toggles/s in a crowded street and the first-frame pose after re-add; fallback is a CPD-only fade that stays at α = 0 for short hides (proxy kept, shadow and GI still suppressed only if the spike finds a cheaper flag path) [U].
 - **R-4 CPD dither unsupported or costly on the chosen character path**: skinned meshes verified [V]; Nanite skinned and Substrate [U]. *Mitigation:* ADR-0022 owns the shared character material; spike tests skinned and Nanite skinned; fallback per-pawn MID is rejected for Pillar reasons, so the fallback is a hard cut at α thresholds (no fade).
 - **R-5 Engine paths change the view target locally** (`NotifyLoadedWorld` on seamless travel, `Reset`/`ClientReset`, `OnUnPossess`, `SetSeamlessTravelViewTarget` [V]) or send camera RPCs. *Mitigation:* the `SetViewTarget` override accepts only manager-requested targets and the view is computed from the manager's own state (§1); `bClientSimulatingViewTarget`; server code never calls `SetViewTarget` for a player; AC-CS-37 gains a seamless-travel test and a round-reset test (neutral view stays black, no world frame from the controller's location); AC-CS-27 traces RPCs in a 10-minute session.
@@ -341,12 +341,12 @@ public:
 
 ## Migration Plan
 1. The prototype's debug camera (`StealthDebugCam` exec), the sample `CBP_SandboxCharacter` camera setup and its Gameplay Cameras assets are not promoted (ADR-0007 §8); the production pawn (ADR-0010) is created without camera components.
-2. Build order: (a) `EvaluateViewEnvelope` + `FStealthCameraCore` with headless tests (AC-CS-03/04/38/29/30/31); (b) camera manager with 1P/3P, boom, collision, fades, neutral view (AC-CS-01/02/27, 06, 37); (c) `ViewBlock` channel + collision profile audit; (d) mask spike (OQ5/OQ10) on the graybox with 50 pawns, then `FEyeMaskCore` + apply path (AC-CS-05/07/08/09/36/28); (e) aim ray with IIF (AC-CS-34 and IIF AC); (f) grades and listener.
+2. Build order: (a) `EvaluateViewEnvelope` + `FStealthCameraCore` with headless tests (AC-CS-03/04/38/29/30/31); (b) camera manager with 1P/3P, boom, collision, fades, neutral view (AC-CS-01/02/27, 06, 37); (c) `ViewBlock` channel + collision profile audit; (d) mask spike (OQ5/OQ10) on the graybox with 60 characters, then `FEyeMaskCore` + apply path (AC-CS-05/07/08/09/36/28); (e) aim ray with IIF (AC-CS-34 and IIF AC); (f) grades and listener.
 3. Config (implementing story): `ViewBlock` trace channel and per-profile responses in `DefaultEngine.ini` `[/Script/Engine.CollisionProfile]`.
 
 ## Validation Criteria
 - Camera ACs pass under ADR-0008's harness (`StealthGame.Camera.*`, tests under `Source/StealthGameplay/Private/Tests/Camera/`): AC-CS-01, 02, 27 (mode not observable; zero `ServerUpdateCamera`/camera RPCs in a traced session), 28 (host masked simulation parity), 05 (LOS multi-position vs the 25-point oracle, ≤ 5 % false hides), 07 (mask parity and inputs), 08 (timing), 09 (masked casts nothing, RT/Lumen included), 36 (beyond-range LOS), 34 (`WorldPoint` into bush), 37 (view state and layer), 21 (informant same rules), 39 (presentation include check).
-- Spike OQ5/OQ10 report: GT ≤ 0.5 ms at 49 near pawns on the reference machine; hidden pawn has no shadow, Lumen or RT presence; dither works on the chosen character mesh path.
+- Spike OQ5/OQ10 report: GT ≤ 0.5 ms at 59 near pawns on the reference machine; hidden pawn has no shadow, Lumen or RT presence; dither works on the chosen character mesh path.
 - Playtests: AC-CS-25 (own pawn found within 2 s), AC-CS-26 (1P/3P read parity; > 15 % gap goes to the user, OQ11).
 
 ## Related
@@ -372,3 +372,8 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 - `EViewReleaseReason::InformantKilled` — user decision 2026-10-25: confirmed (Penalty CR-18 / OQ-NKP-12).
 - Settings — user decision 2026-10-25: tap/hold camera toggle and a left-handed default shoulder are not in MVP; later as Vertical Slice settings (camera OQ12).
 - Key renames — user decision 2026-10-25 (TDC CR-10): `EyeMaskHideFailCount`, `StickDeadZoneFrac`, `StickOuterZoneFrac`.
+
+Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-25_rereview-followups.md`); decision unchanged, Status unchanged (Accepted).
+- Verification (3), §4.3 per-frame cap, R-2, Alternatives, Build order, spike report: worst case is **295 traces per frame** (59 other characters x 5 probes at `NpcCount` 50), replacing 245 (49 pawns); "50 pawns" / "50 characters" become 60 characters (5v5 + 50 NPCs). `EyeMaskTracesPerFrameMax` stays 160, so the worst case drains in two frames (one extra frame of delay); GT target stays 0.5 ms (camera re-review xdoc).
+- D6 (camera, 2026-10-25): the AC-CS-05 oracle and the mask both use the **capsule axis origin**; the mask gains hysteresis `CameraMaskOffHysteresisCm` = 10 (mask off at 20 cm, back on at 30 cm) as a registered TDC key; hide latency beyond 60 m is a stated limit (Game Feel); AC-CS-23 is a document-review AC, not automated. The `FEyeMaskCore` applies the off/on thresholds with this hysteresis and uses the capsule-axis origin for the 3P probe origin comparison.
+- Camera CS-R8: Informant Pings (`IA_Ping`) is a consumer of `GetAimRay()` (the aim query, §4.3 steps 1-2; the client sends only the resulting ground point in `ServerTeamPing`, ADR-0011); no new camera API, trace channel or replicated field.

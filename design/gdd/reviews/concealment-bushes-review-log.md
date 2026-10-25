@@ -42,3 +42,38 @@ Reviewed-Content-Hash: design/gdd/camera-system.md f9e69a811e48da816bbeb7424f626
 Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md d5494369a7ed46d882c863563dd3228f5d2281ab
 Reviewed-Content-Hash: design/gdd/level-socket-contract.md f318f06c15dd6194b5816961985e04c18cd1e5ce
 Reviewed-Content-Hash: design/gdd/game-concept.md 8dccb622e17a7f1dc58349dd2baa54d52fc36d32
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (unchanged: 4 formulas, 9 upstream and 8 downstream dependencies, ADR-0017 owner component, spikes S-CON-1 and R5; producer should verify before sprint planning)
+Specialists: none (lean, single-session second-round review)
+Blocking items: 3 (all fixed in place; the verdict stands until a further review) | Recommended: 5
+Summary: All 13 blockers of the 2026-10-24 full review are confirmed resolved in the text (leak and timing paths, CON-R6a/R6b/R9, k range, host gating, ACs with bounds), and the user decisions of 2026-10-25 (`bDiedConcealed`, `StartServerTime`) are consistently applied. The new problems are stale text left by later syncs: AC-CON-24 (c) still used 35 % although the NpcCount 50 baseline moved m0 to 34 % (CON-R12 had already been raised to 40 %), and F4 still described the replaced stateless-hash pick in several places. One open design question remains for the creative director (the absolute cap on m against the F1 range).
+Prior verdict resolved: Yes (13 of 13 blockers; the full-review note that this re-review must run in full was honoured: the whole document was read)
+Findings:
+- [BLOCKING] Acceptance Criteria / AC-CON-24 (c): `m` ≤ 35 % sat 1 point above the F1 baseline m0 = 34 % at defaults (a compliant build fails it) and contradicted CON-R12's 40 % -> fixed: AC now reads ≤ 40 % and ≤ m0 + 10 points, same as CON-R12.
+- [BLOCKING] F4 / CON-R12 / Interactions / Dependencies / AC-CON-14: pick still specified as a "stateless hash" with `SpotSalt`, variable row `H`, "hash value 7 → 7 mod 2" example and "1,000 fixed salts", contradicting the F4 formula (secret stream, `UniformBelow`, ADR-0006 domain 14, registry revision note) -> fixed: rows, example, rules and AC reworded to the stream draw.
+- [BLOCKING] Open design question for the creative director: CON-R12 / AC-CON-24 (c) apply an absolute cap (m > 40 %) AND m > m0 + 10. At the F1 upper range (N_B 8, n_N 60: λ 0.54, m0 ≈ 42 %) the absolute cap trips on a compliant build, so the rule is only coherent at or near defaults. Not changed (a CD ruling): either drop the absolute cap or make it max(40 %, m0 + 10).
+- [RECOMMENDED] F3: the F3 variable table gave `BushEnterSwapSec` 0.35-0.7 against the Tuning Knobs and registry safe range 0.45-0.7 -> fixed to 0.45-0.7. Also (d) is joint: Swap 0.45 at Reach 60 gives 211 cm/s against the 210 limit -> noted in F3 (the validator, not the ranges, binds; practical floor 0.46); registry safe range left to the main session.
+- [RECOMMENDED] AC-CON-11: the failing data set "swap 0.9 with dur 0.8" violates (a) and (e), not one constraint -> expected validator output now names the exact set for each row.
+- [RECOMMENDED] AC-CON-23: "above the noise floor" undefined -> defined as the 99th percentile of the temporal-mean difference between two empty bushes at matched sway.
+- [RECOMMENDED] CON-R2 / ACs: the owned/attached-actor relevancy rule had no AC -> AC-CON-33 added.
+- [RECOMMENDED] CON-R4: garbled "(or the warp is stopped by its own bush)" -> reworded.
+Registry values: searched the bush entries, thresholds and knob names against design/registry/entities.yaml (NpcCount 50, k 1.5, ConcealCullDelayMs 250, ConcealedBoomCm 60/70, BushSpotToleranceCm 75, BushEnterSwapSec 0.5, BushExitCrossSec 0.45, StrikeVerticalReachCm, BushSpacingCm 1200): no conflict with the GDD. One stale registry note the other way (below). F1/F2 arithmetic re-derived (E[O] 0.410, m0 0.336, pick-on-player 0.82, r_N,req 0.633 r_P, P_hide 0.112, T_uncull 250 ms): all correct.
+Dependency graph: all 14 named GDDs exist; Diegetic Audio, Telemetry and Anti-Cheat are listed "Not written" (no file, correctly marked).
+Cross-doc follow-ups (main session):
+- design/gdd/assassination-defence-reversal.md ASN-R8.2, Dependencies row (line ~318), change-request rows and AC-ASN-39 still say "stateless hash salted with `SpotSalt`" / "BushVictimHash" / "1,000 fixed hash inputs"; Concealment F4, ADR-0017 §7 and the registry now use the `BushSpotPick` stream (`UniformBelow`).
+- design/registry/entities.yaml `npc_bush_use_rate_target` notes say "0.625 * r_P" (NpcCount 40); at NpcCount 50 it is 0.633 * r_P (Concealment F2, Crowd F2). Also `exit_occlusion_timing_chain` expression lists only (a)-(c) while F3 now has invariants (a)-(f).
+- Registry `BushEnterSwapSec` safe range 0.45-0.7: at Reach 60 the lower end fails F3 (d) by 1 cm/s at the provisional walk speed; consider 0.5-0.7 or a joint (d) note in Tuning Data & Config.
+- Creative director: ruling on the CON-R12 / AC-CON-24 (c) absolute cap (see third blocker above).
+- Systems index: Concealment stays Needs Revision until the CD ruling and a clean re-review.
+Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c845e98d280ed6797f
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/information-visibility-policy.md 9ce1d9677b38048e71176b7dd0b44959ce5c99f5
+Reviewed-Content-Hash: design/gdd/assassination-defence-reversal.md c56bbe20ab9e274be42989aac11f4cc6b797f818
+Reviewed-Content-Hash: design/gdd/teammate-markers.md 8b45501b2783ca0601c2f3832fa3aba2cd85e2bc
+Reviewed-Content-Hash: design/gdd/camera-system.md 6c124b4dd555a8157b58cca2a38167582a200cdd
+Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 242977e3dcc0185347fd1053741e6f305c1e42fa
+Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8

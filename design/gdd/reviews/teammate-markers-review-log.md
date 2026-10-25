@@ -42,3 +42,39 @@ Reviewed-Content-Hash: design/gdd/hud.md 00414a034133f413de29ba689b03b83c155fcb1
 Reviewed-Content-Hash: design/gdd/round-match-framework.md 5d1f316101eefb952dc5c9f42e9247d2cbcd613d
 Reviewed-Content-Hash: design/gdd/tuning-data-config.md 4c00659ec2fded9575197cc975bcde9241b96b93
 Reviewed-Content-Hash: design/gdd/input-interaction-framework.md 90b88857c2a98e951356a90c5878a80f231c47ca
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: M (unchanged: one presentation system, 8 formulas of local geometry and timing, 10 upstream and 6 downstream dependencies; producer should verify before sprint planning)
+Specialists: none (lean, single-session second-round re-review)
+Blocking items: 1 | Recommended: 6
+Summary: All 9 blockers of the 2026-10-24 review are resolved and the user decisions of 2026-10-25 (`RetireAtServerTime` and feed `Seq` adopted, `bPawnBound` declined, `ShowTeamNames` to VS, reconnecting label suffix in MVP) are applied consistently with the Roster, IVP, registry and HUD. The re-review found one new formula blocker, an F3 discontinuity at the camera plane that contradicted the GDD's own continuity claim and AC-TMK-17, plus AC/rule mismatches introduced by the `RetireAtServerTime` revision. All were revised in place; the verdict stays NEEDS REVISION because a revision is not an approval and F3 needs a fresh read.
+Prior verdict resolved: Yes (9 of 9 blocking items verified fixed; F1, F2, F3 examples, F4 examples, F5, F7 recomputed and correct)
+Findings:
+- [BLOCKING] F3 / TM-R9 / AC-TMK-17: the behind-camera bias `max(−D_u, k_b)` applied from the camera plane onward, so a level ally crossing the side plane jumped about `k_b · h_x` = 212 px (top or middle of the right edge to below centre), contradicting "moves continuously" and the AC's 180°/s bound -> fixed: bias ramp `σ = clamp(−D_f / ε_b, 0, 1)`, `ε_b` 0.5, `d_y = −D_u + σ·max(0, k_b + D_u)`, zero-vector guard, crossing example (1810, 540/650/785), AC-17 extended (F3 behind-left and exactly-behind examples unchanged at σ = 1).
+- [RECOMMENDED] TM-R6 step 2 / F6: step 2 omitted the `T_Rmax` guard that F6 has, named no clock, and left a stale or leftover `RetireAtServerTime` able to extend a later hold -> fixed: guard added, clock named (`EstimatedServerNow()`, ADR-0002 §9), value latched once at `t_r` from the retiring update only; AC-TMK-12 gained cases (g) zero, (h) +3.0 s cap, (i) past value, (j) stale value.
+- [RECOMMENDED] AC-TMK-31 / TM-R14: AC said `OnAllyMarkerRetired` fires at `t_r + T_hold`, wrong for a bush strike (`t_end` of F6) -> fixed to `t_end`.
+- [RECOMMENDED] States and Transitions: `Entering → Exiting` skipped the TM-R6 hold, and `Stale` had no exit for a retirement while undrawn although TM-R14 says the event still fires -> fixed (`Entering → Held`, `Stale → Held`).
+- [RECOMMENDED] AC-TMK-23: F8 hysteresis (8 px) and "edge markers never take focus" had no test -> added to the AC.
+- [RECOMMENDED] Cross-References / Dependencies counts / header: stale text (session-travel OQ7 "not added", "4 pending user, 0 declined", Status and Last Updated) -> refreshed.
+- [RECOMMENDED] Tuning Knobs / registry: five of the seven `TeammateMarker*` / `TeammateLabelFocusSize` keys are not in `design/registry/entities.yaml` (only `TeammateMarkerFeedStaleSec` and `TeammateMarkerRetireHoldSec` are; both match the GDD) -> cross-doc follow-up, not edited here.
+- [NICE] AC-TMK-21 "a tester names all three states correctly": state a tester count and threshold at the first playtest; `T_Rmax` (1.5 s) is a constant derived from I-ASN-3 and should be re-derived if that bound moves.
+Cross-doc follow-ups (main session): (1) register `TeammateMarkerAnchorCm`, `TeammateMarkerEdgeGapSize`, `TeammateMarkerFadeSec`, `TeammateLabelFocusSize`, `TeammateMarkerLargeMult` in the registry (TDC row 119 counts 7 keys); (2) the systems index row for Teammate Markers should read Needs Revision with this review's date; (3) Informant Pings reuses the F3 clamp: its GDD (`informant-pings-team-comms.md`) should pick up the camera-plane ramp (`σ`, `ε_b`) if it copies the formula; (4) HUD UX spec (`/ux-design`) still owns OQ15 (edge markers under plates).
+Note: the target document was revised after this review, so it is deliberately not stamped below (a re-review must run in full).
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
+Reviewed-Content-Hash: design/gdd/information-visibility-policy.md 9ce1d9677b38048e71176b7dd0b44959ce5c99f5
+Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c845e98d280ed6797f
+Reviewed-Content-Hash: design/gdd/camera-system.md d304d3eb9b8ca59389014b2fd64e1318e1200f5a
+Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
+Reviewed-Content-Hash: design/gdd/assassination-defence-reversal.md d89bac971a0a37d20024e0b32fb89559467cf5ab
+Reviewed-Content-Hash: design/gdd/hud.md 05f2d8dac61a985f97a45a83f56d07c421369931
+Reviewed-Content-Hash: design/gdd/round-match-framework.md ab477269caa8bacab048c8719d3029a90a7ce89e
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 63db04c802c6db06eb0ba3dac93f65fb9fa98068
+Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9557521fb4c45d124224835244
+Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526f8d2c6c107100ba7a2db673b
+Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md 6df3690b6fb980c603a0a0be65d9a6224c0b57b9
+Reviewed-Content-Hash: design/gdd/session-travel.md a0a052e3e4fbdc5dea8e841e14d1bc2d52c88e45
+Reviewed-Content-Hash: design/gdd/character-pool-appearance.md dfb73369b11821c543d7841b5cec4d3965988d04
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8

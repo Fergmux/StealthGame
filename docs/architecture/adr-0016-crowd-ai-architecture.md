@@ -478,3 +478,6 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 
 User scope decisions (2026-10-25: "accept all recommendations"); decision unchanged, Status unchanged (Accepted).
 - §4 pace — user decision 2026-10-25: the keyboard walk-slower modifier exists (IIF R15a), so Crowd's interim full-pace rule is lifted: `CrowdFullPacePct` default 55 and C4 group-drift pace matching active (Crowd R3.1, T16 "Yes"). The follower's pace decision (`ECrowdDecision::Pace`) already draws from the shared set; only the tuning default changes.
+
+Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-25_rereview-followups.md`); decision unchanged, Status unchanged (Accepted).
+- F2 (closeout D7): Crowd's default bush interval is **300 s** (was 315 s after the 40-to-50 rescale) to absorb `r_P` drift; the 300 s figure replaces "bush 315 s" in the 2026-10-25 NpcCount amendment above, and the registry carries it. Crowd's stop deceleration consumes SCL's `StopMinSec` (closeout D2, ADR-0010); no separate pace-set key. `CrowdSchedule` event kinds are unchanged (ADR-0002 confirmation).

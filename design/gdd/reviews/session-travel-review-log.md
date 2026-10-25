@@ -47,3 +47,43 @@ Reviewed-Content-Hash: design/gdd/round-match-framework.md 0a20ed3e6deebf0dcc36a
 Reviewed-Content-Hash: design/gdd/level-socket-contract.md 262eb5056ce08175a3eebf6cac899bb141684101
 Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 68259041af50a0d709b82752d79be73e07113961
 Reviewed-Content-Hash: design/gdd/game-concept.md 8dccb622e17a7f1dc58349dd2baa54d52fc36d32
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (unchanged: multi-system integration, 8 formulas, ADRs for engine timeouts, replication model, online identity; producer should verify before sprint planning)
+Specialists: none (lean, single-session second round; first-round specialist findings were re-checked against the revised text)
+Blocking items: 6 | Recommended: 6
+Summary: Second round after the 2026-10-24 revisions. All 18 first-round blocking items are resolved in the text (TuningHash/ClientHash echo, server-requested acknowledgement with explicit resend and epoch keys, admission order vs Round R5, Roster API names, F7 absolute deadline, F6 pause, AC rewrites; the F5 golden vectors 2107646860 / 523860287 / 313478722 were recomputed and match; registry values for all 13 Session keys, F1, F5 and F7 match). The new faults are state-machine holes the added rules left behind (unbounded or target-less `Rejoining` for supersede and `Expired` origins, supersede missing for a `Traveling` participant, a Lobby supersede with no named state), one numeric inconsistency (engine timeout 105 s below the F7 worst case of 111 s), two contract drifts (rule 11.1 order vs Round R5; `RejoinToken` refusal without a gate position) and a handshake that Round's `RejoinOnly` push could strand. All six were revised in place in this session; an independent pass must confirm them.
+Prior verdict resolved: Yes (18 of 18 first-round blocking items; the "unbounded Rejoining" item was only partly resolved and is re-opened as blocking item 1 below)
+Findings:
+- [BLOCKING] Core Rules 21 / 11.7 / States: `Rejoining` was bounded only for a `Disconnected` origin; `Expired`-started and supersede-started rejoins had no deadline and no failure target (the supersede-started one has no window to fall back on). REVISED: origin / `RejoinDeadline` / failure-target table in rule 21, state rows, Edge Cases, new AC 66
+- [BLOCKING] Core Rule 15 / States: supersede was not defined for a `Traveling` participant, the likeliest crash moment (a client that crashes while loading stays `Traveling` until the F7 deadline, and rule 8 said "supersede" for a state the transition table lacked). REVISED: `Traveling` added to the supersede definition and row; keeps the travel's F7 `Deadline`
+- [BLOCKING] Core Rule 15 / States: Lobby supersede used the undefined "Traveling-equivalent" state, so acknowledgement acceptance (c) had no legal state. REVISED: `Rejoining` in Lobby too (failure goes `Dormant`), counted as `Connecting` by rule 11.2
+- [BLOCKING] F7 / Core Rule 19 / AC 27: backstop "105 s at defaults" was computed from the T_srvload = 10 example, but with T_srvload at its stated maximum (20 s) the formula gives 111 s, so a config passing AC 27 could still fire before the Deadline. REVISED: 111 s minimum, 120 s configured, F7 constraint names the T_srvload maximum
+- [BLOCKING] Core Rules 11.1 / 20: round-start order contradicted Round R5 (R5 pushes `RejoinOnly`, locks, `ResetAll`, travel, and sets `Preparing` only on acceptance; this GDD said `Preparing` came first). REVISED to R5 steps 5b-9 with the rollback; rule 11.3 now says Session applies its `Closed` override rather than "sets" the mode (Round is the only writer)
+- [BLOCKING] Core Rules 6 / 7 / AC 5, 58: `RejoinToken` refusal had no position in the rule-7 gate order, so a wrong token could surface as `Busy` or reach supersede, and `GateOrder` could not test it. REVISED: gate 3 now covers kicked key and missing/wrong token; AC 5 and 58 extended. (Also revised: the `Connecting` to `Connected` guard no longer says "mode Open", which a `RejoinOnly` push would have stranded.)
+- [RECOMMENDED] AC 32: expected first/last-player share was the 40-NPC value 20%; at 50 NPCs plus 10 players it is 10/60 = 16.7%. REVISED (threshold 25% kept)
+- [RECOMMENDED] AC 46: text still said it blocked on Round and Crowd GDDs defining the mechanism; both exist (Round R17.1). REVISED wording; the playtest in (b) still gates implementation sign-off
+- [RECOMMENDED] F5: formulas list `ServerSecret` in the hashed input while the encoding note keys SipHash with it as the 128-bit key and puts only the other fields in the message; state one form in the ADR/implementation story (not changed here)
+- [RECOMMENDED] F6 / T_host_stall_max: allows host stalls outside Active only; the Generator now promises game-thread frames <= 33 ms in Preparing too, so the F6 wording could cite that (not changed)
+- [RECOMMENDED] F4: LHS counts restart time from the crash while the window starts at Hard, so the check is conservative by SessionHardTimeoutSec (12 s) and `ReservedFromLastPacket` is defined but unused; fine as a safety margin, say so (not changed)
+- [RECOMMENDED] Rule 11.4: only `Seed` is validated on arrival; `?Round=` and `?Preset=` are server-issued so a bad value is an engine fault, but a cheap `RoundIndex` equality assert against the server's value would close it (not changed)
+Specialist disagreements: none (no specialists in lean mode).
+Cross-doc follow-ups (main session):
+- ADR-0005 line 193 (engine timeouts): connection timeout backstop is now >= 111 s (120 s configured), not 105 s; any harness DefaultEngine.ini value must follow.
+- Round & Match: Interactions rows list the Session events but omit `OnLobbyTravelComplete` and `OnRoundTravelStarted`; Round must also tolerate `OnParticipantDisconnected` raised for a failed supersede-rejoin (new, rule 21 origin table) and a Lobby `Rejoining` state (projects `Disconnected`, `bReconnecting` stays false outside Active).
+- Roster R11 projection table: add that a supersede-started `Rejoining` in Lobby projects `Disconnected` (no leak) and that a failed supersede-rejoin writes a fresh `DisconnectedAt` / `ConnectionGeneration` bump.
+- Registry (design/registry/entities.yaml): `connection_state.values` omits Connecting, Dormant, Rejected, SessionEnded; keys `LivenessCheckIntervalSec`, `LivenessMaxCountedFrameSec`, `PendingLoginTimeoutSec`, `DisplayNameCharLimit` are not registered (TDC registers 13 Session keys; the registry mirrors only 9); add an `EngineConnectionTimeoutSec` note (>= 111 s) to `travel_deadline`.
+- Systems index row 5: set to Needs Revision (this review does not approve); dependency list needs no change.
+- UX: the three status overlays and rejection strings still need `/ux-design` before epics (already flagged in UI Requirements).
+Revisions: 8 groups applied by the reviewer to design/gdd/session-travel.md in this session (rules 6/7, 11.1-11.3, 11.7, 15, 19, 20, 21 + origin table, States rows, F7, Edge Cases x2, AC 5, 27, 32, 46, 58, new AC 66, Status lines). Verdict not upgraded by the revisions; an independent pass must confirm them.
+Reviewed-Content-Hash: design/gdd/session-travel.md 1e185cf338c1b17880a81bc7057dcb11fa8a0ee4
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 63db04c802c6db06eb0ba3dac93f65fb9fa98068
+Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
+Reviewed-Content-Hash: design/gdd/round-match-framework.md ab477269caa8bacab048c8719d3029a90a7ce89e
+Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
+Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 252003e5936635dd0a55fb062f10b42713cbf39d
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+Reviewed-Content-Hash: design/gdd/procedural-city-generator.md 959a9840a217d9c97c54fc5d17c8791257ccf6a4

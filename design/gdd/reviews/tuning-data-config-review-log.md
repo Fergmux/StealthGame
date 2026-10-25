@@ -47,3 +47,46 @@ Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 0726280799c1a0eac
 Reviewed-Content-Hash: design/gdd/level-socket-contract.md 587d95c70981b40e4986bd5b7257c20fc92c6ac3
 Reviewed-Content-Hash: design/gdd/game-concept.md 8dccb622e17a7f1dc58349dd2baa54d52fc36d32
 Reviewed-Content-Hash: design/gdd/systems-index.md 2adb098db430a1b7d1c77e1238171c3948bf08eb
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (multi-system integration with Session & Travel and Round, 4 formulas plus about 60 owner invariants, ADR-0004; producer should verify before sprint planning; systems-index still says S)
+Specialists: none (lean, single-session second-round review)
+Blocking items: 6 (all revised in the GDD in this pass; a further independent re-review is needed to confirm) | Recommended: 6
+Summary: The second round found the first-round blockers resolved: one acknowledgement owned by Session & Travel, TuningHash not replicated, the preset store, rejoin-only admission, I-4 as a schema constant, the byte layout and hard-range tables all hold, and every canonical default, range, audience and latch matches the registry and the owner GDDs. The new defects are all in the layer added since: the schema cannot express the registered disjoint hard ranges (`0 or 3 to 600`, `0 or 0.25 to 5`), several acceptance criteria cannot pass as written (AC-4 fixture, AC-17 flag on a `HostSelectable` preset, AC-30 I-ST-1 example, AC-15 allowlist rejecting registered `Team*` keys, duplicate AC-30 id), and the Session deadline wording and downstream dependency table are stale.
+Prior verdict resolved: Yes (19 of 19 first-round blockers verified resolved against the GDD text and the current Session & Travel and Round GDDs)
+Findings:
+- [BLOCKING] Formulas F-1 / Core Rules CR-3: no rule for disjoint hard ranges; `EndedAutoResetSec` (0 or 3-600, Round) and `SessionHeartbeatIntervalSec` (0 or 0.25-5, Session) cannot be clamped by "clamp to [HardMin, HardMax]". REVISED: schema rows may declare a sentinel (value outside the continuous range, valid by itself); F-1, CR-3, the F-1 variable table, the example and AC-4 updated.
+- [BLOCKING] Acceptance Criteria AC-4: the fixture (`NpcCount` 0 clamps to 6 with `TeamSize` 5) fails I-2, so the whole preset is rejected and the stated effective values never exist. REVISED: AC-4 is scoped to the F-1 stage in isolation; whole-preset outcomes stay with AC-6a / AC-17.
+- [BLOCKING] Acceptance Criteria AC-17: the `HostSelectable` bullet (`TeamSize` 1, `NpcCount` 21/22) is specified with `NpcKillStrikeLimit` 1 plus `bTestAllowsStrikeLimitOne`, but that flag is rejected on `HostSelectable` presets, so the bullet could never show I-3. REVISED: that bullet uses `NpcKillStrikeLimit` 2 (I-4 result 0.085 added).
+- [BLOCKING] Acceptance Criteria AC-30 (owner invariants): the I-ST-1 example (`SessionHardTimeoutSec` 4, Soft 3) clamps Hard to its minimum 5 and passes, and raising Soft alone also breaks I-CNB-1 at `CrowdIdleMinSec` 4, violating "breaks only that row". REVISED: example is Soft 4, Hard 5, `CrowdIdleMinSec` 6. A second criterion also carried id AC-30 (FrozenImmutable); renumbered AC-32.
+- [BLOCKING] Acceptance Criteria AC-15 / CR-15.2: the `^(Npc|Player|Bot|Human|Team|Viewer)` scan with a three-key allowlist fails on registered keys `TeamPositionFeedHz`, `TeamPositionFeedGridCm`, `TeamZoneRadiusCm` and the seven `Teammate*` keys (none is a per-team variant). REVISED: allowlist extended in AC-15 and CR-15.2.
+- [BLOCKING] Core Rules CR-9: describes the acknowledgement deadline as `TravelLoadTimeoutSec` from travel start; Session & Travel F7 is now `max(t_travel + TravelLoadTimeoutSec, t_ready + TravelAckGraceSec)`. REVISED (CR-9 and the Tuning Knobs note).
+- [RECOMMENDED] Core Rules CR-12: the PIE advisory re-check had no channel (Session re-requests on a `Revision` change only from participants not yet `Connected`). REVISED: stated as an editor-only in-process comparison with no RPC.
+- [RECOMMENDED] Formulas F-3: stated minima of BlindGuessSuccess (0.0099) and ExpectedBlindKills (0.01) are only reachable with `L` = 1; with the hard minimum 2 they are 0.0197 and 0.02. REVISED.
+- [RECOMMENDED] Dependencies: Round key count read 14 (17 registered); Teammate Markers listed Soft while its GDD lists TDC Hard; Informant Pings (Hard) missing from the bidirectionality sentence; GDDs 24, 26, 27, 28 do not exist yet. REVISED (counts, Hard, forward-reference note).
+- [RECOMMENDED] Core Rules CR-2: every non-Default preset is still cooked into Shipping paks although Shipping can only run `Default`; consider excluding them from the Shipping cook (ADR-0004 decision; not applied).
+- [RECOMMENDED] Formulas I-4: breach rejects `Default`, but the schema-defaults rung equals `Default`, so a `Default` that fails I-4 can only end in `Failed`; AC-29 (CI) is the real guard (acceptable; note for ADR-0004).
+- [RECOMMENDED] Formulas: the F-1 `HardMin` exception for `bTestAllowsStrikeLimitOne` was only in prose elsewhere. REVISED (F-1 variable table and AC-4).
+Cross-doc follow-ups (main session):
+- systems-index.md: TDC status In Review -> Needs Revision (this review is NEEDS REVISION, not an approval); effort S is stale for an L-scope GDD (about 60 owner invariants, 4 formulas, 150 public keys).
+- round-match-framework.md acceptance criterion 7 still says "exactly half of the clients mismatching aborts; one fewer does not" for `TuningSnapshotFault`/mismatch; TDC CR-9 and Session rule 11.6 have no quorum abort (a mismatching client is only disconnected). Round's `EndedAutoResetSec` row ("0, or 3 to 600") should say it is a sentinel key per TDC CR-3/F-1; Session's `SessionHeartbeatIntervalSec` likewise.
+- Stale `NpcKillStrikeLimit` range "1-5" after the 2026-10-25 hard minimum 2: hud.md F-table (line 276), npc-kill-penalty-informants.md F tables (lines 219, 275), assassination-defence-reversal.md (line 245).
+- Stale `NpcCount` ranges in consumer formula tables: concealment-bushes.md (n_N 20-60), information-visibility-policy.md (n_N 20-60), crowd-npc-behaviour.md (35-60), objectives-chain.md (32-60) versus TDC hard 6-100, safe 35-50.
+- design/registry/entities.yaml `tuning_derived_indicators` note says I-4 "warns when 100 * BlindGuessSuccess > BlindGuessWarnPct"; TDC I-4 rejects (for Default and HostSelectable presets) when it is >= the threshold. Add `sentinel` handling to the registry entries for `EndedAutoResetSec` and `SessionHeartbeatIntervalSec`.
+- teammate-markers.md and informant-pings-team-comms.md list TDC Hard (TDC now agrees); Telemetry (26), Anti-Cheat (27), Dedicated Server (28), Settings (24) GDDs do not exist; TDC rows for them are forward references.
+Revisions: applied by the reviewer in the same session (autonomous pipeline); one independent re-review is required before Approved.
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 63db04c802c6db06eb0ba3dac93f65fb9fa98068
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/session-travel.md f6e4a60b76f7e3e99045662d1636bb3e226926f1
+Reviewed-Content-Hash: design/gdd/round-match-framework.md 97e464757d41252679f8163bd3f90f68d509d23b
+Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
+Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9557521fb4c45d124224835244
+Reviewed-Content-Hash: design/gdd/character-pool-appearance.md d7835d0ffad2ed35212543f583ba4be4cd81e001
+Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bbbc02bdd9ba8
+Reviewed-Content-Hash: design/gdd/hud.md 224977e0b36ac631f3ab286857b5b707178bc4dd
+Reviewed-Content-Hash: design/gdd/teammate-markers.md 24083d13eef70e3b1d1b20c9905a338859258db5
+Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526f8d2c6c107100ba7a2db673b

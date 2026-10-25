@@ -46,3 +46,42 @@ Reviewed-Content-Hash: design/gdd/objectives-chain.md 3611facfb79f5c98605dfcf531
 Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md 13f87f4eae08c99906862f29de8e94cc59796e3d
 Reviewed-Content-Hash: design/gdd/level-socket-contract.md f318f06c15dd6194b5816961985e04c18cd1e5ce
 Reviewed-Content-Hash: design/gdd/session-travel.md 5a2f3d67fb9453d71eb9602429781de31d79777c
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: XL (unchanged: cross-cutting Core system, 6 formulas, 14 upstream and 11 downstream systems, ADR-0016; producer should verify before sprint planning)
+Specialists: none (lean mode, single-session analysis; arithmetic of F1-F6 re-derived and the F2 chain-gap compensation checked by a Monte Carlo of the eight tell clocks)
+Blocking items: 5 | Recommended: 6
+Summary: All 14 first-round blockers are resolved in the text (C7 bush rules, chain-gap compensation, Objectives CR6, pace rule lifted by the user decision, pitch path, motion parity, handover epoch, F5, counter-based streams, F4, AC-10/02, perception exclusions, reciprocal conversation) and the document honours every confirmed design rule (informant respawn by takeover near the spawn, blind-attack of bush occupants, NpcCount 50, brace pose shared, walk-slower modifier). The remaining problems are a pair of statistical ACs that cannot reliably pass, one fact that contradicts SCL F2, and two unspecified rules F3 and AC-18 depend on. All were revised in place; a verdict of NEEDS REVISION stands until a third review confirms them.
+Prior verdict resolved: Yes (14 of 14 blocking items from the 2026-10-24 full review verified fixed; the 12 recommended items verified applied)
+Findings:
+- [BLOCKING] Acceptance Criteria AC-CNB-15: required the measured NPC bush rate to be >= r_N,req, but the shipped 0.1905/min sits 0.25 % above the requirement while 1,140 expected entries give about 3 % noise, so a fixed seed fails about half the time -> fixed: (a) deterministic config check `60 / CrowdBushIntervalSec >= r_N,req`, (b) measured rate inside the 99 % Poisson interval of the configured rate.
+- [BLOCKING] Acceptance Criteria AC-CNB-17: 1,100 trials per arm gives about 76 % TOST power at p = 0.5 for the 5-point margin, so a correct build fails about a quarter of fixed seeds (the rest of the document sizes at 1,236) -> fixed: 1,236 per arm.
+- [BLOCKING] Core Rules R3.2: arrival stop distance "42 cm at 140 cm/s" contradicts SCL F2 (53 cm at 140, 42 cm at 126, 34 cm at 112) -> fixed: stop distance of the current pace, SCL figures quoted.
+- [BLOCKING] Core Rules R8: which 8 of the qualifying NPCs respond when more than `CrowdStrikeResponderLimit` qualify was unspecified (AC-18's distance strata depend on it) -> fixed: lowest counter-based priority draw keyed by (ordinal, strike index), never distance, appearance or kind.
+- [BLOCKING] Core Rules R9.1 / F3: the ambient schedule's arrival law was unstated while F3's replacement delay (Exp(lambda), mean 16.2 s, p95 28.4 s) and AC-CNB-08 assume Poisson -> fixed: Poisson process at lambda city-wide, slot given to a uniformly drawn socket, cooldown-blocked sockets take the 1 s retry.
+- [RECOMMENDED] Formulas F5: T_disp 3 ms/s in the table vs 3.6 in the example (60 pawns x 60 calls x 1 us); 30 fps average stated 1.24 ms but the model gives 40.6 ms/s = 1.35 ms -> fixed (both under the 1.5 ms budget).
+- [RECOMMENDED] Formulas F2 example: uncompensated bush rate stated 0.159 / P_hide 0.158; simulation gives about 0.16 / 0.155 -> fixed; the linear compensation `a_j = r_j / (1 − (Λ − r_j)·T_gap)` verified by simulation (accepted/target 0.998-1.013).
+- [RECOMMENDED] Edge Cases: NpcCount extreme said every red-herring rate scales by 50/NpcCount; the bush row is exempt (F2) -> fixed.
+- [RECOMMENDED] Tuning Knobs: R5 says "parameters are knobs", but R8 shares, pause shares, leg length, gaze timings, avoidance distances, lane offset and reaction-delay range have no key (coding standard: gameplay values data-driven) -> listed at the head of Tuning Knobs, change request 22 and OQ13 added; registration is a TDC schema edit (not applied here).
+- [RECOMMENDED] Formulas F2 / Tuning Knobs `CrowdBushIntervalSec`: the bush target is met with zero margin (P_hide = k·b exactly at r_N,req, r_P 0.3); if the measured r_P exceeds 0.3 the ceiling fails until the interval is retuned. A margin default (for example 300 s, 0.20/min) would absorb about 5 % of r_P drift; not applied (the default is registered at 315 and referenced by IVP and Concealment; decide in the main session).
+- [RECOMMENDED] Header: Status, Last Updated and Design Review lines updated for this round.
+Cross-doc follow-ups (main session):
+- systems-index.md row 11: keep status Needs Revision / In Review (this review is not an approval); Camera System (soft) still absent from the Depends On cell (CR 21).
+- design/registry/entities.yaml: `npc_bush_use_rate_target` notes say "0.625 * r_P at defaults", which is the 40-NPC figure; at NpcCount 50 it is 0.633 * r_P (IVP F5 and Concealment F2 already say 0.633). Consider a bush-interval margin (see above) and registering the unkeyed constants (CR 22).
+- shared-character-locomotion.md: change-request table row "Crowd CR 3 / Keyboard walk slower: PENDING-USER — not added" (line ~656) is stale beside the APPLIED row for the 2026-10-25 user decision (line ~677).
+- tuning-data-config.md: register the keys from CR 22 and the `CrowdMotionProfileAsset`, `CrowdFullStateTreeAsset`, `CrowdRestrictedStateTreeAsset` rows already in the registry; confirm the cross-field constraints listed in Tuning Knobs are in its validator.
+- ADR-0002: still needs the `CrowdSchedule` timer kind (ADR-0016 §6), which the Poisson schedule in R9.1 relies on.
+Note: the target document was revised after this review, so it is deliberately not stamped below (a re-review must run in full).
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c845e98d280ed6797f
+Reviewed-Content-Hash: design/gdd/information-visibility-policy.md 9ce1d9677b38048e71176b7dd0b44959ce5c99f5
+Reviewed-Content-Hash: design/gdd/objectives-chain.md ca652db3c9bb041fb11d0af194650394ce5140b0
+Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md b16480784d0fc81db34f2d01c988e88b0e5f7134
+Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
+Reviewed-Content-Hash: design/gdd/session-travel.md 4fd55e704b2b7660cd0b3f4f9294f63523bd578a
+Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9557521fb4c45d124224835244
+Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
+Reviewed-Content-Hash: design/gdd/round-match-framework.md ab477269caa8bacab048c8719d3029a90a7ce89e
+Reviewed-Content-Hash: docs/architecture/adr-0016-crowd-ai-architecture.md a555315844f9e5c7aa96ad4602c8ae35d69c4e05

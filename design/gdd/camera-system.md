@@ -1,11 +1,12 @@
 # Camera System
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (revisions applied; re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (pitch −60°/+40° in both modes confirmed; `InformantKilled` confirmed; tap/hold toggle and left-handed shoulder deferred to VS settings; `EyeMaskHideFailCount`, `StickDeadZoneFrac`/`StickOuterZoneFrac` renames)
+> **Status**: Reviewed - NEEDS REVISION 2026-10-25 (lean re-review; revisions applied; re-review pending). Earlier: NEEDS REVISION 2026-10-24 (revisions applied); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (pitch −60°/+40° in both modes confirmed; `InformantKilled` confirmed; tap/hold toggle and left-handed shoulder deferred to VS settings; `EyeMaskHideFailCount`, `StickDeadZoneFrac`/`StickOuterZoneFrac` renames)
 > **Author**: design-system pipeline (autonomous) + ux-designer, gameplay-programmer, creative-director
 > **Design Review (2026-10-24, full)**: NEEDS REVISION. Revisions applied per creative-director rulings 1-10 (log: `design/gdd/reviews/camera-system-review-log.md`): one pitch envelope −60°/+40° for both modes; F1 edge push reads raw input with a 150 ms latch; F3 never draws a pawn without a line-of-sight result; `ConcealedBoomCm` 60; `ViewRelease` and `SetOwnerGrade` hooks; engine camera RPCs and host-side simulation guarded; acceptance criteria rebuilt.
-> **Last Updated**: 2026-10-24
+> **Last Updated**: 2026-10-25
 > **Last Verified**: 2026-10-24
 > **Implements Pillar**: P2 Every Advantage Is a Tell (primary); P1 Hide in Plain Sight
+> **Design Review (2026-10-25, lean re-review)**: NEEDS REVISION. All 14 first-round blockers confirmed resolved. Two new blockers were fixed in the text: the mask worst case used 49 other pawns where `NpcCount` 50 gives 59 (F3, AC-CS-13, OQ10); and Informant Pings (#20) consumes `GetAimRay()` but was not listed as a dependent. `GetAimRay()` return contract and trace channels written down (CS-R8); AC-CS-40 and AC-CS-41 added. Recommended items are in the review log.
 > **Creative Director Review (CD-GDD-ALIGN)**: CONCERNS -> REVISED 2026-10-24. Four items applied:
 > - the whole-pawn reveal at corners is stated as a residual, and OQ5 costs partial masking;
 > - the `ViewHeadLeadMaxDeg` fallback and its trigger are written down;
@@ -126,7 +127,7 @@ Geometry alone does not stop parallax peeking. A lens 180 cm back and 45 cm to t
 **(b) Eye-origin visibility mask (load-bearing).** In third person, every **eye-masked** element is drawn only while it is visible from the eye pivot. The visibility test (F3) has two parts:
 1. A probe point lies inside a **fixed physical eye cone** around the view direction: ±`EyeConeHalfHDeg` (55°) horizontal and ±`EyeConeHalfVDeg` (38°) vertical. The cone does not follow the FOV slider, and the largest slider setting stays inside it.
 2. At least one of five capsule probe points has an unobstructed line from the **mask origin** on the dedicated `ViewBlock` trace channel. The probes are head, chest, pelvis and two lateral points. On that channel walls, doors and props block; pawns, bush foliage and glass do not.
-   - **Mask origin:** the eye pivot, with its height set to the lower of the lagged pivot height and the real eye-socket height. On a descent the lagged pivot can sit up to 30 cm above the real eye for about 0.1 s, so the lower of the two never sees over a wall the eye cannot.
+   - **Mask origin:** the eye pivot on the **capsule axis** (horizontal position of the capsule centre, never the animated head's offset), with its height set to the lower of the lagged pivot height and the real eye-socket height. The AC-CS-05 oracle traces from the same capsule-axis origin (decision D6, 2026-10-25), so the test measures the probe set, not an origin offset. On a descent the lagged pivot can sit up to 30 cm above the real eye for about 0.1 s, so the lower of the two never sees over a wall the eye cannot.
    - **Evaluation order:** the cone test runs first and costs no trace. Traces then run for the in-cone probes only: asynchronous traces submit all in-cone probes of a due target together (no early exit; the same `Pass` result), and the synchronous near-band fallback exits early on the first clear probe (ADR-0015 §4.3).
    - **At every range:** no pawn is ever drawn in 3P without a line-of-sight result. Beyond `EyeMaskRangeCm` (60 m) the same traces run, time-sliced at `EyeMaskBeyondHz` (5 Hz) with the same hysteresis (F3; creative-director ruling).
 
@@ -144,7 +145,7 @@ Rules for the mask:
 - **Fade.** The fade uses the shared character material's dither. It is driven by a per-pawn value: the custom primitive data slot `CPD_EyeMaskAlpha` (one project-wide index reserved in the shared character material and every attachable pawn material; ADR-0015 §4.4). Skeletal meshes do not take per-*instance* custom data, but per-*primitive* custom data applies (spike confirms). Every pawn uses the same parameter path.
 - **"Visible" and "not rendered".** A pawn is mask-visible while α > 0. A pawn with α = 0 counts as not rendered for IIF R10, the Strike hint and SCL R11, through the flag the mask sets (CS-R1). It is the same as an occlusion-culled pawn in 1P.
 - **False-hide budget.** 3P may hide a pawn that a 1P eye sees only as a sliver. Hides where a dense 25-point oracle sees at least 5 points are capped at 5 % of samples (AC-CS-05). Above that, the mask is too strict and fails review.
-- **First person:** the mask is off for hiding, because the eye is the camera; the evaluator still runs in **flag-only** mode and computes the rendered flag (`IsEyeMaskVisible`) with the same cone and probes, which targeting and animation tiering read (ADR-0015 §4.5; no behaviour change for the viewer). It is also off in 3P when the free boom length is below 20 cm (CS-R6).
+- **First person:** the mask is off for hiding, because the eye is the camera; the evaluator still runs in **flag-only** mode and computes the rendered flag (`IsEyeMaskVisible`) with the same cone and probes, which targeting and animation tiering read (ADR-0015 §4.5; no behaviour change for the viewer). It is also off in 3P when the free boom length is below 20 cm, and comes back on only above 20 + `CameraMaskOffHysteresisCm` (10) = 30 cm, so a boom hovering near 20 cm never toggles the mask frame by frame (CS-R6; decision D6, 2026-10-25).
 - **Hearing is not masked.** A masked pawn's sound still plays. Hearing is a mechanic and is equal in both modes.
 - **Stated residual: whole-pawn reveal (CD-GDD-ALIGN).** The mask draws the whole pawn once any one probe is clear. At a corner the eye may see only a head, while the lens 45 cm to the side sees the full gait, and gait is the reading skill. Accepted for the MVP. The OQ5 spike also costs **partial masking** (per-section or screen-space clipping to the eye's visible region) as the fix if playtests show 3P reading gait at corners earlier than 1P (AC-CS-26).
 
@@ -155,7 +156,7 @@ Rules for the mask:
 - A modified client that disables the mask gains only what reading replicated positions already gives it.
 - The mask stops honest 3P players from out-observing 1P players.
 
-A server-side fog-of-war would have to filter all 50 pawns identically to avoid a P1 leak. Its cost goes in the Alpha ADR.
+A server-side fog-of-war would have to filter every pawn (up to 60 at `NpcCount` 50) identically to avoid a P1 leak. Its cost goes in the Alpha ADR.
 
 **(d) Audio.** The listener sits at the eye pivot with the view rotation, in both modes. A listener at the camera would hear around corners.
 
@@ -166,7 +167,7 @@ A server-side fog-of-war would have to filter all 50 pawns identically to avoid 
 - **Pull-in** is instant: the lens is never inside a wall for a frame.
 - **Recovery** waits `BoomRecoverHoldSec` (0.15 s), then eases out exponentially (τ `BoomRecoverTauSec` 0.30 s), capped at `BoomRecoverCmPerSec` (300).
 - **Shoulder squeeze.** Against a wall on the shoulder side, the shoulder offset slides from 45 to 0 cm over `ShoulderSqueezeInSec` (0.15 s) and returns over `ShoulderSqueezeOutSec` (0.40 s). Shoulders never flip automatically.
-- **Close third person.** If the free length falls below `BoomCloseCm` (60), the own head, neck and hair are hidden as in 1P, with 15 cm of hysteresis. Below 20 cm the camera is effectively at the eye and the mask is off.
+- **Close third person.** If the free length falls below `BoomCloseCm` (60), the own head, neck and hair are hidden as in 1P, with 15 cm of hysteresis. Below 20 cm the camera is effectively at the eye and the mask is off; it turns back on above 30 cm (`CameraMaskOffHysteresisCm` 10, D6).
 - **Pivot overlap.** If the sweep starts overlapping geometry, the free length is 0.
 - **Near clip** is `CameraNearClipCm` (5) in both modes.
 
@@ -176,7 +177,8 @@ A server-side fog-of-war would have to filter all 50 pawns identically to avoid 
 - **Own body.** The head is hidden (CS-R2) and the rest of the body is visible when looking down. At pitch −20° and 60° vertical FOV, the ground is visible from about 1.4 m ahead. At the −60° limit the player sees their own feet and a bush at their feet, while observers see the head held at −20° (SCL R9).
 - **Not in the MVP:** a separate first-person arms mesh, because it would need a second animation path.
 
-**CS-R8. Aim ray (consumed by IIF R10 and the Strike hint through one shared function).** `GetAimRay()`:
+**CS-R8. Aim ray (consumed by IIF R10, the Strike hint and Informant Pings PNG-R3 through one shared function).** `GetAimRay()` returns `FAimRay { Origin, Direction, WorldPoint, TargetPawn, bTargetSpot }` (ADR-0015 §5). `Origin` and `Direction` are always the camera-centre ray (in 3P, `Origin` is the point on it nearest the eye pivot). `WorldPoint`, `TargetPawn` and `bTargetSpot` are the eye-side result below. Informant Pings read `Origin` and `Direction` and run their own `ViewBlock` trace (PNG-R3); they never use `TargetPawn` or `WorldPoint`.
+- **Trace channels (ADR-0015 §5):** the world test is `LineTraceSingleByChannel(ViewBlock)`, which pawns ignore; pawns are found by a separate `LineTraceSingleByObjectType(Pawn)` query limited to the same segment. Both run in each step below.
 - **First person:** the camera-centre ray.
 - **Third person:**
   1. Trace the camera-centre ray from the point on it nearest the eye pivot, so nothing between the lens and the body can be targeted. This finds the aim point P.
@@ -281,7 +283,7 @@ The camera's inputs are own input, own pawn state (body facing, eye pivot, own `
 |---|---|---|---|---|
 | `NoPawn` (neutral view) | no possessed pawn (Preparing, awaiting a pawn, Ended without a pawn) | client-local camera actor (IVP R13): black + HUD plates, no world render; `GetViewState() = Neutral` | n/a | `FirstPerson`/`ThirdPerson` on binding (cut + fade in) |
 | `FirstPerson` | remembered mode or toggle | eye camera (CS-R7) | off | `Blend` on toggle; `Dying`; `NoPawn` on binding loss |
-| `ThirdPerson` | remembered mode or toggle | boom; sub-states normal / squeezed / close (CS-R6) / concealed (CS-R11.3) | on (off below 20 cm) | `Blend`; `Dying`; `NoPawn` |
+| `ThirdPerson` | remembered mode or toggle | boom; sub-states normal / squeezed / close (CS-R6) / concealed (CS-R11.3) | on (off below 20 cm, back on above 30 cm) | `Blend`; `Dying`; `NoPawn` |
 | `Blend` | toggle accepted (outside the lockout) | interpolates position and FOV over `CameraToggleBlendSec` | on | target mode at blend end |
 | `Dying` | own local contact frame of an elimination (kill, reversal, or the exile strike) | current mode, no control, transient grade | as mode | fade over `NoPawnFadeSec` when `ViewRelease` falls due (`DeathFallSec` after contact; for an exile, HUD's card entrance or the `ExileCardTimeoutSec` fallback; for `InformantKilled`, `DeathServerTime + DeathFallSec`), then `NoPawn` |
 
@@ -296,6 +298,7 @@ The camera's inputs are own input, own pawn state (body facing, eye pivot, own `
 | NPC-Kill Penalty & Informants | own Informant state; `ExileBeatSec`, `ExileCardTimeoutSec`; "returning" countdown plate (HUD) | exile hold (CR-10); neutral view while awaiting a pawn; `SetOwnerGrade(Informant)` from the cut frame | Penalty (when), Camera (hooks) |
 | Participant State & Roster / Round | own binding, owner-audience state, phase (Owner-audience client data only, CS-R1) | none | Roster, Round |
 | Teammate Markers / HUD | view transform and FOV for constant-pixel overlays (art bible 7.1) | `GetViewState()` (Live / Neutral); fade layer above markers, below plates (CS-R15) | Camera (view state), HUD |
+| Informant Pings & Team Comms (20) | none | `GetAimRay()` (`Origin`, `Direction`) for the ping point (PNG-R3); eye pivot for the range check (CS-R4); `GetViewState()` | Pings (point rule), Camera (function) |
 | Crowd & NPC Behaviour | none | `EvaluateViewEnvelope` (F1) for NPC virtual look; Tell Matrix row "camera mode: no visible deviation" | Crowd (use), Camera (function) |
 | Settings & Accessibility (VS) | settings values | CS-R13 hooks | Settings |
 
@@ -369,7 +372,7 @@ The boom_position formula is defined as:
 
 The eye_mask formula is defined as:
 
-`P_m = (P.x, P.y, min(P.z, z_eye))` (mask origin) ; `InCone(q) = x_q > 0 ∧ |atan2(y_q, x_q)| ≤ C_h ∧ |atan2(z_q, x_q)| ≤ C_v` (q in the view space at P_m) ; `Pass(T) = ∃ q ∈ Probes(T): InCone(q) ∧ ¬Blocked_ViewBlock(P_m → q)` (cone first, traces only for in-cone probes, early exit on the first clear trace; **at every distance**) ; `Visible_t = Pass_t ∨ (Visible_{t−1} ∧ fails < N_h)` ; `α_t = moveToward(α_{t−1}, Visible_t, dt / T_f)` ; mask-visible ⇔ `α > 0` ; test rate `f = f_near` if `dist ≤ D_near`, `f_far` if `dist ≤ D_max`, else `f_beyond` ; cost per frame `C = Σ_T n_T · f_T / f_frame`
+`P_m = (P.x, P.y, min(P.z, z_eye))` (mask origin) ; `InCone(q) = x_q > 0 ∧ |atan2(y_q, x_q)| ≤ C_h ∧ |atan2(z_q, x_q)| ≤ C_v` (q in the view space at P_m) ; `Pass(T) = ∃ q ∈ Probes(T): InCone(q) ∧ ¬Blocked_ViewBlock(P_m → q)` (cone first, traces only for in-cone probes, early exit on the first clear trace; **at every distance**) ; `Visible_t = Pass_t ∨ (Visible_{t−1} ∧ fails < N_h)` (`fails` = consecutive failed tests of that pawn, reset to 0 on a `Pass`) ; `α_t = moveToward(α_{t−1}, Visible_t, dt / T_f)` ; mask-visible ⇔ `α > 0` ; test rate `f = f_near` if `dist ≤ D_near`, `f_far` if `dist ≤ D_max`, else `f_beyond` ; cost per frame `C = Σ_T n_T · f_T / f_frame`
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
@@ -387,9 +390,9 @@ The eye_mask formula is defined as:
 - Each pawn is either shown or hidden, with α between 0 and 1. No pawn is drawn without a passing line-of-sight test at any distance.
 - Reveal starts on the first passing test. With async traces, the result lands one frame later, so the delay is ≤ 1/f + 1 frame + T_f: ≤ 0.14 s near, ≤ 0.19 s far and ≤ 0.32 s beyond 60 m. It is never earlier than 1P.
 - Hide starts after 2 failing tests: ≤ 50 ms near.
-- **Worst case cost:** all 49 pawns near, inside the cone and hidden, so every probe is traced. That is 49 × 5 = 245 traces per frame at 60 Hz.
-  - Typical: the cone prefilter removes about 70 % of pawns, and visible pawns exit early, so about 75 or fewer per frame.
-  - Budget: target ≤ 0.5 ms game thread, async traces allowed. At about 5 µs per trace the worst case is about 1.2 ms **[verify, profile]**.
+- **Worst case cost:** all 59 other pawns (`TeamSize` 5 gives 10 players, plus `NpcCount` 50, minus the owner: 60 − 1) near, inside the cone and hidden, so every probe is traced. That is 59 × 5 = 295 traces per frame at 60 Hz. (The first review used 49 pawns, from the earlier `NpcCount` 40; corrected at the 2026-10-25 re-review.)
+  - Typical: the cone prefilter removes about 70 % of pawns, and visible pawns exit early, so about 90 or fewer per frame.
+  - Budget: target ≤ 0.5 ms game thread, async traces allowed. At about 5 µs per trace the worst case is about 1.5 ms **[verify, profile]**.
   - If the worst case exceeds 0.5 ms, technical-director decides among time-slicing the near band, fewer probes for distant pawns, or GPU queries (OQ10). The creative limit is that the 3P reveal delay must not be noticeably worse than 1P occlusion culling.
 
 **Example:** the player in 3P stands 40 cm behind a wall corner, and an NPC walks down the cross street 8 m away.
@@ -505,34 +508,35 @@ The stick_look formula is defined as:
 
 ## Dependencies
 
-Source: `design/gdd/systems-index.md` row 10 (Depends On: Input & Interaction Framework, Shared Character & Locomotion). Tuning Data & Config is added as an upstream dependency because it holds every key. Index rows 12, 13, 14, 17 and 18 list Camera as a (mostly soft) dependency (verified 2026-10-24, cross-review C-W11); the dependents below follow the interfaces. Statuses were re-checked on 2026-10-24 at design review.
+Source: `design/gdd/systems-index.md` row 10 (Depends On: Input & Interaction Framework, Shared Character & Locomotion). Tuning Data & Config is added as an upstream dependency because it holds every key. Index rows 12, 13, 14, 17 and 18 list Camera as a (mostly soft) dependency (verified 2026-10-24, cross-review C-W11); the dependents below follow the interfaces. Statuses were re-checked on 2026-10-24 at design review; `design/gdd/systems-index.md` is authoritative for current status.
 
 ### Upstream
 
 | System (#) | Interface | Hard/Soft | Status |
 |---|---|---|---|
-| Tuning Data & Config (1) | Camera keys (Tuning Knobs, CR-15) via `GetClientTuning()`; SCL and IIF keys read from the same snapshot | Hard | designed (add Camera to its dependents) |
-| Input & Interaction Framework (3) | Look axis, toggle (R14, `CameraToggleLockoutSec`), `IMC_Common`, shoulder-swap binding (change request) | Hard | in review |
-| Shared Character & Locomotion (9) | body facing, eye socket height, capsule, `IsInTraversal`, look clamps, `TurnInPlaceDelaySec`, R9 (incl. D6 pitch), `PawnSmoothSnapThresholdCm`, always-tick | Hard | in review |
-| Participant State & Roster (2) | own binding and owner-audience state (pawn present, Informant) for CS-R12 | Soft | designed |
-| Round & Match Framework (6) | phase, for the `Preparing`/`Ended` neutral view | Soft | designed |
-| Information Visibility Policy (7) | L17 (local-only components), R13 (neutral view without spectator state), AC-IVP-17 (presentation include check), own `IsConcealed` (Owner audience) | Soft | in review |
-| Concealment (12) | own `IsConcealed`; foliage channel responses; `HideVolume` bush-spot channel; bush dome size (I-CS-4) | Soft | in review |
-| Assassination & Defence Reversal (13) | local contact frame and `DeathFallSec` (CS-R12.1); grade timing (VA-ASN-4) | Soft | designed (pending review) |
-| NPC-Kill Penalty & Informants (14) | `ExileBeatSec`, `ExileCardTimeoutSec`; own Informant state for `SetOwnerGrade`; `InformantKilled` view reason (CR-18) | Soft | in review |
+| Tuning Data & Config (1) | Camera keys (Tuning Knobs, CR-15) via `GetClientTuning()`; SCL and IIF keys read from the same snapshot | Hard | In Review |
+| Input & Interaction Framework (3) | Look axis, toggle (R14, `CameraToggleLockoutSec`), `IMC_Common`, shoulder-swap binding (change request) | Hard | In Review |
+| Shared Character & Locomotion (9) | body facing, eye socket height, capsule, `IsInTraversal`, look clamps, `TurnInPlaceDelaySec`, R9 (incl. D6 pitch), `PawnSmoothSnapThresholdCm`, always-tick | Hard | In Review |
+| Participant State & Roster (2) | own binding and owner-audience state (pawn present, Informant) for CS-R12 | Soft | In Review |
+| Round & Match Framework (6) | phase, for the `Preparing`/`Ended` neutral view | Soft | In Review |
+| Information Visibility Policy (7) | L17 (local-only components), R13 (neutral view without spectator state), AC-IVP-17 (presentation include check), own `IsConcealed` (Owner audience) | Soft | In Review |
+| Concealment (12) | own `IsConcealed`; foliage channel responses; `HideVolume` bush-spot channel; bush dome size (I-CS-4) | Soft | In Review |
+| Assassination & Defence Reversal (13) | local contact frame and `DeathFallSec` (CS-R12.1); grade timing (VA-ASN-4) | Soft | In Review |
+| NPC-Kill Penalty & Informants (14) | `ExileBeatSec`, `ExileCardTimeoutSec`; own Informant state for `SetOwnerGrade`; `InformantKilled` view reason (CR-18) | Soft | In Review |
 
 ### Downstream
 
 | Dependent (#) | What it takes | Hard/Soft | Status |
 |---|---|---|---|
-| Input & Interaction Framework (3) | `GetAimRay()` and `WorldPoint`; masked = not rendered (R10, Strike hint) | Hard | in review (change request) |
-| Shared Character & Locomotion (9) | masked = not rendered for R11 (mask flag); the clamped control-rotation target | Soft | in review |
-| Concealment (12) | CS-R11.3 (60 cm boom, edge push off); foliage ignores `Camera`/`ViewBlock`; rustle effects tagged eye-masked; `WorldPoint` into `HideVolume` | Soft | in review |
-| Assassination & Defence Reversal (13) | `ApplyTransientGrade`; aim ray; `Dying` hold and own-elimination fade (CS-R12.1) | Soft | designed (pending review) |
-| NPC-Kill Penalty & Informants (14) | informant camera follows the same rules; `NoPawn` while awaiting a pawn; exile hold (CR-10); `SetOwnerGrade(Informant)` | Soft | in design |
-| Crowd & NPC Behaviour (11) | `EvaluateViewEnvelope` (F1) for NPC virtual look; Baseline and Tell Matrix row: camera mode has no visible deviation | Soft | in review |
-| Teammate Markers (17) | view transform and FOV; `GetViewState()`; fade layer order (CR-3) | Hard (for Markers) | designed (pending review) |
-| HUD (18) | view transform and FOV; `GetViewState()`; the one-time 3P hint; neutral-view plates | Soft | designed (hud.md) |
+| Input & Interaction Framework (3) | `GetAimRay()` and `WorldPoint`; masked = not rendered (R10, Strike hint) | Hard | In Review |
+| Shared Character & Locomotion (9) | masked = not rendered for R11 (mask flag); the clamped control-rotation target | Soft | In Review |
+| Concealment (12) | CS-R11.3 (60 cm boom, edge push off); foliage ignores `Camera`/`ViewBlock`; rustle effects tagged eye-masked; `WorldPoint` into `HideVolume` | Soft | In Review |
+| Assassination & Defence Reversal (13) | `ApplyTransientGrade`; aim ray; `Dying` hold and own-elimination fade (CS-R12.1) | Soft | In Review |
+| NPC-Kill Penalty & Informants (14) | informant camera follows the same rules; `NoPawn` while awaiting a pawn; exile hold (CR-10); `SetOwnerGrade(Informant)` | Soft | In Review |
+| Crowd & NPC Behaviour (11) | `EvaluateViewEnvelope` (F1) for NPC virtual look; Baseline and Tell Matrix row: camera mode has no visible deviation | Soft | In Review |
+| Teammate Markers (17) | view transform and FOV; `GetViewState()`; fade layer order (CR-3) | Hard (for Markers) | In Review |
+| HUD (18) | view transform and FOV; `GetViewState()`; the one-time 3P hint; neutral-view plates | Soft | In Review |
+| Informant Pings & Team Comms (20) | `GetAimRay()` `Origin`/`Direction` (PNG-R3), eye pivot (CS-R4) for the range check, `GetViewState()` | Hard (for Pings) | In Review |
 | Settings & Accessibility (24, VS) | CS-R13 hooks | Soft | not written |
 | Post-Round Reveal (21, VS) | owns its own reveal camera; Camera hands over in `Ended` | Soft | not written |
 | Anti-Cheat & Info-Leak Security (27, Alpha) | the CS-R5c residual risk and the server-side view-check ADR | Soft | not written |
@@ -562,6 +566,7 @@ The table uses the CR-15 columns. Every key is owner-local presentation with one
 | `BoomCloseCm` | float | Camera | 60 | 30-100 | 50-80 | Client | Use | Cm | Low: the lens is inside the head. High: frequent headless 3P |
 | `ConcealedBoomCm` | float | Camera | 60 | 0-70 | 40-60 | Client | Use | Cm | Straight back, no shoulder or height offset. High: the lens leaves the leaf dome and the hider surveys from behind the bush (P2; I-CS-4). Low: the leaf framing fills the screen |
 | `FpForwardOffsetCm` | float | Camera | 8 | 0-20 | 5-12 | Client | Use | Cm | Low: the neck is visible. High: the lens passes a wall the face touches |
+| `CameraMaskOffHysteresisCm` | float | Camera | 10 | 5-30 | 8-15 | Client | Use | Cm | Added 2026-10-25 (D6): the mask turns off below 20 cm of free boom and back on only above 20 + this (30 cm at the default). Low: the mask flickers on a boom hovering near 20 cm. High: a longer stretch of near-eye 3P without the mask (the lens is still within 50 cm of the eye, so little parallax) |
 | `CameraNearClipCm` | float | Camera | 5 | 1-15 | 3-8 | Client | Use | Cm | High: own hands and close walls clip |
 | `EyeConeHalfHDeg` / `EyeConeHalfVDeg` | float | Camera | 55 / 38 | 40-70 / 25-50 | 52-60 / 36-42 | Client | Round | Deg | High: 3P sees beside the body. Must stay ≥ the FOV slider maximum (I-CS-3) |
 | `EyeMaskHideFailCount` | int | Camera | 2 | 1-4 | 2-3 | Client | Use | Count | High: 3P keeps seeing briefly after the eye loses sight |
@@ -593,7 +598,7 @@ Consumed, not owned: `LookYawLimitDeg`, `LookPitchLimitDeg`, `TurnInPlaceDelaySe
 
 - **FOV and the art bible tables.** The default 60° vertical FOV in both modes confirms the art bible's reference camera. The 8.5 LOD and thumbnail tables therefore hold, and the "FOV unconfirmed (4.8)" note can be closed. A player who raises the FOV makes figures smaller on screen; LODs switch by screen height, so no rule changes.
 - **Own body in 3P.** No self-outline, ring or marker on the own body (art bible 5.2, 7.1).
-- **Mask fade.** One shared character material with a dithered opacity driven by a per-pawn value (custom primitive data or a per-pawn material instance; CS-R5b). At α = 0 the primitives are hidden, which removes shadow and ray-tracing presence. Every pawn uses the same parameter path **[verify cost on the 50-pawn case, and TSR/Lumen/MegaLights behaviour with dither, OQ5]**. No colour, outline, silhouette or ghost is shown while fading.
+- **Mask fade.** One shared character material with a dithered opacity driven by a per-pawn value (custom primitive data or a per-pawn material instance; CS-R5b). At α = 0 the primitives are hidden, which removes shadow and ray-tracing presence. Every pawn uses the same parameter path **[verify cost on the 60-character case, and TSR/Lumen/MegaLights behaviour with dither, OQ5]**. No colour, outline, silhouette or ghost is shown while fading.
 - **Post-process hooks (CS-R15).** The leaf-edge vignette (2.8), the transient grade (2.7, at the local contact frame only) and the persistent informant grade (2.9, on from the cut frame) are camera post-process hooks; their look is the art bible's.
 - **Audio.** The listener sits at the eye pivot in both modes, and the toggle and shoulder swap make no sound.
 
@@ -606,6 +611,7 @@ Consumed, not owned: `LookYawLimitDeg`, `LookPitchLimitDeg`, `TurnInPlaceDelaySe
 | Toggle | 0.20 s eased dolly, peak about 14 m/s, inside the 0.30 s lockout, no sound | quick without disorienting |
 | Boom pull-in / recovery | instant in; 0.15 s hold then τ 0.30 s out | never inside a wall; no pumping |
 | Mask reveal compared with 1P | ≤ 0.14 s later within 20 m, ≤ 0.19 s to 60 m, ≤ 0.32 s beyond, and never earlier | 3P is never the better scouting mode |
+| Mask hide after the eye loses sight (**stated limit**, D6 2026-10-25) | fade-out starts after `EyeMaskHideFailCount` (2) failed tests plus one frame: ≤ 0.05 s within 20 m, ≤ 0.15 s to 60 m, **≤ 0.42 s beyond 60 m** (2 tests at 5 Hz); fully hidden 0.10 s later (≤ 0.52 s beyond 60 m) | beyond 60 m a pawn that steps behind cover can stay drawn in 3P up to about half a second longer than in 1P; accepted as a stated limit (the pawn is a few pixels tall at that range, the reveal side is never earlier than 1P, and closing the gap would cost the near-band trace budget); revisit only if the AC-CS-24 scout-parity playtest flags it |
 | 1P stability | no bob, no roll, pivot low-pass 0.10 s | comfort in a slow walking game |
 
 **What it must never feel like:** a sniper scope, a drone above the crowd, or an aim-assisted shooter.
@@ -642,6 +648,7 @@ The MVP options listed in CS-R13 go on a minimal options panel: default camera m
 | View gate and fade layer order | design/gdd/teammate-markers.md | TM-R8, TM-R9, CR-3 | designed (pending review) |
 | NPC virtual look (motion parity), Baseline and Tell Matrix | design/gdd/crowd-npc-behaviour.md | R3.4, OQ11 | in review |
 | Neutral view without spectator state; presentation include check | design/gdd/information-visibility-policy.md | R13, L17, L30, AC-IVP-17 | in review |
+| Third consumer of `GetAimRay()`; eye pivot for range; `GetViewState()` | design/gdd/informant-pings-team-comms.md | PNG-R3, F2 | in review |
 | Informant grade | design/art/art-bible.md | 2.9 | approved |
 | Gameplay Cameras plugin (Experimental in 5.8) | docs/engine-reference/unreal/plugins/gameplay-camera-system.md | 5.8 changes | reference |
 
@@ -755,7 +762,7 @@ Test names take the form `StealthGame.Camera.<Scenario>`; tests live in `Source/
   - **Map:** a functional test map with an L-corner, a T-junction, a pillar, a door frame, a 100 cm wall, a wall whose top lies between eye height and eye + 25 cm, a 120 cm alley, a dead end, a 5 cm fence, a window slit and a bush.
   - **Dummies:** 24 dummy pawns (12 NPC-controlled, 12 bound to fake participants) on rings and behind each occluder.
   - **Sampling:** the player stands at ≥ 40 positions (corner-adjacent, 5 cm from walls, alley centres) and sweeps yaw in 15° steps across the envelope at pitch −60, −20, 0, +20 and +40, in 3P on both shoulders. Each sample is taken after the rig and mask settle (30 frames, past the N_h hysteresis).
-  - **Oracle:** 25 points per dummy, a superset of the 5 mask probes, traced from the real eye socket on `ViewBlock` and restricted to the eye cone.
+  - **Oracle:** 25 points per dummy, a superset of the 5 mask probes, traced on `ViewBlock` from the mask origin `P_m` (capsule axis, at the lower of the lagged pivot height and the real eye-socket height; the same origin as the mask, decision D6 2026-10-25) and restricted to the eye cone.
   - **Assertions at every sample:**
     1. The 2 cm guard ray from the pivot to the lens is unblocked.
     2. The 14 cm sphere does not overlap geometry.
@@ -784,7 +791,7 @@ Test names take the form `StealthGame.Camera.<Scenario>`; tests live in `Source/
   - **And** the set of mask-visible dummies equals the AC-CS-05 oracle's set for the same pivot (at most the 5 % false-hide budget).
 - **AC-CS-12** [P] `AudioListenerAtEye`: given 3P with the lens at 186 cm, when the listener transform is read, then its position equals the pivot within 1 cm and its rotation equals the view rotation.
 - **AC-CS-13** [P] `MaskPerf`:
-  - **Given** 49 dummies within 20 m, all inside the eye cone and behind walls (5 traces each), on a named RTX 3060-class reference machine (CPU recorded in the evidence file) at 1080p.
+  - **Given** 59 dummies within 20 m (the `NpcCount` 50 worst case: 60 characters less the owner), all inside the eye cone and behind walls (5 traces each, 295 per frame), on a named RTX 3060-class reference machine (CPU recorded in the evidence file) at 1080p.
   - **When** the mask runs for 60 s.
   - **Then** its mean game-thread cost is ≤ 0.5 ms and its p99 per-frame cost is ≤ 1.0 ms.
   - A failure goes to technical-director (OQ10). It is never fixed by dropping the line-of-sight test.
@@ -795,11 +802,19 @@ Test names take the form `StealthGame.Camera.<Scenario>`; tests live in `Source/
   - **Given** a 150 cm drop and a 120 cm climb.
   - **Then** the pivot's vertical speed never exceeds 300 cm/s, and the mask origin is never above the real eye socket.
   - **And** for an injected owner correction below `PawnSmoothSnapThresholdCm`, the pivot moves smoothly (no step > 5 cm per frame). Above the threshold, it snaps with the body on the same frame.
+- **AC-CS-41** [U] `CloseThirdPerson` (CS-R6):
+  - **Given** the free boom length swept 120 → 50 → 15 → 50 → 90 cm, one step per 10 frames.
+  - **Then** the own head, neck and hair hide at the first step below 60 cm and stay hidden through the 15 cm hysteresis (they show again only above 75 cm), and the eye-mask output (α) is not applied at 15 cm and is applied again at 90 cm.
+  - **And** no frame renders from inside geometry: the 2 cm guard ray is clear on every frame.
 - **AC-CS-30** [U] `SqueezeAndSwap`:
   - **Given** a wall 30 cm from the right shoulder: the offset reaches 0 within 0.15 s and returns within 0.40 s after clearing, with no automatic flip.
   - **And** a shoulder swap mirrors the offset over 0.25 s. A second press during the blend is buffered and runs once. The 2 cm guard ray stays clear on every frame of the blend.
 
 **D. No identification aid (CS-R9, F6)**
+- **AC-CS-40** [U] `StrikeWarpViewHold` (CS-R11.1):
+  - **Given** an owner with view offset v = 0 and then v = +50°, Look idle, and a Strike whose root motion or warp turns the body by `StrikeWarpYawLimitDeg` (30°).
+  - **Then** for v = 0 the view's world yaw is unchanged (±0.01°) on every frame of the strike, and for v = 50° the view's world yaw is unchanged until the body-relative offset would pass 70°, then follows the body with no step above one frame of body rotation.
+  - **And** no camera shake, zoom or cut occurs.
 - **AC-CS-14** [U] `NoAimAssist`: given an identical injected Look input sequence, when it is replayed once with a dummy under screen centre and once with none, then the view rotation trajectories are identical to 0.01°.
 - **AC-CS-15** [U] `StickCurve`: given F6 with the defaults:
   - at pure-right deflection 0.565, 0.10 and 1.0, the yaw rate is 63.6 ± 0.5 °/s, 0 and 180 °/s;
@@ -858,9 +873,9 @@ Test names take the form `StealthGame.Camera.<Scenario>`; tests live in `Source/
 - **AC-CS-39** [U] `PresentationIncludeCheck` (IVP AC-IVP-17):
   - **Given** the camera module, when the include and grep check runs, then it includes no server query header.
   - It calls `GetPlayerState`, `GetController`, `IsPlayerControlled` or `GetOwner` only on the local controller's own possessed pawn.
-- **AC-CS-23** [P] `TellMatrixRow` (with Crowd):
+- **AC-CS-23** [Doc review/ADVISORY, not automated; retagged 2026-10-25, D6] `TellMatrixRow` (with Crowd): verified by reading the Crowd GDD and its code review, not by a test run.
   - **Given** the Baseline and Tell Matrix.
-  - **When** it is reviewed.
+  - **When** it is reviewed (design review of Crowd, and code review of Crowd's virtual-look call site).
   - **Then** it has a "camera mode / toggle" row reading "no visible deviation", pointing to Camera.
   - **And** Crowd's virtual look calls `EvaluateViewEnvelope`.
 - **AC-CS-24** [PT] `ScoutParity`:
@@ -888,11 +903,11 @@ Test names take the form `StealthGame.Camera.<Scenario>`; tests live in `Source/
 | OQ2 | Glance asymmetry (CS-R3.5): the camera leads the head, so a glance under 0.2 s shows observers only a small twitch. Accepted for the MVP (CD ruling). Log glance counts under 0.2 s in the graybox playtest. The fallback `ViewHeadLeadMaxDeg` and its trigger are written in CS-R3.5. | game-designer | graybox playtest |
 | OQ3 | Turn cost and comfort: a walking 180° look takes about 1.8 s and an idle look-back 1.1-1.4 s. ux-designer asks for an SCL `PivotTurnRateDegPerSec` ≥ 150 °/s (currently 120; the run turn rate of 180 °/s already meets the ≥ 90 request). Add telemetry on edge-push events per minute. Also watch the body-driven view turn while steering (CS-R3.3) for comfort. | SCL owner + creative-director | graybox playtest |
 | OQ4 | -> ADR: the rig. Options: (C, recommended) a custom PlayerCameraManager with no pawn components, engine camera-update RPCs disabled and manual view-target management; (B) SpringArm with its origin at the eye and `TargetOffset`; (A) the stock SpringArm with `SocketOffset`, rejected because it leaves through walls sideways; or the Gameplay Cameras plugin used by the Game Animation Sample (Experimental in 5.8). | technical-director | before the first camera story |
-| OQ5 | -> ADR / spike: per-viewer mask rendering. Covers per-pawn dither cost with masked blend on 50 pawns (custom primitive data or per-pawn material instance), `SetVisibility` at α = 0 versus shadow and ray-tracing state, virtual shadow map invalidation, and TSR, Lumen and MegaLights behaviour with dither **[verify]**. Also costs partial masking for the whole-pawn-reveal residual (CS-R5b). | technical-artist + gameplay-programmer | before the mask story |
+| OQ5 | -> ADR / spike: per-viewer mask rendering. Covers per-pawn dither cost with masked blend on 60 characters (custom primitive data or per-pawn material instance), `SetVisibility` at α = 0 versus shadow and ray-tracing state, virtual shadow map invalidation, and TSR, Lumen and MegaLights behaviour with dither **[verify]**. Also costs partial masking for the whole-pawn-reveal residual (CS-R5b). | technical-artist + gameplay-programmer | before the mask story |
 | OQ6 | Server-side view check or an Iris dynamic filter applied identically to all pawns (CS-R5c). | Anti-Cheat GDD / technical-director | Alpha |
 | OQ7 | **Closed (Concealment CON-R7, 2026-10-24):** a concealed hider's body yaw is locked; Look is free within the head clamp; the camera's edge push is off while concealed (CS-R3.2, CS-R11.3). | Concealment GDD | closed |
 | OQ8 | **Closed (Assassination ASN-R16, 2026-10-24):** `StrikeWarpYawLimitDeg` is 30°. | Assassination GDD | closed |
 | OQ9 | **CLOSED — confirmed by the user 2026-10-25.** One view and aim pitch range of −60°/+40° in **both** modes (creative-director ruling at design review, extending SCL D6 from first person only). Applied. The alternative of −60°/+40° in 1P with ±20° in 3P was rejected because it makes the camera choice a gameplay choice (CS-R2). | user (creative-director recommends) | closed 2026-10-25 |
-| OQ10 | Mask trace budget: worst case 245 traces per frame, about 1.2 ms at 5 µs per trace, against the 0.5 ms target (F3, AC-CS-13). The options are time-slicing the near band, fewer probes at distance, or GPU queries. The line-of-sight test is never dropped, and the 3P reveal must not be noticeably worse than 1P occlusion culling. | technical-director | mask spike (OQ5) |
+| OQ10 | Mask trace budget: worst case 295 traces per frame (59 other pawns at `NpcCount` 50), about 1.5 ms at 5 µs per trace, against the 0.5 ms target (F3, AC-CS-13). The options are time-slicing the near band, fewer probes at distance, or GPU queries. The line-of-sight test is never dropped, and the 3P reveal must not be noticeably worse than 1P occlusion culling. | technical-director | mask spike (OQ5) |
 | OQ11 | **User decision, only if triggered:** if AC-CS-26 shows 1P reading better than 3P by more than 15 %, should the default mode change from `ThirdPerson` to `FirstPerson`? | user | after the graybox read-parity playtest |
 | OQ12 | **CLOSED for MVP — declined by the user 2026-10-25; later as Vertical Slice settings.** A tap or hold toggle option and a left-handed default shoulder (recommended by ux-designer, allowed by the creative director as settings) are not in MVP; Settings & Accessibility (VS) adds them. | user | VS (Settings & Accessibility) |

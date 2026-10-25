@@ -60,3 +60,42 @@ Reviewed-Content-Hash: design/gdd/level-socket-contract.md 262eb5056ce08175a3eeb
 Reviewed-Content-Hash: design/gdd/systems-index.md 2adb098db430a1b7d1c77e1238171c3948bf08eb
 Reviewed-Content-Hash: design/gdd/game-concept.md 8dccb622e17a7f1dc58349dd2baa54d52fc36d32
 (The GDD hash is of the reviewed, pre-revision text. The revised document will read CHANGED, so the re-review runs in full.)
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (unchanged: multi-system integration, 6 formulas, several ADRs; producer should verify before sprint planning)
+Specialists: none (lean mode, single-session analysis)
+Blocking items: 3 (all fixed in text; verdict not upgraded, a re-review decides) | Recommended: 5
+Summary: All 26 first-round blockers are resolved in the text: the CR-15 knob table, the two-tier reply model, queue-resident hold timers, host ingress, the transport bucket sizing, the `PawnRef` gate, the Look-parity contract and the rewritten acceptance criteria. Arithmetic checked and correct: F3 (6 admitted of 16; Σ B 11, Σ R 6/s), F4 (T_ack 0.483 s), F5 (L_confirm, L_observer examples) and F6 (190/240 cm). The second pass found three internal contradictions left behind by the 2026-10-24 reconciliation and ADR sync (an edge case and AC 6 still dropped hidden-court ids at ingress, and F1 still described a per-drain poll stamped after intake). All three were fixed, but they touch ingress, timer order and a test, so the document needs one more read.
+Prior verdict resolved: Yes (first-round blockers all resolved; 3 new blockers found)
+Findings:
+- [BLOCKING] Edge Cases (hidden-site probe): said a hidden-court `TargetId` is dropped silently at ingress, contradicting R5.1, AC 71 and IVP R7.4a ruling D (every court accepted, resolves as `AllowNoEffect`). FIXED: only non-target ids are dropped.
+- [BLOCKING] Acceptance Criteria 6: asserted the same stale drop of a hidden-site Interact, so it would fail against AC 71. FIXED.
+- [BLOCKING] Formulas F1 / AC 32: said the IIF polls active Interacts each drain and stamps `HoldTimer(Complete)` after intake. R8 and ADR-0002 §4 schedule it at Begin with `ScheduleAt`, and Round R12 stamps an already-due item before intake. FIXED: F1, its Output Range sentence about same-frame order, and AC 32 now match R8 and Round R12.
+- [RECOMMENDED] Core Rules R6: ingress tier still listed "Policy-invisible" ids; also did not say that Round's own pre-resolver drops (`WrongPhase`, `StaleConnection`, `MailboxOverflow`) are silent. FIXED.
+- [RECOMMENDED] Dependencies: Information Visibility Policy was marked Soft although R10's `PawnRef` gate needs `CanViewerKnow` (x-ray oracle otherwise). FIXED: Hard for R10, soft for vocabulary.
+- [RECOMMENDED] Dependencies: Settings & Accessibility row listed "debounce constants", contradicting OQ1 (no release tolerance). FIXED. R8 "not a setting in MVP" reworded to "server-only tuning key, never a player-facing setting".
+- [RECOMMENDED] Cross-References: change requests 4, 7 and 12 still described an ingress site filter (superseded by ruling D) and a three-kind `HoldTimer`. FIXED: marked superseded, `ConditionCancel` added.
+- [RECOMMENDED] Acceptance Criteria: no test for a reversal ending a brace (`Reversed`, `ServerEndTime = ContactServerTime`), the planted brace ignoring Move, or the `PossessionEpoch` gate. ADDED as AC 77-79.
+- [OPEN] ε in the due-time comparison is applied in F1 as `t_now ≥ DueTime − ε`, but Round R12 states the test as `DueTime <= DrainStartTime`. Needs a Round decision (see follow-ups).
+- [OPEN] Verify in the first 2-client playtest or spike V1: exactly-one-`Completed` on input flush, ForceNetUpdate under Iris (note: pending decision A4 pins Iris off, so the Iris-specific "verify" notes may be moot), `RemoteViewPitch` parity.
+
+Cross-doc follow-ups (main session):
+- `design/registry/entities.yaml`: it lists only 19 IIF-sourced entries. IIF knobs missing from it: `InteractFacingHalfAngleDeg`, `InteractMoveGraceSec`, `UnmatchedEndPerSec`, `AbuseLogDropCount`, `AbuseLogWindowSec`, `BucketInteract*`, `BucketPrepare*`, `BucketHidePerSec`. Present: `AckSlackSec`, `BucketAttack*`, `BucketHideSize`, `CameraToggleLockoutSec`, `CommandRangeSlackCm`, `InteractCancelHysteresisCm`, `InteractMoveCancelDistCm`, `InteractRangeCm`, `PawnRefAgreementCm`, `ReleaseDebounceSec`, `TransportBucket*` and the plate cooldowns. `LatencyWarnRttSec` is correctly `deprecated` (replaced by `HudLatencyWarnRttSec`).
+- `design/gdd/round-match-framework.md` R12: decide whether the due test carries ε (1e-4 s, double precision) or is exact on double absolute `DueTime`; the IIF F1 text defers to Round's comparison. Also confirm R12's `MailboxMaxItemsPerDrain` 32 drops stay silent with no IIF reply (IIF R6 now says so).
+- `design/gdd/systems-index.md`: IIF row 3 "Depends On" should add Information Visibility Policy (hard, for `CanViewerKnow`) and Shared Character & Locomotion is already listed in the other direction (change request 2).
+- `design/gdd/tuning-data-config.md`: still owes the two cross-field invariants on the transport bucket and the `ObjectiveInteractRange` → `InteractRangeCm` mapping (IIF change request 10); verify they landed.
+- `design/gdd/objectives-chain.md`: the stale "Team-audience live-site set for ingress filter" wording from IIF change request 7 is superseded; Objectives should not implement an ingress filter.
+Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9557521fb4c45d124224835244
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/round-match-framework.md f019aa4e04092b43aee6b74f2462438418205597
+Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 89d049074c81e71b16f1269736cbe2016d977f9c
+Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
+Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bbbc02bdd9ba8
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+Reviewed-Content-Hash: design/gdd/objectives-chain.md 2458e588b87bb7d1954477782e9a5f2b75118ff6
+Reviewed-Content-Hash: design/gdd/information-visibility-policy.md 9ce1d9677b38048e71176b7dd0b44959ce5c99f5
+Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md dc19c6207e69961a896ea3c6268187b563001dca
+(The GDD hash is of the revised text as left by this review, so the next check reads UNCHANGED until the document is edited again; the verdict stands until a re-review.)

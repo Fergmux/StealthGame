@@ -44,3 +44,38 @@ Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 8bf1dcd1acd4e4515
 Reviewed-Content-Hash: design/gdd/tuning-data-config.md 4c00659ec2fded9575197cc975bcde9241b96b93
 Reviewed-Content-Hash: design/gdd/level-socket-contract.md e07cedf53b842c906dcf4a5d51fc302c1569de22
 Reviewed-Content-Hash: design/gdd/game-concept.md 8dccb622e17a7f1dc58349dd2baa54d52fc36d32
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: XL (unchanged: cross-cutting Core system, 8 formulas, 9+ dependencies, several ADRs already accepted)
+Specialists: none (lean, single-session analysis)
+Blocking items: 2 (both fixed in text; one needs Roster/Session confirmation) | Recommended: 5
+Summary: All 14 first-round blockers are verified resolved in the text (Reason partition and forfeit/void, `ExpectedConnectionGeneration`, G_eff clamp, `ShouldAdmitExpired`, C1 informant re-pawn, pawn-loss own-card respawn, C2 start order, R23(f) identity-free replication precondition, scheduled start with world-ready, `EndedMinDwellSec`, F6 computed watchdog, single acknowledgement, rewritten ACs, unreachable `TeamsInvalid(Unassigned)` removed). No registry value conflicts were found, and all 8 sections are present. New blockers: an acceptance criterion that contradicts the P5 rule, and a host-kick path that Session sends to `Expired` in the same tick, which R17.4 would have treated as a defect and converted instantly. The revisions are applied; a revision is not an approval, so a further re-review decides.
+Prior verdict resolved: Yes (MAJOR REVISION NEEDED 2026-10-24; all 14 blockers and 12 recommendations verified present; 2 new blockers found)
+Findings:
+- [BLOCKING] Acceptance Criteria 7: still asserted a "half of the clients mismatching aborts" quorum for `TuningSnapshotFault`, contradicting R6 P5 / TDC CR-9 (no quorum abort) -> fixed (mismatch only disconnects the client; the fault is a server self-check).
+- [BLOCKING] R17.2/R17.4/F2/AC 26b: a host kick is sent by Session straight to `Expired` with `OnRejoinWindowExpired` in the same tick; R17.4 treated that as a `WindowBeforeGrace` defect with immediate conversion (a timing tell, and false defect noise), and the Roster transition may return `Rejected_NotDisconnected` for an `Expired` connection -> fixed on Round's side (kick keeps the grace, same-tick window expiry ignored, AC 26c added); Roster/Session confirmation is change request 21.
+- [RECOMMENDED] F6: `LayoutTotalBudgetSec` range "0 to 45" contradicted the registry hard range 10-90; the "~0 for the graybox" note contradicted the minimum -> fixed (range 10-90; maxima and minima recomputed, T_needed 52.1 to 242 unchanged).
+- [RECOMMENDED] R6 slow-loader text: "up to 70.2 s" is Session's example, not the bound; F6's bound is 81 s -> fixed.
+- [RECOMMENDED] F4 / change request 13(a): `RejoinWindowSec` "Session's table says 30" is stale (Session and registry now 60-600) -> fixed.
+- [RECOMMENDED] Acceptance Criteria: duplicate label 12d; placeholder `<StopBlendSec>` (no such key; uses `RunStopSec`); "Crowd-owned limit" in 28a (named `CrowdStopDecel`) -> fixed.
+- [RECOMMENDED] Dependencies: Informant Pings & Team Comms (MVP since 2026-10-25) clears its parts in the R9 round-end step but was missing from Downstream -> row added.
+- [RECOMMENDED] R10 step 4 (OQ14): destroying only the player pawns before lobby travel is an uncontrolled player/NPC difference on an abort or void -> added as OQ14, not changed (needs the spike and AC 13a).
+Specialist disagreements: none (no specialists in lean mode).
+Cross-doc follow-ups (main session):
+- Roster/Session (change request 21): confirm the Roster accepts `RequestTransition(Informant, Disconnect)` for a connection Session has marked `Expired` after a host kick, or keep a kicked in-round participant `Disconnected` until grace ends.
+- Registry/TDC (change request 22): `StartLeadSec`, `PreparingWatchdogSec`, `MaxTeamImbalanceCount`, `PawnLossRecoveryMaxCount` and `RoundLogMaxEntriesCount` are not in `design/registry/entities.yaml` (TDC counts 17 Round keys; the registry has 12).
+- Systems index: set round-match-framework to "In Review" (revisions applied, re-review pending), not Approved.
+- Penalty/HUD: `TeamSummary.WrongTargetCount` is read "from the Event Log"; confirm it is the protected `KillResolved` entries (VictimKind Npc or Informant, by the killer's team), not Penalty's non-protected `StrikeCounted` entries.
+- Informant Pings & Team Comms GDD: confirm its Dependencies row for Round matches the new Round Downstream row.
+Note: the target document was revised after this review, so it is deliberately not stamped below (a re-review must run in full).
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
+Reviewed-Content-Hash: design/gdd/session-travel.md 0da6609c7da397b7225feb73fde9b303ac01a320
+Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 4d10b5f8eb2a9a711422f9e2955e2fbf3aa164d6
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 63db04c802c6db06eb0ba3dac93f65fb9fa98068
+Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
+Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526f8d2c6c107100ba7a2db673b
+Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 242977e3dcc0185347fd1053741e6f305c1e42fa

@@ -51,3 +51,33 @@ Reviewed-Content-Hash: design/gdd/level-socket-contract.md f318f06c15dd6194b5816
 Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 8bf1dcd1acd4e451528d64eb7491c82b2479c26e
 Reviewed-Content-Hash: design/gdd/participant-state-roster.md 7090ac55a320a45ab62d598f7ec0661d468cc8e3
 Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md 13f87f4eae08c99906862f29de8e94cc59796e3d
+
+## Review — 2026-10-25 — Verdict: NEEDS REVISION
+Review mode: lean · Workflow: full
+Scope signal: L (unchanged: 5 formulas, 11 upstream and 8 downstream systems, 20 change requests)
+Specialists: none (lean mode, single-session analysis; GDD read in full, registry and TDC/ASN/HUD facts grepped)
+Blocking items: 4 | Recommended: 3
+Summary: Second-round review. All nine first-round blockers are resolved in the text (one exile clock with timeout fallback, `InformantKilled` presentation, three named residuals, tally re-push gated by `LastResultSeq`, CR-4/6/7/17-20 wording, AC-35 tolerance), the user's 2026-10-25 decisions are reflected (tally confirmed, hard minimum 2, `InformantKilled`, `T_due` carrier, ping MVP, audio bed deferred to VS, `NpcCount` 50), and F1-F5 and AC-NKP-35 recompute correctly. Four small defects remained (testability and consistency); all were revised in place, but a revision is not an approval, so the verdict stands until a re-review of the revised text.
+Prior verdict resolved: Yes (NEEDS REVISION 2026-10-24: 9 blocking items all resolved; recommended items resolved or deliberately left as pending user decisions that were then decided)
+Findings:
+- [BLOCKING] AC-NKP-18: the F2 floor-warning case (D = 5 with DeathFallSec 2.0, NoPawnFadeSec 1.5) cannot warn: 1.2 + 2.0 + 1.5 = 4.7 <= 5, and the hard ranges can never violate the predicate -> revised: that input now expects no warning, and the predicate is tested directly with an injected out-of-range D = 4.0.
+- [BLOCKING] AC-NKP-09: "one card move per TryReleaseNpc attempt" contradicted PEN-R9 step 6 and AC-NKP-30 (no card move for a failed takeover) -> revised: exactly one card move over the whole respawn, one pick per commit attempt.
+- [BLOCKING] Cross-References CR-11: still stated `ExileCardTimeoutSec >= ExileBeatSec + 0.5`, superseded by W-NKP-5 (TDC and the knob row: StrikeContactSec + BushStrikeEmergeSec + ExileBeatSec + 0.3) -> revised to the W-NKP-5 formula; W-NKP-4 noted as a guard that cannot fire inside the hard ranges.
+- [BLOCKING] Edge Cases: "P's 3rd NPC kill is reversed by a bracing NPC" is not possible (a strike on a braced NPC resolves Reversal, not Kill; ASN-R7) -> rewritten as k = L - 1 striking a bracing NPC: Reversal, no tally, no strike, P eliminated ReversedAgainst.
+- [RECOMMENDED] AC-NKP-31: "Returning…" (ellipsis) contradicted UI-NKP-4's static "Returning" -> revised.
+- [RECOMMENDED] AC-NKP-05 parameterised L = 1 to 5, but L = 1 exists only behind `bTestAllowsStrikeLimitOne` -> revised (L = 2 to 5 plus the flagged L = 1); coverage map gained AC-NKP-48; F4 labels L = 5 as outside the 2-4 safe range.
+- [RECOMMENDED] Header and Quick reference: Informant Pings still "(VS)" and Status/Last Updated stale -> refreshed (MVP since 2026-10-25; Pings In Review).
+Registry values: searched NpcKillStrikeLimit, InformantRespawnDelaySec, ExileBeatSec, StrikeOutReleaseGraceSec, ExileCardTimeoutSec, NpcCount; no conflict (3 / 2-5 / 2-4, 15 / 5-60 / 10-20, 0.8, 2.0, 2.0, N = 50 in F4).
+Dependency graph: every named GDD exists (informant-pings-team-comms.md included); Event Feedback, Post-Round Reveal and Telemetry are Not designed (VS/Alpha, by design).
+Cross-doc follow-ups (main session):
+- design/registry/entities.yaml `informant_respawn.chain` still reads "PickRespawnPawn -> TakeNpcCard -> TryReleaseNpc -> TakeOverCrowdPawn"; the GDD, ADR-0019 and ASN follow pick, pre-check, TryReleaseNpc, TakeOverCrowdPawn, then TakeNpcCard (only after Applied). Update the registry chain.
+- design/gdd/tuning-data-config.md W-NKP-4 (`1.2 + DeathFallSec + NoPawnFadeSec <= InformantRespawnDelaySec`) can never fire inside the hard ranges (max 4.7 <= min D 5); keep as a guard or drop it, and align its test with AC-NKP-18.
+- design/gdd/systems-index.md: row 14 status should read Needs Revision (second review) until the revised GDD is re-reviewed; Informant Pings row is In Review.
+- Dependency-row statuses in this GDD for sibling GDDs ("Reviewed, NEEDS REVISION") will go stale as parallel re-reviews land; refresh them at the next pass.
+Note: the target document was revised after this review, so it is deliberately not stamped below (a re-review must run in full).
+Reviewed-Content-Hash: design/registry/entities.yaml 28f7a489149e3fba702986d089b7799719796b39
+Reviewed-Content-Hash: .claude/skills/design-review/SKILL.md a63d8fba9b7142eeb43791f061e2e1533c429b43
+Reviewed-Content-Hash: design/gdd/tuning-data-config.md 89d049074c81e71b16f1269736cbe2016d977f9c
+Reviewed-Content-Hash: design/gdd/assassination-defence-reversal.md 2ae4886c85a5145d50d8cab36f30cc374c722621
+Reviewed-Content-Hash: design/gdd/hud.md 224977e0b36ac631f3ab286857b5b707178bc4dd
+Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6bf80120e5a3d8ace5b1ae83ad802eef537b16a2

@@ -411,3 +411,6 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 - §8 A, §3, Key Interfaces, guidelines — user decision 2026-10-25: `FActionState.StartServerTime` adopted; `ContactServerTime` no longer carries hide-pose start times; `HidePoseStartServerTime` stopgap retired.
 - §8 B, §3, §5, diagram, guidelines — user decision 2026-10-25: `FDeathState.bDiedConcealed` adopted; a killed-concealed victim re-opens at the death write and is kept hidden by the client latch; the `KilledConcealed` interim and `MarkKilledConcealed` call are retired (ADR-0003 §5.7).
 - Key renames — user decision 2026-10-25 (TDC CR-10): `bConcealServerCull`.
+
+Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-25_rereview-followups.md`); decision unchanged, Status unchanged (Accepted).
+- §7 (closeout D1): CON-R12 / AC-CON-24(c) multi-occupant share cap is `max(40 %, m0 + 10 pp)` (replaces the absolute 40 % plus m0 + 10 pp double cap); it is a spot-zone/candidate rule inside the server query and changes no interface or replicated field. The blind-strike spot pick stays the secret `BushSpotPick` stream (ADR-0006 domain 14, tag `CON_SPOT`); ASN-R8.2 / AC-ASN-39's older wording "stateless hash `SpotSalt`" is superseded by that stream (Assassination re-review xdoc; nothing here changes).
