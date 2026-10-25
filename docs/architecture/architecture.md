@@ -2,18 +2,19 @@
 
 ## Document Status
 
-- Version: 1 (first issue; revised in place the same day after the Phase 7b gates, before any ADR cited it)
-- Last Updated: 2026-10-24
+- Version: 2 (Technical Setup refresh, 2026-10-25; version 1 was the first issue of 2026-10-24, revised in place the same day after the Phase 7b gates)
+- Last Updated: 2026-10-25
 - Engine: Unreal Engine 5.8 (installed 5.8.4, CL 58902052, `C:/Program Files/Epic Games/UE_5.8`), C++ primary, Blueprint for presentation and tuning assets
-- Authoring: `/create-architecture full` (autonomous run; rigor full, docs.density thorough; every choice point logged in `production/session-logs/decision-log.md` under `create-architecture`)
-- GDDs Covered (18 MVP): tuning-data-config, participant-state-roster, input-interaction-framework, character-pool-appearance, session-travel, round-match-framework, information-visibility-policy, level-socket-contract, shared-character-locomotion, camera-system, crowd-npc-behaviour, concealment-bushes, assassination-defence-reversal, npc-kill-penalty-informants, objectives-chain, procedural-city-generator, teammate-markers, hud. Also read: game-concept.md (Technical Considerations), systems-index.md, gdd-cross-review-2026-10-24.md (verdict after fixes: blockers resolved, warnings open), design/registry/entities.yaml (247 cross-GDD entries, used as the knob/name baseline), design/art/art-bible.md §8.x (budgets).
-- GDD state caveat: all 18 GDDs are "In Review" (one review + fix pass each, independent re-reviews pending, none Approved). This architecture is written against that state; a GDD change after re-review goes through `/propagate-design-change`.
-- ADRs Referenced: none exist yet (Phase 5 audit found no `docs/architecture/adr-*.md`). The 25 required ADRs are listed under **Required ADRs**; ADR-001 is first.
-- TR-IDs: the TR registry (`docs/architecture/tr-registry.yaml`) is empty, so every ID in Appendix A is **provisional**; `/architecture-review` registers them and assigns permanent IDs.
+- Authoring: `/create-architecture full` (autonomous run; rigor full, docs.density thorough; every choice point logged in `production/session-logs/decision-log.md` under `create-architecture`); version 2 refresh logged under `technical-setup` (Technical Director findings of `production/gate-checks/2026-10-25_systems-design-to-technical-setup.md`)
+- GDDs Covered (19 MVP): tuning-data-config, participant-state-roster, input-interaction-framework, character-pool-appearance, session-travel, round-match-framework, information-visibility-policy, level-socket-contract, shared-character-locomotion, camera-system, crowd-npc-behaviour, concealment-bushes, assassination-defence-reversal, npc-kill-penalty-informants, objectives-chain, procedural-city-generator, teammate-markers, hud, **informant-pings-team-comms** (system 20, moved to MVP by user decision 2026-10-25). Also read: game-concept.md (Technical Considerations), systems-index.md, gdd-cross-review-2026-10-24.md and gdd-cross-review-2026-10-25b.md, design/registry/entities.yaml, design/art/art-bible.md §8.x (budgets).
+- GDD state: **all 19 MVP GDDs are Approved** (main-session decision D35, 2026-10-25, under the user's authorisation, after second-round reviews, two cross-doc fix passes and `/review-all-gdds` 2026-10-25b = CONCERNS with 0 blocking; `production/design-closeout/2026-10-25_rereview-followups.md`). Remaining warnings and open questions stay listed in each GDD. A GDD change from here goes through `/propagate-design-change`.
+- ADRs Referenced: **ADR-0001 to ADR-0023, all Accepted** (user blanket acceptance 2026-10-25; ADR-0009 with Git + Git LFS). Acceptance is **conditional** where an ADR names spikes or verification items: those must report before implementation depends on them, and a failed spike is handled by a superseding ADR. Every ADR carries its closeout amendments ("User decisions/User scope decisions 2026-10-25", "Closeout 2026-10-25", "Cross-review fix 2026-10-25", and for ADR-0002, 0007, 0011, 0017, 0020, 0023 "Technical Setup 2026-10-25"). ADR-0024 and ADR-0025 are deferred (Alpha).
+- TR-IDs: the TR registry (`docs/architecture/tr-registry.yaml`, version 3) holds **201 permanent IDs**: the 170 Appendix A baseline IDs, 7 added by the first `/architecture-review`, and 24 Informant Pings IDs (`TR-png-001..024`, added at Technical Setup). Coverage: 201/201 by Accepted ADRs, 0 partial, 0 gaps ([`requirements-traceability.md`](requirements-traceability.md)).
 - Evidence policy: the prototype in `Source/StealthGame` and `production/first-playable-report.md` are cited as feasibility evidence only. They are not this design (the prototype replicates `APawn::PlayerState`, `Team` and `bConcealed` to everyone and hides bushes client-side; report known issue 2).
 - TD-ARCHITECTURE: 2026-10-24 — REVISED after CONCERNS (8 concerns: dependency inversion for Crowd/Concealment edges, ADR-001 narrowed with S1/S14 fallback and bootstrap order, client server-time estimator owned by ADR-002, compile guard + Blueprint audit, queue keeps latch storage only with typed staged writes, Iris default verified and pinned, harness module type, audio scope)
 - LP-FEASIBILITY: 2026-10-24 — REVISED after CONCERNS (12 findings: per-service View facades, wire structs moved to Foundation `View/`, core value types defined in ADR-002 scope, registration/lifetime rules, custom drain `FTickFunction`, plain-C++ testable cores, metadata-driven tuning schema, four-module layout, CPU budget table and target-hardware spike, Roster-first build, seed in replicated GameState, pawn-factory subsystem)
-- Gate re-review: not re-run on the revised text (autonomous run); the next `/architecture-review` is the check.
+- Version 2 refresh (2026-10-25): Data Flow and API Boundaries now follow ADR-0002 §2a (Foundation-owned payloads in `StealthQueuePayloads.h`, `FPawnHandle`, `IStagedWriteApplier`; review N2); AnimationBudgetAllocator removed from the Platform layer (ADR-0013 rules it out; listen host tiers by the D3 uniform `TickPose` escalation); system 20 Informant Pings added to the layer and module maps; review N1/N3 closed in ADR-0002/ADR-0020; AQ-19 closed (ADR-0007 §1).
+- Gate re-review: `/architecture-review` has not been re-run since the closeout and Technical Setup amendments; the next review is the independent check of this version.
 
 ---
 
@@ -85,11 +86,12 @@ Core UObject/GC, gameplay framework classes (GameMode/GameState/PlayerController
 ┌────────────────────────────────────────────────────────────────────────────────┐
 │ PRESENTATION  (client-local; reads only carriers: owner data, C-TeamView,      │
 │               FRoundPublicState, tuning client snapshot)                       │
-│   HUD (18) · Teammate Markers (17)                                             │
+│   HUD (18; L0 also paints Pings rings, HUD-E22) · Teammate Markers (17)        │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │ FEATURE       (gameplay meaning; registers queue resolvers; server-authoritative)
 │   Crowd & NPC Behaviour (11) · Concealment (12) · Assassination & Defence (13) │
 │   NPC-Kill Penalty & Informants (14) · Objectives Chain (15)                   │
+│   Informant Pings & Team Comms (20; controller RPC + C-TeamView part, no queue)│
 │   Procedural City Generator (16, built last; an LSC provider)                  │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │ CORE          (the shared body, its commands, its look, its world, its round)  │
@@ -108,12 +110,14 @@ Core UObject/GC, gameplay framework classes (GameMode/GameState/PlayerController
 │ PLATFORM      (not project code)                                               │
 │   UE 5.8.4: CharacterMovementComponent, legacy NetDriver (Iris optional),      │
 │   Recast navigation, PoseSearch/Chooser/MotionWarping (Game Animation Sample), │
-│   StateTree, AnimationBudgetAllocator, Enhanced Input, UMG/CommonUI,           │
+│   StateTree, Enhanced Input, UMG/CommonUI,                                     │
 │   Lumen/Nanite/VSM, Chaos, Automation framework, OnlineSubsystem Null          │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Numbers are the systems-index `#`. VS/Alpha systems (19-30) are out of this document's build scope; their hooks are noted where an MVP module must leave room (Event Log release classes, informant ping slot, settings hooks).
+Numbers are the systems-index `#`. System 20 (Informant Pings & Team Communication) moved to the MVP by user decision 2026-10-25 and is in scope. The other VS/Alpha systems (19, 21-30) are out of this document's build scope; their hooks are noted where an MVP module must leave room (Event Log release classes, settings hooks, the reserved sighting feed-line type).
+
+**Platform layer note (version 2).** The Game Animation Sample's plugins, including AnimationBudgetAllocator and SignificanceManager, are present in the 5.8.4 install [V], but the project uses neither: ADR-0013 rules out engine URO (player-keyed in 5.8.4), the AnimationBudgetAllocator (it would need `USkeletalMeshComponentBudgeted` on every pawn and budgets by its own significance) and the SignificanceManager; update-rate skips come from the project's own external tick-rate control, tiered by screen height and the eye-mask flag only. On the listen host every non-locally-controlled pawn is tiered with the same bands as on clients (closeout D3, uniform `TickPose` escalation; ADR-0013 §4, ADR-0022).
 
 ### Layer rationale (thorough)
 
@@ -131,22 +135,24 @@ Numbers are the systems-index `#`. VS/Alpha systems (19-30) are out of this docu
 
 **Presentation.** HUD and Teammate Markers read only carriers and client-local queries (Camera view state, Concealment's client latch, IIF reply sink). They write nothing replicated.
 
+**Informant Pings (system 20, Feature).** Pings sit in Feature because they consume Roster, Round, IIF input, Camera, Concealment and the HUD layer, and nothing below them consumes Pings except Round's round-end clear, which is inverted through the Core consumer-owned `ITeamPingReset` (ADR-0007 amendment). A ping is deliberately **not** a pawn command and **not** a queue item: the client sends one point through a controller RPC, the server handler validates it at arrival and writes only the sender's token bucket and a team-only C-TeamView part. It changes no gameplay state, so it needs no slot in the total order (ADR-0002 Technical Setup amendment), and nothing about it touches the pawn (Pillar 1, PNG-R9).
+
 **Engine awareness (Core and Foundation on HIGH/MEDIUM domains).** Visibility Policy, Roster, Session → Networking HIGH (spikes S1-S15, verified facts above). Shared Pawn → Networking HIGH + Animation HIGH. Camera → Rendering HIGH (hide must remove mesh, shadow and ray-tracing presence: `bCastHiddenShadow`, `bAffectIndirectLightingWhileHidden`, `bVisibleInRayTracing` exist [V art bible 8.x.11]). Layout Service → Navigation MEDIUM. Tuning → LOW (data assets, `UGameInstanceSubsystem` [U name verified by usage in prototype only]).
 
 ---
 
 ## Module Ownership
 
-### Code module layout (proposal; ADR-007 decides)
+### Code module layout (decided: ADR-0007 §1, four runtime modules; AQ-19 closed)
 
-*Revised after LP-FEASIBILITY concern 8 and TD-ARCHITECTURE concerns 1, 4, 7.* The first draft proposed seven runtime modules (Foundation, Core, Features, Presentation, root). UBT forbids module cycles, so every Core→Feature run-time edge would have needed an interface plus `*_API` exports across a module line, which is heavy for 1-2 programmers. The recommended layout is **four runtime modules**; the Core/Feature layering inside `StealthGameplay` is enforced by folders, the include-lint and the consumer-owned interfaces below, not by UBT.
+*Revised after LP-FEASIBILITY concern 8 and TD-ARCHITECTURE concerns 1, 4, 7.* The first draft proposed seven runtime modules (Foundation, Core, Features, Presentation, root). UBT forbids module cycles, so every Core→Feature run-time edge would have needed an interface plus `*_API` exports across a module line, which is heavy for 1-2 programmers. The decided layout (ADR-0007 §1, Accepted) is **four runtime modules**; the Core/Feature layering inside `StealthGameplay` is enforced by folders, the include-lint and the consumer-owned interfaces below, not by UBT.
 
 | UE module | Type | Contents | May depend on |
 |---|---|---|---|
-| `StealthFoundation` | Runtime | Tuning service + validator; Roster store; Session connection table + seeds; Visibility Policy + carrier bases + allowlist data; Resolution Queue + server clock + staged writes; Event Log store; fault sink; **wire and view structs shared across layers** (`FActionState`, `FDeathState`, `FStrikeResult`, `FDefenceResult`, `FRoundPublicState`, ids and tokens) in `Public/View/` | Engine, NetCore, DeveloperSettings |
-| `StealthGameplay` | Runtime | `Core/` folder: Shared Pawn + movement + AnimInstance base + significance, pawn factory subsystem, Pawn Command Component + action hub, Character Pool + allocator, Layout Service + Graybox provider, Round rules, Camera (client). `Features/` folder: Crowd, Concealment, Assassination, Penalty, Objectives, City Generator; feature team-view components (e.g. `UObjectiveTeamViewComponent`) declared in `Public/View/` | `StealthFoundation`, EnhancedInput, AIModule, NavigationSystem, PoseSearch, MotionWarping, StateTree, GameplayStateTree |
+| `StealthFoundation` | Runtime | Tuning service + validator; Roster store; Session connection table + seeds; Visibility Policy + carrier bases + allowlist data; Resolution Queue + server clock + staged writes, with **every queue and staged-write payload type, `FPawnHandle`, `FSubjectRef`, `FReplySinkId` and `FDebugPayload` in `Public/Server/StealthQueuePayloads.h`** and the resolver/applier/terminal/flush interfaces (ADR-0002 §2a, §6); Event Log store (with the telemetry section, ADR-0023); fault sink; **wire and view structs shared across layers** (`FActionState`, `FDeathState`, `FStrikeResult`, `FDefenceResult`, `FRoundPublicState`, ids and tokens) in `Public/View/` | Engine, NetCore, DeveloperSettings |
+| `StealthGameplay` | Runtime | `Core/` folder: Shared Pawn + movement + AnimInstance base + significance, pawn factory subsystem, Pawn Command Component + action hub, Character Pool + allocator, Layout Service + Graybox provider, Round rules, Camera (client). `Features/` folder: Crowd, Concealment, Assassination, Penalty, Objectives, **Pings** (`UTeamPingService` + headless `FTeamPingCore`; ADR-0007 amendment), City Generator, Telemetry probes (ADR-0023); feature team-view components (`UObjectiveTeamViewComponent`, `UTeamPingViewComponent`) declared in `Public/View/` | `StealthFoundation`, EnhancedInput, AIModule, NavigationSystem, PoseSearch, MotionWarping, StateTree, GameplayStateTree |
 | `StealthPresentation` | Runtime (client code) | HUD view-models and widgets; Teammate Markers; owner presentation helpers | `StealthFoundation` and `StealthGameplay` **`View/` headers only** (compile guard below), UMG, CommonUI |
-| `StealthGame` | Runtime (composition root) | `AStealthGameMode` (`AGameModeBase`), `AStealthGameState`, `AStealthPlayerController`, `AStealthPlayerState`; registers resolvers, providers and interface implementations from `InitGame` / `OnWorldBeginPlay` | all of the above |
+| `StealthGame` | Runtime (composition root) | `AStealthGameMode` (`AGameModeBase`), `AStealthGameState`, `AStealthPlayerController` (also binds `IA_Ping` and declares `ServerTeamPing`, forwarded to `UTeamPingService`), `AStealthPlayerState`; registers resolvers, staged-write appliers, providers and interface implementations from `InitGame` / `OnWorldBeginPlay` | all of the above |
 | `StealthGameEditor` | Editor | MCP toolsets (existing), tuning lint, allowlist generator, widget-Blueprint server-reference audit, asset audits, golden-seed tools | all runtime modules |
 | `StealthTestHarness` | **Runtime, excluded from Shipping targets** (TD concern 7: an UncookedOnly module would not load in the cooked multi-process Development runs that S3 and the raw-bunch leak suites need) | multi-client and multi-process leak harness, raw-bunch capture, net-emulation profiles, replication-system assertion, test seams | all runtime modules |
 
@@ -169,9 +175,12 @@ The tuning client face is a distinct struct type, so a server-only key cannot be
 | `IConcealmentCullSource` (push API) | Foundation (Visibility Policy) | Concealment (Feature) pushes `SetCullState(Pawn, bConcealed, CommitServerTime)` | Visibility Policy cull hook | the Policy never names a feature type |
 | `IQueueResolver` | Foundation (Queue) | IIF, Assassination, Objectives, Penalty, Round | Queue drain | typed item resolution |
 | `ILayoutProvider` | Core (Layout Service) | Graybox provider (Core), City Generator (Feature) | Layout Service | layout build |
-| `ITerminalDecision` | Foundation (Queue) | Round rules (Core) | Queue latch storage | Round decides termination; the queue only stores the latch (TD concern 5) |
+| `ITerminalDecision` | Foundation (Queue) | Round rules (Core) | Queue latch storage; staging pass routes `RoundEndStep` to `RunRoundEndStep` | Round decides termination; the queue only stores the latch (TD concern 5) |
+| `IStagedWriteApplier` | Foundation (Queue, ADR-0002 §6) | Assassination `UEncounterService` (`DeathWrite`, `CounterPose`) | Queue staging pass (`RegisterStagedWriteApplier`) | apply-only writes of already-decided state; a write with no live applier is dropped and faulted |
+| `IEventFlushBarrier` | Foundation (Queue) | Roster | Queue drain (after every slot) | FIFO Roster event flush at slot end |
+| `ITeamPingReset` | Core (ADR-0007 amendment, Technical Setup 2026-10-25) | Pings `UTeamPingService` (Feature) | Round round-end step (R9 (a)) | clear every team ping part without Round naming a feature type |
 
-The composition root wires every row at world start. Round still reaches Crowd for *Halt* through `ICrowdControl` rather than the `OnRoundEnded` event alone, because R9 requires the halt inside the same server step as the publication (an event subscriber would satisfy that too; ADR-002 picks one and records it).
+The composition root wires every row at world start. Round reaches Crowd for *Halt* through `ICrowdControl` and Pings for the clear through `ITeamPingReset`, not through `OnRoundEnded` subscribers, because R9 fixes their order inside the round-end step and delegate subscriber order is unspecified (ADR-0002 §8.4 (f)).
 
 **Prototype promotion rule.** Nothing in the current `Source/StealthGame` is promoted until the ADR that governs it is Accepted (concept Scope Risks). The prototype's `UStealthSettings` (`Config` properties in `DefaultGame.ini`) violates TDC CR-13 and is replaced, not migrated.
 
@@ -183,8 +192,8 @@ The composition root wires every row at world start. Round still reaches Crowd f
 | **Roster** | `ParticipantRecord` store (match/round scope), pawn bindings + tombstones, `MatchId`, `RoundEpoch`, `EventSeq` | `RegisterParticipant`, `AssignTeams`, `SetTeamsLocked`, `ResetAll`, `EndRoundAll`, `RequestTransition`, `BindPawn`/`RetireBinding`/`ReleaseToCrowd`/`ClearBinding`/`InvalidateAllBindings`, queries (`ResolveVictimKind`, `GetRelation`, `GetLegalityClass`, `IsPawnBound`, counts), events (`OnParticipantStateChanged`, `OnRosterRoundEnded`, `OnRosterReset`, `OnBindingLost`, ...) | Session (`NotifyConnectionChanged`, registration), Round (batches), features (transitions) | Game-instance store; C-Public on `APlayerState` (field trimming: `RESET_REPLIFETIME_CONDITION` [V], `bShouldUpdateReplicatedPing` [U]); C-TeamView on `APlayerController` (owner-only relevancy [V per Roster R6]) — HIGH |
 | **Session & Travel** | Connection table (`ConnectionState`, generations), IdentityKey mapping, admission mode, seed + sub-seed derivation, travel deadline, single round acknowledgement | `RequestRoundTravel`, `RequestLobbyTravel`, `RequestFallbackTravel`, `SetAdmissionMode`, `GetConnectionState`, `KickParticipant`, `PublicSubSeed`, `GetServerSubSeed`, events (`OnParticipantUnresponsive/Disconnected/Rejoined`, `OnParticipantTravelComplete`, `OnSessionEnding`) | Roster registration API; Round's `ShouldAdmitExpired`; TDC `ClientHash`; LSC `LayoutHash`; CPA `PoolHash` | `AGameModeBase::PreLogin` / `Login` / `PostLogin`, seamless `ServerTravel` (`bUseSeamlessTravel`, `GetSeamlessTravelActorList` [V]), net driver timeouts [U], OnlineSubsystem Null — HIGH (S3, S4, S5) |
 | **Visibility Policy (IVP)** | `CanViewerKnow` matrix (7 viewer classes), fact table, carrier rules, replicated-property allowlist file, leak catalogue, concealment cull timing | `CanViewerKnow(Viewer, Subject, Fact)`, `GetViewerClass`, cull hook contract (`ShouldCullFor(Pawn, Connection)`), `IConcealmentCullSource` push API, allowlist data + audit, team position fallback feed builder | Roster facts, Round phase (injected provider), cull state pushed by Concealment through `IConcealmentCullSource` | `IsNetRelevantFor` override + explicit channel close (legacy, S9) or Iris exclusion group filters [V]; `GetLifetimeReplicatedProps` reflection for audit — HIGH |
-| **Resolution Queue & Server Clock** | Per-round queue, `Key = (ServerTickIndex, Seq)`, per-source mailboxes, permuted intake, due-time heap, drain tick (custom `FTickFunction`, `TG_PostPhysics`), **latch storage only** (the terminate decision is Round's, injected through `ITerminalDecision`), **typed staged-write items** (server-time-scheduled, epoch-stamped, logged), server clock; the **client server-time estimator** and its accuracy budget (TD concern 3) | `Submit(Source, Item)`, `RegisterResolver(EQueueItemType, Resolver)`, `ScheduleAt(ServerTime, Item, ExpectedEpoch)`, `Compare(KeyA, KeyB)`, `StageWrite(FStagedWrite)`, `IsLatched()`, `ServerNow()`; client `EstimatedServerNow()` | Resolver registrations from IIF, ASN, OC, PEN, Round; Roster event flush | `FTickFunction` in `TG_PostPhysics` [V tick order per Round R11]; spawn/destroy inside drain [S, deferred-teardown fallback] — MEDIUM |
-| **Seeds & RNG** | Public sub-seed mixer, `ServerSecret`, keyed sub-seed derivation per purpose, DRBG primitive choice | `PublicSubSeed(Purpose, Index)`, `GetServerSubSeed(Purpose, Index)` (server assert if called from Generator), integer stream type — *ADR-0006 (Proposed): `(ESeedDomain Domain, uint32 Attempt)`, SipHash-2-4 keyed sub-seeds, `FSecretStream` (SipHash counter mode) and PCG32 `FIntStream`* | Session (secret at session open) | none beyond platform crypto/hash [primitive decided by ADR-0006] — LOW |
+| **Resolution Queue & Server Clock** | Per-round queue, `Key = (ServerTickIndex, Seq)`, per-source mailboxes, permuted intake, due-time heap, drain tick (custom `FTickFunction`, `TG_PostPhysics`), **latch storage only** (the terminate decision is Round's, injected through `ITerminalDecision`), **typed staged writes** applied by registered `IStagedWriteApplier`s, deferred teardown, server clock; **all payload types** (`StealthQueuePayloads.h`, ADR-0002 §2a); the **client server-time estimator** and its accuracy budget (TD concern 3) | `Submit(Source, Item)`, `RegisterResolver(EQueueItemType, …)`, `RegisterTimerResolver(ETimerKind, …)`, `RegisterStagedWriteApplier(EStagedWriteType, …)`, `SetTerminalDecision`, `SetEventFlushBarrier`, `ScheduleAt(ServerTime, Item)`, `Compare`, `CurrentKey`, `StageWrite`, `ResolvePawnHandle`, `RequestTeardown`/`IsPendingTeardown`, `Latch`/`IsLatched()`, `ServerNow()`; client `EstimatedServerNow()`, `IsServerClockSynced()` | Resolver registrations from IIF, ASN, OC, PEN, Crowd, Concealment, Round; applier registrations from ASN; Roster event flush | `FTickFunction` in `TG_PostPhysics` [V tick order per Round R11]; spawn/destroy inside drain [S, deferred-teardown fallback] — MEDIUM |
+| **Seeds & RNG** | Public sub-seed mixer, `ServerSecret`, keyed sub-seed derivation per purpose, DRBG primitive choice | `PublicSubSeed(Purpose, Index)`, `GetServerSubSeed(Purpose, Index)` (server assert if called from Generator), integer stream type — *ADR-0006 (Accepted): `(ESeedDomain Domain, uint32 Attempt)`, SipHash-2-4 keyed sub-seeds, `FSecretStream` (SipHash counter mode) and PCG32 `FIntStream`* | Session (secret at session open) | none beyond platform crypto/hash [primitive decided by ADR-0006] — LOW |
 | **Event Log & fault sink** | Round Event Log ring + header (server memory only), concealment log slice, fault sink | `Append(Entry)`, `ArchiveSlice`, release-class gate (via IVP), `ReportFault(Code)` | All server systems | Must not route through `UE_LOG`, output log or trace channels (Round R19) — LOW |
 
 ### Core layer
@@ -192,12 +201,12 @@ The composition root wires every row at world start. Round still reaches Crowd f
 | Module | Owns | Exposes | Consumes | Engine APIs (risk) |
 |---|---|---|---|---|
 | **Shared Pawn (SCL)** | `AStealthPawn : ACharacter` (one class), movement component config, pawn-factory world subsystem (`UStealthPawnFactory`: spawn, takeover), possession parity, net parity config, smoothing, speed tiers, traversal set, footstep clock, published state (`IsRunning`, `IsInTraversal`, `CommandedDisplacementCm`) | `SpawnSharedPawn`, `TakeOverCrowdPawn`, `HandOver(ToAi/ToPlayer)`, published state reads, replicated `HeadLook`, `TraversalState`, `AppearanceId` application | IIF (commands), Roster (bind/clear), CPA (appearance), Tuning (SCL keys), IVP (allowlist, cull hook), `ICrowdControl` (hand-over to AI) | `ACharacter`/CMC [D], `PreReplication` override writing `RemoteViewPitch16` [V], `ForceNetUpdate` override [V calls], `PawnLeavingGame` override [V], `NetUpdateFrequency`/adaptive frequency/dormancy config [U values], Game Animation Sample traversal RPCs [U under loss] — HIGH |
-| **Animation & significance (SCL R10-R12)** | One AnimBP class, motion-matching database set, chooser set, look-at solver, tier function (screen height only), TierTieKey | `ComputeTier(Pawn, View)`, tier caps, `ActionPose`-driven states, contact-time clip seeking | Camera eye-mask flag (rendered state), `FActionState`, `FDeathState` | PoseSearch [V present, U cost], URO `bEnableUpdateRateOptimizations` [V], `VisibilityBasedAnimTickOption` [V], AnimationBudgetAllocator (`USkeletalMeshComponentBudgeted`) [V present] or SignificanceManager [V] — HIGH. *ADR-0013 (Proposed) rules out engine URO (player-keyed in 5.8.4), the AnimationBudgetAllocator and the SignificanceManager; update-rate skips come from the project's own external tick-rate control.* |
+| **Animation & significance (SCL R10-R12)** | One AnimBP class, motion-matching database set, chooser set, look-at solver, tier function (screen height only), TierTieKey | `ComputeTier(Pawn, View)`, tier caps, `ActionPose`-driven states, contact-time clip seeking | Camera eye-mask flag (rendered state), `FActionState`, `FDeathState` | PoseSearch [V present, U cost], `VisibilityBasedAnimTickOption` [V], the project's own external tick-rate control — HIGH. *ADR-0013 (Accepted): engine URO (player-keyed in 5.8.4), the AnimationBudgetAllocator and the SignificanceManager are not used; update-rate skips come from the external tick-rate control; the listen host tiers every non-locally-controlled pawn like a client (D3 uniform `TickPose` escalation); the sample AnimBP's `IsLocallyControlled` branch is removed.* |
 | **Pawn Command Interface (IIF)** | `UPawnCommandComponent` (non-replicated), ingress checks, token buckets, slot arbitration, hold timers (as queue items), release debounce, replies, `FActionState` writes, action hub | `Move`, `Look`, `Traverse`, `InteractBegin/End`, `PrepareBegin/End`, `Attack`, `Hide(Enter/Exit)`; `UActionHub` events `OnActionStarted/Cancelled/Completed`; `CanBegin` predicate registration per feature; `ClientCommandRejected` owner reply | Queue (submit/resolve), Roster `GetLegalityClass`, SCL state, Camera `GetAimRay` (client), features' predicates | Enhanced Input `Started/Completed/Canceled` edges [D], CMC saved moves (`ServerMove`) [D/U 5.8 detail], server RPCs reliable/unreliable [D] — MEDIUM |
 | **Character Pool (CPA)** | `UCharacterPoolData` rows (AppearanceId 0-23), deck per round, card ledger, swatch rule | `AllocateAppearances(Players, NpcCount)`, `DrawReplacement()`, `TakeNpcCard()`, `GetAppearanceRow(Id)`, `PoolHash`, `DealDigest` (server-only) | Tuning (deck keys), Seeds (`AppearanceDeal`, `Replace`, `Take` streams), Round (caller) | Hard references + residency, PSO precache [U], texture streaming [U], skin-cache per-mesh opt-in [V config Exclusive] — HIGH |
 | **Layout Service (LSC)** | Layout service world subsystem, provider registry, `FLayoutManifest`, `LayoutHash`, validation (V-*), Selection (`FSiteAssignment`, TeamSpawn, server-only), emergence sockets, respawn pick | `RegisterProvider`, `RequestLayout(Seed, TuningHash)`, `OnLayoutReady`, `RequestStartPlacement`, `PickRespawnPawn(Team, RequestSeq, ExcludePawn)`, server query API for sites; Graybox provider | Tuning (LSC keys), Session (seed), Roster (`GetTeam`), `ITakeoverEligibilitySource` (implemented by Crowd), navigation | `UWorldSubsystem` [U name], Recast runtime build [D], `FindPathSync`/`ProjectPointToNavigation` [D] — MEDIUM |
 | **Round & Match Rules** | Phase machine (game-instance), team rules, start validity, Preparing sequence, win conditions + latch policy, round-end step, disconnect policy, host commands, `FRoundPublicState`, Event Log entries | `StartRound`, `ResetRound`, `AbortRound`, `DeclareObjectiveWin(Team, Key)`, `TryTerminate`, phase events (`OnRoundActive`, `OnRoundEnded`), `ShouldAdmitExpired` | Queue (implements `ITerminalDecision`), Roster, Session, Tuning, LSC, CPA, `ICrowdControl` (Halt, hand-over), staged writes queued by Assassination | GameState replicated struct with RepNotify [D]; console commands on game instance [U] — MEDIUM |
-| **Camera (client)** | 1P/3P modes, view envelope, boom, eye-origin visibility mask, aim ray, view state, listener placement | `GetAimRay()`, `GetViewState()`, `IsEyeMaskVisible(Pawn)` (also feeds SCL tiering), owner presentation hooks | SCL (eye pivot, body facing), IIF (look input), Concealment (own `IsConcealed`), Tuning (client keys) | `APlayerCameraManager` (custom) [D], dedicated `ViewBlock` trace channel [U], per-pawn dither via custom primitive data or per-pawn MID on skeletal mesh [U] (*ADR-0015 (Proposed) chose the custom primitive data slot `CPD_EyeMaskAlpha` and rate bands at every range; no per-pawn MID*), `SetVisibility(false)` removes shadow + RT [U, CS-R5] — HIGH |
+| **Camera (client)** | 1P/3P modes, view envelope, boom, eye-origin visibility mask, aim ray, view state, listener placement | `GetAimRay()`, `GetViewState()`, `IsEyeMaskVisible(Pawn)` (also feeds SCL tiering), owner presentation hooks | SCL (eye pivot, body facing), IIF (look input), Concealment (own `IsConcealed`), Tuning (client keys) | `APlayerCameraManager` (custom) [D], dedicated `ViewBlock` trace channel [U], per-pawn dither via custom primitive data or per-pawn MID on skeletal mesh [U] (*ADR-0015 (Accepted) chose the custom primitive data slot `CPD_EyeMaskAlpha` and rate bands at every range; no per-pawn MID*), `SetVisibility(false)` removes shadow + RT [U, CS-R5] — HIGH |
 
 ### Feature layer
 
@@ -209,13 +218,14 @@ The composition root wires every row at world start. Round still reaches Crowd f
 | **Penalty & Informants** | Strike counts (server), WrongTarget tally (owner), exile request, informant respawn timers, Absent/Awaiting/Picking states, takeover commit | owner data (tally, `bExiled` via `FStrikeResult`; tally re-push and `T_due` on the C-TeamView owner part, user decision 2026-10-25), `OnInformantEmbodied` | ASN `OnPawnKilled`, Roster, Queue due-time heap, LSC `PickRespawnPawn`, Crowd eligibility, SCL `TakeOverCrowdPawn`, CPA `TakeNpcCard` | none beyond Core APIs — MEDIUM (inherits S1/S14 for possession parity) |
 | **Objectives** | Chain data asset, per-team progress, court binding from `FSiteAssignment`, `FObjectiveTeamView`, completion gate, `RivalPrelimCount` publication schedule, stall-pressure rules | `CanBegin(Interact(Court))`, completion follow-on, `DeclareObjectiveWin` call into Round, team view sub-struct | IIF hold timers, LSC Selection, Roster, Queue, Seeds (`StageSignal`), Crowd decoy rate | none beyond Core APIs — LOW |
 | **City Generator** | 12-stage pipeline, integer grid pre-validator, module selection/anti-repetition, kit placement, client decoration, golden seeds | `ILayoutProvider` implementation (kind `Generated`) | LSC service, Tuning (`CityGen*`), Seeds (`PublicSubSeed(Layout, Attempt)` only), kit data | ISM per module type (Nanite) [D], batch `AddInstances` [U], static mobility, Recast build [D] — MEDIUM (R1, R4) |
+| **Informant Pings (20)** | `UTeamPingService` (server, Feature) over headless `FTeamPingCore`: validation order, `ParticipantId`-keyed token bucket (full at `Active`, survives reconnect, reset at `OnRosterReset`), wrapping `PingSeq`, slot writes; `UTeamPingViewComponent` (`FTeamPingView {Entries[TeamSize] {SenderHandle, PingSeq, Point, ServerTime}}`, slot i = Roster team slot i); client ping-point rule and bucket mirror (`Public/View/`); drop counters | `ServerTeamPing` handler (via the root controller RPC); implements `ITeamPingReset::ClearAllTeamPings()`; team part read by the HUD L0 leaf | Roster (`State`, bound pawn, team slots, `PublicHandle`, `OnRosterReset`, `InvalidateAllBindings`), Round phase + `IsLatched()`, Concealment `IsInBushOrTransition` (server) and `IsOwnPawnConcealedForPing()` (owner client), Camera `GetAimRay()` world query + eye pivot (client), Tuning (`InformantPings` keys), HUD `PresentedOwnState` (client gate), telemetry sink | Reliable controller Server RPC [D]; `FVector_NetQuantize10` [V per ADR-0011]; C-TeamView sub-object part, fixed-size array for per-element delta [V registered sub-object list] — LOW (no pawn, queue or relevancy change) |
 
 ### Presentation layer
 
 | Module | Owns | Exposes | Consumes | Engine APIs (risk) |
 |---|---|---|---|---|
 | **Teammate Markers** | Client-local marker set keyed by `PublicHandle`, anchors, fill states, name label | `IsMarkedAlly(Pawn)`, `OnAllyMarkerRetired(PublicHandle)` | C-TeamView (+ fallback feed), Camera `GetViewState`, Concealment client latch, tuning client snapshot | UMG screen-space overlay after post-process, no depth test [U ZOrder vs camera fade] — HIGH |
-| **HUD** | View-models (plain `USTRUCT`), widget stack (HUD-R4 ZOrders), timing of plates/cards/feed, `PresentedOwnState` | none (leaf) | Owner data on PC, C-TeamView, `FRoundPublicState`, tuning client snapshot, IIF replies, Camera view state, Markers events | UMG (CommonUI for menus only), Queue module's client `EstimatedServerNow()` (not raw `GetServerWorldTimeSeconds`, which has no RTT compensation [U]), DPI scale [U] — HIGH |
+| **HUD** | View-models (plain `USTRUCT`), widget stack (HUD-R4 ZOrders), timing of plates/cards/feed, `PresentedOwnState`; the L0 world-anchor leaf also paints Pings rings, edge rings and labels (HUD-E22) | none (leaf) | Owner data on PC, C-TeamView (incl. `UTeamPingViewComponent`), `FRoundPublicState`, tuning client snapshot, IIF replies, Camera view state, Markers events | UMG (CommonUI for menus only), Queue module's client `EstimatedServerNow()` (not raw `GetServerWorldTimeSeconds`, which has no RTT compensation [U]), DPI scale [U] — HIGH |
 
 ### Dependency diagram
 
@@ -230,9 +240,9 @@ The composition root wires every row at world start. Round still reaches Crowd f
  ┌─────────────────┐      ┌───────────────────────┐     ┌──────────────────────┐
  │ PRESENTATION    │      │ FEATURES              │     │ (VS/Alpha hooks)     │
  │ HUD ──► Markers │      │ Crowd ◄── Concealment │     │ Event Log release,   │
- │  │        │     │      │   ▲  ▲        ▲       │     │ ping slot, settings  │
+ │  │        │     │      │   ▲  ▲        ▲  ▲    │     │ feed-line, settings  │
  │  ▼        ▼     │      │   │  └ Penalty ◄ ASN ──┘     └──────────────────────┘
- │ View/ headers   │      │   │        ▲    ▲     │
+ │ View/ headers   │      │   │        ▲    ▲  Pings│
  └───────┬─────────┘      │ Objectives  Generator │
          │                └───────┬──────────┬────┘
          │ (client views only)    ▼          ▼ (provider)
@@ -251,7 +261,7 @@ The composition root wires every row at world start. Round still reaches Crowd f
                   └──────────────────────────────────────────────┘
 ```
 
-Arrows point from consumer to provider; the boxes are logical layers (Core and Features share the `StealthGameplay` module). Upward run-time needs (Round/LSC/Shared Pawn → Crowd, Visibility Policy ← Concealment) go through the consumer-owned interfaces above, so no arrow points up. The only same-layer mutual edges (IIF↔Round, CPA↔Round, Crowd↔features, IVP↔LSC) are broken by interface ownership as the systems-index records: the interface owner ships its header first.
+Arrows point from consumer to provider; the boxes are logical layers (Core and Features share the `StealthGameplay` module). Upward run-time needs (Round/LSC/Shared Pawn → Crowd, Visibility Policy ← Concealment, Round → Pings for the round-end clear) go through the consumer-owned interfaces above, so no arrow points up. Pings (Feature) consumes Concealment (the second ▲ under Concealment), Core (Camera aim ray and eye pivot, Round phase/latch, IIF input context) and Foundation (Roster, Tuning, telemetry sink); nothing consumes Pings except the HUD's L0 leaf through the `View/` part. The only same-layer mutual edges (IIF↔Round, CPA↔Round, Crowd↔features, IVP↔LSC) are broken by interface ownership as the systems-index records: the interface owner ships its header first.
 
 ---
 
@@ -259,52 +269,81 @@ Arrows point from consumer to provider; the boxes are logical layers (Core and F
 
 ### 1. Server frame (listen host) — the authoritative path
 
+*Version 2: follows ADR-0002 §2a-§7 (Accepted) — Foundation-owned payloads, `FTimerPayload` timer kinds, registered staged-write appliers, deferred teardown.*
+
 ```
  NetDriver dispatch (top of world tick, before tick groups)        [V tick order]
    ├─ Human Move/Look ─► CMC ServerMove (saved moves) ─► pawn movement
-   └─ Discrete command RPC ─► IIF ingress (rate limit, payload) ─► per-source MAILBOX
+   ├─ Discrete command RPC ─► IIF ingress (rate limit, payload, possession epoch)
+   │     ─► FQueueItem{PawnCommand, FCommandPayload{FPawnHandle, ControlEpoch,
+   │        ClientSeq, FReplySinkId, Kind, Phase, FSubjectRef Target, WorldPoint, Arg}}
+   │     ─► per-participant MAILBOX (FIFO)
+   └─ ServerTeamPing(Point) ─► Pings handler AT ARRIVAL (not a queue item; ADR-0002
+         Technical Setup amendment): phase/latch → state + bound pawn + not concealed
+         (IsInBushOrTransition) → range from eye pivot → token bucket ─► write the
+         sender team's UTeamPingViewComponent slot (no gameplay state, no pawn)
  TG_PrePhysics … TG_EndPhysics
    ├─ Crowd: StateTree decisions (~4 Hz, scheduled) ─► follower ─► IIF Move/Look/commands
-   │          (AI discrete commands ─► server-local mailbox)
+   │          (AI discrete commands ─► server-local mailbox, null FReplySinkId)
    └─ CMC simulates every pawn (human and AI alike)
- TG_PostPhysics: QUEUE DRAIN (once per frame)
-   1. due-time heap: TimerFired items (HoldTimer, InformantRespawn, Grace, RivalSignal)
-   2. mailboxes stamped Seq in a server-secret permutation  (Round R12)
-   3. for each item in Key order: Resolver.Resolve(Item, Key)
-        └─ follow-ons inline, depth-first (Roster transition, OnPawnKilled, Penalty,
-           elimination check, OnActionStarted fan-out to Crowd/Concealment)
-        └─ Roster events dispatched FIFO before the next item
-        └─ if TryTerminate succeeds: LATCH STEP (server-only; queue closes)
-   4. post-drain deferred actor teardown (if spike shows CMC destroy in drain unsafe)
- PENDING-WRITE STAGING (same frame, after drain)
-   └─ writes whose ServerTime ≤ now: FDeathState/Disabled/Counter at ContactServerTime −
-      StrikeNetLeadSec; ROUND-END STEP when the deciding item was a strike (phase Ended,
-      FRoundResult, staged MatchScore, EndRoundAll + forced updates, held NotNow replies,
-      OnRoundEnded, Crowd Halt + stop-and-blend of every pawn)
+ TG_PostPhysics: FResolutionDrainTickFunction (authority only, once per frame)
+   1. ServerTickIndex++
+   2. stamp due-heap items (Due ≤ DrainStart + 1 ms) by (Due, TieRank | BeginKey):
+        HoldTimer{Complete|CapEnd|DebounceExpiry|ConditionCancel} and
+        TimerFired{FTimerPayload Kind = GraceExpiry, InformantRespawn, StageSignal,
+        DefenceWindowEnd, PawnLossRetry, CrowdSchedule, ConcealmentTransition,
+        BodyRelease, BodyRemoval}
+   3. stamp mailboxes, base order permuted by GetServerSubSeed(SeqOrder, Tick)
+   4. for each item in Key order: resolver (per item type / per ETimerKind)
+        └─ re-validate against live state (ResolvePawnHandle: stale or pending
+           teardown ⇒ gone) ; follow-ons inline, depth-first (Roster transition,
+           OnPawnKilled, Penalty, elimination check, OnActionStarted fan-out)
+        └─ IEventFlushBarrier::FlushPending() (Roster FIFO) before the next item
+        └─ if Round's TryTerminate succeeds: Latch(Key) ─► LATCH STEP (server-only;
+           intake closed; RoundEndStep staged with CauseKey = TerminalKey and bound at
+           slot end to the slot's latest DeathWrite, or consumed inline if none)
+   5. items scheduled inline with Due ≤ now stamped after intake
+   6. STAGING PASS: FStagedWrite with ServerTime ≤ now, by (ServerTime, CauseKey, TypeRank)
+        DeathWrite / CounterPose ─► registered IStagedWriteApplier (Assassination)
+        RoundEndStep ─► ITerminalDecision::RunRoundEndStep (Round R9 a-h): phase Ended +
+          FRoundResult (TeamSummary) + MatchScore, EndRoundAll + forced updates,
+          ITeamPingReset::ClearAllTeamPings(), held NotNow replies released,
+          OnRoundEnded, ICrowdControl::Halt() + stop-and-blend of every live pawn,
+          frozen holds cancel, post-latch dwell timers start
+        (a type with no live applier: dropped, logged StagedWriteNoApplier, fault)
+   7. TEARDOWN PASS: RequestTeardown'd actors destroyed
+   8. reply flush: one ClientCommandReplies batch per sink (FReplySinkId) per pass
  NetDriver replication (end of frame)
    ├─ PreReplication: RemoteViewPitch16 from Look() source for every pawn
    ├─ relevancy: every pawn relevant to every connection EXCEPT concealment cull
    │   (CanViewerKnow(V,S,Position) false ⇒ cull at first boundary ≥ t0+ConcealCullDelayMs;
-   │    legacy: IsNetRelevantFor + explicit channel close; Iris: exclusion group filter)
+   │    legacy driver: IsNetRelevantFor + explicit channel close)
    ├─ fixed 15 Hz pawn cadence; forced updates only for FActionState/TraversalState
    │   writes and death writes, same cap for every pawn kind
-   └─ owner-only PlayerController: C-TeamView (Roster part + feature team sub-structs),
+   └─ owner-only PlayerController: C-TeamView (Roster part + feature parts:
+      UObjectiveTeamViewComponent, UTeamPingViewComponent; change-only, coalesced),
       owner data, replies; GameState: FRoundPublicState, tuning snapshot, FLayoutManifest
 ```
 
-Data in this path: commands (client → server, RPC/saved move), queue items (server-local), Roster state (server store), replicated state (server → clients: pawn movement, `FActionState`, `FDeathState`, `HeadLook`, `TraversalState`, `AppearanceId`; PC carriers; GameState structs). **Thread boundaries:** all mutation on the game thread (Roster I7). `FindPathAsync` runs on the task graph and returns results to the game thread before use; animation evaluation runs on worker threads and reads only replicated/pawn state; Generator work is time-sliced on the game thread (no worker threads in the MVP; ADR-014 may revisit). **ADR-0014 (Proposed) revisits this:** the Generator's pure-data stages run on one worker task that touches no engine state and returns results to the game thread; engine-facing assembly stays on the game thread. This sentence is replaced when ADR-0014 is Accepted.
+Data in this path: commands (client → server, RPC/saved move), queue items (server-local), Roster state (server store), replicated state (server → clients: pawn movement, `FActionState`, `FDeathState`, `HeadLook`, `TraversalState`, `AppearanceId`; PC carriers incl. the team ping part; GameState structs). Ping RPCs (client → server, controller) bypass the queue and change no gameplay state. **Thread boundaries:** all mutation on the game thread (Roster I7). `FindPathAsync` runs on the task graph and returns results to the game thread before use; animation evaluation runs on worker threads and reads only replicated/pawn state; **ADR-0014 (Accepted) revises this:** the Generator's pure-data stages run on one worker task that touches no engine state and returns results to the game thread; engine-facing assembly stays on the game thread.
 
 ### 2. Client frame — presentation path
 
 ```
  Enhanced Input ─► IIF client builder: edges → Begin/End RPC (Started/Completed/Canceled),
                    Attack payload from Camera.GetAimRay(); Move/Look into CMC saved moves
+ IA_Ping (IMC_Common) ─► client gate (phase, PresentedOwnState, bound pawn,
+                   IsOwnPawnConcealedForPing, strict bucket mirror) ─► ping point =
+                   GetAimRay world query on ViewBlock ─► ≤ 300 cm down to walkable,
+                   ≤ PingRangeCm from the eye pivot ─► ServerTeamPing(Point)
  Receive replication ─► RepNotify handlers ─► ONE state-derived RefreshPresentation(ServerNow)
                          (idempotent; arrival order between actors unspecified)
  Camera: view envelope, boom, eye-origin mask (per pawn α) ─► "rendered" flag
  Animation: tier = f(screen height, rendered flag) ─► update-rate skip (external tick-rate control; engine URO off, ADR-0013)/search interval ─► pose
  Concealment client latch: hide body at swap instant from server start time (fail-closed)
  Presentation: HUD + Markers read PC carriers, FRoundPublicState, tuning snapshot;
+               HUD L0 leaf paints ping rings from UTeamPingViewComponent (new
+               (SenderHandle, PingSeq), age from EstimatedServerNow, beneath markers);
                timing from the client server-time estimator EstimatedServerNow()
                (RTT-compensated, smoothed, monotonic; accuracy budget in ADR-002),
                plates at local contact frame
@@ -322,9 +361,11 @@ The listen host runs the same client path for its local player: it does not rece
 | Roster events (`OnParticipantStateChanged`, `OnRosterRoundEnded`, `OnRosterReset`, `OnBindingLost`, registration/connection/team events) | Roster | Round (elimination), Penalty, Objectives, Concealment, Session | queued, FIFO after outermost call; `EventSeq` idempotency |
 | `OnActionStarted/Cancelled/Completed(Pawn, Action)` | IIF action hub | Crowd (stimuli), Concealment (break), Objectives, Assassination | one world-level hub, server-only multicast delegate |
 | `OnPawnKilled(Victim, Killer, VictimKind, Cause)` | Assassination | Penalty, Crowd (replacement), Round (log) | inline in the Attack's queue slot |
-| `OnRoundActive`, `OnRoundEnded(Result)` | Round | Crowd (start/Halt), IVP (PostRound class), Session (admission) | server delegate in the Active-entry / round-end step |
+| `OnRoundActive`, `OnRoundEnded(Result)` | Round | Crowd (start), IVP (PostRound class), Session (admission), Pings (bucket refill at `Active` entry) | server delegate in the Active-entry / round-end step (Crowd Halt and the ping clear are direct calls, not subscribers) |
 | Session connection events | Session | Round (policy), Roster (projection via Session call) | server delegate |
-| Owner replies (`ClientCommandRejected`, `FStrikeResult`, `FDefenceResult`) | IIF, Assassination | owning client's HUD | owner-only reliable client RPC on the PlayerController [U ordering vs replication; HUD F2 interim rule] |
+| Owner replies (rejections, `FHoldStatus`, `FStrikeResult` with `ContactServerTime`, `FDefenceResult`) | IIF, Assassination | owning client's HUD | entries of one batched owner-only reliable `ClientCommandReplies` RPC per connection per pass, addressed by `FReplySinkId` (ADR-0011 §8, ADR-0002 §2a); ordering vs replication handled by the carried server times (ADR-0018) |
+| `ServerTeamPing(FNetTeamPing {Point})` | owning client (`IA_Ping`) | Pings server handler → team's `UTeamPingViewComponent` → teammates' HUD L0 | reliable controller Server RPC handled at arrival, outside the queue; Team-audience C-TeamView part, change-only (ADR-0001, ADR-0011) |
+| `ClearAllTeamPings()` | Round (round-end step) | Pings | `ITeamPingReset` direct call in the fixed R9 order; Pings also clears at `OnRosterReset` / `InvalidateAllBindings` (Roster events) |
 | Client-local: `OnAllyMarkerRetired`, view-state changes | Markers, Camera | HUD | client delegates |
 
 **Rule:** no multicast RPC on any pawn; every observable cue is replicated state presented by a state-derived handler (SCL R13).
@@ -363,7 +404,8 @@ New world (server)
     deferred spawn → BindPawn → finish spawn → possess; AppearanceId before first rep)
  7. Session single acknowledgement barrier (Seed, LayoutHash, ClientHash, PoolHash)
  8. ActiveAtServerTime published (P7) → first drain ≥ that time: Active entry step
-    (zero ActiveAtServerTime, push team views, OnRoundActive → Crowd starts)
+    (zero ActiveAtServerTime, push team views, OnRoundActive → Crowd starts,
+     ping buckets full; ping parts already empty from OnRosterReset/travel)
 Clients
  a. load map → read FRoundParams.Seed + FLayoutManifest from GameState → build geometry
     from Manifest (no RNG) → recompute LayoutHash
@@ -417,47 +459,80 @@ public:
 // Invariants: callers never cache answers across frames; listeners are idempotent per
 // EventSeq; only Session writes Connection; only RequestTransition/batches write State.
 
-// --- Core value types (Foundation Public/View; defined in ADR-002, LP concern 3) -----
+// --- Core value types (Foundation Public/View, client-safe; ADR-0002 §2) ------------
 struct FParticipantId { uint32 Value; };                  // server-only meaning; never replicated
 struct FEpochToken    { uint64 MatchId; uint32 RoundEpoch; };
 struct FViewerId      { FParticipantId Participant; };    // derived from the server connection
-struct FSubjectRef    { /* tagged: Pawn (weak ptr) | Participant | CourtFixtureId */ };
 struct FMailboxId     { uint16 Value; };                  // one per participant + one server-local
-enum class EQueueItemType : uint8 { Command, HoldTimer, InformantRespawn, GraceExpiry,
-                                    RivalSignal, HostCommand, /* closed set */ };
-struct FQueueItem {                                       // tagged, ID-only payloads:
-    EQueueItemType Type;                                  // no raw UObject* in the item
-    TVariant<FCommandPayload, FHoldTimerPayload, FRespawnPayload, FGracePayload,
-             FSignalPayload, FHostPayload> Payload;
-    FEpochToken Expected;
-};
+struct FQueueKey      { uint64 ServerTickIndex; uint64 Seq; };   // total order
 enum class ETransitionReason : uint8 { Assassinated, ReversedAgainst, StrikeLimit,
                                        Disconnect, RoundEnd, Reset };
+double EstimatedServerNow(const UWorld*);  bool IsServerClockSynced(const UWorld*);  // client + host
 
-// --- Resolution Queue & Server Clock -----------------------------------------
-struct FQueueKey { uint64 ServerTickIndex; uint32 Seq; };    // total order
-class IQueueResolver { public: virtual void Resolve(const FQueueItem&, FQueueKey) = 0; };
-class ITerminalDecision { public: virtual void OnLatched(FQueueKey) = 0; };  // Round implements
-enum class EStagedWriteType : uint8 { DeathWrite, CounterPose, RoundEndStep, HeldReplies };
+// --- Queue payloads (Foundation Public/Server/StealthQueuePayloads.h; server-only;
+//     ADR-0002 §2a — feature ADRs own field MEANINGS, never the structs) -------------
+struct FPawnHandle  { TWeakObjectPtr<APawn> Pawn; };      // APawn, never AStealthPawn; never replicated
+struct FSubjectRef  { /* tagged: FPawnHandle | FParticipantId | uint16 CourtSocketId */ };
+struct FReplySinkId { uint16 Index; uint16 Generation; }; // 0 = null sink (AI); table: ADR-0011 §8
+enum class EQueueItemType : uint8 { PawnCommand, HoldTimer, TimerFired, PawnLost,
+                                    ConnectionTransition, HostCommand, DebugItem }; // closed set
+enum class ETimerKind : uint8 { GraceExpiry, InformantRespawn, StageSignal, DefenceWindowEnd,
+                                PawnLossRetry, CrowdSchedule, BodyRelease, BodyRemoval,
+                                ConcealmentTransition, EndedMinDwell, EndedAutoReset };
+enum class EHoldTimerKind : uint8 { Complete, CapEnd, DebounceExpiry, ConditionCancel };
+struct FCommandPayload   { FPawnHandle Pawn; uint32 ControlEpoch; FClientCommandSeq ClientSeq;
+                           FReplySinkId Sink; uint8 Kind; uint8 Phase; FSubjectRef Target;
+                           FVector WorldPoint; uint32 Arg; };              // values: ADR-0011
+struct FHoldTimerPayload { FPawnHandle Pawn; EHoldTimerKind Kind; uint8 ActionType;
+                           uint32 ActionEpoch; FQueueKey BeginKey; };
+struct FTimerPayload     { ETimerKind Kind; FSubjectRef Subject; uint32 Generation;
+                           uint32 Seq; uint8 Phase; };  // one shape; per-kind mapping table in ADR-0002 §2a
+                           // e.g. StageSignal: Subject none, Seq = ordinal k, Phase = viewing team
+struct FPawnLostPayload  { FParticipantId Participant; FPawnHandle Pawn; };
+struct FConnectionTransitionPayload { FParticipantId Participant; uint32 ConnectionGeneration;
+                                      uint8 Transition; };
+struct FHostCommandPayload { uint8 Command; };            // ResetRound | AbortRound
+struct FDebugPayload     { uint8 Command; FSubjectRef Subject; uint32 Arg; }; // all builds; producers !Shipping
+struct FQueueItem { EQueueItemType Type; FEpochToken Expected; FMailboxId Source;
+    TVariant<FCommandPayload, FHoldTimerPayload, FTimerPayload, FPawnLostPayload,
+             FConnectionTransitionPayload, FHostCommandPayload, FDebugPayload> Payload; }; // ID-only
+enum class EStagedWriteType : uint8 { DeathWrite, CounterPose, RoundEndStep };
+struct FDeathWritePayload { FPawnHandle Victim; double DeathServerTime; };      // meaning: ADR-0018
+struct FCounterPayload    { FPawnHandle Defender; double ContactServerTime; };  // meaning: ADR-0018
+struct FRoundEndPayload   { /* Round, ADR-0002 §8 */ };
 struct FStagedWrite { EStagedWriteType Type; double ServerTime; FEpochToken Expected;
-                      TVariant<FDeathWritePayload, FCounterPayload, FRoundEndPayload,
-                               FHeldRepliesPayload> Payload; };       // typed, loggable
+    FQueueKey CauseKey; TVariant<FDeathWritePayload, FCounterPayload, FRoundEndPayload> Payload; };
+
+// --- Resolution Queue & Server Clock (Foundation Public/Server) --------------------
+class IQueueResolver       { public: virtual EResolveResult Resolve(const FQueueItem&, FQueueKey) = 0; };
+class IStagedWriteApplier  { public: virtual void ApplyStagedWrite(const FStagedWrite&) = 0; }; // apply-only
+class ITerminalDecision    { public: virtual void RunRoundEndStep(const FRoundEndPayload&) = 0; }; // Round
+class IEventFlushBarrier   { public: virtual void FlushPending() = 0; };                          // Roster
+// (all four are UINTERFACEs with CannotImplementInterfaceInBlueprint; held by TWeakInterfacePtr)
 class FResolutionQueueCore { /* plain C++: testable without a UWorld */ };
 class UResolutionQueue : public UWorldSubsystem {         // facade; drain = custom FTickFunction
 public:                                                   // in TG_PostPhysics (OnWorldBeginPlay)
     void Submit(FMailboxId Source, FQueueItem Item);              // stamped at drain start
-    void RegisterResolver(EQueueItemType, TWeakInterfacePtr<IQueueResolver>);
     FTimerItemHandle ScheduleAt(double ServerTime, FQueueItem);   // due-time heap
-    int32 Compare(FQueueKey A, FQueueKey B) const;
-    void StageWrite(const FStagedWrite&);                         // pending-write queue
-    bool Latch(FQueueKey);   // storage only; called by Round's TryTerminate (Round owns the rule)
+    void RegisterResolver(EQueueItemType, TWeakInterfacePtr<IQueueResolver>);
+    void RegisterTimerResolver(ETimerKind, TWeakInterfacePtr<IQueueResolver>);
+    void RegisterStagedWriteApplier(EStagedWriteType, TWeakInterfacePtr<IStagedWriteApplier>);
+    void SetTerminalDecision(TWeakInterfacePtr<ITerminalDecision>);   // RoundEndStep route
+    void SetEventFlushBarrier(TWeakInterfacePtr<IEventFlushBarrier>);
+    APawn* ResolvePawnHandle(const FPawnHandle&) const;           // null if stale or pending teardown
+    int32 Compare(FQueueKey A, FQueueKey B) const;  FQueueKey CurrentKey() const;
+    void StageWrite(const FStagedWrite&);                         // inside a slot only
+    void RequestTeardown(AActor*);  bool IsPendingTeardown(const AActor*) const;
+    bool Latch(FQueueKey);   // Round's TryTerminate only; closes intake (Round's record is authoritative)
     bool IsLatched() const; double ServerNow() const;             // double precision
 };
-// Client side (same module, View header): smoothed, RTT-compensated, monotonic estimate.
-double EstimatedServerNow(const UWorld*);   // accuracy budget + net-emulation test in ADR-002
 // Invariants: resolvers re-validate against live state and run follow-ons inline;
-// nothing outside the drain mutates gameplay state; after the latch every item returns
-// Rejected_Latched; staged writes run in server-time order, are logged by type, and are
+// nothing outside the drain mutates gameplay state, except the named apply-only
+// passes (round-end step, hand-over pass, PawnLeavingGame plumbing); the Pings handler
+// runs at RPC arrival but mutates no gameplay state (ADR-0002 Technical Setup amendment);
+// after the latch every item returns Rejected_Latched except parked HostCommands, the
+// post-latch lane and ConcealmentTransition; staged writes run in (ServerTime, CauseKey,
+// TypeRank) order through registered appliers, are logged by type, and are
 // dropped on Reset (epoch mismatch).
 
 // --- Visibility Policy ---------------------------------------------------------
@@ -576,55 +651,73 @@ ETakeoverEligibility GetTakeoverEligibility(const AStealthPawn*) const;
 
 // Objectives
 USTRUCT() struct FObjectiveTeamView { /* live courts for this team, stage card, RivalPrelimCount */ };
+
+// Informant Pings (system 20; StealthGameplay/Features/Pings; ADR-0001 §5, ADR-0007/0011 amendments)
+USTRUCT() struct FNetTeamPing  { FVector_NetQuantize10 Point; };           // the whole RPC payload
+USTRUCT() struct FTeamPingEntry { FPublicHandle SenderHandle; uint8 PingSeq;
+    FVector_NetQuantize10 Point; double ServerTime; };
+USTRUCT() struct FTeamPingView  { FTeamPingEntry Entries[TeamSizeMax]; };  // slot i = Roster team slot i
+UCLASS() class UTeamPingViewComponent : public UTeamViewComponentBase { /* Public/View; View */ };
+// AStealthPlayerController (root): UFUNCTION(Server, Reliable) void ServerTeamPing(FNetTeamPing);
+class UTeamPingService : public UWorldSubsystem, public ITeamPingReset {   // Public/Server
+public:
+    void HandleTeamPing(const APlayerController* Sender, const FNetTeamPing&); // at RPC arrival
+    virtual void ClearAllTeamPings() override;                                // Round's round-end step
+};
+// Invariants: never a pawn command or queue item; reads only the sender's own pawn;
+// writes only the sender's bucket and its team's parts; opponents hold no data.
+// Client (Concealment Public/View): bool IsOwnPawnConcealedForPing() const;   // fail-closed owner gate
 ```
 
 ### Presentation contract
 
-Presentation code reads exactly: the owner part of C-TeamView and owner data on its own `APlayerController`, the teammate entries of C-TeamView (incl. `FObjectiveTeamView` and the fallback feed), `FRoundPublicState` and `FLayoutManifest` on the GameState, `GetClientTuning()`, IIF/ASN owner replies, and the client-local queries listed above. It may not call `IsPlayerControlled()`, `IsBotControlled()`, read `APawn::PlayerState`, iterate world pawns (Markers), or include any `Public/Server/` header (compile guard). C-TeamView is built as the Roster's owner/teammate struct plus **per-feature replicated sub-object components on the PlayerController** (registered sub-object list [V]); Presentation finds them with `FindComponentByClass<>()` on its own controller, so it never includes the root module's `AStealthPlayerController` header.
+Presentation code reads exactly: the owner part of C-TeamView and owner data on its own `APlayerController`, the teammate entries of C-TeamView (incl. `FObjectiveTeamView`, `FTeamPingView` and the fallback feed), `FRoundPublicState` and `FLayoutManifest` on the GameState, `GetClientTuning()`, IIF/ASN owner replies, and the client-local queries listed above. It may not call `IsPlayerControlled()`, `IsBotControlled()`, read `APawn::PlayerState`, iterate world pawns (Markers), or include any `Public/Server/` header (compile guard). C-TeamView is built as the Roster's owner/teammate struct plus **per-feature replicated sub-object components on the PlayerController** (registered sub-object list [V]); Presentation finds them with `FindComponentByClass<>()` on its own controller, so it never includes the root module's `AStealthPlayerController` header.
 
-**Engine-type flags.** `UWorldSubsystem`/`UGameInstanceSubsystem` (GI subsystems survive travel; world-bound delegates must be re-bound per world — S3 confirms in multi-process standalone); `TVariant` payloads and `TWeakInterfacePtr` [U usage under UHT for UPROPERTY-free plain structs]; `UNetConnection` in `ShouldCullForConnection` [legacy only; Iris uses group handles, V]; `NetSerialize` custom serialiser [U under Iris]; `FTickFunction` in `TG_PostPhysics` [V tick-group order per Round GDD]; `USkeletalMeshComponentBudgeted` if the budget allocator is adopted [V], which must then be the mesh class of every pawn.
+**Engine-type flags.** `UWorldSubsystem`/`UGameInstanceSubsystem` (GI subsystems survive travel; world-bound delegates must be re-bound per world — S3 confirms in multi-process standalone); `TVariant` payloads and `TWeakInterfacePtr` [U usage under UHT for UPROPERTY-free plain structs]; `UNetConnection` in `ShouldCullForConnection` [legacy only; Iris uses group handles, V]; `NetSerialize` custom serialiser [U under Iris]; `FTickFunction` in `TG_PostPhysics` [V tick-group order per Round GDD]. The AnimationBudgetAllocator (and its `USkeletalMeshComponentBudgeted`) is not adopted (ADR-0013).
 
 ---
 
 ## ADR Audit
 
-*Refreshed 2026-10-25 after the first `/architecture-review` and its fix pass. The 2026-10-24 text (no ADRs, 0/170 covered) is superseded.*
+*Refreshed 2026-10-25 for Technical Setup (version 2). The first refresh (after the first `/architecture-review`, all Proposed, 174/177 covered) and the 2026-10-24 text (no ADRs) are superseded.*
 
 ### ADR quality check
 
-ADR-0001 to ADR-0023 are written and all are **Proposed**, awaiting user acceptance. ADR-0024 (Dedicated Server / Iris migration) and ADR-0025 are deferred (Alpha) and do not exist yet. Every ADR has the Engine Compatibility, ADR Dependencies and GDD Requirements Addressed sections. Full findings are in [`architecture-review-2026-10-25.md`](architecture-review-2026-10-25.md) and the per-requirement matrix is in [`requirements-traceability.md`](requirements-traceability.md).
+ADR-0001 to ADR-0023 are written and **all Accepted** (user blanket acceptance 2026-10-25, recorded in each Status line; acceptance is conditional wherever the earlier status text named spikes or verification items, and a failed spike is handled by a superseding ADR, not an edit). ADR-0024 (Dedicated Server / Iris migration) and ADR-0025 are deferred (Alpha) and do not exist yet. Every ADR has the Engine Compatibility, ADR Dependencies and GDD Requirements Addressed sections. Findings: [`architecture-review-2026-10-25.md`](architecture-review-2026-10-25.md) (verdict CONCERNS after the re-check; no blocking conflict); per-requirement matrix: [`requirements-traceability.md`](requirements-traceability.md).
 
-| ADR | Title | Status | Engine Compat | GDD Linkage | Conflicts (review 2026-10-25 → fix pass) |
+Amendment blocks carried by the ADRs (each "decision unchanged, Status unchanged"): **Architecture-review fix pass** (C1-C9, cycles), **User decisions / User scope decisions 2026-10-25** (schema and scope choices, incl. Informant Pings moved to MVP), **Closeout 2026-10-25** (re-review follow-ups D1-D13), **Cross-review fix 2026-10-25** (rulings D21-D35), and **Technical Setup 2026-10-25** (this refresh: review N1/N3, Pings traceability, AQ-19 confirmation).
+
+| ADR | Title | Status | Engine Compat | GDD Linkage | Review findings -> closeout amendments |
 |---|---|---|---|---|---|
-| ADR-0001 | Crowd identity rules | Proposed | ✅ 5.8.4 | ✅ | C3, C5 fixed |
-| ADR-0002 | Server resolution queue, server clock and round-end staging contract | Proposed | ✅ 5.8.4 | ✅ | C1 (blocking) fixed: Foundation-owned payloads, `FPawnHandle`, `RegisterStagedWriteApplier` |
-| ADR-0003 | Replication, relevancy and the concealment cull hybrid | Proposed | ✅ 5.8.4 (listen-tick row [V]) | ✅ | C2 fixed; listen-host tick restated |
-| ADR-0004 | Tuning data pipeline and validator | Proposed | ✅ 5.8.4 | ✅ | ADR-0024 edge made conditional |
-| ADR-0005 | Session, seamless travel and match-scoped state stores | Proposed | ✅ 5.8.4 | ✅ | C8 fixed; `OnViewRebound` mapped |
-| ADR-0006 | Seeds and deterministic/secret random streams | Proposed | ✅ 5.8.4 | ✅ | — |
-| ADR-0007 | Code module layout, composition root and include boundaries | Proposed | ✅ 5.8.4 | ✅ | dependency cycle fixed (content inputs moved out of Depends On); C1 module table |
-| ADR-0008 | Test and automation strategy for leak and parity tests | Proposed | ✅ 5.8.4 | ✅ | dependency cycle fixed; G-DECK row fixed |
-| ADR-0009 | Version control and binary asset workflow | Proposed | ✅ | ✅ | — (user decision pending) |
-| ADR-0010 | Shared Pawn: CMC locomotion, spawn factory and possession parity | Proposed | ✅ 5.8.4 (MotionWarping Beta noted) | ✅ | C9 note; header folders |
-| ADR-0011 | Pawn command interface and input pipeline | Proposed | ✅ 5.8.4 | ✅ | C4 fixed (`Public/Server/Core/`) |
-| ADR-0012 | Character pool data and appearance allocation | Proposed | ✅ 5.8.4 | ✅ | C8 fixed |
-| ADR-0013 | Animation: motion matching and significance budget | Proposed | ✅ 5.8.4 | ✅ | — |
-| ADR-0014 | Layout service, seeded generation and runtime navmesh | Proposed | ✅ 5.8.4 | ✅ | — |
-| ADR-0015 | Camera system and LOS envelope | Proposed | ✅ 5.8.4 | ✅ | — |
-| ADR-0016 | Crowd AI architecture | Proposed | ✅ 5.8.4 (StateTree plugins not yet enabled: pending user) | ✅ | C9 note |
-| ADR-0017 | Concealment component and per-viewer presentation | Proposed | ✅ 5.8.4 | ✅ | C1, C5, C6, C7 fixed; acceptance pair with ADR-0018 |
-| ADR-0018 | Encounter data and outcome presentation timing | Proposed | ✅ 5.8.4 (MotionWarping Beta noted) | ✅ | C1, C2, C6 fixed; acceptance pair with ADR-0017 |
-| ADR-0019 | Informant lifecycle and crowd-pawn takeover | Proposed | ✅ | ✅ | C1, C8 fixed; C9 note |
-| ADR-0020 | Objectives data and team-view sub-structs | Proposed | ✅ 5.8.4 | ✅ | C9 note; rebind event named |
-| ADR-0021 | UI/HUD layering, CommonUI and Enhanced Input | Proposed | ✅ 5.8.4 | ✅ | C9 note |
-| ADR-0022 | Rendering configuration and performance budgets | Proposed | ✅ 5.8.4 | ✅ | — |
-| ADR-0023 | Playtest telemetry hooks (pre-Telemetry GDD) | Proposed | ✅ | ✅ | aligned with Round R19 (TR-round-013) |
+| ADR-0001 | Crowd identity rules | Accepted (conditional: S1 multi-process, rejoin, travel, PawnRecovery) | ✅ 5.8.4 | ✅ | C3, C5 fixed; S1/S2/S14 spike results; Iris pinned off (AQ-01 closed); ping part and slot-index rule; `bReconnecting`; S2 fallback |
+| ADR-0002 | Server resolution queue, server clock and round-end staging contract | Accepted | ✅ 5.8.4 | ✅ | C1 fixed (§2a Foundation payloads, `FPawnHandle`, `IStagedWriteApplier`); `TeamSummary`; due epsilon 1 ms; **Technical Setup: N1 (`FReplySinkId`, `FDebugPayload`), N3 (`StageSignal` mapping), Pings outside the drain, `ITeamPingReset`** |
+| ADR-0003 | Replication, relevancy and the concealment cull hybrid | Accepted (conditional: S9/S10/S12 cull spikes) | ✅ 5.8.4 (listen-tick row [V]) | ✅ | C2 fixed; listen-host tick restated; ping and `bReconnecting` budget note |
+| ADR-0004 | Tuning data pipeline and validator | Accepted | ✅ 5.8.4 | ✅ | ADR-0024 edge conditional; `InformantPings` keys and I-PNG-1; closeout keys (D2, D6, D8, D12) |
+| ADR-0005 | Session, seamless travel and match-scoped state stores | Accepted (conditional: S3/S4/S5) | ✅ 5.8.4 | ✅ | C8 fixed; `OnViewRebound` mapped; world-ready ack; timeout 111/120 s; supersede (D24) |
+| ADR-0006 | Seeds and deterministic/secret random streams | Accepted | ✅ 5.8.4 | ✅ | — |
+| ADR-0007 | Code module layout, composition root and include boundaries | Accepted | ✅ 5.8.4 | ✅ | cycle fixed; C1 module table; **Technical Setup: AQ-19 confirmed (four runtime modules), `Features/Pings/`, `ITeamPingReset`** |
+| ADR-0008 | Test and automation strategy for leak and parity tests | Accepted | ✅ 5.8.4 | ✅ | cycle fixed; G-DECK row; `constexpr` calibration seeds |
+| ADR-0009 | Version control and binary asset workflow | Accepted (Git + Git LFS; repository init awaits a user instruction) | ✅ | ✅ | AQ-03 closed |
+| ADR-0010 | Shared Pawn: CMC locomotion, spawn factory and possession parity | Accepted (conditional: traversal net-emulation spike) | ✅ 5.8.4 (MotionWarping Beta noted) | ✅ | C9 note; header folders; stop floor `StopMinSec` (D2) |
+| ADR-0011 | Pawn command interface and input pipeline | Accepted | ✅ 5.8.4 | ✅ | C4 fixed; `IA_WalkSlower`; `IA_Ping` -> `ServerTeamPing`; 0.1 cm ping point; **Technical Setup: full ping validation order incl. the concealed gate; client gate** |
+| ADR-0012 | Character pool data and appearance allocation | Accepted | ✅ 5.8.4 | ✅ | C8 fixed |
+| ADR-0013 | Animation: motion matching and significance budget | Accepted (conditional: R3 on 3060-class hardware) | ✅ 5.8.4 | ✅ | uniform `TickPose` escalation on the listen host (D3); AnimBP `IsLocallyControlled` branch removed; URO, AnimationBudgetAllocator and SignificanceManager not used |
+| ADR-0014 | Layout service, seeded generation and runtime navmesh | Accepted (conditional: R1/R4) | ✅ 5.8.4 | ✅ | respawn region per zone pair; 40-byte graybox hash record |
+| ADR-0015 | Camera system and LOS envelope | Accepted | ✅ 5.8.4 | ✅ | mask worst case 295 traces at 60 characters; Pings named as a `GetAimRay()` consumer |
+| ADR-0016 | Crowd AI architecture | Accepted (conditional: StateTree plugins enabled in the `.uproject`; 50-character spike) | ✅ 5.8.4 | ✅ | C9 note; `CrowdFullPacePct` 55 |
+| ADR-0017 | Concealment component and per-viewer presentation | Accepted (conditional: R5, S-CON-1) | ✅ 5.8.4 | ✅ | C1, C5, C6, C7 fixed; `StartServerTime`, `bDiedConcealed`; share cap (D1); **Technical Setup: Pings consume `IsInBushOrTransition`; owner `IsOwnPawnConcealedForPing()`** |
+| ADR-0018 | Encounter data and outcome presentation timing | Accepted | ✅ 5.8.4 (MotionWarping Beta noted) | ✅ | C1, C2, C6 fixed; lunge not interrupted by the death write |
+| ADR-0019 | Informant lifecycle and crowd-pawn takeover | Accepted | ✅ | ✅ | C1, C8 fixed; `T_due` carrier; respawn region wording |
+| ADR-0020 | Objectives data and team-view sub-structs | Accepted | ✅ 5.8.4 | ✅ | rebind event named; `InteractSecOverride` removed; **Technical Setup: N3 `StageSignal` mapping (`Subject` none, `Phase` viewing team)** |
+| ADR-0021 | UI/HUD layering, CommonUI and Enhanced Input | Accepted | ✅ 5.8.4 | ✅ | Pings in L0 (HUD-E22), round summary in L3 (HUD-E21); L4 input rule |
+| ADR-0022 | Rendering configuration and performance budgets | Accepted (conditional: R1-R9 profiling gates) | ✅ 5.8.4 | ✅ | mask cost 295 traces; round-end step budget |
+| ADR-0023 | Playtest telemetry hooks (pre-Telemetry GDD) | Accepted | ✅ | ✅ | aligned with Round R19 (TR-round-013); **Technical Setup: ping statistics** |
 
-`docs/registry/architecture.yaml` holds the stances registered from ADR-0001..0023 (merged 2026-10-24, revised 2026-10-25 by the fix pass). Declared ADR dependencies are acyclic after the fix pass (`adr-dep-graph.sh`: no CYCLE line). The review verdict was **FAIL** (one blocking conflict, C1). Its fixes are listed in the report's "Fixes applied after review (2026-10-25)" section, and the verdict is left for the independent re-check. While every ADR is Proposed, the verdict is capped at CONCERNS.
+`docs/registry/architecture.yaml` holds the stances registered from ADR-0001..0023 (merged 2026-10-24, revised by the fix pass, the user decisions and Technical Setup: `team_ping_send` revised, `team_ping_reset` and `own_concealment_ping_gate` added). Declared ADR dependencies are acyclic (`adr-dep-graph.sh`: no CYCLE line at the re-check). The re-check verdict was **CONCERNS** (no blocking conflict; capped while ADRs were Proposed). The items it listed for PASS are now closed: every ADR Accepted, both pending-user partials decided, this architecture.md refresh (N2, Phase 6), and N1/N3 fixed. An independent `/architecture-review` re-run is the next check.
 
 ### Traceability coverage check
 
-**177 requirements** are registered in `docs/architecture/tr-registry.yaml`: the 170 Appendix A IDs, now permanent, plus 7 added by the review (TR-roster-012, TR-iif-013, TR-round-013, TR-ivp-012, TR-scl-014, TR-con-011, TR-asn-011). Coverage per the review: **174/177 covered** (by Proposed ADRs), **3 partial**, 0 gaps. TR-con-005 and TR-pen-006 are partial because they wait on pending user decisions. TR-round-013 was partial against ADR-0023; the fix pass aligned ADR-0023 with Round R19, and the re-check confirms it. The per-requirement matrix is [`requirements-traceability.md`](requirements-traceability.md). The table below is the original assignment of baseline TRs to ADRs.
+**201 requirements** are registered in `docs/architecture/tr-registry.yaml` (version 3): the 170 Appendix A IDs, 7 added by the first review (TR-roster-012, TR-iif-013, TR-round-013, TR-ivp-012, TR-scl-014, TR-con-011, TR-asn-011), and **24 Informant Pings IDs `TR-png-001..024`** added at Technical Setup 2026-10-25. Coverage: **201/201 covered by Accepted ADRs, 0 partial, 0 gaps.** TR-con-005 (`FActionState.StartServerTime`) and TR-pen-006 (`T_due` on the C-TeamView owner part) were closed by the user decisions of 2026-10-25; TR-round-013 closed at the re-check. Pings requirements that no ADR stated before were covered by the "Technical Setup 2026-10-25" amendments of ADR-0002, 0007, 0011, 0017 and 0023 rather than left untraced. The per-requirement matrix is [`requirements-traceability.md`](requirements-traceability.md). The table below is the original assignment of baseline TRs to ADRs, plus the Pings row.
 
 | Required ADR | TRs it covers (baseline assignment) |
 |---|---|
@@ -651,8 +744,9 @@ ADR-0001 to ADR-0023 are written and all are **Proposed**, awaiting user accepta
 | ADR-021 | TR-hud-003..007, TR-tmk-002..006, TR-camera-006, TR-iif-003 |
 | ADR-022 | TR-cpa-005, TR-scl-008, TR-citygen-004, TR-con-006, TR-camera-003 |
 | ADR-023 | TR-round-012, TR-crowd-010 |
+| Pings (Technical Setup) | TR-png-001..024 -> ADR-0001 (carrier part, slot rule, push), ADR-0002 (latch read, outside-drain rule, round-end clear), ADR-0003 (allowlist, team-only relevancy, bandwidth), ADR-0004 (keys, I-PNG-1), ADR-0005 (host parity, travel), ADR-0007 (folder, `ITeamPingReset`), ADR-0008 (leak and parity suites), ADR-0011 (input, RPC, validation, bucket), ADR-0015 (`GetAimRay`, eye pivot), ADR-0017 (concealed predicate), ADR-0018 (`PresentedOwnState` strike window), ADR-0021 (HUD-E22 L0 drawing, labels, refusal plate), ADR-0023 (statistics) |
 
-Count (2026-10-25 review): **174/177 covered by Proposed ADRs, 3 partial, 0 gaps**; every requirement has a named ADR (several TRs are deliberately shared by two ADRs where a mechanism ADR and a feature ADR meet, e.g. TR-asn-003 in ADR-003 and ADR-018).
+Count (Technical Setup 2026-10-25): **201/201 covered by Accepted ADRs, 0 partial, 0 gaps**; every requirement has a named ADR (several TRs are deliberately shared by two ADRs where a mechanism ADR and a feature ADR meet, e.g. TR-asn-003 in ADR-003 and ADR-018).
 
 ---
 
@@ -660,11 +754,11 @@ Count (2026-10-25 review): **174/177 covered by Proposed ADRs, 3 partial, 0 gaps
 
 Numbering is the creation order the orchestrator should follow with `/architecture-decision`. ADR-001 is first by mandate; the rest are Foundation-first, then Core, Feature, Presentation, then cross-cutting and deferred. "Priority" uses the skill's three bands: **Must** (before any coding of the layer), **Should** (before the relevant system is built), **Defer** (to implementation or a later tier).
 
-**ADR authoring status (2026-10-24).** ADR-0001 to ADR-0023 are written (`docs/architecture/adr-0001-*.md` … `adr-0023-*.md`), all **Proposed** and awaiting user acceptance; an inter-ADR amendment pass applied their cross-requests the same day (each target ADR lists them under "Amendments (2026-10-24 sync)"). ADR-0024 and ADR-0025 are deferred (Alpha). The table rows above are the scopes the ADRs were written against; where a Proposed ADR narrowed or replaced a candidate mechanism (ADR-0013: engine URO and the AnimationBudgetAllocator ruled out; ADR-0015: CPD dither slot and rate bands at every range instead of "time-sliced beyond 60 m" / "per-pawn parameter"; ADR-0006: `(Domain, Attempt)` naming), the ADR governs and the row is updated on acceptance.
+**ADR authoring status (refreshed 2026-10-25).** ADR-0001 to ADR-0023 are written (`docs/architecture/adr-0001-*.md` … `adr-0023-*.md`) and **all Accepted** by the user on 2026-10-25 (conditional where spikes are named; see ADR Audit). The tables below are kept as the original scopes; where an ADR narrowed a row, the ADR governs. Historical note: on 2026-10-24 all were Proposed; an inter-ADR amendment pass applied their cross-requests the same day (each target ADR lists them under "Amendments (2026-10-24 sync)"). ADR-0024 and ADR-0025 are deferred (Alpha). The table rows above are the scopes the ADRs were written against; where a Proposed ADR narrowed or replaced a candidate mechanism (ADR-0013: engine URO and the AnimationBudgetAllocator ruled out; ADR-0015: CPD dither slot and rate bands at every range instead of "time-sliced beyond 60 m" / "per-pawn parameter"; ADR-0006: `(Domain, Attempt)` naming), the ADR governs and the row is updated on acceptance.
 
 ### Must have before coding starts (Foundation and Core)
 
-**Bootstrap order (TD concern 2).** ADR-001 is written first but cannot be *Accepted* first, because its central mechanism needs spike evidence and the spikes need the harness. The acceptance order is: ADR-009 (VCS, blocked on the user) → ADR-007 and ADR-008 (enough module skeleton and harness to run spikes) → spikes S1, S2, S14 (and S11 if Iris is considered) → ADR-001 Accepted → ADR-002 … in table order. Until then ADR-001 stays Proposed and stories that depend on it are blocked by design.
+**Bootstrap order (TD concern 2; historical — superseded by the user's conditional acceptance of 2026-10-25, which keeps every named spike as a precondition for the implementation that depends on it; S1, S2 and S14 have since reported, ADR-0001 amendment).** ADR-001 is written first but cannot be *Accepted* first, because its central mechanism needs spike evidence and the spikes need the harness. The acceptance order is: ADR-009 (VCS, blocked on the user) → ADR-007 and ADR-008 (enough module skeleton and harness to run spikes) → spikes S1, S2, S14 (and S11 if Iris is considered) → ADR-001 Accepted → ADR-002 … in table order. Until then ADR-001 stays Proposed and stories that depend on it are blocked by design.
 
 | # | Title | Layer | Scope (one line) | GDD requirements covered | Priority |
 |---|---|---|---|---|---|
@@ -719,7 +813,7 @@ Numbering is the creation order the orchestrator should follow with `/architectu
 | Budget | Value | Owner / source |
 |---|---|---|
 | Frame | 16.6 ms | technical-preferences |
-| Animation, all characters (GT + worker sum) | ≤ 4 ms at 60 characters (`NpcCount` 50 since 2026-10-25; working value, re-verify in R3) | SCL R12, art 8.x.8 (ADR-0013, Proposed: summed GT + workers ≤ 4.0 ms with a GT share ≤ 2.0 ms) |
+| Animation, all characters (GT + worker sum) | ≤ 4 ms at 60 characters (`NpcCount` 50 since 2026-10-25; working value, re-verify in R3) | SCL R12, art 8.x.8 (ADR-0013, Accepted: summed GT + workers ≤ 4.0 ms with a GT share ≤ 2.0 ms) |
 | CMC simulated proxies | 1.5-3 ms, reported separately | SCL R12 |
 | Server AI + nav (listen host) | ≤ 1.5 ms steady | Crowd F5 |
 | Per-client bandwidth | ≤ 50 KB/s (pawn line ≤ 36 KB/s; SCL F9 worst case 31.1 KB/s at NpcCount 50) | SCL F9 |
@@ -751,32 +845,32 @@ Decisions deferred; each must be resolved before the named layer is built.
 
 | ID | Question | Resolves in | Blocks |
 |---|---|---|---|
-| AQ-01 | Legacy NetDriver or Iris for the MVP (S11)? Recommendation: legacy (`net.Iris.UseIrisReplication` defaults to 0 [V]; specialists' recommendation; Iris plugin flagged Beta in 5.8.4; pointer and PlayerState trimming unverified under Iris). Whichever is chosen is pinned in `DefaultEngine.ini` (project config change, outside this run's write scope) and asserted by the harness. | ADR-001 | Foundation |
+| AQ-01 | **Closed 2026-10-25: legacy NetDriver** (`net.Iris.UseIrisReplication=0` pinned in `Config/DefaultEngine.ini`, ADR-0001 amendment; the harness startup assertion is still owed, ADR-0008). Original question: Legacy NetDriver or Iris for the MVP (S11)? Recommendation: legacy (`net.Iris.UseIrisReplication` defaults to 0 [V]; specialists' recommendation; Iris plugin flagged Beta in 5.8.4; pointer and PlayerState trimming unverified under Iris). Whichever is chosen is pinned in `DefaultEngine.ini` (project config change, outside this run's write scope) and asserted by the harness. | ADR-001 | Foundation |
 | AQ-02 | Carrier for the owner-only informant countdown end `T_due` (C-W5). **Closed 2026-10-25 (user decision): the C-TeamView owner part** (ADR-0001 §6 option (a)); HUD shows a live countdown. | user → ADR-001 → ADR-019 | Penalty, HUD |
-| AQ-03 | Version control (no repository exists). **Pending user decision**; Git + LFS recommended. | user → ADR-009 | all coding |
+| AQ-03 | Version control. **Closed 2026-10-25: Git + Git LFS** (ADR-0009 Accepted). Initialising the repository, the first commit and any push still need an explicit user instruction; `_snapshots/` stays in force until then. | user → ADR-009 | all coding |
 | AQ-04 | Can `APawn::PlayerState/Controller` and `AActor::Owner` be made owner-only with identical raw-bunch class for both kinds and no broken possession/RPC routing (S1, S14)? | spikes before MVP-core | Pillar-1 network claim |
 | AQ-05 | Concealment cull latency and channel-close behaviour, re-open (NetGUID reuse, ABP init), cull delay vs lag (S9, S10, S12); blind-attack probing as an occupancy oracle (S15). | ADR-003 / ADR-017 spikes | Concealment |
 | AQ-06 | CMC cadence and correction parity, AI- vs PC-possessed, adaptive frequency off (S13); traversal replication under 100 ms / 1 % loss. | ADR-003 / ADR-010 spikes | Shared Pawn |
 | AQ-07 | Motion-matching cost at 60 characters under the tier table (R3; `NpcCount` 50 since 2026-10-25); skin cache mode with VSM (R2); kit Lumen/Nanite cost at 5,000 instances (R1); Chaos bodies + nav build time (R4); concealment shadow/Lumen/RT leak (R5). | ADR-013 / ADR-022 / ADR-014 | mass production gate |
-| AQ-08 | Substrate on or off for this existing project (no `r.Substrate` key)? *ADR-0022 (Proposed): off (`r.Substrate=0` pin pending user).* | ADR-022 | material authoring |
+| AQ-08 | Substrate on or off for this existing project (no `r.Substrate` key)? *ADR-0022 (Accepted): off (`r.Substrate=0`).* | ADR-022 | material authoring |
 | AQ-09 | The sample-enabled `Mover` and `NetworkPrediction` plugins: disable (project file change, outside this run's write scope) or leave unused? Recommendation: disable when ADR-010 is accepted. | ADR-010 | Shared Pawn |
 | AQ-10 | Do game-instance subsystems and the C-TeamView components survive seamless travel as assumed, in multi-process standalone (S3)? Does PIE seamless travel represent it? | ADR-005 | Session |
 | AQ-11 | Owner reply RPCs vs replicated state ordering: `ContactServerTime` in `FStrikeResult`, `RetireAtServerTime` on the C-TeamView retire, a per-entry `Seq` in the fallback feed, `FActionState.StartServerTime` and `FDeathState.bDiedConcealed`. **Closed 2026-10-25: all approved by the user** and specified in ADR-0001/0003/0017/0018. | user → ADR-003 / ADR-017 / ADR-018 / ADR-021 | Concealment, HUD, Markers |
 | AQ-12 | Tuning-schema items: duplicate latency keys (C-W14: `LatencyWarnRttSec` retired, `HudLatencyWarnRttSec` kept), TDC CR 10 key renames (C-W21: applied), `NpcKillStrikeLimit` hard minimum 2 with a test-preset flag (OQ-12), host-selectable presets never ship (TDC OQ-6), new keys `LayoutExactRefineMaxCount` and the three Crowd asset keys, `NpcCount` 50. **Closed 2026-10-25 by user decisions** (ADR-0004 amendments). | user → ADR-004 | TDC AC-3a |
 | AQ-13 | Round-start world-ready second ack stage (Round CR-13(d)). **Closed 2026-10-25 (user decision): adopted** as `ServerWorldReady` → `OnParticipantWorldReady` (Session rule 11, ADR-0005); `RevealPawnWaitMaxSec` stays as the client backstop. | user → ADR-005 | Session/Round |
 | AQ-14 | Listen-server host holds all ServerOnly facts (IVP R10): trusted playtests only until the Dedicated Server (Alpha); headless evidence server deferred to Alpha by the user 2026-10-25 (non-competing-host rule stands). | ADR-024 | external playtests |
-| AQ-15 | CommonUI scope: menus only, or also the in-round HUD input layer, given the 5.8 EI/CommonUI unification? *ADR-0021 (Proposed): menus only (the menu root); the in-round HUD has no input layer.* | ADR-021 | HUD |
+| AQ-15 | CommonUI scope: menus only, or also the in-round HUD input layer, given the 5.8 EI/CommonUI unification? **Closed: ADR-0021 (Accepted): menus only (the menu root); the in-round HUD has no input layer; layers below ZOrder 100 stay display-only (D15).** | ADR-021 | HUD |
 | AQ-17 | Does the client receive the seed only through the replicated `FRoundParams` (not the `?Seed=` server URL option)? S3 verifies. | ADR-005 | Session, Layout |
 | AQ-18 | All performance numbers come from an RTX 5090 / 16-core desktop; no 3060-class capture exists. Who runs R3 and the 10-connection listen-host capture on target-class hardware, and when? | ADR-013 / ADR-022 | mass production, ADR-013 acceptance |
-| AQ-19 | Module count: four runtime modules (recommended, LP) or the seven-module variant (stronger UBT-enforced layering, more interface/export work)? | ADR-007 | all code |
-| AQ-16 | Event Log memory/eviction under the 10-player worst case (Round F8) and whether any VS Post-Round Reveal needs a persisted archive. *ADR-0023 (Proposed) §5 answers the memory bound; it found that a rejected-command flood can evict the kill timeline (Round R19 change request).* | ADR-023 / VS | Telemetry, Post-Round Reveal |
+| AQ-19 | Module count. **Closed: four runtime modules** (`StealthFoundation`, `StealthGameplay`, `StealthPresentation`, `StealthGame`) plus `StealthGameEditor` and `StealthTestHarness`, decided by ADR-0007 §1 (Accepted 2026-10-25; confirmed by its Technical Setup amendment). The seven-module variant stays rejected. | ADR-007 | all code |
+| AQ-16 | Event Log memory/eviction under the 10-player worst case (Round F8) and whether any VS Post-Round Reveal needs a persisted archive. *ADR-0023 (Accepted) §5 answers the memory bound; it found that a rejected-command flood can evict the kill timeline (Round R19 change request).* | ADR-023 / VS | Telemetry, Post-Round Reveal |
 
 ---
 
 ## Appendix A — Technical Requirements Baseline
 
-Extracted from 18 GDDs | 170 baseline requirements | all 170 **registered as permanent** (2026-10-25) | 177 in the registry
-(Status refreshed 2026-10-25: `/architecture-review` registered every ID below unchanged in `docs/architecture/tr-registry.yaml` (version 2) and added 7 IDs that are not listed here: TR-roster-012, TR-iif-013, TR-round-013, TR-ivp-012, TR-scl-014, TR-con-011, TR-asn-011. Their wording and current coverage are in the registry and in [`requirements-traceability.md`](requirements-traceability.md). The ADR column below is the baseline assignment, and ADR-001..023 = ADR-0001..0023, all written and Proposed. Review: [`architecture-review-2026-10-25.md`](architecture-review-2026-10-25.md).)
+Extracted from 18 GDDs | 170 baseline requirements | all 170 **registered as permanent** (2026-10-25) | 201 in the registry (incl. 24 Pings IDs `TR-png-001..024`, Technical Setup 2026-10-25; their text and coverage are in the registry and [`requirements-traceability.md`](requirements-traceability.md), not in this baseline table)
+(Status refreshed 2026-10-25: `/architecture-review` registered every ID below unchanged in `docs/architecture/tr-registry.yaml` (version 2) and added 7 IDs that are not listed here: TR-roster-012, TR-iif-013, TR-round-013, TR-ivp-012, TR-scl-014, TR-con-011, TR-asn-011. Their wording and current coverage are in the registry and in [`requirements-traceability.md`](requirements-traceability.md). The ADR column below is the baseline assignment, and ADR-001..023 = ADR-0001..0023, all written and (since 2026-10-25) Accepted. Review: [`architecture-review-2026-10-25.md`](architecture-review-2026-10-25.md).)
 
 Method: requirements were extracted from each GDD's Summary, Core Rules (headlines and the rules marked "-> ADR"), Interactions, Dependencies and the cross-review "Notes for /create-architecture"; no GDD contributed nothing. System slugs: `tdc`, `roster`, `iif`, `cpa`, `session`, `round`, `ivp`, `lsc`, `scl`, `camera`, `crowd`, `con`, `asn`, `pen`, `oc`, `citygen`, `tmk`, `hud`.
 
@@ -958,3 +1052,6 @@ Data/schema and confirmation decisions applied across the GDDs, ADRs (Amendments
 
 ## Change log - re-review closeout 2026-10-25
 Applied across the ADR Amendments sections ("Closeout 2026-10-25" in ADR-0001, 0002, 0004, 0005, 0008, 0010, 0011, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0021, 0022) and control manifest 2026-10-25d: S2 fallback and ping slot-index rule (ADR-0001); engine timeout backstop 111 s min / 120 s configured (ADR-0005); respawn region per zone pair with nearer-anchor cut and 40-byte graybox hash record (ADR-0014); mask worst case 295 traces at 60 characters (ADR-0015, ADR-0022); listen-host uniform `TickPose` escalation (D3; ADR-0013, ADR-0022); AnimBP `IsLocallyControlled` branch removed (ADR-0013); lunge not interrupted by the death write (ADR-0018); L4 input rule, HUD-E22 in L0, HUD-E21 in L3 (ADR-0021); stop floor `StopMinSec` (ADR-0010). Any CPU table row sized at 245 traces or 50 characters reads 295 and 60.
+
+## Change log - Technical Setup refresh 2026-10-25 (version 2)
+Technical Director findings of the Systems Design → Technical Setup gate (`production/gate-checks/2026-10-25_systems-design-to-technical-setup.md`). Document Status rewritten (19 MVP GDDs Approved by D35; ADR-0001..0023 Accepted; TR registry 201 IDs). ADR Audit refreshed (all Accepted, closeout amendments listed). Data Flow §1-§3, §5 and API Boundaries follow ADR-0002 §2a (Foundation-owned payloads in `StealthQueuePayloads.h`, `FPawnHandle`, `FReplySinkId`, `FDebugPayload`, `FTimerPayload` kinds, `IStagedWriteApplier`, `IEventFlushBarrier`, teardown pass), closing review N2. AnimationBudgetAllocator removed from the Platform layer and the animation row (ADR-0013; D3 host tiering). System 20 Informant Pings added to the layer map, module tables, dependency diagram, data flow and API (`UTeamPingService`, `UTeamPingViewComponent`, `ITeamPingReset`). Review N1/N3 closed by "Technical Setup 2026-10-25" amendments in ADR-0002 and ADR-0020; Pings coverage amendments in ADR-0002, 0007, 0011, 0017 and 0023. AQ-01, AQ-03, AQ-15 and AQ-19 marked closed.

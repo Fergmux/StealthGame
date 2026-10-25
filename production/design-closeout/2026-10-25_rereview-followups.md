@@ -62,3 +62,7 @@ D32 W3 kick vs grace expiry in the same frame: the host kick is processed first;
 D33 W4 ping at bush edges: a pawn in Emerging state counts as concealed for D26 until fully out; the client-side pre-check uses the same predicate as the server; AC-PNG-17 gains the Emerging case.
 D34 W5 ping tracking (D-W5): OQ7 numeric failure threshold — playtest flag if any single walker carries a ping ring from one team for > 30 % of any 60 s window in more than 1 in 5 rounds; mitigation lever is the sender refill interval.
 D35 Approval: after second-round reviews, two cross-doc fix passes, and /review-all-gdds 2026-10-25b = CONCERNS (0 blocking), all 19 MVP GDDs are marked Approved by main-session decision under the user's 2026-10-25 authorisation ("finish approving the systems design"). Remaining warnings/open questions stay listed in each GDD and in the cross-review report.
+
+# Technical Setup rulings
+D36 AC-PNG-10 blind-sort: three fresh-context reviewer agents (no access to the UI source/spec) may run the greyscale blind sort for MVP as a pre-screen; the criterion is marked ADVISORY until human reviewers run it at the first playtest, then BLOCKING again.
+D37 Walk-slower binding: keep Ctrl as walk-slower (per SCL/IIF); remove the Game Animation Sample's Ctrl jog toggle from the project's input mapping (not part of the design; gait is design-owned).

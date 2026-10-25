@@ -297,7 +297,7 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 - Meshy-generated characters may not retarget cleanly to the UE mannequin skeleton.
 - The full-rigor design pipeline and a prototype build run in parallel: prototype code must be promoted only after the matching ADR exists.
-- The 7 core MVP items are estimated 10–12 weeks expected, 16+ pessimistic (producer's revised note in the Systems Index, low confidence; the earlier 8–10 weeks predates the design work). Items 8–11, added by the user on 2026-10-25, are not yet estimated: the producer must re-estimate before sprint planning. The riskiest items (procgen, networked traversal) are ordered last.
+- The full MVP (7 core items plus items 8–11) is re-baselined at about 24 weeks expected, 18.5 optimistic and 36 pessimistic (producer's re-baseline of 2026-10-25, low confidence, solo developer plus AI agents; the Producer Note in the Systems Index and `production/estimates/2026-10-25_mvp-rebaseline.md` carry the detail). The earlier 8–10 and 10–12 week figures are superseded. Items 8–11 add about 3.5 weeks. The riskiest items (procgen, networked traversal) are ordered last.
 
 ### Open Questions
 
@@ -347,9 +347,9 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 | Tier | Content | Features | Timeline |
 | ---- | ---- | ---- | ---- |
-| **MVP** | Graybox → small kit, 1 objective chain, mannequin → Meshy pool | The 7 core items plus the user-added items 8–11, mechanics verified in 2-client PIE (this checks the rules, not the 5v5 hypothesis; the 10-player test is a Vertical Slice item) | 10–12 weeks expected for the 7 core items (16+ pessimistic; low confidence); items 8–11 not yet estimated |
+| **MVP** | Graybox → small kit, 1 objective chain, mannequin → Meshy pool | The 7 core items plus the user-added items 8–11, mechanics verified in 2-client PIE (this checks the rules, not the 5v5 hypothesis; the 10-player test is a Vertical Slice item) | About 24 weeks (about 5.5 months) expected for all 11 items, 18.5 optimistic and 36 pessimistic; low confidence. Re-baselined 2026-10-25 for a solo developer plus AI agents: about 20.5 weeks for the 7 core items plus about 3.5 for items 8–11 (`production/estimates/2026-10-25_mvp-rebaseline.md`) |
 | **Vertical Slice** | One polished district (kit-based), 3 objective variants | Core + invite/lobby join, 10-player test, layout validation hardening, post-round reveal, sensitivity read of the Mexica framing (a named exit gate) | +2–3 months after MVP |
-| **Alpha** | Full kit, several objective types | All features rough; dedicated server (source-built engine); onboarding; private-lobby fallback product | +3–4 months after the Vertical Slice (cumulative about 7–11 months from the start) |
+| **Alpha** | Full kit, several objective types | All features rough; dedicated server (source-built engine); onboarding; private-lobby fallback product | +3–4 months after the Vertical Slice (cumulative about 9–15 months from the start, about 11–12 likely, on the re-baselined MVP; the Vertical Slice and Alpha increments were not re-estimated and were set against the earlier MVP pace) |
 | **Full Vision** | Multiple districts, polished | Matchmaking, progression decision, polish | 18–24 months total (cumulative, solo developer plus AI agents; the Alpha-to-Full-Vision remainder is unplanned) |
 
 ---

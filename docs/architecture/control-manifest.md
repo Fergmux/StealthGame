@@ -2,7 +2,7 @@
 
 > **Engine**: Unreal Engine 5.8 (installed 5.8.4, CL 58902052)
 > **Last Updated**: 2026-10-25
-> **Manifest Version**: 2026-10-25d (same-day update after the re-review closeout of 2026-10-25; see "Changes in 2026-10-25d", "Changes in 2026-10-25c" and "Changes in 2026-10-25b" at the end)
+> **Manifest Version**: 2026-10-25e (same-day update after the Technical Setup amendments of 2026-10-25; see "Changes in 2026-10-25e", "Changes in 2026-10-25d", "Changes in 2026-10-25c" and "Changes in 2026-10-25b" at the end)
 > **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016, ADR-0017, ADR-0018, ADR-0019, ADR-0020, ADR-0021, ADR-0022, ADR-0023 (all **Accepted** 2026-10-25; several conditionally, see "Conditional acceptance")
 > **Status**: Active — regenerate with `/create-control-manifest update` when ADRs change
 
@@ -132,6 +132,8 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Only Round's `TryTerminate` calls `Latch`**; after the latch the queue rejects every item with `Rejected_Latched` except parked `HostCommand`s, the post-latch lane and the `ConcealmentTransition` exemption; it holds the IIF's `NotNow` replies, freezes (not cancels) holds and leaves locomotion untouched — source: ADR-0002
 - **The latch step replicates and presents nothing; the round-end step runs in one server step, bound to the deciding slot's latest death write by `CauseKey` (or inline when the slot staged none),** and calls `ICrowdControl::Halt()` plus the kind-blind stop-and-blend for every live pawn — source: ADR-0002
 - **Every queue item payload, staged-write payload, `FPawnHandle` and `FSubjectRef` is declared in `StealthFoundation/Public/Server/`**; feature timers map onto `FTimerPayload` — source: ADR-0002, ADR-0007
+- **`FReplySinkId { uint16 Index; uint16 Generation; }` (0 = null sink for AI and server-local sources; generation bumped when a reply-sink slot is reused) and `FDebugPayload { uint8 Command; FSubjectRef Subject; uint32 Arg; }` (declared in every configuration; producers and resolver compiled out of Shipping; a Shipping `DebugItem` is dropped with a fault) live in `StealthQueuePayloads.h`** — source: ADR-0002 (Technical Setup 2026-10-25, review N1)
+- **The Informant Pings `ServerTeamPing` handler runs at RPC arrival, outside the queue drain, and writes only the sender's token bucket and its team's `UTeamPingViewComponent` parts; it reads Round's phase and `IsLatched()` and changes no pawn, Roster, crowd, objective, score or queue state** — source: ADR-0002 (Technical Setup 2026-10-25)
 - **Interfaces held by `TWeakInterfacePtr` are `UINTERFACE`s; plain cores take explicitly registered raw pointers** — source: ADR-0002
 - **Client presentation schedules only from `EstimatedServerNow()`; the clock-exchange RPCs carry only timestamps** — source: ADR-0002
 
@@ -249,6 +251,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never send gameplay data in the clock-exchange RPCs** — source: ADR-0002
 - **Never route queue Event Log entries through `UE_LOG`/`UE_LOGF`, the output log or trace channels** — source: ADR-0002
 - **Never declare a type that `FQueueItem` or `FStagedWrite` names in a feature module** — source: ADR-0002, ADR-0007
+- **Never route a team ping through the resolution queue, the action slot or a pawn command, and never let the ping handler mutate gameplay state** — a ping must stay outside the total order and invisible to opponents (PNG-R4, PNG-R9) — source: ADR-0002, ADR-0011 (Technical Setup 2026-10-25)
 - **Never mark tuning types `Config`/`DefaultConfig`/`GlobalUserConfig`/`PerObjectConfig`; never read a gameplay value from `UDeveloperSettings`, ini, `Saved/Config`, command line (Shipping) or a console variable** — a live back door (TDC CR-13) — source: ADR-0004
 - **Never let client or presentation code include a `Public/Server/` tuning header or reference `UStealthTuningData`; never let server code read the raw asset** — source: ADR-0004
 - **Never give a tuning accessor a pawn, controller, team, viewer or participant parameter** — source: ADR-0004
@@ -413,7 +416,8 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Pawnless viewers use the client-local `AStealthNeutralViewActor`** — source: ADR-0015
 - **Every sight test (camera mask, aim world test, LSC sight predicates) uses the `ViewBlock` channel** — source: ADR-0015
 - **`IA_WalkSlower` (`IMC_Common`; Left Ctrl 0.8, Left Alt 0.9) only scales the keyboard Move vector on the owning client before `ServerMove`; SCL quantises the received magnitude to the shared pace set** — source: ADR-0011 (user decision 2026-10-25)
-- **`IA_Ping` (`IMC_Common`) sends only `AStealthPlayerController::ServerTeamPing(FNetTeamPing {Point})` (point only), reliable, validated server-side in order by phase, role, range from the eye pivot (`PingRangeCm + PingRangeSlackCm`) and then its own `ParticipantId`-keyed token bucket (`PingBucketSize`, `PingBucketPerSec`, tolerance 0.05 token); failures drop silently and only an accepted ping spends a token; the ping point is the `ViewBlock` aim-ray hit dropped to walkable ground, range measured from the eye pivot on client and server** — source: ADR-0011 (user decision 2026-10-25)
+- **`IA_Ping` (`IMC_Common`) sends only `AStealthPlayerController::ServerTeamPing(FNetTeamPing {Point})` (point only), reliable, validated server-side in order by (1) phase `Active` and latch not set, (2) `State` `Active`/`Informant`, bound pawn and **not concealed** (`IsInBushOrTransition` false; `Emerging` counts as concealed), (3) a finite point within `PingRangeCm + PingRangeSlackCm` of the eye pivot, then (4) its own `ParticipantId`-keyed token bucket (`PingBucketSize`, `PingBucketPerSec`, tolerance `ε = PingBucketPerSec · 0.1 s`); failures drop silently, counted by reason, and only an accepted ping spends a token; the client sends only when its gate (phase, `PresentedOwnState`, bound pawn, `IsOwnPawnConcealedForPing()`, strict bucket mirror) passes, and only a concealed press gives owner feedback ("Not now" plate + 2D tone); the ping point is the `ViewBlock` aim-ray hit dropped to walkable ground, range measured from the eye pivot on client and server** — source: ADR-0011 (user decision 2026-10-25; Technical Setup 2026-10-25), ADR-0017
+- **Round clears the team ping parts in the round-end step only through the Core consumer-owned `ITeamPingReset::ClearAllTeamPings()`, registered weakly by the composition root; Round never names a Pings type** — source: ADR-0007, ADR-0002 (Technical Setup 2026-10-25)
 
 ### Forbidden Approaches
 
@@ -598,6 +602,10 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **The hold duration is one value for every court (`GetInteractHoldSec()` has no court parameter)** — source: ADR-0020
 - **Completion is judged only in `OnInteractEnded(Completed)` inside the `HoldTimer(Complete)` slot, against live state, with gate (a)-(e); the final calls `DeclareObjectiveWin(Team, CurrentKey())` in that slot** — source: ADR-0020
 - **The rival delay is drawn only from `FSecretStream(GetServerSubSeed(StageSignal, Ordinal), Tag("OC_STAGE"))` in integer milliseconds; release times lie on the grid `t0 + k·Q` anchored at `ActivePhaseStart`** — source: ADR-0020
+- **`TimerFired(StageSignal)` fills `FTimerPayload` as `Subject` = none (no court), `Generation` = 0, `Seq` = round-global ordinal `k`, `Phase` = viewing team (the opponent of the completer)** — source: ADR-0020, ADR-0002 (Technical Setup 2026-10-25, review N3)
+- **Informant Pings live in `StealthGameplay/Features/Pings/` (`UTeamPingService` over a headless `FTeamPingCore`; `UTeamPingViewComponent` and the client ping-point/bucket-mirror helpers in `Public/View/`); the service clears its parts at `OnRosterReset` and `InvalidateAllBindings` and implements `ITeamPingReset`** — source: ADR-0007 (Technical Setup 2026-10-25)
+- **The ping concealment gate uses Concealment's server `IsInBushOrTransition` (unchanged: true for every state but `Outside`) and, on the owning client, `IsOwnPawnConcealedForPing()` (owner `bIsConcealed`, own hide/bush-strike `FActionState` before recovery ends, or an unanswered `Hide(Enter)` with a 1.0 s backstop); the owner query is fail-closed and adds no replicated field** — source: ADR-0017 (Technical Setup 2026-10-25)
+- **Ping statistics (accepted, and drops by reason `Phase`/`Latch`/`State`/`Pawn`/`Concealed`/`Range`/`NonFinite`/`Bucket`, split by role class) and `PingAccepted` rows go only to the server telemetry section; never to clients, never per person in client-visible form, never through `UE_LOG`** — source: ADR-0023 (Technical Setup 2026-10-25)
 - **Card text and clue phrases are rendered client-side from cooked data; only indices and enums travel** — source: ADR-0020
 - **Objectives Event Log entries go through the Round Event Log `Append` only** — source: ADR-0020
 - **Gate (c) compares the control epoch recorded at Begin to the current one and requires `!IsHandOverPending`; an interact-end call outside a slot only releases the claim** — source: ADR-0020
@@ -892,3 +900,11 @@ Updated after the re-review closeout of 2026-10-25 (`production/design-closeout/
 - Feature: respawn region per team-spawn zone pair with the nearer-anchor cut (ADR-0014 §7.3, ADR-0019 §4.3); 40-byte graybox `LayoutHash` extract record (ADR-0014 §6); engine `ConnectionTimeout` at least 111 s, 120 s configured (ADR-0005); `Disconnect` accepted for an `Expired` connection (kick path).
 - Presentation: L4 stays display-only and status buttons live in a Menu-root modal; Pings in L0 (HUD-E22) and round summary in L3 (HUD-E21); mask worst case 295 traces (ADR-0015, ADR-0022).
 - Tuning (ADR-0004, no separate rule line): `StopMinSec` 0.5 s; `CameraMaskOffHysteresisCm` 10; hard minimum 1.25 s for `HudResultPlateMaxHoldBackSec` and `HudOwnRemovalHoldCapSec`; Crowd bush default 300 s; multi-occupant share cap `max(40 %, m0 + 10 pp)`; Shipping-cook preset exclusion deferred to a later ADR-0004 amendment.
+
+## Changes in 2026-10-25e
+
+Updated after the Technical Setup amendments of 2026-10-25 (Technical Director gate findings; recorded as "Technical Setup 2026-10-25" Amendments in ADR-0002, 0007, 0011, 0017, 0020, 0023). Rules added or changed:
+- Foundation: `FReplySinkId` and `FDebugPayload` shapes in `StealthQueuePayloads.h` (review N1); the Pings handler runs outside the drain and mutates no gameplay state; ban on routing pings through the queue, action slot or a pawn command.
+- Core: `IA_Ping` validation order now includes the concealed gate (D26/D33) and the rate-scaled bucket tolerance `ε = PingBucketPerSec · 0.1 s`; client gate stated; Round clears ping parts only through `ITeamPingReset`.
+- Feature: `StageSignal` `FTimerPayload` mapping (`Subject` none, `Phase` viewing team; review N3); Pings feature folder and service; concealment gate for pings (server `IsInBushOrTransition`, owner `IsOwnPawnConcealedForPing()`); ping statistics to the telemetry section only.
+- Traceability: Pings requirements registered as `TR-png-001..024` (all covered by Accepted ADRs).

@@ -1620,10 +1620,39 @@ interfaces:
     consumers:
       - informant-pings-team-comms
     adr: docs/architecture/adr-0011-pawn-command-interface-input.md
-    signal_signature: "AStealthPlayerController::ServerTeamPing(FNetTeamPing {FVector_NetQuantize10 Point}) reliable Server RPC from IA_Ping (IMC_Common); not a pawn command (never ServerPawnCommand, action slot, queue or FActionState); validated by phase, role, range from the eye pivot, then a ParticipantId-keyed token bucket; silent drop on failure (failures spend no token)"
+    signal_signature: "AStealthPlayerController::ServerTeamPing(FNetTeamPing {FVector_NetQuantize10 Point}) reliable Server RPC from IA_Ping (IMC_Common); not a pawn command (never ServerPawnCommand, action slot, queue or FActionState); validated in order by phase/latch, state + bound pawn + not concealed (IsInBushOrTransition false; Emerging counts as concealed), range from the eye pivot (PingRangeCm + PingRangeSlackCm), then a ParticipantId-keyed token bucket (epsilon = PingBucketPerSec * 0.1 s); runs at RPC arrival outside the queue drain and mutates no gameplay state; silent drop on failure, counted by reason (failures spend no token)"
     referenced_by:
       - docs/architecture/adr-0011-pawn-command-interface-input.md
       - docs/architecture/adr-0001-crowd-identity-rules.md
+      - docs/architecture/adr-0002-resolution-queue-round-end-staging.md
+      - docs/architecture/adr-0017-concealment-per-viewer-presentation.md
+    added: 2026-10-25
+    revised: 2026-10-25
+  # --- Technical Setup 2026-10-25 ---
+  - contract: team_ping_reset
+    status: active
+    pattern: direct_call
+    producer: round-match-framework
+    consumers:
+      - informant-pings-team-comms
+    adr: docs/architecture/adr-0007-code-modules-include-boundaries.md
+    signal_signature: "ITeamPingReset::ClearAllTeamPings() (Core consumer-owned UINTERFACE, CannotImplementInterfaceInBlueprint), called by Round in the round-end step (R9 (a)); implemented by UTeamPingService (StealthGameplay/Features/Pings); registered weakly by the composition root beside ICrowdControl; Pings clears itself at OnRosterReset and InvalidateAllBindings via Roster events"
+    referenced_by:
+      - docs/architecture/adr-0007-code-modules-include-boundaries.md
+      - docs/architecture/adr-0002-resolution-queue-round-end-staging.md
+    added: 2026-10-25
+    revised: ""
+  - contract: own_concealment_ping_gate
+    status: active
+    pattern: direct_call
+    producer: concealment-bushes
+    consumers:
+      - informant-pings-team-comms
+    adr: docs/architecture/adr-0017-concealment-per-viewer-presentation.md
+    signal_signature: "IsOwnPawnConcealedForPing() client-local owner query (Concealment Public/View): owner bIsConcealed, or own FActionState hide entry/exit or bush strike-out before recovery ends, or an unanswered Hide(Enter) (1.0 s client backstop); fail-closed mirror of the server IsInBushOrTransition; no replicated field"
+    referenced_by:
+      - docs/architecture/adr-0017-concealment-per-viewer-presentation.md
+      - docs/architecture/adr-0011-pawn-command-interface-input.md
     added: 2026-10-25
     revised: ""
 performance_budgets:

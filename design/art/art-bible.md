@@ -2994,15 +2994,17 @@ hatched = concealed, outline = informant), independent of the viewer. Section
 1. **Informant marker visibility to active allies.** Do active players see an
    allied informant's marker, and in which state? Art default: yes, outline-only
    (the marked player's state), pending the gameplay and UX decision.
+   *Answered 2026-10-25 (`design/gdd/teammate-markers.md`, informant ally rule; its OQ4 closed):* yes, outline-only, showing the marked player's state, for every viewer of the ally's team, active and informant alike.
 2. **Hold-to-prepare toggle.** May a "toggle to prepare" alternative be added with
    identical UI (motor accessibility)? Does it change balance? (Open: a
    Settings & Accessibility (VS) decision; the indicator is identical either
    way.) *Answered 2026-10-24:* prepare is a **protected window from server
    acceptance**, not charge-then-armed (IIF UI-2, Assassination ASN-R3; 7.3
-   row 4).
+   row 4). *Toggle answered 2026-10-25 (`design/accessibility-requirements.md`):* hold-to-toggle for Run, Interact and Prepare (IIF R16), delivered at the Vertical Slice with the settings screen. The toggle sends the identical server command stream (T-05), so it does not change balance.
 3. **Accessibility tier.** Standard (WCAG-style contrasts, remap, scaling,
    captions, colourblind options, Reduce screen effects) or Comprehensive?
    Record in `design/accessibility-requirements.md`.
+   *Answered 2026-10-25 (committed in `design/accessibility-requirements.md`):* **Standard, with named elevations** (for example Reduce motion as three independent settings, High contrast mode, and the ally marker scale option). The elevations are listed in that file, not repeated here.
 4. **Ping visibility.** *Answered 2026-10-25 (user decision, Informant Pings
    PNG-R1):* every ally on the sender's team sees the ring, Active and Informant
    viewers alike, in the same presentation (same ring shape, no extra halo);
@@ -3794,7 +3796,7 @@ the check that closes it. Section references say where the value is used.
 | OI-8 | GPU allocation table is assumed; R1 to R3 not yet run | technical-artist with performance-analyst | Run R1 to R3, replace the table, confirm >= 2.0 ms headroom; apply F1 / F2 if not | 8.x.14, 8.x.16 |
 | OI-9 | LOD3 (900 tris) retains head mass and leg gap, and the 8.5 thresholds, are ASSUMED | technical-artist | T1 items 16, 22, 23 on LOD3 of the first test model; T3 at 30 m on LOD3 | 1.3.5, 5.6, 8.5 |
 | OI-10 | Body_Base not yet built | technical-artist (accepted by T1 and the art-director) | Deliver per 1.3.9 | 1.3.9, 8.7 |
-| OI-11 | Character Pool & Appearance GDD (appearance-deal allocator, test T6) not yet written | game-designer / systems designer | GDD exists and T6 passes in simulation | 1.3.1, 1.3.7, 1.3.8 |
+| OI-11 | **CLOSED 2026-10-25.** Character Pool & Appearance GDD (`design/gdd/character-pool-appearance.md`) is Approved (D35). Open sub-item: the T6 simulation check | game-designer / systems designer | T6 passes in simulation (the only remaining check) | 1.3.1, 1.3.7, 1.3.8 |
 | OI-12 | The contrast scalar (tone-curve slope at the 18 percent grey pivot) needs an implementation definition and measurement | technical-artist | Define the pivot and measure +/- 20 percent on a grey ramp; add to the grade-preset validator (2.12) | 2.1, 2.11 |
 | OI-13 | The camera and spawn-density rule that holds the 8 / 14 / 28 per-band caps (at most 8 figures at LOD0 screen height, 14 in the LOD1 band, the rest at LOD2 or beyond) is not written; until it is, the 266k character figure is a design-density case | level-design with game-designer | Write the rule (camera distance and FOV limits, crowd spawn spacing, maximum local density) in the crowd/city GDD; verify with a scripted per-band figure count over 50 seeds and in T5 | 1.3.5, 8.5, 8.x.2, 8.x.8, 8.x.16 |
 
@@ -3811,13 +3813,13 @@ waived.
 | OI-4 | Sun direction lock; cornice shade-band and alley-sliver checks (2.1, 6.8) | Graybox lighting sign-off, before the generator's layout rules are frozen |
 | OI-5 | Generator shadow-trace constants and objective-site sun-pool validation (4.5, 6.8) | Before the generator story that places objective sites closes |
 | OI-6 | Per-area albedo and shade-ratio sign-off (4.5) | First lighting pass of each area type |
-| OI-7 | Marigold and signal-colour lock (4.1 law 4, 4.7 test 3, 6.4 goods) | Before the UI palette (4.6) is frozen and before goods props are authored |
+| OI-7 | Marigold and signal-colour lock (4.1 law 4, 4.7 test 3, 6.4 goods) | Before the UI palette (4.6) is frozen and before goods props are authored; scheduled: before UI palette freeze, first UI implementation story |
 | OI-8 | The mass-production gate (8.x.14): characters 2 to 8 and kit variants beyond one each | Mass-production gate |
 | OI-9 | LOD3 policy and the 8.5 thresholds for the pool | Test character T1 / T3 sign-off; before characters 2 to 8 |
 | OI-10 | The first Meshy credit (8.7 step 0(b)) and every character conformity check | Before the test character is generated |
 | OI-11 | The appearance-deal allocator story and test T6 (1.3.1, 1.3.7) | Before the allocator implementation story starts |
 | OI-12 | The grade-preset validator (2.12) and the state distinctness checks (2.11) | Before any grade preset is signed off |
-| OI-13 | The 266k character figure and the 800k split (8.x.2, 8.x.16); test T5 | With OI-8, before the mass-production gate lifts |
+| OI-13 | The 266k character figure and the 800k split (8.x.2, 8.x.16); test T5 | With OI-8, before the mass-production gate lifts; scheduled: before spike R3 is trusted |
 
 ## 9. Reference Direction
 
@@ -3828,6 +3830,8 @@ does the stage stay neutral (SpyParty), what does the city's mass and
 material look like (Templo Mayor archaeology), and what does stillness feel
 like on screen (Hitchcock and midday photography). The visual anchor is
 "Held Breath"; every reference is a tool for that, not a mood board to imitate.
+
+**Ratification flag (2026-10-25).** "Held Breath" is ratified as the visual identity anchor under the user's 2026-10-25 authorisation. The user's confirmation is recorded in `design/gdd/game-concept.md` (Visual anchor: "Confirmed by the user 2026-10-25"). The `AD-CONCEPT-VISUAL: STRONG` entry in `production/session-state/active.md` records the original autonomous recommendation only.
 
 **How to use this section.** A reference supplies one named technique, tied to
 a numbered section. If an artist cannot state which section the borrowed
