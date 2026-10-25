@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/crowd-npc-behaviour.md
 > **Architecture Module**: Crowd in `StealthGameplay/Features` (Crowd Director subsystem, StateTree per NPC, follower; implements `ICrowdControl` and `ITakeoverEligibilitySource`)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories crowd-npc-behaviour`
+> **Stories**: 39 stories (see the Stories table at the end of this file)
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 11 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -66,3 +66,49 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 - Visual/Feel and UI stories have retained screenshots in `production/qa/evidence/`
   (a lead sign-off too for Visual/Feel)
 - Stories embed Control Manifest version 2026-10-25e and every governing ADR's conditional gate has reported before dependent work is marked Done
+
+## Stories
+
+Created 2026-10-25 by `/create-stories` at `story_granularity: balanced`. Every GDD criterion AC-CNB-01 to AC-CNB-38 is covered by at least one story (AC-CNB-26 by the early spike 032 and the exit pass 038; AC-CNB-30 advisory in 037). TR-crowd-011 exists in `docs/architecture/tr-registry.yaml` but is missing from this epic's requirements table above; stories 010, 034 and 035 carry it (raise at the next `/architecture-review`).
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Spike: StateTree, controller and path-latency engine verifications | Integration | Ready | ADR-0016 |
+| 002 | Crowd draws: counter-based streams, continuous mappings and kill independence | Logic | Ready | ADR-0016 |
+| 003 | Crowd tuning keys, Baseline and Tell Matrix rates, and asset references as data | Config/Data | Ready | ADR-0016 |
+| 004 | Crowd Director core: server-only subsystem, ledger and phase gating | Logic | Ready | ADR-0016 |
+| 005 | Command sinks: motion/command split, control-epoch check and Halt filter | Logic | Ready | ADR-0016 |
+| 006 | AStealthCrowdController: no path following, Look pitch path and tick order | Integration | Ready | ADR-0016 |
+| 007 | Path source and start budget: pre-baked edges, async queries and leg ids | Logic | Ready | ADR-0016 |
+| 008 | Spatial hash, ray budget and the concealment-blind perception filter | Logic | Ready | ADR-0016 |
+| 009 | Follower: path shaping, pace set, corners and the shared stop floor | Logic | Ready | ADR-0016 |
+| 010 | Virtual input layer: device profiles, virtual camera and recordable stream | Logic | Ready | ADR-0016 |
+| 011 | Avoidance as Move offsets: yield rate, obstacles and the blocked ladder | Logic | Ready | ADR-0016 |
+| 012 | StateTree schema, assets, decision grid and the per-frame due-time list | Integration | Ready | ADR-0016 |
+| 013 | Identity blindness and command-path gate | Integration | Ready | ADR-0001 |
+| 014 | Pauses, stall-cover regulator and the stationary-stretch bound | Logic | Ready | ADR-0016 |
+| 015 | Conversation (C3) and turn-in-place (C6), partner-blind | Integration | Ready | ADR-0016 |
+| 016 | Gaze catalogue (G1-G7): glances, holds, goods and salient motion | Logic | Ready | ADR-0016 |
+| 017 | Density model (F1) and assignment-blind start placement | Logic | Ready | ADR-0016 |
+| 018 | Tell sampler: compensated clocks, chain-gap guard and calibration counters | Logic | Ready | ADR-0016 |
+| 019 | Red herrings: late-porter runs, public traversals and reversals | Integration | Ready | ADR-0016 |
+| 020 | Decoy tending: uniform court choice, early releases and the T3 posterior | Integration | Ready | ADR-0016 |
+| 021 | Brace and startle red herring: due clock, flinch triggers and Prepare cap | Integration | Ready | ADR-0016 |
+| 022 | Bush red herring: occupancy-blind shade-seeking with uncapped stays | Integration | Ready | ADR-0016 |
+| 023 | Tell Matrix calibration gate: 600-minute rates and evidence-compounds test | Logic | Ready | ADR-0016 |
+| 024 | Strike stimulus fan-out and outcome-blind reactions (R8) | Logic | Ready | ADR-0016 |
+| 025 | Strike reaction look: the graybox market reads calm, not a stampede | Visual/Feel | Ready | ADR-0016 |
+| 026 | Ambient schedule as queue items and witness-free emergence | Integration | Ready | ADR-0016 |
+| 027 | Kill vacancy, victim-blind replacement delay and exit cancellation | Logic | Ready | ADR-0016 |
+| 028 | Participant-bound pawn driving: takeover blend, restricted driver and hand-back | Integration | Ready | ADR-0016 |
+| 029 | ReleaseToCrowd: invisible adoption, strike lockout and the exile exit slot | Integration | Ready | ADR-0016 |
+| 030 | Takeover eligibility supply and atomic NPC release for informants | Integration | Ready | ADR-0016 |
+| 031 | Halt at the round-end step and handover epoch discipline | Integration | Ready | ADR-0016 |
+| 032 | Spike: 60-character server cost on the reference host (50 NPCs + 10 players) | Integration | Ready | ADR-0016 |
+| 033 | Global cost-cut order with behaviour invariance | Logic | Blocked (story 032 spike unreported) | ADR-0016 |
+| 034 | Pipeline parity: AIController versus bot-client input path, nightly | Integration | Ready | ADR-0016 |
+| 035 | Classifier gate: NPC motion features cannot identify NPCs (playtest) | Integration | Ready | ADR-0016 |
+| 036 | No crowd UI, debug draw or indicator in Shipping | UI | Ready | ADR-0016 |
+| 037 | Tell Matrix row citations across the dependent GDDs (advisory check) | Config/Data | Ready | N/A |
+| 038 | Performance pass: 50/60-character server cost on the full catalogue (exit criterion) | Integration | Blocked (story 032 spike unreported) | ADR-0016 |
+| 039 | Retire the prototype crowd: swap to the Director and one pawn class | Integration | Ready | ADR-0016 |

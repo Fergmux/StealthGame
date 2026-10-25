@@ -15,7 +15,7 @@ Engine: Unreal Engine 5.8 (installed 5.8.4)
 | [Level Socket Contract](level-socket-contract/EPIC.md) | Core | Level Socket Contract | design/gdd/level-socket-contract.md | Not yet created | Ready |
 | [Shared Character & Locomotion](shared-character-locomotion/EPIC.md) | Core | Shared Character & Locomotion | design/gdd/shared-character-locomotion.md | 55 stories | Ready |
 | [Camera System](camera-system/EPIC.md) | Core | Camera System | design/gdd/camera-system.md | 25 stories | Ready |
-| [Crowd & NPC Behaviour](crowd-npc-behaviour/EPIC.md) | Feature | Crowd & NPC Behaviour | design/gdd/crowd-npc-behaviour.md | Not yet created | Ready |
+| [Crowd & NPC Behaviour](crowd-npc-behaviour/EPIC.md) | Feature | Crowd & NPC Behaviour | design/gdd/crowd-npc-behaviour.md | 39 stories | Ready |
 | [Concealment (Bushes)](concealment-bushes/EPIC.md) | Feature | Concealment (Bushes) | design/gdd/concealment-bushes.md | Not yet created | Ready |
 | [Assassination & Defence Reversal](assassination-defence-reversal/EPIC.md) | Feature | Assassination & Defence Reversal | design/gdd/assassination-defence-reversal.md | Not yet created | Ready |
 | [NPC-Kill Penalty & Informants](npc-kill-penalty-informants/EPIC.md) | Feature | NPC-Kill Penalty & Informants | design/gdd/npc-kill-penalty-informants.md | Not yet created | Ready |
