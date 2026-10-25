@@ -1,0 +1,757 @@
+# Shared Character & Locomotion
+
+> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24
+> **Design Review**: NEEDS REVISION 2026-10-24 (41 revisions applied; specialists systems-designer, qa-lead, art-director; senior creative-director; log design/gdd/reviews/shared-character-locomotion-review-log.md)
+> **Author**: design-system pipeline (autonomous) + ue-replication-specialist, technical-artist, creative-director
+> **Last Updated**: 2026-10-24
+> **Last Verified**: 2026-10-24
+> **Implements Pillar**: P1 Hide in Plain Sight; P2 Every Advantage Is a Tell
+> **Creative Director Review (CD-GDD-ALIGN)**: CONCERNS -> REVISED 2026-10-24 (four items applied: non-zero NPC rate for every SCL tell (R7.3, OQ7, AC-SCL-37); analog pace quantised to the Crowd pace set with a full-pace rule (R5.1, AC-SCL-36); first-person view may not exceed the head clamp (R9, OQ8); Player Fantasy approved)
+
+## Summary
+
+Shared Character & Locomotion is the one body every person in the city wears: a single pawn class driven identically by human input or by NPC AI, with one spawn path, one movement model (a calm crowd walk and a loud run, a small vault-and-climb set), one look path, one animation set and one network configuration. It makes a player move, look, sound and replicate exactly like a citizen until they choose a tell (Pillar 1), and it makes the two advantages it grants, speed and shortcuts, visibly expensive (Pillar 2).
+
+> **Quick reference** — Layer: `Core` · Priority: `MVP` · Key deps: `Input & Interaction Framework, Participant State & Roster, Character Pool & Appearance, Tuning Data & Config; dependents Round, Session, Camera, Crowd, Concealment, Assassination, Penalty, Level Socket Contract, Visibility Policy, Diegetic Audio`
+
+## Overview
+
+Shared Character & Locomotion (SCL) owns the **Shared Pawn**: the one `ACharacter`-derived class that every body in the city uses, whether a human player or an NPC drives it. It owns six things. (1) **The pawn and its lifecycle**: one class, one named spawn factory (deferred spawn, `AppearanceId` set, optional `BindPawn`, finish spawning, possess), one crowd-takeover entry for informant respawn (no pawn is created for a participant mid-round), a disconnect hook that never destroys a pawn, possession by a `PlayerController` or an `AIController`, and the stop-and-blend handover when control moves between them. (2) **Movement execution**: it executes the Input & Interaction Framework's `Move(Direction, Gait)`, `Look(Rotation)` and `Traverse` on the CharacterMovementComponent (CMC, not Mover) for every pawn, with two speed tiers (Walk at crowd pace, Run as a tell), baseline acceleration, braking and turn shaping, the traversal set (vault 0.8 m, climb/mantle 1.6 m, *provisional pending traversal spike*), and the restrictions by participant state and action (informants walk only; no run or traversal while bracing, interacting or in a bush transition). It publishes the server state `IsRunning` and `IsInTraversal`. (3) **One look path**: a single clamped, rate-limited head-look state computed on the server for every pawn and replicated the same way, so a player's 700 °/s mouse flick never reaches anyone's screen or network stream. (4) **Animation**: the Game Animation Sample's motion-matching AnimBP, one database set and one pose set (`ActionPose` poses), and a significance-only animation LOD keyed on figure screen height (art bible 8.5 and 8.x.8), inside the 4 ms / 50-character budget. (5) **Network parity**: one replication configuration for all pawns (update frequency, priority, cull distance, relevancy, dormancy, smoothing, correction thresholds), with the pawn-pointer and sub-threshold-lag rules shared with the Roster and Session GDDs. (6) **Footstep path parity**: one anim-notify footstep path for all pawns; Diegetic Audio (Vertical Slice) designs the sound, but the parity rule lives here. SCL decides how a command *moves and animates* a body; it does not decide whether a command is legal (the IIF does, using SCL's state) or what an action *means* (Assassination, Objectives, Concealment). Implementation choices are marked "-> ADR". Anything that depends on the net-emulation spike (100 ms, 1 % loss), the 50-character performance spike (art bible R3) or the traversal spike is marked **provisional pending spike**.
+
+## Player Fantasy
+
+**Framing: indirect, with a thin direct layer** (Core category; recommended option taken in autonomous mode). The player never thinks about this system. What they feel is *the body is a perfect disguise until I spend it*. When they walk, they walk exactly as the stranger beside them walks: same pace, same unhurried turn, same slow stop before a stall, the head drifting the same way. Nothing they do with their hands on the controls (a twitchy mouse, a tapped key, a gamepad instead of a keyboard, first person instead of third) leaks through the body. The direct layer is the moment they *choose* to leave the crowd: pressing Run and feeling the city open up, the vault over a low wall that takes forty metres off the route, knowing every eye that is on them can now see a runner. The anchor moment is the reverse view: watching a crowd and knowing that the only thing that could give someone away is something *they* decided to do.
+
+- Pillar 1, Hide in Plain Sight: "nothing makes a player differ from an NPC unchosen: model, animation, audio, UI, network presentation". SCL is where animation and network presentation are made equal; it levels players *down* to NPC fidelity, never NPCs up (art bible 5.4 rule 4).
+- Pillar 2, Every Advantage Is a Tell: speed and shortcuts are the advantages SCL grants, and both are loud (art bible 5.5 Run and Parkour rows).
+- Anti-pillar "not a reflex game": movement offers no dodge, no sudden stop and no fast reversal at walk pace; mastery is choosing *when* to deviate, not executing it quickly.
+
+*Reviewed and approved at CD-GDD-ALIGN (2026-10-24).*
+
+## Detailed Design
+
+### Core Rules
+
+*Specialists consulted: ue-replication-specialist (R3, R4, R7, R12-R16) and technical-artist (R5, R8, R10, R11, R18). game-designer, art-director, gameplay-programmer, ai-programmer and systems-designer were not spawned in this resumed run (orchestrator limit of three consults); their lenses are applied explicitly where noted. The independent `/design-review` (2026-10-24: systems-designer, qa-lead, art-director, creative-director) revised R2, R2a-b, R5, R6, R7, R8, R9, R10, R11, R13, R15, R18 and R19.*
+
+**R1. One class.** Every body in a round, NPC or player, informant or active, is an instance of one class, the **Shared Pawn** (`ACharacter`-derived; the Game Animation Sample character Blueprint is reparented onto it, as the prototype's `AStealthCharacter` already does; final class name -> ADR). There is no subclass, no per-instance component set, no per-instance replication flag and no per-instance tuning for NPCs or players. The only per-instance data that differs between pawns are `AppearanceId` (Character Pool), `ActionPose` (IIF), movement state and the controller. No property, function or Blueprint branch on the pawn, its components, its AnimBP or its audio may test `IsPlayerControlled()`, `IsLocallyControlled()` for anything another client can observe, `Controller` class, `PlayerState` presence or Roster state, except the owner-only, local presentation listed in R9. (Owner-local means it runs only on the owning machine and changes nothing replicated or visible to others.)
+
+**R2. One spawn factory.** `SpawnSharedPawn(Transform, AppearanceId, ControlKind ∈ {Ai, Player}, Participant = none, ExpectedEpoch)` is the only code that creates a Shared Pawn. Only two callers exist: Round (round-start placement of all pawns) and Crowd (NPC replacement, including the same-card replacement that follows any kill, an informant's included). **No participant pawn is ever created mid-round**: informant respawn is a takeover (R2a). Every spawn path asserts `Instigator == Self` and spawns no replicated child actor carrying `Owner`/`Instigator` (Visibility Policy R5 table). The engine's default pawn path (`SpawnDefaultPawnFor`, `RestartPlayer`) is routed to it or disabled. The sequence is identical for both kinds:
+1. Deferred spawn of the Shared Pawn class at `Transform` (auto-possess disabled).
+2. Set `AppearanceId` and apply it (Character Pool CP-10: uint8, default 255, initial-only, one apply function; nothing is drawn until it resolves).
+3. If `Participant` is set: `Roster.BindPawn(Participant, Pawn, ExpectedEpoch)`. On any rejection the pawn is destroyed before `FinishSpawning` and the factory returns the rejection (Round aborts `BindFailed`; other callers retry per their GDD).
+4. `FinishSpawning`.
+5. Possess in the same server frame: `ControlKind = Ai` spawns the class's `AIController` and possesses; `Player` calls `PlayerController.Possess`. A participant that is not `Connected` gets `Ai` (Round R17).
+Replication starts on the next net tick, so the first bunch any client receives already carries `AppearanceId`, the final controller-dependent fields (R13) and no binding. A pawn is never visible, relevant or possessed by a client before Session has moved that participant to `Connected` (LSC spawn gate).
+
+**R2a. Crowd takeover (informant respawn; decided cross-GDD rule C1).** `TakeOverCrowdPawn(Pawn, Participant, ExpectedEpoch)` is the only way a participant gets a pawn after round start. NPC-Kill Penalty & Informants (with Crowd) chooses the pawn uniformly at random among the eligible pawns of the team's respawn set (near its `TeamSpawn`, out of line of sight of every non-team viewer); SCL defines eligibility and the mechanics:
+1. **Eligible**: the pawn is `Unbound`, not `Disabled`, `ActionPose = None`, not `IsInTraversal`, not `IsRunning`, not concealed, and not inside a handover. An ineligible pick is rejected `NotEligible` and the caller picks again (its retry rule).
+2. **Sequence, committed in one queue slot, possession executed by the hand-over pass at the next frame start** (consistent with R4 and Round R17; ADR-0010 §3.2, §4.3): in the caller's slot, eligibility (R2a.1), then `Roster.BindPawn(Participant, Pawn, ExpectedEpoch)` (on rejection nothing changes), then Crowd releases control and the AI → player hand-over is committed (control epoch bumped); at the start of the next server frame the hand-over pass unpossesses the crowd AI controller and runs `PlayerController.Possess(Pawn)` through the R4 AI → player path. Between bind and possession the pawn is `BoundLive` but crowd-possessed, issuing nothing, with the last-command hold (R4.3); every system treats that as ordinary. No actor, component or NetGUID is created; `AppearanceId`, velocity and `HeadLook` are unchanged (the look is that pawn's existing card, Character Pool `TakeNpcCard`).
+3. The participant's legality class is `Informant`, so R5.2/R6 clamps apply from the next move (the pawn was eligible only while walking, so no visible deceleration is forced).
+4. The killed body is handled exactly like an NPC corpse, and Crowd's replacement for it is created by `SpawnSharedPawn` with the victim's card through an emergence socket. Total pawn count is constant. The same entry serves an "awaiting pawn" informant (Roster R11, Round R18); it is used for nothing else in MVP.
+
+**R2b. Disconnect never destroys a pawn (Roster R9 hook, spike S8).** The game's PlayerController overrides `PawnLeavingGame` [verify 5.8]: on controller destruction the pawn is unpossessed and, in the same server frame, possessed by a crowd AI controller through R4 (Player → AI); the binding stays as the Roster sets it. No connection event destroys, re-creates or re-spawns a Shared Pawn (Session rule 22).
+
+**R3. Possession parity.** Possessing, unpossessing or re-possessing a pawn never changes its class, components, replication configuration, movement mode, velocity, `HeadLook`, AnimBP instance or mesh state, and causes no forced net update of its own. Changes to `Owner`, `Controller` and `PlayerState` must be invisible to non-owners (Roster R6 pawn-level link; Session rule 25d): the candidate is owner-only conditions on all three, or giving every NPC pawn an equivalent dummy so the received property bunch has the same shape **[verify, spike S1; -> ADR]**. Until S1 passes, the network half of Pillar 1 is **provisional pending spike** and no client code may derive player-ness from these pointers.
+
+**R4. Stop-and-blend handover** (AI ↔ player; Roster R11 takeover rule, Round R17, Session rule 25f). A handover happens at the start of a server frame, never during a traversal (it is deferred until the traversal lands):
+1. The outgoing controller's outstanding holds are ended through the IIF exactly as a release (IIF R4); `ActionPose` returns to `None` through the ordinary end or cancel blend.
+2. The incoming controller's control rotation is initialised from the pawn's current `HeadLook` world rotation, so the head does not move at the switch.
+3. Velocity is kept. **Player → AI**: the AI issues `Move(current heading, Walk)` for `HandoverHoldSec`, so a running pawn slows through the baseline run-to-walk deceleration (F2) and then the AI picks a crowd behaviour from that state (continue walking, B4 slow-to-pause, turn). **AI → player** (rejoin, crowd adoption): the pawn keeps moving as it was until the player's first `Move`, which is shaped from the current velocity by R5. A player who gives no input sees the pawn brake by the baseline (`WalkStopSec`).
+   **Last-command hold** (Crowd change request 15b): after any possession change the pawn keeps executing the last `Move` it received until the new controller's first command or `HandoverHoldSec`, whichever comes first, so no frame between the switch and the new controller's first command has zero input (Crowd R10.5; Round commits the handover in the drain and possession takes effect at the next frame start).
+4. No frame of the handover shows deceleration above the baseline braking of the current gait, a pose change other than an ordinary `ActionPose` end, or a head move faster than `LookMaxRateDegPerSec` (AC-PSR-43, AC-SCL-14).
+
+**R5. Speed tiers and baseline motion shaping** (one model for every pawn; art bible 5.4 B1, B4, B5, rule 1; IIF R3).
+1. **Gaits.** `Move(Direction, Gait)`: `Direction` is a 2D vector clamped to length 1; the owner's client applies the stick dead zone (0.2) before sending, and the server applies none (it treats length 0 as no input, for every pawn). Pace quantisation uses hysteresis of ±0.03 of magnitude around each boundary, and the pace set's minimum must be ≥ `WalkSpeedScaleMinMult` (I-SCL-5). **Walk**: max speed `WalkSpeedCmPerSec × clamp(|Direction|, WalkSpeedScaleMinMult, 1)` (default 112-140 cm/s). Keyboard input always gives scale 1. Analog magnitude is quantised to the same discrete pace set Crowd uses (default {0.8, 0.9, 1.0}), with hysteresis, and pace changes are shaped by baseline acceleration, so an analog stick cannot produce a continuously drifting speed no NPC shows. **Full-pace rule (CD-GDD-ALIGN):** in the Crowd reference scene at least 50 % of NPC walking time is at scale 1.0, and an NPC changes pace only at a stop or a route-leg boundary (AC-SCL-36), so a keyboard walker holding 1.0 is ordinary. **Run**: `RunSpeedCmPerSec` (450), no scale. There is no sprint, crouch, jump, strafe, back-pedal or dodge in the MVP.
+2. **Effective-gait clamps** (applied by SCL on the server and predicted by the owner, the same function for every pawn): Run becomes Walk if the pawn's legality class is `Informant` (informants walk only) or `ActionPose = Brace` ("no run while prepared"; a requested Run is clamped and never cancels the brace, IIF R7/R8). During `Interacting`, Run is not clamped: the IIF cancels the interaction on Gait=Run (IIF R8). **Planted brace**: while `ActionPose = Brace` Move input is ignored for both translation and yaw; only head-look moves (within the R8 clamp). Brace entry from a walk plays one authored step-into-stance clip whose root motion covers the F2 stop distance for the current speed within ±10 %, so the wide stance never slides (art bible 5.5 "feet planted wide, held"; CD ruling D3 2026-10-24). (This answers IIF Open Question 3, "may a braced pawn walk": no, nor turn. A strolling or rotating brace would let a defender walk a guard down the street and would need braced-walk or brace-pivot clips. Assassination confirmed at its design review: planted brace with frozen yaw, no brace-pivot clips, ASN-R3; OQ9 closed.) While `Striking`, `Countering` or in `HideTransition`, Move input is ignored (zeroed during Hide transitions, Concealment CON-R4a) and the pose's own root motion or warp moves the pawn. While `Interacting`, Move input is applied normally; the IIF cancels the interaction once commanded displacement passes `InteractMoveCancelDistCm`.
+3. **Acceleration and braking.** Accelerating toward gait speed V takes `WalkStartSec` / `RunStartSec` (constant acceleration). Walk braking is one constant deceleration for every walk pace, set from the **slowest** pace so its stop takes exactly `WalkStopSec` (default 187 cm/s²: 0.60 s / 34 cm at 112 cm/s, 0.75 s / 53 cm at 140 cm/s; CD ruling D1). Run braking stops 450 cm/s in `RunStopSec`; dropping from Run to Walk while moving decelerates at the run braking rate (F2). Every walk stop therefore takes ≥ `WalkStopSec` ≥ 0.5 s (the B4 slow-to-pause), never the art bible 5.5 sudden stop (< 0.2 s). There is no input that produces a sudden stop at walk.
+4. **Turning.** The body always faces its direction of travel (orient-to-movement) in both camera modes; control rotation never turns the body directly (`bUseControllerRotationYaw` off for every pawn). The acceleration direction turns toward the input direction at most `WalkTurnRateDegPerSec` (60 °/s, radius F3) at walk and `RunTurnRateDegPerSec` at run. If the input direction differs from the current heading by more than `ReversalAngleDeg` while speed is above `PivotSpeedCmPerSec`, the pawn performs the baseline stop, pivots in place at `PivotTurnRateDegPerSec`, then starts: an abrupt reversal (art 5.5) cannot be produced at walk pace. The reversal is **latched** once triggered and released only when `Pivot` exits, and it re-triggers only when |Δψ| exceeds `ReversalAngleDeg`; below `ReversalAngleDeg − ReversalHysteresisDeg` it never triggers, so a stick wobbling at the threshold cannot flip arc and pivot each frame. A pawn at or below `PivotSpeedCmPerSec` whose input differs from its facing by more than `PivotExitAngleDeg` enters `Pivot` directly (idle start in a new direction). An exact 180° tie turns in the sign of the last non-zero turn, else clockwise. All angles here are from the same function for every pawn. The shaping lives in the movement component (predicted on the owner, identical on the server and for AI with `bRequestedMoveUseAcceleration`), so it is not player-only smoothing.
+5. **Idle turn-to-look.** When idle, if the **unclamped** head-look target stays beyond `LookYawLimitDeg` for `TurnInPlaceDelaySec`, the body turns in place at `PivotTurnRateDegPerSec` until |head yaw| ≤ `TurnInPlaceExitFrac × LookYawLimitDeg` (default 35°). NPCs do the same through their gaze catalogue (Crowd change request). The trigger accepts Camera's elastic view-edge overshoot: a target beyond the clamp by up to 5° (minimum 2°, Camera invariant I-CS-5) counts as "beyond `LookYawLimitDeg`" (Camera change request 2).
+6. **No CMC-level avoidance.** RVO avoidance is off for every pawn. NPC avoidance and yielding (B6) is AI steering expressed as `Move` commands (Crowd & NPC Behaviour), so nothing in SCL moves an NPC differently from a player. Players are never auto-steered to yield (it would take their control); Crowd gives NPCs a non-zero non-yielding rate (10-30 % to start, Crowd OQ) so a non-yielding walker is ordinary (CD ruling D5). A blocked pawn of any kind brakes by the baseline and animates from its actual velocity (never walk-in-place).
+7. **AI motion enters through `Move` (IIF R17).** Crowd's follower (ADR-0016 §4: input emulation) issues the IIF `Move(Direction, Gait)` entry point, with `Direction` from Crowd's path smoothing and a pace from the shared set. The engine path-following component does not drive pawns: its direct-move and path-move requests are overridden as a **fault-and-no-op backstop** (a call reports to the fault sink and moves nothing; ADR-0010 §6). No pawn is ever moved by a direct velocity request, `SetActorLocation`, launch or teleport while any client can see it (only designed spawns, which happen out of view). AI Move intent is therefore commanded displacement (R16) exactly as human input is, and the same acceleration, braking and turn shaping apply.
+8. **Contact reaction (B8, CD ruling D5).** When two pawn capsules touch at relative speed ≥ `ContactBrushMinRelSpeedCmPerSec`, both pawns play the same additive shoulder-brush reaction (upper body only, no displacement, no gait change). It is one rule for every pawn, players included, and is presentation driven by replicated movement on each client (no RPC, no replicated field).
+
+**R6. Restrictions by participant state and action** (SCL's half; the IIF gates the commands).
+
+| Pawn condition (server state) | Walk | Run | Traverse | Notes |
+|---|---|---|---|---|
+| Active (incl. every unbound NPC pawn), idle or walking | ✓ | ✓ | ✓ | |
+| Running (`IsRunning`) | ✓ | ✓ | ✓ | IIF rejects Interact, Prepare, Attack, Hide Enter |
+| In traversal (`IsInTraversal`) | root motion only | — | ✗ | Move input buffered and applied on landing |
+| Bracing (`ActionPose = Brace`) | ✗ (frozen: no translation, no yaw; head-look only) | clamped | ✗ (IIF) | entry: step-into-stance clip (R5.2) |
+| Interacting | ✓ (cancels past `InteractMoveCancelDistCm`) | ✓ (cancels the interaction, IIF R8) | ✓ (cancels, IIF R8) | |
+| Striking / HideTransition | ✗ (root motion) | ✗ | ✗ | |
+| Informant | ✓ | clamped to Walk | ✗ (IIF, and SCL refuses the traversal movement mode as a backstop) | same capsule, collision, queueing and yielding as anyone (art 5.3) |
+| RoundEnded / Round freeze | input ignored: baseline braking to idle | ✗ | ✗ | never a snap |
+
+Informants also cannot attack, prepare, interact or hide (IIF R7); SCL adds no informant-only movement (no different top speed, no pass-through, no free camera), because each would be a visible tell (art bible 5.3).
+
+**R7. Traversal set** (*provisional pending traversal spike*; art bible 5.5 Parkour row; LSC `TraversalPoint`).
+1. **Types.** **Vault**: over an obstacle whose top is within `TraversalVaultHeightCm ± TraversalHeightToleranceCm` (0.8 m) and landing on the far side. **Climb (mantle)**: onto a ledge within `TraversalClimbHeightCm ± tolerance` (1.6 m) whose top offers a landing cell (a capsule-diameter footprint, `TraversalLandingClearCm` deep from the coping edge, LSC). Obstacles at or below `TraversalMinHeightCm` (= CMC `MaxStepHeight`, one key) are stepped; every other height outside the two bands blocks. A 1.2 m hurdle may be added after the spike. Only **coping** is traversable, and all coping is traversable (LSC "coping means traversable, and only coping does"); the kit heights equal SCL's capability heights.
+2. **Command.** `Traverse` carries an optional `TraversalPointHint` (the coping record the owner's local query found; IIF change request). The server re-runs eligibility (F5) with its own query and never trusts the hint. It evaluates F5 only after it has processed every saved move whose timestamp is ≤ the command's client timestamp, so the server position matches the owner's at the press within one move and runners are not systematically rejected [verify ServerMove/RPC ordering]. Eligibility uses **body facing**, never the camera.
+3. **Who.** Active pawns only (including NPCs, which reach the same function through navigation links). Informants, bracing pawns and pawns in `Striking`/`HideTransition` cannot. **Pillar constraint (CD-GDD-ALIGN): every tell SCL renders (Run, Vault, Climb) must have a non-zero NPC baseline rate set by Crowd & NPC Behaviour. Crowd decides the rate, not whether there is one.** A tell no NPC ever performs is a confession, not evidence (P2, P3).
+4. **Authority.** Server-authoritative start: the server validates, sets the motion-warp targets from the coping record, writes a replicated `TraversalState {Seq, TypeId, PointId}` with a forced net update, and plays the traversal clip. Every client derives the warp targets locally from `PointId` (the coping is public geometry). The engine's motion-warping component replicates its warp targets to simulated proxies by default (verified in 5.8.4, ADR-0018 E5); the pawn's motion-warping component disables that replication identically for every pawn, so no warp target is ever on the wire (ADR-0018 §7.2). The engine's own montage replication is not used for traversal, so bytes are not duplicated **[verify]**. On a rejection the owner's anticipation is cancelled by the owner-only reply (IIF R6).
+5. **Anticipation.** Every pawn plays the same `TraversalAnticipationSec` lead-in (a step into the coping) before the clip. On the owner it starts locally at the press and masks the server round trip; on the server and on observers it starts at the server's validation. Same clip, same length, so an observer cannot tell a predicted start from an AI start.
+6. **During traversal** `IsInTraversal = true`, collision with other pawns is kept (a pawn standing on the landing cell at validation makes F5 fail), and the movement mode used by the sample (`MOVE_Flying` + root motion + motion warping in the prototype, -> ADR) is identical for all. If root-motion end positions on simulated proxies slide more than `PawnSmoothSnapThresholdCm / 4`, the fallback is to follow the replicated path on proxies and ignore root motion there (spike decision).
+
+**R8. One look path: the IIF R3a Look-parity mechanism** (SCL owns it; art bible 5.4 rule 2, B3; CD-SYSTEMS amendment; -> ADR).
+1. **One control-rotation path.** `Look(Rotation)` sets the control rotation for every pawn: human input through the CMC saved-move path, AI by the crowd AIController writing `Look` (pitch included) into the control rotation directly (IIF R3; Crowd R3, change request 15a). Control rotation has exactly one consumer on the pawn: the F6 filter. No Look event exists, and no presentation code reads control rotation or `GetBaseAimRotation()`.
+2. **One body-yaw rule.** `bUseControllerRotationYaw = false` and orient-to-movement with the R5.4 rates for every pawn; idle re-centring only by R5.5. No pawn ever uses a controller-yaw-driven body.
+3. **One filter, one cadence.** On the server, in the pawn's own tick (never inside ServerMove processing), every frame and for **every** pawn, the same filter turns control rotation into the **`HeadLook`** state: yaw and pitch relative to the torso, clamped to `±LookYawLimitDeg` / `±LookPitchLimitDeg`, moved toward the target by the F6 2D rate-limited filter at fixed 1/60 s sub-steps. Because the filter runs per server tick, a ServerMove-stepped pawn and a tick-stepped AI pawn produce `HeadLook` at the same cadence. Rates are torso-relative; the head's world rate is at most `LookMaxRateDegPerSec` plus the body's current yaw rate.
+4. **One pitch path.** Only `HeadLook` reaches other clients: yaw as one byte encoded over ±`LookYawLimitDeg` (0.55° at 70°), pitch through the engine's `RemoteViewPitch16` (16-bit, ≈ 0.0055° quantisation; verified in 5.8.4 by Crowd's review, change request 15a, replacing the earlier 8-bit / ≈ 1.41° figure), which the pawn writes from the clamped head pitch in `PreReplication` for every pawn, with or without a controller **[verify]**, overriding the engine default that copies raw controller pitch only when a controller exists (Visibility Policy R5 table).
+5. **Observer interpolation.** Every simulated proxy on every client runs the same F6 filter toward the latest received `HeadLook` (same Ω and `LookEaseSec` for every pawn), so a 15 Hz byte stream renders as a continuous eased head, never as 9° steps.
+6. The owner runs the same pure filter locally (prediction) so its own body matches what others see.
+7. One look-at solver in the AnimBP drives the head and neck chain only (Manny: head 60 %, neck_02 25 %, neck_01 15 %, spine 0 %), so the torso does not follow (B3).
+8. Body yaw is never driven by control rotation, so a 700 °/s mouse spin is visible nowhere: not in `HeadLook`, not in the replicated actor rotation, not in pitch. A head held at its clamp for more than 2.5 s is the art bible "head hold" tell, by design.
+
+**R9. Camera mode never changes the body.** First/third-person toggling (Camera System) is local. It changes no replicated property, no component, no pose, no footstep, no movement rule and no tiering input other than the local camera's own FOV (F7: a wider first-person FOV changes which *observed* pawns this client tiers where, on this client only; it never changes the owner's pawn's tier as others see it). Body facing, gait shaping and head-look are identical in both modes. Owner-local presentation that is allowed: hiding the owner's own head mesh from their own first-person camera, hiding the owner's own head, neck and hair in close third person (lens within 60 cm of the eye pivot; Camera change request 2), and the camera itself. The Camera System constrains its view by `GetHeadLookWorldRotation()` and the eye socket so a camera cannot see what the body's line of sight cannot (CD-SYSTEMS amendment; Camera GDD owns the method); Camera's pivot is capsule-derived and uses only the eye socket's height (Camera CS-R4). The view yaw may not exceed the ±70° head clamp (wider looks are paid through the body); camera view/aim pitch may range −60° to +40° **in both camera modes** (creative-director ruling at Camera design review, extending D6; user to confirm, Camera OQ9), local only, while the replicated head pitch stays clamped at ±20° and holds at the limit (OQ8 ruling as adjusted by the CD at design review, D6).
+
+**R10. Animation set.** One AnimBP class (Game Animation Sample derived), one motion-matching database set, one chooser set, one look-at solver, one pose set. Locomotion databases cover the calm walk at 112-140 cm/s (slow-walk loops, starts, stops, turns, pivots; play rate 0.9-1.1 plus stride warping) and the run at 450 cm/s; an idle set (≥ 3 variants, weight shift every 4-9 s from a per-pawn timer seeded identically for every pawn kind, onset ≥ 0.8 s, no loop shorter than 4 s; B2) and the shared contact reaction (R5.8); the sample's sprint, crouch, jump and unused overlays are removed. `ActionPose` (the `Pose` field of the IIF's replicated `FActionState {Pose, Seq, Variant, ContactServerTime, WarpPoint}`, IIF R12 / Assassination ASN-R21; set {None, Brace, InteractPose, Strike, Counter, BushEnter, BushExit}, written only through the IIF on the server) drives AnimBP states; Strike and Counter clips are scheduled from `ContactServerTime` and `WarpPoint` (Assassination owns the timing), and the owner's own `BushEnter`/`BushExit` clip is predicted locally (≤ 50 ms) and reconciled (Concealment change request 1). A **shared contextual idle overlay** plays for every idle pawn with per-pawn random timers seeded identically for every pawn kind (Crowd change request 3; art bible B8): a touch within 100 cm of a touchable prop (prop records published by LSC, Crowd change request 8; that record type is a pending user decision (schema change), and until it exists the touch half of the overlay is off for every pawn alike) and conversation gestures facing a pawn within 150 cm; it never reads controller kind. Pose states use chooser-selected pose databases; one-shots that need root motion or warping (traversal, strike) use montages started by server state. Pose search cadence is set by time (`AnimSearchIntervalTierBSec`), not by update count, so it is the same at any frame rate. Debug draws, per-frame traversal traces and per-frame chooser evaluation are stripped; traversal traces run only on a `Traverse` press.
+
+**R11. Significance-only animation LOD** (art bible 8.5 and 8.x.8; ADR-001).
+1. Each client computes, for every pawn it renders, the figure screen height `h` (F7) from view depth and FOV only. A pawn not rendered in the last 0.2 s has `h = 0`; "rendered" reads Camera's eye-mask flag (α > 0, CS-R5), never the engine's was-recently-rendered test (Camera change request 2, AC-CS-28). **No input to the tiering may be controller kind, team, binding, participant state or any gameplay fact.**
+2. Tiers A ≥ 19 %, B 8-19 %, C 3-8 %, **D-visible** < 3 % and rendered, **D-culled** not rendered, with hysteresis and a minimum hold that applies to **demotion only** (promotion is immediate, and a D-culled → visible transition evaluates the pose in the same frame, inertialising from the last evaluated pose; F7), and caps 8 / 14 / 28 (F8). Overflow drops one tier; slots go by `h` descending, and ties break by a **TierTieKey** that each client draws at random for each pawn when it first receives it (client-local, never replicated, never derived from spawn index, NetGUID or actor name, any of which could order players apart from NPCs).
+3. Features per tier: A full (every frame, full motion matching, foot placement, look-at, offset root); B update-rate skip 1 (implemented by external tick-rate control with the engine's update-rate optimisation off on every pawn, because the engine's own optimisation is keyed to player-controlled pawns in 5.8.4, a host-side tell; ADR-0013 E1-E2), search every `AnimSearchIntervalTierBSec`, foot placement off on far LODs; C skip 3 interpolated, search every `AnimSearchIntervalTierCSec`, look-at and offset root only, fingers and twist bones stripped; D-visible: locomotion and stops only at ≥ `AnimTierDVisibleMinHz` (8 Hz) pose updates, no head-look and no foot IK; D-culled: no pose tick or evaluation on clients; montages do not advance while culled, and on promotion the montage position is re-derived from replicated state (`FActionState`/`FDeathState`) that frame, so the visible result is the same as if they had ticked (ADR-0013 §3). Foot placement is off below h = 11 % (the art bible 8.5 LOD1/LOD2 boundary). **No rendered pawn is ever unposed or frozen.** Mesh LODs follow 8.5 on the same key. Rate changes are inertialised, so tier switches show no pop.
+4. The owner's own pawn is tiered by `h` like any other pawn and counts inside the 8 / 14 / 28 caps (art bible 5.6 bans an exemption for the local viewer's own pawn; CD ruling D4). In first person its `h` is large, so it is tier A by the ordinary rule.
+5. The server (listen host) ticks the pose, refreshes bones, and runs montages, root motion and notifies for every pawn whether rendered or not (always-tick at rate 1 for every pawn; Camera change request 2), so gameplay-relevant motion never depends on what the host is looking at or on its eye mask. **Scope (ADR-0010 E4, ADR-0013):** the requirement is on the observable result: every pawn's pose, montages, root motion and notifies advance on the server whether rendered or not. The engine's role-driven timing is left unchanged: a remotely controlled pawn's server pose advances with its incoming moves, an AI pawn's with the mesh tick; forcing one behaviour would double-advance root-motion montages. Host-view parity is verified by measurement (ANIM-V3, AC-SCL-13/14), not by an identical tick flag. The host's *rendering* uses the same client tiering.
+6. The engine's animation budget allocator is **not used** (ADR-0013 Alternative 2): tiering drives external tick-rate control directly from this significance function.
+
+**R12. Performance contract** (*provisional pending spike R3*). At the reference scene (50 characters, RTX 3060-class, 1080p) animation for all characters, game thread plus animation worker time summed, is ≤ 4 ms per frame (F8); CMC simulated-proxy movement is counted separately and reported in the same capture (technical-artist estimate 1.5-3 ms, a risk for the 16.6 ms frame, not for the 4 ms line), and so is the **server-side movement simulation of AI-moved pawns** on the listen host (about 40 NPC CMCs; Crowd change request 15c), which F8 does not include. Pawn replication is ≤ 30 KB/s per client of the 50 KB/s budget in the worst case of 49 moving pawns (F9). If R3 fails, the pre-decided fallbacks of art bible 8.x.16 apply, and they must lower fidelity for every pawn equally.
+
+**R13. Network parity configuration** (Roster R6 pawn replication parity; Session rule 25d; values in config, never code).
+- `NetUpdateFrequency = MinNetUpdateFrequency = PawnNetUpdateHz` (15) for every pawn; adaptive update frequency (and CMC throttling cancellation) disabled for pawns; `NetPriority` 3.0; the listen host sustains a frame rate ≥ 60 (host frame time `T_frame` ≤ 1/60 s) at the profiled load, so the effective delay `U_eff` (F9) stays ≤ 0.083 s (I-SCL-10). On a listen server the server tick is the host's render frame: `NetServerMaxTickRate` has no effect unless the engine's listen-server clamp flag is set, so the rule is stated on the host frame time (architecture review 2026-10-25, ADR-0003 §1).
+- **Relevancy and dormancy bans (IIF R12; owned here).** No Shared Pawn ever uses net dormancy (`DORM_Never`, no `SetNetDormancy` call anywhere), `bOnlyRelevantToOwner`, a net cull distance, a per-class or per-instance priority or relevancy override, or teammate-only always-relevance. The owner connection's engine-internal priority boost for its own view target is the only per-connection difference, and it acts only on the owner's own connection.
+- **Relevancy may vary by concealment and viewer relation only** (Visibility Policy R6/R7, amending the earlier "relevancy can never be a tell"). By default every pawn is relevant to every client (with ~50 pawns in about 10,500 m² walkable, a distance cull adds edge cases for no saving). The single exception is the Policy's concealment cull: while Concealment has committed a pawn as concealed, it is not relevant to connections for which `CanViewerKnow(V, S, Position)` is false (every non-ally connection for a player pawn, every connection for a concealed NPC), keyed on concealment state alone, never on binding, controller kind or participant state. SCL provides the cull hook: legacy driver, an `IsNetRelevantFor` override plus an explicit per-connection channel close at the Policy's deadline (the override drops the engine's based-on clause for concealed subjects, Policy L27); Iris, per-connection exclusion-group filter status (-> ADR-001; spikes S9, S10, S13, S14). Un-cull happens in the same server step as the state change. Every other position is held by every client (a wall-hack surface accepted until Anti-Cheat, Alpha). If Iris is adopted, the same values are expressed through its prioritiser and filter configuration, and the parity tests are run under the replication system actually shipped (-> ADR).
+- Identical replicated components and subobjects; **no multicast RPC on the pawn** (all presentation is driven by replicated state: movement, `HeadLook`, `ActionPose`, `TraversalState`, `AppearanceId`); `FActionState` and `TraversalState` writes force a net update with the same cap for every pawn; Assassination's strike forces one on the attacker at the slot and one on every pawn written at the death write, identically for every outcome and victim kind (ASN-R21, change request 17).
+- The **replicated-property allowlist** of the pawn (the input to the Visibility Policy's leak tests): replicated movement, `HeadLook` yaw, `RemoteViewPitch16` (clamped), `FActionState` (fixed-size struct, IIF R12), `TraversalState`, `AppearanceId`, plus the S1 outcome for `Owner`/`Controller`/`PlayerState`. Nothing else (no team, strike, cooldown, concealment or binding field) is on the pawn (IIF R12; Roster R6).
+
+**R14. Smoothing parity.** Every simulated proxy on every client uses the same smoothing mode (exponential), `PawnSmoothLocationSec`, rotation smoothing time and `PawnSmoothSnapThresholdCm`. On the listen-server host, remote-client pawns are moved by `ServerMove` at irregular arrival times while NPC pawns move every server tick; the host smooths remote-client pawns with the same `PawnSmoothLocationSec` so their per-frame speed variance stays within 1.25 × that of an NPC walking the same path (AC-SCL-22). Observers never see a client's own corrections (only the owner does), and client-authoritative position is never enabled.
+
+**R15. Input starvation** (Session rule 25g; *provisional pending net-emulation spike*). If the server has accepted no move from a player pawn's owner for `InputStarvationSec`, it simulates that pawn with zero input acceleration, so it brakes by the baseline (`WalkStopSec`/`RunStopSec`) into idle and the server position keeps replicating; it never stops dead mid-stride and never keeps gliding. The owner mirrors this: with no server acknowledgement for `InputStarvationSec + 0.05 s` it also zeroes its input, so the recovery correction stays below `PawnSmoothSnapThresholdCm`. When moves resume, late moves are consumed with movement-time discrepancy detection on and observed speed capped at `StarvationCatchUpMaxMult` × the gait's max speed (F12); excess late moves are **discarded**, never replayed later: no visible catch-up sprint. This rule acts only on a connection fault and its visible result (a baseline stop) is one NPCs also perform. Past `SessionSoftTimeoutSec` (3 s), Round's handover (R4) takes over.
+
+**R16. External displacement is not commanded displacement.** The movement component accumulates, per pawn, the horizontal displacement produced while the pawn's own `Move` input is non-zero (`CommandedDisplacementCm(Since)`), separately from displacement while input is zero (depenetration, moving bases, root motion of poses). The IIF reads only the commanded figure for R8 cancels. No pawn pushes another (pawn-pawn capsules block, physics push of pawns off). A pawn whose `ActionPose ∈ {Brace, InteractPose}` is a static obstacle: Crowd avoidance routes around it (change request), and contact never moves it.
+
+**R17. Body and collision.** One capsule size, one collision profile, one physics asset for every pawn (art bible 8.x.7). Informants collide, queue and yield exactly as others (art bible 5.3).
+1. **Body constants published for the kit** (Procedural City Generator change request 4; values in the pawn class defaults, the same for every pawn): capsule radius and half-height = the reparented Game Animation Sample character's capsule **[verify in the 5.8.4 project; `ACharacter` default 34 / 88 cm]**; maximum step height = `TraversalMinHeightCm` (45 cm), so the kit's ≥ 0.23 m stair risers pass; walkable floor angle = the engine default 44.765° (the 40° temple stair passes with about 4.8° margin; do not lower it). **A 0.4 m kerb does not block**: it is below the step height and is stepped onto whether or not it carries coping (traversal needs coping, stepping does not). A kerb or edge meant to stop a pawn must be 46-69 cm high (above the step height and below the vault band, so it blocks and is not traversable, R7) or carry a pawn-blocking volume (routed back to the Generator).
+2. **Concealment support** (Concealment change request 15; spike S-CON-1): Hide transitions move the pawn by a warp-to-anchor root-motion source (`MoveToForce` to a fixed anchor), predicted on the owner per CON-R4a; `Move` is zeroed during transitions (R5.2); after a correction the pawn's collision state is re-derived from Concealment state and elapsed server time, never from a client flag; every presentation path SCL owns (footsteps R18, foley, Niagara, decals) checks the client-local `bPresentationHidden` latch on every client; the walk speed Concealment's F3d needs is `WalkSpeedCmPerSec`. Concealed and transitioning pawns are excluded from avoidance and steering queries (Concealment CON-R4, Crowd).
+
+**R18. Footstep path parity.** Footstep events come from **one step clock** in the shared movement/animation code: distance travelled divided by the stride for the current speed, where the walk cadence is set by pace (1.8 steps/s at the slowest pace to 2.0 at full pace, B1) and stride = speed / cadence (F11), alternating feet, firing on every client for every pawn from its replicated movement. It is independent of animation tier and pose evaluation, so off-screen or tier-D pawns are not silent and LOD never changes what is heard (technical-artist recommendation over anim notifies, which blend unreliably under motion matching and vanish at tier D; logged decision).
+1. **The animation follows the clock.** The AnimBP receives the clock's phase and drives stride warping and distance matching from it at tiers A-C, so a visible foot plant coincides with the step event within ±50 ms; the clock never reads animation state. Any resync slews over ≥ 3 strides, so a tier change never audibly shifts the rhythm.
+2. **Starts, stops and pivots.** A start step fires `FootstepStartDelaySec` (0.30 s) after a start from idle; a settling step fires when speed falls below `PivotSpeedCmPerSec`; an in-place pivot fires one step per 60° of yaw.
+3. **Suppressed** while not grounded (`Falling`), in traversal, and in `PoseLocked` (the clip's own authored foley plays instead, identically for every pawn).
+4. A pawn culled for a viewer by the concealment cull (R13) produces no step events on that viewer's client (Visibility Policy L12). Audio is attenuated by distance and occlusion only. The step event carries pawn, foot, surface type and gait, never controller, team or role. The owner hears their own steps through the same event (2D or 3D mix is Diegetic Audio's local choice and is not observable by others). Server-side noise events for AI hearing, if any, are separate and authoritative (Crowd). Diegetic Audio (Vertical Slice) designs the sounds; this rule binds it.
+
+**R19. Published state.** On the server for every pawn: `IsRunning` (F4, with hysteresis; computed from the CMC horizontal velocity of commanded locomotion, forced false while `IsInTraversal`, `PoseLocked`, `Falling` or `Disabled`, and initialised false at spawn and at every handover) and `IsInTraversal` (`TraversalState` active from validation to landing). The IIF reads them for legality (R7 locomotion restriction). The owner computes the same values locally for prompt legality only (HUD). Neither is a separate replicated property: what observers see is the movement itself.
+
+### States and Transitions
+
+One locomotion state per pawn, computed identically on the server and (predicted) on the owner.
+
+| State | Entered when | Exits to | Speed / rotation rule |
+|---|---|---|---|
+| `Idle` | speed < `PivotSpeedCmPerSec` and no input | `Walk`/`Run` on input within `PivotExitAngleDeg` of facing; `Pivot` on input beyond it, turn-to-look or a latched reversal; `Traversal`; `Planted`; `PoseLocked` | 0; head-look free; turn-in-place after `TurnInPlaceDelaySec` |
+| `Pivot` | reversal (R5.4, latched), idle input beyond `PivotExitAngleDeg`, or turn-to-look (R5.5) | `Walk`/`Run` when facing within `PivotExitAngleDeg` of input (the latch releases); `Idle` if input released or turn-to-look reaches its exit; `Planted`; `PoseLocked` | in-place yaw at `PivotTurnRateDegPerSec` |
+| `Walk` | input, effective gait Walk | `Idle` (braked by `WalkStopSec`); `Run`; `Traversal`; `Planted` | F1, F2, F3 walk caps |
+| `Run` | input, effective gait Run | `Walk` (decelerate at run rate); `Idle`; `Traversal` | run caps; `IsRunning` per F4 |
+| `Traversal` (Anticipation → Clip → Land) | server validation of `Traverse` (F5) | `Walk`/`Run`/`Idle` on landing (buffered input) | root motion + warp; `IsInTraversal` |
+| `Planted` | `ActionPose = Brace` | `Idle` when Brace ends (then input as usual) | entry from a walk: the step-into-stance clip, root motion = the F2 stop distance ± 10 %, never a snap; then no translation and no yaw; head-look only |
+| `PoseLocked` | `ActionPose ∈ {Strike, Counter, BushEnter, BushExit}` | `Idle`/`Walk` when the pose ends | pose root motion only |
+| `Falling` | left a ledge without traversal (CMC falling) | `Idle`/`Walk` on landing | engine gravity; no air control beyond engine default, identical for all |
+| `Disabled` | from **any** state: pawn killed (Assassination; applied at the death write `ContactServerTime − StrikeNetLeadSec`, never at execution, ASN-R16) or round frozen (a freeze mid-traversal waits for landing) | none (killed) / `Idle` (unfreeze) | no input; a frozen moving pawn brakes by the baseline first; body handling owned by Assassination/Crowd |
+
+Possession changes are not state transitions: the state continues through a handover (R4). `IsRunning` is derived from speed (F4), not from the `Run` state, so a pawn slowing from a run stays `IsRunning` until it drops below the exit threshold.
+
+### Interactions with Other Systems
+
+| System | Flows in | Flows out | Interface owner |
+|---|---|---|---|
+| Input & Interaction Framework | `Move`, `Look`, `Traverse` (+ hint); `ActionPose`; action state; legality | `IsRunning`, `IsInTraversal`, `CommandedDisplacementCm`, owner-only traversal cancel | IIF (gate), SCL (execution) |
+| Participant State & Roster | `BindPawn` result; legality class (via IIF or `GetLegalityClass`) | `BindPawn` call inside the factory; `ClearBinding` at `EndPlay` | Roster |
+| Character Pool & Appearance | `AppearanceId`, pool table | the one property and apply function | SCL (property), CPA (meaning) |
+| Tuning Data & Config | SCL keys after `OnTuningReady`; no pawn spawned before | — | TDC |
+| Round & Match Framework | spawn list order; handover requests; freeze | factory results; possession | Round (when), SCL (how) |
+| Session & Travel | connection events (through Round) | rules 25d, 25g implemented | shared |
+| Camera System | toggle (local) | `GetHeadLookWorldRotation`, eye socket, body facing | Camera |
+| Crowd & NPC Behaviour | AI `Move`/`Look`/`Traverse` with speed scale (path-following through `Move`, R5.7); replacement spawns via the factory | same execution; obstacle rule; handover state; contact reaction | Crowd (behaviour) |
+| NPC-Kill Penalty & Informants | `TakeOverCrowdPawn` requests (pawn chosen by Penalty with Crowd) | eligibility verdict; possession through R4 | Penalty (when, which), SCL (how) |
+| Concealment / Assassination / Objectives | — (they act through the IIF) | pose playback, planted brace, run/traversal state | owning features |
+| Level Socket Contract | `TraversalPoint` coping records | walk/run speeds; capability heights | LSC (geometry), SCL (capability) |
+| Information Visibility Policy | audiences; the concealment-cull decision (`CanViewerKnow`) | the replicated-property allowlist (R13); the cull hook | Policy |
+| Diegetic Audio (VS) | — | step events (R18), surface type | SCL (event), Audio (sound) |
+
+## Formulas
+
+*systems-designer not spawned at authoring; boundary-checked by systems-designer at design review 2026-10-24 (F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12 revised). Values derive from the art bible 5.4/5.5/8.5/8.x.8 working values, the technical-artist's and ue-replication-specialist's figures, and the IIF/LSC consumers. Every formula applies to every pawn with the same inputs; none has a controller-kind term.*
+
+### F1. Target speed
+
+The target_speed formula is defined as:
+
+Evaluated in this order: (1) `v_max = 0` if Planted, PoseLocked, Disabled, `L = RoundEnded` or `m = 0`; (2) else `v_max = RunSpeedCmPerSec` if `G_eff = Run`; (3) else `v_max = WalkSpeedCmPerSec × q(m)`, where `q(m)` is m quantised with ±0.03 hysteresis to the pace set {0.8, 0.9, 1.0}. `G_eff = Walk` if `G = Walk` or `L = Informant`, else `Run` (Brace is already caught by step 1). The dead zone is applied by the owner's client before sending (`m_dz` is not a server input).
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| m | float | 0-1 | calculated (`|Direction|` as received by the server) | input magnitude (keys: 0 or 1; a stick reading below 0.2 is sent as 0) |
+| q(m) | float | {0.8, 0.9, 1.0} | calculated | quantised pace; min(set) ≥ `WalkSpeedScaleMinMult` (I-SCL-5); m in (0, 0.8] maps to 0.8 |
+| G | enum | Walk, Run | command | requested gait |
+| L | enum | Active, Informant, RoundEnded | Roster via IIF | legality class |
+| `WalkSpeedCmPerSec` | float | 100-200 | data file (140) | crowd pace |
+| `WalkSpeedScaleMinMult` | float | 0.6-1.0 | data file (0.80) | slowest walk |
+| `RunSpeedCmPerSec` | float | 300-650 | data file (450) | run tier |
+
+**Output Range:** 0, `WalkSpeedCmPerSec × {0.8, 0.9, 1.0}` (112 / 126 / 140 cm/s at defaults), `RunSpeedCmPerSec` (450). Informants: ≤ `WalkSpeedCmPerSec`, the same ceiling as every walker.
+**Example:** stick at 0.9, Walk: 140 × 0.9 = 126 cm/s. Stick at 0.5: 140 × 0.8 = 112 cm/s. An informant holding Run: G_eff = Walk, 140 cm/s. Gait Run with no stick input: step 1, 0 cm/s.
+
+### F2. Acceleration, braking and stop distance
+
+The motion_shaping formula is defined as:
+
+`a_g = V_g / T_start,g` ; `d_walk = (V_walk · m_min) / T_stop,walk` (one constant for every walk pace, from the slowest pace) ; `d_run = V_run / T_stop,run` ; `t_stop = v / d_g` ; `s_stop = v² / (2 · d_g)` ; run → walk slowdown `t_rw = (V_run − V_walk) / d_run`, `s_rw = (V_run² − V_walk²) / (2 · d_run)`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| V_g | float | per F1 | data file | gait speed (walk 140, run 450) |
+| T_start,g | float (s) | walk 0.2-1.0, run 0.3-1.5 | data file (`WalkStartSec` 0.40, `RunStartSec` 0.60) | time 0 → V_g |
+| T_stop,g | float (s) | walk 0.5-1.2, run 0.4-1.5 | data file (`WalkStopSec` 0.60, `RunStopSec` 0.75) | walk: stop time at the slowest pace; run: time V_run → 0 |
+| m_min | float | 0.6-1.0 | data file (`WalkSpeedScaleMinMult` 0.80) | slowest pace multiplier |
+| a_g, d_g | float (cm/s²) | calculated | calculated | acceleration and braking deceleration (CMC MaxAcceleration and braking, -> ADR mapping) |
+| v | float (cm/s) | 0-V_g | calculated | current speed |
+
+**Output Range:** a_walk 350, d_walk 187, a_run 750, d_run 600 cm/s². Walk stops: 0.60 s / 34 cm at 112, 0.675 s / 42 cm at 126, 0.75 s / 53 cm at 140 cm/s (B4 ≥ 0.5 s holds at every pace because the shortest stop equals `WalkStopSec` ≥ 0.5, I-SCL-4; the art bible's "about 0.7 m" needs a ~1 s stop at 140 cm/s: change request to restate B4 as "≥ 0.5 s at every crowd pace, about 0.35-0.55 m"). Run stop 0.75 s over 169 cm. The sudden-stop tell (< 0.2 s) is impossible without a deliberate input (none exists).
+**Example:** a pawn running at 450 releases Run but keeps the stick forward: t_rw = 310 / 600 = 0.52 s, s_rw = (202,500 − 19,600) / 1,200 = 152 cm, then walks on at 140.
+
+### F3. Turn rate and turning radius
+
+The turn_radius formula is defined as:
+
+`r = v / (ω · π / 180)` ; reversal triggers stop-pivot-start when `|Δψ| > ReversalAngleDeg` and `v > PivotSpeedCmPerSec`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| v | float (cm/s) | 0-650 | calculated | speed (run hard max 650) |
+| ω | float (°/s) | 30-360 | data file (`WalkTurnRateDegPerSec` 60, `RunTurnRateDegPerSec` 180) | heading rate cap |
+| Δψ | float (°) | 0-180 | calculated | input direction minus current heading |
+| `ReversalAngleDeg` | float | 90-170 | data file (120) | reversal threshold; `ReversalHysteresisDeg` (10) below it never triggers |
+
+**Output Range:** walk r = 107 cm at 112 and 134 cm at 140 cm/s (B5 requires ≥ 100 cm at every pace: invariant I-SCL-6 `WalkTurnRateDegPerSec ≤ 0.573 × WalkSpeedCmPerSec × WalkSpeedScaleMinMult`, 64.2 °/s at defaults), run r = 143 cm. A 90° corner at walk takes 1.5 s.
+**Example:** walking at 140 cm/s, the player flicks the stick 150° back: |Δψ| > 120, so the pawn brakes 0.75 s (53 cm), pivots 150° at 120 °/s (1.25 s), then accelerates 0.40 s: 2.4 s in all, never the art bible's abrupt reversal (> 120° in < 0.5 s; the pivot turns 60° per 0.5 s).
+
+### F4. IsRunning with hysteresis
+
+The is_running formula is defined as:
+
+`IsRunning(t) = true` if `s_h > Θ`; `false` if `s_h < Θ − H`; else `IsRunning(t − dt)`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| s_h | float (cm/s) | 0-650 | calculated | server CMC `Velocity` 2D size of commanded locomotion; `IsRunning` is forced false while `IsInTraversal`, PoseLocked, Falling or Disabled, and starts false at spawn and handover (R19) |
+| Θ | float (cm/s) | 180-500 | data file (`RunSpeedThresholdCmPerSec` 300) | enter threshold |
+| H | float (cm/s) | 0-100 | data file (`RunExitHysteresisCmPerSec` 25) | hysteresis |
+
+**Output Range:** boolean. With defaults a walker (≤ 140, or ≤ 161 under F12 catch-up: invariant I-SCL-7 `StarvationCatchUpMaxMult × WalkSpeedCmPerSec < Θ − H`) is never running; a runner stays `IsRunning` for (450 − 275) / 600 = 0.29 s after releasing Run.
+**Example:** a pawn releases Run at 450 cm/s; at t = 0.29 s speed is 275 cm/s and `IsRunning` becomes false; Prepare is legal from then on.
+
+### F5. Traversal eligibility
+
+The traversal_eligibility formula is defined as:
+
+`E = A ∧ S ∧ Gnd ∧ ¬T ∧ ∃c ∈ Coping: [ |h_c − H_k| ≤ τ_h ] ∧ [ d_c ≤ R ] ∧ [ θ_c ≤ Φ ] ∧ [ clear_c ≥ C_land ] ∧ [ occ_c = 0 ]`, type k = Vault if `h_c` is in the vault band, Climb if in the climb band. Selection: first filter every coping by all predicates, then choose the passing c with the smallest d_c, then smallest θ_c, then lowest coping id. The landing cell is a capsule-diameter footprint on the far side (vault) or on top (climb), `C_land` deep from the coping edge.
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| A | bool | — | Roster via IIF | legality class Active (unbound pawns included) |
+| S | bool | — | IIF | action slot allows Traverse (not Bracing, Striking, HideTransition) |
+| Gnd, T | bool | — | calculated | grounded; already in traversal |
+| h_c | float (cm) | 0-250 | LSC coping record | coping height above the pawn's floor |
+| H_k | float (cm) | 80 / 160 | data file (`TraversalVaultHeightCm`, `TraversalClimbHeightCm`) † | capability heights |
+| τ_h | float (cm) | 2-20 | data file (`TraversalHeightToleranceCm` 10) † | height tolerance |
+| d_c | float (cm) | 0-200 | calculated | capsule edge to coping, horizontal |
+| R | float (cm) | 50-200 | data file (`TraversalReachCm` 100) † | reach |
+| θ_c | float (°) | 0-180 | calculated | angle between **body facing** and the coping's inward normal |
+| Φ | float (°) | 20-80 | data file (`TraversalFacingHalfAngleDeg` 45) † | facing cone |
+| clear_c | float (cm) | 0-∞ | calculated | free landing depth beyond/onto the coping |
+| C_land | float (cm) | 60-150 | data file (`TraversalLandingClearCm` 100, LSC) | landing clearance |
+| occ_c | int | 0-n | calculated | pawns overlapping the landing cell at validation |
+
+**Output Range:** true/false plus type. Obstacles at or below `TraversalMinHeightCm` (45, which is also the CMC `MaxStepHeight`) are stepped; anything between that and the vault band, or between the bands, blocks.
+**Example:** coping 83 cm high, 70 cm ahead, 20° off facing, 1.2 m clear, nobody on it, Active and idle: |83 − 80| = 3 ≤ 10, 70 ≤ 100, 20 ≤ 45, 120 ≥ 100 → Vault. The same press by an informant: A = false → `NotNow`.
+
+### F6. Head-look rate limit
+
+The head_look formula is defined as:
+
+2D, at fixed sub-steps `h_s = 1/60 s` (the server, the owner's prediction and every proxy's interpolation run the same steps): `E = clamp(target, ±Ylim, ±Plim) − current` (vector, yaw and pitch, torso-relative) ; `α = Ω / max(T_e, h_s)` ; `w_des = Ê · min(Ω, sqrt(2 · α · |E|))` ; `w += clamp(w_des − w, |Δw| ≤ α · h_s)` (w is a **signed** velocity vector) ; `step = min(|w| · h_s, |E|)` along `ŵ` ; `w = 0` when `|E| < ε` (0.1°) ; time for a large move `T ≈ |E| / Ω + T_e`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| target | float (°) | any | calculated (control rotation relative to torso) | requested look |
+| Ylim, Plim | float (°) | 30-90 / 10-45 | data file (`LookYawLimitDeg` 70, `LookPitchLimitDeg` 20) | clamps |
+| Ω | float (°/s) | 60-300 | data file (`LookMaxRateDegPerSec` 140) | max head rate |
+| T_e | float (s) | 0-0.5 | data file (`LookEaseSec` 0.15) | ease time |
+| α | float (°/s²) | calculated | calculated | angular acceleration (933 with defaults; finite at `T_e = 0` because of the `max`) |
+| w | vector (°/s) | \|w\| ≤ Ω | calculated | signed head angular velocity; a target reversal decelerates through zero at α, never flips instantly |
+| h_s | float (s) | 1/60 | constant | sub-step; a server frame of any length runs ⌈dt / h_s⌉ sub-steps, so a host below 30 fps behaves identically |
+
+**Output Range:** head yaw ±70°, pitch ±20°, combined (vector) rate ≤ 140 °/s torso-relative on any diagonal, eased at both ends, no overshoot (the step never exceeds the remaining error); replicated yaw quantised to 1 byte over ±70° (≈ 0.55°), pitch ≈ 1.41°.
+**Example:** a mouse flick of 180° in 0.05 s (3,600 °/s): target clamps to 70°, the head takes 70 / 140 + 0.15 = 0.65 s; observers and the network stream see a 0.65 s eased glance, identical to an NPC's B3 glance; after `TurnInPlaceDelaySec` (0.5 s) beyond the limit the body pivots.
+
+### F7. Animation significance tier
+
+The anim_tier formula is defined as:
+
+`h = H_fig / (2 · z · tan(FOV_v / 2))` (h = 0, tier D-culled, if not rendered within 0.2 s; h = 1 if `z < z_near` = 30 cm); `η = AnimTierHysteresisPct / 100`; promote to a tier **immediately** when `h ≥ T_tier · (1 + η)`; demote when `h < T_tier · (1 − η)` and only after `t_hold` in the current tier; caps (F8) override holds.
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| H_fig | float (cm) | 175 | constant (art bible 8.5 reference figure) | figure height |
+| z | float (cm) | 0-∞ | calculated | view-space depth of the pawn |
+| FOV_v | float (°) | 50-90 | calculated (current camera) | vertical field of view |
+| T_A, T_B, T_C | float (%) | see knobs | data file (19 / 8 / 3) † | tier thresholds |
+| η | float | 0-0.2 | data file (`AnimTierHysteresisPct` 8 → 0.08) | relative hysteresis; bands must not overlap (I-SCL-3: `T_B(1+η) < T_A(1−η)` and `T_C(1+η) < T_B(1−η)`) |
+| t_hold | float (s) | 0-2 | data file (`AnimTierMinHoldSec` 0.5) | minimum hold before a **demotion** |
+
+**Output Range:** tier A, B, C, D-visible, D-culled. At the reference camera (60°): A to 8.0 m, B to 18.9 m, C to 50.5 m, D-visible beyond, D-culled off-screen. LOD meshes switch on the same h (art bible 8.5).
+**Example:** z = 8.3 m, FOV 60°: h = 175 / (2 · 830 · 0.577) = 18.3 %. A pawn coming from tier B is promoted only at h ≥ 20.5 %, a pawn in A is demoted only below 17.5 %, so this pawn stays where it was. A pawn that was off-screen (D-culled) and reappears at 8.3 m is posed that frame in tier B (no hold on promotion).
+
+### F8. Animation cost budget
+
+The anim_budget formula is defined as:
+
+`C_anim = Σ_t n_t · c_t + C_fixed ≤ 4.0 ms` over tiers A, B, C, D-visible, D-culled, with `n_A ≤ 8`, `n_B ≤ 14`, `n_C ≤ 28` (overflow drops one tier; overflow from C goes to D-visible, which still poses at ≥ 8 Hz). The owner's own pawn is counted like any pawn (R11.4). Budget invariant I-SCL-11: `c_A · CapA + c_B · CapB + c_C · CapC + c_Dv · (P_total − CapA − CapB − CapC) + C_fixed ≤ 4.0 ms`, with `P_total = 2 · TeamSize + NpcCount`.
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| n_t | int | 0-50 | calculated | pawns in tier t |
+| c_A, c_B, c_C, c_Dv, c_Dc | float (µs) | 120 / 80 / 30 / ~12 / ~5 | ASSUMED (art bible 8.x.8; spike R3) | cost per pawn per frame, game thread plus worker summed (D-visible at 8 Hz ≈ c_C × 8/60 × 3) |
+| C_fixed | float (ms) | 0-0.9 | measured | shared overhead (anim graph setup, look-at, chooser cache); must leave I-SCL-11 true |
+| caps | int | see knobs | data file (8 / 14 / 28) † | tier caps |
+| P_total | int | 12-60 | TDC (`TeamSize`, `NpcCount`) | all pawns, the owner's included |
+
+**Output Range:** worst case at defaults (50 pawns, owner included): 8 · 120 + 14 · 80 + 28 · 30 = 2.92 ms + C_fixed ≤ 0.9 → ≤ 3.82 ms. At `NpcCount` 50 (60 pawns) the extra 10 go to D-visible: + 0.12 ms. Safe-range cap tops (10/16/32) cost 3.44 ms, so C_fixed must stay ≤ 0.56 there (I-SCL-11 enforces it). CMC proxy movement (est. 1.5-3 ms) is measured separately.
+**Example:** 50 pawns including the owner (first person, h large); 13 qualify for A, 10 for B, 27 for C. A takes the 8 largest h (the owner among them); the other 5 drop to B (10 + 5 = 15 > 14, so 1 drops to C); C holds 28. Cost (8 · 120) + (14 · 80) + (28 · 30) = 2.92 ms + C_fixed.
+
+### F9. Pawn network budget per client
+
+The pawn_bandwidth formula is defined as:
+
+`B = Σ_{i ∈ relevant pawns} f · b_i · μ_i + B_forced` ; `U_eff = ⌈(1 / f) / T_frame⌉ · T_frame ≤ 1/f + T_frame` with `T_frame` = the listen host's frame time (its server tick; variable)
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| f | float (Hz) | 12-17 | data file (`PawnNetUpdateHz` 15) † | update frequency, every pawn (17 is the highest value inside the 30 KB/s line) |
+| b_i | float (B) | 30-35 | estimate (replication specialist) | movement ~18-20 B + `HeadLook` 1 B + `ActionPose` 1 B + header ~6-10 B |
+| μ_i | float | 0-1 | calculated | fraction of updates with a change (idle pawns cost ~0) |
+| B_forced | float (B/s) | ≤ 1,000 | IIF AC 49 | forced updates from `ActionPose` / `TraversalState` writes |
+| U_eff | float (s) | ≤ 0.083 | calculated | replication delay the IIF requires (≤ 1/12 s), quantised to host frames; I-SCL-10: host frame time `T_frame` ≤ 1/60 s (frame rate ≥ 60) at the profiled load, so `U_eff ≤ 1/15 + 1/60 = 1/12 s` |
+| T_frame | float (s) | ≤ 0.0167 | measured | listen host frame time = its server tick (`NetServerMaxTickRate` is ignored on a listen server without the clamp flag) |
+
+**Output Range:** worst case (μ = 1 for every pawn, since idle pawns still move their heads) 49 · 15 · 34 = 25.0 KB/s + ≤ 1 KB/s = 26 KB/s (≤ 30 KB/s line, about half the 50 KB/s client budget); at f = 17 and b = 35, 29.2 + 1 = 30.2 KB/s (the range ceiling). Typical half-idle crowd 12-15 KB/s. U_eff = 0.067 s at 15 Hz on a steady 60 fps host and at most 1/12 s for any host frame time ≤ 1/60 s. A host hitch to 30 fps gives up to 0.1 s for its duration, identically for every pawn (accepted; the harness frame-time capture reports it).
+**Example:** 49 relevant pawns, 30 walking (μ = 1), 19 idle (μ ≈ 0.05): 15 · 34 · (30 + 0.95) = 15.8 KB/s.
+
+### F10. Simulated-proxy smoothing and snap
+
+The proxy_smoothing formula is defined as:
+
+`if e_0 > S_snap: snap` ; else `e(t) = e_0 · exp(−t / τ)`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| e_0 | float (cm) | 0-∞ | calculated | position error at a new update |
+| S_snap | float (cm) | 128-512 | data file (`PawnSmoothSnapThresholdCm` 256) † | the "NPC smoothing threshold" (Session 25g) |
+| τ | float (s) | 0.07-0.25 | data file (`PawnSmoothLocationSec` 0.10) † | smoothing time, same on clients and for the host's remote-client pawns |
+
+**Output Range:** errors ≤ 256 cm decay to < 5 % in 3τ (0.3 s at default); > 256 cm snaps (a defect in play, AC-SCL-21). Invariants I-SCL-8: `S_snap ≥ 3 × RunSpeedCmPerSec / f` (90 cm at defaults, 162 cm at 650 cm/s and 12 Hz), so two lost updates never snap a runner; I-SCL-9: `τ ≥ 1 / f` (0.067 s at 15 Hz; the default 0.10 holds), so the proxy never visibly steps at the update rate.
+**Example:** e_0 = 40 cm after a lost packet: 14.7 cm after 0.1 s, 2 cm after 0.3 s, for an NPC and a player alike.
+
+### F11. Step clock
+
+The step_clock formula is defined as:
+
+Walk (`v ≤ V_w`): `n(v) = lerp(n_slow, n_full, clamp((v − V_s) / (V_w − V_s), 0, 1))`, `stride(v) = max(v, V_s) / n(v)` (below the slowest pace the stride holds at `V_s / n_slow`). Run (`v > V_w`): `stride(v) = lerp(V_w / n_full, L_r, (v − V_w) / (V_r − V_w))`. A step fires each time grounded, non-traversal, non-PoseLocked distance `Σ v · dt ≥ stride(v)`; during `Pivot` the accumulator adds `|Δψ| / 60° × stride(V_s)` (one step per 60°); plus the start and settling steps of R18.2. `V_s = V_w · WalkSpeedScaleMinMult`.
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| v | float (cm/s) | 0-650 | calculated (replicated movement on observers) | speed |
+| n_slow, n_full | float (steps/s) | 1.6-2.0 / 1.8-2.2 | data file (`FootstepCadenceSlowPerSec` 1.8, `FootstepCadenceFullPerSec` 2.0) | walk cadence at the slowest and full pace (B1) |
+| L_r | float (cm) | 90-180 | data file (`FootstepStrideRunCm` 130) | run stride |
+| V_s, V_w, V_r | float | 112 / 140 / 450 | calculated / data file | slowest walk, walk and run speeds |
+
+**Output Range:** walk 1.8 steps/s (62 cm stride) at 112, 1.9 (66 cm) at 126, 2.0 (70 cm) at 140 cm/s, inside art bible B1 (1.8-2.0) at every pace; run 3.46 steps/s at 450. A smoothed proxy's count may differ from the server's by ±1 step per start or stop.
+**Example:** a pawn at 126 cm/s: n = 1.8 + 0.2 × (14/28) = 1.9 steps/s, stride 66 cm, the same number on every client whether the pawn is in tier A or D-culled.
+
+### F12. Starvation and catch-up
+
+The starvation formula is defined as:
+
+`a_input = 0` if `t_now − t_lastMove > T_s` ; on resume `v_obs = Δx / Δt ≤ M · V_g`, where Δt is the sum of the consumed moves' timestamp deltas (never wall-clock), and late moves that would exceed the cap are discarded
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| T_s | float (s) | 0.25-1.0 | data file (`InputStarvationSec` 0.25) † | starvation threshold; I-SCL-12: `T_s ≥ 3 ×` the idle ServerMove heartbeat (83 ms **[verify]**) and `T_s + 0.05 + RunStopSec < SessionSoftTimeoutSec` |
+| M | float | 1.0-1.5 | data file (`StarvationCatchUpMaxMult` 1.15) † | catch-up cap |
+| V_g | float | per F1 | data file | gait speed |
+
+**Output Range:** a starved full-pace walker stops within 0.25 + 0.75 = 1.0 s, travelling ≤ 35 + 53 = 88 cm after the last move; a starved runner within 0.25 + 0.75 = 1.0 s (≤ 113 + 169 = 282 cm); a resumed runner is never observed above 518 cm/s, a walker above 161 cm/s.
+**Example:** a 2 s loss burst while walking at 140: at 0.25 s the server zeroes input; the pawn brakes to idle by 1.0 s and stands like a B2 idler (a 2 s pause, which the crowd's idle catalogue covers, Session rule 25f); on recovery the owner's correction is under 256 cm and smooths.
+
+## Edge Cases
+
+*systems-designer not spawned at authoring; extended at design review 2026-10-24. Cases below cover the formula and rule space, the replication specialist's risks and the change requests addressed to SCL.*
+
+**Spawn, binding and possession**
+- **If `BindPawn` is rejected inside the factory**: the pawn is destroyed before `FinishSpawning`, so no client ever receives it; the factory returns the rejection code; Round aborts `BindFailed` at round start, other callers follow their own retry rule.
+- **If two systems call the factory for the same participant in one frame**: the second `BindPawn` returns `Rejected_AlreadyBound` and its pawn is destroyed unreplicated; the first stands.
+- **If a participant is not `Connected` at round-start spawn**: the pawn is spawned `ControlKind = Ai`, bound, and AI-driven like a mid-round disconnect (Round R17); a later rejoin repossesses it through R4.
+- **If possession changes during a traversal**: the handover waits until landing (at most the clip length, ≤ 1.5 s), then runs R4.
+- **If possession changes while a hold is active**: the IIF ends it as a release (R4.1); `ActionPose` blends to `None` with the ordinary end; a Brace still burns its cooldown (IIF R8).
+- **If the player takes over a crowd pawn that is mid-B4 slow-to-pause**: the deceleration continues; the first player `Move` is shaped from the current velocity; no velocity reset.
+- **If an informant respawn picks a pawn that is running, traversing, holding an `ActionPose`, concealed or already in a handover**: `TakeOverCrowdPawn` returns `NotEligible` and changes nothing; Penalty picks again from the eligible set (R2a.1). If no eligible unseen pawn exists, no pawn is created; the participant stays "awaiting pawn" and Penalty/Round retry per their GDDs (Round R18 timeout).
+- **If the takeover pawn becomes visible to a non-team viewer in the frame of the takeover**: the eligibility check (out of line of sight) is Penalty's and is evaluated in the same server frame as the bind; the takeover itself changes nothing replicated (same actor, card, velocity, head), so a late line of sight sees only a walking citizen.
+- **If a connected player's client disconnects mid-round**: R2b: the PlayerController's `PawnLeavingGame` override keeps the pawn; a crowd AI controller possesses it in the same server frame through R4 (Player → AI); mid-traversal, possession waits until landing; no actor is destroyed (AC-SCL-42).
+- **If a listen-server host's own pawn is possessed**: it uses the same class and configuration; the host sees the same tiering, smoothing and look filter (R11, R14). The host's process holds the binding in memory (Roster accepted limit, until Dedicated Server).
+- **If a pawn falls out of the world** (Round change request 16): the world's KillZ sits far below the lowest kit geometry (at least 10 m below it), so no legal motion reaches it. If a pawn reaches it anyway (a bug), `FellOutOfWorld` is handled identically for every pawn: a bound pawn's loss is reported through the Roster (`OnBindingLost(P, PawnDestroyed)`) for Round's `PawnLost` recovery (Round R17.9), an unbound NPC is replaced by Crowd, and nothing branches on controller type in presentation.
+- **If spike S1 shows `Owner`/`Controller`/`PlayerState` cannot be made shape-identical on non-owners without an engine change**: fall back to giving every NPC pawn an equivalent dummy (an AI-side PlayerState-like object of the same class) so all pawns export the same shape; if that also fails, the network half of Pillar 1 is an open risk escalated to the technical-director (ADR-001), and the MVP leak test AC-SCL-17 stays red.
+
+**Movement and shaping**
+- **If move input is released at full walk speed**: constant walk braking (187 cm/s²): 0.75 s over 53 cm at 140, 0.60 s over 34 cm at 112; never faster (IIF AC 24).
+- **If the stick wobbles across the dead zone**: below 0.2 is no input; each crossing yields baseline braking or baseline start, never a stutter faster than F2 permits.
+- **If input reverses by more than 120° while walking**: stop-pivot-start (F3 example, about 2.4 s); at 120° or less the pawn arcs at the walk turn cap; a stick wobbling around 120° stays latched or unlatched by the 10° hysteresis (R5.4).
+- **If an idle pawn is given input 90° off its facing**: it enters `Pivot` (beyond `PivotExitAngleDeg`), turns in place at 120 °/s, then starts.
+- **If a running pawn is clamped to Walk by a Brace**: impossible as an order of events, because the IIF rejects Prepare while `IsRunning` (R7); a pawn that has just released Run becomes Prepare-legal only once F4 reports false (0.29 s).
+- **If a Brace begins while walking**: the step-into-stance clip plays; its root motion covers the F2 stop distance for the current speed (34-53 cm) within ±10 %, so the wide stance never slides and there is no freeze mid-stride (sudden-stop tell). Once planted, Move input changes neither position nor yaw. The protected window starts at execution regardless (IIF R8, Assassination owns the meaning).
+- **If something forces a run while bracing** (none exists in MVP; e.g. a future knock-back): SCL reports `IsRunning` true and the IIF cancels the brace (IIF R8 "externally forced run").
+- **If an informant holds Run**: clamped to Walk on the server and in owner prediction; no rejection message, no speed difference from any walker (F1).
+- **If a pawn walks off a ledge without traversal**: CMC falling with engine defaults, identical for all; landing from ≤ 1.6 m plays the ordinary land; there is no fall damage (no health exists).
+- **If two pawns walk into each other**: capsules block; neither is pushed (R16); the player must steer around, NPCs steer by Crowd avoidance.
+- **If a crowd NPC brushes a tending pawn**: the tending pawn is a static obstacle, contact moves it 0 cm, commanded displacement stays 0, the interaction continues (IIF AC `CrowdBrushDoesNotCancelTend`).
+- **If an NPC path has a sharp corner**: the AI's `Move` is shaped exactly like a player's (60 °/s arc or stop-pivot-start); Crowd must smooth paths (string-pulling) so NPCs do not stop at every corner (change request).
+
+**Traversal**
+- **If the owner's local query finds coping but the server's does not** (latency moved the pawn or another pawn landed there): the server rejects `NotNow`; the owner's anticipation (`TraversalAnticipationSec`, a step into the coping) is cancelled by the reply; observers saw nothing because their anticipation starts only at server validation.
+- **If two pawns traverse the same coping toward the same landing cell in one tick**: Round's queue orders them; the first passes F5, the second fails `occ_c = 0` and is rejected.
+- **If `TraversalState` replication is lost or late** (1 % loss): the forced update is retried by normal replication; a late OnRep starts the clip at the elapsed offset, and if it arrives after the clip's duration the proxy skips the clip and follows replicated movement (no replay of a finished vault).
+- **If the pawn is killed mid-traversal**: Assassination's attacker legality rejects strikes from a traversing attacker (IIF R7); a traversing target can be struck only if Assassination allows it (provisional: allowed, the hit lands at the server position); on death the clip stops and Assassination's body handling starts.
+- **If the coping height is between the bands** (e.g. 1.2 m): no traversal; the obstacle blocks. A 1.2 m hurdle is a spike decision.
+- **If a round freeze or `RoundEnded` arrives mid-traversal**: the traversal completes, then the pawn brakes to idle.
+
+**Look**
+- **If a player spins the mouse at 700 °/s**: `HeadLook` moves at ≤ 140 °/s and clamps at ±70°; the body turns only by turn-to-look at 120 °/s after 0.5 s; replicated yaw and pitch never exceed the B3 envelope (AC-SCL-09).
+- **If an AI controller snaps its focus instantly** (engine focus changes are instantaneous): the same filter eases it; AI pawns obey the same envelope.
+- **If a first-person player looks behind the body**: the camera's handling is Camera's; the view yaw and the head stop at ±70°, the idle body re-centres after `TurnInPlaceDelaySec` until the head is within 35°; a third-person camera may not see what the head cannot (Camera System).
+- **If a first-person player looks down 60° at a bush at their feet**: the local camera may pitch to −60°; the replicated head pitch holds at −20° (the clamp), so observers see an ordinary downward glance held at the limit (R9).
+- **If a target direction reverses while the head is moving** (mouse flick left then right): the F6 signed velocity decelerates through zero at α and accelerates the other way; the head never flips direction within one sub-step.
+
+**Network**
+- **If a player's connection loses packets for 1-3 s while walking**: R15: the pawn brakes to idle within 1.0 s (0.25 s starvation + the walk stop) and stands; on recovery the owner's correction is below 256 cm; observers see a pause that the crowd's common idle pauses cover (Session rule 25f). **Provisional pending spike.**
+- **If many late moves arrive in one server tick after a burst**: consumed at ≤ 1.15 × gait speed (F12); excess discarded by movement-time discrepancy resolution; no catch-up sprint.
+- **If the listen-server host's frame rate drops below 30 fps**: every pawn's updates drop equally (same configuration); U may exceed 0.083 s for all pawns alike; owner warning is the IIF's.
+- **If the host migrates or leaves** (listen server): the session ends (Session S5); SCL has no migration path in MVP.
+- **If Iris is adopted instead of legacy replication**: the R13 values are re-expressed in Iris configuration and all parity tests (AC-SCL-16 to 25) re-run under Iris before the change ships.
+
+**Animation LOD and audio**
+- **If more pawns qualify for tier A than the cap**: the smallest-h pawns overflow to B; ties by `TierTieKey`; never by controller.
+- **If a pawn hovers at a tier boundary**: hysteresis ± 8 % and a 0.5 s demotion hold stop flicker; rate changes are inertialised.
+- **If the camera flicks away for 0.3 s and back**: every off-screen pawn went D-culled; on return each is promoted at once by its `h` and posed that frame from its last pose (inertialised); none is shown unposed.
+- **If more than 50 pawns exist (NpcCount tuned up)**: overflow beyond the C cap goes to D-visible, which still poses at ≥ 8 Hz; I-SCL-11 must still hold or TDC rejects the snapshot.
+- **If a pawn's view depth is below 30 cm** (the owner's own pawn in first person, or a pawn brushing the camera): `h` = 1 (tier A); no division by zero.
+- **If an enemy is culled for this viewer by concealment**: it has no actor on this client, so no step events, no tier and no pose; on un-cull it re-opens as a new client actor, posed in its first rendered frame.
+- **If a pawn is off-screen but within hearing**: tier D (no pose), but the step clock still fires from movement, so it is heard as any pawn would be (R18).
+- **If the motion-matching database has no good match at 112 cm/s**: stride warping and play rate 0.9-1.1 cover ±20 %; if foot sliding exceeds the art bible tolerance at 112, `WalkSpeedScaleMinMult` is raised for every pawn (never only for AI).
+
+## Dependencies
+
+Source: `design/gdd/systems-index.md` row 9 and Dependency Map item 9 (Depends On: Input & Interaction Framework, Participant State & Roster, Character Pool & Appearance, Tuning Data & Config). Every GDD named below is now designed (verified 2026-10-24, cross-review C-W11).
+
+### Upstream (SCL depends on)
+
+| System (index #) | Data interface | Hard/Soft | Status |
+|---|---|---|---|
+| Tuning Data & Config (1) | SCL-owned keys (Tuning Knobs, CR-15); read through `GetServerTuning()` on the server and `GetClientTuning()` for the owner's prediction and the client-side animation LOD keys; `OnTuningReady` before any pawn is spawned | Hard | GDD designed; lists SCL as a hard dependent ("speed tiers, traversal limits, restrictions") |
+| Participant State & Roster (2) | `BindPawn(Id, Pawn, ExpectedEpoch)` inside the factory and inside `TakeOverCrowdPawn` (R2a), `ClearBinding(Pawn, EndPlayReason)` at `EndPlay`; the `PawnLeavingGame` override SCL implements (R2b, spike S8); `GetLegalityClass(Pawn)` (read via the IIF and for the SCL R5 speed clamp); the pawn-level link and pawn replication parity requirements (Roster R6), which SCL implements | Hard | GDD designed; `GetLegalityClass` is an IIF change request (**provisional**) |
+| Input & Interaction Framework (3) | the entry points `Move(Direction, Gait)`, `Look(Rotation)`, `Traverse` (SCL executes them); the legality gate (R7), action state (`Idle`, `Interacting`, `Bracing`, `Striking`, `HideTransition`), and the `ActionPose` value the IIF writes | Hard | GDD designed |
+| Character Pool & Appearance (4) | `AppearanceId` value and meaning, the pool table (mesh, static material instance) consumed by SCL's single apply function; rules CP-10, CP-16, CP-18 | Hard | GDD designed |
+
+### Downstream (these depend on SCL)
+
+| Dependent (index #) | What it takes | Hard/Soft |
+|---|---|---|
+| Input & Interaction Framework (3) | server `IsRunning`, `IsInTraversal`; `CommandedDisplacementCm(Since)` for R8; `PawnNetUpdateHz` (U = 1/Hz); `ReleaseBaselineStop` behaviour (R5) | Hard at runtime (contained soft cycle, as stated by the IIF) |
+| Round & Match Framework (6) | the pawn factory `SpawnSharedPawn` (one-frame shuffled spawn), `Possess`/`Unpossess`, the stop-and-blend handover (R4) | Hard (Round designed) |
+| Session & Travel (5) | rule 25d (pawn replicated shape is identical and unchanged by connection events) and rule 25g (input starvation, smoothing parity) are implemented here (R13, R15, R16) | Soft (peer contract) |
+| Camera System (10) | `GetHeadLookWorldRotation()`, eye socket, body facing; the rule that camera mode changes nothing replicated (R9) | Hard |
+| Crowd & NPC Behaviour (11) | the same entry points (path-following through `Move`, R5.7); the speed scale range and baseline shaping its AI must live inside (R5, R6); traversal availability for red herrings; handover hooks; `ActionPose`-based obstacle rule (R16); the factory for NPC replacement (R2); the takeover eligibility rule (R2a, with Penalty); the contact reaction (R5.8) | Hard |
+| Concealment (Bushes) (12) | `IsInTraversal`, `IsRunning` (no Hide Enter while running, IIF R7); body capsule and mesh for per-viewer hiding; `BushEnter`/`BushExit` pose clips; warp, collision re-derivation and presentation gating (R17.2) | Hard |
+| Assassination & Defence Reversal (13) | `Brace`/`Strike` pose playback, the planted-brace rule (R5), `IsRunning`/`IsInTraversal` for "cannot prepare while running or in parkour"; strike root motion | Hard |
+| NPC-Kill Penalty & Informants (14) | the informant restrictions (R6); `TakeOverCrowdPawn` (R2a) for informant respawn (takeover of an unseen crowd pawn, decided rule C1; never the factory) | Hard |
+| Objectives Chain (15) | `InteractPose` playback; commanded-displacement cancel source (via the IIF) | Soft |
+| Level Socket Contract (8) | the reference walk speed `WalkSpeedCmPerSec` (D4) and run speed; traversal capability heights equal to `TraversalVaultHeightCm` / `TraversalClimbHeightCm`; SCL consumes `TraversalPoint` coping records | Soft (values), both directions |
+| Information Visibility Policy (7) | the pawn's replicated-property allowlist (R13) as input to its leak tests; audiences of `HeadLook`, `ActionPose`, `AppearanceId`, `TraversalState` = `All`; the concealment-cull hook (R13) and the engine-default overrides SCL owns in its R5 table (`PlayerState`/`Controller`/`Owner` owner-only, `Instigator == Self`, `RemoteViewPitch` one source, adaptive frequency off) | Hard (Policy designed, `information-visibility-policy.md`; it amends R13, now adopted) |
+| Diegetic Audio (22, VS) | the one footstep notify path (R18) and the surface-type query | Hard (index) |
+| HUD (18) | owner-only predicted `IsRunning` / `IsInTraversal` for prompt legality only | Soft |
+| Teammate Markers (17) | the pawn's network-smoothed visual root (mesh location) for marker placement; no marker data may ever be added to the pawn's replicated-property allowlist (R13) | Soft |
+| Procedural City Generator (16) | capsule radius and height, max step height and walkable slope, walk/run speeds and traversal heights for its geometry checks (Generator Dependencies, its SCL change request 4); added at the 2026-10-24 cross-review (C-W13) | Soft |
+| Anti-Cheat & Info-Leak Security (27, Alpha) | the replicated-property allowlist and the input-starvation / speed checks | Soft |
+
+**Bidirectionality**: Tuning Data & Config, Input & Interaction Framework, Participant State & Roster, Character Pool & Appearance, Session & Travel, Round & Match Framework and Level Socket Contract already list SCL in their own Dependencies (verified 2026-10-24). Change requests: the systems index should add Round & Match Framework and Session & Travel as SCL dependents and Level Socket Contract as a soft peer; Concealment should list SCL (index already lists Concealment). The Information Visibility Policy now lists SCL as a peer (verified at design review 2026-10-24).
+
+## Tuning Knobs
+
+CR-15 table. Every key is **one value for every pawn**: no key has an NPC or player variant, and no code path may select a value by controller kind (AC-SCL-01). Defaults are provisional until the graybox playtest; † = *provisional pending spike* (traversal, net emulation or the 50-character spike R3). Audience `Client` = replicated with the tuning snapshot because every client's animation LOD or the owner's prediction needs it (consumer named).
+
+| Key | Type | Owner | Default | Hard range | Safe range | Audience | Latch | Unit | Effect / breaks if too high or low |
+|---|---|---|---|---|---|---|---|---|---|
+| `WalkSpeedCmPerSec` | float | SCL | 140 | 100-200 | 125-160 | Client (owner prediction) | Round | CmPerSec | Crowd pace; also LSC D4 reference speed. High: city shrinks, B1 cadence too fast. Low: rounds drag past the ~12 min target |
+| `WalkSpeedScaleMinMult` | float | SCL | 0.80 | 0.6-1.0 | 0.75-0.90 | Client | Round | Mult | Slowest walk an analog stick or the AI may request. Low: a slow walker reads as loitering. 1.0: no drift (B7) possible |
+| `RunSpeedCmPerSec` | float | SCL | 450 | 300-650 | 400-500 | Client | Round | CmPerSec | Run tier. High: run dominates routes, LSC fairness shifts. Low: run is not worth its tell |
+| `RunSpeedThresholdCmPerSec` | float | SCL | 300 | 180-500 | 250-350 | ServerOnly | Use | CmPerSec | `IsRunning` enter threshold (F4). Must satisfy `WalkSpeedCmPerSec < threshold − hysteresis` and `threshold < RunSpeedCmPerSec` (invariant I-SCL-1) |
+| `RunExitHysteresisCmPerSec` | float | SCL | 25 | 0-100 | 15-40 | ServerOnly | Use | CmPerSec | Exit = threshold − this. 0: `IsRunning` flickers at the boundary |
+| `WalkStartSec` | float | SCL | 0.40 | 0.2-1.0 | 0.3-0.5 | Client | Round | Sec | Time 0 → walk speed. Low: twitchy start (art 5.5 sudden moves). High: sluggish controls |
+| `WalkStopSec` | float | SCL | 0.60 | 0.5-1.2 | 0.5-0.8 | Client | Round | Sec | Stop time at the **slowest** pace; sets the one walk deceleration `d = WalkSpeed × MinMult / WalkStopSec` (F2), so faster paces stop longer (0.75 s at 140). Below 0.5: the sudden-stop tell (I-SCL-4). High: overshoot at stalls |
+| `RunStartSec` | float | SCL | 0.60 | 0.3-1.5 | 0.5-0.8 | Client | Round | Sec | Time 0 → run speed |
+| `RunStopSec` | float | SCL | 0.75 | 0.4-1.5 | 0.6-0.9 | Client | Round | Sec | Time run speed → 0; also sets run → walk slowdown (F2). Low: sudden stop from a run |
+| `WalkTurnRateDegPerSec` | float | SCL | 60 | 30-120 | 50-64 | Client | Round | PerSec | B5 cap at walk; radius F3 (I-SCL-6 keeps r ≥ 100 cm at the slowest pace). High: abrupt turn tell. Low: corners feel like a boat |
+| `RunTurnRateDegPerSec` | float | SCL | 180 | 90-360 | 150-220 | Client | Round | PerSec | Turn cap while running (already a tell) |
+| `PivotTurnRateDegPerSec` | float | SCL | 120 | 60-180 | 90-150 | Client | Round | PerSec | In-place turn (below `PivotSpeedCmPerSec`) and turn-to-head re-centre |
+| `PivotSpeedCmPerSec` | float | SCL | 20 | 5-50 | 15-30 | Client | Round | CmPerSec | Below this the pawn pivots in place |
+| `ReversalAngleDeg` | float | SCL | 120 | 90-170 | 110-135 | Client | Round | Deg | Input heading change that triggers stop-pivot-start instead of an arc (R5.4) |
+| `LookYawLimitDeg` | float | SCL | 70 | 30-90 | 60-75 | Client | Round | Deg | B3 head yaw relative to torso |
+| `LookPitchLimitDeg` | float | SCL | 20 | 10-45 | 15-25 | Client | Round | Deg | B3 head pitch |
+| `LookMaxRateDegPerSec` | float | SCL | 140 | 60-300 | 120-160 | Client | Round | PerSec | Head speed clamp (art 5.4 rule 2). High: head snap becomes a tell |
+| `LookEaseSec` | float | SCL | 0.15 | 0.0-0.5 | 0.1-0.25 | Client | Round | Sec | Time to reach the rate limit from rest (eased onset and stop) |
+| `TurnInPlaceDelaySec` | float | SCL | 0.50 | 0.1-2.0 | 0.3-0.8 | Client | Round | Sec | Look held beyond the yaw limit this long before the idle body re-centres |
+| `TraversalVaultHeightCm` † | float | SCL (LSC references) | 80 | 60-120 | 75-85 | Client | Round | Cm | Vault capability height; must equal the kit's vault coping (LSC). Also hard ceiling of the vault band |
+| `TraversalClimbHeightCm` † | float | SCL (LSC references) | 160 | 120-200 | 150-170 | Client | Round | Cm | Climb/mantle capability height (LSC kit) |
+| `TraversalMinHeightCm` † | float | SCL | 45 | 30-50 | 40-50 | Client | Round | Cm | Also the CMC `MaxStepHeight` (one key): at or below it an obstacle is stepped; above it and below the vault band it blocks |
+| `TraversalHeightToleranceCm` † | float | SCL | 10 | 2-20 | 5-12 | Client | Round | Cm | Accepted deviation from the authored heights (motion-warp scale ≤ 10 %, TA) |
+| `TraversalReachCm` † | float | SCL | 100 | 50-200 | 80-120 | Client | Round | Cm | Max horizontal distance capsule edge → coping at Traverse |
+| `TraversalFacingHalfAngleDeg` † | float | SCL | 45 | 20-80 | 35-55 | Client | Round | Deg | Body-facing (never camera) cone toward the coping normal |
+| `TraversalAnticipationSec` † | float | SCL | 0.15 | 0.0-0.3 | 0.1-0.2 | Client | Round | Sec | Length of the anticipation lead-in (the step into the coping) that every pawn plays before the traversal clip; on the owner it masks the server round trip (R7.5) |
+| `PawnNetUpdateHz` † | float | SCL | 15 | 12-17 | 13-16 | ServerOnly | Round | PerSec | `NetUpdateFrequency` = `MinNetUpdateFrequency` for every pawn; U = 1/Hz (IIF requires ≥ 12). High: bandwidth (F9). Low: observers see late poses |
+| `PawnSmoothSnapThresholdCm` † | float | SCL | 256 | 128-512 | 200-300 | Client | Round | Cm | The "NPC smoothing threshold" of Session 25g: simulated-proxy error above which the proxy snaps instead of smoothing (CMC `NetworkMaxSmoothUpdateDistance`, F10). An observer-visible error above it is a defect except at designed teleports (spawn), which never happen in view |
+| `PawnSmoothLocationSec` † | float | SCL | 0.10 | 0.07-0.25 | 0.08-0.12 | Client | Round | Sec | Smoothing time for every simulated proxy on clients **and** for remote-client pawns on the listen-server host (CMC `NetworkSimulatedSmoothLocationTime` and `ListenServerNetworkSimulatedSmoothLocationTime` both set from this one key, R14). Low: host sees ServerMove arrival jitter on player pawns only |
+| `InputStarvationSec` † | float | SCL | 0.25 | 0.25-1.0 | 0.25-0.4 | ServerOnly | Use | Sec | Server time without a move from the owner before the pawn is given zero acceleration and brakes by the baseline (R15, Session 25g) |
+| `StarvationCatchUpMaxMult` † | float | SCL | 1.15 | 1.0-1.5 | 1.05-1.25 | ServerOnly | Use | Mult | Cap on observed speed relative to the gait's max speed while the server consumes a burst of late moves (F12); 1.0 can reject legitimate jittered moves |
+| `AnimTierAMinScreenPct` † | float | SCL (art 8.x.8) | 19 | 10-30 | 17-21 | Client | Round | Pct | Tier A threshold (F7) |
+| `AnimTierBMinScreenPct` † | float | SCL | 8 | 4-15 | 7-10 | Client | Round | Pct | Tier B threshold |
+| `AnimTierCMinScreenPct` † | float | SCL | 3 | 1-6 | 2.5-4 | Client | Round | Pct | Tier C threshold; below = tier D |
+| `AnimTierHysteresisPct` | float | SCL | 8 | 0-20 | 5-10 | Client | Round | Pct | ± band on each threshold (relative) |
+| `AnimTierMinHoldSec` | float | SCL | 0.5 | 0.0-2.0 | 0.3-0.8 | Client | Round | Sec | Minimum time in a tier |
+| `AnimTierACapCount` † | int | SCL | 8 | 4-12 | 6-10 | Client | Round | Count | Max pawns in tier A (budget F8) |
+| `AnimTierBCapCount` † | int | SCL | 14 | 8-24 | 12-16 | Client | Round | Count | Max pawns in tier B |
+| `AnimTierCCapCount` † | int | SCL | 28 | 20-50 | 24-32 | Client | Round | Count | Max pawns in tier C |
+| `AnimSearchIntervalTierBSec` † | float | SCL | 0.067 | 0.033-0.2 | 0.05-0.1 | Client | Round | Sec | Motion-matching search interval in tier B (time-based, frame-rate independent) |
+| `FootstepCadenceSlowPerSec` | float | SCL | 1.8 | 1.6-2.0 | 1.75-1.9 | Client | Round | PerSec | Walk cadence at the slowest pace (F11, B1); stride = speed / cadence |
+| `FootstepCadenceFullPerSec` | float | SCL | 2.0 | 1.8-2.2 | 1.9-2.05 | Client | Round | PerSec | Walk cadence at full pace (F11, B1). Must be ≥ the slow cadence |
+| `FootstepStartDelaySec` | float | SCL | 0.30 | 0.2-0.5 | 0.25-0.4 | Client | Round | Sec | First step after a start from idle (R18.2) |
+| `FootstepStrideRunCm` | float | SCL | 130 | 90-180 | 115-145 | Client | Round | Cm | Stride length at run speed |
+| `PivotExitAngleDeg` | float | SCL | 10 | 5-20 | 8-12 | Client | Round | Deg | Facing error at which `Pivot` exits to a start, and above which an idle pawn pivots first (R5.4) |
+| `ReversalHysteresisDeg` | float | SCL | 10 | 5-20 | 8-15 | Client | Round | Deg | Band below `ReversalAngleDeg` in which a reversal never triggers (no arc/pivot flip) |
+| `TurnInPlaceExitFrac` | float | SCL | 0.5 | 0.2-0.8 | 0.4-0.6 | Client | Round | Mult | Idle re-centre stops when head yaw ≤ this × `LookYawLimitDeg` (R5.5) |
+| `AnimSearchIntervalTierCSec` † | float | SCL | 0.133 | 0.067-0.3 | 0.1-0.17 | Client | Round | Sec | Motion-matching search interval in tier C |
+| `AnimTierDVisibleMinHz` † | float | SCL | 8 | 6-15 | 8-10 | Client | Round | PerSec | Minimum pose update rate of a rendered tier-D pawn (never frozen, R11.3) |
+| `ContactBrushMinRelSpeedCmPerSec` | float | SCL | 40 | 10-100 | 30-60 | Client | Round | CmPerSec | Relative speed at which two touching pawns play the shared brush reaction (R5.8) |
+| `HandoverHoldSec` | float | SCL | 0.8 | 0.3-2.0 | 0.5-1.2 | ServerOnly | Use | Sec | After an AI takeover, the AI keeps the pawn's heading at walk before choosing a crowd behaviour (R4) |
+
+**Retired (not registered):** `InformantMaxSpeedCmPerSec` (TDC migration table). A separate informant top speed would be a visible tell (art bible 5.3: "a different top speed ... is itself a visible tell"). Informants are clamped to the Walk gait and use `WalkSpeedCmPerSec`; one quantity, one name (CR-15.3). Change request to TDC.
+
+**Consumed, owned elsewhere (not duplicated):** `DefenceDurationSec`, `DefenceCooldownSec`, `AssassinationRangeCm` (Assassination); `InteractMoveCancelDistCm` (IIF); `SessionSoftTimeoutSec` (Session, 3); `TraversalLandingClearCm` (LSC, 100); crowd pace distribution keys (`Crowd*`, Crowd & NPC Behaviour).
+
+**Invariants sent to TDC (CR-15.6):** I-SCL-1 `WalkSpeedCmPerSec < RunSpeedThresholdCmPerSec − RunExitHysteresisCmPerSec` and `RunSpeedThresholdCmPerSec < RunSpeedCmPerSec`; I-SCL-2 `TraversalMinHeightCm < TraversalVaultHeightCm − TraversalHeightToleranceCm` and `TraversalVaultHeightCm + TraversalHeightToleranceCm < TraversalClimbHeightCm − TraversalHeightToleranceCm`; I-SCL-3 `T_B(1+η) < T_A(1−η)` and `T_C(1+η) < T_B(1−η)` (tier thresholds with `η = AnimTierHysteresisPct/100`); I-SCL-4 `WalkStopSec ≥ 0.5`; I-SCL-5 min(Crowd pace set) ≥ `WalkSpeedScaleMinMult`; I-SCL-6 `WalkTurnRateDegPerSec ≤ 0.573 × WalkSpeedCmPerSec × WalkSpeedScaleMinMult`; I-SCL-7 `StarvationCatchUpMaxMult × WalkSpeedCmPerSec < RunSpeedThresholdCmPerSec − RunExitHysteresisCmPerSec`; I-SCL-8 `PawnSmoothSnapThresholdCm ≥ 3 × RunSpeedCmPerSec / PawnNetUpdateHz`; I-SCL-9 `PawnSmoothLocationSec ≥ 1 / PawnNetUpdateHz`; I-SCL-10 the listen host's frame time `T_frame` ≤ 1/60 s (frame rate ≥ 60) at the profiled load, so `1/PawnNetUpdateHz + T_frame ≤ 1/12 s` (checked by the harness frame-time capture at p99, not by a startup check of `NetServerMaxTickRate`, which a listen server ignores without the clamp flag; restated 2026-10-25); I-SCL-11 the F8 budget sum with all caps filled and the remaining `2·TeamSize + NpcCount − ΣCaps` pawns at D-visible ≤ 4.0 ms (using the measured c_t after spike R3); I-SCL-12 `InputStarvationSec ≥ 0.25` and `InputStarvationSec + 0.05 + RunStopSec < SessionSoftTimeoutSec`; I-SCL-13 `FootstepCadenceFullPerSec ≥ FootstepCadenceSlowPerSec`; I-SCL-14 `TraversalReachCm ≤ 1.1 ×` the authored clip approach length (warp ≤ 10 %). I-SCL-15 (ADR-0010 §6, boot test; ADR sync 2026-10-24): the engine's movement-network values are pinned in project config and must satisfy `MaxClientForcedUpdateDuration ≥ InputStarvationSec + max(WalkStopSec, RunStopSec) + 0.25 s` and `MaxMoveDeltaTime ≤ MAXCLIENTUPDATEINTERVAL = InputStarvationSec`.
+
+**Identity-tell review (CR-15.8):** `HandoverHoldSec` times a player-to-crowd event: it is a tell only if NPCs never hold a heading that long, which they do (B1). `InputStarvationSec` times a connection event: the resulting stop uses `WalkStopSec`, the NPC stop. `PawnNetUpdateHz` and the smoothing keys are single values for every pawn. No other key times a crowd-versus-player event.
+
+## Visual/Audio Requirements
+
+*art-director not spawned at authoring; reviewed by art-director at design review 2026-10-24 (cadence, step sync, brace, LOD tiers, owner tiering revised). Requirements are taken from the approved art bible 5.4, 5.5, 8.5, 8.x.7-8.x.9 and the technical-artist consult.*
+
+- **Baseline motion** (art bible 5.4, Direction C "composed"): B1 walk at 140 cm/s with about 2.0 steps/s, torso within 5° of upright, arm swing about 18°, head bob ≤ 1.5 cm; B2 idle with weight shift every 4-9 s (idle set, R10); B3 glance via the one look-at solver; B4 stop ≥ 0.5 s; B5 turn ≤ 60 °/s; one database set for everyone.
+- **Tells SCL renders** (art bible 5.5): Run (forward lean, bent arms, wide leg gap, 450 cm/s); Parkour vault and climb (hands leave the torso line, trajectory leaves the ground plane). SCL renders `ActionPose` poses that others own: Brace (60 ± 5 % stature, feet planted wide, forearms raised, head a separate circle above the garment line, held about 4 s, **planted: no translation and no yaw**, R5.2), InteractPose, Strike (one clip up to contact), Counter, BushEnter / BushExit. No tell uses colour, light, particles, glow or UI.
+- **Never tells** (art bible 5.5 leak list), each enforced by a rule here: LOD or LOD transition (R11), animation update rate or pose-search cadence (R11), network correction snap (R14, F10), spawn (R2), camera mode (R9), input device (R5, F6), team (R1).
+- **Assets needed**: calm-walk locomotion database (loops, starts, stops, 45°/90°/180° turns and pivots at 112-140 cm/s), run database at 450, traversal montages curated for exactly 0.8 m vault and 1.6 m climb (warp scale ≤ 10 %), brace / interact / bush-transition pose databases, a brace step-into-stance entry clip (root motion 34-53 cm, R5.2), an idle set (≥ 3 variants, B2), the shared shoulder-brush additive (R5.8, B8), the strike montage (Assassination). Removed from the sample: sprint, crouch, jump, unused overlays, debug.
+- **Rig**: Manny skeleton unmodified (art bible 8.x.7); look-at weights head 60 % / neck_02 25 % / neck_01 15 %.
+- **Audio**: the step clock (R18) provides `{pawn, foot, surface, gait}` events; Diegetic Audio (VS) maps them to sounds; MVP uses one placeholder step sound per surface. No sound is keyed to controller, team or role.
+
+> 📌 **Asset Spec** — Visual/Audio requirements are defined. After the art bible is approved, run `/asset-spec system:shared-character-locomotion` (locomotion and traversal animation sets, pose databases).
+
+## Game Feel
+
+*gameplay-programmer not spawned (orchestrator limit); targets follow the IIF's Game Feel table and the anti-pillar "not a reflex game".*
+
+| Feel target | Value | Why |
+|---|---|---|
+| Move input → first visible body response (owner, 0 ms RTT) | ≤ 100 ms (IIF); motion-matching start latency ≤ 2 frames after input | controls must never be the cost |
+| Walk start to full pace | 0.40 s | unhurried but not sluggish |
+| Release → stop | 0.75 s / 53 cm at full pace, 0.60 s / 34 cm at the slowest (never a snap) | the B4 baseline; a stop is never a tell unless chosen (none exists) |
+| Run start / run stop | 0.60 s / 0.75 s | running feels like a commitment: you lean in and you cannot stop on a coin |
+| Corner at walk | 60 °/s, 1.07-1.34 m radius | the crowd's gait; precision comes from planning, not twitch |
+| Head response to a mouse flick | eased, 140 °/s, ±70° | the camera is free; the head is a citizen's |
+| Traversal press → visible step (owner) | ≤ 1 frame (local anticipation) | press feels instant even at 150 ms RTT |
+| Observer sees a traversal begin | RTT/2 + U + interpolation (≈ 0.2 s at 150 ms) | identical for NPC and player |
+
+Mastery is route choice and timing (when to run, where to vault, when to stop at a stall), not execution speed. The player should feel "heavy and calm" at walk and "exposed" when running.
+
+## UI Requirements
+
+SCL has no UI of its own. The HUD may read the owner's locally predicted `IsRunning` / `IsInTraversal` to grey out prompts that the IIF would reject (owner-only). No prompt, marker or indicator may be shown for traversable coping beyond what the geometry itself shows (coping is visible by design, LSC). No UI ever reflects another pawn's locomotion state.
+
+## Cross-References
+
+| This GDD references | Target doc | Element | Status |
+|---|---|---|---|
+| Pillars P1, P2, anti-pillar "not a reflex game", CMC not Mover, GASP foundation | design/gdd/game-concept.md | Pillars, Technical Considerations | locked; consistent |
+| Command entry points, legality R7, hold rules R8, `ActionPose`, R3 Look, `PawnNetUpdateHz`, change request 6 | design/gdd/input-interaction-framework.md | R1, R3, R5, R7, R8, R12, F5 | designed; honoured (R5, R6, R8, R16, R19) |
+| `BindPawn`, `ClearBinding`, pawn-level link, pawn replication parity, takeover rule, OQ10 | design/gdd/participant-state-roster.md | R6, R9, R11, AC-PSR-39/43/45 | designed; honoured (R2-R4, R13) |
+| `AppearanceId` property and apply function, change request 10 | design/gdd/character-pool-appearance.md | CP-10, CP-16, CP-18 | designed; honoured (R2, R13) |
+| CR-15 knob convention, migrated keys `RunSpeedThreshold`, `InformantMaxSpeed` | design/gdd/tuning-data-config.md | CR-11, CR-15, migration table | designed; honoured, one key retired (change request) |
+| Rules 25d, 25f, 25g; AC 47 | design/gdd/session-travel.md | rule 25 | designed; honoured (R3, R13-R15, AC-SCL-17, 23) |
+| Pawn factory, one-frame spawn, R17 handover, `bHandOverOnUnresponsive` | design/gdd/round-match-framework.md | Interactions, R17, R23 | designed |
+| `TraversalPoint`, coping rule, D4 walk speed, `TraversalVaultHeightCm`/`TraversalClimbHeightCm`, spawn gate | design/gdd/level-socket-contract.md | R3, R4.8, D4, knobs | designed |
+| B1-B8, rules 1-5, tell vocabulary, leak list, informants 5.3, LOD 8.5, rig 8.x.7, anim tiers 8.x.8, no Mass 8.x.9, spikes 8.x.14, fallbacks 8.x.16 | design/art/art-bible.md | 5.3, 5.4, 5.5, 8.5, 8.x.7-8.x.9, 8.x.14, 8.x.16 | approved; consistent except the two change requests below |
+| Gaze catalogue, Baseline and Tell Matrix, avoidance, pace distribution | design/gdd/crowd-npc-behaviour.md | — | designed |
+| Camera LOS constraint, toggle | design/gdd/camera-system.md | — | designed |
+| Audiences, leak tests, concealment cull (R6/R7), engine-default overrides (R5 table), L12/L27 | design/gdd/information-visibility-policy.md | R5, R6, R7, L1-L27 | designed; adopted in R2, R8.4, R13, R18.4 |
+| Brace meaning, strike clip, defence cooldown | design/gdd/assassination-defence-reversal.md | — | designed |
+| UE 5.8 animation, networking (Iris status), CMC | docs/engine-reference/unreal/modules/animation.md, networking.md, VERSION.md | — | consulted; neither covers motion matching, GASP, URO internals or CMC smoothing, so those claims are marked [verify] |
+
+**Change requests to other documents** (not applied; parallel-mode rule; the orchestrator propagates them):
+1. **Input & Interaction Framework**: `Traverse` carries an optional `TraversalPointHint` (server re-validates; R7.2). Record the answer to IIF OQ3: a braced pawn neither walks nor turns (planted, R5.2), and change R7's "provisional: walking allowed" accordingly. `PawnNetUpdateHz` default is 15 (range 12-17; 10 breaks U ≤ 0.083 s and above 17 breaks the 30 KB/s line, F9). R3a mechanism and R12 relevancy bans are now owned by SCL R8 and R13; the IIF R12 bans gain the Visibility Policy's concealment-cull exception.
+2. **Tuning Data & Config**: retire `InformantMaxSpeedCmPerSec` (informants use the Walk gait); register the SCL keys (including the review's new keys `PivotExitAngleDeg`, `ReversalHysteresisDeg`, `TurnInPlaceExitFrac`, `AnimSearchIntervalTierCSec`, `AnimTierDVisibleMinHz`, `FootstepCadenceSlowPerSec`, `FootstepCadenceFullPerSec`, `FootstepStartDelaySec`, `ContactBrushMinRelSpeedCmPerSec`; `FootstepStrideWalkCm` retired) and invariants I-SCL-1 to I-SCL-12 (I-SCL-11 reads `TeamSize` and `NpcCount`).
+3. **Level Socket Contract**: mark `TraversalVaultHeightCm` and `TraversalClimbHeightCm` as owned by SCL (LSC references them; one quantity, one name); reference walk speed is `WalkSpeedCmPerSec` 140 and run `RunSpeedCmPerSec` 450 (LSC's provisional 140 and 4.5 m/s agree). `TraversalMinHeightCm` (45) equals the CMC step height: the kit must not author 46-69 cm obstacles meant as walk-overs (they block); the landing cell is a capsule-diameter footprint `TraversalLandingClearCm` deep, which also governs climb tops.
+4. **Round & Match Framework**: route every pawn creation, NPC included, through `SpawnSharedPawn`; handovers never during a traversal; the factory is the "named spawn site" of Roster R9. R18 re-admission of an awaiting informant uses `TakeOverCrowdPawn` (R2a), never a spawn. Keep the listen host's frame rate ≥ 60 (frame time ≤ 1/60 s) at the profiled load (I-SCL-10 as restated 2026-10-25; not a `NetServerMaxTickRate` setting).
+5. **Crowd & NPC Behaviour**: (a) NPC walk pace distribution inside `[WalkSpeedScaleMinMult, 1] × WalkSpeedCmPerSec`, with full pace (scale 1.0, the keyboard pace) as the most common value, so a constant full-pace walker is not a player tell; (b) gaze catalogue includes turn-in-place re-centring (R5.5); (c) avoidance and yielding as `Move` commands, never CMC velocity overrides; tending and bracing pawns are static obstacles (R16); (d) smooth AI paths so NPCs are not stopping at every corner; (e) set a non-zero NPC rate for every SCL tell, run and traversal included (R7.3, OQ7); quantise NPC pace to the shared set {0.8, 0.9, 1.0}, ≥ 50 % of walking time at 1.0, pace changes only at stops or leg boundaries (R5.1); (f) Baseline and Tell Matrix rows for Run, Traversal, sudden stop, abrupt reversal, head hold, handover, with SCL as owner (AC-SCL-32); (g) a non-zero NPC non-yielding rate (10-30 % to start), since players are never auto-steered to yield (R5.6, CD ruling D5); (h) route path-following through `Move` (R5.7), never direct velocity, `SetActorLocation` or teleports in view; (i) the shared contact reaction (R5.8) for NPC-NPC brushes too; (j) NPC replacement uses `SpawnSharedPawn`; with Penalty, choose takeover candidates by R2a eligibility; (k) the gaze catalogue includes glances held at the pitch clamp, so a first-person player looking down (head held at −20°) is ordinary.
+6. **Camera System**: use `GetHeadLookWorldRotation()` and the eye socket for the line-of-sight constraint; camera mode changes nothing replicated (R9); view yaw may not exceed the ±70° head clamp; first-person camera pitch −60° to +40° is local only (CD ruling D6 at design review, adjusting OQ8).
+7. **Assassination & Defence Reversal**: confirm the planted brace with frozen yaw (OQ9; if facing during a brace matters, request brace-pivot clips 45/90/180° at ≤ 60 °/s) and whether a traversing pawn can be struck.
+8. **NPC-Kill Penalty & Informants**: OQ6 is resolved by decided rule C1: informant respawn calls `TakeOverCrowdPawn` (R2a) on an unseen crowd pawn chosen uniformly from the eligible respawn set near `TeamSpawn`; never the factory; handle `NotEligible` by re-picking and "no eligible pawn" by the awaiting-pawn retry.
+9. **Information Visibility Policy**: adopt R13's replicated-property allowlist; `HeadLook`, `TraversalState`, `ActionPose`, `AppearanceId` audience `All`. Policy change request 1 (R6 amendment, cull hook, L27 based-on exception, `Instigator == Self`, fixed frequency, spikes S9/S10/S13/S14) is adopted in SCL R2 and R13; L12 adopted in R18.4.
+10. **Diegetic Audio (VS)**: consume the step-clock event (R18); never key a sound to controller, team or role.
+11. **Art bible**: (a) 5.4 B4 "about 0.7 m or more" → "≥ 0.5 s at every crowd pace, about 0.35-0.55 m" (F2); (b) 5.4 rule 5 "same pose-search cadence" → "same cadence at the same screen height, and no other input" (8.x.8 varies it by tier); (c) 5.4 B1: cadence by pace, 1.8 steps/s at 112 cm/s to 2.0 at 140; (d) 5.4 B5: add "in-place pivot after B4 at ≤ 150 °/s"; (e) 5.4 rule 4 or 8.x.8: "step sound lands within ±50 ms of the visible foot plant at tier A"; (f) 5.5 Brace row: "does not translate or turn while held"; (g) 8.x.8: tier B/C cadence as a time interval, split tier D into D-visible (≥ 8 Hz minimal pose) and D-culled; (h) 3.2 (line ~1036) and the pose-set lists: rename "crouch" to "brace" (the sample's crouch is removed, R10).
+12. **Systems index**: add Round & Match Framework and Session & Travel as SCL dependents, Level Socket Contract as a soft peer.
+13. **Participant State & Roster**: R9 crowd adoption names SCL's `TakeOverCrowdPawn` (R2a) as the mechanism; the `PawnLeavingGame` override is implemented by SCL R2b (spike S8 stays Roster's).
+14. **Character Pool & Appearance**: CP-12b/CP-13 `TakeNpcCard` is paired with `TakeOverCrowdPawn` in one server frame; the card is the taken-over pawn's existing card.
+15. **Procedural City Generator** (reconciliation 2026-10-24): a 0.4 m canal kerb does not block (it is below the 45 cm step height); raise kerbs meant to block to 46-69 cm or add a pawn-blocking volume (R17.1).
+
+**Change requests received (reconciliation 2026-10-24)**
+
+| From | Request | Disposition |
+|---|---|---|
+| Assassination CR 1 | `FActionState {Pose, Seq, Variant, ContactServerTime, WarpPoint}` replaces the bare `ActionPose` in SCL R13 | APPLIED (R10, R13 allowlist; pose set adds `Counter`) |
+| Assassination CR 9 | Planted brace with frozen yaw confirmed; no brace-pivot clips; traversing pawn strikeable | APPLIED (R5.2, OQ9 closed) |
+| Assassination CR 17 | `Disabled` at the death write; shared net frequency/adaptive/priority; forced update at slot and death write | APPLIED (States `Disabled`, R13); shared net settings ALREADY DONE (R13) |
+| Camera CR 2 | Capsule-derived pivot (eye-socket height only); hide head/neck/hair in close 3P; R5.5 accepts the elastic 5° overshoot; host always-tick; R11 "rendered" = mask flag; −60/+40 view pitch in both modes; review `PivotTurnRateDegPerSec` ≥ 150 | APPLIED (R9, R5.5, R11.1, R11.5, OQ8); pivot turn rate recorded as OQ13, value unchanged (tuning, playtest) |
+| Concealment CR 1 | `BushEnter`/`BushExit` split; owner-side Hide clip prediction | APPLIED (R10, States, Visual, Dependencies) |
+| Concealment CR 15 | Owner-side warp (CON-R4a), `MoveToForce`, collision re-derivation, `Move` zeroed, `bPresentationHidden` gating, walk speed for F3d | APPLIED (R17.2, R5.2) |
+| Crowd CR 3 | Shared contextual idle overlay for every idle pawn; pace = `Move` magnitude | APPLIED (R10 overlay; pace ALREADY DONE in R5.1) |
+| Crowd CR 3 | Keyboard "walk slower" modifier | PENDING-USER (scope; already listed in active.md, Crowd review) — not added |
+| Crowd CR 15 | (a) 16-bit `RemoteViewPitch16`, fix AC-SCL-18, AI writes Look pitch into control rotation; (b) hold last `Move` after possession change; (c) budget AI server movement simulation; (d) ADR weighs a shared turn-smoothing filter | APPLIED (R8.1, R8.4, AC-SCL-18, R4, R12, OQ14) |
+| Generator CR 4 | Capsule radius, max step height, walkable slope; confirm the 0.4 m kerb cannot be vaulted | APPLIED (R17.1, values [verify] for the capsule); the premise that a 0.4 m kerb blocks is DECLINED (SCL step height 45 cm, R7; routed back as change request 15) |
+| Round CR 16 | `PlayerState`/`Controller` not replicated to non-owners (-> ADR); KillZ and `FellOutOfWorld`; no controller branch in presentation | APPLIED (KillZ edge case); the rest ALREADY DONE (R13, OQ1 spike S1, R1/AC-SCL-01) |
+| Teammate Markers CR-10 | List Markers as soft consumer of the visual root; no marker data on the pawn allowlist | APPLIED (Downstream row) |
+| IVP CR 1 | R13 relevancy amendment, cull hook, L27, `Instigator == Self`, fixed frequency, spikes | ALREADY DONE (R2, R13) |
+| CPA CR 10 | `AppearanceId` property and apply function; parity; bandwidth line | ALREADY DONE (R2, R12, R13) |
+| LSC CR 7 | R2 drops "respawn creates a pawn"; traversal heights; walk/run keys | ALREADY DONE (R2, R7, Tuning Knobs) |
+| Session CR 5 | Rule 25d jointly owned | ALREADY DONE (R13) |
+| IIF CR 6, 11 | Baseline deceleration, facing, published state, static obstacles, R3a mechanism, relevancy bans | ALREADY DONE (R5, R8, R13, R16, R19) |
+| Roster OQ15 | Single spawn site, crowd adoption, `PawnLeavingGame`, `RemoteViewPitch` parity | ALREADY DONE (R2, R2a, R2b, R8) |
+| Cross-review 2026-10-24 C-W11, C-W13 | Stale "not written / provisional" statuses; Generator missing from Downstream | APPLIED (cross-review fixes 2026-10-24): Dependencies and Cross-References statuses; Generator downstream row (values, soft) |
+| ADR-0010 sync 2026-10-24 | R2a.2 "one server frame" → committed in one queue slot, possession by the hand-over pass at the next frame start | APPLIED (R2a.2) |
+| ADR-0010 sync 2026-10-24 | R5.7 path-following override becomes a fault-and-no-op backstop; Crowd's follower issues `Move` (ADR-0016) | APPLIED (R5.7; Interactions wording "path-following through `Move`" kept as the R5.7 pointer) |
+| ADR-0010 / ADR-0013 sync 2026-10-24 | R11.5 always-tick scoped to the observable result (engine role-driven server pose timing unchanged, E4) | APPLIED (R11.5 scope note) |
+| ADR-0013 sync 2026-10-24 | R11.3 "URO skip" = update-rate skip by external tick-rate control with engine URO off; D-culled montages re-derived at promotion; R11.6 AnimationBudgetAllocator not adopted; OQ4 answered (summed GT + workers ≤ 4.0 ms, GT ≤ 2.0 ms) | APPLIED (R11.3, R11.6, OQ4) |
+| ADR-0010 sync 2026-10-24 | TDC invariants on `MaxClientForcedUpdateDuration` / `MaxMoveDeltaTime` vs SCL keys (boot test) | APPLIED (I-SCL-15 in the invariant list; TDC row I-SCL-15; the config pin itself is an existing active.md item) |
+| ADR-0016 sync 2026-10-24 | OQ14: Alternative 3 (shared turn filter) rejected; `bUseRVOAvoidance` false for every pawn | APPLIED (OQ14 answered; R5.6 already states RVO off) |
+| ADR-0018 sync 2026-10-24 | Motion-warping component replicates warp targets by default (E5); no replicated `WarpTargets` on any pawn | APPLIED (R7.4 traversal authority) |
+| ADR-0007/0008 sync 2026-10-24 | Test root follows the module layout | APPLIED (AC preamble) |
+| Architecture review 2026-10-25 (GDD revision flag; ADR-0002/ADR-0003 fix) | On a listen server `NetServerMaxTickRate` applies only with `bClampListenServerTickRate` (which also caps the host's render rate); restate `T_tick`/I-SCL-10 on the host frame time | APPLIED (R13 net-config bullet, F9 `U_eff`/`T_frame`, I-SCL-10, Round dependency item 4); the clamp-flag alternative is a pending user item (Config edit) |
+
+## Acceptance Criteria
+
+*qa-lead not spawned at authoring; reviewed by qa-lead at design review 2026-10-24 (ACs 02, 09, 11, 14, 16, 18, 21, 23, 24, 26, 28, 31, 32, 33 rewritten; 38-46 added). Every randomised trial uses an injected fixed-seed RNG. Tags: [U] automation unit test, [P] PIE/integration, [N] 2-3 client PIE under net emulation, [S#] blocked until spike S# (Roster OQ0) or [R3] (art bible spike) passes, [SPIKE] provisional pending the net-emulation or traversal spike. Test names are `StealthGame.Locomotion.<Scenario>`; tests live under `Source/StealthGameplay/Private/Tests/Locomotion/`, multi-client [N] tests under `Source/StealthTestHarness/Private/` (ADR-0007/0008).*
+
+**A. Class and factory (R1-R3)**
+- **AC-SCL-01** [U] `ClassParity`: GIVEN the Shared Pawn class, its components, AnimBP and audio code, WHEN a static scan and a reflection dump run, THEN no observable path branches on controller class, `IsPlayerControlled`, `PlayerState` presence or Roster state (only the R9 owner-local list), and every SCL tuning key has exactly one value (no per-kind variant).
+- **AC-SCL-02** [P] `SingleSpawnSite`: GIVEN a round start, an NPC kill with its replacement and an informant kill with its respawn, WHEN pawn creation is traced, THEN every created Shared Pawn came from `SpawnSharedPawn` (round start: all `2·TeamSize + NpcCount`; each replacement: exactly 1), the informant respawn created 0 pawns (it is a takeover, AC-SCL-38), `RestartPlayer`/`SpawnDefaultPawnFor` created none, and every spawned pawn has `Instigator == Self`.
+- **AC-SCL-03** [P] `FactoryBindFailDestroys`: GIVEN `BindPawn` stubbed to return `Rejected_AlreadyBound`, WHEN the factory runs, THEN the pawn is destroyed before `FinishSpawning`, the code is returned, and a connected client never receives the actor.
+- **AC-SCL-04** [N] `SpawnBunchParity`: GIVEN one NPC and one player pawn spawned by the factory in one frame, WHEN a third client captures each pawn's first received bunch, THEN both carry `AppearanceId` ≠ 255 and have identical property sets, sizes (± quantisation) and arrival frames.
+
+**B. Movement (R4-R6, R16, F1-F4, F6)**
+- **AC-SCL-05** [P] `SpeedTiers`: GIVEN default tuning in a minimal test world, WHEN Move is issued with (m = 1, Walk), (0.9, Walk), (0.5, Walk), (1, Run), (1, Run) as an informant, (0, Run) and (1, Walk) while braced, THEN steady speeds are 140, 126, 112, 450, 140, 0 and 0 cm/s (± 1); AND a client stick reading of 0.19 is sent as 0.
+- **AC-SCL-06** [P] `ReleaseBaselineStop`: GIVEN a pawn at 140 cm/s (and a second run at 112 cm/s) at 60 fps, WHEN input is released, THEN it reaches 0 in 0.75 s (0.60 s at 112) ± 1 frame over 53 ± 3 cm (34 ± 3 cm), peak deceleration ≤ 187 cm/s² + 5 %, an AI pawn given the same commands differs by ≤ 1 frame and 1 cm, and the owner-predicted path at 100 ms lag matches the server within 1 frame (IIF AC 24).
+- **AC-SCL-07** [P] `TurnShaping`: GIVEN a walking pawn, WHEN input turns 90°, THEN heading rate never exceeds 60 °/s and a circle fit over a 1 s arc gives r ≥ 134 cm − 5 % (≥ 107 cm − 5 % at 112 cm/s); running, r ≥ 143 cm − 5 %; WHEN input reverses 119°, THEN no pivot occurs; at 121° and at 150°, THEN the pawn stops, pivots at ≤ 120 °/s and restarts, and no 0.5 s window contains a heading change > 120°; WHEN the input oscillates 115-125° at 10 Hz, THEN the pawn changes between arc and pivot at most once.
+- **AC-SCL-08** [P] `IsRunningHysteresis`: GIVEN speed ramps 0 → 450 → 0 and then dithers ± 10 cm/s around 290 for 5 s, WHEN `IsRunning` is sampled, THEN it turns true above 300, stays true down to 275, turns false below 275, does not toggle during the dither, falls 0.29 s ± 1 frame after Run is released at 450, and is false throughout a vault and a strike root motion even when horizontal speed exceeds 300.
+- **AC-SCL-09** [N] `LookEnvelope700DegSpin`: GIVEN one scripted target sequence (700 °/s spin for 5 s, then a 180° snap, then a 90° diagonal) driven once through the human input path and once through the AI focus path, 20 runs each with a fixed seed, WHEN an opponent client logs every received `HeadLook` yaw and `RemoteViewPitch` sample, THEN yaw stays within ±70.6°, pitch within ±21.5°, per-sample yaw step ≤ 140/15 + 0.55 = 9.9° and pitch step ≤ 10.7°, the time to reach 90 % of 140 °/s is 0.12-0.18 s, the diagonal's vector rate ≤ 140 °/s + 5 %, actor yaw rate ≤ 120 °/s when idle, and the human and AI step-size distributions are equivalent (two-sample KS D ≤ 0.15, n ≥ 200 samples per path).
+- **AC-SCL-10** [U] `InformantRestrictions`: GIVEN an informant pawn, WHEN Run and Traverse are issued and the traversal movement mode is forced directly, THEN speed stays ≤ 140, Traverse is rejected `NotNow` by the IIF, and SCL refuses the mode switch (backstop).
+- **AC-SCL-11** [P] `BracePlanted`: GIVEN a pawn walking at 140 cm/s, WHEN `ActionPose = Brace` is written, THEN the step-into-stance clip moves it 53 cm ± 10 % and it then holds; WHEN Move (Walk and Run, 8 directions) is issued for 2 s, THEN horizontal displacement is 0 ± 1 cm, yaw change is 0 ± 0.5°, head-look still follows the clamp, and the brace is not cancelled.
+- **AC-SCL-14** [N] `HandoverBlend` (with Roster AC-PSR-43): GIVEN an Active player running mid-interaction and a control run with no handover, WHEN control passes to AI and later back, THEN [P, server] no frame shows deceleration above the run braking rate (600 cm/s² + 5 %) and head rate ≤ 140 °/s torso-relative, and the interaction ends with the ordinary cancel blend; AND [N, third client] in ±0.2 s of each switch the bunch count is ≤ the control run's + 1, the replicated property-name set is identical, root and pelvis per-frame delta ≤ 1.5 × the control run's p99, and no bone rotates > 15° in one frame.
+- **AC-SCL-15** [P] `CommandedVsExternalDisplacement`: GIVEN a tending pawn and 20 NPC brushes plus one depenetration push of 10 cm, WHEN `CommandedDisplacementCm` is read, THEN it is 0 and the tending pawn moved ≤ 1 cm from contact; a 20 cm stick nudge reads 20 ± 1.
+
+**C. Traversal (R7, F5)**
+- **AC-SCL-12** [U] `TraversalEligibilityMatrix` [SPIKE]: GIVEN coping at 45, 75, 83, 100, 120, 155, 165 and 175 cm, WHEN an idle Active pawn presses Traverse at 70 cm and 20° off facing, THEN results are none, vault, vault, none, none, climb, climb, none; AND with the camera turned 180° but the body unchanged the results are identical; AND with a pawn on the landing cell, rejected.
+- **AC-SCL-13** [N] `TraversalStartParity` [SPIKE]: GIVEN an NPC and a player vaulting the same coping, WHEN an observer records onset (first anticipation frame) to landing, THEN clip, anticipation length, duration and trajectory match within 1 frame and 5 cm, and the observer sees no anticipation for a server-rejected owner press.
+- **AC-SCL-25** [N] `TraversalUnderEmulation` [SPIKE]: GIVEN PktLag 100, PktLoss 1 %, WHEN 100 vaults and climbs are performed by players and 100 by AI, THEN every traversal ends within `PawnSmoothSnapThresholdCm / 4` (64 cm) of the server landing on all clients, and no observer sees a replayed or duplicated clip.
+
+**D. Network parity (R13-R15, F9, F10, F12)**
+- **AC-SCL-16** [P] `NetConfigParity`: GIVEN an NPC pawn and a player pawn at runtime, WHEN their replication settings are dumped (update frequency, min frequency, priority, relevancy flags, dormancy, components, subobjects, condition table), THEN every field is equal, AND absolutely `NetUpdateFrequency` = `MinNetUpdateFrequency` = 15, `NetPriority` = 3.0, `NetDormancy` = `DORM_Never`, `bOnlyRelevantToOwner` = false, adaptive frequency off, and this stays true after possession, unpossession, a takeover and a state transition.
+- **AC-SCL-17** [N][S1] `PawnPointerShape`: GIVEN a modified client dumping raw received bunches, WHEN it observes NPC and player pawns for 60 s including a disconnect handover, THEN `Owner`, `Controller` and `PlayerState` are null or identical in kind for both, with no unresolvable NetGUID on either (Roster AC-PSR-39/45, Session 25d).
+- **AC-SCL-18** [N] `RemoteViewPitchClamped`: GIVEN a player pitching the first-person camera −60° to +40° and an AI pitching focus ±60°, WHEN an observer reads every `RemoteViewPitch16` sample (resolution ≈ 0.0055°, 16-bit [verified 5.8.4]), THEN both stay within ±20.1° and the per-sample step is ≤ 9.4° at 15 Hz (140 °/s ÷ 15 Hz plus quantisation; corrected at reconciliation 2026-10-24, Crowd change request 15a), for both pawns, including an AI pawn with no controller at the moment of a handover.
+- **AC-SCL-19** [N] `BandwidthBudget49Pawns`: GIVEN 49 relevant pawns all walking, WHEN Network Insights measures one client for 60 s, THEN pawn replication averages ≤ 30 KB/s; with a typical half-idle crowd ≤ 18 KB/s.
+- **AC-SCL-20** [N] `ReplicationDelay`: GIVEN `PawnNetUpdateHz` 15 on a 60 Hz host, WHEN 200 `ActionPose` writes on NPC and player pawns are timed from server write to send, THEN p95 ≤ 0.083 s and the NPC and player distributions differ by ≤ 1 frame.
+- **AC-SCL-21** [N] `NoObserverSnap`: GIVEN 10 minutes of a 3-client round under PktLag 50 / PktLoss 1 % with a fixed loss seed, WHEN observers log simulated-proxy corrections, THEN no correction > 256 cm occurs outside the listed designed spawns (round-start placement, out-of-view replacements), each pawn kind yields ≥ 200 corrections (else the result is INCONCLUSIVE, not Pass), the two-sample KS D ≤ 0.15, and p95 correction sizes are within 20 % between NPC and player pawns.
+- **AC-SCL-22** [N] `ListenServerJitterParity`: GIVEN a remote-client player and an NPC walking the same straight path, WHEN the host records rendered positions, THEN the player pawn's per-frame speed variance ≤ 1.25 × the NPC's.
+- **AC-SCL-23** [N][SPIKE] `LossBurstDecelNoSnap` (Session AC 47): GIVEN a 2 s loss burst on one client while its pawn walks at 140, WHEN a non-owner observes, THEN measured from the last server-accepted move the pawn is stopped within 1.0 s + RTT/2 ± 1 net tick (66.7 ms), the per-sample speed drop is ≤ 187 × (1/15) × 1.05 = 13.1 cm/s (no dead stop mid-stride, no gliding), and recovery shows no positional snap > 256 cm.
+- **AC-SCL-24** [N][SPIKE] `LossRecoveryNoCatchUp`: GIVEN a 2.5 s burst (below `SessionSoftTimeoutSec`, so no handover) while running, and a second while walking, WHEN moves resume, THEN observed speed (Δx over a 0.2 s window on the server) never exceeds 1.15 × 450 = 518 cm/s for the runner and 1.15 × 140 = 161 cm/s for the walker; AND server input is zeroed 0.25 s ± 1 frame after the last move, the owner mirror at 0.30 s ± 1 frame.
+
+**E. Animation, camera, audio (R9-R11, R18, F7, F8, F11)**
+- **AC-SCL-26** [U] `TierFormula`: GIVEN FOV 60°, each depth a separate trial starting in tier B with ≥ 0.5 s held, WHEN tiers are computed, THEN: 7.5 m h = 20.2 % stays B (promotion needs ≥ 20.52); 8.3 m 18.3 % B; 18 m 8.42 % B; 20 m 7.57 % stays B (demotion only below 7.36); 49 m 3.09 % C; 52 m starting in C 2.91 % stays C (demotion below 2.76); a demotion crossing at 0.4 s of hold causes no demotion; a promotion crossing at 0.1 s promotes at once; unrendered for 0.2 s gives h = 0 (D-culled); z = 20 cm gives h = 1 (tier A), no division by zero.
+- **AC-SCL-27** [P] `TierParityAB`: GIVEN a fixed camera, one AI pawn and one player pawn (replayed input) mirrored at equal depth doing B1 for 60 s, then swapped, WHEN per-frame h, tier, mesh LOD, update rate and motion-matching search count are traced, THEN they are equal for both on every frame (technical-artist protocol).
+- **AC-SCL-28** [U] `TierCapsTieKey`: GIVEN 12 pawns at identical h inside 8 m, one of them a player pawn, WHEN tiers are assigned, THEN exactly 8 are in A chosen by the client-local `TierTieKey`; over 10,000 draws from an injected fixed-seed RNG the player pawn's tier-A frequency equals an NPC's within ± 3 %; AND over 1,000 pawns Spearman |ρ| < 0.1 between `TierTieKey` and spawn order.
+- **AC-SCL-29** [P][R3] `AnimBudget50`: GIVEN the reference scene with 50 characters on an RTX 3060-class machine at 1080p, WHEN an Insights trace runs 60 s, THEN summed animation time ≤ 4.0 ms per frame (p95), tier A ≤ 8 characters, and CMC proxy time is reported.
+- **AC-SCL-30** [N] `CameraToggleChangesNothing`: GIVEN a player toggling first/third person 20 times, WHEN an observer records the pawn's replicated properties, pose, tier and step events, THEN nothing differs from a no-toggle control run.
+- **AC-SCL-31** [N] `FootstepParity`: GIVEN an NPC and a player walking, one in tier A and one in D-culled (off-screen), at 112, 126 and 140 cm/s and running at 450, plus a tier change mid-walk, WHEN step events are counted for 30 s on an observer, THEN cadence is 1.8 / 1.9 / 2.0 / 3.46 ± 0.05 steps/s (± 1 step per start or stop), identical for both pawns, with identical event fields and no controller or team field; AND for a tier-A pawn |t_sound − t_visible plant| ≤ 50 ms on ≥ 95 % of steps; AND no step fires during a vault, a fall or a strike.
+
+**F. Cross-system**
+- **AC-SCL-32** [U] `TellMatrixRows` (doc lint): GIVEN `design/gdd/crowd-npc-behaviour.md`, WHEN the lint parses its Baseline and Tell Matrix, THEN rows exist for Run, Traversal, sudden stop, abrupt reversal and head hold (5 of 5), each Owner cell reads "Shared Character & Locomotion", and each NPC-baseline cell is non-empty and not TBD. Until the Crowd GDD exists the result is NOT ASSESSED, not Pass.
+- **AC-SCL-33** [PLAYTEST] `BlindObserverWalk`: GIVEN 20 clips of 30 s (10 NPC, 10 player, all walking without tells, same map, camera, tier band and lighting), each shown in a fixed-seed shuffled order to 5 testers who did not record them and have played ≥ 3 rounds, WHEN each clip is classified NPC or player, THEN correct judgements are ≤ 60 of 100 (exact binomial, two-sided p ≥ 0.05 against 50 %) and no tester exceeds 16 of 20; evidence in `production/qa/evidence/`. Not CI-gating.
+- **AC-SCL-34** [U] `TraversalHeightsMatchKit`: GIVEN the tuning snapshot and the kit coping manifest, WHEN validated at `OnLayoutReady`, THEN every coping height is within `TraversalHeightToleranceCm` of a capability height (LSC cross-check).
+- **AC-SCL-36** [P] `NpcPaceDistribution` (with Crowd): GIVEN the Crowd reference scene for 10 minutes, WHEN NPC walk scale is logged, THEN only {0.8, 0.9, 1.0} occur, ≥ 50 % of NPC walking time is at 1.0, every pace change happens at a stop or a route-leg boundary, and a player's analog stick produces only the same three values.
+- **AC-SCL-37** [P] `NpcTellBaselineNonZero` (with Crowd): GIVEN 10 minutes of the Crowd reference scene, WHEN NPC runs, vaults and climbs are counted, THEN each count is > 0.
+- **AC-SCL-35** [U] `KeysRegistered`: GIVEN the TDC schema, WHEN the CR-15 lint runs, THEN every key in Tuning Knobs exists with the stated audience and latch, invariants I-SCL-1 to I-SCL-14 (Tuning Knobs) are enforced, and `InformantMaxSpeedCmPerSec` and `FootstepStrideWalkCm` do not exist.
+- **AC-SCL-38** [P] `InformantRespawnTakesOverUnseenCrowdPawn`: GIVEN a killed participant and 50 pawns, of which one eligible crowd pawn near `TeamSpawn` has been unrendered on all 3 clients for ≥ 5 s, WHEN informant respawn runs, THEN the participant is bound to that same actor (same NetGUID), the pawn count stays 50 after Crowd's replacement for the killed body, `SpawnSharedPawn` is called once (the replacement) and never for the participant, `AppearanceId` and velocity are unchanged, and the head moves ≤ 1 quantum; AND a pick that is running, traversing, braced or concealed returns `NotEligible` with no state change.
+- **AC-SCL-39** [N] `HeadLookObserverInterpolation`: GIVEN a 70° head sweep at 140 °/s under PktLag 100 / PktLoss 1 % (fixed seed), WHEN an observer renders at 60 fps, THEN ≥ 95 % of frames show a new head yaw, the per-frame step is ≤ 140/60 + 0.55 = 2.9° with no step > 5°, and the NPC and player traces have equivalent step distributions (KS D ≤ 0.15, n ≥ 200).
+- **AC-SCL-40** [P] `AiPathFollowRoutesThroughMove`: GIVEN an NPC walking a 60 s navigation path with corners, WHEN calls are traced, THEN 100 % of its accelerating input comes through `Move(Direction, Gait)`, with 0 direct velocity requests, `SetActorLocation` or launch calls on the pawn, |Direction| ∈ {0.8, 0.9, 1.0}, and its release-to-stop is 0.75 s ± 1 frame over 53 ± 3 cm (as AC-SCL-06).
+- **AC-SCL-41** [P] `NoDormancyOwnerOnlyOrClassPriority`: GIVEN the Shared Pawn class default and 50 live instances over 60 s including possession changes, a takeover and 30 s idle, WHEN settings are read each second and the source is scanned, THEN `NetDormancy` = `DORM_Never`, `bOnlyRelevantToOwner` = false and `NetPriority` = 3.0 on every sample, there are 0 `SetNetDormancy` calls and 0 per-class priority or cull-distance entries in config; AND the only relevancy change observed is the concealment cull, which occurs only while a pawn is committed concealed (the Visibility Policy owns the cull test).
+- **AC-SCL-42** [N] `DisconnectKeepsPawnUnderCrowdAI`: GIVEN a connected player's pawn walking at 140 cm/s in a 3-client round, WHEN that client's connection closes, THEN the pawn is not destroyed (same NetGUID after 5 s, 0 channel closes for it on the other clients), a crowd AI controller possesses it in the same server frame, velocity is kept and braking never exceeds 187 cm/s² + 5 %; mid-traversal the possession waits for landing; AC-SCL-17's pointer-shape check holds throughout.
+- **AC-SCL-43** [U] `ReplicatedAllowlist`: GIVEN a reflection dump of the Shared Pawn class and a spawned instance (components and subobjects included), WHEN replicated properties and RPCs are enumerated, THEN the replicated set equals {replicated movement, `HeadLook`, `RemoteViewPitch`, `ActionPose`, `TraversalState`, `AppearanceId`} plus the S1 outcome for `Owner`/`Controller`/`PlayerState`, there are 0 multicast RPCs, and `IsRunning`/`IsInTraversal` are not replicated (R13, R19).
+- **AC-SCL-44** [U] `BodyAndAnimSetParity`: GIVEN an NPC pawn and a player pawn, WHEN capsule size, collision profile, physics asset, RVO flag, AnimBP class and database set are read, THEN all are identical, RVO avoidance is off on both, and the database set contains no sprint, crouch or jump assets (R10, R5.6, R17); AND the tier-B search count over 10 s is the same at 30 and 120 fps ± 5 % (time-based cadence).
+- **AC-SCL-45** [P] `IdleTurnInPlace`: GIVEN an idle pawn whose look target is held at 100° yaw, WHEN 0.49 s and then 0.51 s pass, THEN the body has not turned at 0.49 s, starts turning at ≤ 120 °/s after 0.50 s ± 1 frame, and stops when head yaw ≤ 35°; identical for an AI focus target.
+- **AC-SCL-46** [P] `NoRenderedPawnFrozen`: GIVEN a camera that turns away for 0.3 s and back to 49 pawns, and a scene with 60 pawns (`NpcCount` 50), WHEN pose evaluation per pawn is traced, THEN every rendered pawn's pose updates at ≥ 8 Hz in every 1 s window, pawns returning to view are posed in their first rendered frame, and the owner's pawn occupies one of the 8 tier-A slots when its h ranks it there.
+
+## Open Questions
+
+| # | Question | Owner | Resolve by |
+|---|---|---|---|
+| OQ1 | Spike S1: can `Owner`/`Controller`/`PlayerState` be shape-identical on non-owners (owner-only conditions or NPC dummies)? Until then the network half of P1 is provisional. | ue-replication-specialist / technical-director (ADR-001) | MVP-core checkpoint |
+| OQ2 | Net-emulation spike (100 ms, 1 % loss, 1-3 s bursts): server behaviour with no ServerMove, starvation threshold, catch-up cap, traversal convergence (AC-SCL-23 to 25). | gameplay-programmer + ue-replication-specialist | before traversal stories |
+| OQ3 | Traversal spike: final heights (0.8 / 1.6 m, optional 1.2 m hurdle), the sample's movement mode during traversal, root-motion fallback on proxies. | gameplay-programmer | spike report (LSC OQ5 shares it) |
+| OQ4 | **Budget definition answered by ADR-0013 §5 (2026-10-24 ADR sync)**: 4.0 ms is **summed** game-thread + worker animation time, with a game-thread share ≤ 2.0 ms; the per-tier cost still comes from spike R3. Original question: spike R3: motion-matching cost per tier with the pruned database set; whether 4 ms is game-thread or summed time (this GDD assumes summed). | technical-artist + performance-analyst | mass-production gate |
+| OQ5 | Legacy replication or Iris for the shipped build; re-express R13 in Iris config if Iris. | technical-director (-> ADR) | before the first network story |
+| OQ6 | **Resolved (design review 2026-10-24, decided cross-GDD rule C1):** informant respawn takes over an unseen crowd pawn (R2a `TakeOverCrowdPawn`); no participant pawn is created mid-round; the killed body's replacement NPC uses the factory. Remaining for Penalty: candidate selection and the no-candidate retry. | NPC-Kill Penalty GDD author | that GDD |
+| OQ7 | What rate of NPC run and traversal red herrings? (Not whether: R7.3 requires a non-zero rate for every SCL tell.) | Crowd & NPC Behaviour GDD | Crowd GDD |
+| OQ8 | **CD ruling (CD-GDD-ALIGN 2026-10-24), adjusted at design review (D6):** view yaw may not exceed the ±70° head clamp (wider looks are paid through the body: R5.5 idle turn-in-place; while moving, the body's travel facing); first-person camera pitch −60° to +40° is local only, replicated head pitch stays ±20°. Camera System GDD keeps the method. **Extended at Camera design review (CD ruling): the −60°/+40° view pitch applies in both camera modes**, so mode choice never changes reach (R9; user to confirm, Camera OQ9). | Camera System GDD | Camera GDD |
+| OQ9 | ~~Planted brace (no walking while braced) is a decision taken here in autonomous mode; Assassination must confirm it fits the defence's meaning.~~ **Closed** (reconciliation 2026-10-24): Assassination confirms the planted brace with frozen yaw, no brace-pivot clips, and a traversing pawn can be struck at its server position (ASN-R3, ASN-R12; its change request 9). | Assassination GDD author | closed |
+| OQ10 | NPC non-yielding rate (players are never auto-steered to yield, R5.6): start 10-30 %; confirm in the Crowd reference scene that a non-yielding walker is not a player tell. | Crowd & NPC Behaviour GDD | Crowd GDD |
+| OQ11 | [verify 5.8] `RemoteViewPitch` written from `HeadLook` in `PreReplication` for controller-less pawns (R8.4); `PawnLeavingGame` override keeps the pawn (R2b, spike S8); F5 evaluated after saved moves up to the command timestamp (R7.2); concealment cull hook under legacy and Iris (R13, spikes S9/S10). | ue-replication-specialist (-> ADR-001) | before the first network story |
+| OQ12 | Step clock authority (R18.1): can stride warping and distance matching hold visible plants within ±50 ms of the clock under motion matching at tiers A-C? Fallback if not: tier-A pawns fire the event from a foot-contact curve snapped to the clock phase, still identical for every pawn. | technical-artist | traversal / locomotion spike |
+| OQ13 | Camera change request 2: raise `PivotTurnRateDegPerSec` from 120 to ≥ 150 °/s so turn-in-place keeps up with the camera edge? Not changed at reconciliation (tuning); decide in the first look-parity playtest against the Crowd gaze catalogue. | game-designer, Camera author | first 2-client playtest |
+| OQ14 | **Answered by ADR-0016 (2026-10-24 ADR sync)**: input emulation chosen; the shared turn-smoothing filter (ADR-0016 Alternative 3) is rejected; `bUseRVOAvoidance` false for every pawn (R5.6). Original question: Crowd change request 15d: the Crowd ADR weighs an SCL turn-smoothing filter on every pawn against NPC input emulation (NPC motion matched to logged human input, Crowd R3.4, Camera change request 5). SCL's position: any filter must be the R8 filter applied identically to every pawn, never an NPC-only path. | ai-programmer, ue-replication-specialist | Crowd ADR |

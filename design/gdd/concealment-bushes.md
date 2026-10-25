@@ -1,0 +1,481 @@
+# Concealment (Bushes)
+
+> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (revisions applied; re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24
+> **Author**: design-system pipeline (autonomous) + ue-replication-specialist, systems-designer, art-director, creative-director
+> **Last Updated**: 2026-10-24
+> **Last Verified**: 2026-10-24
+> **Implements Pillar**: P1 Hide in Plain Sight; P2 Every Advantage Is a Tell; P4 A Race, Not a Hunt
+> **Creative Director Review (CD-GDD-ALIGN)**: CONCERNS -> REVISED 2026-10-24 (five fixes applied: hunt framing removed from Player Fantasy and Fellowship anchor added; Objectives Chain made a hard P4 dependency with AC-CON-24; uniform victim pick declared intended with a multi-occupant review metric (10 % at the gate; rebased on the F1 baseline by the 2026-10-24 design review, CON-R12); emergence window stated as non-reactive with a Prepare check in AC-CON-13; process note corrected)
+
+## Summary
+
+Concealment lets any pawn, player or NPC, slip into one of the city's distinctive bushes and vanish for everyone who is not its ally, while staying open to a blind strike at the bush. Entering and leaving are seen by anyone with line of sight, attacking from the leaves breaks cover, and nothing ever times a hider out. It exists so a player can pause the crowd's scrutiny at the price of a visible tell, without hiding ever becoming a strategy (P1, P2, P4).
+
+> **Quick reference** — Layer: `Feature` · Priority: `MVP` · Key deps: `Information Visibility Policy, Input & Interaction Framework, Shared Character & Locomotion, Level Socket Contract, Participant State & Roster, Round & Match Framework, Tuning Data & Config; dependents Assassination, NPC-Kill Penalty & Informants, Crowd, Teammate Markers, HUD, Camera`
+
+## Overview
+
+Concealment (Bushes) is the server-authoritative system that lets any pawn, human or NPC, slip into one of the city's 8-14 hideable bushes and vanish from every viewer who is not its ally. It owns the bush occupancy record (keyed on the Level Socket Contract's `BushId`), the legality of `Hide(Enter|Exit)` (registered as the IIF `CanBegin` predicate), the timing of the enter, exit and strike-from-bush transitions, the commit and release of the concealed state, what breaks it, the spot-attack zone that lets a blind strike reach a concealed occupant, and the server-side query `IsConcealedFrom(Viewer)`. It does **not** decide how concealment is enforced on the wire: that is the Information Visibility Policy's hybrid rule (IVP R7: server cull for non-allies plus a client-local hide at the leaf plane), which this system implements. It adds no timer of any kind. For the player it is the one place in the city where being seen stops, at the price of being seen going in and coming out, and of a blade swung at a guess.
+
+*Framing: both (data layer and player effect), as a `Gameplay` system. Implementation choices were marked "-> ADR"; ADR-0017 (Proposed) now resolves CON-R2 placement, the CON-R4a mechanism order, the F4 spot pick and VA-2 (ADR sync 2026-10-24).*
+
+## Player Fantasy
+
+**Gone, but not safe.** You walk the calm walk to a planter, step through the leaves, and the city closes behind you. For everyone who is not on your team you have stopped existing: no body, no shadow, no breath of data. Your teammates still see your small mark, hatched now, and you see the plaza through a green frame of leaves, close and muted. It is a pause, a held breath: to shed a suspicion, to let a watcher lose interest and walk on, to let the race move while a teammate works. It is never a fortress, and what it protects you from depends on who saw you go in. A watcher who only saw *a* figure step into the leaves cannot be sure it was a player: the crowd uses bushes too, so at most about one entry in six is a player's (IVP F5). A watcher who had already picked *you* out and saw you step in should strike, and the strike lands on you about 85 % of the time (F1: the bush already holds someone else about 29 % of the time, and the pick between occupants is uniform). The entry is the tell (P2): hiding sheds an unformed suspicion, not a confirmed one. Every second inside is a bet that nobody was tracking you, and staying long is a tell of its own: citizens rarely linger beyond a minute, so a bush that stays quiet for long invites the guess.
+
+Anchor moments (each mapped to an acceptance criterion):
+1. **The slip-in.** An enemy who watched you go in sees only leaves afterwards, in first and third person alike (AC-CON-01, 02).
+2. **The look-out.** From inside you see what your head sees, no more: no view over the dome (AC-CON-09).
+3. **The interruption.** A rival is heading for *your* objective past your bush. You can strike from the leaves, but it costs you the bush: the city sees a figure step out of the planter and, a beat later, a body fall. The emergence is a risky reveal, not the bush's reward (AC-CON-13).
+4. **The guess.** You strike a bush you saw someone enter: it was a rival (a kill), an NPC (a strike against you) or empty (a whiff). The outcome is identical in feel until the result (AC-CON-14, 15).
+5. **The cover.** Your teammate sees your hatched mark in the bush across from the court and knows where you are while they tend it; for that short task you are close by and invisible to everyone else (Fellowship; AC-CON-03, 04). It is a brief cover, not a post: the time-concealed budget of AC-CON-24 (≤ 8 % of round time) is the whole of the role.
+
+Pillars served: P1 (the crowd uses bushes too, so stepping in is evidence, not proof: "nothing makes a player differ from an NPC unchosen"), P2 (entering and leaving are visible deviations; concealment is the advantage, the entry is its tell), P4 ("hiding is a pause, not a strategy": no reward for staying, no timer either; stall pressure is the Objectives Chain's).
+
+*Player Fantasy was drafted without a separate creative-director consult (budget rule). The CD-GDD-ALIGN gate reviewed it: CONCERNS, items 1-5 applied in this revision (hunt framing removed, Fellowship anchor added, Objectives made a hard dependency with AC-CON-24, the random pick declared intended with a review metric, the emergence window stated as non-reactive).*
+
+## Detailed Design
+
+*Specialists consulted: ue-replication-specialist (timing chain, owner state, collision, host parity, checked against installed UE 5.8 `Pawn.cpp`; tags [V] verified in source, [S] spike), systems-designer (formulas, degenerate strategies, edge cases), art-director (rustle, swap, leak closures). The enforcement model is the Policy's (IVP R7) and is implemented here, not re-decided.*
+
+### Core Rules
+
+**CON-R1. Bushes come from the Manifest.** The only hideable objects are the Level Socket Contract's `BushSite` entries: `BushId`, the planter footprint (2.0 × 2.0 m, 0.35 m curb), `HideVolume` (footprint × 2.25 m), the `EntryAxis` set (open sides, 1-3) and the bush **anchor** (footprint centre, ground level inside the curb ring). Server and clients build them locally from the Manifest (LSC R5.6, zero replicated actors). A bush whose `EntryAxis` set is empty is a V-BUSH-1 reject and never reaches a round.
+
+**CON-R2. One component, one record, server-only.** Each Shared Pawn carries one Concealment component (same class and settings on every pawn, NPC or player). Its state (`Outside`, `Entering`, `Concealed`, `Exiting`, `Emerging`; see States) and its `BushId` live on the server only. The server also holds one **occupancy record** per `BushId`: the set of pawns in `Concealed`, or in `Exiting`/`Emerging` before their outward leaf crossing, each with its commit sequence id. Nothing on the pawn replicates any of this (SCL R13 allowlist). The owner learns its own `IsConcealed` through a `COND_OwnerOnly` field on its PlayerController-side owner component; allies learn it from the C-TeamView entry flag (IVP R3 row `IsConcealed`). `BushId` is never replicated: an owner derives it from its own position and the Manifest. Owner component placement (resolved by ADR-0017 §1): `UConcealmentOwnerViewComponent`, a replicated component on the owner's PlayerController carrying `bIsConcealed` (Owner audience); the pawn's own Concealment component is not replicated. **Cull scope [V `Pawn.cpp` `APawn::IsNetRelevantFor`]:** for a concealed subject the cull predicate replaces the whole relevancy function for that connection (controller, owner-of-view-target, instigator and both based-on clauses included), not only the `IsBasedOnActor` clause (IVP L27). Every actor owned by or attached to a pawn (held or carried props, tend props) uses owner relevancy (`bNetUseOwnerRelevancy`) or joins the same cull, so no child actor replicates a concealed pawn's position.
+
+**CON-R3. Entry legality (IIF `CanBegin` for `HideEnter`).** `Hide(Enter(BushId))` is `Allow` iff all hold, else `Reject(Code)` with a code the owner could compute itself:
+1. IIF R7 class/locomotion legality: Active (every unbound pawn counts as Active), not `IsRunning`, not `IsInTraversal`, not `RoundEnded` (`NotNow`).
+2. IIF R9 slot free (`Busy`).
+3. The pawn's capsule centre is within `BushEntryReachCm` (60) of the planter's outer edge, on a side in the `EntryAxis` set (`OutOfReach`).
+4. The pawn's own re-entry cooldown has elapsed: `BushReenterCooldownSec` (6 s) after its last exit or emergence completed (`Cooldown`). It applies to NPCs identically. The cooldown only stops same-bush flicker (cull churn); it never binds on bush-hopping, which is bounded by the rustle at every entry and by `BushSpacingCm` (12 m is about 8.6 s at walk). It is not to be lengthened to fight hopping.
+
+Distances are inclusive (≤ 60 cm is in reach) and measured horizontally from the capsule centre to the planter's outer edge; the 0.35 m curb is the planter's height and lies inside the 2.0 × 2.0 m footprint.
+
+**Occupancy is never checked.** There is no capacity limit: any number of pawns may share a bush, and no reply, timing or animation depends on who or how many are inside (a "full" reply would be an occupancy oracle). The entry side is the open side nearest the pawn's position at execution.
+
+**CON-R4. Collision.** A bush's `HideVolume` blocks every pawn that is not in a Hide transition or `Concealed`: you cannot walk into a bush without hiding. Pawns that are `Entering`, `Concealed`, `Exiting` or `Emerging` ignore both the `HideVolume` block (or the warp is stopped by its own bush) and pawn-pawn collision entirely, so an entrant never bumps an invisible occupant and no one can stand on one (IVP L27 stays as the backstop, see CON-R2). The collision state is a pure function of the Concealment state and the transition's elapsed server time on server and owner alike (it is re-derived after a correction or replay, never stored by a notify), and `Move` input is zeroed on both sides from transition start. Nothing may use a concealed pawn as `Instigator` (IVP L15). **Avoidance:** pawns in any of those four states are removed from RVO and crowd avoidance and from every NPC steering query, so no NPC bends its path around an invisible occupant (that bend would be an occupancy oracle that needs no packet).
+
+**CON-R4a. Owner-side warp (spike S-CON-1; mechanism order recorded in ADR-0017 §4).** The server executes `Hide` at a Round queue drain, later than the owner's press, so a server-only root-motion source reaches the owner as a correction (`ClientAdjustRootMotionSourcePosition` [V]) and would hitch every hide. The warp is a `FRootMotionSource_MoveToForce` to the fixed anchor (`MoveToDynamicForce` is not needed). One of two mechanisms is chosen by the spike, both meeting the Game Feel row (≤ 50 ms press-to-motion, no visible snap under [Net]): (a) the owner starts the identical source on an owner-only start message carrying the server start time and blends the residual correction; (b) the server flags the owner's moves for the transition's length with `bIgnoreClientMovementErrorChecksAndCorrection` [V] and validates the end point only. Whichever is chosen, NPCs and players use the same server path. ADR-0017 §4 records the order: option (a) first tries starting the identical source when the owner's `FActionState` arrives (no new message) before an owner-only start message; option (b) pairs the server-side flag with the owner-side ignore-corrections flag for the transition plus one RTT, then one normal correction to the server's end point; collision is a pure function of state and elapsed time on server and owner, never an anim notify.
+
+**CON-R5. The enter transition ("fully inside").** On execution the pawn plays `ActionPose = BushEnter` (change request: split the provisional `BushTransition` into `BushEnter` / `BushExit`). Movement is a warp-to-anchor root-motion source (CON-R4a) over `BushEnterDurSec` (0.9 s): a calm-gait step over the curb, no hand contact; the warp's mean speed `(BushEntryReachCm + r_c) / BushEnterSwapSec` stays ≤ 1.5 × walk speed (F3 d). **Fully inside** means: at `BushEnterSwapSec` (0.5 s) after execution the capsule lies wholly within the `HideVolume` (it does by construction of the warp). At that instant the server **commits** concealment (a Round queue timer item, fixed data time, never an anim notify): state `Concealed`, occupancy record updated, IVP `CullPending` starts and the cull lands `ConcealCullDelayMs` (250 ms) later. If the guard ever fails, nothing is committed, the fault sink reports, and the server issues an ordinary exit on the entry side. **No invulnerable window:** before the commit an `Entering` pawn is an ordinary visible pawn (a `TargetPawn` or open-spot candidate, ASN-R8 rules 1 and 3); from the commit it is a bush-spot candidate. Being `Busy` until +0.9 s grants no immunity: a hider already in the bush can strike the entrant either way, as a visible `TargetPawn` before the commit or as a spot candidate after it (AC-CON-25).
+
+**CON-R6. Who sees the entry.** Every client that holds the pawn plays `BushEnter` with the identical rustle (CON-R13). The body, its attachments and every shadow, Lumen, reflection and ray-tracing contribution hide at the swap instant, on every client except the owner's (IVP R7.3). Allies then show the hatched marker and no body; the owner keeps its own body. Non-allies then lose the actor when the cull lands. So entering is seen exactly by those with line of sight (the eye-origin mask applies in third person, Camera CS-R5b), and leaving a trace is impossible.
+
+**CON-R6a. One clock: replicated server start time.** Hide clips are scheduled from server time, never from pose arrival (arrival differs per client, shifts on retransmit and restarts on actor re-creation). The replicated action state carries the pose's **start server time** (change request: `FActionState` gains `StartServerTime`, ASN-R21; until it lands, `ContactServerTime` carries it for hide poses), written identically for NPC and player pawns. Each client seeks the clip to `ServerNow − Start` (never restarts it, never snaps) and evaluates the swap (`Start + BushEnterSwapSec`) and the crossing (`Start + BushExitCrossSec`, or `+ BushStrikeEmergeSec` for the bush-emerge strike) on the client's synchronised server clock (`EstimatedServerNow()`, ADR-0002 §9; read for "GameState server clock"). The clip notify is presentation only and must agree with the key within one frame (AC-CON-11).
+
+**CON-R6b. Body-hidden is a latched client state, fail-closed.** Each client keeps one client-local, non-replicated latch per pawn, **`IsAllyBodyHidden(Pawn)`** (a public client-side read; Teammate Markers TM-R5 consumes it, CR-6), which also drives `bPresentationHidden` (CON-R16) and hides body, attachments, shadow, Lumen, ray tracing, footstep decals, foley, Niagara, spawned sounds and the audio emitter together:
+1. **Fresh actor:** a non-owner pawn is created presentation-hidden and the latch is evaluated once in `PostNetInit` from the full action state, the death state (`bDiedConcealed`, CON-R9; pending user decision: under CON-R9's interim rule no non-ally re-creates a killed-concealed actor, so MVP does not need the field) and, on ally clients, the C-TeamView `IsConcealed` flag. It clears only if none of the set rules below applies, so an actor whose exit already completed (pose `None`, no evidence of concealment) shows at once.
+2. **Set** at the swap server time of a `BushEnter`; while `IsConcealed` is true on an ally client; while a `BushExit` or bush-emerge pose is before its crossing time; when `bDiedConcealed` is set.
+3. **Clear** only at the crossing server time of a `BushExit` or bush-emerge pose, or when (on an ally client) `IsConcealed` is false and no set rule applies. A pose change to `None`, a death pose or a strike pose never clears it; this is why a hidden ally body never pops back at +0.9 s.
+4. **Precedence:** `BushEnter` before its swap with `IsConcealed` false: wait for the swap. `IsConcealed` true arriving before the pose: set at once. Death before the commit cancels the pending swap (an ordinary visible kill); death after the commit never clears the latch.
+
+Allies and opponents run the same latch; opponents simply lose the actor when the cull lands.
+
+**CON-R7. Inside the bush.** `Move` input produces no displacement while `Concealed` (no movement, so no footsteps, no rustle and no occupied-vs-empty difference). **The body does not turn** (answers Camera OQ7): body yaw is locked where the `BushEnter` clip ends (facing out of the entry side); `Look` is free within the head clamp only. A freely turning body would give a full panorama from a safe spot, which is hide-and-wait; the narrow view is part of what the bush costs. The camera follows CS-R11.3 (3P boom clamped to Camera's `ConcealedBoomCm`, height 0, mask from the eye inside the leaves): peeking is exactly what that head can see. The lens must stay inside the dome (1.8 × 1.9 m), which needs a boom of ≤ 60 cm from the anchor; a 100 cm boom would put the lens about 10 cm outside the leaves and turn the bush into a lookout post. Camera applied this (change request 12): `ConcealedBoomCm` default 60, hard maximum 70 under Camera's invariant I-CS-4 (dome inner radius 90 cm − 20 cm margin; reconciliation 2026-10-24 replaced the earlier "safe range capped at 80"). The dome inner radius is published as a fixed asset fact (VA-8) that Camera's I-CS-4 lint reads. Bush foliage ignores the `Camera` and `ViewBlock` channels (Camera change request, confirmed). Prepare and Interact are rejected `NotNow` (IIF R9 default, **confirmed** here: a concealed brace would stack two advantages behind one tell and counter blind strikes; concealed tending defeats P4). Camera toggle works (local). **No dwell timer exists**: no minimum or maximum stay, no warning, no reveal. Hiding is a pause; stall pressure belongs to the Objectives Chain.
+
+**CON-R8. The exit transition.** `Hide(Exit(Side))` carries a 2-bit side index chosen by the client from its look yaw (change request to IIF; AI chooses through the same path). The server validates the side is open, else uses the open side nearest it. **Blocked exit:** the server tests open sides in angular order from the requested one and takes the first whose end-point capsule overlaps no **blocking pawn** (a pawn in `Outside`, or in `Exiting`/`Emerging` after its leaf crossing; pawns in `Entering`, `Concealed`, or before their crossing never block); if all are blocked, it uses the requested side, and depenetration separates the pawns when collision returns, capped at `BushExitDepenetrationCapCm` (30 cm per pawn, never a launch, engine `MaxDepenetrationWithPawn` [V], default value [S]). An exit is **never refused** for blocking. On execution: state `Exiting`, un-cull in the same server step (IVP R7.5), `ActionPose = BushExit` with its start server time, root motion over `BushExitDurSec` (0.9 s). The body shows on every client only at the outward leaf crossing, `Start + BushExitCrossSec` (0.45 s) on the server clock (CON-R6a; F3: ≥ `T_uncull`). The pawn leaves the occupancy record at the crossing; the re-entry cooldown starts when the transition completes.
+
+**CON-R9. What breaks concealment.**
+
+| Event | Outcome |
+|---|---|
+| `Attack` from inside (any target, including a co-occupant) | At Attack execution: `OnConcealmentBroken(Pawn)`, un-cull in the same step, state `Emerging`, pose `Strike` with the bush-emerge preface (`BushStrike` variant, owned by Assassination; contact segment frame-identical to the standard strike). Emerge side = open side nearest the aim yaw; leaf crossing at `BushStrikeEmergeSec` (0.35 s, ≥ `T_uncull`). The victim outcome is decided at execution (IIF R10). A whiff from inside breaks concealment identically (P3). Observers see the figure cross the leaves at +0.35 s and the victim's contact at +0.75 s (`BushStrikeEmergeSec + StrikeContactSec`). The pawn ends outside. |
+| Kill of the concealed pawn | **Two instants, both fixed by Assassination's timing (ASN-R10, R21).** At the Attack's execution slot (the outcome): the victim leaves the occupancy record (so a second strike in the same tick draws from the survivors) and stops being a candidate. **Leaving the occupancy record does not clear the victim's Owner/Team `IsConcealed`** (CON-R2's flag): it stays true from the slot through the fall until the body is removed, so the victim's own camera keeps its concealed framing until the death presentation takes over (Camera CS-R12.1 holds that input from `Dying`) and an ally's body-hidden latch can never clear on it (CON-R6b rule 3); it is cleared with the body's removal (cross-review S-W2 2026-10-24). **Interim rule (in force until the user decides on `bDiedConcealed`; Assassination ASN-R10, OQ-ASN-11, change request 7; reconciliation 2026-10-24):** at the death write a concealed victim is **never un-culled** for non-allied viewers; it stays relevancy-closed to them through fall, linger and removal (IVP R7.5), and ally clients keep it presentation-hidden (CON-R6b, rule 4: death after the commit never clears the latch). Nothing below changes the slot behaviour. **Target rule (only if `bDiedConcealed` is approved):** at the death write, `ContactServerTime − StrikeNetLeadSec`: the un-cull (IVP R7.5) happens in the same server step as `FDeathState {DeathServerTime, bDiedConcealed = true}` (change request to Assassination), so the wire to a bystander stays outcome-blind until then (AC-ASN-20). `bDiedConcealed` is set only in the death write, only when the victim was in `Concealed` (or `CullPending`), identically for NPC and player victims, never before death, and carries no companion data (no concealed-since, no dwell). The body stays presentation-hidden for every viewer but its owner through the whole fall and removal (it falls inside the dome; art bible 5.2.1 rule 3), allies included (CON-R6b). |
+| Prepare / Interact inside | Rejected `NotNow`; not a break. |
+| Run input | No effect inside; after an exit completes, normal locomotion (Run allowed). There is no "dash out". |
+| Disconnect, takeover, round end | See CON-R11 and Edge Cases; never an instant cancel. |
+
+**CON-R10. Per-viewer result.** `IsConcealedFrom(Viewer, Pawn) = Concealed(Pawn) ∧ ¬CanViewerKnow(Viewer, Pawn, Position)`: server-only, the definition the Policy requires. It is true for every non-ally of a concealed player (active or informant viewers alike: informants have no x-ray, IVP R9a) and for **every** viewer of a concealed NPC. **Co-occupants who are not allies do not see each other**: the relevancy rule stays `owner ∨ ally ∨ ¬concealed`, with no "same bush" clause. Two rivals in one bush are blind to each other and may blind-strike their own bush. Allies in one bush see each other's hatched marker and no body.
+
+A victim's own `Hide(Exit)` arriving between the outcome slot and the death write is rejected (the pawn is dead in the slot; IIF `NotNow`), so no exit can start for a killed pawn.
+
+**CON-R11. Ownership changes while concealed.** A participant-bound AI hold (disconnect grace, Round R17) never issues Hide; a transition in flight when control passes completes (Enter to `Concealed`, Exit to `Outside`). The pawn stays concealed until killed or released. On `ReleaseToCrowd` it is a concealed NPC: culled for former allies at the same boundary (their body was already hidden locally, so nothing pops), and Crowd exits it later through an ordinary `Hide(Exit)` drawn from its NPC dwell distribution. A rejoiner resumes its concealed pawn and learns its state from the owner component (pose is `None`).
+
+**CON-R12. Blind strikes reach bushes (spot-attack zone).** A strike's `WorldPoint` (or a `TargetPawn` that falls back to it, IIF R10) **targets bush b** iff its horizontal distance to b's planter footprint is ≤ `BushSpotToleranceCm` (75) (F4). Concealment answers `GetSpotOccupants(b, Attacker)`: the occupancy record of b minus the attacker itself and its allies (Roster `GetRelation`; confirmed by ASN-R9), including pawns in `Exiting`/`Emerging` before their leaf crossing. Assassination (ASN-R8 rule 2) **first filters** the candidates by its full F1 reach test (horizontal reach to the capsule surface, `|Δz| ≤ StrikeVerticalReachCm`, warp limit with the variant's `T_v`) applied to each candidate's **server capsule position at the slot** (the anchor while `Concealed`, the moving position while `Exiting`/`Emerging`), **then picks one** survivor uniformly by a stateless hash keyed on a server-only salt (F4). **The bush rule is terminal (ASN-R8):** if the filtered set is empty (an empty bush, an ally-only bush, or occupants out of reach), the strike is a whiff, identical in content and timing to any whiff, and never falls through to open-spot candidates standing beside the bush; a visible pawn there is struck only through an honoured `PawnRef` (ASN-R8 rule 1), which beats any spot. **The uniform pick is intended:** an attacker who reads a player correctly in a bush that also holds an NPC can still draw the NPC and take a strike. Following someone into a bush is a chosen, visible tell, and an entry-order pick would make a watched NPC entrant reliable cover. **Review metric (creative-director ruling, rebased):** the concealment log records, per match, the share `m` of bush strikes with a non-empty candidate set whose set held ≥ 2, against the F1 baseline `m0 = 1 − e^(−λ)` at that match's measured λ (about 29 % at defaults). The creative director reviews the rule when `m > 35 %` or `m > m0 + 10` points; fewer than 30 such strikes is inconclusive. Change request to IIF/Camera: the aim ray's `WorldPoint` includes its intersection with a `HideVolume` (a bush-spot query channel), projected to the ground, so a strike aimed into the leaves lands in the zone.
+
+**CON-R13. Rustle parity.** Each `BushEnter`, `BushExit` and bush-emerge plays one authored rustle at the bush's face on the transition's side: a stateless WPO pulse on the leaf tiers plus one SFX from a shared pool (Visual/Audio). It is driven by the pose on every client for every pawn kind, identical in 1P and 3P, at every LOD, never scaled by occupant count, and absent while a bush is merely occupied. It is the only sign a bush gives.
+
+**CON-R14. NPCs use bushes through this exact path.** Crowd AI calls `Hide(Enter|Exit)` through the IIF; Concealment has no `IsAI` input. NPC bush choice must be blind to occupancy and to player positions (change request to Crowd: drop "a free bush"), at the rate F2 requires, with a dwell distribution that has no cap (conflict C7: this version stands). Long dwell is accepted as a chosen P2 tell (a citizen rarely stays beyond a minute); Crowd is **not** asked for a heavier tail, which would make camping cheaper. **Parity evidence (OQ3):** Crowd's Tell Matrix row T5 (r_N 0.19/min at k = 1.5, occupancy-blind, uncapped log-normal dwell) and its gate AC-CNB-15 `Crowd.NpcBushParity` (Crowd change request 7, reconciliation 2026-10-24). **Wire parity:** NPC and player pawns share one net update frequency, net priority and cull boundary (the quantised server clock of IVP R7.2, never a per-actor update phase); Crowd LOD never changes a pawn's replication settings. **No automatic fallback (IVP R7.6, L29):** if Crowd cannot meet F5 at the MVP-core checkpoint, the case escalates to the creative director and the user. Client-side hide (`ConcealServerCullEnabled = false`) may run only in internal development builds, never by default and never in a build that leaves the team; a cull that only players can trigger is never shipped. The gameplay rules in this GDD do not change in that mode.
+
+**CON-R15. Entry log.** The server appends `{Tick, BushId, PawnKind, Event ∈ {Commit, ExitCross, Emerge, Killed, BushStrike}}` to a ServerOnly concealment log (Round Event Log slice); `BushStrike` rows carry the candidate-set size before and after the reach filter, and `Emerge` rows whether the strike killed. It is the source of F2's measured `r_P`, of dwell and time-concealed metrics, of the CON-R12 multi-occupant metric and of the **ambush metric**: kills by a pawn in `Emerging` as a share of all kills, reviewed by the creative director above 25 % and fixed, if needed, by raising the cost of emerging, never by a dwell timer. It is never released to clients in MVP (IVP Event Log release classes).
+
+**CON-R16. Listen-server host.** The host runs the same latch (CON-R6b), setting a client-local, non-replicated `bPresentationHidden` on the actor: body, attachments, shadow, Lumen, ray tracing, footstep decals, foley, Niagara, spawned sounds and its audio emitter. On the authority no RepNotify fires, so the host's latch is set and cleared by explicit calls from the server's swap and crossing queue items (never by an anim notify: visibility-based anim ticking can skip notifies on a hidden mesh). `SetActorHiddenInGame` and `bHidden` are never used for concealment (`bHidden` replicates and feeds relevancy [V `Pawn.cpp`]). The host's aim and Strike-hint traces ignore hidden non-allies by switching the response of the host's copy of each such pawn on a dedicated presentation trace channel; shared physics collision is unchanged, and server hit tests use capsule math, not trace channels. Any server-side sight or perception check on a pawn reads `IsConcealedFrom`. The host's `Attack` goes through the same server validation as a remote client's. The host has no cull (IVP R10/L21, accepted for trusted playtests).
+
+### States and Transitions
+
+| State | Entered when | Relevancy (IVP) | Pose | Exits to |
+|---|---|---|---|---|
+| `Outside` | default; exit or emergence completes; Reset | `Visible` | any | `Entering` on `HideEnter` execution |
+| `Entering` | `HideEnter` executes | `Visible` | `BushEnter` | `Concealed` at +`BushEnterSwapSec`; `Outside` if killed before commit (ordinary kill, no record) |
+| `Concealed` | commit at the swap | `CullPending` → `Culled` after `ConcealCullDelayMs` | `BushEnter` until +0.9 s, then `None` | `Exiting` (`HideExit`), `Emerging` (Attack), removed (kill) |
+| `Exiting` | `HideExit` executes | `Visible` (same step) | `BushExit` | `Outside` at +`BushExitDurSec` (record left at +`BushExitCrossSec`) |
+| `Emerging` | Attack executes while `Concealed` | `Visible` (same step) | `Strike` (bush-emerge variant) | `Outside` when the strike's recovery ends (record left at +`BushStrikeEmergeSec`) |
+
+Transitions are atomic (IIF R9: every other command `Busy`). Commits, leaf crossings and transition ends are Round queue timer items ordered by (due time, sequence id) with commands and kills, so every same-tick case has one order. Due times are whole server ticks; "same tick" means one server frame processed in (due, seq) order. Each item carries the pawn's **transition generation id** and is dropped, with no effect, unless the pawn is alive and still in that transition (a stale commit, crossing or end after a kill, reset or reversal never fires). In `Ended`, Hide commands are rejected `NotNow`, in-flight transitions complete, and concealed pawns stay culled (IVP: concealed positions are `N` for `PostRound` in MVP). `Reset` destroys every pawn and clears every record on `OnRosterReset`.
+
+### Interactions with Other Systems
+
+| System | In (Concealment receives) | Out (Concealment provides) | Interface owner |
+|---|---|---|---|
+| Information Visibility Policy | `CanViewerKnow(V, S, Position)`; the cull/un-cull mechanism, `ConcealCullDelayMs`, `ConcealServerCullEnabled` | commit, exit, break and kill events driving `CullPending`/`Culled`/`Visible`; `IsConcealedFrom` | Policy (audience), Concealment (behaviour) |
+| Input & Interaction Framework | `Hide(Enter(BushId) \| Exit(Side))`; `OnActionStarted(Pawn, Attack)` | `CanBegin` for HideEnter/HideExit; transition lengths; `NotNow` for Prepare/Interact while concealed | IIF |
+| Shared Character & Locomotion | `IsRunning`, `IsInTraversal`; root-motion sources; capsule; pose playback; per-viewer hide flags | `BushEnter`/`BushExit` pose requests; collision-ignore window | SCL |
+| Level Socket Contract | `BushSite` (`BushId`, `HideVolume`, `EntryAxis`, anchor) from the Manifest | — | LSC |
+| Participant State & Roster | `GetRelation(viewer, subject)`; `OnRosterReset` | — | Roster |
+| Round & Match Framework | queue timer items, phase gate (`Active`/`Ended`/`Reset`), R17 bound-AI rule, Event Log | log entries (CON-R15) | Round |
+| Camera System | own `IsConcealed` (owner component) | CS-R11.3 clamp input; foliage channel; rustle tagged eye-masked | Camera |
+| Assassination & Defence Reversal | spot attacks (ASN-R8 rule 2, terminal), F1 reach filter, outcome slot and death write, `BushStrike` clip, `FActionState`/`FDeathState` carriers | `GetSpotOccupants`; `OnConcealmentBroken`; state at execution; hash pick (F4); `bDiedConcealed` value; hide-pose start server time | Assassination |
+| Crowd & NPC Behaviour | NPC Hide commands | the one Hide path; no occupancy data | Crowd |
+| NPC-Kill Penalty & Informants | — | `IsInBushOrTransition(Pawn)` for takeover eligibility (IVP R9c) | Penalty |
+| Teammate Markers / HUD | — | `IsConcealed` via C-TeamView and the client-local `IsAllyBodyHidden(Pawn)` latch (CON-R6b) for the hatched marker; owner grade trigger | Markers / HUD |
+| Crowd steering / avoidance | — | concealed and transitioning pawns excluded from RVO, crowd avoidance and steering queries (CON-R4) | Crowd |
+
+## Formulas
+
+Defaults used below: `TeamSize` 5 (n_P), `NpcCount` 40 (n_N), N_B = 9 bushes (LSC D5 example), `AssassinationRangeCm` 200, capsule radius r_c = 35 cm (**provisional**, SCL owns the value). Concealment defines no damage or economy curve; its numbers are occupancy forecasts, a parity target, a timing chain and a hit zone.
+
+### F1. Bush occupancy
+
+The bush occupancy formula is defined as:
+
+`O_b(t) = |{p : p ∈ record(b) at t}|` (instant count, server-only); expected occupancy by Little's law `E[O] = (n_N · r_N · D_N + n_P · r_P · D_P) / N_B`, with `P(no NPC in b) = e^(−n_N · r_N · D_N / N_B)`
+
+| Variable | Type | Range | Source | Description |
+|---|---|---|---|---|
+| N_B | int | 8-14 | LSC D5 | Bushes in the layout |
+| n_N, n_P | int | 20-60, 1-5 | `NpcCount`, `TeamSize` | NPCs; opponents of the viewer |
+| r_N, r_P | float (/min) | ≥ 0 | Crowd tuning; entry log (CON-R15) | Bush entries per pawn per minute |
+| D_N, D_P | float (min) | > 0 | Crowd dwell distribution; entry log | Mean dwell per entry |
+| E[O] (λ) | float | 0-∞ (about 0.12-0.54 over the variable ranges at the recommended rates) | calculated | Mean occupants per bush |
+| m0 | float | 0-1 | calculated, `1 − e^(−λ)` | Chance that a bush holding a given pawn also holds someone else (Poisson arrivals); baseline of the CON-R12 review metric |
+
+**Output Range:** O_b is any integer ≥ 0 (no cap, CON-R3); E[O] about 0.34 at defaults (0.12 at N_B 14 and n_N 20; 0.54 at N_B 8 and n_N 60). **Example:** r_N = 0.19, D_N = 0.345 min (log-normal median 15 s, σ 0.8, mean 20.7 s), r_P = 0.24, D_P = 0.345: NPC term 40 · 0.19 · 0.345 / 9 = 0.29 (about 25 % of bushes hold an NPC at any instant); opponent term 5 · 0.24 · 0.345 / 9 = 0.046. A strike at an occupied bush finds an opponent about 0.046 / (0.29 + 0.046) = 13.7 % of the time. With λ = 0.337, m0 = 1 − e^(−0.337) = 0.29: a bush a tracked player enters already holds someone else 29 % of the time, and the uniform pick then lands on the player with expectation (1 − e^(−λ))/λ = 0.85 (Player Fantasy). Player dwell matters as much as entries: D_P = 1.0 min would triple the player term, so dwell is logged with entries.
+
+### F2. NPC bush-use rate target
+
+The NPC bush-use rate formula is defined as (IVP F5, solved for Crowd's rate):
+
+`r_N,req = r_P · n_P · (1 − k·b) / (k · b · n_N)`, with `b = n_P / (n_P + n_N)`; pass iff `r_N ≥ r_N,req`
+
+| Variable | Type | Range | Source | Description |
+|---|---|---|---|---|
+| r_P | float (/min) | 0-1 | entry log of internal playtests (≥ 10 matches) | Measured player entry rate |
+| k | float | 1.0-1.5 | IVP `HidePosteriorFactor` (1.5, authoritative; 1.5 is the ceiling, IVP F5 ruling A) | Allowed posterior inflation |
+| b | float | 0-1 | calculated | Base rate: 5 / 45 = 0.111 |
+| r_N,req | float (/min) | ≥ 0 | calculated → Crowd's NPC bush-rate key | Minimum per-NPC entry rate |
+
+**Output Range:** r_N,req = 0.625 · r_P at defaults (k = 1.5); 1.0 · r_P at k = 1.0, the strict end. r_N,req grows with n_P / n_N, so it is evaluated at each build's measured `TeamSize` and `NpcCount`, never as the fixed 0.625. **Example:** design target r_P ≤ 0.24/min (about 2.9 entries per player per 12-minute round) needs r_N ≥ 0.15/min; Concealment recommends Crowd ship r_N = 0.19/min for margin (P_hide ≈ 0.136 at r_P = 0.24). Crowd's draft T5 target (a posterior of 0.20) is not a valid input: the Policy's k = 1.5 bound (P_hide ≤ 1/6) governs, and the gap is closed by raising r_N, never by loosening k (conflict C7). **Design target:** r_P ≤ 0.24/min is a target in its own right, separate from AC-CON-24's time-concealed cap: many short hides (for example 6 s each) could stay under 8 % of round time while pushing r_P near 0.8/min and r_N,req to 0.5/min, beyond a believable crowd.
+
+### F3. Exit occlusion and transition timing chain
+
+The transition timing formula is defined as two pass/fail constraints:
+
+`(a) BushEnterDurSec ≥ BushEnterSwapSec + D_cull` and `(b) BushExitCrossSec ≥ T_uncull = L99 + 1/f_net + T_reopen`; also `(c) BushStrikeEmergeSec ≥ T_uncull`, `(d) (BushEntryReachCm + r_c) / BushEnterSwapSec ≤ 1.5 · v_walk` (calm-gait warp), `(e) BushEnterSwapSec < BushEnterDurSec` and `BushExitCrossSec < BushExitDurSec`, and `(f) StrikeContactSec + BushStrikeEmergeSec ≤ 1.2` (Assassination I-ASN-3)
+
+| Variable | Type | Range | Source | Description |
+|---|---|---|---|---|
+| BushEnterDurSec | float (s) | 0.8-1.3 | data file | Enter transition length (0.9) |
+| BushEnterSwapSec | float (s) | 0.35-0.7 | data file | Commit and leaf-plane swap (0.5) |
+| D_cull | float (s) | 0.1-0.4 | `ConcealCullDelayMs` (IVP F3) | Commit to cull (0.25) |
+| BushExitCrossSec | float (s) | 0.35-0.7 | data file | Exit execution to outward leaf crossing (0.45) |
+| BushStrikeEmergeSec | float (s) | 0.3-0.5 | data file (Assassination clip) | Strike-from-bush leaf crossing (0.35); hard range 0.30-0.6 (Tuning Knobs), also bounded by (f) |
+| v_walk | float (cm/s) | ~140 | SCL walk speed (**provisional**) | Calm-gait reference for (d) |
+| StrikeContactSec | float (s) | 0.4 | Assassination | Execution-to-contact of the standard strike, for (f) |
+| L99, f_net, T_reopen | ms, Hz, ms | 150, 15, 33 | IVP F4 | p99 latency, pawn net rate, channel re-open |
+| T_uncull | float (s) | 0.1-0.4 | calculated (IVP F4) | 0.25 at defaults |
+
+**Output Range:** boolean per constraint. (a) guarantees every exit starts `Culled`, so no exit ever cancels a pending cull at defaults. **Example:** (a) 0.9 ≥ 0.5 + 0.25 = 0.75 (margin 150 ms); (b) 0.45 ≥ 0.25 (margin 200 ms); (c) 0.35 ≥ 0.25 (margin 100 ms). At L99 = 250 ms, D_cull and T_uncull rise to 0.35: (a) 0.85 ≤ 0.9, (b) margin 100 ms, (c) margin 0; at L99 = 300 ms they reach 0.40 and (c) fails, so the network ceiling for these defaults is **L99 ≤ 250 ms**, where (a) keeps 50 ms and (c) 0 ms of margin; above it the Policy owner recomputes F3 and this GDD retunes. (d) (60 + 35) / 0.5 = 190 cm/s ≤ 210 (1.36 × walk, pass); at `BushEntryReachCm` 100 or `BushEnterSwapSec` 0.35 it reaches 270 cm/s and fails, so the safe ranges are Reach ≤ 70 cm and Swap ≥ 0.45 s. (e) 0.5 < 0.9 and 0.45 < 0.9. (f) 0.4 + 0.35 = 0.75 ≤ 1.2. The hard minimum of the crossing keys is 0.30 s (50 ms above `T_uncull` at the profile), never 0.25. The minimum enter-to-exit cycle is 1.8 s; with the 6 s re-entry cooldown, a full in-out cycle in the same bush takes at least 7.8 s.
+
+### F4. Spot-attack hit zone
+
+The spot-attack hit formula is defined as:
+
+`TargetsBush(b, W) = d_xy(W, Footprint_b) ≤ BushSpotToleranceCm`; `Reachable = { c ∈ GetSpotOccupants(b, A) : Reach(A, c) }` with Assassination's F1 `Reach` (horizontal `d_xy(A, P_c) − r_c ≤ AssassinationRangeCm` to the capsule surface, confirmed by ASN; `|Δz| ≤ StrikeVerticalReachCm`; warp limit) at each candidate's server position `P_c` at the slot (`P_c` = anchor while `Concealed`); victim = `Reachable[ UniformBelow(|Reachable|) ]` drawn from the server-secret stream `FSecretStream(GetServerSubSeed(BushSpotPick, LayoutAttempt), "CON_SPOT")` keyed by `(ServerTickIndex, AttackerCommandSeq, BushId)` (unbiased; replaces the earlier `H(SpotSalt, …) mod |Reachable|`; ADR-0017 §7, ADR-0006 domain 14), none if `Reachable` is empty (terminal whiff)
+
+| Variable | Type | Range | Source | Description |
+|---|---|---|---|---|
+| W | vector | — | IIF R10 `WorldPoint` | Ground point of the strike |
+| BushSpotToleranceCm | float (cm) | 40-120 | data file | Zone beyond the footprint (75) |
+| A | vector | — | server position | Attacker capsule centre |
+| r_c | float (cm) | 30-45 | SCL capsule (**provisional**) | Capsule radius |
+| Reachable | set | 0-n | `GetSpotOccupants` (CON-R12) filtered by F1 | Non-ally occupants in reach, ordered by commit sequence (the order shifts as occupants leave; intended, the hash makes it irrelevant) |
+| BushSpotPick stream | secret stream | — | `GetServerSubSeed(BushSpotPick, LayoutAttempt)` (ADR-0006 domain 14), server-only, never replicated or derived from `RoundSeed` (which the Manifest may expose); injectable in tests | Keeps the pick unpredictable to clients (replaces the former `SpotSalt`) |
+| H | uint32 | — | stateless hash | Uniform pick; reproducible for tests with a fixed salt |
+
+**Output Range:** zone area (2.0 + 2·0.75)² − corner trim ≈ 11.8 m² (the zone is the footprint grown by 75 cm with rounded corners: a point 75 cm diagonally off a corner, e.g. (1.53, 1.53) m from the anchor, is in; (1.55, 1.55) m is out); bushes ≥ 12 m apart (`BushSpacingCm`), so zones never overlap at any tolerance below half the spacing. **Example** (the 0.35 m curb is the planter's height; its outer edge is the footprint edge, 1.0 m from the anchor): attacker capsule touching the planter: d(A, anchor) = 1.0 + 0.35 = 1.35 m, minus 0.35 = 1.00 ≤ 2.00, hit. Attacker centre 2.4 m from the anchor (1.4 m beyond the planter edge): 2.05 > 2.00, whiff. The boundary is d = 2.35 m (2.34 hit, 2.36 whiff at r_c 35), so a blind strike reaches from up to about 1.35 m beyond the planter edge. Because the aim ray's `WorldPoint` includes its `HideVolume` intersection (CON-R12), an aimed strike at the leaves always lands inside the footprint; the tolerance only matters for ground aims beside the planter. With two candidates and hash value 7: victim index 7 mod 2 = 1. One strike never kills more than one pawn (P3), and the pick is not by entry order (an entry order would make a watched NPC entrant reliable cover).
+
+## Edge Cases
+
+**Same-tick and ordering** (all resolve in Round's single queue order: due time, then sequence id)
+- **If a kill and the victim's commit fall in one tick:** whichever item is first in the queue wins. Kill first: an ordinary kill of a visible pawn, no record is created and no cull starts. Commit first: the pawn is `Concealed`, a `TargetPawn` naming it fails the `CanViewerKnow` gate and falls back to its `WorldPoint`, which lies in the zone, so F4 decides.
+- **If two attackers strike one bush in one tick:** the first in queue order draws from the candidates; the second draws from the survivors and whiffs if none remain.
+- **If a strike lands while the occupant is `Exiting` before its leaf crossing:** the occupant is still a candidate (CON-R12) and is struck if F1 reach holds at its moving server position, although already un-culled.
+- **If a pawn is struck while `Entering`, before its commit:** it is an ordinary visible pawn (a `TargetPawn` or open-spot candidate); the kill is visible, the pending commit item is dropped by its generation id and the client's pending swap is cancelled (CON-R6b). After the commit, it is a spot candidate. No window grants immunity.
+- **If a commit, crossing or end item fires after its pawn was killed, reset or reversed:** dropped by its generation id, no effect (States).
+- **If a pawn issues `HideExit` and is struck in the same tick:** queue order; exit first means the strike resolves against a candidate in `Exiting` (still hit if reachable); strike first means a kill while `Concealed`.
+- **If two or more pawns commit in one server frame:** their culls land on the same net-update boundary (IVP); order carries no information.
+
+**Occupancy and co-occupants**
+- **If a pawn enters a bush that already holds pawns:** entry proceeds identically; all overlap at the anchor without collision; no reply or timing differs.
+- **If two rivals share a bush:** neither sees the other; either may strike its own bush (W lies in the zone); the striker emerges (CON-R9) and the victim is drawn from the non-ally candidates.
+- **If only the attacker's allies occupy the struck bush:** the candidate set is empty; a whiff identical to an empty bush (confirmed, ASN-R8/R9).
+- **If a struck bush is empty or every occupant is out of reach, while a visible pawn stands beside it inside the zone:** a whiff. The bush rule is terminal and never falls through to the open spot (ASN-R8); the visible pawn is struck only through an honoured `PawnRef`.
+- **If an NPC and a player share the struck bush:** one is drawn uniformly; an NPC victim is an NPC-kill strike for the attacker (P3 probe cost, IVP L28).
+
+**Transitions and geometry**
+- **If the chosen exit side is blocked by a standing pawn:** the next open side in angular order is used; if all are blocked, the requested side with capped depenetration. Never refused, never a reply.
+- **If the enter guard fails at the swap (fault):** no commit; fault sink; immediate ordinary exit on the entry side (looks like a brief in-out).
+- **If the pawn is running when it presses Hide:** rejected `NotNow` (IIF R7); it must drop to walk (SCL F4 hysteresis). The prompt is hidden while running.
+- **If a pawn is in reach of two bushes:** impossible at `BushSpacingCm` 12 m; the command names one `BushId` anyway, validated by reach.
+- **If a pawn spams Hide:** the first exit's completion starts the 6 s re-entry cooldown; further Enters reply `Cooldown`; the shared IIF bucket (4 burst, 2/s) caps command rate. A flickering player inflates its own `r_P`, which is its own tell.
+- **If a pawn hops from bush to bush:** the cooldown does not bind (the walk between bushes is longer); each entry plays the rustle and is seen by anyone with line of sight. Hopping is bounded by those tells and by spacing, not by a key.
+- **If a concealed player stays a long time:** nothing happens (no timer). Citizens rarely stay beyond a minute (NPC dwell median 15 s), so a long quiet bush is a P2 tell that a watcher can read; it is accepted and not masked by a heavier NPC tail.
+- **If a client receives a pawn actor late (packet loss, re-open after the crossing time):** the action state's server start time seeks the clip and the latch evaluates in `PostNetInit` (CON-R6a/b): the body shows seeked, never snapped, and never before the crossing.
+
+**Lifecycle**
+- **If a concealed player disconnects:** AI hold, stays concealed, never toggled (Round R17); a transition in flight completes.
+- **If the grace expires (`ReleaseToCrowd`):** the pawn becomes a concealed NPC, culled for former allies at the same boundary with their marker entry already cleared; Crowd exits it later with an ordinary exit. Never an instant cancel (change request to Roster's "cancelled on next tick" wording).
+- **If a concealed player rejoins within grace:** resumes the concealed pawn; the owner component supplies `IsConcealed`; camera enters CS-R11.3; nothing changes for any non-ally connection.
+- **If a viewer becomes an informant while watching a concealed rival:** no change (class invariant, IVP).
+- **If an informant takeover candidate is `Entering`, `Concealed`, `Exiting` or `Emerging`:** ineligible (`IsInBushOrTransition`, IVP R9c, amended for the pose split).
+- **If a concealed pawn's participant would become an informant by strike-out:** impossible while concealed; a strike first breaks concealment (CON-R9), so the strike-out applies to an `Emerging` pawn outside the bush.
+- **If the round enters `Ended` mid-transition:** the transition completes; then Hide is rejected; concealed pawns stay culled until `Reset` (no PostRound position release in MVP). The culled pawn's destruction at Reset sends nothing to non-allies (no channel).
+- **If the last surviving active player of a team hides:** the round continues; Concealment adds no timer or reveal. The other team wins by objective (stall pressure, Objectives Chain) or by finding them. The concealment log records time concealed so playtests can measure it.
+- **If the listen-server host disconnects:** the session ends (no host migration); nothing persists.
+
+**Pillar 1 leak cases**
+- **If an observer sees X enter bush B and later Y enter B:** nothing follows about Y, because NPC bush choice is blind to occupancy (CON-R14). A Crowd rule that picks only free bushes would make Y a certain player; it is forbidden.
+- **If NPC dwell were capped:** any stay longer than the cap would mark a player; NPC dwell has no cap.
+- **If a modified client reads the wire during `CullPending`:** it holds a stationary pawn whose entry it could already see; after the cull, nothing (IVP F3).
+- **If `ConcealServerCullEnabled = false`:** client-local hide only; every client holds every bush occupant (IVP L29, CRITICAL). Allowed only in internal development builds, never by default and never in a build that leaves the team (IVP R7.6); all gameplay rules here are unchanged.
+- **If Crowd misses F5 at the MVP-core checkpoint:** no automatic fallback; escalation to the creative director and the user (IVP R7.6).
+- **If an NPC routes past an occupied bush:** its path is identical to the empty case; concealed and transitioning pawns are not in avoidance (CON-R4).
+
+## Dependencies
+
+**Upstream (Concealment depends on)**
+
+| System | Interface | Hard/Soft | Status |
+|---|---|---|---|
+| Information Visibility Policy (#7) | `CanViewerKnow`; R7 hybrid cull and its timing; F3/F4/F5; `ConcealServerCullEnabled` (dev builds only, R7.6/L29) | Hard | Reviewed (NEEDS REVISION, revisions applied) |
+| Input & Interaction Framework (#3) | `Hide(Enter(BushId) \| Exit(Side))`; `CanBegin`; R9 slot; `OnActionStarted(Attack)`; `FActionState` (pose; `StartServerTime` is pending CR 10(b), CON-R9 interim; cross-review C-W10) | Hard | Reviewed (NEEDS REVISION; change requests) |
+| Shared Character & Locomotion (#9) | `IsRunning`, `IsInTraversal`, capsule, root-motion sources, pose playback, hide flags, walk speed | Hard | Reviewed (NEEDS REVISION) |
+| Level Socket Contract (#8) | `BushSite` from the Manifest | Hard | Reviewed (MAJOR REVISION NEEDED) |
+| Participant State & Roster (#2) | `GetRelation`; `OnRosterReset` | Hard | Reviewed (NEEDS REVISION) |
+| Round & Match Framework (#6) | queue timer items, phase gate, R17, Event Log slice | Hard | Reviewed (MAJOR REVISION NEEDED) |
+| Tuning Data & Config (#1) | Concealment keys (CR-15 columns); cross-field invariants F3 (d)-(f) | Hard | Reviewed (MAJOR REVISION NEEDED, revisions applied) |
+| Crowd & NPC Behaviour (#11) | NPC bush use at F2 rate, occupancy-blind, uncapped dwell (C7); avoidance exclusion; wire parity | Hard for any build that leaves the team (no automatic fallback, IVP R7.6) | Reviewed, revisions applied; C7 resolved for this version (Crowd T5, AC-CNB-15) |
+| Camera System (#10) | CS-R11.3 concealed boom (`ConcealedBoomCm` 60, applied; hard maximum 70 by I-CS-4, which reads the VA-8 dome fact), eye mask, foliage channels | Soft peer | Reviewed, revisions applied |
+
+**Downstream (depend on Concealment)**
+
+| System | Interface | Hard/Soft | Status |
+|---|---|---|---|
+| Assassination & Defence Reversal (#13) | `GetSpotOccupants`, F4 zone and hash pick, `OnConcealmentBroken`, `BushStrike` variant, killed-concealed handling (CON-R9 interim rule now; death-write un-cull and `bDiedConcealed` only if approved) | Hard | Reviewed, revisions applied |
+| NPC-Kill Penalty & Informants (#14) | `IsInBushOrTransition` for takeover eligibility | Hard | Reviewed, revisions applied |
+| Crowd & NPC Behaviour (#11) | the one Hide path; Tell Matrix row T5 | Soft | Reviewed, revisions applied |
+| Teammate Markers (#17) | `IsConcealed` via C-TeamView and `IsAllyBodyHidden(Pawn)` (hatched marker, CR-6 applied) | Hard | Reviewed, revisions applied |
+| HUD (#18) | owner `IsConcealed` for the prompt verb only (the hider's grade is a post-process, VA-5, not a HUD element); Concealment UI-1, UI-2 | Soft | Reviewed, revisions applied |
+| Objectives Chain (#15) | Interact rejected inside a bush. **Obligation:** Concealment has no timer, so Objectives' stall pressure (SP-1 to SP-8) is the only thing that pushes a hider out. Hiding indefinitely must never be a winning line (AC-CON-24) | Hard (for P4) | Reviewed, revisions applied (SP-8 in place) |
+| Camera System (#10) | own `IsConcealed`; dome fact (VA-8) for I-CS-4 | Soft | Reviewed, revisions applied |
+| Diegetic Audio (#22, VS), Telemetry, Anti-Cheat (Alpha) | rustle parity; concealment log; cull surface | Soft | Not written |
+
+**Bidirectionality:** the systems index lists IVP, SCL, IIF, LSC and Roster as upstream. Change requests: add Round, TDC and Crowd (hard) and Camera (soft) as Concealment upstream; Penalty and Objectives should list Concealment. Assassination, Teammate Markers, IVP and Camera already list it (checked 2026-10-24).
+
+## Tuning Knobs
+
+Registered under owner `Concealment` (TDC CR-15 columns). All are ServerOnly unless stated; transition times replicate as `All` because every client plays the clips.
+
+| Key | Type | Owner | Default | Hard range | Safe range | Audience | Latch | Unit | Effect / what breaks |
+|---|---|---|---|---|---|---|---|---|---|
+| `BushEnterDurSec` | float | Concealment | 0.9 | 0.6-1.5 | 0.8-1.3 | All | Round | s | Low: fails F3a (exit before cull lands). High: sluggish, long exposure. |
+| `BushEnterSwapSec` | float | Concealment | 0.5 | 0.3-0.8 | 0.45-0.7 | All | Round | s | Commit and swap; must equal the clip notify ±1 frame. Must be < `BushEnterDurSec` (F3e) and keep the warp calm (F3d). Low: a rushed step. High: longer visible entry. |
+| `BushExitDurSec` | float | Concealment | 0.9 | 0.6-1.5 | 0.8-1.3 | All | Round | s | Exit length; low feels like a pop. |
+| `BushExitCrossSec` | float | Concealment | 0.45 | 0.30-0.8 | 0.35-0.7 | All | Round | s | Must be ≥ `T_uncull` (F3b) and < `BushExitDurSec` (F3e). Low: body pops in late under lag. High: slow exit. |
+| `BushStrikeEmergeSec` | float | Concealment | 0.35 | 0.30-0.6 | 0.3-0.5 | All | Round | s | Must be ≥ `T_uncull` (F3c) and keep `StrikeContactSec + BushStrikeEmergeSec ≤ 1.2` (F3f, Assassination I-ASN-3). Low: attacker appears before its actor exists. High: ambush lags the strike. Clip owned by Assassination. |
+| `BushEntryReachCm` | float | Concealment | 60 | 20-150 | 30-70 | All | Round | Cm | Low: fiddly entry. High: hide from far away (a dash-in); above 70 the warp fails F3d. |
+| `BushSpotToleranceCm` | float | Concealment | 75 | 20-200 | 40-120 | ServerOnly | Round | Cm | Matters only for ground aims beside the planter (an aim into the leaves is always in the footprint). Low: a ground aim at the bush's foot misses it. High: strikes near a bush resolve as bush strikes (terminal), so a visible pawn beside it needs an honoured `PawnRef`. Kept equal to `OpenSpotToleranceCm` and `PawnRefAgreementCm` (Assassination). Must stay < half of `BushSpacingCm`. |
+| `BushReenterCooldownSec` | float | Concealment | 6 | 0-30 | 3-15 | ServerOnly | Round | s | Low: flicker spam, cull churn. High: hiding after a strike becomes impossible. Same for NPCs. |
+| `BushExitDepenetrationCapCm` | float | Concealment | 30 | 0-60 | 15-40 | ServerOnly | Round | Cm | Cap on per-pawn depenetration when an exit lands on a blocking pawn (CON-R8). High: a visible shove (wire-visible nudge). Low: overlapping pawns linger. |
+| `BushVictimMode` | enum | Concealment | UniformHash | UniformHash, EarliestCommitted, All | UniformHash | ServerOnly | Round | — | Playtest A/B only; `All` breaks P3, `EarliestCommitted` makes NPC entrants cover. |
+| `BushRustleAmplitudeCm` | float | Concealment | 10 | 4-20 | 8-12 | All | Use | Cm | Presentation; must pass the 20 m read test and fail at 2×. |
+
+Referenced, owned elsewhere: `ConcealCullDelayMs`, `ConcealServerCullEnabled`, `HidePosteriorFactor` (IVP; k range 1.0-1.5); `AssassinationRangeCm`, `StrikeVerticalReachCm`, `StrikeWarpLimitCm`, `StrikeContactSec`, `StrikeNetLeadSec`, `OpenSpotToleranceCm` (Assassination); `BucketHideSize`/`PerSec`, `PawnRefAgreementCm` (IIF); `ConcealedBoomCm` (Camera; default 60, hard maximum 70 by I-CS-4, applied); `BushSites*`, `BushSpacingCm`, `BushCourtExclusionCm` (LSC); NPC bush rate and dwell keys (Crowd, recommended 0.19/min, log-normal median 15 s, σ 0.8, no cap). **Deliberately absent:** any dwell, capacity or reveal key. Adding one is a creative-director change (P4, anti-pillar "not hide-and-wait").
+
+## Visual/Audio Requirements
+
+*art-director consulted (art bible 2.8, 3.6, 5.2.1, 5.5, 6.5, 8.x.11, risk R5).*
+
+**VA-1 Bush is identical occupied or empty.** One mesh family, one MI, no occupancy parameter, no per-instance custom data, no MID, no custom depth or stencil (art bible 3.6, 8.x.11). Sway is the shared foliage WPO (period ≥ 4 s).
+
+**VA-2 The rustle (the only tell a bush gives).** Not particles: art bible 5.5 bans particle tells and 2.8 makes the rustle an authored motion of the bush. Mechanism: a stateless Material Parameter Collection with 8 ring-buffered pulse slots `(world position, start time, side)`. Every bush runs the same WPO function and responds only to a pulse within about 1.5 m. Motion: leaf tiers on the 90° arc of the transition's side displace laterally by `BushRustleAmplitudeCm` (10, range 8-12) in 2-3 oscillations at 4-5 Hz with exponential decay, 0.6 s in total. Onset is 0.1 s before the swap or crossing, with the peak at the crossing. It is emitted at the bush face, never at the pawn. It is identical for NPC and player, 1P and 3P, every LOD and distance, and is never scaled by occupant count. It is tagged eye-masked for the 3P mask (Camera CS-R5b). **Test:** at 20 m in greyscale, ≥ 85 % of testers name it within 2 s, and it fails at 2× amplitude (too loud). MPC pulse slots resolved by ADR-0017 §9 (client-local presentation, identical for every pawn).
+
+**VA-3 Clips** (SCL pose databases; Assassination owns the strike):
+
+| Clip | Length | Key instant | Requirements |
+|---|---|---|---|
+| `BushEnter` | 0.9 s | swap at 0.5 s (head passes the leaf plane) | Calm walk gait (B1) up to the swap; step over the 0.35 m curb with no hand contact (must not read as parkour); hard hide at the swap, no fade, dissolve or ghost; settle to rest (seen only by the owner) |
+| `BushExit` | 0.9 s | outward crossing at 0.45 s | Mirror of enter; body hidden until the crossing; rustle onset at 0.35 s |
+| Bush-emerge strike | preface + standard strike | crossing at 0.35 s | Contact segment frame-identical to the standard strike (5.5); only the emerge preface differs |
+
+**VA-4 Leak closures (art bible 5.2.1 rule 2, R5).** At the swap, on every non-owner client, these hide together: the body, hair, garments and every attached prop, with `bCastHiddenShadow=false`, `bAffectIndirectLightingWhileHidden=false` and `bVisibleInRayTracing=false` (verify flag behaviour in 5.8). No SSR, planar, water reflection or VSM trace may remain, and no footstep decal spawns inside the `HideVolume`. The killed-while-concealed body stays hidden through its fall and removal. Enemy clients and the listen host both apply it (CON-R16). **R5 test matrix:** low sun, noon and shade × Lumen software and hardware RT × VSM on/off × flag combinations. Compare an occupied bush with an empty one with the sway phase matched, using 60-frame temporal means. Pass = no difference above noise outside the rustle window, plus single-frame captures around each swap. **Occlusion proof:** a magenta proxy at the anchor, orbited at 5-25 m through every LOD and during a rustle, shows 0 visible pixels from the swap until the crossing.
+
+**VA-5 Hider's view (art bible 2.8).** Per-viewer grade: 5,000 K (−600 K), slight green tint, saturation −10 %, contrast −10 %, leaf-edge vignette 30 % (the maximum). It eases in over 0.6 s from the start of `BushEnter` and out over 0.4 s, finishing before the exit crossing. In 3P a boom of ≤ 60 cm keeps the lens inside the dome and its leaf silhouette framing the screen (Camera's `ConcealedBoomCm` 60, applied; CON-R7, I-CS-4).
+
+**VA-6 Audio.** One rustle SFX pool for every pawn kind and both camera modes: dry, soft and leafy, as short as the motion, spatialised at the bush face, never varied by occupancy. Nothing is audible while a bush is occupied: no breath, cloth or footsteps. An ally hears nothing extra (their marker is UI only). A concealed pawn's audio emitter is culled with its body for non-allies (IVP, Diegetic Audio VS).
+
+**VA-8 Dome geometry is a published asset fact** (Camera change request, reconciliation 2026-10-24). The bush mesh data asset publishes `BushDomeInnerRadiusCm` = 90 (the leaf dome is 1.8 × 1.9 m) as a fixed, read-only asset fact, not a tuning key: it changes only when the mesh changes, and the mesh is identical for every bush (VA-1). Camera's I-CS-4 lint reads it (`ConcealedBoomCm ≤ BushDomeInnerRadiusCm − 20`, i.e. ≤ 70 cm); a mesh revision that shrinks the dome fails that lint until the boom is re-checked.
+
+**VA-7 Art bible change request:** 5.5 says "NPCs never enter bushes (concept design flag)". The Policy's R7.6 requires NPC bush use (F2), so 5.5 must say NPCs enter bushes at the Crowd rate, and that the rustle means "a body went in", never "a player went in".
+
+> **Asset Spec**: run `/asset-spec system:concealment-bushes` after the art bible is approved (clips, rustle WPO, SFX pool).
+
+## Game Feel
+
+| Moment | Target | Number |
+|---|---|---|
+| Press to motion (owner) | The owner's clip starts locally, predicted, and reconciles with the server | ≤ 3 frames (50 ms) at 60 fps; mechanism is IIF's (**-> ADR**, change request) |
+| Slip-in | A quick, smooth step with an eased settle; grade and vignette build together; never feels stuck despite the atomic lock | 0.9 s; swap 0.5 s |
+| Pause inside | Free look, slow sway only, muted colour; no countdown, no meter | no timer |
+| Exit | Step back into full colour at the crossing | 0.9 s; crossing 0.45 s; fastest in-out cycle 1.8 s, re-entry 6 s after |
+| Ambush emergence | Fast and punchy: observers see the figure cross the leaves at 0.35 s, then contact at 0.75 s. The 0.35 s exists so **observers** can see who struck, never as a reaction window: the victim outcome is fixed at Attack execution (IIF R10), and nothing the victim does during the preface changes it (anti-pillar "not a reflex game") | crossing ≥ 0.30 s (hard minimum of `BushStrikeEmergeSec`; ≥ `T_uncull` 0.25 s), default 0.35 s |
+| Observer's view of an entry | No pop when the network cull lands; the swap is frame-exact to the clip | ±1 frame; 0 ms network dependence |
+| Blind strike | Identical feel for a hit, a whiff and an NPC kill until the Owner-only confirmation | Assassination's timings |
+
+Pop risk: if a cull ever arrived before a slow client's swap, the body would vanish unoccluded. F3 and IVP F3 (`D_cull` ≥ L99 + 1/f) prevent it at p99. Above the L99 ceiling of 250 ms, this GDD is retuned.
+
+## UI Requirements
+
+| # | Element | Viewer | Rule |
+|---|---|---|---|
+| UI-1 | Context prompt "[glyph] Slip in" / "[glyph] Slip out" (IIF UI-3, player-facing verbs) | Owner, Active only | Computed locally from Manifest geometry and own state (reach, not running, not traversing, slot free). Never depends on occupancy, on any other pawn or on a server query. Never shown to informants. A hint, never a gate. |
+| UI-2 | Concealed view grade and leaf-edge vignette (art bible 2.8) | Owner while own `IsConcealed` | Post-process only; 0.6 s in from the swap, 0.4 s out from Exit execution. No icon, meter, timer, "hidden"/"detected" text or stealth wording (IIF language rule). |
+| UI-3 | Hatched teammate marker | Allies (Active and Informant) | Owned by Teammate Markers; Concealment supplies the `IsConcealed` flag through C-TeamView (IVP R3/R8). Opponents' clients receive nothing. |
+| UI-4 | Strike hint | Attacker | Absent for any concealed non-ally (the actor is not rendered, IIF UI-4); nothing appears for a spot or a bush. No bush-specific reticle or highlight, ever. |
+| UI-5 | Kill confirmation after a blind strike | Attacker | Assassination's Owner-only confirmation, identical to any strike's. Concealment adds no UI. |
+
+No enemy-facing, informant-facing or spectator UI exists for concealment. **UX flag:** UI-1 and UI-2 feed `design/ux/hud.md` (run `/ux-design` before HUD epics).
+
+## Cross-References
+
+| Document | What is used | Where | Status |
+|---|---|---|---|
+| design/gdd/game-concept.md | Locked bush rules, P1/P2/P4, anti-pillar "not hide-and-wait", design flag on NPC bush use | Overview, CON-R7, CON-R14 | Locked |
+| design/gdd/information-visibility-policy.md | R6, R7 (hybrid; R7.6 no automatic fallback), R7.8, R9, R10, F3, F4, F5 (k 1.0-1.5), L13/L15/L27/L28/L29, `ConcealCullDelayMs`, `ConcealServerCullEnabled`, change requests 3 and 12 (applied) | CON-R2, R5-R10, R14, F2, F3 | Reviewed (NEEDS REVISION, revisions applied) |
+| design/gdd/input-interaction-framework.md | R7 legality, R9 slot and NotNow inside a bush, R10 targeting, UI-3/UI-4, buckets | CON-R3, R7, R8, R12 | Designed |
+| design/gdd/level-socket-contract.md | `BushSite`, V-BUSH-1/2/3, `BushSpacingCm`, AC-52 | CON-R1, F4 | Designed |
+| design/gdd/shared-character-locomotion.md | R6, R10, R13, R16, R18, R19 | CON-R4, R5, R7 | Designed |
+| design/gdd/camera-system.md | CS-R5b mask, CS-R8 aim ray, CS-R11.3 (`ConcealedBoomCm`), change request 3, OQ7 (answered: body does not turn) | CON-R6, R7, R12 | Designed (pending review) |
+| design/gdd/round-match-framework.md | queue order, R17 bound AI, phases, Reset | States, Edge Cases | Designed |
+| design/gdd/participant-state-roster.md | `GetRelation`, `OnRosterReset`, grace-expiry wording | CON-R10, R11 | Designed |
+| design/gdd/crowd-npc-behaviour.md | NPC bush row T5, rate and dwell (conflict C7: Concealment version stands) | CON-R14, F1, F2 | Designed (pending review) |
+| design/gdd/assassination-defence-reversal.md | ASN-R8 (rule 2 terminal), ASN-R9 (allies excluded), ASN-R10/R21 (outcome slot, death write, `FActionState`, `FDeathState`), F1 reach, I-ASN-3, change request 7 | CON-R9, R12, F3, F4 | Designed (pending review) |
+| design/gdd/teammate-markers.md | TM-R5 hatch rule, CR-6 (`IsAllyBodyHidden`) | CON-R6b | Designed (pending review) |
+| design/gdd/objectives-chain.md | Stall Pressure SP-1 to SP-8 (the P4 obligation) | Dependencies, AC-CON-24 | Designed (pending review) |
+| design/art/art-bible.md | 2.8, 3.6, 5.2.1, 5.5, 6.5, 8.x.11, R5 | Visual/Audio | Approved |
+
+**Change requests raised by this GDD** (orchestrator to route; no other file was edited):
+1. **IIF / SCL:** split `ActionPose.BushTransition` into `BushEnter` / `BushExit`; `Hide(Exit(Side))` carries a 2-bit side index; owner-side prediction of Hide clips (≤ 50 ms); the aim ray's `WorldPoint` includes the `HideVolume` intersection; R9 "Prepare/Interact inside a bush `NotNow`" is confirmed (drop "provisional"); add the `Cooldown` reply for `HideEnter`.
+2. **IVP:** R9c and AC-IVP-31 name `BushEnter`/`BushExit`/`Emerging` in place of `BushTransition`; confirm concealed pawns stay culled through `Ended`; the L99 ceiling of 250 ms becomes a cross-GDD invariant.
+3. **Crowd:** NPC bush choice blind to occupancy (drop "free bush"); no dwell cap (log-normal median 15 s, σ 0.8); per-NPC rate 0.19/min against IVP k = 1.5 (not 2.0); NPCs use the same re-entry cooldown and exit-side rule; Tell Matrix T5 references AC-CON-15.
+4. **Roster:** the grace-expiry edge case says concealment ends by a natural Crowd exit, not "cancelled on the next tick".
+5. **Assassination (not written):** measure reach to the capsule surface; the uniform-hash victim pick and the one-victim rule; the teammate rule for spot candidates; the bush-emerge strike variant (crossing ≥ `T_uncull`); the killed-concealed body stays presentation-hidden through its removal.
+6. **NPC-Kill Penalty & Informants:** use `IsInBushOrTransition` for takeover eligibility.
+7. **Art bible 5.5:** NPCs do enter bushes (VA-7).
+8. **Systems index:** add Round, TDC (hard) and Crowd, Camera (soft) to Concealment's dependencies, and Objectives Chain as a hard P4 peer.
+9. **Objectives Chain (now designed):** its stall-pressure section (SP-1 to SP-8) must guarantee that hiding indefinitely is never a winning line, including when a team's last survivors are concealed (AC-CON-24).
+
+**Change requests added by the 2026-10-24 review** (not applied to other GDDs):
+
+10. **Assassination:** (a) `FDeathState` gains `bDiedConcealed`, written only in the death write (`ContactServerTime − StrikeNetLeadSec`), only for a victim that was `Concealed`/`CullPending`, identically for NPC and player victims, with no companion data (CON-R9); (b) `FActionState` gains `StartServerTime` (or `ContactServerTime` is defined to carry the start server time for hide poses) so hide clips seek from server time (CON-R6a); (c) change request 7 is applied here: OQ1/OQ2 closed, ally-only whiff confirmed, `BushStrikeEmergeSec` reconciled (F3 safe 0.3-0.5, hard 0.30-0.6, I-ASN-3 as F3f); (d) ASN-R8 rule 2 and AC-ASN-39 read "filter by F1, then pick by the salted hash" (F4 `SpotSalt`, not `RoundSeed`).
+11. **Information Visibility Policy:** R7.5 states that a killed concealed pawn re-opens at the death write, not at the outcome slot (keeps AC-ASN-20 outcome-blind); R7.8 row "killed while concealed" timed from the death write; the cull predicate replaces the whole `IsNetRelevantFor` body for a concealed subject and owned/attached actors follow owner relevancy (CON-R2); L27 note updated accordingly.
+12. **Camera System:** `ConcealedBoomCm` default 100 → 60 and safe range 60-120 → 40-80 (the lens must stay inside the 1.8 m dome; the knob note "High: surveys from behind the bush" is the risk, not a P2 tell); OQ7 answered (body yaw locked, CON-R7); change request 3 items 1-2 confirmed.
+13. **Crowd & NPC Behaviour:** concealed and transitioning pawns excluded from RVO, crowd avoidance and steering queries (CON-R4); Crowd LOD never changes replication settings (CON-R14); NPC dwell stays as is (no heavier tail requested: long dwell is an accepted P2 tell).
+14. **Teammate Markers:** CR-6 applied: the public client read is `IsAllyBodyHidden(Pawn)` (CON-R6b latch, fail-closed); TM-R5's "either input" rule matches CON-R6b precedence.
+15. **Shared Character & Locomotion / IIF:** owner-side warp per CON-R4a (spike S-CON-1); `MoveToForce` to a fixed anchor; collision state re-derived from Concealment state and elapsed server time after a correction; `Move` zeroed during transitions; presentation gating (footsteps, foley, Niagara, decals) reads `bPresentationHidden` on every client; walk speed published for F3d.
+16. **Tuning Data & Config:** register `BushExitDepenetrationCapCm`; add the F3 cross-field invariants (a)-(f) to the validator; hard minimum 0.30 s for `BushExitCrossSec` and `BushStrikeEmergeSec`.
+17. **Systems index:** Crowd becomes a hard upstream of Concealment for any external build (IVP R7.6).
+
+**Change requests received (reconciliation 2026-10-24):**
+
+| From | Request | Disposition |
+|---|---|---|
+| Camera (CR 3, new) | "Safe range capped at 80" becomes 70 under I-CS-4 (dome inner radius 90 − 20); publish the dome inner radius as a key or fixed asset fact Camera's lint can read | APPLIED: CON-R7, Tuning Knobs note, VA-5, new VA-8 (`BushDomeInnerRadiusCm` 90 as a fixed asset fact, not a tuning key), AC-CON-09 |
+| Camera (CR 3 items 1-2, OQ7, our CR 12) | Foliage channels, rustle tag; body yaw locked; `ConcealedBoomCm` 60 | ALREADY DONE (Camera applied; CON-R7 text updated to "applied") |
+| Assassination (item 7, design review) | CON-R9 kill-of-concealed: until the user decides on `bDiedConcealed`, a concealed victim is never un-culled for non-allied viewers; occupancy removal at the slot unchanged | APPLIED: CON-R9 interim rule plus target rule, CON-R6b note, AC-CON-26 split, OQ10 |
+| Assassination (item 7, earlier) | OQ1 surface reach, OQ2 allies excluded, ally-only whiff, `BushStrikeEmergeSec` ranges | ALREADY DONE (OQ1, OQ2 closed; F3; Tuning Knobs) |
+| Assassination (received list) | Our CR-10 (a) `bDiedConcealed`, (b) `StartServerTime` | PENDING-USER (schema_changes; already in the active.md pending list, OQ10); CR-10 (c), (d) applied by Assassination |
+| Teammate Markers CR-6 | `IsAllyBodyHidden(Pawn)` public client read | ALREADY DONE (CON-R6b; closed by Markers) |
+| Crowd CR 7 | CON-R14 cites T5 and AC-CNB-15 as the parity evidence for OQ3 | APPLIED: CON-R14, OQ3 (also removed OQ3's stale "the cull falls back", which contradicted IVP R7.6) |
+| Crowd CR 7 (first half) | Our CR 3 to Crowd applied there | ALREADY DONE (Crowd R7 bush rule, T5) |
+| Penalty (Dependencies, CR-14 context) | Penalty uses `IsInBushOrTransition` for takeover eligibility (our CR 6) | ALREADY DONE (Penalty R9; downstream row status updated) |
+| HUD (Dependencies row 12) | Owner `IsConcealed` drives the prompt verb only; the hider's grade is post-process, not HUD; UI-1, UI-2 | APPLIED: downstream HUD row wording and status |
+| IVP (CR 3, CR 12) | Implement R7, F4 exit timing, `IsConcealedFrom` via `CanViewerKnow`; k range 1.0-1.5 | ALREADY DONE (CON-R2, R5-R10, F2, F3) |
+| IVP (reconciled R7.5/R7.8) | Killed-concealed timing per Assassination item 13 | ALREADY DONE here by the CON-R9 interim rule (consistent with IVP R7.5 as reconciled) |
+| Objectives (SP-8) | Our CR 9 (hiding never wins) | ALREADY DONE by Objectives (SP-8, AC-CON-24); downstream row status updated |
+| Cross-review 2026-10-24 S-W2, C-W10, C-W20 | Owner/Team `IsConcealed` of a victim killed in a bush; pending `StartServerTime` stated as present; Game Feel crossing minimum below the hard minimum | APPLIED (cross-review fixes 2026-10-24): CON-R9 kill row keeps `IsConcealed` true until body removal; IIF dependency row marks `StartServerTime` pending; Game Feel row reads ≥ 0.30 s |
+| ADR-0002 / ADR-0017 sync 2026-10-24 | CON-R6a "GameState server clock" read as `EstimatedServerNow()` | APPLIED (CON-R6a) |
+| ADR-0017 sync 2026-10-24 | F4 `H(...) mod |Reachable|` → unbiased secret-stream draw (`BushSpotPick`, ADR-0006 domain 14) | APPLIED (F4 formula and variable row; `SpotSalt` replaced) |
+| ADR-0017 sync 2026-10-24 | CON-R2 "-> ADR (owner component placement)" → `UConcealmentOwnerViewComponent`; CON-R4a mechanism order recorded (§4); VA-2 "-> ADR" resolved (§9) | APPLIED (CON-R2, CON-R4a, VA-2, framing line) |
+| ADR-0017 sync 2026-10-24 | Round R13 `TimerFired(ConcealmentTransition)` with post-latch exemption | APPLIED in round-match-framework.md (no change here) |
+
+## Acceptance Criteria
+
+Tags: [PIE-2] 2-client PIE (listen server + 1 client, or dedicated + 2 clients), [Net] under the IVP `LeakNetProfile` (PktLag 100 ms, 2 % loss), [1P/3P] run once in each camera mode on the viewing client, [U] unit/automation with fixed fixtures, [Int] integration test world, [Doc] document or asset review, [Stat] statistical check over logged matches with the stated sample size and threshold, [Dep:X] needs system X built, [Vis] retained screenshots in `production/qa/evidence/` with lead sign-off. A negative control that passes means the harness is broken.
+
+**Per-viewer visibility (CON-R6, R6a, R6b, R10)**
+- **AC-CON-01a** [PIE-2][1P/3P][Vis] `StealthGame.Concealment.EnterSwapHidesBodyPerViewer` (no [Net]; frame-stepped capture): GIVEN an opponent client and an ally client, each with line of sight to a player pawn walking into a bush, WHEN the client's server clock reaches `Start + BushEnterSwapSec`, THEN on both clients the body, its attachments, shadow and reflections disappear on that rendered frame (±1 frame at 60 Hz). The ally then shows the hatched marker and no body; the owner keeps its own body. Negative control: a capture with the swap key offset by 5 frames fails. Evidence: `con-enter-{opp,ally}-{1p,3p}-*.png`.
+- **AC-CON-01b** [PIE-2][Net] `StealthGame.Concealment.CullSendTime`: GIVEN 200 commits under [Net], WHEN the server's net log is read, THEN each opponent connection's channel close is sent at the first pawn net-update boundary at or after commit + `ConcealCullDelayMs` (250 ms, ±1 server tick) in 100 % of cases, and every commit in one server frame closes on the same boundary.
+- **AC-CON-02** [PIE-2][1P/3P] `StealthGame.Concealment.NoTraceWhileCulled`: GIVEN a concealed opponent for 10 s, WHEN the viewer orbits the bush at 2, 5, 10 and 25 m at 8 bearings in each mode, THEN no actor, shadow, decal, sound or aim/Strike-hint hit exists for that pawn at any sample. Control: an `Outside` pawn at the same spot is found at every sample. A packet capture of the 10 s with the bush occupied and with it empty shows no bunch for the concealed pawn's channel.
+- **AC-CON-03** [PIE-2][U] `StealthGame.Concealment.CoOccupantsBlind`: GIVEN two rival players concealed in one bush, WHEN each client's actor list is read, THEN neither holds the other's pawn. GIVEN two allies in one bush, THEN each holds the other with body hidden and the hatched marker.
+- **AC-CON-04** [PIE-2] `StealthGame.Concealment.InformantNoXray`: GIVEN an informant viewer whose rival is concealed and whose ally is concealed, THEN the rival has no actor and the ally shows the hatched marker.
+- **AC-CON-05** [U] `StealthGame.Concealment.IsConcealedFromTruthTable`: GIVEN {player, NPC} × {Outside, Entering, Concealed, Exiting, Emerging} × {owner, ally, opponent, informant-opponent}, THEN `IsConcealedFrom` equals a checked-in, hand-written expected table (not computed from `CanViewerKnow`): true for every non-ally of a player and every viewer of an NPC exactly in `Concealed` and in `Exiting`/`Emerging` before the crossing, false elsewhere.
+
+**Entry, exit and inside (CON-R3, R4, R4a, R5, R7, R8; F3)**
+- **AC-CON-06** [U] `StealthGame.Concealment.EntryLegality` (table-driven, every row at occupancy 0, 1 and 4): reach 59 and 60 cm from an open side → `Allow`; 61 → `OutOfReach`; 30 cm from a closed side → `OutOfReach`; running, traversing, informant, `RoundEnded` → `NotNow`; slot held → `Busy`; 5.9 s after an exit → `Cooldown`, 6.0 and 6.1 s → `Allow`; 5.9 s after an **emergence** → `Cooldown`; the same rows for an AI-driven pawn give the same replies. No reply or timing differs by occupancy (byte-identical reply on the same tick at 0, 1 and 4).
+- **AC-CON-07** [PIE-2][Net][1P/3P] `StealthGame.Concealment.ExitUncullBeforeLeafPlane`: GIVEN 1,000 exits and 300 bush-emerge strikes under [Net], THEN (a) the body is drawn before its crossing server time in **0** cases on any client (keyed to server time, network-independent); (b) the opponent client creates the actor after the crossing in ≤ 1.5 % of exits and ≤ 2.0 % of emerges, and every late actor appears seeked into the clip with no snap; (c) the measured p99 of `T_uncull` is ≤ crossing − 50 ms.
+- **AC-CON-08** [PIE-2] `StealthGame.Concealment.FreshActorLatch`: GIVEN a client that creates the pawn (rejoin or re-open) (i) during `BushEnter` after the swap, (ii) during `BushExit` before the crossing, (iii) after the crossing time has passed, (iv) while `Concealed` with pose `None` on an ally client, (v) after a death with `bDiedConcealed`, THEN the body is hidden from the first rendered frame in (i), (ii), (iv) and (v) and shows seeked in (iii). GIVEN an ally client watching the whole enter, THEN no body frame is drawn when the pose goes `BushEnter` → `None` at +0.9 s.
+- **AC-CON-09** [PIE-2][1P/3P][Vis] `StealthGame.Concealment.InsideViewAndStillness`: GIVEN a concealed owner holding Move for 5 s and sweeping Look through its full range, THEN server displacement is 0 cm, body yaw changes by 0°, and no footstep or rustle fires. In 3P the lens stays inside the dome at every sample (boom = `ConcealedBoomCm`, 60 cm from the anchor at the default and never above `BushDomeInnerRadiusCm − 20` = 70 cm, VA-8), height 0, and the grade and vignette match 2.8. Prepare and Interact reply `NotNow`; the camera toggle works. Evidence: `con-inside-{1p,3p}.png`.
+- **AC-CON-10** [U] `StealthGame.Concealment.ExitSideAndBlocked`: GIVEN a bush with 2 open sides, WHEN Exit names a closed side, THEN the nearest open side is used. WHEN an `Outside` pawn occupies the first side's end point, THEN the second is used. WHEN a concealed co-occupant or an `Entering` pawn stands at the end point, THEN it does not block. WHEN both sides are blocked by `Outside` pawns, THEN the requested side is used and each pawn is displaced by ≤ `BushExitDepenetrationCapCm` (30 cm). No exit is ever refused and no reply differs.
+- **AC-CON-11** [U][Doc] `StealthGame.Concealment.TimingChain`: GIVEN the clip assets and keys, THEN the swap notify equals `BushEnterSwapSec` within 1 frame, and F3 (a) 0.9 ≥ 0.75, (b) 0.45 ≥ 0.25, (c) 0.35 ≥ 0.25, (d) 190 ≤ 210 cm/s, (e) 0.5 < 0.9 and 0.45 < 0.9, (f) 0.75 ≤ 1.2 pass. Data sets with `BushExitCrossSec` 0.2; `BushEnterSwapSec` 0.9 with `BushEnterDurSec` 0.8; `BushEntryReachCm` 100; and `BushStrikeEmergeSec` 0.5 with `StrikeContactSec` 0.8 each fail validation naming exactly the violated constraint.
+- **AC-CON-12** [U] `StealthGame.Concealment.NoDwellTimer`: GIVEN a player pawn concealed for 30 min of simulated time in phase `Active` (Crowd disabled for that pawn, no other input), THEN it is still concealed, and no event, reply, log warning or state change occurs except the log's Commit row. A whitelist check of the Concealment key set finds no key naming dwell, capacity, stay, reveal or timeout.
+
+**Breaks and blind strikes (CON-R9, R12; F4)**
+- **AC-CON-13** [PIE-2][1P/3P] `StealthGame.Concealment.AttackBreaksConcealment`: GIVEN a concealed player who strikes a passer-by at t0 (execution), THEN `OnConcealmentBroken` fires and the un-cull happens in the same server step; the opponent client shows the attacker's body at t0 + 0.35 s (±1 server tick), then the victim's contact and fall at t0 + 0.75 s (±1 frame); the attacker ends outside the bush. A Prepare issued by the victim during the preface does not change the outcome (fixed at execution). Control: a victim braced before t0 takes the reversal path. GIVEN a whiff from inside, THEN concealment breaks identically.
+- **AC-CON-14** [U] `StealthGame.Concealment.SpotZoneAndVictim`: GIVEN `WorldPoint`s at 74 and 76 cm from a footprint side and at (1.53, 1.53) and (1.55, 1.55) m from the anchor, THEN only the first of each pair targets the bush. GIVEN attackers at d = 2.34 and 2.36 m from a concealed candidate (r_c 35), THEN hit and whiff; GIVEN an attacker whose `|Δz|` exceeds `StrikeVerticalReachCm`, THEN whiff. GIVEN 2 reachable candidates and 1,000 fixed salts, THEN each is picked 50 ± 5 %, exactly one victim dies per strike, and `TargetPawn` naming the culled pawn gives the identical victim as `TargetSpot`. GIVEN 2 candidates of which one is out of reach, THEN the reachable one is picked in 1,000 of 1,000 (filter before pick). GIVEN an empty bush with a visible pawn 50 cm beside the planter and no `PawnRef`, THEN whiff (terminal).
+- **AC-CON-15** [PIE-2] `StealthGame.Concealment.BlindStrikeParity`: GIVEN strikes at an empty bush, an ally-only bush, a bush whose occupant is out of reach, a bush with a concealed NPC and one with a concealed rival, THEN the attacker client's packet traces (replies, replicated properties, timings within ±1 tick) are identical until Assassination's Owner-only confirmation. The NPC case is an NPC kill, and the killed body stays hidden through its removal on every non-owner client.
+- **AC-CON-25** [U][PIE-2] `StealthGame.Concealment.NoImmunityWhileEntering`: GIVEN a pawn struck by `TargetPawn` at +0.3 s of `BushEnter` (before commit), THEN it dies as a visible pawn, no record or cull is created, its commit item is dropped and the pending swap is cancelled on every client (the fall is visible). GIVEN a strike at +0.6 s (after commit), THEN it resolves as a spot candidate. GIVEN a hider already in the same bush, THEN it can strike the entrant in both cases.
+- **AC-CON-26** [PIE-2][Net] `StealthGame.Concealment.KillWhileConcealedTiming`: GIVEN a concealed rival killed by a bush strike, THEN the victim leaves the occupancy record in the execution slot; opponent connections receive no bunch for the victim before `ContactServerTime − StrikeNetLeadSec` (±1 tick); **under the interim rule (CON-R9)** opponent connections receive no bunch for the victim at all through fall, linger and removal; **under the target rule (if `bDiedConcealed` is approved)** the re-opened actor carries `bDiedConcealed`; in both cases the body is never rendered on any non-owner client (allies included) through fall, linger and removal. The same run with an NPC victim produces the same replicated fields and values.
+
+**Lifecycle, parity and fallback (CON-R11, R13, R14, R16)**
+- **AC-CON-16** [PIE-2] `StealthGame.Concealment.DisconnectRelease`: GIVEN a concealed player who disconnects, THEN the pawn stays concealed under AI hold and issues no Hide. At grace expiry it becomes a concealed NPC culled for former allies; with a deterministic Crowd stub that exits after 20 s, it then exits by an ordinary `Hide(Exit)` with the rustle, never an instant un-hide.
+- **AC-CON-17** [U] `StealthGame.Concealment.RoundEndAndReset`: GIVEN transitions in flight at `Ended`, THEN they complete, later Hide commands reply `NotNow`, and concealed pawns stay culled. At `OnRosterReset` every record is empty and every queued Concealment item is dropped by its generation id.
+- **AC-CON-18** [PIE-2][Vis] `StealthGame.Concealment.RustleParity`: GIVEN an NPC and a player each entering, exiting and bush-emerging at the same bush with 0, 1 and 4 occupants, at LOD 0 and the farthest LOD, THEN the MPC pulse, SFX asset, onset and amplitude are identical in 1P and 3P. No pulse or sound fires while the bush is merely occupied. Read test (VA-2): 12 testers at 20 m in greyscale; pass if ≥ 85 % name the rustle within 2 s and ≥ 50 % call the 2× amplitude too loud.
+- **AC-CON-19** [U] `StealthGame.Concealment.SamePathForNpcs`: GIVEN an AI-driven and a human-driven pawn, THEN both enter through the one IIF `Hide` entry point with identical legality, timings and cooldown. Crowd's bush selection is invariant to occupancy and to player positions (fixed seed; occupied vs empty, and players near vs far, give the same choice in 1,000 of 1,000 draws).
+- **AC-CON-20** [PIE-2] `StealthGame.Concealment.ListenHostParity`: GIVEN the host player watching an opponent client's pawn conceal, THEN `bPresentationHidden` is set by the server queue item (not an anim notify), `bHidden` never changes, the host's aim trace and Strike hint miss the pawn, no shadow, footstep, foley, Niagara or audio remains, and a host `Attack(TargetPawn)` resolves through the same server path as a remote one.
+- **AC-CON-21** [Stat][Dep:Crowd] `StealthGame.Concealment.EntryLogFeedsF5`: GIVEN ≥ 10 logged internal matches, THEN the log yields per-kind entry rates and mean dwell, and F5 evaluated at the measured n_P and n_N gives `P_hide ≤ k·b` (k = 1.5) at the 95 % upper confidence bound. On failure no build leaves the team and the case is escalated (IVP R7.6); `ConcealServerCullEnabled = false` is never an accepted pass.
+- **AC-CON-22** [Int][Dep:LSC] `StealthGame.Concealment.BushSiteParity`: GIVEN a 2-client PIE, THEN every bush's `BushId`, `HideVolume`, `EntryAxis` and anchor hash identically on the server and both clients (LSC AC-52).
+- **AC-CON-23** [Vis] `StealthGame.Concealment.R5LeakMatrix` (VA-4): GIVEN the R5 matrix (low sun, noon, shade × Lumen software and hardware RT × VSM on/off × flag combinations), WHEN an occupied and an empty bush are captured with sway phase matched (60-frame temporal means) plus single frames around each swap, THEN no difference above the noise floor exists outside the rustle window, and the magenta occlusion proxy shows 0 visible pixels from the swap until the crossing at 5-25 m through every LOD. Evidence: `con-r5-*.png` plus the results sheet.
+- **AC-CON-24** [Stat][Dep:Objectives] `StealthGame.Concealment.HidingIsAPause`: GIVEN the concealment log of ≥ 10 internal playtest matches, THEN (a) mean time concealed is ≤ 8 % of round time per player and r_P ≤ 0.24/min; (b) no round is won by a team whose surviving players were all concealed for the final 60 s; (c) the CON-R12 multi-occupant metric `m` is ≤ 35 % and ≤ m0 + 10 points (inconclusive below 30 bush strikes with candidates); (d) kills from `Emerging` are ≤ 25 % of all kills. A failure of (a) or (b) is fixed by more objective pressure (Objectives Chain), **never** by a timer or a reveal (P4 design test); (c) and (d) go to the creative director.
+- **AC-CON-27** [U] `StealthGame.Concealment.ManifestReject`: GIVEN a `BushSite` with an empty `EntryAxis` set, THEN V-BUSH-1 rejects the layout and no round starts with it.
+- **AC-CON-28** [U][PIE-2] `StealthGame.Concealment.CollisionAndAvoidance`: GIVEN an `Outside` pawn walking into a `HideVolume`, THEN it is blocked. GIVEN two pawns entering one bush, THEN neither collides with the other or with its own bush during the warp. GIVEN 100 NPC routes past a bush with fixed seeds, occupied vs empty, THEN the paths are identical. GIVEN an owner correction mid-warp, THEN the collision state after replay equals the state derived from the Concealment state and elapsed server time.
+- **AC-CON-29** [U] `StealthGame.Concealment.GuardFaultPath`: GIVEN a forced guard failure at the swap, THEN no commit occurs, the fault sink records one entry, and an ordinary exit on the entry side follows.
+- **AC-CON-30** [U] `StealthGame.Concealment.TakeoverEligibility`: GIVEN pawns in each of `Outside`, `Entering`, `Concealed`, `Exiting` and `Emerging`, THEN `IsInBushOrTransition` is false only for `Outside` (IVP R9c).
+- **AC-CON-31** [PIE-2][Net] `StealthGame.Concealment.OwnerWarpNoSnap` (spike S-CON-1): GIVEN 100 owner hides and 100 exits under [Net], THEN press-to-motion is ≤ 50 ms at 60 fps and no owner frame shows a positional correction > 5 cm during the transition.
+- **AC-CON-32** [PIE-2] `StealthGame.Concealment.RejoinConcealed`: GIVEN a concealed player who rejoins within grace, THEN its owner component reports `IsConcealed`, the camera enters CS-R11.3, and the packets to every non-ally connection are unchanged.
+
+## Open Questions
+
+| # | Question | Owner | Resolve by |
+|---|---|---|---|
+| OQ1 | ~~Does Assassination measure reach to the capsule surface or centre?~~ **Resolved:** surface (Assassination F1, change request 7). | Assassination author | closed 2026-10-24 |
+| OQ2 | ~~Are a co-occupant's allies excluded from spot candidates?~~ **Resolved:** yes; an ally-only bush is a whiff (ASN-R8, R9). | Assassination / creative-director | closed 2026-10-24 |
+| OQ3 | Can Crowd meet r_N 0.19/min with occupancy-blind choice and an uncapped dwell without looking odd (IVP OQ3)? Crowd now designs to it (T5, AC-CNB-15); measured at the MVP-core checkpoint. If not met, escalate to the creative director and the user: there is no automatic fallback (IVP R7.6, CON-R14). | Crowd author / technical-director | MVP-core checkpoint |
+| OQ4 | Are the 0.9 s transitions and the 6 s re-entry cooldown right in play? (The time-concealed metric is now AC-CON-24.) | game-designer | first graybox playtest |
+| OQ5 | Do the hide flags fully close the shadow, Lumen, VSM and ray-tracing paths in 5.8 (R5), and is the MPC pulse rustle within budget? | technical-artist | spike R5 |
+| OQ6 | Does the CMC root-motion warp and collision-ignore window survive owner corrections under [Net] without visible snaps? | ue-replication-specialist | net-emulation spike |
+| OQ7 | Should the VS Post-Round Reveal release concealed positions at `Ended`? (MVP: no) | creative-director | VS Reveal GDD |
+| OQ8 | Spike S-CON-1: which owner-side warp mechanism (CON-R4a option a or b) meets AC-CON-31 under [Net]? | ue-replication-specialist + gameplay-programmer | net-emulation spike, before the Concealment epic |
+| OQ9 | Does seeking hide clips from the replicated server clock (CON-R6a) hold within one frame for non-fresh actors under [Net] (clock error)? | ue-replication-specialist | net-emulation spike |
+| OQ10 | Cross-GDD: Assassination must add `bDiedConcealed` and the hide-pose start time to its replicated structs, IVP must time the killed-concealed re-open from the death write, and Camera must lower `ConcealedBoomCm` (change requests 10-12). **Partly resolved (reconciliation 2026-10-24):** Camera applied 60 cm (CON-R7 no longer provisional); IVP R7.5/R7.8 now say nothing re-opens in the slot and a killed-concealed victim stays closed to non-allies (CON-R9 interim rule). **Still pending user decision (schema_changes):** `FDeathState.bDiedConcealed` and `FActionState.StartServerTime`; until decided CON-R9's interim rule applies and CON-R6a (start-time clock, carried by `ContactServerTime` meanwhile) and CON-R9's target rule stay **provisional**. | user / Assassination author | user decision |

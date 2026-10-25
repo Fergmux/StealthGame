@@ -1,0 +1,4059 @@
+# Game World Entity Registry
+#
+# PURPOSE: Single source of truth for all named game-world facts that appear
+# in more than one document. Skills check this before writing new content to
+# detect cross-doc inconsistencies at authoring time.
+#
+# RULES:
+#   - Only register facts that cross system boundaries. Internal-only facts
+#     (a formula used in one GDD only) do NOT need to be registered.
+#   - Never delete entries — set status: deprecated instead.
+#   - When a value changes: update the value, set revised: to today's date,
+#     and add a comment with the old value and which GDD changed it.
+#   - source: is the authoritative GDD — the one that "owns" this fact.
+#     Other GDDs that reference it list themselves in referenced_by.
+#   - When a new GDD references an existing entry, append its path to
+#     referenced_by. Do not create a duplicate entry.
+#
+# WRITTEN BY: /design-system (Phase 5 — after GDD sections are approved)
+#             /consistency-check (when resolving conflicts)
+#             economy-designer, systems-designer (new cross-system entries,
+#               after asking)
+# READ BY:    /design-system (Phase 2 — before authoring begins, and after
+#               Section C/D writes to conflict-check new entities/formulas)
+#             /consistency-check (primary input — grep-first, GDD-second)
+#             /review-all-gdds (Phase 1 — baseline for Phase 2 checks)
+#             /design-review (Phase 1 — cross-doc facts, in place of sibling GDDs)
+#             /content-audit (Step 2 — planned named-content count)
+#             /balance-check (Phase 3 — intended constant/formula values)
+#             /propagate-design-change (Step 3 — downstream GDD impact via referenced_by)
+#             /asset-spec (named entities to write specs for)
+#             economy-designer, systems-designer (before authoring items,
+#               loot tables and formulas)
+#
+# SEARCH PATTERNS (for skills using Grep):
+#   All entity names:        Grep pattern="^  - name:" path="design/registry/entities.yaml"
+#   Specific entity:         Grep pattern="  - name: goblin" path="design/registry/entities.yaml"
+#   All items:               Grep pattern="^  - name:" path="design/registry/entities.yaml" (items section)
+#   What combat.md owns:     Grep pattern="source: design/gdd/combat.md"
+#   What inventory.md uses:  Grep pattern="design/gdd/inventory.md" -B 8
+#                            (referenced_by is a block list, so match the
+#                            path; referenced_by.*inventory never matches)
+#   All gold values:          Grep pattern="value_gold:"
+#   Deprecated entries:      Grep pattern="status: deprecated"
+#
+# FORMAT: YAML. Consistent indentation is critical for grep reliability.
+#   Sections: entities | items | formulas | constants
+#   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
+#
+# LAYOUT: the one shape .claude/scripts/registry.sh reads. Each section is a
+#   key at column 0 holding a block list, or [] while it is empty. Each entry
+#   starts "- name: <name>" with the dash at column 2 (or 0, the same for every
+#   entry of a section); its fields sit two columns past the dash, and a deeper
+#   line belongs to the field above it. Quote a value that holds ": ". A line
+#   in any other shape is reported as unsupported layout, with its number.
+
+version: 1
+last_updated: "2026-10-24"
+
+# ─── ENTITIES ──────────────────────────────────────────────────────────────────
+# Named game-world objects: enemies, NPCs, characters, factions, bosses.
+# Register an entity here when it appears in more than one GDD.
+# Required fields: name, status, source, referenced_by, added
+# Populated 2026-10-24 from the 18 MVP GDDs (pipeline registry pass).
+
+entities:
+  - name: participant_state
+    status: active
+    source: design/gdd/participant-state-roster.md
+    referenced_by:
+      - design/gdd/participant-state-roster.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/camera-system.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/hud.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/teammate-markers.md
+    values: [Active, Informant, RoundEnded]
+    entering_reasons_informant: [Assassinated, ReversedAgainst, StrikeLimit, Disconnect]
+    return_to_active: "only ResetAll at the next round (no revival within a round)"
+    exiled_label: "Exiled is the player-facing name for Informant entered by StrikeLimit (NPC-Kill Penalty); not a separate state"
+    authority: "server; Roster owns state, Round owns phase, order, win and disconnect policy"
+    added: 2026-10-24
+    revised: ""
+  - name: victim_kind
+    status: active
+    source: design/gdd/participant-state-roster.md
+    referenced_by:
+      - design/gdd/participant-state-roster.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/round-match-framework.md
+    values: [Player, Npc, Informant]
+    not_targetable: "NotTargetable(AlreadyResolved | Stale | RoundOver)"
+    resolver: "ResolveVictimKind(Pawn), server-only (Roster); Player = BoundLive+Active, Informant = BoundLive+Informant, Npc = valid live unbound pawn"
+    strike_rule: "a strike counts only for Cause = Strike and VictimKind = Npc (ASN-R11, Penalty)"
+    added: 2026-10-24
+    revised: ""
+  - name: round_phase
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/camera-system.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/session-travel.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    values: [Lobby, Preparing, Active, Ended, Reset]
+    ended_entry: "Active -> Ended only by a win (ObjectiveWin or EliminationWin); void and host abort go Active -> Reset"
+    tuning_freeze: "TDC BeginResolve() on entering Preparing; frozen until Reset"
+    admission: "Lobby Open; Preparing, Active and Ended RejoinOnly; Reset Closed"
+    added: 2026-10-24
+    revised: ""
+  - name: participant_id
+    status: active
+    source: design/gdd/participant-state-roster.md
+    referenced_by:
+      - design/gdd/participant-state-roster.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    scope: "match-stable server id per human participant, plus IdentityKey for rejoin"
+    rule: "server bookkeeping is keyed by ParticipantId, never by connection, PlayerController or PlayerState"
+    added: 2026-10-24
+    revised: ""
+  - name: team
+    status: active
+    source: design/gdd/participant-state-roster.md
+    referenced_by:
+      - design/gdd/participant-state-roster.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+    values: [0, 1, None]
+    count: "2 teams of TeamSize (default 5) players"
+    lock: "teams locked from Preparing until lobby arrival (SetTeamsLocked)"
+    added: 2026-10-24
+    revised: ""
+  - name: relation
+    status: active
+    source: design/gdd/participant-state-roster.md
+    referenced_by:
+      - design/gdd/participant-state-roster.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/information-visibility-policy.md
+    values: [Self, Teammate, Opponent, NotBothPlayers]
+    resolver: "GetRelation(PawnA, PawnB), server-side Roster query"
+    added: 2026-10-24
+    revised: ""
+  - name: connection_state
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/round-match-framework.md
+    values: [Connected, Unresponsive, Traveling, Disconnected, Rejoining, Expired]
+    owner_rule: "Session is the sole writer of the Roster Connection projection (NotifyConnectionChanged)"
+    added: 2026-10-24
+    revised: ""
+  - name: c_team_view
+    status: active
+    source: design/gdd/participant-state-roster.md
+    referenced_by:
+      - design/gdd/participant-state-roster.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/teammate-markers.md
+    content: "per-viewer team view: teammate {PublicHandle, State, PawnRef}; own State and Team"
+    rule: "all presentation on every machine (including the listen host) reads only its viewer C-TeamView"
+    added: 2026-10-24
+    revised: ""
+  - name: pawn_command
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/teammate-markers.md
+    values: [Move, Look, "Interact(Begin|End)", "Prepare(Begin|End)", "Attack(TargetSpot|TargetPawn)", "Hide(Enter|Exit)", Traverse]
+    parity: "humans and NPC AIControllers call the same server-validated entry points; no IsAI parameter exists"
+    hold_actions: "Interact held ObjectiveInteractSec (3.0 s); Prepare held up to DefenceDurationSec (4.0 s)"
+    added: 2026-10-24
+    revised: ""
+  - name: defence_brace
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/camera-system.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    command: Prepare
+    duration: "DefenceDurationSec (4.0 s, locked range 3-5)"
+    cooldown: "DefenceCooldownSec (60 s) from activation, used or unused"
+    on_reversal: "attacker -> Informant (ReversedAgainst); the brace is consumed"
+    added: 2026-10-24
+    revised: ""
+  - name: strike_outcome
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/participant-state-roster.md
+    server_outcomes: [Kill, Reversal, Whiff]
+    owner_plates: [RivalEliminated, WrongTarget, NoContact, Reversed]
+    reply: "FStrikeResult {ClientCommandSeq, Result, TallyAfter, bExiled}, Owner-only, shown by HUD at the local contact frame"
+    rule: "WrongTarget is identical for every non-rival victim kind (NPC or enemy informant)"
+    added: 2026-10-24
+    revised: ""
+  - name: on_pawn_killed
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    signature: "OnPawnKilled(Victim, Killer, VictimKind, Cause)"
+    cause_values: [Strike, Reversal]
+    emitted: "inside the resolving slot of the Round queue"
+    added: 2026-10-24
+    revised: ""
+  - name: npc_kill_strike
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/camera-system.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    counted_when: "Cause = Strike and VictimKind = Npc, killer Active and bound (PEN-R2)"
+    limit: "NpcKillStrikeLimit (3, user-locked); on the Nth strike RequestTransition(Killer, Informant, StrikeLimit)"
+    audience: "strike count server-only; the owner sees only the WrongTarget tally"
+    added: 2026-10-24
+    revised: ""
+  - name: wrong_target_tally
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/participant-state-roster.md
+    audience: Owner
+    range: "0-255 saturating; tally >= strike count always (Penalty F1)"
+    rule: "never reveals whether a WrongTarget victim was an NPC or an enemy informant"
+    added: 2026-10-24
+    revised: ""
+  - name: informant_respawn
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+    method: "takeover of an unseen crowd pawn inside RespawnRegion near the team TeamSpawn (rule C1)"
+    chain: "LSC PickRespawnPawn -> CPA TakeNpcCard -> Crowd TryReleaseNpc -> SCL TakeOverCrowdPawn"
+    rule: "no player pawn is ever spawned mid-round"
+    added: 2026-10-24
+    revised: ""
+  - name: appearance
+    status: active
+    source: design/gdd/character-pool-appearance.md
+    referenced_by:
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/teammate-markers.md
+    definition: "one (model, variant) row of the pool, addressed by a one-byte AppearanceId"
+    pool: "6-8 base models x up to 3 variants, at most 24 distinct appearances (MVP floor 12)"
+    immutability: "AppearanceId written once per pawn; never changes for the pawn lifetime"
+    added: 2026-10-24
+    revised: ""
+  - name: appearance_deck
+    status: active
+    source: design/gdd/character-pool-appearance.md
+    referenced_by:
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    definition: "deck = all cards of one round (size D = players + NpcCount); card = one dealt copy of an appearance"
+    active_appearances: "at most DeckActiveAppearancesMaxCount (12) in play, at least DeckActiveAppearancesMinCount (6)"
+    copies: "at least DeckCopiesFloorCount (4) per appearance; per-appearance counts differ by at most 1"
+    conservation: "per-appearance counts fixed at the deal for the whole round; a replacement NPC takes the vacated card"
+    dealer: "AllocateAppearances(Players, NpcCount), server-only, called by Round once per round in Preparing"
+    added: 2026-10-24
+    revised: ""
+  - name: bush
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/camera-system.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    count: "8-14 per layout (LSC D5)"
+    geometry: "BushSite: 2.0 x 2.0 m planter against architecture, dome 1.8 x 1.9 m, HideVolume footprint x 2.25 m, EntryAxis set (LSC R3)"
+    id: "BushId = the LSC SocketId"
+    users: "any pawn, human or NPC; hidden from every non-ally viewer (IVP R7 hybrid cull)"
+    geometry_owner: design/gdd/level-socket-contract.md
+    added: 2026-10-24
+    revised: ""
+  - name: objective_court
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+    size: "6 x 6 to 8 x 8 m (8 x 8 in Market areas), spacing CourtSpacingCm (24 m)"
+    fixture: "one 0.8-1.0 m stone block with FixtureInteractSideCount (4) stand points, inside the sun pool"
+    roles: "ObjectivePrelimSite(Team, Stage) or ObjectiveFinalSite, resolved by server-secret Selection (FSiteAssignment)"
+    rule: "every court is identical; its role is never visible in geometry"
+    added: 2026-10-24
+    revised: ""
+  - name: objective_chain
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+    structure: "per team: two team-specific preliminary stages, then one shared final"
+    tend: "hold Interact for ObjectiveInteractSec (3.0 s) at the live court fixture"
+    final_win: "final completion calls Round.DeclareObjectiveWin (ObjectiveWin)"
+    final_candidates: "final-eligible courts >= FinalCandidatesMinCount (LSC)"
+    audience: "a team knows only its own next court; the final is revealed after both preliminaries"
+    added: 2026-10-24
+    revised: ""
+  - name: clue_tag
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/hud.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+    definition: "role-blind per-court tag (area type + nearest distinctive public feature), included in the layout hash"
+    match_limit: "a stage clue matches at most ClueMatchMaxCount (3) courts"
+    added: 2026-10-24
+    revised: ""
+  - name: rival_signal
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/tuning-data-config.md
+    definition: "delayed team-visible notice of a rival completion, released on a global quantum grid"
+    keys: "RivalSignalDelayMinSec 30, RivalSignalDelayMaxSec 165, RivalSignalReleaseQuantumSec 30"
+    bound: "Objectives F4 (LR_sig <= 2.4)"
+    added: 2026-10-24
+    revised: ""
+  - name: emergence_socket
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    kind: "AlleyMouth (MVP); Doorway reserved, not valid in MVP"
+    origin: "hidden OriginCell at least 1.2 x 1.2 m; ExitPoint on the navmesh 2-6 m walk from the origin; witness set W(O)"
+    users: "Crowd NPC replacement and ambient entry and exit (shared portal; art bible 5.2.1)"
+    replication: not replicated
+    added: 2026-10-24
+    revised: ""
+  - name: traversal_point
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/shared-character-locomotion.md
+    types: "Vault at TraversalVaultHeightCm (80), Climb at TraversalClimbHeightCm (160); heights owned by SCL"
+    landing: "both landing cells at least TraversalLandingClearCm (100) clear, on the navmesh"
+    added: 2026-10-24
+    revised: ""
+  - name: team_spawn_zone
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/shared-character-locomotion.md
+    zone_ids: "ZoneId 0-3, never a team; ZoneCandidatesMinCount (2) to 4 candidates, exactly 2 used per round"
+    start_cells: "at least TeamSize + 1 start cells, StartCellSpacingCm (8 m) apart, within StartCellMaxRadiusCm (18 m) of the anchor"
+    density_disc: "TeamZoneRadiusCm (35 m)"
+    respawn_region: "walkable cells within InformantRespawnPathCm (45 m path) of the anchor"
+    added: 2026-10-24
+    revised: ""
+  - name: round_event_log
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    audience: "server-only; clients read it only after Ended, under the Visibility Policy"
+    header: "TuningHash, PresetId, SchemaVersion, FallbackLevel, Revision, warnings (TDC CR-7)"
+    added: 2026-10-24
+    revised: ""
+  - name: round_acknowledgement
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    definition: "Session single per-round acknowledgement (ClientRequestRoundAck / ServerRoundAck)"
+    fields: "ClientHash (TDC F-2 over public keys) and PoolHash (CPA)"
+    mismatch: "ParamsMismatch, then Roster Disconnect"
+    deadline: "TravelLoadTimeoutSec, absolute from travel start"
+    added: 2026-10-24
+    revised: ""
+  - name: tuning_snapshot
+    status: active
+    source: design/gdd/tuning-data-config.md
+    referenced_by:
+      - design/gdd/tuning-data-config.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/camera-system.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/teammate-markers.md
+    definition: "ValidatedTuning: one frozen, validated value set per round, identical for every participant"
+    audiences: "ServerOnly or All (Client = All with no server consumer); only the public struct replicates, on the GameState"
+    latch_classes: [Round, Action, Use, Session]
+    added: 2026-10-24
+    revised: ""
+  - name: layout_manifest
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+    hash: "LayoutHash = FNV1a64 over the manifest bytes (LSC D7); a desync detector, not a security check"
+    replication: "the contract spawns zero replicated actors; geometry is built locally from the Manifest"
+    added: 2026-10-24
+    revised: ""
+
+
+# ─── ITEMS ─────────────────────────────────────────────────────────────────────
+# Named collectables, equipment, consumables, crafting materials, currency.
+# Register an item when its name or value appears in more than one GDD.
+# Required fields: name, status, source, referenced_by, added
+# None at 2026-10-24: the MVP GDDs define no items, inventory or currency.
+
+items: []
+
+
+# ─── FORMULAS ──────────────────────────────────────────────────────────────────
+# Named calculations with defined variables and output ranges.
+# Register a formula when its output feeds into another system's input,
+# or when another GDD references it by name.
+# Required fields: name, status, source, referenced_by, variables[],
+#   output_range, added. Optional: expression, notes
+
+formulas:
+  - name: hide_event_posterior
+    status: active
+    source: design/gdd/information-visibility-policy.md
+    referenced_by:
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    variables:
+      - n_P
+      - n_N
+      - r_P
+      - r_N
+      - k
+      - b
+      - P_hide
+    output_range: [0, 1]
+    expression: "P_hide = n_P*r_P / (n_P*r_P + n_N*r_N); pass iff P_hide <= k*b"
+    notes: "IVP F5. k = 1.5 is the ceiling and is never raised to meet Crowd (review ruling A). Concealment F2 and Crowd F2 derive the required NPC bush-use rate from it."
+    added: 2026-10-24
+    revised: ""
+  - name: npc_bush_use_rate_target
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    variables:
+      - r_P
+      - n_P
+      - n_N
+      - k
+      - b
+      - r_N_req
+    output_range: "[0, inf)"
+    expression: "r_N_req = r_P * n_P * (1 - k*b) / (k*b*n_N), b = n_P / (n_P + n_N)"
+    notes: "Concealment F2; 0.625 * r_P at defaults (k 1.5). Feeds Crowd bush-use tuning."
+    added: 2026-10-24
+    revised: ""
+  - name: red_herring_rate_per_tell
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/objectives-chain.md
+    variables:
+      - r_P
+      - n_P
+      - n_N
+      - P_star
+      - r_N
+      - Lambda
+      - T_gap
+      - a_j
+    output_range: "(0, inf)"
+    expression: "r_N = r_P * n_P * (1 - P*) / (P* * n_N)"
+    notes: "Crowd F2 (tell rate). Floor 25 % of the table default for every SCL, IIF or Concealment tell. Objectives F3 uses its inverse for tends."
+    added: 2026-10-24
+    revised: ""
+  - name: resolution_order_key
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/assassination-defence-reversal.md
+    variables:
+      - T_i
+      - Seq_i
+      - m
+      - pi_T
+      - dt
+      - W
+    output_range: "strict total order"
+    expression: "Key(i) = (T_i, Seq_i); intake permutation pi_T = FisherYates(m, SubSeed(SeqOrder, T))"
+    notes: "Round F1 (key order). One queue order for every contested action (Assassination F4 in-encounter ordering, IIF hold completions, Objectives completions)."
+    added: 2026-10-24
+    revised: ""
+  - name: win_predicates
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+    variables:
+      - L
+      - e.Kicked
+      - "ConnectedActiveCount(T)"
+      - i
+      - e
+      - "RosterCount(T)"
+    output_range: "exactly one terminal outcome per round"
+    expression: "ObjectiveWin(t,i) = Phase=Active AND NOT L AND i.Type=FinalCompletion AND Valid(i) AND Team(i.Completer)=t"
+    notes: "Round F2 (ObjectiveWin, EliminationWin, Void)."
+    added: 2026-10-24
+    revised: ""
+  - name: disconnect_timing
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    variables:
+      - G
+      - G_eff
+      - DisconnectedAt
+      - ActivePhaseStart
+      - L_soft
+      - L_hard
+      - RejoinWindowSec
+    output_range: "G_eff [3, 120] s"
+    expression: "G_eff = min(DisconnectGraceSec, RejoinWindowSec - 30)"
+    notes: "Round F4; T_informant 30-42.3 s at defaults."
+    added: 2026-10-24
+    revised: ""
+  - name: placement_share
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/level-socket-contract.md
+    variables:
+      - P_z
+      - N_z
+      - P
+      - NpcCount
+      - D
+    output_range: [0, 0.5]
+    expression: "ZoneShare_z = P_z / (P_z + N_z), required <= 0.5"
+    notes: "Round F5; guaranteed by LSC D6 zone NPC fill."
+    added: 2026-10-24
+    revised: ""
+  - name: pacing_metrics
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/objectives-chain.md
+    variables:
+      - DurationSec
+      - TargetRoundMinutes
+      - N_obj
+      - N_elim
+    output_range: "(0, inf)"
+    expression: "PacingRatio = DurationSec / (60 * TargetRoundMinutes)"
+    notes: "Round F7, logged only; TargetRoundMinutes is non-binding."
+    added: 2026-10-24
+    revised: ""
+  - name: reach_and_warp
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+    variables:
+      - R
+      - r_c
+      - Z
+      - T_v
+      - v
+      - a_b
+      - lambda
+      - X_max
+      - g
+      - Theta
+    output_range: boolean
+    expression: "Reach(A,V) = [d0 - r_c <= R] and [|dz| <= Z] and [X_eff <= X_max] and [|theta_T| <= Theta]"
+    notes: "Assassination F1 (reach); R = AssassinationRangeCm. Concealment F4 spot-attack zone uses Reach. Invariant I-ASN-1."
+    added: 2026-10-24
+    revised: ""
+  - name: blind_guess_economics
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/tuning-data-config.md
+    variables:
+      - p
+      - b_P
+      - b_N
+      - L
+    output_range: "[0, 1] (probabilities)"
+    expression: "pi = m / (m + rho); E[N] = sum_{i=0}^{L-1} pi^i"
+    notes: "Assassination F5; TDC F-3 BlindGuessSuccess is its conservative floor."
+    added: 2026-10-24
+    revised: ""
+  - name: tuning_derived_indicators
+    status: active
+    source: design/gdd/tuning-data-config.md
+    referenced_by:
+      - design/gdd/tuning-data-config.md
+      - design/gdd/assassination-defence-reversal.md
+    variables:
+      - NpcCount
+      - TeamSize
+      - DefenceDurationSec
+      - DefenceCooldownSec
+      - L
+    output_range: "per indicator"
+    expression: "BlindGuessSuccess = 1 - (1 - p)^L, p = TeamSize / (TeamSize + NpcCount); DutyCycle = DefenceDurationSec / DefenceCooldownSec"
+    notes: "TDC F-3; invariant I-4 warns when 100 * BlindGuessSuccess > BlindGuessWarnPct (50). 0.298 at defaults."
+    added: 2026-10-24
+    revised: ""
+  - name: tuning_canonical_hash
+    status: active
+    source: design/gdd/tuning-data-config.md
+    referenced_by:
+      - design/gdd/tuning-data-config.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+    variables:
+      - SchemaVersion
+      - k
+      - typeTag
+      - "Effective(k)"
+    output_range: "64-bit value"
+    expression: "H = Hash64(u32le(SchemaVersion) || per sorted key: u8(len) || ascii(k) || u8(typeTag) || canon(Effective(k)))"
+    notes: "TDC F-2; TuningHash over all keys, ClientHash over public keys (carried in the Session round acknowledgement)."
+    added: 2026-10-24
+    revised: ""
+  - name: rival_signal_correlation_bound
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/tuning-data-config.md
+    variables:
+      - RivalSignalDelayMinSec
+      - RivalSignalDelayMaxSec
+      - RivalSignalReleaseQuantumSec
+      - W_eff
+      - lambda_c
+      - LR_max
+      - LR_sig
+    output_range: "LR_sig [1, 2.4]"
+    expression: "LR_sig = 1 / (1 - e^(-lambda_c * W_eff)), W_eff = (Max - Min) + Q"
+    notes: "Objectives F4 (leak bound); requires W_eff >= 163 s at lambda_c,min."
+    added: 2026-10-24
+    revised: ""
+  - name: tend_posterior
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/crowd-npc-behaviour.md
+    variables:
+      - T_round
+      - n_full
+      - R_full
+      - R_short
+      - N_npc
+      - c
+      - r_N
+      - P_full
+      - P_short
+    output_range: "P_full band [0.65, 0.75]"
+    expression: "P_full = R_full / (R_full + N_npc * r_N * c)"
+    notes: "Objectives F3; sets the Crowd decoy tend rate (CrowdDecoyTendIntervalSec)."
+    added: 2026-10-24
+    revised: ""
+  - name: chain_duration_estimate
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/level-socket-contract.md
+    variables:
+      - L
+      - kappa
+      - v
+      - v_run
+      - phi
+      - n
+      - D
+      - o
+      - q
+      - r
+    output_range: "[307, 535] s nominal; rush floor 50-91 s"
+    expression: "T_chain = kappa*L/(v*phi) + n*(D + o) + n*(q/(1-q))*(D/2 + r)"
+    notes: "Objectives F1; L from the LSC D4 chain length band."
+    added: 2026-10-24
+    revised: ""
+  - name: strike_tally_exile
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/participant-state-roster.md
+    variables:
+      - t
+      - WT
+      - k
+      - Cause
+      - VK
+      - S
+      - G
+      - L
+    output_range: "k [0, L]; t [0, 255]"
+    expression: "t' = min(t + WT, 255); k' = k + [Cause=Strike and VK=Npc and S=Active and not G]; Exile = (k' >= L) and (S = Active)"
+    notes: "Penalty F1 (tally). L = NpcKillStrikeLimit; k <= t always; exile at most once per participant per round."
+    added: 2026-10-24
+    revised: ""
+  - name: respawn_due_time
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+    variables:
+      - t_lost
+      - D
+      - DeathServerTime
+      - DeathFallSec
+      - NoPawnFadeSec
+      - t_now
+    output_range: "T_due >= t_lost"
+    expression: "T_due = max(t_lost + D, t_floor, t_now)"
+    notes: "Penalty F2; D = InformantRespawnDelaySec; the HUD F7 returning countdown reads it."
+    added: 2026-10-24
+    revised: ""
+  - name: informant_downtime
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/hud.md
+    variables:
+      - "T_due - t_lost"
+      - L_pick
+      - d
+      - v
+      - T_black
+      - T_out
+    output_range: "T_out >= D"
+    expression: "T_out = (T_due - t_lost) + L_pick + d / v"
+    notes: "Penalty F3; Pillar 3 budget (median total <= 30 s)."
+    added: 2026-10-24
+    revised: ""
+  - name: exit_occlusion_timing_chain
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/tuning-data-config.md
+    variables:
+      - BushEnterDurSec
+      - BushEnterSwapSec
+      - D_cull
+      - BushExitCrossSec
+      - BushStrikeEmergeSec
+      - v_walk
+      - T_uncull
+    output_range: "boolean per constraint"
+    expression: "BushExitCrossSec >= T_uncull; BushStrikeEmergeSec >= T_uncull; BushEnterDurSec >= BushEnterSwapSec + D_cull"
+    notes: "Concealment F3 (invariants I-CON-a to e; I-ASN-3 = F3 f)."
+    added: 2026-10-24
+    revised: ""
+  - name: concealment_cull_delay
+    status: active
+    source: design/gdd/information-visibility-policy.md
+    referenced_by:
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/concealment-bushes.md
+    variables:
+      - L99
+      - f_net
+      - q
+      - D_cull
+    output_range: "[100, 1000] ms"
+    expression: "D_cull = q * ceil((L99 + 1/f_net) / q)"
+    notes: "IVP F3; 250 ms at defaults."
+    added: 2026-10-24
+    revised: ""
+  - name: uncull_lead
+    status: active
+    source: design/gdd/information-visibility-policy.md
+    referenced_by:
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/tuning-data-config.md
+    variables:
+      - L99
+      - f_net
+      - T_reopen
+      - T_exit_occluded
+      - T_uncull
+    output_range: "T_uncull 0.1-0.4 s"
+    expression: "T_uncull = L99 + 1/f_net + T_reopen; require T_exit_occluded >= T_uncull"
+    notes: "IVP F4; requirement on the Concealment exit transition."
+    added: 2026-10-24
+    revised: ""
+  - name: team_position_fallback_feed
+    status: active
+    source: design/gdd/information-visibility-policy.md
+    referenced_by:
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    variables:
+      - N_u
+      - s
+      - h
+      - B_feed
+    output_range: "[0, 480] B/s"
+    expression: "B_feed = N_u * s * h"
+    notes: "IVP F6; h = TeamPositionFeedHz. Teammate Markers F5 staleness reads it."
+    added: 2026-10-24
+    revised: ""
+  - name: hold_progress
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/objectives-chain.md
+    variables:
+      - t_now
+      - t_start
+      - D
+      - epsilon
+    output_range: [0, 1]
+    expression: "P = clamp((t_now - t_start) / D, 0, 1)"
+    notes: "IIF F1; D = ObjectiveInteractSec for Interact."
+    added: 2026-10-24
+    revised: ""
+  - name: effective_brace_window
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/assassination-defence-reversal.md
+    variables:
+      - t_start
+      - t_endRes
+      - ReleaseDebounceSec
+      - D_cap
+      - U
+      - t_interp
+    output_range: "[0.10, 4.05) s at defaults"
+    expression: "W = min(t_endRes + ReleaseDebounceSec, t_start + D_cap) - t_start"
+    notes: "IIF F2; D_cap = DefenceDurationSec."
+    added: 2026-10-24
+    revised: ""
+  - name: owner_ring_prediction
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/hud.md
+      - design/gdd/objectives-chain.md
+    variables:
+      - t_local
+      - t_press
+      - D
+      - ServerNowEst
+      - ServerStartTime
+      - dt_max
+      - AckSlackSec
+    output_range: "[0, 0.98] until Completed"
+    expression: "ring_local = clamp((t_local - t_press) / D, 0, 0.98)"
+    notes: "IIF F4; presentation only."
+    added: 2026-10-24
+    revised: ""
+  - name: input_latency_budget
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/camera-system.md
+      - design/gdd/hud.md
+    variables:
+      - t_frame
+      - t_display
+      - RTT
+      - dt_server
+      - dt_client
+      - t_interp
+      - U
+    output_range: seconds
+    expression: "L_confirm = RTT + dt_server + dt_client"
+    notes: "IIF F5."
+    added: 2026-10-24
+    revised: ""
+  - name: chain_length_band
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/shared-character-locomotion.md
+    variables:
+      - L
+      - v
+      - T
+      - S
+    output_range: "S [0.12, 0.24]"
+    expression: "S = L / (v * T * 60); ChainLengthMinCm <= C_T <= ChainLengthMaxCm"
+    notes: "LSC D4; C_T from D1."
+    added: 2026-10-24
+    revised: ""
+  - name: socket_counts_per_area
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/procedural-city-generator.md
+    variables:
+      - A
+      - EmergenceAreaPerSocket
+      - BushAreaPerSite
+      - TraversalAreaPerPoint
+      - Overlap
+      - N_sec
+    output_range: "N_E 12-13, N_B 8-9, N_T 10-11, N_C >= 16 at defaults"
+    expression: "N_E = clamp(ceil(A / EmergenceAreaPerSocket), EmergenceSocketsMinCount, EmergenceSocketsMaxCount)"
+    notes: "LSC D5."
+    added: 2026-10-24
+    revised: ""
+  - name: zone_npc_fill
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    variables:
+      - r
+      - A_z
+      - P_z
+      - s_max
+      - d_max
+      - q
+      - v_run
+      - T_contact_z
+    output_range: "NpcZoneMin >= 8 at TeamSize 5"
+    expression: "NpcZoneMin_z = max(ceil(r * rho * A_z), ceil(P_z * (1 - s_max) / s_max))"
+    notes: "LSC D6; source of the NpcCount safe minimum 35 (I-LSC-1)."
+    added: 2026-10-24
+    revised: ""
+  - name: layout_hash
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+    variables:
+      - GeneratorKitVersion
+      - EntryCount
+      - CellX
+      - CellY
+      - Course
+      - ModuleId
+      - VariantId
+      - Yaw
+    output_range: "64-bit value"
+    expression: "LayoutHash = FNV1a64(Bytes)"
+    notes: "LSC D7; desync detector reported in the Session round acknowledgement."
+    added: 2026-10-24
+    revised: ""
+  - name: selection_space
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/procedural-city-generator.md
+    variables:
+      - F_elig
+      - N_raw
+      - MinFairCombosCount
+      - FinalAmbiguityMinCount
+      - p
+      - N
+    output_range: "N_raw about 1e5-1e6"
+    expression: "N_raw = sum over usable zone pairs of 2 * sum over f in F_elig of ordered picks of 4 prelim courts != f"
+    notes: "LSC D8; F_elig >= FinalCandidatesMinCount."
+    added: 2026-10-24
+    revised: ""
+  - name: round_seed_derivation
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+    variables:
+      - ServerSecret
+      - MatchNonce
+      - RoundIndex
+      - Draw
+      - UsedSeeds
+      - Domain
+      - Attempt
+    output_range: "[1, 2^31 - 1]"
+    expression: "Seed = (H64(ServerSecret || MatchNonce || RoundIndex || Draw) mod (2^31 - 1)) + 1"
+    notes: "Session F5; public and secret sub-seeds (SubSeed) for every consumer. H64 = SipHash-2-4 keyed by ServerSecret (ADR-0006); server domains 2-14 (13 CrowdBehaviour, 14 BushSpotPick added 2026-10-24)."
+    # revised 2026-10-24 (ADR sync): notes only; H64 named, domains 13-14 registered (session-travel.md F5)
+    added: 2026-10-24
+    revised: 2026-10-24
+  - name: admission_capacity
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/participant-state-roster.md
+    variables:
+      - TeamSize
+      - Occupied
+      - AdmissionMode
+    output_range: "Capacity [2, 10]"
+    expression: "Capacity = 2 * TeamSize"
+    notes: "Session F1."
+    added: 2026-10-24
+    revised: ""
+  - name: travel_deadline
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/round-match-framework.md
+    variables:
+      - t_travel
+      - TravelLoadTimeoutSec
+      - TravelAckGraceSec
+      - T_srvload
+      - T_layout
+      - T_tuning
+    output_range: seconds
+    expression: "Deadline = max(t_travel + TravelLoadTimeoutSec, t_ready + TravelAckGraceSec)"
+    notes: "Session F7; bounds Preparing on the Session account."
+    added: 2026-10-24
+    revised: ""
+  - name: pawn_network_budget
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/input-interaction-framework.md
+    variables:
+      - f
+      - b_i
+      - mu_i
+      - B_forced
+      - U_eff
+    output_range: "about 26 KB/s worst case"
+    expression: "B = sum_i f * b_i * mu_i + B_forced"
+    notes: "SCL F9; f = PawnNetUpdateHz."
+    added: 2026-10-24
+    revised: ""
+  - name: acceleration_braking
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/crowd-npc-behaviour.md
+    variables:
+      - V_g
+      - T_start_g
+      - T_stop_g
+      - m_min
+      - a_g
+      - d_g
+      - v
+    output_range: "cm/s^2"
+    expression: "a_g = V_g / T_start_g; d_run = V_run / T_stop_run"
+    notes: "SCL F2; Assassination F1 victim braking uses it."
+    added: 2026-10-24
+    revised: ""
+  - name: result_show_time
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/npc-kill-penalty-informants.md
+    variables:
+      - ContactServerTime
+      - t_arrival
+      - offset
+      - HudResultPlateMaxHoldBackSec
+      - HudReplayWindowSec
+    output_range: "t_show - t_arrival [0, HoldBack]"
+    expression: "t_c_local = ContactServerTime - offset"
+    notes: "HUD F2; plates appear at the local contact frame (ASN-R23)."
+    added: 2026-10-24
+    revised: ""
+  - name: spot_attack_hit_zone
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/assassination-defence-reversal.md
+    variables:
+      - W
+      - BushSpotToleranceCm
+      - A
+      - r_c
+      - Reachable
+      - BushSpotPick
+      - UniformBelow
+    output_range: "zone about 11.8 m^2"
+    expression: "TargetsBush(b, W) = d_xy(W, Footprint_b) <= BushSpotToleranceCm"
+    notes: "Concealment F4; reachability by Assassination F1. Victim = Reachable[UniformBelow(|Reachable|)] from the secret stream GetServerSubSeed(BushSpotPick, LayoutAttempt) (ADR-0017/ADR-0006 domain 14)."
+    # revised 2026-10-24 (ADR sync): variables SpotSalt, H replaced by BushSpotPick, UniformBelow (old pick: H(SpotSalt, Tick, AttackerSeq, BushId) mod |Reachable|); changed in concealment-bushes.md
+    added: 2026-10-24
+    revised: 2026-10-24
+
+
+# ─── CONSTANTS ─────────────────────────────────────────────────────────────────
+# Named numerical values referenced across multiple systems.
+# Required fields: name, status, source, referenced_by, value, unit, added
+# Scope (2026-10-24): every tuning key named in two or more GDDs, plus the
+# user-locked canonical keys. Single-GDD keys are not mirrored here: the owner
+# GDD Tuning Knobs tables, indexed by tuning-data-config.md (Registered Owner
+# Keys), are the complete list. value = owner default; hard_range is the schema
+# clamp, safe_range the warn band; conflict: names a GDD that states otherwise.
+
+constants:
+  - name: AckSlackSec
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/hud.md
+    value: 0.15
+    unit: s
+    hard_range: 0.05-0.5
+    safe_range: 0.1-0.25
+    audience: All
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: AmbientEmergencePerSocketMinPerMin
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 0.5
+    unit: per_s
+    hard_range: 0.2-2
+    safe_range: 0.4-0.55  # was 0.4-1.0; changed by level-socket-contract.md (C-W18: bounded by I-CNB-3) (cross-review fixes 2026-10-24)
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: 2026-10-24
+  - name: AppearanceHistoryDepth
+    status: active
+    source: design/gdd/participant-state-roster.md
+    referenced_by:
+      - design/gdd/participant-state-roster.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 0
+    unit: count
+    default_note: log-only
+    hard_range: 0-16
+    safe_range: 0-8
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: AssassinationRangeCm
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    value: 200
+    unit: cm
+    hard_range: 100-250
+    safe_range: 150-250
+    audience: All
+    latch: Use
+    user_locked: true
+    note: "resolved 2026-10-24: Assassination table now states hard 100-250 (TDC canonical)"
+    added: 2026-10-24
+    revised: ""
+  - name: AttackAttemptLockoutSec
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/tuning-data-config.md
+    value: 1.75
+    unit: s
+    hard_range: 1.2-3.0
+    safe_range: 1.5-2.5
+    audience: All
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: BodyLingerSec
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/tuning-data-config.md
+    value: 6.0
+    unit: s
+    hard_range: 2-12
+    safe_range: 4-8
+    audience: All
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: BodyRemovalGraceSec
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/tuning-data-config.md
+    value: 2.0
+    unit: s
+    hard_range: 0-2.5
+    safe_range: 1.5-2.5
+    audience: All
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: BucketAttackPerSec
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/assassination-defence-reversal.md
+    value: 1.0
+    unit: per_s
+    hard_range: 0.5-10
+    safe_range: 0.5-2
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: BucketAttackSize
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/assassination-defence-reversal.md
+    value: 2
+    unit: count
+    hard_range: 1-10
+    safe_range: 1-3
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: BucketHideSize
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/concealment-bushes.md
+    value: 4
+    unit: count
+    hard_range: 1-10
+    safe_range: 2-6
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: BushCourtExclusionCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/procedural-city-generator.md
+    value: 600
+    unit: cm
+    hard_range: "300-1,200"
+    safe_range: 600-800
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: BushEnterSwapSec
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/teammate-markers.md
+    value: 0.5
+    unit: s
+    hard_range: 0.3-0.8
+    safe_range: 0.45-0.7
+    audience: All
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: BushExitCrossSec
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 0.45
+    unit: s
+    hard_range: 0.30-0.8
+    safe_range: 0.35-0.7
+    audience: All
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: BushExitDepenetrationCapCm
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/tuning-data-config.md
+    value: 30
+    unit: cm
+    hard_range: 0-60
+    safe_range: 15-40
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: BushReenterCooldownSec
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/input-interaction-framework.md
+    value: 6
+    unit: s
+    hard_range: 0-30
+    safe_range: 3-15
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: BushSpacingCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/concealment-bushes.md
+    value: 1200
+    unit: cm
+    hard_range: "600-2,000"
+    safe_range: "1,000-1,600"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: BushSpotToleranceCm
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/tuning-data-config.md
+    value: 75
+    unit: cm
+    hard_range: 20-200
+    safe_range: 40-120
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: BushStrikeEmergeSec
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 0.35
+    unit: s
+    hard_range: 0.30-0.6
+    safe_range: 0.3-0.5
+    audience: All
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: CameraEdgeSoftMinGain
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 0.1
+    unit: mult
+    hard_range: 0.05-0.3
+    safe_range: 0.08-0.15
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: CameraToggleLockoutSec
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 0.30
+    unit: s
+    hard_range: 0-1
+    safe_range: 0.2-0.5
+    audience: All
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: ChainFairnessMaxMult
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 1.10
+    unit: mult
+    hard_range: 1.05-1.20
+    safe_range: 1.08-1.12
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: ChainLengthMinCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/objectives-chain.md
+    value: 12000
+    unit: cm
+    hard_range: "10,000-40,000"
+    safe_range: "from the graybox histogram"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: CityGenFacadeIdenticalRunMaxCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 6
+    unit: count
+    hard_range: 4-6
+    safe_range: 6
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: CityGenFinalEligibleTargetCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/objectives-chain.md
+    value: 6
+    unit: count
+    hard_range: 3-8
+    safe_range: 4-6
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: CityGenGridSideMinCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 62
+    unit: count
+    hard_range: 56-76
+    safe_range: 60-68
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: CityGenManifestEntriesMaxCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/level-socket-contract.md
+    value: 3500
+    unit: count
+    hard_range: "2,000-4,000"
+    safe_range: "3,300-3,700"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: CityGenSkeletonFairnessMaxMult
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 1.06
+    unit: mult
+    hard_range: 1.03-1.08
+    safe_range: 1.05-1.07
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: CityGenWitnessCellsTargetCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 30
+    unit: count
+    hard_range: 20-37
+    safe_range: 26-32
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: ClientAutoRejoinIntervalSec
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    value: 3.0
+    unit: s
+    hard_range: 1-10
+    safe_range: 2-5
+    audience: "All (client consumer: auto-rejoin)"
+    latch: Session
+    added: 2026-10-24
+    revised: ""
+  - name: CommandRangeSlackCm
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/assassination-defence-reversal.md
+    value: 40
+    unit: cm
+    hard_range: 20-80
+    safe_range: 30-50
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: ConcealCullDelayMs
+    status: active
+    source: design/gdd/information-visibility-policy.md
+    referenced_by:
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/tuning-data-config.md
+    value: 250
+    unit: ms
+    hard_range: 100-1000
+    safe_range: 200-400
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: ConcealServerCullEnabled
+    status: active
+    source: design/gdd/information-visibility-policy.md
+    referenced_by:
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/tuning-data-config.md
+    value: true
+    unit: bool
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: ConcealedBoomCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/concealment-bushes.md
+    value: 60
+    unit: cm
+    hard_range: 0-70
+    safe_range: 40-60
+    audience: Client
+    latch: Use
+    conflict: "concealment-bushes.md change-request record 12 states safe range 40-80 (owner Camera safe 40-60, hard 0-70)"
+    added: 2026-10-24
+    revised: ""
+  - name: CounterDurationSec
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 1.2
+    unit: s
+    hard_range: 0.8-2.0
+    safe_range: 1.0-1.5
+    audience: All
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdAmbientCycleIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 80
+    unit: s
+    hard_range: 40-90
+    safe_range: 60-90
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdAmbientTouchMaxSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/tuning-data-config.md
+    value: 1.5
+    unit: s
+    hard_range: 0.3-3.0
+    safe_range: 0.6-1.5
+    audience: ServerOnly
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdBraceIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/assassination-defence-reversal.md
+    value: 2400
+    unit: s
+    hard_range: 300-7200
+    safe_range: 1600-3600
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdBushIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 316
+    unit: s
+    default_note: "r_N 0.19/min"
+    hard_range: 120-320
+    safe_range: 240-320
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdConversationMaxSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 20
+    unit: s
+    hard_range: 2-60
+    safe_range: 5-20
+    audience: ServerOnly
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdDecoyCompletePct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/objectives-chain.md
+    value: 75
+    unit: pct
+    hard_range: 0-100
+    safe_range: 60-90
+    audience: ServerOnly
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdDecoyEarlyReleaseMinSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/tuning-data-config.md
+    value: 0.8
+    unit: s
+    hard_range: 0.3-3.0
+    safe_range: 0.6-1.0
+    audience: ServerOnly
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdDecoyTendIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/objectives-chain.md
+    value: 10500
+    unit: s
+    hard_range: 1800-60000
+    safe_range: 8400-13500
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdExitGiveUpSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/npc-kill-penalty-informants.md
+    value: 8
+    unit: s
+    hard_range: 2-30
+    safe_range: 5-12
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdHeadHoldIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 480
+    unit: s
+    hard_range: 120-3600
+    safe_range: "±40 %"
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdIdleMaxSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 16
+    unit: s
+    hard_range: 2-30
+    safe_range: 4-16
+    audience: ServerOnly
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdIdleMinSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 4
+    unit: s
+    hard_range: 2-30
+    safe_range: 4-16
+    audience: ServerOnly
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdMaxIdleSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    value: 20
+    unit: s
+    hard_range: 10-60
+    safe_range: 15-25
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdReplacementMaxDelaySec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 60
+    unit: s
+    hard_range: 30-180
+    safe_range: 45-90
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdReplacementMinDelaySec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/tuning-data-config.md
+    value: 10
+    unit: s
+    hard_range: 3-30
+    safe_range: 8-15
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: CrowdTellChainGapSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 20
+    unit: s
+    hard_range: 10-35
+    safe_range: 20-30
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: DeathFallSec
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/camera-system.md
+      - design/gdd/hud.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/tuning-data-config.md
+    value: 1.2
+    unit: s
+    hard_range: 0.8-2.0
+    safe_range: 1.1-1.6
+    audience: All
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: DeckActiveAppearancesMaxCount
+    status: active
+    source: design/gdd/character-pool-appearance.md
+    referenced_by:
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/tuning-data-config.md
+    value: 12
+    unit: count
+    hard_range: "6 to 16"
+    safe_range: "8 to 12"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: DeckActiveAppearancesMinCount
+    status: active
+    source: design/gdd/character-pool-appearance.md
+    referenced_by:
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 6
+    unit: count
+    hard_range: "5 to 12"
+    safe_range: "6 to 8"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: DeckCopiesFloorCount
+    status: active
+    source: design/gdd/character-pool-appearance.md
+    referenced_by:
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 4
+    unit: count
+    hard_range: "3 to 6"
+    safe_range: "4 to 5"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: DefenceCooldownSec
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    value: 60
+    unit: s
+    hard_range: 30-120
+    safe_range: 45-75
+    audience: All
+    latch: Action
+    user_locked: true
+    added: 2026-10-24
+    revised: ""
+  - name: DefenceDurationSec
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    value: 4.0
+    unit: s
+    hard_range: 3.0-5.0
+    safe_range: 3.0-5.0
+    audience: All
+    latch: Action
+    user_locked: true
+    added: 2026-10-24
+    revised: ""
+  - name: DetourMaxMult
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/tuning-data-config.md
+    value: 2.0
+    unit: mult
+    hard_range: 1.8-2.4
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: DisconnectGraceSec
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    value: 30
+    unit: s
+    hard_range: "3 to 120"
+    safe_range: "15 to 60"
+    audience: ServerOnly
+    latch: Action
+    conflict: "participant-state-roster.md Open Questions still state range 10-120 (owner Round hard 3-120; TDC index says 3-120 supersedes)"
+    added: 2026-10-24
+    revised: ""
+  - name: EdgePushLatchSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 0.15
+    unit: s
+    hard_range: 0.05-0.3
+    safe_range: 0.1-0.2
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: EmergenceDeficitMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/crowd-npc-behaviour.md
+    value: 3
+    unit: count
+    hard_range: 0-6
+    safe_range: 2-4
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: EmergenceExitCancelMaxPct
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 25
+    unit: pct
+    hard_range: 10-50
+    safe_range: 20-30
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: EmergenceRetrySec
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/npc-kill-penalty-informants.md
+    value: 1
+    unit: s
+    hard_range: 0.2-5
+    safe_range: 0.5-2
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: EmergenceSocketCooldownSec
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 20
+    unit: s
+    hard_range: 5-60
+    safe_range: 15-30
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: EmergenceWitnessCellsMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 37
+    unit: count
+    hard_range: 10-55
+    safe_range: 30-40  # was 25-40; changed by level-socket-contract.md (C-W18: bounded by I-PCG-2) (cross-review fixes 2026-10-24)
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: 2026-10-24
+  - name: EmergenceWitnessRangeCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/tuning-data-config.md
+    value: 3200
+    unit: cm
+    hard_range: "2,500-4,000"
+    safe_range: "= SightlineMaxCm"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: EndedAutoResetSec
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 0
+    unit: s
+    hard_range: "0, or 3 to 600"
+    safe_range: "0 or 20 to 120"
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: EndedMinDwellSec
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 3
+    unit: s
+    hard_range: "1 to 10"
+    safe_range: "2 to 5"
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: ExileBeatSec
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/camera-system.md
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 0.8
+    unit: s
+    hard_range: 0-2.0
+    safe_range: 0.75-1.2  # was 0.5-1.2; changed by npc-kill-penalty-informants.md (C-W2: bounded by I-HUD-3/I-HUD-5) (cross-review fixes 2026-10-24)
+    audience: All
+    latch: Action
+    added: 2026-10-24
+    revised: 2026-10-24
+  - name: ExileCardTimeoutSec
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/camera-system.md
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 2.0
+    unit: s
+    hard_range: 1.0-4.0
+    safe_range: 1.5-2.5
+    audience: All
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: EyeMaskBeyondHz
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 5
+    unit: Hz
+    hard_range: 2-15
+    safe_range: 4-8
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: EyeMaskHideFails
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 2
+    unit: count
+    hard_range: 1-4
+    safe_range: 2-3
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: FinalAmbiguityMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/procedural-city-generator.md
+    value: 3
+    unit: count
+    hard_range: 2-5
+    safe_range: 3-4
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: FinalCandidatesMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/procedural-city-generator.md
+    value: 6
+    unit: count
+    hard_range: 3-8
+    safe_range: "TeamSize + 1-8"
+    audience: ServerOnly
+    latch: Round
+    note: "resolved 2026-10-24: objectives-chain.md SP-2, SP-4, OQ 9 now state the LSC floor 6"
+    added: 2026-10-24
+    revised: ""
+  - name: FixtureInteractSideCount
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/level-socket-contract.md
+    value: 4
+    unit: count
+    hard_range: 1-4
+    safe_range: 3-4
+    audience: All
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: FovHMaxDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/teammate-markers.md
+    value: 108
+    unit: deg
+    hard_range: 90-120
+    safe_range: 100-110
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: FpFovVDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/teammate-markers.md
+    value: 60
+    unit: deg
+    hard_range: 55-75
+    safe_range: 55-70
+    audience: Client
+    latch: Use
+    user_setting: true
+    added: 2026-10-24
+    revised: ""
+  - name: HandoverHoldSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/crowd-npc-behaviour.md
+    value: 0.8
+    unit: s
+    hard_range: 0.3-2.0
+    safe_range: 0.5-1.2
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HostLossTimeoutSec
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    value: 12.0
+    unit: s
+    hard_range: 5-60
+    safe_range: 8-20
+    audience: "All (client consumer: host-loss clock, F6)"
+    latch: Session
+    added: 2026-10-24
+    revised: ""
+  - name: HudBannerMaxDelaySec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 1.6
+    unit: s
+    hard_range: 1.0-2.5
+    safe_range: 1.4-1.8
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudBannerMinPlateSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 1.0
+    unit: s
+    hard_range: 0-1.5
+    safe_range: 0.5-1.0
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudFeedLineLifeSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 6.0
+    unit: s
+    hard_range: 3.0-12.0
+    safe_range: 5.0-8.0
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudFeedMinDwellSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 2.0
+    unit: s
+    hard_range: 0.5-4.0
+    safe_range: 1.5-3.0
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudLatencyWarnRttSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 0.20
+    unit: s
+    hard_range: 0.10-0.50
+    safe_range: 0.15-0.30
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudOwnRemovalHoldCapSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 1.25
+    unit: s
+    hard_range: 1.2-2.0
+    safe_range: 1.25-1.5
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudPreemptExitSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/npc-kill-penalty-informants.md
+    value: 0.25
+    unit: s
+    hard_range: 0.1-0.4
+    safe_range: 0.2-0.3
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudReadHoldMult
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 1.0
+    unit: mult
+    hard_range: 1.0-2.0
+    safe_range: 1.0-1.5
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudRemovalCardDelaySec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 0.8
+    unit: s
+    hard_range: 0.5-1.2
+    safe_range: 0.7-1.0
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudRemovalCardInSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 0.6
+    unit: s
+    hard_range: 0.3-1.0
+    safe_range: 0.5-0.8
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudReplayWindowSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 1.0
+    unit: s
+    hard_range: 0.5-3.0
+    safe_range: 0.75-1.5
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudResultPlateHoldSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/assassination-defence-reversal.md
+    value: 3.0
+    unit: s
+    hard_range: 1.0-6.0
+    safe_range: 2.0-4.0
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudResultPlateInSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 0.25
+    unit: s
+    hard_range: 0.1-0.5
+    safe_range: 0.2-0.3
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudResultPlateMaxHoldBackSec
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 1.25
+    unit: s
+    hard_range: 1.2-2.0
+    safe_range: 1.25-1.5
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: HudSafeMarginPct
+    status: active
+    source: design/gdd/hud.md
+    referenced_by:
+      - design/gdd/hud.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 5
+    unit: pct
+    hard_range: 3-10
+    safe_range: 3-6
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: InformantPlateCooldownSec
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/hud.md
+    value: 3.0
+    unit: s
+    hard_range: 1-10
+    safe_range: 2-5
+    audience: All
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: InformantRespawnDelaySec
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/hud.md
+      - design/gdd/tuning-data-config.md
+    value: 15
+    unit: s
+    hard_range: 5-60
+    safe_range: 10-20
+    audience: "All (owner countdown)"
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: InformantRespawnPathCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+    value: 4500
+    unit: cm
+    hard_range: "3,000-7,000"
+    safe_range: "4,000-5,500"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: InteractCancelHysteresisCm
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 50
+    unit: cm
+    hard_range: 30-150
+    safe_range: 30-80
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: InteractMoveCancelDistCm
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/shared-character-locomotion.md
+    value: 15
+    unit: cm
+    hard_range: 5-40
+    safe_range: 10-25
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: InteractRangeCm
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/tuning-data-config.md
+    value: 150
+    unit: cm
+    hard_range: 80-250
+    safe_range: 120-180
+    audience: "All (prompts, ring prediction)"
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: LateJoinTakeoverTimeoutSec
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/npc-kill-penalty-informants.md
+    value: 30
+    unit: s
+    hard_range: "5 to 120"
+    safe_range: "15 to 60"
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: LatencyWarnRttSec
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/information-visibility-policy.md
+    value: 0.20
+    unit: s
+    hard_range: 0.1-0.4
+    safe_range: 0.15-0.25
+    audience: All
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: LayoutAttemptTimeoutSec
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 7
+    unit: s
+    hard_range: 2-30
+    safe_range: 5-7.5
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: LayoutMaxReseedAttemptsCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    value: 5
+    unit: count
+    hard_range: 0-10
+    safe_range: 3-6
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: LayoutProviderMode
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+    value: Graybox
+    unit: enum
+    hard_range: "Graybox, Generated, GeneratedWithFallback"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: LayoutSliceWorkUnitsMax
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 4096
+    unit: count
+    default_note: "provisional pending spike"
+    hard_range: "256-65,536"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: LayoutTotalBudgetSec
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    value: 45
+    unit: s
+    hard_range: 10-90
+    safe_range: 30-60
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: LayoutWalkableCellsMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+    value: 3250
+    unit: count
+    hard_range: "1,500-4,000"
+    safe_range: "2,000-2,250"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: LayoutWalkableCellsMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 2000
+    unit: count
+    hard_range: "1,500-4,000"
+    safe_range: "2,000-2,250"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: LookMaxRateDegPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/crowd-npc-behaviour.md
+    value: 140
+    unit: per_s
+    hard_range: 60-300
+    safe_range: 120-160
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: LookPitchLimitDeg
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/camera-system.md
+    value: 20
+    unit: deg
+    hard_range: 10-45
+    safe_range: 15-25
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: LookYawLimitDeg
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/camera-system.md
+    value: 70
+    unit: deg
+    hard_range: 30-90
+    safe_range: 60-75
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: MinPlayersPerTeamCount
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 1
+    unit: count
+    hard_range: "1 to 5"
+    safe_range: "1 to 3"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: NavMinClearWidthCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+    value: 280
+    unit: cm
+    hard_range: 240-400
+    safe_range: 280-320
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: NoPawnFadeSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/hud.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 0.5
+    unit: s
+    hard_range: 0-1.5
+    safe_range: 0.3-0.8
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: NpcCount
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    value: 40
+    unit: count
+    hard_range: "per TDC"
+    safe_range: "per TDC"
+    audience: ServerOnly
+    latch: Round
+    user_locked: true
+    added: 2026-10-24
+    revised: ""
+  - name: NpcKillStrikeLimit
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/hud.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 3
+    unit: count
+    hard_range: 1-5
+    safe_range: 2-4
+    audience: All
+    latch: Round
+    user_locked: true
+    note: "raising the hard minimum to 2 is a pending user decision (NKP OQ-12)"
+    added: 2026-10-24
+    revised: ""
+  - name: ObjectiveInteractSec
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 3.0
+    unit: s
+    hard_range: 2.0-6.0
+    safe_range: 2.5-4.5
+    audience: "All (owner ring prediction)"
+    latch: Action
+    user_locked: true
+    added: 2026-10-24
+    revised: ""
+  - name: OpenSpotToleranceCm
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/tuning-data-config.md
+    value: 75
+    unit: cm
+    hard_range: 20-200
+    safe_range: 40-120
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: PawnNetUpdateHz
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 15
+    unit: per_s
+    hard_range: 12-17
+    safe_range: 13-16
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: PawnRefAgreementCm
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/tuning-data-config.md
+    value: 75
+    unit: cm
+    hard_range: 25-150
+    safe_range: 50-100
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: PawnSmoothSnapThresholdCm
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/camera-system.md
+    value: 256
+    unit: cm
+    hard_range: 128-512
+    safe_range: 200-300
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: PivotTurnRateDegPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/camera-system.md
+    value: 120
+    unit: per_s
+    hard_range: 60-180
+    safe_range: 90-150
+    audience: Client
+    latch: Round
+    note: "camera-system.md ux-designer request asks for >= 150 deg/s (currently 120); open request, not applied"
+    added: 2026-10-24
+    revised: ""
+  - name: ReachDetourMult
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/tuning-data-config.md
+    value: 2.0
+    unit: mult
+    hard_range: 1.6-2.4
+    safe_range: "= DetourMaxMult"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RejectPlateCooldownSec
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/hud.md
+    value: 3.0
+    unit: s
+    hard_range: 1-10
+    safe_range: 2-5
+    audience: All
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: RejoinWindowSec
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 120
+    unit: s
+    hard_range: 60-600
+    safe_range: 60-300
+    audience: ServerOnly
+    latch: Session
+    added: 2026-10-24
+    revised: ""
+  - name: ReleaseDebounceSec
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/objectives-chain.md
+    value: 0.10
+    unit: s
+    hard_range: 0.05-0.2
+    safe_range: 0.05-0.12
+    audience: ServerOnly
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: RespawnPoolMinExpected
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/tuning-data-config.md
+    value: 4
+    unit: count
+    hard_range: 2-8
+    safe_range: 3-6
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RespawnStarvationSec
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/tuning-data-config.md
+    value: 10
+    unit: s
+    hard_range: 5-30
+    safe_range: 5-20
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: ReversalAngleDeg
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/crowd-npc-behaviour.md
+    value: 120
+    unit: deg
+    hard_range: 90-170
+    safe_range: 110-135
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RivalSignalDelayMaxSec
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/tuning-data-config.md
+    value: 165
+    unit: s
+    hard_range: 70-300
+    safe_range: 150-200
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RivalSignalDelayMinSec
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/tuning-data-config.md
+    value: 30
+    unit: s
+    hard_range: 30-120
+    safe_range: 30-60
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RivalSignalReleaseQuantumSec
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/tuning-data-config.md
+    value: 30
+    unit: s
+    hard_range: 10-90
+    safe_range: 20-45
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RoleShareMaxPct
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+    value: 50
+    unit: pct
+    hard_range: 30-70
+    safe_range: 40-50
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RosterTransitionLogDepth
+    status: active
+    source: design/gdd/participant-state-roster.md
+    referenced_by:
+      - design/gdd/participant-state-roster.md
+      - design/gdd/tuning-data-config.md
+    value: 64
+    unit: count
+    hard_range: 16-1024
+    safe_range: 16-512
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RouteMaxGapCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+    value: 1000
+    unit: cm
+    hard_range: "600-1,500"
+    safe_range: "800-1,000"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RunSpeedCmPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/level-socket-contract.md
+    value: 450
+    unit: cm/s
+    hard_range: 300-650
+    safe_range: 400-500
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RunSpeedThresholdCmPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    value: 300
+    unit: cm/s
+    hard_range: 180-500
+    safe_range: 250-350
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: RunStopSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/crowd-npc-behaviour.md
+    value: 0.75
+    unit: s
+    hard_range: 0.4-1.5
+    safe_range: 0.6-0.9
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: SessionHardTimeoutSec
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 12.0
+    unit: s
+    hard_range: 5-60
+    safe_range: 8-20
+    audience: ServerOnly
+    latch: Session
+    added: 2026-10-24
+    revised: ""
+  - name: SessionHeartbeatIntervalSec
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    value: 0
+    unit: s
+    default_note: disabled
+    hard_range: "0 or 0.25-5"
+    safe_range: "0.5-1 when enabled"
+    audience: ServerOnly
+    latch: Session
+    added: 2026-10-24
+    revised: ""
+  - name: SessionSoftTimeoutSec
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    value: 3.0
+    unit: s
+    hard_range: 1-10
+    safe_range: 2-5
+    audience: ServerOnly
+    latch: Session
+    added: 2026-10-24
+    revised: ""
+  - name: ShutdownFlushSec
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    value: 0.5
+    unit: s
+    hard_range: 0.1-2.0
+    safe_range: 0.3-1.0
+    audience: ServerOnly
+    latch: Session
+    added: 2026-10-24
+    revised: ""
+  - name: SightlineMaxCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/tuning-data-config.md
+    value: 3200
+    unit: cm
+    hard_range: "2,500-4,000"
+    safe_range: "3,000-3,200"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: StickDeadZone
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 0.15
+    unit: mult
+    hard_range: 0.05-0.40
+    safe_range: 0.1-0.2
+    audience: Client
+    latch: Use
+    user_setting: true
+    added: 2026-10-24
+    revised: ""
+  - name: StickOuterZone
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 0.98
+    unit: mult
+    hard_range: 0.9-1
+    safe_range: 0.95-0.99
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: StrikeBearingLimitDeg
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/tuning-data-config.md
+    value: 90
+    unit: deg
+    hard_range: 60-105
+    safe_range: 80-95
+    audience: All
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: StrikeContactGapCm
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/tuning-data-config.md
+    value: 15
+    unit: cm
+    hard_range: 5-40
+    safe_range: 10-25
+    audience: All
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: StrikeContactSec
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/hud.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 0.40
+    unit: s
+    hard_range: 0.25-0.80
+    safe_range: 0.30-0.50
+    audience: All
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: StrikeNetLeadSec
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/hud.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 0.15
+    unit: s
+    hard_range: 0.05-0.30
+    safe_range: 0.10-0.15
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: StrikeOutReleaseGraceSec
+    status: active
+    source: design/gdd/npc-kill-penalty-informants.md
+    referenced_by:
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/tuning-data-config.md
+    value: 2.0
+    unit: s
+    hard_range: 0-5.0
+    safe_range: 1.75-2.5
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: StrikeVerticalReachCm
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+    value: 75
+    unit: cm
+    hard_range: 30-120
+    safe_range: 50-100
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: StrikeWarpLimitCm
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/tuning-data-config.md
+    value: 240
+    unit: cm
+    hard_range: 150-240
+    safe_range: 200-240
+    audience: All
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: StrikeWarpYawLimitDeg
+    status: active
+    source: design/gdd/assassination-defence-reversal.md
+    referenced_by:
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 30
+    unit: deg
+    hard_range: 10-45
+    safe_range: 20-35
+    audience: All
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: TargetRoundMinutes
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 12
+    unit: min
+    hard_range: "5 to 30"
+    safe_range: "8 to 15"
+    audience: ServerOnly
+    latch: Round
+    user_locked: true
+    note: "non-binding design target; no timer exists; logged only"
+    added: 2026-10-24
+    revised: ""
+  - name: TeamPositionFeedGridCm
+    status: active
+    source: design/gdd/information-visibility-policy.md
+    referenced_by:
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 10
+    unit: cm
+    hard_range: 5-50
+    safe_range: 10-25
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: TeamPositionFeedHz
+    status: active
+    source: design/gdd/information-visibility-policy.md
+    referenced_by:
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 2.0
+    unit: Hz
+    hard_range: 0-10
+    safe_range: 1.5-4  # was 1-4; changed by information-visibility-policy.md (C-W18: bounded by I-TM-1) (cross-review fixes 2026-10-24)
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: 2026-10-24
+  - name: TeamSize
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/concealment-bushes.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/information-visibility-policy.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/npc-kill-penalty-informants.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/participant-state-roster.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/session-travel.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 5
+    unit: count
+    hard_range: "1 to 5"
+    safe_range: "2 to 5"
+    audience: All
+    latch: Round
+    user_locked: true
+    added: 2026-10-24
+    revised: ""
+  - name: TeamZoneRadiusCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/round-match-framework.md
+    value: 3500
+    unit: cm
+    hard_range: "2,000-4,500"
+    safe_range: "3,000-4,000"
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: TeammateMarkerFeedStaleSec
+    status: active
+    source: design/gdd/teammate-markers.md
+    referenced_by:
+      - design/gdd/teammate-markers.md
+      - design/gdd/tuning-data-config.md
+    value: 2.0
+    unit: s
+    hard_range: 1.0-5.0
+    safe_range: 1.5-3.0
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: TeammateMarkerRetireHoldSec
+    status: active
+    source: design/gdd/teammate-markers.md
+    referenced_by:
+      - design/gdd/teammate-markers.md
+      - design/gdd/assassination-defence-reversal.md
+      - design/gdd/hud.md
+    value: 0.25
+    unit: s
+    hard_range: 0-1.0
+    safe_range: 0.15-0.35
+    audience: Client
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: TendCueDelaySec
+    status: active
+    source: design/gdd/objectives-chain.md
+    referenced_by:
+      - design/gdd/objectives-chain.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/hud.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 1.0
+    unit: s
+    hard_range: 0.5-2.0
+    safe_range: 0.8-1.5
+    audience: "All (owner ring prediction)"
+    latch: Action
+    added: 2026-10-24
+    revised: ""
+  - name: TpFovVDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/teammate-markers.md
+    value: 60
+    unit: deg
+    hard_range: 55-75
+    safe_range: 55-70
+    audience: Client
+    latch: Use
+    user_setting: true
+    added: 2026-10-24
+    revised: ""
+  - name: TransportBucketPerSec
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 20
+    unit: per_s
+    hard_range: 5-40
+    safe_range: 12-30
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: TransportBucketSize
+    status: active
+    source: design/gdd/input-interaction-framework.md
+    referenced_by:
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 30
+    unit: count
+    hard_range: 10-60
+    safe_range: 24-40
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: TravelAckGraceSec
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/round-match-framework.md
+    value: 15
+    unit: s
+    hard_range: 5-60
+    safe_range: 10-30
+    audience: ServerOnly
+    latch: Session
+    added: 2026-10-24
+    revised: ""
+  - name: TravelLoadTimeoutSec
+    status: active
+    source: design/gdd/session-travel.md
+    referenced_by:
+      - design/gdd/session-travel.md
+      - design/gdd/character-pool-appearance.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 60
+    unit: s
+    hard_range: 20-180
+    safe_range: 30-120
+    audience: ServerOnly
+    latch: Session
+    added: 2026-10-24
+    revised: ""
+  - name: TraversalClimbHeightCm
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 160
+    unit: cm
+    hard_range: 120-200
+    safe_range: 150-170
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: TraversalLandingClearCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/shared-character-locomotion.md
+    value: 100
+    unit: cm
+    hard_range: 60-150
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: TraversalMinHeightCm
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+    value: 45
+    unit: cm
+    hard_range: 30-50
+    safe_range: 40-50
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: TraversalVaultHeightCm
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 80
+    unit: cm
+    hard_range: 60-120
+    safe_range: 75-85
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: TurnInPlaceDelaySec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/camera-system.md
+    value: 0.50
+    unit: s
+    hard_range: 0.1-2.0
+    safe_range: 0.3-0.8
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: ViewPitchDownLimitDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 60
+    unit: deg
+    hard_range: 20-75
+    safe_range: 50-65
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: ViewPitchUpLimitDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 40
+    unit: deg
+    hard_range: 20-60
+    safe_range: 30-45
+    audience: Client
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: WalkSpeedCmPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/level-socket-contract.md
+      - design/gdd/tuning-data-config.md
+    value: 140
+    unit: cm/s
+    hard_range: 100-200
+    safe_range: 125-160
+    audience: "Client (owner prediction)"
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: WalkableCellsPerPawnMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 45
+    unit: count
+    default_note: "180 m²"
+    hard_range: 30-75
+    safe_range: 40-50
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: RevealPawnWaitMaxSec
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 2.0
+    unit: s
+    hard_range: "0.5 to 10"
+    safe_range: "1 to 3"
+    audience: All
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: WorldReadyTimeoutSec
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+    value: 10
+    unit: s
+    hard_range: "2 to 30"
+    safe_range: "5 to 15"
+    audience: ServerOnly
+    latch: Use
+    added: 2026-10-24
+    revised: ""
+  - name: ZoneDensityMaxMult
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/crowd-npc-behaviour.md
+    value: 1.8
+    unit: mult
+    hard_range: 1.2-2.5
+    safe_range: 1.5-2.0
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: bAllowEmptyTeamDev
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/objectives-chain.md
+    value: false
+    unit: bool
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: bHandOverOnUnresponsive
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/session-travel.md
+      - design/gdd/shared-character-locomotion.md
+    value: true
+    unit: bool
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""
+  - name: bHostMayAbortActive
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/objectives-chain.md
+    value: true
+    unit: bool
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-24
+    revised: ""

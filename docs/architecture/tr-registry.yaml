@@ -1,0 +1,1460 @@
+# Technical Requirement ID Registry
+#
+# PURPOSE: Persistent, stable IDs for every GDD technical requirement.
+# Prevents TR-ID renumbering across /architecture-review runs, which would
+# break story references.
+#
+# RULES:
+#   - IDs are PERMANENT. Never renumber, never delete (use status: deprecated).
+#   - Add new entries only at the END of each system's list.
+#   - When a GDD requirement is reworded (same intent): update `requirement`
+#     text and add a `revised` date. The ID stays the same.
+#   - When a requirement is removed from the GDD: set status: deprecated.
+#   - When a requirement is split or replaced: set
+#     status: "superseded-by: TR-[system]-NNN" with the new TR-ID(s), quoted:
+#     unquoted, the second colon makes the file invalid YAML.
+#
+# WRITTEN BY: /architecture-review (appends new entries, never overwrites)
+# READ BY:    /create-stories (embed IDs in stories)
+#             /dev-story (current requirement text before implementing)
+#             /story-done (look up current requirement text at review time)
+#             /story-readiness (validate TR-ID exists and is active)
+#             /create-epics (trace requirements to ADR coverage)
+#             /test-helpers (map requirements to tested systems)
+#             /adopt (brownfield audit: is the registry there)
+#             /create-architecture (reuses registered IDs in its baseline)
+#
+# ID FORMAT: TR-[system]-[NNN]
+#   [system] = a short lowercase slug for the system. It is an alias: the
+#   system's key (system_overrides and the like) is its GDD filename stem
+#   NNN = three-digit zero-padded sequence per system, starting at 001
+#
+# STATUS VALUES: active | deprecated | "superseded-by: TR-[system]-NNN"
+#
+# LAYOUT: the one shape .claude/scripts/registry.sh reads. requirements: holds
+#   a block list, or [] while it is empty. Each entry starts "- id: TR-..." with
+#   the dash at column 0, as in the examples (or 2, the same for every entry);
+#   its fields sit two columns past the dash. Quote a value that holds ": ". A
+#   line in any other shape is reported as unsupported layout, with its number.
+
+version: 2
+last_updated: "2026-10-25"
+
+requirements:
+
+- id: TR-tdc-001
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "Every gameplay number is a key in one cooked data-asset class of per-owner sub-structs; presets listed by a catalog"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-002
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "C++ schema row per key (type, default, hard range, audience, latch); editor metadata is a mirror; schema defaults pinned to GDD defaults by test"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-003
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "Server-only resolve/validate/freeze at `Preparing` with the CR-6 ladder and fallback rungs (`FallbackLevel`, `ValidationReport`)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-004
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "Cross-field invariants reject or warn, never clamp; safe ranges linted against all invariants at other keys' defaults"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-005
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "Immutable `ValidatedTuning` per round; `TuningHash` (server-only) and `ClientHash` (public keys)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-006
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "ServerOnly/All audience split; client snapshot replicated; client face typed to the public struct (compile-time guarantee)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-007
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "World-scoped accessor correct in multi-client PIE; no per-pawn/team/viewer parameter"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-008
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "Latch classes Round/Action/Use honoured by every consumer"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-009
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "No back doors: no `Config` properties, no ini/CVar overrides in Shipping; Shipping always resolves `Default`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-010
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "PIE-only hot-reload re-validation, debounced, routed to the PIE server world"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tdc-011
+  system: tdc
+  gdd: design/gdd/tuning-data-config.md
+  requirement: "Client tuning check rides Session's single acknowledgement (no TDC RPC/timer)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-001
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Game-instance store of `ParticipantRecord`s surviving seamless and hard travel; `BeginMatch`/`EndMatch`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-002
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Single writer of lifecycle state through `RequestTransition` with the legal-transition table and result precedence; batch-only reset/end"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-003
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Game-thread-only mutation; events queued and dispatched FIFO after the outermost call; `EventSeq` +1 per event"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-004
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Pawn binding states with bind-before-visible spawn and crowd-adoption paths; tombstones"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-005
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "O(1) allocation-free server queries; on clients return 0/false and report to the fault sink"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-006
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Carriers C-Public (PlayerState allowlist), C-TeamView (owner-only PlayerController), C-Server (never replicated)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-007
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Engine PlayerState defaults disabled or constant; frozen in-round `PlayerArray`; no PlayerState byte change on a transition"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-008
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Opponent counts never leave the server before `Ended`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-009
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "All presentation, incl. the listen host, reads only C-TeamView and public structs"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-010
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Disconnect/reclaim keyed by IdentityKey; epoch token and connection generation guard every timer"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-011
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Pawn replication configuration identical for NPC and player and invariant under possession"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-roster-012
+  system: roster
+  gdd: design/gdd/participant-state-roster.md
+  requirement: "Server-only `OnViewRebound(ParticipantId)` raised after `RebindView` (seamless arrival, rejoin) so feature team-view parts rebuild; carries no `EventSeq`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-001
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "One non-replicated command component per pawn with the seven entry points; no caller identity anywhere"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-002
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Human Move/Look through CMC saved moves; AI through the same entry points (Crowd follower issues Move by input emulation; path-following never feeds Move); one control rotation, body-yaw rule and pitch path"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-003
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Discrete commands as Enhanced Input edges; the Hold trigger never carries server meaning"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-004
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Two-stage server validation (ingress with token buckets; command check at the queue slot)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-005
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Hold timers as queue items from server time; 0.10 s release debounce for every pawn"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-006
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "One action slot per pawn, priority Attack > Prepare > Interact > Hide"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-007
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Exactly one owner reply per resolution-voided command; ingress rejections silent"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-008
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Server-only action hub with `OnActionStarted/Cancelled/Completed` in one world-level hub"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-009
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Replicated fixed-size `FActionState` with one RepNotify; nothing else per action replicated except owner data"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-010
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Attack payload from the camera aim ray; no lock-on, no target-dependent presentation"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-011
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Input contexts swap on owner state (UX only); AI subject to the same token buckets"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-012
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "Input latency budget (F5) met for human commands"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-iif-013
+  system: iif
+  gdd: design/gdd/input-interaction-framework.md
+  requirement: "`PossessionEpoch` is server-owned and delivered owner-only by `ClientSetPossessionEpoch`; commands carry it and stale epochs are rejected silently at ingress (R5.1)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-cpa-001
+  system: cpa
+  gdd: design/gdd/character-pool-appearance.md
+  requirement: "Pool as one cooked data asset of appearance rows; 6-8 models, ≤ 24 appearances, stable `AppearanceId`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-cpa-002
+  system: cpa
+  gdd: design/gdd/character-pool-appearance.md
+  requirement: "`AllocateAppearances` once per round; balanced deck, model-stratified subset, unbiased Fisher-Yates"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-cpa-003
+  system: cpa
+  gdd: design/gdd/character-pool-appearance.md
+  requirement: "Server-private streams from `GetServerSubSeed(AppearanceDeal)`; DRBG-class primitive for Replace/Take"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-cpa-004
+  system: cpa
+  gdd: design/gdd/character-pool-appearance.md
+  requirement: "Appearance before first replication, immutable per pawn; deck conserved; `DrawReplacement` same tick; `TakeNpcCard` on adoption"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-cpa-005
+  system: cpa
+  gdd: design/gdd/character-pool-appearance.md
+  requirement: "All pool assets resident and precached before leaving `Preparing`; no first-draw load"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-cpa-006
+  system: cpa
+  gdd: design/gdd/character-pool-appearance.md
+  requirement: "One look path for every viewer and pawn kind; no keyed material parameters"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-cpa-007
+  system: cpa
+  gdd: design/gdd/character-pool-appearance.md
+  requirement: "Statistical indistinguishability gate G-DECK automated"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-001
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Listen-server direct join; ordered admission gates at PreLogin; capacity `2 × TeamSize`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-002
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Persistent 128-bit IdentityKey per install with launch/PIE override"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-003
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Round travel by seamless `ServerTravel ?Seed=` with the Roster reset ordering"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-004
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Public seed vs server-secret keyed sub-seeds"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-005
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Single round acknowledgement (seed, layout hash, tuning hash, pool hash) within the travel deadline"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-006
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Liveness silence clock, rejoin window, supersede, client auto-rejoin"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-007
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Session never spawns/frees pawns or PlayerStates on connection events; default login pawn disabled"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-008
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Host parity: the host's view reads the replicated view path"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-009
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "No host migration; session-ending notice; client host-loss detection"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-session-010
+  system: session
+  gdd: design/gdd/session-travel.md
+  requirement: "Leak-surface checklist (PlayerState fields, ping, join timing) enforced via the allowlist"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-001
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Five-phase machine in a game-instance store surviving travel"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-002
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "One queue per round, `Key = (ServerTickIndex, Seq)`, per-source mailboxes, permuted intake"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-003
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Drain once per frame in `TG_PostPhysics`; due-time heap; resolvers per item type; inline follow-ons; Roster events flushed before the next item"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-004
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Single-assignment latch and the two-step round end (latch step; round-end step at the deciding strike's death write)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-005
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Objective and elimination wins; no draw, no clock"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-006
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Preparing readiness sequence, spawn gate and watchdog"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-007
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Disconnect policy: blend hand-over, guarded grace timer, forfeit/void"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-008
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Server-only Event Log ring with release classes; never through logs or traces"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-009
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "`FRoundPublicState` identical bytes for every viewer; `ActiveAtServerTime` zeroed in Active; bounded late-loader reveal"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-010
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Host commands on the game instance with a net-mode check"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-011
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Single shuffled spawn list in one frame, server-secret order"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-012
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Playtest instrumentation (brace timing, run share, final camping, team-size bucket) in the Event Log"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-round-013
+  system: round
+  gdd: design/gdd/round-match-framework.md
+  requirement: "Event Log ring bounded (`RoundLogMaxEntriesCount` 4,096, about 400 KB, F8); kill-timeline entries and `WinLatched` protected from eviction; `TruncatedCount` per type; separate `NeverReleased` telemetry section (R19)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-001
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "`CanViewerKnow` server query, default deny, seven viewer classes"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-002
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "One carrier kind per audience"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-003
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "UE default overrides of R5 (pawn links, Instigator, possession ForceNetUpdate, RemoteViewPitch16, spectator)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-004
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "Concealment hybrid: quantised server cull for non-allies + client presentation hide"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-005
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "Relevancy varies by concealment and relation only"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-006
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "Single allowlist file, reflection audit and net-config audit on defaults and live instances"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-007
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "Leak catalogue with CRITICAL ship gate; per-commit canaries"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-008
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "Engine spectator state banned; client-local no-pawn view"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-009
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "Teammate fallback position feed on C-TeamView"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-010
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "Iris rerun gate if Iris is enabled"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-011
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "Presentation modules cannot include server query headers"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-ivp-012
+  system: ivp
+  gdd: design/gdd/information-visibility-policy.md
+  requirement: "Owner-only clock-exchange RPC pair carrying timestamps only, under the existing owner connection/ping fact; no other audience learns timing (R3)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-lsc-001
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Layout service world subsystem with registered providers; Round talks only to it"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-lsc-002
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Integer Layout Manifest; clients build with no RNG and recompute `LayoutHash`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-lsc-003
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Zero replicated actors; bush/court components built locally"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-lsc-004
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Server nav build, Validate and Select within attempt/total budgets; ≤ 33 ms slices"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-lsc-005
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Reseed and graybox fallback travel"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-lsc-006
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Shared emergence sockets; `PickRespawnPawn` of an unseen crowd pawn"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-lsc-007
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Round-start placement and spawn gate"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-lsc-008
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Pillar-1 placement constraints (no area type for spawns/objectives)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-lsc-009
+  system: lsc
+  gdd: design/gdd/level-socket-contract.md
+  requirement: "Server-only query API for site assignment and team spawns"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-001
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "One Shared Pawn class; one spawn factory; takeover function"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-002
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "Disconnect never destroys a pawn (`PawnLeavingGame` override, same-frame AI possession)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-003
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "Possession parity and stop-and-blend hand-over; `ForceNetUpdate` deferral"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-004
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "CMC locomotion, speed tiers, state restrictions, replicated traversal set (spike)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-005
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "One look path; `RemoteViewPitch16` written from `Look` for every pawn"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-006
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "One AnimBP, motion-matching database, chooser and pose set; `ActionPose`-driven states"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-007
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "Significance-only tiers by screen height; caps; client-local tie key; server always-ticks pose"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-008
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "≤ 4 ms animation at 50 characters; ≤ 30 KB/s pawn replication per client"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-009
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "Net parity config (15 Hz fixed, priority 3.0, `DORM_Never`, no cull distance, no pawn multicast)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-010
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "Smoothing parity and input-starvation rule"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-011
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "Footstep path parity from one step clock"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-012
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "Published server state (`IsRunning`, `IsInTraversal`, commanded displacement)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-013
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "One capsule, collision profile and physics asset"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-scl-014
+  system: scl
+  gdd: design/gdd/shared-character-locomotion.md
+  requirement: "Engine CMC network settings (GameNetworkManager client update interval, forced-update duration, max move delta, time-discrepancy checks) pinned in project config and boot-tested against SCL tuning keys (I-SCL-15)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-camera-001
+  system: camera
+  gdd: design/gdd/camera-system.md
+  requirement: "Local-only toggle; nothing replicated about camera mode"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-camera-002
+  system: camera
+  gdd: design/gdd/camera-system.md
+  requirement: "View envelope −60/+40 in both modes relative to body facing"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-camera-003
+  system: camera
+  gdd: design/gdd/camera-system.md
+  requirement: "3P line-of-sight rule: boom geometry + eye-origin visibility mask hiding mesh, shadow and RT"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-camera-004
+  system: camera
+  gdd: design/gdd/camera-system.md
+  requirement: "Mask reads geometry only; α = 0 counts as not rendered for IIF, SCL and the strike hint"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-camera-005
+  system: camera
+  gdd: design/gdd/camera-system.md
+  requirement: "One shared `GetAimRay`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-camera-006
+  system: camera
+  gdd: design/gdd/camera-system.md
+  requirement: "`GetViewState` and published screen fade (`GetScreenFade`) for HUD/markers; fade drawn by the HUD fade layer, no `StartCameraFade`; no-pawn view states"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-camera-007
+  system: camera
+  gdd: design/gdd/camera-system.md
+  requirement: "Audio listener at the eye pivot"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-camera-008
+  system: camera
+  gdd: design/gdd/camera-system.md
+  requirement: "Eye-mask trace cost bounded at 50 pawns: the same line-of-sight traces at every range in rate bands (15 Hz near, 5 Hz beyond EyeMaskRangeCm), never a distance cutoff (CS-R5, F3)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-001
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "Server-only Crowd Director subsystem"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-002
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "StateTree per NPC (~4 Hz) + follower emitting `Move`/`Look` through the IIF; no path-following driving"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-003
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "Async path queries ≤ 2 starts/frame; navmesh frozen at `OnLayoutReady`; 2 m spatial hash"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-004
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "Identity blindness: no crowd code reads player/binding/team/state"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-005
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "Counter-based draws from the crowd server sub-seed"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-006
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "≤ 1.5 ms AI + nav; global-only cuts; never changes replication"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-007
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "Participant-bound AI driving and takeover eligibility supply"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-008
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "Ambient emergence and replacement via shared sockets and `DrawReplacement`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-009
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "Dormant until `OnRoundActive`; Halt in the round-end step"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-crowd-010
+  system: crowd
+  gdd: design/gdd/crowd-npc-behaviour.md
+  requirement: "Baseline and Tell Matrix rates as data with calibration counters"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-001
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "One component per pawn; server-only record and state machine"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-002
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "Entry/exit legality through IIF predicates; no occupancy check"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-003
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "Hide volumes block non-hiding pawns"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-004
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "Owner-side warp for the enter transition (S-CON-1)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-005
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "Hide clips scheduled from replicated server start time"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-006
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "Fail-closed client latch; hide removes body, attachments, shadow, Lumen and RT"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-007
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "`IsConcealedFrom` server-only; blind-strike spot zones"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-008
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "Server cull per the hybrid; un-cull in the same server step"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-009
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "Rustle parity; NPCs through the same path"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-010
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "Concealment log in the Event Log"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-con-011
+  system: con
+  gdd: design/gdd/concealment-bushes.md
+  requirement: "Blind-strike spot pick is an unbiased secret-stream draw on the `BushSpotPick` seed domain, no modulo bias (F4)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-001
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "Attack resolver re-checks live state at its slot; victim resolution on server capsules"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-002
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "Defence sampled at Attack execution by key compare; server-only defence component"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-003
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "Outcome-blind `FActionState` at the slot; outcome writes at contact via the pending-write queue"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-004
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "Uniform forced net updates for every outcome and victim kind"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-005
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "Owner-only `FStrikeResult`/`FDefenceResult`; idempotent state-derived presentation"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-006
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "`OnPawnKilled` emitted inside the slot"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-007
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "One body sequence for every victim; possession kept through the fall"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-008
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "Nothing outcome-caused presented before contact (server clock scheduling)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-009
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "No replicated effect actors, no multicast"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-010
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "Clients present contact-timed outcomes from one RTT-compensated estimate of server time with a stated accuracy budget (ASN-R21/R23, HUD-R6; added after TD-ARCHITECTURE concern 3)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-asn-011
+  system: asn
+  gdd: design/gdd/assassination-defence-reversal.md
+  requirement: "`FStrikeResult` and `FDefenceResult` travel as entries of the per-connection batched owner reply RPC (`ClientCommandReplies`) with a command sequence (ASN-R19, IIF R6)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-pen-001
+  system: pen
+  gdd: design/gdd/npc-kill-penalty-informants.md
+  requirement: "Server strike count and owner tally keyed by `ParticipantId`, round-scoped"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-pen-002
+  system: pen
+  gdd: design/gdd/npc-kill-penalty-informants.md
+  requirement: "Exile on the Nth NPC kill through the Roster; body released to the crowd"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-pen-003
+  system: pen
+  gdd: design/gdd/npc-kill-penalty-informants.md
+  requirement: "Respawn as a due-time-heap item at `T_due`; Absent path for disconnected victims"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-pen-004
+  system: pen
+  gdd: design/gdd/npc-kill-penalty-informants.md
+  requirement: "Takeover of an unseen crowd pawn in one call stack; retries and widening"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-pen-005
+  system: pen
+  gdd: design/gdd/npc-kill-penalty-informants.md
+  requirement: "Informant-kill invariant: perception identical to an NPC kill"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-pen-006
+  system: pen
+  gdd: design/gdd/npc-kill-penalty-informants.md
+  requirement: "Owner-only data (tally, `bExiled`, `T_due` — carrier pending user decision)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-pen-007
+  system: pen
+  gdd: design/gdd/npc-kill-penalty-informants.md
+  requirement: "Informant restrictions enforced by their owners; Tell row T7"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-pen-008
+  system: pen
+  gdd: design/gdd/npc-kill-penalty-informants.md
+  requirement: "Event Log rows"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-oc-001
+  system: oc
+  gdd: design/gdd/objectives-chain.md
+  requirement: "Chain data asset of `FObjectiveDef` rows"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-oc-002
+  system: oc
+  gdd: design/gdd/objectives-chain.md
+  requirement: "Court binding from `FSiteAssignment` at `OnLayoutReady`, server-only"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-oc-003
+  system: oc
+  gdd: design/gdd/objectives-chain.md
+  requirement: "`FObjectiveTeamView` rides C-TeamView; pushed at Active entry"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-oc-004
+  system: oc
+  gdd: design/gdd/objectives-chain.md
+  requirement: "Tend predicate reads only site, public occupancy and legality class"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-oc-005
+  system: oc
+  gdd: design/gdd/objectives-chain.md
+  requirement: "Completion gate inside the hold-timer slot; `DeclareObjectiveWin`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-oc-006
+  system: oc
+  gdd: design/gdd/objectives-chain.md
+  requirement: "`RivalPrelimCount` with fresh per-publication delay and one global release grid"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-oc-007
+  system: oc
+  gdd: design/gdd/objectives-chain.md
+  requirement: "Stall-pressure rules (no timer, no reveal)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-citygen-001
+  system: citygen
+  gdd: design/gdd/procedural-city-generator.md
+  requirement: "Pure function of attempt seed, kit version and params; asserts on server sub-seeds"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-citygen-002
+  system: citygen
+  gdd: design/gdd/procedural-city-generator.md
+  requirement: "Integer-only RNG and canonical iteration; golden seeds stable across CPUs/compilers"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-citygen-003
+  system: citygen
+  gdd: design/gdd/procedural-city-generator.md
+  requirement: "Twelve-stage pipeline with integer pre-validator; time-sliced"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-citygen-004
+  system: citygen
+  gdd: design/gdd/procedural-city-generator.md
+  requirement: "ISM per module (Nanite), batch add, static mobility; ≤ 5,000 instances, ≤ 20,000 shapes"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-citygen-005
+  system: citygen
+  gdd: design/gdd/procedural-city-generator.md
+  requirement: "Deterministic client decoration without collision"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-citygen-006
+  system: citygen
+  gdd: design/gdd/procedural-city-generator.md
+  requirement: "Server spawn + nav ≤ 3 s; client build ≤ 3 s p95"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-citygen-007
+  system: citygen
+  gdd: design/gdd/procedural-city-generator.md
+  requirement: "Manifest ≤ 3,500 entries"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-citygen-008
+  system: citygen
+  gdd: design/gdd/procedural-city-generator.md
+  requirement: "Failure modes → reseed or graybox fallback"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tmk-001
+  system: tmk
+  gdd: design/gdd/teammate-markers.md
+  requirement: "Marker set only from the local C-TeamView (+ feed); no world iteration"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tmk-002
+  system: tmk
+  gdd: design/gdd/teammate-markers.md
+  requirement: "Anchor on the resolved `PawnRef`'s visual root; null semantics"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tmk-003
+  system: tmk
+  gdd: design/gdd/teammate-markers.md
+  requirement: "Fill states from C-TeamView state and phase (`RoundEnded` before `Ended` = no change)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tmk-004
+  system: tmk
+  gdd: design/gdd/teammate-markers.md
+  requirement: "Screen-space overlay after post-process, no depth test, constant size, edge clamp"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tmk-005
+  system: tmk
+  gdd: design/gdd/teammate-markers.md
+  requirement: "`IsMarkedAlly` and `OnAllyMarkerRetired` client-local API"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-tmk-006
+  system: tmk
+  gdd: design/gdd/teammate-markers.md
+  requirement: "View gate through Camera `GetViewState`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-hud-001
+  system: hud
+  gdd: design/gdd/hud.md
+  requirement: "Reads only the three carriers"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-hud-002
+  system: hud
+  gdd: design/gdd/hud.md
+  requirement: "Subject-kind parity rule and automated leak suite"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-hud-003
+  system: hud
+  gdd: design/gdd/hud.md
+  requirement: "Layer/ZOrder stack after post-process; safe-margin anchors"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-hud-004
+  system: hud
+  gdd: design/gdd/hud.md
+  requirement: "Server-clock timing: plates at local contact frame, tally with plate, `PresentedOwnState`"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-hud-005
+  system: hud
+  gdd: design/gdd/hud.md
+  requirement: "Round surfaces from `FRoundPublicState`; rebuild on `RoundEpoch` change"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-hud-006
+  system: hud
+  gdd: design/gdd/hud.md
+  requirement: "Client-local settings hooks (scale, reduce motion, high contrast)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
+- id: TR-hud-007
+  system: hud
+  gdd: design/gdd/hud.md
+  requirement: "Latency warning threshold (duplicate key pending, C-W14)"
+  created: 2026-10-25
+  revised: ""
+  status: active
+
