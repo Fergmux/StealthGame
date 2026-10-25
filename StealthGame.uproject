@@ -14,6 +14,11 @@
 			]
 		},
 		{
+			"Name": "StealthFoundation",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "StealthGameEditor",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"

@@ -1,12 +1,12 @@
 # Story 001: Foundation module skeleton and server-only guard header
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -76,10 +76,9 @@
 - `Source/StealthFoundation/Public/View/.gitkeep`
 - `Source/StealthFoundation/Public/Server/.gitkeep`
 - `Source/StealthFoundation/Private/Tests/.gitkeep`
-- `Source/StealthFoundation/Private/Tests/Build/FoundationLayoutTest.cpp`
+- `Source/StealthFoundation/Private/Tests/Build/FoundationLayoutTest.cpp` (test `StealthGame.Build.FoundationLayout`)
+- `Source/StealthFoundation/Private/Tests/Build/StealthBuildFileTestUtils.h` (shared test helpers for the `StealthGame.Build.*` tests; added, reused by story 004)
 - `StealthGame.uproject`
-
----
 
 ## QA Test Cases
 
@@ -99,7 +98,7 @@
 **Required evidence**:
 - Integration: the named automation test `StealthGame.Build.FoundationLayout` in `Source/StealthFoundation/Private/Tests/Build/FoundationLayoutTest.cpp` must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Build.FoundationLayout`, 2026-10-25)
 
 ---
 
@@ -108,3 +107,13 @@
 - Depends on: None
 - Unlocks: `production/epics/tuning-data-config/story-002-gameplay-presentation-module-skeletons.md`, `production/epics/tuning-data-config/story-003-split-prototype-composition-root.md`, `production/epics/tuning-data-config/story-004-test-harness-module-shipping-excluded.md`, `production/epics/tuning-data-config/story-005-compile-probe-runner-and-guard-probe.md`, `production/epics/tuning-data-config/story-007-stealth-clock-interface.md`, `production/epics/tuning-data-config/story-008-fault-sink-and-test-seams-define.md`, `production/epics/tuning-data-config/story-009-log-capture-hook.md`, `production/epics/tuning-data-config/story-010-negative-control-helper.md`, `production/epics/tuning-data-config/story-012-include-lint-rules-a-c.md`, `production/epics/tuning-data-config/story-038-schema-row-types.md`, `production/epics/tuning-data-config/story-052-round-session-stubs.md`, `production/epics/tuning-data-config/story-100-rpc-counter-and-property-crc-helper.md`
 - Open verification claims from the plan's Note lines: none for this story (the plan has no Note line on 001).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: `StealthGame.Build.FoundationLayout`, including the inline seeded extra/missing dependency control)
+**Deviations**: None blocking. Added a shared test-helper header `Private/Tests/Build/StealthBuildFileTestUtils.h` (also used by story 004, so unity builds do not see duplicate helper definitions). Manifest Version updated 2026-10-25e -> 2026-10-25f (the 25f changes touch no rule this story uses).
+**Test Evidence**: `production/qa/evidence/story-001-foundation-module-skeleton/test-run.txt` (build `Result: Succeeded`; 13/13 `StealthGame.` tests Success, the 12 prototype tests unchanged) and `stamp.txt`
+**Run result**: N/A — a module skeleton with no player-visible surface (no actor, asset, UI or map change)
+**Reviewed by**: focused code review (lead-programmer checklist, self-applied in the unattended build run): no defects found
