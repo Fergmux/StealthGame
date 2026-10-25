@@ -5,6 +5,11 @@
        Gauntlet.Automation.csproj made the second UAT run fail while validating its build record
        (".." can be only added at the beginning of the pattern), observed with UE 5.8.4. -->
   <PropertyGroup>
+    <!-- GenerateProjectFiles rejects a project-side C# project without a Development configuration
+         ("must contain a Development configuration"); the engine's own *.Automation.csproj files get these from
+         Engine/Source/Programs/Shared/UnrealEngine.csproj.props. -->
+    <Configuration Condition="'$(Configuration)' == ''">Development</Configuration>
+    <Configurations>Debug;Release;Development</Configurations>
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Library</OutputType>
     <AssemblyName>StealthGame.Automation</AssemblyName>
