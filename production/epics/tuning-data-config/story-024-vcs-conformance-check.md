@@ -1,12 +1,12 @@
 # Story 024: VCS conformance check for ignore and attribute rules
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -66,9 +66,10 @@
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
 - `tools/ci/lint/vcs-conformance.sh`
-- `tools/ci/lint/selftest/` (vcs-conformance selftest)
-- `Source/StealthFoundation/Private/Tests/Build/VcsConformanceTest.cpp` (G2 wrapper `StealthGame.Build.VcsConformance`)
-- `.gitignore`, `.gitattributes` (only if the check finds a gap, and only on explicit user instruction)
+- `tools/ci/lint/selftest/run-vcs-conformance-selftest.sh`, `tools/ci/lint/selftest/vcs-conformance/compliant/` (compliant fixture pair)
+- `Source/StealthFoundation/Private/Tests/Build/VcsConformanceTest.cpp` (G2 wrapper)
+- `production/qa/smoke-2026-10-25_vcs-conformance.md`
+- `.gitignore`, `.gitattributes`: NOT changed (the real repository already conforms)
 
 ---
 
@@ -89,7 +90,7 @@
 **Required evidence**:
 - Config/Data: smoke check pass recorded in `production/qa/smoke-*.md`, plus (G2) the selftest under `tools/ci/lint/selftest/` and the wrapper `StealthGame.Build.VcsConformance` (`Source/StealthFoundation/Private/Tests/Build/VcsConformanceTest.cpp`) which must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`tools/ci/lint/selftest/run-vcs-conformance-selftest.sh` 25/25 cases; `StealthGame.Build.VcsConformance`; smoke record `production/qa/smoke-2026-10-25_vcs-conformance.md`, 2026-10-25)
 
 ---
 
@@ -98,3 +99,14 @@
 - Depends on: None
 - Unlocks: None
 - Open verification claims: the plan has no Note line for this story. Open: the G2 wrapper sits in the Foundation module (story 001), which is not a declared dependency; bash discovery from the wrapper on Windows; unverified here are `_backup_pre_rebase/` and the Godot/Unity patterns on the current tree.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: `git check-ignore -v Build/Scripts/x.cs` prints nothing; the eight folders are ignored; `.gitattributes` has one pattern per line with `lockable` on `*.uasset` and `*.umap`; no Godot/Unity section on the real repo: `GATE: PASS (2 file(s) scanned, 0 findings)`. Seeded: Build ignored, each of eight folders un-ignored, two patterns on one line, a path-like token, `*.uasset`/`*.umap` not lockable, `*.umap` missing, Godot header, lowercase Unity header, each of the five patterns: one finding each at its file and line; a plain (non-git) folder is NOT ASSESSED)
+**Decisions**: the script is a rule script on the shared emitter (rule id `vcs`, observations only); `vcs-conformance.sh --check [root]` runs the gate over it so a hook or a person gets the nonzero exit the story asks for; the root must itself be a git top level (a folder inside another checkout is NOT ASSESSED, not a silent pass); `git check-ignore --no-index` with `core.excludesFile` disabled so the user's global ignore cannot make the repo look compliant; a Godot/Unity section header means a DECORATED heading (`# === Name ===`, `# --- Name ---`, `# *** Name ***`), so the ordinary comment that mentions Unity's test results under `Test Output` is not a false positive; an attribute token is `[-!]name[=value]` with no `*` and no `/` in the name
+**Deviations**: none; the conditional edits to `.gitignore`/`.gitattributes` were not needed
+**Test Evidence**: `production/qa/smoke-2026-10-25_vcs-conformance.md`, `production/qa/evidence/story-024-vcs-conformance-check/` (`selftest.txt`, `real-repo-check.txt`, `test-run.txt` 37/37 Success, `stamp.txt`)
+**Run result**: N/A — CI tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no further defects found

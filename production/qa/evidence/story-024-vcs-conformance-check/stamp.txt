@@ -1,0 +1,4 @@
+Reviewed-Content-Hash: tools/ci/lint/vcs-conformance.sh f967f78379d0f6416c1927fb7b1224a678acd349
+Reviewed-Content-Hash: tools/ci/lint/selftest/run-vcs-conformance-selftest.sh 41f98f049b432eff8c530b633611335ea8b7862d
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/VcsConformanceTest.cpp 9173c5334ef66bae1a3a03c7ded38095bf282fe5
+Story: production/epics/tuning-data-config/story-024-vcs-conformance-check.md

@@ -1,0 +1,72 @@
+SELFTEST compliant-passes ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST build-ignored-reported ok
+    .gitignore:0 vcs Build/Scripts/x.cs is ignored (.gitignore:19:Build/	Build/Scripts/x.cs); Unreal's Build/ folder must stay tracked
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST lowercase-build-rule-handled ok
+SELFTEST missing-ignore-_snapshots-reported ok
+    .gitignore:0 vcs _snapshots/ is not ignored (ADR-0009: never commit regenerable or local-safety folders)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST missing-ignore-_backup_pre_rebase-reported ok
+    .gitignore:0 vcs _backup_pre_rebase/ is not ignored (ADR-0009: never commit regenerable or local-safety folders)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST missing-ignore-Plugins----Binaries-reported ok
+    .gitignore:0 vcs Plugins/Sample/Binaries/ is not ignored (ADR-0009: never commit regenerable or local-safety folders)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST missing-ignore-Plugins----Intermediate-reported ok
+    .gitignore:0 vcs Plugins/Sample/Intermediate/ is not ignored (ADR-0009: never commit regenerable or local-safety folders)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST missing-ignore-Binaries-reported ok
+    .gitignore:0 vcs Binaries/ is not ignored (ADR-0009: never commit regenerable or local-safety folders)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST missing-ignore-Intermediate-reported ok
+    .gitignore:0 vcs Intermediate/ is not ignored (ADR-0009: never commit regenerable or local-safety folders)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST missing-ignore-DerivedDataCache-reported ok
+    .gitignore:0 vcs DerivedDataCache/ is not ignored (ADR-0009: never commit regenerable or local-safety folders)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST missing-ignore-Saved-reported ok
+    .gitignore:0 vcs Saved/ is not ignored (ADR-0009: never commit regenerable or local-safety folders)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST two-patterns-on-one-line-reported ok
+    .gitattributes:9 vcs '*.psd' after pattern '*.blend' is not an attribute: one pattern per line (a second pattern becomes an attribute name and is never applied)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST slash-token-reported ok
+    .gitattributes:9 vcs 'stray/path.txt' after pattern '*.tga' is not an attribute: one pattern per line (a second pattern becomes an attribute name and is never applied)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST uasset-not-lockable-reported ok
+    .gitattributes:0 vcs the *.uasset line lacks 'lockable' (ADR-0009: unmergeable assets are lockable)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST umap-not-lockable-reported ok
+    .gitattributes:0 vcs the *.umap line lacks 'lockable' (ADR-0009: unmergeable assets are lockable)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST umap-line-missing-reported ok
+    .gitattributes:0 vcs no line for *.umap (ADR-0009: stored via LFS and lockable)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST godot-header-reported ok
+    .gitignore:19 vcs Godot/Unity section header remains: # === Engine: Godot 4 ===
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST unity-header-case-insensitive-reported ok
+    .gitignore:19 vcs Godot/Unity section header remains: # --- unity ---
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST pattern--godot--reported ok
+    .gitignore:19 vcs Godot/Unity ignore pattern remains: .godot/
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST pattern---import-reported ok
+    .gitignore:19 vcs Godot/Unity ignore pattern remains: *.import
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST pattern-Library--reported ok
+    .gitignore:19 vcs Godot/Unity ignore pattern remains: Library/
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST pattern-Temp--reported ok
+    .gitignore:19 vcs Godot/Unity ignore pattern remains: Temp/
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST pattern-UnityLockfile-reported ok
+    .gitignore:19 vcs Godot/Unity ignore pattern remains: UnityLockfile
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST not-a-repository-not-assessed ok
+    vcs-conformance: /tmp/tmp.26gRHgpnrD/plain is not the top level of a git checkout
+    GATE: NOT ASSESSED (0 file(s) scanned; an empty or broken lint scope is not a pass)
+SELFTEST real-repo-conforms ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST RESULT: PASS (25 cases)

@@ -1,0 +1,18 @@
+# Compliant .gitignore for the vcs-conformance selftest (copied to <temp repo>/.gitignore).
+# === Build Output ===
+/bin/
+/obj/
+
+# === Engine: Unreal ===
+/Binaries/
+DerivedDataCache/
+/Intermediate/
+Saved/
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+_snapshots/
+_backup_pre_rebase/
+
+# === Test Output ===
+# gdUnit4 and Unity's -testResults write here; this comment names engines but is not a header.
+/reports/
