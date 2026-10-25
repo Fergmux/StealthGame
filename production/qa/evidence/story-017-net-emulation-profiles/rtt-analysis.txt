@@ -1,0 +1,65 @@
+== rtt2-hleak1-client
+  client1: profile='StealthLeak1' applied PktLag=100 PktLagVariance=0 PktLoss=1 iris=0 driver=IpNetDriver
+  server: profile='' applied PktLag=0 PktLagVariance=0 PktLoss=0 iris=0 driver=IpNetDriver
+  load check: StealthLeak1: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=1
+  load check: StealthLeak2: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=2
+  load check: StealthClean: loaded=1 PktLag=0 PktLagVariance=0 PktLoss=0
+  load check: StealthNoSuchProfile: loaded=0 PktLag=999 PktLagVariance=0 PktLoss=0
+  client1: AvgLag RTT ms n=35 min=117.4 p10=118.8 median=120.9 p90=122.7 p99=123.6 max=123.6
+  client1: ExactPing ms n=35 min=117.9 p10=118.5 median=119.6 p90=121.5 p99=122.2 max=122.2
+  client1: fps n=35 min=120.7 p10=128.6 median=133.8 p90=138.4 p99=141.4 max=141.4
+  server: AvgLag RTT ms n=35 min=117.8 p10=119.2 median=120.5 p90=122.1 p99=125.2 max=125.2
+  server: ExactPing ms n=35 min=118.3 p10=120.2 median=122.2 p90=123.7 p99=125.1 max=125.1
+  server: fps n=35 min=124.2 p10=128.5 median=133.1 p90=137.3 p99=140.0 max=140.0
+== rtt2-leak1-both
+  client1: profile='StealthLeak1' applied PktLag=100 PktLagVariance=0 PktLoss=1 iris=0 driver=IpNetDriver
+  server: profile='StealthLeak1' applied PktLag=100 PktLagVariance=0 PktLoss=1 iris=0 driver=IpNetDriver
+  load check: StealthLeak1: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=1
+  load check: StealthLeak2: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=2
+  load check: StealthClean: loaded=1 PktLag=0 PktLagVariance=0 PktLoss=0
+  load check: StealthNoSuchProfile: loaded=0 PktLag=999 PktLagVariance=0 PktLoss=0
+  client1: AvgLag RTT ms n=36 min=222.2 p10=223.0 median=225.8 p90=227.1 p99=250.8 max=250.8
+  client1: ExactPing ms n=36 min=221.1 p10=222.2 median=224.8 p90=245.4 p99=256.7 max=256.7
+  client1: fps n=36 min=101.8 p10=121.7 median=129.4 p90=135.8 p99=137.6 max=137.6
+  server: AvgLag RTT ms n=35 min=221.2 p10=223.2 median=225.2 p90=227.1 p99=250.1 max=250.1
+  server: ExactPing ms n=35 min=220.8 p10=221.9 median=223.9 p90=248.7 p99=249.5 max=249.5
+  server: fps n=35 min=102.8 p10=124.4 median=130.3 p90=136.4 p99=137.6 max=137.6
+== rtt2-hleak2-client
+  client1: profile='StealthLeak2' applied PktLag=100 PktLagVariance=0 PktLoss=2 iris=0 driver=IpNetDriver
+  server: profile='' applied PktLag=0 PktLagVariance=0 PktLoss=0 iris=0 driver=IpNetDriver
+  load check: StealthLeak1: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=1
+  load check: StealthLeak2: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=2
+  load check: StealthClean: loaded=1 PktLag=0 PktLagVariance=0 PktLoss=0
+  load check: StealthNoSuchProfile: loaded=0 PktLag=999 PktLagVariance=0 PktLoss=0
+  client1: AvgLag RTT ms n=35 min=116.5 p10=117.6 median=120.4 p90=122.3 p99=122.8 max=122.8
+  client1: ExactPing ms n=35 min=116.2 p10=117.3 median=120.6 p90=121.9 p99=123.0 max=123.0
+  client1: fps n=35 min=124.0 p10=129.9 median=133.8 p90=139.2 p99=148.4 max=148.4
+  server: AvgLag RTT ms n=35 min=117.4 p10=118.5 median=120.6 p90=122.4 p99=125.0 max=125.0
+  server: ExactPing ms n=35 min=115.8 p10=117.4 median=120.4 p90=121.9 p99=124.2 max=124.2
+  server: fps n=35 min=124.7 p10=127.3 median=133.0 p90=136.9 p99=147.5 max=147.5
+== rtt2-leak2-both
+  client1: profile='StealthLeak2' applied PktLag=100 PktLagVariance=0 PktLoss=2 iris=0 driver=IpNetDriver
+  server: profile='StealthLeak2' applied PktLag=100 PktLagVariance=0 PktLoss=2 iris=0 driver=IpNetDriver
+  load check: StealthLeak1: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=1
+  load check: StealthLeak2: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=2
+  load check: StealthClean: loaded=1 PktLag=0 PktLagVariance=0 PktLoss=0
+  load check: StealthNoSuchProfile: loaded=0 PktLag=999 PktLagVariance=0 PktLoss=0
+  client1: AvgLag RTT ms n=35 min=222.6 p10=223.4 median=226.2 p90=228.2 p99=228.4 max=228.4
+  client1: ExactPing ms n=35 min=220.5 p10=223.0 median=225.5 p90=229.5 p99=255.9 max=255.9
+  client1: fps n=35 min=129.0 p10=129.7 median=133.3 p90=135.9 p99=137.4 max=137.4
+  server: AvgLag RTT ms n=35 min=220.9 p10=223.4 median=226.1 p90=228.4 p99=229.1 max=229.1
+  server: ExactPing ms n=35 min=220.9 p10=222.2 median=224.7 p90=228.8 p99=229.6 max=229.6
+  server: fps n=35 min=126.5 p10=126.9 median=130.6 p90=134.4 p99=137.7 max=137.7
+== rtt2-clean-both
+  client1: profile='StealthClean' applied PktLag=0 PktLagVariance=0 PktLoss=0 iris=0 driver=IpNetDriver
+  server: profile='StealthClean' applied PktLag=0 PktLagVariance=0 PktLoss=0 iris=0 driver=IpNetDriver
+  load check: StealthLeak1: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=1
+  load check: StealthLeak2: loaded=1 PktLag=100 PktLagVariance=0 PktLoss=2
+  load check: StealthClean: loaded=1 PktLag=0 PktLagVariance=0 PktLoss=0
+  load check: StealthNoSuchProfile: loaded=0 PktLag=999 PktLagVariance=0 PktLoss=0
+  client1: AvgLag RTT ms n=35 min=15.1 p10=15.9 median=17.3 p90=19.4 p99=20.0 max=20.0
+  client1: ExactPing ms n=35 min=13.7 p10=16.3 median=17.5 p90=19.6 p99=20.5 max=20.5
+  client1: fps n=35 min=120.6 p10=125.8 median=131.1 p90=136.9 p99=138.6 max=138.6
+  server: AvgLag RTT ms n=35 min=14.5 p10=15.9 median=17.4 p90=19.8 p99=20.3 max=20.3
+  server: ExactPing ms n=35 min=14.4 p10=14.8 median=16.9 p90=20.5 p99=21.6 max=21.6
+  server: fps n=35 min=121.2 p10=123.0 median=129.5 p90=134.7 p99=137.1 max=137.1

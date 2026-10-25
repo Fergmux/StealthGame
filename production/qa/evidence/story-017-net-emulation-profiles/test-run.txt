@@ -1,0 +1,34 @@
+Build: tools/dev/cycle.ps1 -Tests -NoLaunch (StealthGameEditor Win64 Development) -> Result: Succeeded
+Automation RunTests StealthGame. (headless, -nullrhi), 2026-10-25:
+Success  StealthGame.Build.CompileProbes
+Success  StealthGame.Build.FoundationLayout
+Success  StealthGame.Build.HarnessModuleExclusions
+Success  StealthGame.Build.IncludeLintAbc
+Success  StealthGame.Build.LintFramework
+Success  StealthGame.Build.PresentationGuardDefineIsPrivate
+Success  StealthGame.Build.ShippingSymbolCheck
+Success  StealthGame.EditorTools.AssetToolset.ExportAssetToFile.exports an engine static mesh to FBX
+Success  StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the asset is null
+Success  StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the path has no extension
+Success  StealthGame.EditorTools.PlayToolset.ListPlayInstances.returns an empty list when no play session is running
+Success  StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when no play session is running
+Success  StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when the command is empty
+Success  StealthGame.Harness.PIE.ListenServerThreeClients.OneServerAndThreeClientWorldsAreUp
+Success  StealthGame.Harness.FakeClockAdvancesOnlyWhenTold
+Success  StealthGame.Harness.FaultSinkTeardownAssertion
+Success  StealthGame.Harness.LogCaptureAssertsWarningByKey
+Success  StealthGame.Harness.ModuleLoadsInDevelopment
+Success  StealthGame.Harness.NegativeControlDetected
+Success  StealthGame.Locomotion.ClassParity.Blueprint
+Success  StealthGame.Locomotion.ClassParity.NegativeControl
+Success  StealthGame.Locomotion.ClassParity.Source
+Success  StealthGame.Locomotion.AnimBpNoLocalControlRead
+Success  StealthGame.Locomotion.PawnClassDefaults
+Success  StealthGame.Rules.Assassination
+Success  StealthGame.Rules.Defence
+Success  StealthGame.Rules.EliminationVictory
+Success  StealthGame.Rules.NpcKillRemoval
+Success  StealthGame.Rules.ObjectiveStages
+Success  StealthGame.Rules.TeamsAndMovement
+Total: 30, Success: 30
+T0: tools/ci/lint/gate.sh tools/ci/lint/include-lint-abc.sh -> GATE: PASS (35 file(s) scanned, 0 findings)

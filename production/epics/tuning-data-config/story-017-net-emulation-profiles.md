@@ -1,12 +1,12 @@
 # Story 017: Net emulation profiles StealthLeak1, StealthLeak2, StealthClean
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *Bootstrap criterion (no GDD), as revised in `tdc-plan-amendments.md`:*
 
-- [ ] `Config/DefaultEngine.ini` defines `[PacketSimulationProfile.StealthLeak1]` (PktLag 100, PktLagVariance 0, PktLoss 1), `[PacketSimulationProfile.StealthLeak2]` (PktLag 100, PktLagVariance 0, PktLoss 2) and `[PacketSimulationProfile.StealthClean]` (PktLag 0, PktLagVariance 0, PktLoss 0); each loads by name through FPacketSimulationSettings::LoadEmulationProfile, and the measured RTT of StealthLeak1 and StealthLeak2 is recorded in a comment beside each profile (recorded, no threshold).
+- [x] `Config/DefaultEngine.ini` defines `[PacketSimulationProfile.StealthLeak1]` (PktLag 100, PktLagVariance 0, PktLoss 1), `[PacketSimulationProfile.StealthLeak2]` (PktLag 100, PktLagVariance 0, PktLoss 2) and `[PacketSimulationProfile.StealthClean]` (PktLag 0, PktLagVariance 0, PktLoss 0); each loads by name through FPacketSimulationSettings::LoadEmulationProfile, and the measured RTT of StealthLeak1 and StealthLeak2 is recorded in a comment beside each profile (recorded, no threshold).
 
 ---
 
@@ -63,8 +63,10 @@
 
 ## Files
 
-- `Config/DefaultEngine.ini`
-- `production/qa/smoke-<date>_net-emulation-profiles.md` (the smoke record; date set when run)
+- `Config/DefaultEngine.ini` (`[PacketSimulationProfile.StealthLeak1|StealthLeak2|StealthClean]`, measured RTT and the PktLag semantics in the comments)
+- `production/qa/smoke-2026-10-25_net-emulation-profiles.md` (the smoke record)
+- Measurement tooling (scope addition, see Deviations): `Source/StealthTestHarness/Private/Scenarios/StealthHarnessRun.{h,cpp}` (T3 harness runner, scenario `Rtt`, the `-StealthHarnessProfileCheck` load check), `Source/StealthTestHarness/Private/StealthTestHarnessModule.cpp` (starts the runner only when `-StealthHarnessScenario=` is given), `Source/StealthTestHarness/StealthTestHarness.Build.cs` (`EnhancedInput`, `InputCore` for the IVP scenarios), `tools/ci/mp/run-mp.ps1`, `tools/ci/mp/harness_records.py`, `tools/ci/mp/analyze_rtt.py`
+- Evidence: `production/qa/evidence/story-017-net-emulation-profiles/`
 
 ---
 
@@ -85,7 +87,7 @@
 **Required evidence**:
 - Config/Data: a smoke check pass recorded in `production/qa/smoke-*.md` (qa.level is full; a smoke record, not new test code, is the evidence for this story type)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Smoke record `production/qa/smoke-2026-10-25_net-emulation-profiles.md` (PASS, 2026-10-25)
 
 ---
 
@@ -95,3 +97,14 @@
 - Unlocks: None (no later story lists 017 in its dependencies, although stories 023 and 071 use these profiles: see the sequencing note)
 - Sequencing note (not a plan dependency): the profiles must exist before the first run that applies `-PktEmulationProfile=` (story 020 or 023) and before story 071's `StealthLeak2` measurement.
 - Open verification claims from the plan's Note lines: PktLag semantics (one-way, outgoing side) are [U]; this story measures and records the RTT. Also open: the `LoadEmulationProfile` 5.8 signature, and the RTT measurement method.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: three profiles, one section each, values as stated; each loads by name through `FPacketSimulationSettings::LoadEmulationProfile` with the loaded values equal to the stated ones and a missing name rejected; the measured RTT of StealthLeak1 and StealthLeak2 is in the comment beside each profile)
+**Decisions**: load check performed by a harness boot check (`-StealthHarnessProfileCheck`) in every process of the five measurement runs, recorded in the smoke record rather than as new test code (the story asks for a smoke record). RTT measured with the engine-reported `UNetConnection::AvgLag` and `APlayerState::ExactPing` in a listen host + 1 client multi-process run, profile on the client only and on both sides, so the [U] PktLag semantics are settled: outgoing side only (client only ~120 ms, both ~226 ms, clean 17 ms). 5.8.4 signature confirmed: `bool LoadEmulationProfile(const TCHAR* ProfileName)`.
+**Deviations**: the story has no harness dependency, but measuring the RTT needed a multi-process runner; the T3 runner (`StealthHarnessRun`), launcher and analysers were built here and are reused by the IVP spikes S1/S9 the same day. Gauntlet wiring stays story tdc-020.
+**Test Evidence**: smoke record + `production/qa/evidence/story-017-net-emulation-profiles/` (rtt-analysis.txt, gzipped records and launch lines of runs rtt2-*). Build `Result: Succeeded`; full `StealthGame.` suite: see the batch test run in the commit.
+**Run result**: N/A — config and measurement only; nothing player-visible changes (profiles apply only when a test or launch passes them)
+**Reviewed by**: focused self-review (unattended run): runner registers nothing unless the scenario switch is present; records written on the game thread only; the profile sections do not duplicate.
