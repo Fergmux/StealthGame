@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/assassination-defence-reversal.md
 > **Architecture Module**: Assassination in `StealthGameplay/Features` (attack resolver, `UEncounterService`, server-only defence component; wire structs in Foundation `Public/View`)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories assassination-defence-reversal`
+> **Stories**: 27 stories written (25 Ready, 2 Blocked on spike S10) — see the Stories table below
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 13 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -44,6 +44,38 @@ All governing ADRs are Accepted (user, 2026-10-25). Several are conditionally ac
 | TR-asn-009 | No replicated effect actors, no multicast | ADR-0003 ✅ |
 | TR-asn-010 | Clients present contact-timed outcomes from one RTT-compensated estimate of server time with a stated accuracy budget (ASN-R21/R23, HUD-R6; added after TD-ARCHITECTURE concern 3) | ADR-0002 ✅ |
 | TR-asn-011 | Owner results as entries of the batched `ClientCommandReplies` RPC | ADR-0011, ADR-0018 ✅ |
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Assassination tuning keys and cross-field invariants I-ASN-1 to I-ASN-8 | Logic | Ready | ADR-0004 |
+| 002 | Reach and warp (F1) as a pure function, standard and bush strike | Logic | Ready | ADR-0018 |
+| 003 | Server-only defence state, cooldown from activation, and its lifecycle across possession | Logic | Ready | ADR-0018 |
+| 004 | Wire structs FActionState (208 bits) and FDeathState (65 bits), fixed width for every value | Logic | Ready | ADR-0018 |
+| 005 | Victim resolution order, ally exclusion and dead bodies (rules 1, 3 and 4) | Logic | Ready | ADR-0018 |
+| 006 | Bush spot rule is terminal, with an unbiased victim pick from the secret stream | Integration | Ready | ADR-0018, ADR-0017 |
+| 007 | One strike, one outcome: kill, reversal or whiff resolved with every effect inside the slot | Logic | Ready | ADR-0002, ADR-0018 |
+| 008 | Attack is never rejected by its target; every executed Attack locks the attacker for 1.75 s | Logic | Ready | ADR-0011, ADR-0018 |
+| 009 | Braced at the Attack by key compare, and same-drain ordering | Logic | Ready | ADR-0002 |
+| 010 | Reversal eliminates the attacker, the counter is not protected, and chained strikes | Integration | Ready | ADR-0018 |
+| 011 | NPCs brace through the same path, NPCs never strike, and a brace is planted | Integration | Ready | ADR-0011, ADR-0016 |
+| 012 | The slot writes one outcome-blind FActionState, with a WarpPoint that never reads a hidden pawn | Integration | Ready | ADR-0018 |
+| 013 | Death write staging at contact minus the lead, applied identically even after the latch | Integration | Ready | ADR-0018, ADR-0002 |
+| 014 | Motion-warp targets are never replicated, and the server lunge is outcome-blind | Integration | Ready | ADR-0018 |
+| 015 | Owner results FStrikeResult and FDefenceResult as reply entries, with tally and exile flag | Integration | Ready | ADR-0018, ADR-0011 |
+| 016 | Owner-only cooldown end time on the PlayerController, defence state never replicated | Integration | Ready | ADR-0018 |
+| 017 | The target gets no warning and no observer gets a cue | Integration | Ready | ADR-0018 |
+| 018 | Strike clip variants, local warp and contact scheduling from the server clock | Integration | Ready | ADR-0018, ADR-0013 |
+| 019 | Server body sequence (release, removal, possession through the fall) and Reset | Integration | Ready | ADR-0018 |
+| 020 | One fall, one linger, one cut-at-occlusion removal, for every victim | Visual/Feel | Ready | ADR-0018, ADR-0013 |
+| 021 | OnRoleChangePresented dispatch and the transient grade at the contact frame | Integration | Ready | ADR-0018 |
+| 022 | A culled victim re-opens already falling, and late actors seek and never snap | Integration | Blocked (S10) | ADR-0018, ADR-0003 |
+| 023 | A body killed while concealed stays hidden from every non-owner client | Integration | Blocked (S9, S10) | ADR-0018, ADR-0017 |
+| 024 | Result plates and the brace square are shown at the local contact frame, never on receipt | UI | Ready | ADR-0018 |
+| 025 | A reversal reads as the striker fell and the brace reads as a stance (playtest protocol) | Visual/Feel | Ready | ADR-0018 |
+| 026 | Advisory checks: probe economics (F5), probe and brace telemetry, resolver cost | Integration | Ready | ADR-0023, ADR-0018 |
+| 027 | Port the StealthRules reference tests to the production cores and retire the prototype strike and defence code | Logic | Ready | ADR-0018 |
 
 ## Prototype Disposition
 
