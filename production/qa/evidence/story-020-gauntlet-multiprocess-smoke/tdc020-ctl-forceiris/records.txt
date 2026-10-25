@@ -1,0 +1,3 @@
+{"t":17352457.085143,"type":"boot","netMode":2,"driver":"IpNetDriver","iris":0,"profile":"","PktLag":0,"PktLagVariance":0,"PktLoss":0,"PktIncomingLagMin":0,"PktIncomingLoss":0,"netClientTicksPerSecond":2400.0,"tMaxFPS":0.0,"maxPlayers":10,"map":"/Game/StealthGame/Maps/L_Prototype"}
+{"t":17352457.085170,"type":"replicationSystem","system":"iris","expected":"legacy","ok":0,"negativeControlDetected":1}
+{"t":17352457.085174,"type":"end","reason":"replication system assertion failed"}

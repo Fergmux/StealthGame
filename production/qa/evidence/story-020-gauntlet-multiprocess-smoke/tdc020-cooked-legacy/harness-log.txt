@@ -1,0 +1,10 @@
+[2026.10.25-10.55.41:294][  0]LogStealthHarness: Display: Harness scenario Smoke (server 0) writing to C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-cooked-legacy
+[2026.10.25-10.55.41:480][  0]LogStealthHarness: Display: Replication system legacy (expected legacy), negative control detected
+[2026.10.25-10.55.46:439][414]LogStealthHarness: Display: Harness scenario Smoke finished (scenario complete); requesting exit.
+[2026.10.25-10.55.46:440][414]LogStealthHarness: Display: Result written to C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-cooked-legacy/server-result.json (passed 1, replicationSystem legacy)
+[2026.10.25-10.55.46:440][414]LogStealthHarness: Display: Harness scenario Smoke result: passed
+[2026.10.25-10.55.46:181][  0]LogStealthHarness: Display: Harness scenario Smoke (client 1) writing to C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-cooked-legacy
+[2026.10.25-10.55.46:397][101]LogStealthHarness: Display: Replication system legacy (expected legacy), negative control detected
+[2026.10.25-10.55.46:441][178]LogStealthHarness: Display: Harness scenario Smoke finished (server connection lost); requesting exit.
+[2026.10.25-10.55.46:442][178]LogStealthHarness: Display: Result written to C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-cooked-legacy/client1-result.json (passed 1, replicationSystem legacy)
+[2026.10.25-10.55.46:442][179]LogStealthHarness: Display: Harness scenario Smoke result: passed

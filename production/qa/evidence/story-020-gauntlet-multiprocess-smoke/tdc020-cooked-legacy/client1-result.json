@@ -1,0 +1,12 @@
+{
+	"scenario": "Smoke",
+	"build": "Development",
+	"replicationSystem": "legacy",
+	"netProfile": "none",
+	"passed": true,
+	"negativeControlDetected": true,
+	"faults": [],
+	"captures": [
+		"C:\\Users\\fergm\\Documents\\Unreal Projects\\StealthGame\\Saved\\Harness\\tdc020-cooked-legacy/client1.jsonl"
+	]
+}

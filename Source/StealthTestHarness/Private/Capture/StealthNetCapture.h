@@ -45,4 +45,7 @@ namespace StealthHarness::Capture
 
 	/** True after Install. */
 	bool IsInstalled();
+
+	/** Installs the capture after engine init when the process was started with -StealthNetCapture. Module startup only. */
+	void InstallIfRequested();
 }

@@ -1,0 +1,10 @@
+LogCsvProfiler: Display: Metadata set : commandline="" "C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject" /Game/StealthGame/Maps/L_Prototype?listen -game -unattended -nosplash -nosound -NoVerifyGC -log -StealthHarnessScenario=Smoke -StealthHarnessRunId=tdc020-ctl-forceiris -
+LogInit: Command Line: /Game/StealthGame/Maps/L_Prototype?listen -game -unattended -nosplash -nosound -NoVerifyGC -log -StealthHarnessScenario=Smoke -StealthHarnessRunId=tdc020-ctl-forceiris -StealthHarnessOut="C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-ctl-forceiris" 
+[2026.10.25-10.06.36:280][  0]LogStealthHarness: Warning: Negative control: the replication-system probe is forced to report iris
+[2026.10.25-10.06.36:280][  0]LogStealthHarness: Display: Harness scenario Smoke (server 0) writing to C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-ctl-forceiris
+[2026.10.25-10.06.50:343][  0]LogStealthHarness: Warning: Harness run failed: replication system is iris, the pinned expectation is legacy
+[2026.10.25-10.06.50:343][  0]LogStealthHarness: Display: Replication system iris (expected legacy), negative control detected
+[2026.10.25-10.06.50:345][  0]LogStealthHarness: Display: Harness scenario Smoke finished (replication system assertion failed); requesting exit.
+[2026.10.25-10.06.50:346][  0]LogStealthHarness: Display: Result written to C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-ctl-forceiris/server-result.json (passed 0, replicationSystem iris)
+[2026.10.25-10.06.50:346][  0]LogStealthHarness: Display: Harness scenario Smoke result: FAILED
+[2026.10.25-10.06.50:346][  0]LogWindows: FPlatformMisc::RequestExitWithStatus(0, 1, StealthHarness)

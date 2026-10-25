@@ -1,0 +1,21 @@
+# tools: RunUAT RunUnreal -project=<uproject> -test=StealthMultiProcessSmoke -Namespaces=StealthGame.Harness.MP -build=Saved/Staged/Dev3 -platform=Win64 -configuration=Development (2026-10-25)
+23:Selected build Gauntlet.StagedBuild for test run.
+28:Build exists on local drive, skipping installation.
+30:Selected build Gauntlet.StagedBuild for test run.
+33:Build exists on local drive, skipping installation.
+1873:[2026.10.25-10.56.10:544][665]LogStealthHarness: Display: Result written to C:\Program Files\Epic Games\UE_5.8\GauntletTemp\StealthHarness\a8d6be39d6114183805df818aae75227/server-result.json (passed 1, replicationSystem legacy)
+1898:[2026.10.25-10.56.10:580][ 90]LogStealthHarness: Display: Result written to C:\Program Files\Epic Games\UE_5.8\GauntletTemp\StealthHarness\a8d6be39d6114183805df818aae75227/client1-result.json (passed 1, replicationSystem legacy)
+1956:server-result.json: replicationSystem=legacy passed=True negativeControlDetected=True
+1957:client1-result.json: replicationSystem=legacy passed=True negativeControlDetected=True
+1971:StealthGame.Harness.MP.Smoke (Win64 Development Client) result=Passed
+1981: Client Role: Tests exited with error code 0 (ExitOk, ExitCode=0)
+1982: Client Role: Tests exited with error code 0 (ExitOk, ExitCode=0)
+1994: #### Role: Client (Win64 Development)
+1995: #### Client completed: Tests exited with error code 0 (ExitOk, ExitCode=0)
+1996: * CommandLine: "/Game/StealthGame/Maps/L_Prototype?listen"  -StealthHarnessScenario=Smoke  -StealthHarnessOut="C:\Program Files\Epic Games\UE_5.8\GauntletTemp\StealthHarness\a8d6be39d6114183805df818aae75227"  -StealthHarnessClients=1  -nullrhi  -log  -StealthHarnessRole=server  -gauntlet  -windowed  -unattended  -nosplash 
+2002: #### Role: Client (Win64 Development)
+2003: #### Client completed: Tests exited with error code 0 (ExitOk, ExitCode=0)
+2004: * CommandLine:  -StealthHarnessScenario=Smoke  -StealthHarnessOut="C:\Program Files\Epic Games\UE_5.8\GauntletTemp\StealthHarness\a8d6be39d6114183805df818aae75227"  -StealthHarnessClients=1  -nullrhi  -log  -StealthHarnessRole=client  -StealthHarnessClient=1  -ExecCmds="open 127.0.0.1?Name=C1"  -gauntlet  -windowed  -unatt
+2014:StealthGame.Harness.MP.Smoke (Win64 Development Client) result=Passed
+2028:BUILD SUCCESSFUL
+2030:AutomationTool exiting with ExitCode=0 (Success)

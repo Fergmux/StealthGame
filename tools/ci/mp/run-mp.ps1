@@ -31,16 +31,19 @@ param(
   [switch]$Render,
   [string]$ExtraArgs = '',
   [int]$TimeoutSeconds = 420,
-  [int]$ServerBootSeconds = 30
+  [int]$ServerBootSeconds = 30,
+  [string]$CookedExe = ''
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path (Split-Path (Split-Path $PSScriptRoot))
 $proj = Join-Path $root 'StealthGame.uproject'
 $exe = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'
+# -CookedExe <path to a staged StealthGame.exe>: run the cooked Development game instead of the editor binary (story tdc-020).
+if ($CookedExe) { $exe = $CookedExe }
 $out = Join-Path $root "Saved\Harness\$RunId"
 New-Item -ItemType Directory -Force $out | Out-Null
 
-$common = @('-game', '-unattended', '-nosplash', '-nosound', '-NoVerifyGC', '-log', "-StealthHarnessScenario=$Scenario",
+$common = @($(if ($CookedExe) { '-windowed' } else { '-game' }), '-unattended', '-nosplash', '-nosound', '-NoVerifyGC', '-log', "-StealthHarnessScenario=$Scenario",
   "-StealthHarnessRunId=$RunId", "-StealthHarnessOut=`"$out`"", "-StealthHarnessClients=$Clients", "-StealthHarnessDuration=$Duration")
 if ($Render) { $common += @('-windowed', '-ResX=640', '-ResY=360') } else { $common += '-nullrhi' }
 if ($Capture) { $common += @('-StealthNetCapture', '-LogCmds="LogRepProperties VeryVerbose, LogNetTraffic Log, LogRepTraffic Log"') }
@@ -49,7 +52,7 @@ if ($NpcCount -ge 0) { $common += "-ini:Game:[/Script/StealthGame.StealthSetting
 if ($ExtraArgs) { $common += $ExtraArgs }
 
 function Start-Role([string]$url, [string]$role, [string]$profileName, [string[]]$roleArgs) {
-  $a = @("`"$proj`"", $url) + $common + $roleArgs + @("-abslog=`"$out\$role.log`"")
+  $a = @($(if ($CookedExe) { $null } else { "`"$proj`"" }), $url) + $common + $roleArgs + @("-abslog=`"$out\$role.log`"")
   if ($profileName) { $a += "-PktEmulationProfile=$profileName" }
   $p = Start-Process -FilePath $exe -ArgumentList ($a -join ' ') -PassThru
   "$role pid=$($p.Id) args: $($a -join ' ')" | Out-File (Join-Path $out 'launch.txt') -Append -Encoding utf8

@@ -1,0 +1,4 @@
+LogCsvProfiler: Display: Metadata set : commandline="" "C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject" 127.0.0.1?Name=C1 -game -unattended -nosplash -nosound -NoVerifyGC -log -StealthHarnessScenario=Smoke -StealthHarnessRunId=tdc020-ctl-forceiris -StealthHarnessOut="C:\Us
+LogInit: Command Line: 127.0.0.1?Name=C1 -game -unattended -nosplash -nosound -NoVerifyGC -log -StealthHarnessScenario=Smoke -StealthHarnessRunId=tdc020-ctl-forceiris -StealthHarnessOut="C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-ctl-forceiris" -StealthHarnessClients=1
+[2026.10.25-10.06.39:231][  0]LogStealthHarness: Warning: Negative control: the replication-system probe is forced to report iris
+[2026.10.25-10.06.39:231][  0]LogStealthHarness: Display: Harness scenario Smoke (client 1) writing to C:\Users\fergm\Documents\Unreal Projects\StealthGame\Saved\Harness\tdc020-ctl-forceiris

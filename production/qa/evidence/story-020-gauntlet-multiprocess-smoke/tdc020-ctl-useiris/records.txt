@@ -1,0 +1,7 @@
+{"t":17352418.332571,"type":"boot","netMode":2,"driver":"IpNetDriver","iris":0,"profile":"","PktLag":0,"PktLagVariance":0,"PktLoss":0,"PktIncomingLagMin":0,"PktIncomingLoss":0,"netClientTicksPerSecond":2400.0,"tMaxFPS":0.0,"maxPlayers":10,"map":"/Game/StealthGame/Maps/L_Prototype"}
+{"t":17352418.332601,"type":"replicationSystem","system":"legacy","expected":"legacy","ok":1,"negativeControlDetected":1}
+{"t":17352433.090514,"type":"smoke","phase":"allJoined","expectedClients":1}
+{"t":17352433.616235,"type":"end","reason":"scenario complete"}
+{"t":17352433.065527,"type":"boot","netMode":3,"driver":"IpNetDriver","iris":0,"profile":"","PktLag":0,"PktLagVariance":0,"PktLoss":0,"PktIncomingLagMin":0,"PktIncomingLoss":0,"netClientTicksPerSecond":2400.0,"tMaxFPS":0.0,"maxPlayers":-1,"map":"/Game/StealthGame/Maps/L_Prototype"}
+{"t":17352433.065546,"type":"replicationSystem","system":"legacy","expected":"legacy","ok":1,"negativeControlDetected":1}
+{"t":17352433.619468,"type":"end","reason":"server connection lost"}

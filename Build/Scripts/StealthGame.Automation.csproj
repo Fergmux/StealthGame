@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Project automation scripts compiled by UAT: it discovers *.Automation.csproj under <Project>/Build and passes
+       EngineDir. Holds the Gauntlet nodes of the T3 multi-process tests (ADR-0008 section 1, story tdc-020).
+       The engine's own assemblies are referenced by DLL, not by ProjectReference: referencing the engine's
+       Gauntlet.Automation.csproj made the second UAT run fail while validating its build record
+       (".." can be only added at the beginning of the pattern), observed with UE 5.8.4. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>StealthGame.Automation</AssemblyName>
+    <RootNamespace>StealthGame.Automation</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <NuGetAudit>false</NuGetAudit>
+    <RollForward>LatestMajor</RollForward>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ToolBin>$(EngineDir)\Binaries\DotNET</ToolBin>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Gauntlet.Automation"><HintPath>$(ToolBin)\AutomationTool\AutomationScripts\Gauntlet\net10.0\Gauntlet.Automation.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="AutomationUtils.Automation"><HintPath>$(ToolBin)\AutomationTool\AutomationUtils\net10.0\AutomationUtils.Automation.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="AutomationTool"><HintPath>$(ToolBin)\AutomationTool\AutomationTool.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnrealBuildTool"><HintPath>$(ToolBin)\UnrealBuildTool\UnrealBuildTool.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Microsoft.Extensions.Logging.Abstractions"><HintPath>$(ToolBin)\AutomationTool\Microsoft.Extensions.Logging.Abstractions.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="EpicGames.Core"><HintPath>$(ToolBin)\AutomationTool\EpicGames.Core.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

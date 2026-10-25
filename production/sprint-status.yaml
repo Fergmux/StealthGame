@@ -228,11 +228,11 @@ stories:
     name: "Gauntlet host plus client smoke scenario with legacy-driver assertion"
     file: "production/epics/tuning-data-config/story-020-gauntlet-multiprocess-smoke.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "qa-lead"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-021"
     name: "Per-commit gate script: T0 lint, build, prefix-filtered automation run"
     file: "production/epics/tuning-data-config/story-021-per-commit-gate-script.md"

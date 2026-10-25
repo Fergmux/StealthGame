@@ -309,18 +309,18 @@ namespace StealthHarness::Capture
 	/**
 	 * Only a process launched with -StealthNetCapture installs the capture: after engine init (every net
 	 * driver class is loaded, no driver exists yet) and it is removed before exit. Nothing else registers.
+	 * Called from the harness module's StartupModule, NOT from a static initialiser: a static initialiser
+	 * reads FCommandLine::Get() before the command line exists in a monolithic (cooked) build and the process
+	 * dies with "Attempting to get the command line but it hasn't been initialized yet" (found in story tdc-020).
 	 */
-	static struct FAutoInstall
+	void InstallIfRequested()
 	{
-		FAutoInstall()
+		if (FParse::Param(FCommandLine::Get(), TEXT("StealthNetCapture")))
 		{
-			if (FParse::Param(FCommandLine::Get(), TEXT("StealthNetCapture")))
-			{
-				FCoreDelegates::GetOnPostEngineInit().AddStatic(&Install);
-				FCoreDelegates::OnPreExit.AddStatic(&Uninstall);
-			}
+			FCoreDelegates::GetOnPostEngineInit().AddStatic(&Install);
+			FCoreDelegates::OnPreExit.AddStatic(&Uninstall);
 		}
-	} GAutoInstall;
+	}
 }
 
 UStealthCaptureActorChannel::UStealthCaptureActorChannel(const FObjectInitializer& ObjectInitializer)

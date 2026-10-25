@@ -1,0 +1,10 @@
+# cook + stage of the cooked Development game (2026-10-25)
+RunUAT BuildCookRun -project=<uproject> -noP4 -platform=Win64 -clientconfig=Development -build -cook -stage -pak -IgnoreCookErrors -stagingdirectory=Saved/Staged/Dev3
+(-IgnoreCookErrors: the cook reports 1 error, the sample CameraDirector_SandboxCharacter broken import, present before this project's work)
+49:Took 15.88s to run dotnet.exe, ExitCode=0
+767:Took 34.44s to run UnrealEditor-Cmd.exe, ExitCode=1
+883:Took 2.90s to run UnrealPak.exe, ExitCode=0
+1021:Took 1.57s to run UnrealPak.exe, ExitCode=0
+1029:BuildCookRun time: 56.65 s
+1030:BUILD SUCCESSFUL
+1032:AutomationTool exiting with ExitCode=0 (Success)

@@ -1,0 +1,12 @@
+{
+	"scenario": "Smoke",
+	"build": "Development",
+	"replicationSystem": "iris",
+	"netProfile": "none",
+	"passed": false,
+	"negativeControlDetected": true,
+	"faults": [],
+	"captures": [
+		"C:\\Users\\fergm\\Documents\\Unreal Projects\\StealthGame\\Saved\\Harness\\tdc020-ctl-forceiris/server.jsonl"
+	]
+}
