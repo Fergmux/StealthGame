@@ -1,7 +1,7 @@
 # Story 037: BushSite derivation and server/client parity
 
 > **Epic**: Level Socket Contract
-> **Status**: Blocked — BLOCKED: design gap, not an ADR or spike. GDD R2.7 gives the graybox an empty Manifest (0 entries) while R2.6 and ADR-0014 say clients derive `BushSite` records from the Manifest; ADR-0014 section 6 lets graybox clients read only the baked blob header. Where graybox BushSite records reach clients is undefined. Resolve with an ADR-0014 / GDD R2.7 amendment (`/architecture-decision`), then re-run `/qa-plan` for this story.
+> **Status**: Ready — design gap resolved by main-session decision D49 (graybox Manifest carries BushSite records; amend GDD R2.7 + ADR-0014 within this story).
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: S
