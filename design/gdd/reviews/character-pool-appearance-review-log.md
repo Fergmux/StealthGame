@@ -77,3 +77,8 @@ Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bb
 Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 88399334ca7f9623f4f828a7ba51075673f039f6
 Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
 Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
+
+## Closeout cross-doc pass 2026-10-25
+- Dependencies and Cross-References status cells set to In Review (all peer GDDs are In Review in the systems index).
+- Respawn-region Pillar-1 question (OQ-14) handed to Penalty OQ-NKP-13 and LSC.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

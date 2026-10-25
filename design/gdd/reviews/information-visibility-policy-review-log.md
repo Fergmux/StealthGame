@@ -59,3 +59,7 @@ Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8ed
 Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 409b5d7c0de4b7484fed1a6e4ad5fac1fedce466
 Reviewed-Content-Hash: design/gdd/hud.md 224977e0b36ac631f3ab286857b5b707178bc4dd
 Reviewed-Content-Hash: design/gdd/tuning-data-config.md 89d049074c81e71b16f1269736cbe2016d977f9c
+
+## Closeout cross-doc pass 2026-10-25
+- Formula table NpcCount range set to safe 35-50, hard 6-100, default 50; `TeamPing` quantisation corrected from "10 cm" to 0.1 cm (`FVector_NetQuantize10`); status cells set to In Review.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

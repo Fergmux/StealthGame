@@ -78,3 +78,7 @@ Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md 6df3690b6fb980c
 Reviewed-Content-Hash: design/gdd/session-travel.md a0a052e3e4fbdc5dea8e841e14d1bc2d52c88e45
 Reviewed-Content-Hash: design/gdd/character-pool-appearance.md dfb73369b11821c543d7841b5cec4d3965988d04
 Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+
+## Closeout cross-doc pass 2026-10-25
+- Dependencies and Cross-References status cells set to In Review; F3 bias ramp is mirrored in Informant Pings VA-PNG-2.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

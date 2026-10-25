@@ -87,3 +87,8 @@ Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789
 Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 252003e5936635dd0a55fb062f10b42713cbf39d
 Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
 Reviewed-Content-Hash: design/gdd/procedural-city-generator.md 959a9840a217d9c97c54fc5d17c8791257ccf6a4
+
+## Closeout cross-doc pass 2026-10-25
+- Kick wording aligned with Roster D9 (Roster accepts `Disconnect` for `Expired`; kicked pawn keeps the AI walk for the grace period).
+- Lobby `Rejoining` projection and failed-supersede `ConnectionGeneration` bump / fresh `DisconnectedAt` wording added (Roster R11); status cells set to In Review.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

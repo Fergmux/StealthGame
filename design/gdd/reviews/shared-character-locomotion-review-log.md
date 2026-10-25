@@ -93,3 +93,8 @@ Reviewed-Content-Hash: design/gdd/character-pool-appearance.md 252003e5936635dd0
 Reviewed-Content-Hash: docs/architecture/adr-0010-shared-pawn-cmc-possession.md 58f59f4168c6ada0eefe565a0586cf51f56c7497
 Reviewed-Content-Hash: docs/architecture/adr-0013-animation-motion-matching-significance.md ba39985e11bb5cc3cfbb53a09c61b00db85fc8ea
 Reviewed-Content-Hash: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md ab5abc0c7a57a15709c7c92762a2ca4590f67b13
+
+## Closeout cross-doc pass 2026-10-25
+- OQ15 closed by D2 (stop floor `d_eff = min(d, v0 / StopMinSec)`, `StopMinSec` 0.5 s); AC-SCL-50 vectors include 93 cm/s, the floor boundary. OQ16 closed by D3 (uniform TickPose escalation, confirm in spike R3).
+- Bidirectionality paragraph and change request 12 marked met (index rows 5, 6, 9, 12 list SCL / LSC peer); status cells set to In Review.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

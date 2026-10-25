@@ -309,12 +309,12 @@ The test is defined for the reference configuration `P = 10`, `N = 40`, MVP pool
 
 | System (index #) | Data interface | Hard / Soft | Status |
 | ---- | ---- | ---- | ---- |
-| Tuning Data & Config (1) | Frozen `NpcCount` and `TeamSize`; CPA's three deck keys (Tuning Knobs); `OnTuningReady` ordering (deal only after the freeze). Fills TDC's provisional invariant I-3 (roles `MinCopies` / `MinAppearances`) | **Hard** | Written, reviewed (MAJOR REVISION NEEDED, revisions applied); keys registered here |
-| Participant State & Roster (2) | The participant id set for the deal; `AssignedAppearanceId` copy for the spawn handoff; R9 crowd adoption (`BindPawn` on an existing pawn); transitions and `ReleaseToCrowd` (consumed, not owned) | **Soft** (data-only; listed in index row 4, verified 2026-10-24, cross-review C-W11) | Written |
-| Round & Match Framework (6) | Caller: `Preparing` ordering (P3), the single spawn list (P6), Event Log header, `DisconnectGraceSec`, informant re-admission (R18) and `LateJoinTakeoverTimeoutSec`, `Reset` | **Hard** (Round cannot start without a deal) but Round depends on CPA through its caller role only; listed in index rows 4 and 6 (verified 2026-10-24, cross-review C-W11) | Written |
-| Session & Travel (5) | `GetServerSubSeed(AppearanceDeal, 0)` (CP-9); `PoolHash` inside the single round acknowledgement (rule 11.6) and `TravelLoadTimeoutSec`; `RejoinOnly` admission (no late join); disconnect / rejoin facts | **Soft** | Written |
-| Level Socket Contract (8) | Shared emergence sockets for round-start placement and replacement (informants adopt, they do not emerge) | **Soft** (CPA only requires independence of appearance and out-of-sight emergence) | Written |
-| Information Visibility Policy (7) | The audience rows for `AppearanceId` and for the look-owner link | **Soft** | Designed (information-visibility-policy.md; verified 2026-10-24, cross-review C-W11) |
+| Tuning Data & Config (1) | Frozen `NpcCount` and `TeamSize`; CPA's three deck keys (Tuning Knobs); `OnTuningReady` ordering (deal only after the freeze). Fills TDC's provisional invariant I-3 (roles `MinCopies` / `MinAppearances`) | **Hard** | In Review; keys registered here |
+| Participant State & Roster (2) | The participant id set for the deal; `AssignedAppearanceId` copy for the spawn handoff; R9 crowd adoption (`BindPawn` on an existing pawn); transitions and `ReleaseToCrowd` (consumed, not owned) | **Soft** (data-only; listed in index row 4, verified 2026-10-24, cross-review C-W11) | In Review |
+| Round & Match Framework (6) | Caller: `Preparing` ordering (P3), the single spawn list (P6), Event Log header, `DisconnectGraceSec`, informant re-admission (R18) and `LateJoinTakeoverTimeoutSec`, `Reset` | **Hard** (Round cannot start without a deal) but Round depends on CPA through its caller role only; listed in index rows 4 and 6 (verified 2026-10-24, cross-review C-W11) | In Review |
+| Session & Travel (5) | `GetServerSubSeed(AppearanceDeal, 0)` (CP-9); `PoolHash` inside the single round acknowledgement (rule 11.6) and `TravelLoadTimeoutSec`; `RejoinOnly` admission (no late join); disconnect / rejoin facts | **Soft** | In Review |
+| Level Socket Contract (8) | Shared emergence sockets for round-start placement and replacement (informants adopt, they do not emerge) | **Soft** (CPA only requires independence of appearance and out-of-sight emergence) | In Review |
+| Information Visibility Policy (7) | The audience rows for `AppearanceId` and for the look-owner link | **Soft** | In Review (information-visibility-policy.md; verified 2026-10-24, cross-review C-W11) |
 
 ### Downstream (these depend on CPA)
 

@@ -78,3 +78,8 @@ Reviewed-Content-Hash: design/art/art-bible.md ba9f28821285a7933cad48bee9f4ccf28
 Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bbbc02bdd9ba8
 Reviewed-Content-Hash: design/gdd/tuning-data-config.md 63db04c802c6db06eb0ba3dac93f65fb9fa98068
 Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md 0ecd59c878842ff54ca7fb1da7c30e07497e7efd
+
+## Closeout cross-doc pass 2026-10-25
+- D4/D5 applied: `StartToFinalMinPathCm` 44 m (<= 44.4 m admits 6 final-eligible courts), `FinalCandidatesMinCount` stays 6; S5 anchor wording adopted.
+- Cross-Reference and change-request status cells set to In Review.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

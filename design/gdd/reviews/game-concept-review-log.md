@@ -79,3 +79,7 @@ Reviewed-Content-Hash: docs/architecture/adr-0006-seeds-random-streams.md 613298
 Reviewed-Content-Hash: docs/architecture/adr-0008-test-automation-leak-parity.md 4c9c47caf2e0b10ba63f10085b97e2d646c3ebea
 Reviewed-Content-Hash: docs/architecture/adr-0023-playtest-telemetry-hooks.md 3480d97ec0f1dc482562e2d96bcc3c4090d5b072
 Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bbbc02bdd9ba8
+
+## Closeout cross-doc pass 2026-10-25
+- Cross-doc alignment only (NpcCount 50, objective duration near Objectives Chain F1 ~9 min median); no design change.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

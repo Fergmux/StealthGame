@@ -85,3 +85,7 @@ Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9
 Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
 Reviewed-Content-Hash: design/gdd/round-match-framework.md ab477269caa8bacab048c8719d3029a90a7ce89e
 Reviewed-Content-Hash: docs/architecture/adr-0016-crowd-ai-architecture.md a555315844f9e5c7aa96ad4602c8ae35d69c4e05
+
+## Closeout cross-doc pass 2026-10-25
+- D7: bush target default 300 s (from 315 s) to absorb r_P drift (registry updated); Crowd consumes the SCL `StopMinSec` key (D2).
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

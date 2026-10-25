@@ -81,3 +81,8 @@ Reviewed-Content-Hash: design/gdd/tuning-data-config.md 89d049074c81e71b16f12697
 Reviewed-Content-Hash: design/gdd/assassination-defence-reversal.md 2ae4886c85a5145d50d8cab36f30cc374c722621
 Reviewed-Content-Hash: design/gdd/hud.md 224977e0b36ac631f3ab286857b5b707178bc4dd
 Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6bf80120e5a3d8ace5b1ae83ad802eef537b16a2
+
+## Closeout cross-doc pass 2026-10-25
+- OQ-NKP-13 added: Penalty owns the Pillar-1 review of the informant respawn-region restriction (taken over from Character Pool OQ-14, shared with LSC R5b).
+- D10 (InformantKilled reason) lives on `RetireBinding` in the Roster log, not as a transition reason; Penalty passes it, nothing replicates.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

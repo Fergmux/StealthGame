@@ -48,3 +48,7 @@ Cross-doc follow-ups (main session):
 - docs/architecture/adr-0001 (feature part list): state the slot-index rule for `FTeamPingView.Entries[TeamSize]`.
 - design/gdd/systems-index.md row 20: status stays In Review (a revision verdict is not an approval).
 Receipt: not stamped. The revisions above were applied after the review, so stamping the current bytes would make the next run treat the revised document as the one that failed. The next review must run in full (`/design-review design/gdd/informant-pings-team-comms.md`, fresh session).
+
+## Closeout cross-doc pass 2026-10-25
+- PNG-R6 states that ping entries carry no stage, card, court or other world-state data; VA-PNG-2 copies the Teammate Markers F3 behind-camera bias ramp (`k_b` 0.25, `ε_b` 0.5) because the edge clamp is reused; status cells set to In Review.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

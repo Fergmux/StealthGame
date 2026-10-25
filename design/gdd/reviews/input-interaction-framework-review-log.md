@@ -99,3 +99,7 @@ Reviewed-Content-Hash: design/gdd/objectives-chain.md 2458e588b87bb7d1954477782e
 Reviewed-Content-Hash: design/gdd/information-visibility-policy.md 9ce1d9677b38048e71176b7dd0b44959ce5c99f5
 Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md dc19c6207e69961a896ea3c6268187b563001dca
 (The GDD hash is of the revised text as left by this review, so the next check reads UNCHANGED until the document is edited again; the verdict stands until a re-review.)
+
+## Closeout cross-doc pass 2026-10-25
+- Dependencies and Cross-References status cells set to In Review.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

@@ -473,11 +473,11 @@ Source: `design/gdd/systems-index.md`, Enumeration row 3 and Dependency Map. Eve
 
 | System (index #) | Data interface | Hard/Soft | Status |
 |---|---|---|---|
-| Tuning Data & Config (1) | IIF-owned keys (Tuning Knobs) registered per TDC's Knob Registry Convention; consumed keys `ObjectiveInteractSec`, `DefenceDurationSec`, `AssassinationRangeCm`; read via `GetServerTuning()` (server) and `GetClientTuning()` (owner prediction, client-visible keys only) | Hard (index) | GDD in progress; TDC already lists the IIF as a hard dependent |
-| Participant State & Roster (2) | `GetLegalityClass(Pawn)` → {Active, Informant, RoundEnded}, Active for unbound pawns; owner-audience own-state change for the context swap | Hard (listed in index row 3, verified 2026-10-24, cross-review C-W11) | Designed (`GetLegalityClass` defined, Roster R7) |
-| Round & Match Framework (6) | `RoundQueue.Submit(Command, SourceMailbox)`, Round key (tick, `Seq` by mailbox rotation), resolver callback; `HoldTimer` server items; round phase and latch drops | Hard for discrete commands (listed in index row 3, verified 2026-10-24, cross-review C-W11). The index orders Round after the IIF, so the IIF defines the queue-item contract it needs, and Round must accept it | Designed (Round R11-R12) |
-| Shared Character & Locomotion (9) | server `IsRunning`, `IsInTraversal`; execution of Move/Look/Traverse (planted brace, R7); `FActionState` animation; the R3a Look-parity mechanism and the R12 relevancy bans (SCL R8, R13) | Hard at runtime, but it **depends on the IIF** in the index; the IIF reads only two booleans and does not import Locomotion's design (contained soft cycle, same pattern as Round/Level Socket) | provisional |
-| Information Visibility Policy (7) | audiences `Owner`/`All` for R12; `CanViewerKnow(Attacker, Pawn, Position)` as the `PawnRef` gate (R10); the concealment-only relevancy exception (R12) | Hard for R10's `PawnRef` gate (without it a concealed pawn's id is an x-ray oracle); soft for the audience vocabulary. The index lists the IIF as a soft dependency of the Policy but not the reverse (change request 2) | designed (in review) |
+| Tuning Data & Config (1) | IIF-owned keys (Tuning Knobs) registered per TDC's Knob Registry Convention; consumed keys `ObjectiveInteractSec`, `DefenceDurationSec`, `AssassinationRangeCm`; read via `GetServerTuning()` (server) and `GetClientTuning()` (owner prediction, client-visible keys only) | Hard (index) | In Review; TDC already lists the IIF as a hard dependent |
+| Participant State & Roster (2) | `GetLegalityClass(Pawn)` → {Active, Informant, RoundEnded}, Active for unbound pawns; owner-audience own-state change for the context swap | Hard (listed in index row 3, verified 2026-10-24, cross-review C-W11) | In Review (`GetLegalityClass` defined, Roster R7) |
+| Round & Match Framework (6) | `RoundQueue.Submit(Command, SourceMailbox)`, Round key (tick, `Seq` by mailbox rotation), resolver callback; `HoldTimer` server items; round phase and latch drops | Hard for discrete commands (listed in index row 3, verified 2026-10-24, cross-review C-W11). The index orders Round after the IIF, so the IIF defines the queue-item contract it needs, and Round must accept it | In Review (Round R11-R12) |
+| Shared Character & Locomotion (9) | server `IsRunning`, `IsInTraversal`; execution of Move/Look/Traverse (planted brace, R7); `FActionState` animation; the R3a Look-parity mechanism and the R12 relevancy bans (SCL R8, R13) | Hard at runtime, but it **depends on the IIF** in the index; the IIF reads only two booleans and does not import Locomotion's design (contained soft cycle, same pattern as Round/Level Socket) | In Review (provisional) |
+| Information Visibility Policy (7) | audiences `Owner`/`All` for R12; `CanViewerKnow(Attacker, Pawn, Position)` as the `PawnRef` gate (R10); the concealment-only relevancy exception (R12) | Hard for R10's `PawnRef` gate (without it a concealed pawn's id is an x-ray oracle); soft for the audience vocabulary. The index lists the IIF as a soft dependency of the Policy but not the reverse (change request 2) | In Review |
 
 ### Downstream (these depend on the IIF)
 
@@ -607,20 +607,20 @@ Every element below is **owner-only**, screen-space, and derived from data the o
 
 | This GDD references | Target doc | Element | Status |
 |---|---|---|---|
-| Knob registry, `GetServerTuning`/`GetClientTuning`, audiences | design/gdd/tuning-data-config.md | Dependencies, Core Rules | exists (in design) |
-| `GetLegalityClass(Pawn)`, owner-audience state change | design/gdd/participant-state-roster.md | API | Designed (Roster R7, `GetLegalityClass`; verified 2026-10-24, cross-review C-W11) |
-| `RoundQueue.Submit`, total-order key, phase | design/gdd/round-match-framework.md | queue contract | Designed (Round R11-R12; verified 2026-10-24, cross-review C-W11) |
-| `IsRunning`, `IsInTraversal`, Move/Look/Traverse execution, planted brace, `FActionState` playback, `PawnNetUpdateHz`, R3a mechanism and relevancy bans | design/gdd/shared-character-locomotion.md | R5.2, R7.2, R8, R13, F9 | designed (in review); reconciled |
-| Toggle presentation, shoulder swap, `GetAimRay()`, eye mask ("rendered") | design/gdd/camera-system.md | CS-R5, CS-R8, CS-R10 | designed (in review); reconciled |
-| Prepare meaning, cooldown, `AttackAttemptLockoutSec`, victim resolution, `FActionState`, `Countering`, `Reversed`, presentation gating | design/gdd/assassination-defence-reversal.md | ASN-R3, R9, R14, R18, R19, R21, R23 | designed (in review); reconciled |
-| Hide transition length, `Exit(Side)`, `BushEnter`/`BushExit`, re-entry `Cooldown`, concealment from Attack | design/gdd/concealment-bushes.md | CON-R4a, R8, R12 | designed (in review); reconciled |
-| Interact duration, every-court ingress, full-fixture refusal, `TendCueDelaySec`, `AllowNoEffect` decoys, no stacking | design/gdd/objectives-chain.md | OC-6, OC-7, OC-8, OC-14 | designed (in review); reconciled |
-| `IsMarkedAlly(Pawn)`; `ShowTeamNames` (VS, user decision 2026-10-25) | design/gdd/teammate-markers.md | TM-R10, CR-4, OQ11 | designed (in review) |
-| PNG-R3, PNG-R4 (`IA_Ping`, controller-level `ServerTeamPing`) | design/gdd/informant-pings-team-comms.md | Core Rules | Binding row here; meaning there | designed (pending independent review) |
-| UI 1-8 layout, anchors, layering | design/gdd/hud.md | HUD-R6, HUD-R12, CR-HUD-3 | designed (in review) |
-| Baseline and Tell Matrix rows (brace, tend, bush, strike, run, traversal, informant) | design/gdd/crowd-npc-behaviour.md | | designed |
-| Audiences `Owner`/`All` | design/gdd/information-visibility-policy.md | | designed |
-| Sites and emergence sockets for prompts | design/gdd/level-socket-contract.md | `ObjectivePrelimSite`, `ObjectiveFinalSite`, `BushSite` | designed |
+| Knob registry, `GetServerTuning`/`GetClientTuning`, audiences | design/gdd/tuning-data-config.md | Dependencies, Core Rules | In Review |
+| `GetLegalityClass(Pawn)`, owner-audience state change | design/gdd/participant-state-roster.md | API | In Review (Roster R7, `GetLegalityClass`; verified 2026-10-24, cross-review C-W11) |
+| `RoundQueue.Submit`, total-order key, phase | design/gdd/round-match-framework.md | queue contract | In Review (Round R11-R12; verified 2026-10-24, cross-review C-W11) |
+| `IsRunning`, `IsInTraversal`, Move/Look/Traverse execution, planted brace, `FActionState` playback, `PawnNetUpdateHz`, R3a mechanism and relevancy bans | design/gdd/shared-character-locomotion.md | R5.2, R7.2, R8, R13, F9 | In Review; reconciled |
+| Toggle presentation, shoulder swap, `GetAimRay()`, eye mask ("rendered") | design/gdd/camera-system.md | CS-R5, CS-R8, CS-R10 | In Review; reconciled |
+| Prepare meaning, cooldown, `AttackAttemptLockoutSec`, victim resolution, `FActionState`, `Countering`, `Reversed`, presentation gating | design/gdd/assassination-defence-reversal.md | ASN-R3, R9, R14, R18, R19, R21, R23 | In Review; reconciled |
+| Hide transition length, `Exit(Side)`, `BushEnter`/`BushExit`, re-entry `Cooldown`, concealment from Attack | design/gdd/concealment-bushes.md | CON-R4a, R8, R12 | In Review; reconciled |
+| Interact duration, every-court ingress, full-fixture refusal, `TendCueDelaySec`, `AllowNoEffect` decoys, no stacking | design/gdd/objectives-chain.md | OC-6, OC-7, OC-8, OC-14 | In Review; reconciled |
+| `IsMarkedAlly(Pawn)`; `ShowTeamNames` (VS, user decision 2026-10-25) | design/gdd/teammate-markers.md | TM-R10, CR-4, OQ11 | In Review |
+| PNG-R3, PNG-R4 (`IA_Ping`, controller-level `ServerTeamPing`) | design/gdd/informant-pings-team-comms.md | Core Rules | Binding row here; meaning there | In Review |
+| UI 1-8 layout, anchors, layering | design/gdd/hud.md | HUD-R6, HUD-R12, CR-HUD-3 | In Review |
+| Baseline and Tell Matrix rows (brace, tend, bush, strike, run, traversal, informant) | design/gdd/crowd-npc-behaviour.md | | In Review |
+| Audiences `Owner`/`All` | design/gdd/information-visibility-policy.md | | In Review |
+| Sites and emergence sockets for prompts | design/gdd/level-socket-contract.md | `ObjectivePrelimSite`, `ObjectiveFinalSite`, `BushSite` | In Review |
 | Ring, indicator, prompts, palette, tells | design/art/art-bible.md | 4.4, 4.6, 5.2, 5.5, 7.1, 7.3, 7.5, 7.6, 7.8 | exists; change requests below |
 
 **Change requests to other documents** (not applied here; parallel-mode rule):

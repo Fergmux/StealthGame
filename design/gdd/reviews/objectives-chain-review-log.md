@@ -84,3 +84,7 @@ Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f
 Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526f8d2c6c107100ba7a2db673b
 Reviewed-Content-Hash: design/gdd/hud.md 224977e0b36ac631f3ab286857b5b707178bc4dd
 Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+
+## Closeout cross-doc pass 2026-10-25
+- Cross-doc follow-ups from the lean re-review applied (ClueMatchMaxCount use in the ClueTooBroad edge case, Generator OQ9 closure by D4, concept median vs F1 ~9 min).
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

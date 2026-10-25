@@ -107,3 +107,8 @@ Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526
 Reviewed-Content-Hash: design/gdd/participant-state-roster.md 11106ca55e071c8e8f1ab67926f678d5c3ecf306
 Reviewed-Content-Hash: design/gdd/tuning-data-config.md 63db04c802c6db06eb0ba3dac93f65fb9fa98068
 Reviewed-Content-Hash: design/gdd/session-travel.md 1e185cf338c1b17880a81bc7057dcb11fa8a0ee4
+
+## Closeout cross-doc pass 2026-10-25
+- D11: removal card wording fixed to title "Informant" for every cause, subtitles "Too many wrong targets" (exile) and "Eliminated for the round" (assassinated/reversed), so OQ5 no longer collides with the Roster language rule.
+- D8: ranges of `HudResultPlateMaxHoldBackSec` and `HudOwnRemovalHoldCapSec` now start at 1.25 s (TDC hard minimum raised to match).
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

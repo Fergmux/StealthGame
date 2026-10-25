@@ -71,3 +71,7 @@ Reviewed-Content-Hash: design/gdd/assassination-defence-reversal.md d89bac971a0a
 Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
 Reviewed-Content-Hash: design/gdd/input-interaction-framework.md ed42829b7c7aea9557521fb4c45d124224835244
 Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c845e98d280ed6797f
+
+## Closeout cross-doc pass 2026-10-25
+- Replication specialist (ue-replication-specialist) re-verified AC-ASN-05, 20, 21, 44, 45 and the ACs were rewritten: fresh paired control instances and consumed-move-timestamp comparison (05); 208-bit fixed-width sweep instead of a vacuous size comparison, stationary pawns, whiff writes no death state (20); actor-local bone comparison, parity and bearing groups split, both bearing signs, tag split (21); `Culled` precondition, zero-tolerance send-capture bound, per-frame latch assertion, attached actors and NetGUID exports (44); the unreachable "beyond cull distance" scenario replaced by a test-seam defensive path (45; pawns have no cull distance, SCL R13 / ADR-0003). Negative controls added to all five (ADR-0008 section 3).
+- Ref: production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

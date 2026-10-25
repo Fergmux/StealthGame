@@ -135,3 +135,7 @@ Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526
 Reviewed-Content-Hash: design/gdd/hud.md 05f2d8dac61a985f97a45a83f56d07c421369931
 Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
 Reviewed-Content-Hash: design/art/art-bible.md ba9f28821285a7933cad48bee9f4ccf28499ac5e
+
+## Closeout cross-doc pass 2026-10-25
+- D6 applied: AC-CS-05 oracle and mask use the capsule axis origin; `CameraMaskOffHysteresisCm` 10 (off at 20 cm, on at 30 cm); AC-CS-23 retagged document review; hide latency beyond 60 m stated as a Game Feel limit.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

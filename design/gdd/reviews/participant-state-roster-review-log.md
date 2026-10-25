@@ -77,3 +77,8 @@ Reviewed-Content-Hash: design/gdd/input-interaction-framework.md d2cffcaa5a50602
 Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
 Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bbbc02bdd9ba8
 Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+
+## Closeout cross-doc pass 2026-10-25
+- Dependencies status cells set to In Review; R11 projection details: `Rejoining` projects `Disconnected` in every phase; failed supersede-rejoin bumps `ConnectionGeneration` with a fresh `DisconnectedAt`; kick path (D9) accepted for `Expired`.
+- D10 applied on `RetireBinding` (log only).
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

@@ -349,24 +349,24 @@ The systems index lists two upstream dependencies (Participant State & Roster, I
 
 | System | Interface used | Hard / Soft | Status |
 |---|---|---|---|
-| Participant State & Roster (#2) | C-TeamView teammate entries `{PublicHandle, State, PawnRef}` and own handle (R6); `PawnRef` cleared at `InvalidateAllBindings`, re-pushed after controller swaps and on `RebindView`; C-Public `DisplayName` by handle; host-presentation rule (AC-PSR-42) | Hard | Reviewed, NEEDS REVISION; reconciled (CR-1, CR-13 applied; CR-12 declined, user decision 2026-10-25) |
-| Information Visibility Policy (#7) | Team audience and carrier rule (R4); `IsConcealed` entry flag (R3); fallback position feed and `TeamPositionFeedHz` (R8, F6) as the TM-R4a signal; informant viewers keep markers (R9a); include check (AC-IVP-17); AC-IVP-15 | Hard | Reviewed, NEEDS REVISION; reconciled (CR-2, CR-11 a-c applied in R8; CR-11c by user decision 2026-10-25) |
-| Concealment (Bushes) (#12) | client-local `IsAllyBodyHidden(Pawn)` latch (CON-R6b, R8, R16) for tracked entries; `IsConcealed` via C-TeamView for fed entries (CON-R2, UI-3) | Hard (for the hatch state) | Reviewed, NEEDS REVISION; reconciled (CR-6 applied) |
-| Camera System (#10) | rendered view transform and world FOV; `GetViewState()` and the fade-to-black layer (CS-R12, CS-R15; CR-3 applied there) | Hard | Reviewed, NEEDS REVISION; reconciled (CR-3 applied) |
-| Tuning Data & Config (#1) | `GetClientTuning()`; CR-15 registration of this GDD's `Client` keys; two new invariants (CR-5) | Hard | Reviewed, MAJOR REVISION NEEDED; reconciled (CR-5 applied, I-TM-1) |
-| Assassination & Defence Reversal (#13) | none at run time (the death-hold read was removed, TM-R6 step 2); `StrikeContactSec` / `StrikeNetLeadSec` inform the hold default | Soft (rationale only) | Reviewed, NEEDS REVISION; reconciled (CR-9 applied) |
-| Shared Character & Locomotion (#9) | the pawn's network-smoothed visual root (mesh location); no pawn field added (SCL R13 allowlist) | Soft | Reviewed, NEEDS REVISION; reconciled (CR-10 applied) |
-| Round & Match Framework (#6) | phase (`Ended`, `Reset`) through `FRoundPublicState` | Soft | Reviewed, MAJOR REVISION NEEDED; reconciled |
-| Session & Travel (#5) | seamless travel and rejoin timing (markers cleared and rebuilt) | Soft | Reviewed, NEEDS REVISION; reconciled |
-| NPC-Kill Penalty & Informants (#14) | informant state, the exile release (PEN-R4.2) and the takeover's new `PawnRef`, all through C-TeamView | Soft | Reviewed, NEEDS REVISION; reconciled (PEN-R4.2 answers OQ10) |
+| Participant State & Roster (#2) | C-TeamView teammate entries `{PublicHandle, State, PawnRef}` and own handle (R6); `PawnRef` cleared at `InvalidateAllBindings`, re-pushed after controller swaps and on `RebindView`; C-Public `DisplayName` by handle; host-presentation rule (AC-PSR-42) | Hard | In Review; reconciled (CR-1, CR-13 applied; CR-12 declined, user decision 2026-10-25) |
+| Information Visibility Policy (#7) | Team audience and carrier rule (R4); `IsConcealed` entry flag (R3); fallback position feed and `TeamPositionFeedHz` (R8, F6) as the TM-R4a signal; informant viewers keep markers (R9a); include check (AC-IVP-17); AC-IVP-15 | Hard | In Review; reconciled (CR-2, CR-11 a-c applied in R8; CR-11c by user decision 2026-10-25) |
+| Concealment (Bushes) (#12) | client-local `IsAllyBodyHidden(Pawn)` latch (CON-R6b, R8, R16) for tracked entries; `IsConcealed` via C-TeamView for fed entries (CON-R2, UI-3) | Hard (for the hatch state) | In Review; reconciled (CR-6 applied) |
+| Camera System (#10) | rendered view transform and world FOV; `GetViewState()` and the fade-to-black layer (CS-R12, CS-R15; CR-3 applied there) | Hard | In Review; reconciled (CR-3 applied) |
+| Tuning Data & Config (#1) | `GetClientTuning()`; CR-15 registration of this GDD's `Client` keys; two new invariants (CR-5) | Hard | In Review; reconciled (CR-5 applied, I-TM-1) |
+| Assassination & Defence Reversal (#13) | none at run time (the death-hold read was removed, TM-R6 step 2); `StrikeContactSec` / `StrikeNetLeadSec` inform the hold default | Soft (rationale only) | In Review; reconciled (CR-9 applied) |
+| Shared Character & Locomotion (#9) | the pawn's network-smoothed visual root (mesh location); no pawn field added (SCL R13 allowlist) | Soft | In Review; reconciled (CR-10 applied) |
+| Round & Match Framework (#6) | phase (`Ended`, `Reset`) through `FRoundPublicState` | Soft | In Review; reconciled |
+| Session & Travel (#5) | seamless travel and rejoin timing (markers cleared and rebuilt) | Soft | In Review; reconciled |
+| NPC-Kill Penalty & Informants (#14) | informant state, the exile release (PEN-R4.2) and the takeover's new `PawnRef`, all through C-TeamView | Soft | In Review; reconciled (PEN-R4.2 answers OQ10) |
 
 ### Downstream (depend on Teammate Markers)
 
 | System | Interface it uses | Hard / Soft | Status |
 |---|---|---|---|
-| Input & Interaction Framework (#3) | `IsMarkedAlly(Pawn)` (TM-R10) for IIF R10 (no Attack at a marked ally) and the Strike hint's ally exclusion | Hard (for the honest-client rule) | Reviewed, NEEDS REVISION; reconciled (CR-4 `IsMarkedAlly` applied; `ShowTeamNames` pending user) |
-| HUD (#18) | the marker layer as L0 (HUD-R4); `OnAllyMarkerRetired` (TM-R14) for the HUD-R10 removal line; HUD owns `HudSafeMarginPct` and UI scale, which Markers read | Soft | Reviewed, NEEDS REVISION; reconciled (CR-HUD-7 applied here; CR-14 applied by HUD) |
-| Informant Pings & Team Communication (#20, MVP since 2026-10-25) | the F3 clamp rule for off-screen rings; draw order (rings beneath markers); pings stay places, never markers on people | Soft | Designed (pending independent review) |
+| Input & Interaction Framework (#3) | `IsMarkedAlly(Pawn)` (TM-R10) for IIF R10 (no Attack at a marked ally) and the Strike hint's ally exclusion | Hard (for the honest-client rule) | In Review; reconciled (CR-4 `IsMarkedAlly` applied; `ShowTeamNames` pending user) |
+| HUD (#18) | the marker layer as L0 (HUD-R4); `OnAllyMarkerRetired` (TM-R14) for the HUD-R10 removal line; HUD owns `HudSafeMarginPct` and UI scale, which Markers read | Soft | In Review; reconciled (CR-HUD-7 applied here; CR-14 applied by HUD) |
+| Informant Pings & Team Communication (#20, MVP since 2026-10-25) | the F3 clamp rule for off-screen rings; draw order (rings beneath markers); pings stay places, never markers on people | Soft | In Review |
 | Post-Round Reveal & Results (#21, VS) | the pentagon glyph only (its own data path after `Ended`) | Soft | Not written |
 | Settings & Accessibility (#24, VS) | TM-R12 hooks: accent colour, `TeammateMarkerLargeMult`, Reduce motion, high contrast, streamer alias, opt-in hide-markers | Soft | Not written |
 | Anti-Cheat & Info-Leak Security (#27, Alpha) | AC-TMK-01 to 06 as audit inputs | Soft | Not written |
@@ -503,19 +503,19 @@ Layout: one HUD layer (HUD-R4 L0), below the camera's fade-to-black, HUD plates,
 | This GDD references | Element | Where used | Status |
 |---|---|---|---|
 | design/gdd/game-concept.md | Locked rule "teammate markers created only on teammates' clients"; Fellowship aesthetic; anti-pillar "not an identification-tools game"; design risk "markers in 2v2 may reveal enemies by elimination" | Overview, Player Fantasy, TM-R1, OQ8 | Locked |
-| design/gdd/participant-state-roster.md | R6 C-TeamView, C-Public, host-presentation rule; R9 `RetireBinding`, `ReleaseToCrowd`, `InvalidateAllBindings`; R11 rejoin; AC-PSR-42; OQ8 | TM-R1-R7, Edge Cases | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/information-visibility-policy.md | R3 rows `IsPlayer`, `IsConcealed`, `IsInformant`; R4 carriers; R8 fallback feed; R9a informant viewers; R10 host; R11 allowlist; R13 no spectator; R14 possession; L17, L23; F6; AC-IVP-15, 17 | TM-R1-R4, TM-R8, Edge Cases, AC | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/concealment-bushes.md | CON-R2 owner and team flag; CON-R6 swap and ally hatch; CON-R8 exit crossing; CON-R9 kill while concealed; CON-R10 co-occupants; CON-R16 presentation-hidden flag; UI-3; AC-CON-01, 03, 04 | TM-R5, TM-R6, Edge Cases | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/camera-system.md | CS-R5b eye mask (bodies only); CS-R12 dying-body phase, neutral view, fade to black; CS-R15 `GetViewState()` and layer order; `NoPawnFadeSec` | TM-R8, TM-R9, Game Feel | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/input-interaction-framework.md | R7 informants cannot hide; R10 no Attack at a marked ally; UI 4 Strike-hint ally exclusion | TM-R5, TM-R10 | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/assassination-defence-reversal.md | ASN-R9 teammates never victims; ASN-R21 death-write timing (why the death hold was removed); `StrikeContactSec`, `StrikeNetLeadSec` | TM-R6, F6 | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/npc-kill-penalty-informants.md | PEN-R4.2 exile releases the pawn; takeover (C1) | TM-R6, TM-R7, Edge Cases | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/hud.md | HUD-R4 layer L0 and plate order; HUD-R10 removal line; `HudSafeMarginPct`; CR-HUD-7 | TM-R8, TM-R14, F3 | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/shared-character-locomotion.md | R13 pawn allowlist (nothing added); network-smoothed visual root | TM-R1, TM-R4 | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/character-pool-appearance.md | CP-16 the marker is UI, not appearance | TM-R7 | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/session-travel.md | rule 3 host parity; rule 24 no connection state to non-owners; OQ7 teammate-reconnecting indicator (decided 2026-10-25: MVP, label suffix here via Roster `bReconnecting`) | Edge Cases, OQ1 | Reviewed, NEEDS REVISION; reconciled |
-| design/gdd/round-match-framework.md | R17 bound-AI hold; phases `Preparing`, `Ended`, `Reset` | Edge Cases | Reviewed, MAJOR REVISION NEEDED; reconciled |
-| design/gdd/tuning-data-config.md | CR-15 registry columns and key suffixes; CR-11 latch classes | Tuning Knobs | Reviewed, MAJOR REVISION NEEDED; reconciled |
+| design/gdd/participant-state-roster.md | R6 C-TeamView, C-Public, host-presentation rule; R9 `RetireBinding`, `ReleaseToCrowd`, `InvalidateAllBindings`; R11 rejoin; AC-PSR-42; OQ8 | TM-R1-R7, Edge Cases | In Review; reconciled |
+| design/gdd/information-visibility-policy.md | R3 rows `IsPlayer`, `IsConcealed`, `IsInformant`; R4 carriers; R8 fallback feed; R9a informant viewers; R10 host; R11 allowlist; R13 no spectator; R14 possession; L17, L23; F6; AC-IVP-15, 17 | TM-R1-R4, TM-R8, Edge Cases, AC | In Review; reconciled |
+| design/gdd/concealment-bushes.md | CON-R2 owner and team flag; CON-R6 swap and ally hatch; CON-R8 exit crossing; CON-R9 kill while concealed; CON-R10 co-occupants; CON-R16 presentation-hidden flag; UI-3; AC-CON-01, 03, 04 | TM-R5, TM-R6, Edge Cases | In Review; reconciled |
+| design/gdd/camera-system.md | CS-R5b eye mask (bodies only); CS-R12 dying-body phase, neutral view, fade to black; CS-R15 `GetViewState()` and layer order; `NoPawnFadeSec` | TM-R8, TM-R9, Game Feel | In Review; reconciled |
+| design/gdd/input-interaction-framework.md | R7 informants cannot hide; R10 no Attack at a marked ally; UI 4 Strike-hint ally exclusion | TM-R5, TM-R10 | In Review; reconciled |
+| design/gdd/assassination-defence-reversal.md | ASN-R9 teammates never victims; ASN-R21 death-write timing (why the death hold was removed); `StrikeContactSec`, `StrikeNetLeadSec` | TM-R6, F6 | In Review; reconciled |
+| design/gdd/npc-kill-penalty-informants.md | PEN-R4.2 exile releases the pawn; takeover (C1) | TM-R6, TM-R7, Edge Cases | In Review; reconciled |
+| design/gdd/hud.md | HUD-R4 layer L0 and plate order; HUD-R10 removal line; `HudSafeMarginPct`; CR-HUD-7 | TM-R8, TM-R14, F3 | In Review; reconciled |
+| design/gdd/shared-character-locomotion.md | R13 pawn allowlist (nothing added); network-smoothed visual root | TM-R1, TM-R4 | In Review; reconciled |
+| design/gdd/character-pool-appearance.md | CP-16 the marker is UI, not appearance | TM-R7 | In Review; reconciled |
+| design/gdd/session-travel.md | rule 3 host parity; rule 24 no connection state to non-owners; OQ7 teammate-reconnecting indicator (decided 2026-10-25: MVP, label suffix here via Roster `bReconnecting`) | Edge Cases, OQ1 | In Review; reconciled |
+| design/gdd/round-match-framework.md | R17 bound-AI hold; phases `Preparing`, `Ended`, `Reset` | Edge Cases | In Review; reconciled |
+| design/gdd/tuning-data-config.md | CR-15 registry columns and key suffixes; CR-11 latch classes | Tuning Knobs | In Review; reconciled |
 | design/art/art-bible.md | 1.3.2-1.3.3 stature and headwear cap; 3.4 glyph table; 4.6 palette; 4.7 colourblind and accent list; 5.2 viewer-state matrix; 7.1-7.8 HUD rules (7.3 rows 1-2, 7.6 motion, 7.7 leak rules and streamer mask, 7.x C6 and Q1) | VA-1 to VA-7, TM-R5, TM-R9, F1, F2 | Approved direction |
 | production/first-playable-report.md; Source/StealthGame/Private/StealthHUD.cpp | Prototype teammate marker (team field replicated on every pawn; NPC test through the PlayerState pointer): evidence of feasibility only, and the leak this GDD forbids | TM-R2 | Evidence (read-only) |
 

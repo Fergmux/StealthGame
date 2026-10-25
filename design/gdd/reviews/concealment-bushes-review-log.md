@@ -77,3 +77,8 @@ Reviewed-Content-Hash: design/gdd/camera-system.md 6c124b4dd555a8157b58cca2a3816
 Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 242977e3dcc0185347fd1053741e6f305c1e42fa
 Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789eda4906874349fc59f9
 Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
+
+## Closeout cross-doc pass 2026-10-25
+- CON-R12 / AC-CON-24(c): multi-occupant share cap is max(40 %, m0 + 10 pp) (D1), replacing the double cap.
+- `BushEnterSwapSec` safe lower bound is now 0.46 s in F3 and the knob table, matching the registry (0.45 failed F3(d) by 1 cm/s at Reach 60).
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

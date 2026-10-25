@@ -83,7 +83,7 @@ The released pawn finishes its strike lockout (`AttackAttemptLockoutSec`) under 
 |---|---|---|
 | `Assassinated` / `ReversedAgainst` (Roster event, Assassination) | the kill slot's server time | dies (one body sequence, ASN-R17); the card is vacated and refilled by Crowd (CPA CP-12) |
 | `StrikeLimit` (PEN-R4) | the exile slot's server time | survives, released to the crowd (PEN-R4.2) |
-| Informant killed (`OnPawnKilled`, `VictimKind = Informant`) | the kill slot's server time | dies; Penalty calls `RetireBinding(VictimPawn)` inline in the slot (Roster "not a transition"), so a second strike on the falling body resolves `AlreadyResolved` (a `NoContact` on a falling body, identical for every victim kind) |
+| Informant killed (`OnPawnKilled`, `VictimKind = Informant`) | the kill slot's server time | dies; Penalty calls `RetireBinding(VictimPawn, RetireAtServerTime, Reason = InformantKilled)` inline in the slot (Roster "not a transition"; D10: the reason is applied on `RetireBinding` and written only to the Roster's ServerOnly log), so a second strike on the falling body resolves `AlreadyResolved` (a `NoContact` on a falling body, identical for every victim kind) |
 | Returning informant awaiting a pawn (Round R18, C1 extension; confirmed by the user 2026-10-25) | kept from the earlier loss (PEN-R11) | none |
 | Informant body lost without a kill (KillZ, a defect) | now, with no delay (PEN-R11) | lost |
 
@@ -169,7 +169,7 @@ Penalty's per-participant view (the Roster state is authoritative; this table ad
 | **Picking**(W) | draw in progress or retrying; W = widening level 0-2 | takeover committed | **Embodied** | log `InformantRespawn` |
 | Picking(W) | | no eligible pawn | Picking(W), W+1 after each `RespawnStarvationSec` (max 2) | retry every `EmergenceRetrySec` |
 | Picking | | disconnect | **Absent** | cancel |
-| **Embodied** | Informant with a live pawn | killed (`VictimKind = Informant`) | **Awaiting** | `RetireBinding` inline; schedule, `t_lost` = slot |
+| **Embodied** | Informant with a live pawn | killed (`VictimKind = Informant`) | **Awaiting** | `RetireBinding(…, Reason = InformantKilled)` inline (D10); schedule, `t_lost` = slot |
 | Embodied | | disconnect | **Absent** | `t_lost` = now (Round releases the pawn) |
 | Embodied | | body lost without a kill | **Picking**(0) | `T_due` = now |
 | **Absent** | Informant, disconnected, no pawn | reclaim during `Active` (Round R18) | **Awaiting** if now < `T_due`, else **Picking**(0) | F2 with the kept `t_lost` |

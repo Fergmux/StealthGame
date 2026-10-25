@@ -79,3 +79,9 @@ Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789
 Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8eda18782a2c8
 Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526f8d2c6c107100ba7a2db673b
 Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 242977e3dcc0185347fd1053741e6f305c1e42fa
+
+## Closeout cross-doc pass 2026-10-25
+- CR-21 marked confirmed by Roster R11 (kick path, D9): `Disconnect` for an `Expired` connection is accepted and `Applied`.
+- Interactions row for Session now lists `OnRoundTravelStarted` and `OnLobbyTravelComplete` semantics; R17.2 gains the failed-supersede-rejoin `OnParticipantDisconnected` handling (stale generation voids the old grace timer, new timer from the new loss).
+- Status cells in Dependencies set to In Review.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

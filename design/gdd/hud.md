@@ -198,7 +198,7 @@ The result_show formula is defined as:
 | ContactServerTime | double | ≥ 0 | `FStrikeResult.ContactServerTime` (Owner, ASN-R19; primary since 2026-10-25); else the matching `FActionState` of the pawn captured at the press (All, ASN-R21; defender's Counter and fallback) | Server time of the owner's strike (or Counter) contact |
 | t_arrival | double | ≥ 0 | calculated (client clock) | Arrival of `FStrikeResult` |
 | offset | double | any | calculated | Server-to-local clock offset |
-| HudResultPlateMaxHoldBackSec | float | 1.2-2.0 | data file (1.25) | Cap on holding a received result for the contact frame. The RPC leaves at the resolving slot and contact is `StrikeContactSec` (0.4; bush strike + `BushStrikeEmergeSec` 0.35) later, so the cap must cover the longest contact delay: invariant I-HUD-1 `≥ StrikeContactSec + BushStrikeEmergeSec` (≤ 1.2 by Assassination I-ASN-3) |
+| HudResultPlateMaxHoldBackSec | float | 1.25-2.0 (hard minimum 1.25, decision D8) | data file (1.25) | Cap on holding a received result for the contact frame. The RPC leaves at the resolving slot and contact is `StrikeContactSec` (0.4; bush strike + `BushStrikeEmergeSec` 0.35) later, so the cap must cover the longest contact delay: invariant I-HUD-1 `≥ StrikeContactSec + BushStrikeEmergeSec` (≤ 1.2 by Assassination I-ASN-3) |
 | HudReplayWindowSec | float | 0.5-3.0 | data file (1.0) | Rebuilds only (HUD-R17): how long after its show time a result pending across a rebuild may still be shown |
 | seq, seq_lastShown | `(PossessionEpoch, Seq)` | — | owner command history (IIF R5) | `ClientCommandSeq` of the result / of the last shown plate; ring cleared on rebuild |
 
@@ -241,7 +241,7 @@ The own_removal formula is defined as:
 | DeathServerTime | double | — | own pawn `FDeathState` (All) | Server time the owner's fall starts (= contact time) |
 | ExileBeatSec | float | 0.5-1.2 | Penalty key (default 0.8) | Beat between the exile plate and the card |
 | HudRemovalCardDelaySec | float | 0.5-1.2 | data file (0.8) | Beat between own fall start and the card; warning if ≠ `ExileBeatSec` |
-| HudOwnRemovalHoldCapSec | float | 1.2-2.0 | data file (1.25) | Longest wait for the own death state after the State arrives; invariant I-HUD-2 `≥ StrikeContactSec + BushStrikeEmergeSec` (the latest a fall can start after the slot) |
+| HudOwnRemovalHoldCapSec | float | 1.25-2.0 (hard minimum 1.25, decision D8) | data file (1.25) | Longest wait for the own death state after the State arrives; invariant I-HUD-2 `≥ StrikeContactSec + BushStrikeEmergeSec` (the latest a fall can start after the slot) |
 
 **Output Range:** `t_card − t_state` ∈ [≈ `StrikeContactSec` − one-way latency + 0.8, `HudOwnRemovalHoldCapSec` + 0.8] (≥ 0.8 s when the state arrives after the fall start). For an exile, `t_card − t_show` = `ExileBeatSec`; a late `FStrikeResult` delays the card with its plate (Camera's `ExileCardTimeoutSec` fallback fades the view meanwhile, PEN-R16). The camera fade to black starts when the binding is retired (`DeathServerTime + DeathFallSec`, 1.2 s) and lasts 0.5 s; the card (L3) sits above it.
 **Example:** a victim's State arrives at 20.00; death state observed at 20.25 with fall start mapped to 20.40 → card enters 21.20, fully in 21.80; camera black from 22.10; card collapses into the brackets at 25.80-26.60. For an exile whose plate showed at 10.00, the card enters at 10.80.
@@ -453,14 +453,14 @@ Registered under owner `HUD` (TDC CR-15 columns, layout as in concealment-bushes
 | `HudResultPlateInSec` | float | HUD | 0.25 | 0.1-0.5 | 0.2-0.3 | Client | Use | s | F3 stepped entrance (art bible 7.6 urgent). High: the verdict lags the contact frame. Low: the four steps collapse into a pop. |
 | `HudResultPlateHoldSec` | float | HUD | 3.0 | 1.0-6.0 | 2.0-4.0 | Client | Use | s | F3. Low: a glance away misses the verdict. High: the plate covers the next encounter's strike hint and delays the banner. One value for every outcome (HUD-R6). |
 | `HudResultPlateOutSec` | float | HUD | 0.6 | 0.2-1.0 | 0.4-0.8 | Client | Use | s | F3 exit fade. |
-| `HudResultPlateMaxHoldBackSec` | float | HUD | 1.25 | 1.2-2.0 | 1.25-1.5 | Client | Use | s | F2 cap. Below the I-HUD-1 bound a bush strike's plate could show before contact (outcome early). High: a corrupt clock offset delays the plate. |
+| `HudResultPlateMaxHoldBackSec` | float | HUD | 1.25 | 1.25-2.0 | 1.25-1.5 | Client | Use | s | F2 cap. Below the I-HUD-1 bound a bush strike's plate could show before contact (outcome early). High: a corrupt clock offset delays the plate. |
 | `HudReplayWindowSec` | float | HUD | 1.0 | 0.5-3.0 | 0.75-1.5 | Client | Use | s | F2, rebuilds only (HUD-R17; live play never drops a late result). High: a stale plate appears after a reconnect, out of context. Low: a plate pending across a quick travel or rebuild is lost. |
 | `HudPreemptExitSec` | float | HUD | 0.25 | 0.1-0.4 | 0.2-0.3 | Client | Use | s | F3 preempt. High: two text blocks overlap longer (photosensitivity budget, art bible 7.6 rule 7). Low: a pop. |
 | `HudRemovalCardInSec` | float | HUD | 0.6 | 0.3-1.0 | 0.5-0.8 | Client | Use | s | F3 card entrance (art bible 7.6). |
 | `HudRemovalCardHoldSec` | float | HUD | 4.0 | 2.0-6.0 | 3.0-5.0 | Client | Use | s | F3. Low: the role change is missed. High: the informant waits behind a card. |
 | `HudRemovalCardOutSec` | float | HUD | 0.8 | 0.4-1.2 | 0.6-1.0 | Client | Use | s | F3 collapse into the informant brackets. |
 | `HudRemovalCardDelaySec` | float | HUD | 0.8 | 0.5-1.2 | 0.7-1.0 | Client | Use | s | F4 beat after the own fall start. I-HUD-3 **rejects** the preset if ≠ `ExileBeatSec` (one beat for every removal; cross-review C-W3 2026-10-24). Low: the card hides the fall. High: the screen goes black before the card (camera fade at 1.2 s). |
-| `HudOwnRemovalHoldCapSec` | float | HUD | 1.25 | 1.2-2.0 | 1.25-1.5 | Client | Use | s | F4. Below I-HUD-2 the card could precede the visible fall. High: a lost death state delays the card. |
+| `HudOwnRemovalHoldCapSec` | float | HUD | 1.25 | 1.25-2.0 | 1.25-1.5 | Client | Use | s | F4. Below I-HUD-2 the card could precede the visible fall. High: a lost death state delays the card. |
 | `HudFeedLineCount` | int32 | HUD | 3 | 1-4 | 3-3 | Client | Use | Count | F8 (art bible 7.3 row 12: max 3). High: the feed grows into the city. Low: simultaneous removals queue. |
 | `HudFeedLineLifeSec` | float | HUD | 6.0 | 3.0-12.0 | 5.0-8.0 | Client | Use | s | F8. Low: a line vanishes before it is read under pressure. High: stale lines. |
 | `HudFeedMinDwellSec` | float | HUD | 2.0 | 0.5-4.0 | 1.5-3.0 | Client | Use | s | F8 eviction floor. Must be ≤ `HudFeedLineLifeSec`. |

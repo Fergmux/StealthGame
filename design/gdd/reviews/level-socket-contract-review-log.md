@@ -87,3 +87,8 @@ Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md 0ecd59c878842ff
 Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bbbc02bdd9ba8
 Reviewed-Content-Hash: design/gdd/objectives-chain.md ca652db3c9bb041fb11d0af194650394ce5140b0
 Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a6a34b36063e17bccc2f3ad910
+
+## Closeout cross-doc pass 2026-10-25
+- D4 applied in V-SEP/D5: `StartToFinalMinPathCm` 4,400 on the generator.
+- Dependencies and Cross-References status cells set to In Review.
+- Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.

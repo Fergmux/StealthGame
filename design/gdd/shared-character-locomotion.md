@@ -478,7 +478,7 @@ The starvation formula is defined as:
 
 ## Dependencies
 
-Source: `design/gdd/systems-index.md` row 9 and Dependency Map item 9 (Depends On: Input & Interaction Framework, Participant State & Roster, Character Pool & Appearance, Tuning Data & Config). Every GDD named below is now designed (verified 2026-10-24, cross-review C-W11).
+Source: `design/gdd/systems-index.md` row 9 and Dependency Map item 9 (Depends On: Input & Interaction Framework, Participant State & Roster, Character Pool & Appearance, Tuning Data & Config). Every GDD named below is now designed and In Review (verified 2026-10-24, cross-review C-W11; statuses refreshed 2026-10-25).
 
 ### Upstream (SCL depends on)
 
@@ -494,7 +494,7 @@ Source: `design/gdd/systems-index.md` row 9 and Dependency Map item 9 (Depends O
 | Dependent (index #) | What it takes | Hard/Soft |
 |---|---|---|
 | Input & Interaction Framework (3) | server `IsRunning`, `IsInTraversal`; `CommandedDisplacementCm(Since)` for R8; `PawnNetUpdateHz` (U = 1/Hz); `ReleaseBaselineStop` behaviour (R5) | Hard at runtime (contained soft cycle, as stated by the IIF) |
-| Round & Match Framework (6) | the pawn factory `SpawnSharedPawn` (one-frame shuffled spawn), `Possess`/`Unpossess`, the stop-and-blend handover (R4) | Hard (Round designed) |
+| Round & Match Framework (6) | the pawn factory `SpawnSharedPawn` (one-frame shuffled spawn), `Possess`/`Unpossess`, the stop-and-blend handover (R4) | Hard (Round In Review) |
 | Session & Travel (5) | rule 25d (pawn replicated shape is identical and unchanged by connection events) and rule 25g (input starvation, smoothing parity) are implemented here (R13, R15, R16) | Soft (peer contract) |
 | Camera System (10) | `GetHeadLookWorldRotation()`, eye socket, body facing; the rule that camera mode changes nothing replicated (R9) | Hard |
 | Crowd & NPC Behaviour (11) | the same entry points (path-following through `Move`, R5.7); the speed scale range and baseline shaping its AI must live inside (R5, R6); traversal availability for red herrings; handover hooks; `ActionPose`-based obstacle rule (R16); the factory for NPC replacement (R2); the takeover eligibility rule (R2a, with Penalty); the contact reaction (R5.8) | Hard |
@@ -510,7 +510,7 @@ Source: `design/gdd/systems-index.md` row 9 and Dependency Map item 9 (Depends O
 | Procedural City Generator (16) | capsule radius and height, max step height and walkable slope, walk/run speeds and traversal heights for its geometry checks (Generator Dependencies, its SCL change request 4); added at the 2026-10-24 cross-review (C-W13) | Soft |
 | Anti-Cheat & Info-Leak Security (27, Alpha) | the replicated-property allowlist and the input-starvation / speed checks | Soft |
 
-**Bidirectionality**: Tuning Data & Config, Input & Interaction Framework, Participant State & Roster, Character Pool & Appearance, Session & Travel, Round & Match Framework and Level Socket Contract already list SCL in their own Dependencies (verified 2026-10-24). Change requests: the systems index should add Round & Match Framework and Session & Travel as SCL dependents and Level Socket Contract as a soft peer; Concealment should list SCL (index already lists Concealment). The Information Visibility Policy now lists SCL as a peer (verified at design review 2026-10-24).
+**Bidirectionality**: Tuning Data & Config, Input & Interaction Framework, Participant State & Roster, Character Pool & Appearance, Session & Travel, Round & Match Framework and Level Socket Contract already list SCL in their own Dependencies (verified 2026-10-24). The systems-index change request (change request 12, below) is **met** (verified in the closeout pass 2026-10-25): index rows 5 (Session & Travel) and 6 (Round & Match Framework) list SCL in Depends On, row 9 lists Level Socket Contract as a soft peer, and row 12 (Concealment) lists SCL. The Information Visibility Policy lists SCL as a peer (verified at design review 2026-10-24).
 
 ## Tuning Knobs
 
@@ -645,7 +645,7 @@ SCL has no UI of its own. The HUD may read the owner's locally predicted `IsRunn
 9. **Information Visibility Policy**: adopt R13's replicated-property allowlist; `HeadLook`, `TraversalState`, `ActionPose`, `AppearanceId` audience `All`. Policy change request 1 (R6 amendment, cull hook, L27 based-on exception, `Instigator == Self`, fixed frequency, spikes S9/S10/S13/S14) is adopted in SCL R2 and R13; L12 adopted in R18.4.
 10. **Diegetic Audio (VS)**: consume the step-clock event (R18); never key a sound to controller, team or role.
 11. **Art bible**: (a) 5.4 B4 "about 0.7 m or more" → "≥ 0.5 s at every crowd pace, about 0.35-0.55 m" (F2); (b) 5.4 rule 5 "same pose-search cadence" → "same cadence at the same screen height, and no other input" (8.x.8 varies it by tier); (c) 5.4 B1: cadence by pace, 1.8 steps/s at 112 cm/s to 2.0 at 140; (d) 5.4 B5: add "in-place pivot after B4 at ≤ 150 °/s"; (e) 5.4 rule 4 or 8.x.8: "step sound lands within ±50 ms of the visible foot plant at tier A"; (f) 5.5 Brace row: "does not translate or turn while held"; (g) 8.x.8: tier B/C cadence as a time interval, split tier D into D-visible (≥ 8 Hz minimal pose) and D-culled; (h) 3.2 (line ~1036) and the pose-set lists: rename "crouch" to "brace" (the sample's crouch is removed, R10).
-12. **Systems index**: add Round & Match Framework and Session & Travel as SCL dependents, Level Socket Contract as a soft peer.
+12. **Systems index**: add Round & Match Framework and Session & Travel as SCL dependents, Level Socket Contract as a soft peer. **MET (closeout pass 2026-10-25)**: index rows 5 and 6 list SCL, row 9 lists LSC as a soft peer.
 13. **Participant State & Roster**: R9 crowd adoption names SCL's `TakeOverCrowdPawn` (R2a) as the mechanism; the `PawnLeavingGame` override is implemented by SCL R2b (spike S8 stays Roster's).
 14. **Character Pool & Appearance**: CP-12b/CP-13 `TakeNpcCard` is paired with `TakeOverCrowdPawn` in one server frame; the card is the taken-over pawn's existing card.
 15. **Procedural City Generator** (reconciliation 2026-10-24): a 0.4 m canal kerb does not block (it is below the 45 cm step height); raise kerbs meant to block to 46-69 cm or add a pawn-blocking volume (R17.1).

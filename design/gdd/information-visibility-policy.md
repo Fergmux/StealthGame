@@ -78,7 +78,7 @@ Anchor moments, each mapped to an acceptance criterion: (1) an opponent with a m
 | `SiteKnownToTeam` (Subject = court fixture: the court is a live site of the viewer's own team, Objectives OC-5) | Y | Y | Y | **N** | — | E | Team | C-TeamView (`FObjectiveTeamView` live-site ids). Derived from `SiteAssignment`; drives presentation (prompt, stage card, progress credit) only, **never ingress acceptance** (R7.4a) |
 | `ConnectionState`, ping, join time | own | own | **N** (Session 24; the only teammate exception is the `TeammateReconnecting` bit below) | N | — | N (`NeverReleased`) | Owner | Owner's connection; the clock-exchange pair `ServerClockPing(T1)` / `ClientClockPong(T1, T2, T3)` (unreliable, owner only, timestamps only; ADR-0002 §9) |
 | `TeammateReconnecting` (one bit: the teammate is disconnected inside its grace during `Active`; no time, reason, ping or address) | — | — | Y | **N** | — | N | Team | C-TeamView teammate entry `bReconnecting` (Roster R6), derived by the Roster push step from Session's `Connection` projection. Added by user decision 2026-10-25 (Session OQ7 closed). Allies may already infer a disconnect from the AI-held pawn's behaviour; the bit only makes it explicit to them. Never in any `All` carrier |
-| `TeamPing` (a teammate's momentary ping: sender `PublicHandle`, per-sender `PingSeq`, 10 cm quantised world point, server time; Informant Pings PNG-R6) | Y (own echo) | Y (own echo) | Y | **N** | — | N | Team | C-TeamView part `UTeamPingViewComponent` (`FTeamPingView`, one slot per team member) on each team member's PlayerController. Added by user decision 2026-10-25 (Informant Pings moved to MVP). The point is the sender's own claim (no LOS check); it names no pawn; nothing about it reaches the pawn, the PlayerState or the GameState (PNG-R9) |
+| `TeamPing` (a teammate's momentary ping: sender `PublicHandle`, per-sender `PingSeq`, 0.1 cm quantised world point (`FVector_NetQuantize10`, one decimal place of a centimetre), server time; Informant Pings PNG-R6) | Y (own echo) | Y (own echo) | Y | **N** | — | N | Team | C-TeamView part `UTeamPingViewComponent` (`FTeamPingView`, one slot per team member) on each team member's PlayerController. Added by user decision 2026-10-25 (Informant Pings moved to MVP). The point is the sender's own claim (no LOS check); it names no pawn; nothing about it reaches the pawn, the PlayerState or the GameState (PNG-R9) |
 | Opponent counts (Active, Informant, AwaitingPawn) | N | N | N | N | — | Y | ServerOnly until `Ended` | `FRoundResult` only |
 | `RoundTeamSummary` (per team: stages completed 0-3, members eliminated for the round at the round's end, team total of `WrongTarget` results; Round R9 (a) `FRoundResult.TeamSummary`) | N | N | N | N | — | **Y** (released in MVP, at the round-end step only) | ServerOnly until `Ended`, then All | `FRoundResult` in `FRoundPublicState` (Round R9, R19 `PublicResult`). Added by user decision 2026-10-25 (text-only round summary in MVP, HUD-E21). Team aggregates only: no per-participant value, no time, no NPC/informant split (wrong targets count NPC and informant kills alike, as the tally does). Never present before `Ended` |
 | Own-team counts | Y | Y | Y | — | — | Y | Team | derived locally from C-TeamView |
@@ -305,7 +305,7 @@ The Policy defines no gameplay balance curve. Its numeric rules are leak budgets
 | Variable | Type | Range | Source | Description |
 |---|---|---|---|---|
 | n_P | int | 1-5 | `TeamSize` | Non-ally player pawns (opponents) |
-| n_N | int | 20-60 | `NpcCount` | NPC pawns |
+| n_N | int | 35-50 (safe; hard 6-100, TDC); default 50 | `NpcCount` | NPC pawns |
 | r_P, r_N | float (/min) | ≥ 0 | measured in playtest / Crowd tuning | Bush entries per pawn per minute, players and NPCs |
 | k | float | 1.0-1.5 | test constant | Allowed posterior inflation over base rate, 1.5 (the ceiling; review 2026-10-24 ruling A: never raised to meet Crowd, R7.6) |
 | P_hide | float | 0-1 | calculated | Probability that a pawn seen (or detected) entering concealment is a player |
@@ -383,32 +383,32 @@ The index row 7 lists Roster and Round as hard upstream dependencies and SCL, Se
 
 | System | Interface the Policy uses | Hard / Soft | Status |
 |---|---|---|---|
-| Participant State & Roster (#2) | `GetRelation(PawnA, PawnB)` (viewer class), `IsPawnBound` (fact `IsPlayer`), `GetState` (`IsInformant`), `GetTeam` (`TeamMembership`), `GetParticipant`; R6 carriers C-Public, C-TeamView, C-Server | Hard | Designed (NEEDS REVISION; R6 consistent) |
-| Round & Match Framework (#6) | Phase (`Ended` flips every viewer to `PostRound` in the round-end step, R9), Event Log release classes, `FRoundPublicState`, the no-opponent-count rule | Hard | Reviewed - MAJOR REVISION NEEDED 2026-10-24 (re-review pending) |
-| Tuning Data & Config (#1) | Registers the Policy's knobs (CR-15); TDC uses the Policy's `ServerOnly | All` audience subset for tuning keys | Soft | Reviewed - MAJOR REVISION NEEDED 2026-10-24 (re-review pending) |
+| Participant State & Roster (#2) | `GetRelation(PawnA, PawnB)` (viewer class), `IsPawnBound` (fact `IsPlayer`), `GetState` (`IsInformant`), `GetTeam` (`TeamMembership`), `GetParticipant`; R6 carriers C-Public, C-TeamView, C-Server | Hard | In Review (R6 consistent) |
+| Round & Match Framework (#6) | Phase (`Ended` flips every viewer to `PostRound` in the round-end step, R9), Event Log release classes, `FRoundPublicState`, the no-opponent-count rule | Hard | In Review |
+| Tuning Data & Config (#1) | Registers the Policy's knobs (CR-15); TDC uses the Policy's `ServerOnly | All` audience subset for tuning keys | Soft | In Review |
 
 ### Peer contracts (the other system implements a Policy audience)
 
 | System | What it implements | Hard for whom | Status |
 |---|---|---|---|
-| Shared Character & Locomotion (#9) | Pawn replicated-property allowlist (R13), pawn-pointer suppression (S1), replication parity, the per-viewer concealment cull hook (R7 here) | Hard for SCL | Designed (in progress) |
-| Session & Travel (#5) | Rule 25a-g leak checklist (frozen PlayerStates, suppressed join/leave broadcasts, connection data never to non-owners) | Hard for Session | Designed |
-| Input & Interaction Framework (#3) | `ActionPose` audience `All`; owner-only `FHoldStatus`, rejection codes, cooldown end on the PlayerController; reply-timing guard (R6) | Hard for IIF | Designed |
-| Character Pool & Appearance (#4) | `AppearanceId` `All`; look-owner link `ServerOnly` until `PostRound` | Hard for CPA | Designed |
-| Level Socket Contract (#8) | `FSiteAssignment`, zone-to-team map and Selection sub-seed `ServerOnly`, released to `PostRound` | Hard for LSC | Reviewed - MAJOR REVISION NEEDED 2026-10-24 (re-review pending) |
+| Shared Character & Locomotion (#9) | Pawn replicated-property allowlist (R13), pawn-pointer suppression (S1), replication parity, the per-viewer concealment cull hook (R7 here) | Hard for SCL | In Review |
+| Session & Travel (#5) | Rule 25a-g leak checklist (frozen PlayerStates, suppressed join/leave broadcasts, connection data never to non-owners) | Hard for Session | In Review |
+| Input & Interaction Framework (#3) | `ActionPose` audience `All`; owner-only `FHoldStatus`, rejection codes, cooldown end on the PlayerController; reply-timing guard (R6) | Hard for IIF | In Review |
+| Character Pool & Appearance (#4) | `AppearanceId` `All`; look-owner link `ServerOnly` until `PostRound` | Hard for CPA | In Review |
+| Level Socket Contract (#8) | `FSiteAssignment`, zone-to-team map and Selection sub-seed `ServerOnly`, released to `PostRound` | Hard for LSC | In Review |
 
 ### Downstream (these depend on the Policy)
 
 | Dependent | Interface it uses | Hard / Soft | Status |
 |---|---|---|---|
-| Crowd & NPC Behaviour (#11) | Must never read `IsPlayer`; red-herring duty for any tell whose network surface reaches non-allies (bush use, R7.6); takeover blend parity | Hard | Reviewed, revisions applied. Conflict resolved: Crowd withdrew k = 2.0 and designs to F5 at k = 1.5 with r_N 0.19/min (T5, AC-CNB-15); measurement still due at the MVP-core checkpoint (OQ3) |
-| Concealment (Bushes) (#12) | Implements `IsConcealedFrom(Viewer)` through `CanViewerKnow(V, S, Position)`; owns transition timing; uses R7 hybrid enforcement; killed-concealed target rule (CON-R9, `bDiedConcealed`) | Hard | Reviewed, revisions applied; consistent (k 1.0-1.5, `BushEnter`/`BushExit`, change requests 3 and 12 applied) |
-| Assassination & Defence Reversal (#13) | Kill confirmation audience Owner (attacker only); `Attack(TargetSpot)` resolution against server positions of culled pawns (R7.4); informant-kill invariant; outcome slot vs death write (R7.5); L10 residuals | Hard | Reviewed, revisions applied |
-| NPC-Kill Penalty & Informants (#14) | `StrikeCount` ServerOnly and `WrongTargetTally` Owner (confirmed 2026-10-25); informant viewer classes; takeover eligibility R9c (the line-of-sight rule C1 is Penalty's own); residuals R9d, L24 | Hard | Reviewed, revisions applied |
-| Objectives Chain (#15) | `ObjectiveProgress` Team (own) / ServerOnly (opponent); `RivalPrelimCount` Team (R3 row, ruling-B shape); reads `FSiteAssignment` server-side only; `SiteKnownToTeam` presentation only, ingress accepts any court (R7.4a) | Hard | Reviewed, revisions applied. Conflict resolved: OC-12 rewritten to ruling B; R3 row added, OQ4 closed (reconciliation 2026-10-24) |
-| Teammate Markers (#17) | C-TeamView `PawnRef` and the Team `Position` fallback feed (R8: feet position, per-connection trigger, same-update invariant) | Hard | Reviewed, revisions applied |
-| HUD (#18) | Reads only C-TeamView, owner data and `FRoundPublicState` (R10 host parity); leak rows L10, L22, L23, L34; AC-IVP-17 | Hard | Reviewed, revisions applied |
-| Camera System (#10) | Neutral view through a client-local, non-replicated camera actor, never the engine spectator state (R13, L30); camera components local-only (L17); presentation include check (AC-IVP-17) | Soft (Policy side) / Hard for Camera | Reviewed, revisions applied |
+| Crowd & NPC Behaviour (#11) | Must never read `IsPlayer`; red-herring duty for any tell whose network surface reaches non-allies (bush use, R7.6); takeover blend parity | Hard | In Review. Conflict resolved: Crowd withdrew k = 2.0 and designs to F5 at k = 1.5 with r_N 0.19/min (T5, AC-CNB-15); measurement still due at the MVP-core checkpoint (OQ3) |
+| Concealment (Bushes) (#12) | Implements `IsConcealedFrom(Viewer)` through `CanViewerKnow(V, S, Position)`; owns transition timing; uses R7 hybrid enforcement; killed-concealed target rule (CON-R9, `bDiedConcealed`) | Hard | In Review; consistent (k 1.0-1.5, `BushEnter`/`BushExit`, change requests 3 and 12 applied) |
+| Assassination & Defence Reversal (#13) | Kill confirmation audience Owner (attacker only); `Attack(TargetSpot)` resolution against server positions of culled pawns (R7.4); informant-kill invariant; outcome slot vs death write (R7.5); L10 residuals | Hard | In Review |
+| NPC-Kill Penalty & Informants (#14) | `StrikeCount` ServerOnly and `WrongTargetTally` Owner (confirmed 2026-10-25); informant viewer classes; takeover eligibility R9c (the line-of-sight rule C1 is Penalty's own); residuals R9d, L24 | Hard | In Review |
+| Objectives Chain (#15) | `ObjectiveProgress` Team (own) / ServerOnly (opponent); `RivalPrelimCount` Team (R3 row, ruling-B shape); reads `FSiteAssignment` server-side only; `SiteKnownToTeam` presentation only, ingress accepts any court (R7.4a) | Hard | In Review. Conflict resolved: OC-12 rewritten to ruling B; R3 row added, OQ4 closed (reconciliation 2026-10-24) |
+| Teammate Markers (#17) | C-TeamView `PawnRef` and the Team `Position` fallback feed (R8: feet position, per-connection trigger, same-update invariant) | Hard | In Review |
+| HUD (#18) | Reads only C-TeamView, owner data and `FRoundPublicState` (R10 host parity); leak rows L10, L22, L23, L34; AC-IVP-17 | Hard | In Review |
+| Camera System (#10) | Neutral view through a client-local, non-replicated camera actor, never the engine spectator state (R13, L30); camera components local-only (L17); presentation include check (AC-IVP-17) | Soft (Policy side) / Hard for Camera | In Review |
 | Informant Pings (#20, MVP since 2026-10-25) | Ping audience Team, momentary, place-anchored (`TeamPing` row, C-TeamView part) | Hard | In Review (design review NEEDS REVISION 2026-10-25, revisions applied; re-review pending) |
 | Post-Round Reveal (#21, VS) | `PostRound` class, `PostRoundEligible` Event Log content | Hard | Not written |
 | Diegetic Audio (#22, VS) | Audio parity: no sound path keyed on player-ness; concealed-pawn audio culled with the body for non-allies | Hard | Not written |
@@ -472,22 +472,22 @@ The Policy defines no screen. It binds every UI that shows information about ano
 | This GDD references | Element | Where used | Status |
 |---|---|---|---|
 | design/gdd/game-concept.md | Pillars P1, P2, P4; locked bush, informant, marker rules | Overview, R7, R9 | Locked |
-| design/gdd/participant-state-roster.md | R6 carriers, accepted limits, opponent-count and host-presentation rules; R10 queries and informant-kill invariant; OQ0 spikes S1-S8; AC-PSR-42/44/45 | R1-R5, R10, AC | Designed |
-| design/gdd/round-match-framework.md | R9 latch and round-end steps, R17 bound-AI constraint, R19 Event Log classes, R20 `FRoundPublicState` | R2, R3, States | Designed |
-| design/gdd/session-travel.md | Rules 22, 24, 25a-g | R5, R12 | Designed |
-| design/gdd/shared-character-locomotion.md | R13 always relevant, pawn allowlist; F9 net frequency | R5, R6, F3 | Designed (in progress) |
-| design/gdd/input-interaction-framework.md | R6 rejection timing, R7 informant legality, R12 audiences and relevancy bans | R3, R6, R7.4 | Designed |
-| design/gdd/character-pool-appearance.md | `AppearanceId` All, look-owner link | R3 | Designed |
-| design/gdd/level-socket-contract.md | R9 `FSiteAssignment` ServerOnly, `PostRound` release | R3 | Designed |
-| design/gdd/tuning-data-config.md | CR-8 audiences, CR-15 knob table | R3, Tuning Knobs | Designed |
+| design/gdd/participant-state-roster.md | R6 carriers, accepted limits, opponent-count and host-presentation rules; R10 queries and informant-kill invariant; OQ0 spikes S1-S8; AC-PSR-42/44/45 | R1-R5, R10, AC | In Review |
+| design/gdd/round-match-framework.md | R9 latch and round-end steps, R17 bound-AI constraint, R19 Event Log classes, R20 `FRoundPublicState` | R2, R3, States | In Review |
+| design/gdd/session-travel.md | Rules 22, 24, 25a-g | R5, R12 | In Review |
+| design/gdd/shared-character-locomotion.md | R13 always relevant, pawn allowlist; F9 net frequency | R5, R6, F3 | In Review |
+| design/gdd/input-interaction-framework.md | R6 rejection timing, R7 informant legality, R12 audiences and relevancy bans | R3, R6, R7.4 | In Review |
+| design/gdd/character-pool-appearance.md | `AppearanceId` All, look-owner link | R3 | In Review |
+| design/gdd/level-socket-contract.md | R9 `FSiteAssignment` ServerOnly, `PostRound` release | R3 | In Review |
+| design/gdd/tuning-data-config.md | CR-8 audiences, CR-15 knob table | R3, Tuning Knobs | In Review |
 | design/art/art-bible.md | 5.2 matrix, 5.2.1 swap at occlusion, 7.7 per-viewer summary, streamer mask, tests | R3, R7, UI, F8 | Written |
-| design/gdd/assassination-defence-reversal.md | ASN-R10, R21, R23 (outcome slot, death write, killed-concealed `bDiedConcealed` rule), I-ASN-4 residuals; change requests 3, 13 | R5, R7.5, R7.8, L10 | Reviewed, revisions applied |
-| design/gdd/npc-kill-penalty-informants.md | PEN-R3 (tally), PEN-R14 residuals, OQ-NKP-1; CR-1, CR-20 | R2, R3, R9d, L24 | Reviewed, revisions applied |
-| design/gdd/objectives-chain.md | OC-12 `RivalPrelimCount`, F4; change request 3 | R3, L34, OQ4 | Reviewed, revisions applied |
-| design/gdd/teammate-markers.md | TM-R4, TM-R4a; CR-2, CR-11 | R8 | Reviewed, revisions applied |
-| design/gdd/concealment-bushes.md | CON-R2, CON-R9 (target rule in force), F3; change requests 2, 11 | R7.1, R7.5, F4 | Reviewed, revisions applied |
-| design/gdd/crowd-npc-behaviour.md | T5, AC-CNB-15; change request 1 | Cross-References 4, OQ3, AC-IVP-34 | Reviewed, revisions applied |
-| design/gdd/camera-system.md | CS-R12.2 neutral view, CS-R2 | R13, L17, Downstream | Reviewed, revisions applied |
+| design/gdd/assassination-defence-reversal.md | ASN-R10, R21, R23 (outcome slot, death write, killed-concealed `bDiedConcealed` rule), I-ASN-4 residuals; change requests 3, 13 | R5, R7.5, R7.8, L10 | In Review |
+| design/gdd/npc-kill-penalty-informants.md | PEN-R3 (tally), PEN-R14 residuals, OQ-NKP-1; CR-1, CR-20 | R2, R3, R9d, L24 | In Review |
+| design/gdd/objectives-chain.md | OC-12 `RivalPrelimCount`, F4; change request 3 | R3, L34, OQ4 | In Review |
+| design/gdd/teammate-markers.md | TM-R4, TM-R4a; CR-2, CR-11 | R8 | In Review |
+| design/gdd/concealment-bushes.md | CON-R2, CON-R9 (target rule in force), F3; change requests 2, 11 | R7.1, R7.5, F4 | In Review |
+| design/gdd/crowd-npc-behaviour.md | T5, AC-CNB-15; change request 1 | Cross-References 4, OQ3, AC-IVP-34 | In Review |
+| design/gdd/camera-system.md | CS-R12.2 neutral view, CS-R2 | R13, L17, Downstream | In Review |
 | design/gdd/hud.md | HUD-R1 three carriers, tally display | R2, Downstream | Reviewed, revisions applied |
 | docs/engine-reference/unreal/modules/networking.md | Iris status; no coverage of relevancy internals, so R5/R7 claims come from installed 5.8.4 source | R5, R7 | Reference |
 

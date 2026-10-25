@@ -522,7 +522,7 @@ The index row 8 lists Tuning Data & Config and, as soft, Participant State & Ros
 | Tuning Data & Config (#1) | Frozen server snapshot at `RequestLayout`: every key in Tuning Knobs (owned here) plus `TeamSize`, `NpcCount`, `TargetRoundMinutes` (read only); `TuningHash` feeds `LayoutParamsHash`. | Hard |
 | Session & Travel (#5) | `FRoundParams.Seed`; `PublicSubSeed(Layout, Attempt)` and `ServerSubSeed(Domain, Attempt)` (F5); the single readiness ack (rule 11.6); writes `LayoutAttempt`/`LayoutHash` into `FRoundReadiness`; the fallback seamless travel to the graybox. | Soft (graybox runs with a fixed seed and test sub-seed) |
 | Participant State & Roster (#2) | Server-only `GetTeam`, for zone mapping and the respawn takeover's own-team and non-team sets. | Soft |
-| Information Visibility Policy (#7, designed) | Audience vocabulary; `PostRound` release of `FSiteAssignment` and the Selection sub-seed value. | Soft |
+| Information Visibility Policy (#7, In Review) | Audience vocabulary; `PostRound` release of `FSiteAssignment` and the Selection sub-seed value. | Soft |
 | Shared Character & Locomotion (#9) | Reference walk speed (140 cm/s, D4) and run speed (450 cm/s, D6); traversal heights, *provisional pending traversal spike*. | Soft (values only) |
 
 ### Downstream (these depend on the contract)
@@ -530,11 +530,11 @@ The index row 8 lists Tuning Data & Config and, as soft, Participant State & Ros
 | Dependent | What it takes | Hard/Soft |
 |---|---|---|
 | Round & Match Framework (#6) | `RequestLayout(Seed, TuningHash)`, `OnLayoutReady(LayoutId, Seed)`, `OnLayoutAborted`, `OnClientLayoutFailed`, `RequestStartPlacement`, `FSiteAssignment` and TeamSpawn queries, attempt records and `LayoutFallbackLevel` for the Event Log header. Owes the spawn gate (R4.6), the spawn-order shuffle (F5) and the abort-to-Lobby path. | Hard |
-| Crowd & NPC Behaviour (#11, designed) | `CrowdRoute`, `AreaTypeId`, `RequestEmergence(Replacement / AmbientEntry / AmbientExit)`, NPC start pool. Owes the ambient baseline (R5.6) from its `AmbientSchedule` stream, the exit-cancel rule (R5.7), the takeover release and a density function blind to the assignment. | Hard |
-| NPC-Kill Penalty & Informants (#14, designed) | `PickRespawnPawn(Team, RequestSeq, ExcludePawn)` (R5b) for every informant-body cause; owns the respawn delay and the Roster bind. | Hard |
-| Concealment (Bushes) (#12, designed) | `BushSite` (`BushId`, `HideVolume`, `EntryAxis`), built identically from the Manifest on server and clients. | Hard |
-| Objectives Chain (#15, designed) | `FSiteAssignment` (ServerOnly) and court geometry; owns the interaction actors and every narrower audience. | Hard |
-| Procedural City Generator (#16, designed) | Implements the provider interface from `PublicSubSeed(Layout, Attempt)` only, passes every predicate and the D8 acceptance target; never references Round. | Hard (on the contract) |
+| Crowd & NPC Behaviour (#11, In Review) | `CrowdRoute`, `AreaTypeId`, `RequestEmergence(Replacement / AmbientEntry / AmbientExit)`, NPC start pool. Owes the ambient baseline (R5.6) from its `AmbientSchedule` stream, the exit-cancel rule (R5.7), the takeover release and a density function blind to the assignment. | Hard |
+| NPC-Kill Penalty & Informants (#14, In Review) | `PickRespawnPawn(Team, RequestSeq, ExcludePawn)` (R5b) for every informant-body cause; owns the respawn delay and the Roster bind. | Hard |
+| Concealment (Bushes) (#12, In Review) | `BushSite` (`BushId`, `HideVolume`, `EntryAxis`), built identically from the Manifest on server and clients. | Hard |
+| Objectives Chain (#15, In Review) | `FSiteAssignment` (ServerOnly) and court geometry; owns the interaction actors and every narrower audience. | Hard |
+| Procedural City Generator (#16, In Review) | Implements the provider interface from `PublicSubSeed(Layout, Attempt)` only, passes every predicate and the D8 acceptance target; never references Round. | Hard (on the contract) |
 | Character Pool & Appearance (#4) | Emergence sockets for replacement materialisation; the takeover keeps the taken pawn's card (CP-12b intent). | Soft |
 | Shared Character & Locomotion (#9) | `TraversalPoint` records and the coping rule ("coping means traversable, and only coping does"). | Soft |
 | Input & Interaction Framework (#3) | Bush geometry from the Manifest for local prompts; objective prompts must come from Objectives' team-audience data, because roles are secret. | Soft |
@@ -668,14 +668,14 @@ The contract has **no player-facing UI** and publishes nothing to the HUD or Tea
 |---|---|---|---|
 | Locked rules (shared final, informant respawn at the team's spawn, server seed, identical layout, invalid layouts rejected) and pillars P1/P4, anti-pillars large-map and hide-and-wait | design/gdd/game-concept.md; production/session-state/active.md | R3, R5b, R8, R9, R10, D4 | Locked |
 | Informant respawn takeover (decided rule C1) | orchestrator pipeline rules; confirmed by the user 2026-10-25 | R5b | Decided 2026-10-24, confirmed 2026-10-25 |
-| `TeamSize`, `NpcCount`, `TargetRoundMinutes`, CR-15 key convention, freeze at `Preparing`, `TuningHash` | design/gdd/tuning-data-config.md | Tuning Knobs, D4, D6 | Written |
-| `Seed`, `FRoundParams`, `FRoundReadiness`, rule 11.6 ack, rule 14 secret sub-seeds, F5 domains, F7 `T_layout`, `TravelLoadTimeoutSec` | design/gdd/session-travel.md | R2, R4, R8, R9 | Written |
-| `GetTeam`, crowd adoption, `BindPawn`, "awaiting pawn", disconnect hand-over | design/gdd/participant-state-roster.md | R5b, R6, Edge Cases | Written |
-| Phases, P3-P6 preconditions, F5 spawn shuffle and zone share, R18 re-admission, Event Log header | design/gdd/round-match-framework.md | R4, R6, R8, R5b | Written |
-| Card rules for replacement and takeover (CP-12, CP-12b) | design/gdd/character-pool-appearance.md | R5b.4 | Written |
-| Walk/run speeds, spawn factory, traversal heights | design/gdd/shared-character-locomotion.md | D4, D6, R3 | In progress (*traversal: provisional pending spike*) |
-| Context prompts from site data (UI-3) | design/gdd/input-interaction-framework.md | Dependencies | Written |
-| Audiences, `PostRound`; ambient schedule, density function, Tell Matrix; stall pressure, site audiences; hide volumes; respawn delay; Generator | information-visibility-policy, crowd-npc-behaviour, objectives-chain, concealment-bushes, npc-kill-penalty-informants, procedural-city-generator (design/gdd/) | R5-R9 | Written (cross-reviewed 2026-10-24; provisional where those GDDs still await re-review) |
+| `TeamSize`, `NpcCount`, `TargetRoundMinutes`, CR-15 key convention, freeze at `Preparing`, `TuningHash` | design/gdd/tuning-data-config.md | Tuning Knobs, D4, D6 | In Review |
+| `Seed`, `FRoundParams`, `FRoundReadiness`, rule 11.6 ack, rule 14 secret sub-seeds, F5 domains, F7 `T_layout`, `TravelLoadTimeoutSec` | design/gdd/session-travel.md | R2, R4, R8, R9 | In Review |
+| `GetTeam`, crowd adoption, `BindPawn`, "awaiting pawn", disconnect hand-over | design/gdd/participant-state-roster.md | R5b, R6, Edge Cases | In Review |
+| Phases, P3-P6 preconditions, F5 spawn shuffle and zone share, R18 re-admission, Event Log header | design/gdd/round-match-framework.md | R4, R6, R8, R5b | In Review |
+| Card rules for replacement and takeover (CP-12, CP-12b) | design/gdd/character-pool-appearance.md | R5b.4 | In Review |
+| Walk/run speeds, spawn factory, traversal heights | design/gdd/shared-character-locomotion.md | D4, D6, R3 | In Review (*traversal: provisional pending spike*) |
+| Context prompts from site data (UI-3) | design/gdd/input-interaction-framework.md | Dependencies | In Review |
+| Audiences, `PostRound`; ambient schedule, density function, Tell Matrix; stall pressure, site audiences; hide volumes; respawn delay; Generator | information-visibility-policy, crowd-npc-behaviour, objectives-chain, concealment-bushes, npc-kill-penalty-informants, procedural-city-generator (design/gdd/) | R5-R9 | In Review (cross-reviewed 2026-10-24; second-round reviews done 2026-10-25, provisional until each re-review lands) |
 | Visual rules 2.3-2.5, 3.3, 3.6, 5.2.1, 6.2-6.8, 6.10 | design/art/art-bible.md | R3, R5, R7, VA-1 to VA-7 | Written |
 | UE 5.8 navigation (runtime generation, per-mesh nav areas) | docs/engine-reference/unreal/modules/navigation.md | R4.3, NavArea | Reference (5.8 block verified 2026-10-17) |
 
