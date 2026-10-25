@@ -1,0 +1,4 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthTuningDerived.h f2cd4645dd26647cd8383e35494fd60679f8e587
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tuning/StealthTuningDerived.cpp 6b45393321b523c33d3fd85ff48bb3d1ed57623c
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Tuning/DerivedIndicatorsTest.cpp aef7fd48ec385646b153dce60668b88d6f02c4b5
+Story: production/epics/tuning-data-config/story-047-derived-indicators.md

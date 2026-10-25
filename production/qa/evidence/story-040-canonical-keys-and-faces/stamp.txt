@@ -1,0 +1,7 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Public/View/StealthClientTuning.h b0db9e348ab7236252ae5710c8c57288c4ec89c2
+Reviewed-Content-Hash: Source/StealthFoundation/Public/View/StealthTuningPublicSubstructs.h 431e6a16cd4234d4b2e1cfcc09a936435a314ae1
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthServerTuning.h ca5361369d4b467f805c64052457750b0ab3522a
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthTuningSubstructs.h 7c6189a0b9066dc7b06f80ecc08e66040c8b6c7f
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthTuningData.h 44f9d15de33ca918af5e12148caf57ee81cc2c3f
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Tuning/CanonicalKeysTest.cpp 508cc86390d35688f3b93a10e85d468698dcbc13
+Story: production/epics/tuning-data-config/story-040-canonical-keys-and-faces.md

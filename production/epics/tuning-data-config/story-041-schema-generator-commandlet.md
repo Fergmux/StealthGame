@@ -1,12 +1,12 @@
 # Story 041: StealthTuningSchemaGen commandlet writes the generated schema table
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From the plan (Exit B-2), scoped to this story:*
 
-- [ ] The editor commandlet `StealthTuningSchemaGen` reflects the tuning sub-structs and writes the checked-in `StealthTuningSchema.generated.inl` of `constexpr` rows (member-pointer accessors, never offsetof) in deterministic key order, and rerunning it on an unchanged tree produces a byte-identical file. Test `StealthGame.Tuning.SchemaGenDeterministic`.
+- [x] The editor commandlet `StealthTuningSchemaGen` reflects the tuning sub-structs and writes the checked-in `StealthTuningSchema.generated.inl` of `constexpr` rows (member-pointer accessors, never offsetof) in deterministic key order, and rerunning it on an unchanged tree produces a byte-identical file. Test `StealthGame.Tuning.SchemaGenDeterministic`.
 
 ---
 
@@ -73,6 +73,9 @@
 - `Source/StealthGameEditor/Private/Tuning/StealthTuningSchemaGenCommandlet.cpp`
 - `Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl`
 - `Source/StealthGameEditor/Private/Tests/Tuning/SchemaGenDeterministicTest.cpp`
+- `Source/StealthGameEditor/Private/Tuning/StealthTuningSchemaGen.h` / `.cpp` (replace the `StealthTuningSchemaGenCommandlet.*` names: a console command, see Completion Notes)
+- `Source/StealthFoundation/Private/Tuning/StealthTuningAccess.h` (added: the member-pointer Get/Set templates the rows name)
+- `.gitattributes` (added: the generated table is checked out LF)
 
 ---
 
@@ -94,7 +97,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameEditor/Private/Tests/Tuning/SchemaGenDeterministicTest.cpp` (`StealthGame.Tuning.SchemaGenDeterministic`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.SchemaGenDeterministic`)
 
 ---
 
@@ -103,3 +106,14 @@
 - Depends on: `production/epics/tuning-data-config/story-040-canonical-keys-and-faces.md`, `production/epics/tuning-data-config/story-003-split-prototype-composition-root.md`
 - Unlocks: `production/epics/tuning-data-config/story-034-doc-lint-schema-row-match.md`, `production/epics/tuning-data-config/story-042-schema-bootstrap-regeneration.md`, `production/epics/tuning-data-config/story-043-schema-fingerprint-version-bump.md`, `production/epics/tuning-data-config/story-044-schema-complete.md`, `production/epics/tuning-data-config/story-045-hasher-golden.md`, `production/epics/tuning-data-config/story-046-f1-validate-clamp-nan.md`
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story). Open design point: the deterministic key order rule.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: two runs of the shared generator are byte-identical and equal to the checked-in `StealthTuningSchema.generated.inl` byte for byte (no BOM, no CR); rows are `inline constexpr` with `&Get<&FStealthServerTuning::X, &FX::Key>` / `&Set<...>` member-pointer accessors and the text never names offsetof; rows are in byte-wise key order (checked against the rendered text and the compiled table); no absolute path; the path is resolved from `FPaths::ProjectDir()`)
+**Decisions**: a console command `Stealth.Tuning.SchemaGen` (plus `Stealth.Tuning.SchemaVerify`, used by story 042) instead of a `UCommandlet`: StealthGameEditor loads at PostEngineInit, after commandlet lookup (main-session instruction); run headless with `UnrealEditor-Cmd StealthGame.uproject -ExecCmds="Stealth.Tuning.SchemaGen,QUIT_EDITOR" -unattended -nullrhi`. Key order = byte-wise ordinal (the F-2 hash order, and the snapshot wire order of ADR-0004 section 7), so reordering struct members cannot change the output. Number format: ints/bools as `N.0`, floats as the shortest decimal that round-trips through float plus `f` (the double field then holds the float value exactly). The fingerprint is emitted after the table (story 043's extension point). `.gitattributes` pins the table to LF so a `core.autocrlf` checkout stays byte-identical
+**Deviations**: Advisory: file names `StealthTuningSchemaGen.h/.cpp` instead of `...Commandlet.h/.cpp` (console command, not a commandlet); one added private header and a `.gitattributes` line (Files)
+**Test Evidence**: `Source/StealthGameEditor/Private/Tests/Tuning/SchemaGenDeterministicTest.cpp`; `production/qa/evidence/story-041-schema-generator-commandlet/stamp.txt`; generator run logs in `production/qa/evidence/story-042-schema-bootstrap-regeneration/`; full suite 61/61 green (cycle.ps1 -Tests -NoLaunch: Result: Succeeded, tests exit=0)
+**Run result**: N/A — editor tool writing a source file; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): an invalid printf precision form was replaced by a fixed round-trip formatter before the first build; no defects left

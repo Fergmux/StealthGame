@@ -1,0 +1,28 @@
+LogAutomationController: Display: Test Completed. Result={Success} Name={RegenerateTuningSchema} Path={StealthGame.Build.RegenerateTuningSchema}
+LogAutomationController: control detected: ValueAboveMax
+LogAutomationController: control detected: ValueAboveMax
+LogStealthHarness: Display: Replication system legacy (expected legacy), negative control detected
+LogStealthHarness: Display: Replication system iris (expected legacy), negative control detected
+LogStealthHarness: Display: Replication system unknown (expected legacy), negative control detected
+LogStealthHarness: Display: Replication system legacy (expected legacy), negative control detected
+LogStealthHarness: Display: Replication system legacy (expected legacy), negative control detected
+LogStealthHarness: Display: Replication system legacy (expected legacy), negative control detected
+LogAutomationController: control detected: IrisDriverFailsTheRun
+LogAutomationController: control detected: UnreadableDriverFailsTheRun
+LogAutomationController: control detected: UnmodifiedSampleBlueprints
+LogAutomationController: control detected: SeededIsLocallyControlledCall
+LogAutomationController: control detected: SeededCppLocalControlBranch
+LogAutomationController: control detected: UnmodifiedSampleAnimBp
+LogAutomationController: Display: Test Completed. Result={Success} Name={CanonicalKeys} Path={StealthGame.Tuning.CanonicalKeys}
+LogAutomationController: Display: Test Completed. Result={Success} Name={DerivedIndicators} Path={StealthGame.Tuning.DerivedIndicators}
+LogAutomationController: Display: Test Completed. Result={Success} Name={HashStableAndSensitive} Path={StealthGame.Tuning.HashStableAndSensitive}
+LogAutomationController: Default schema defaults: TuningHash 0xbfb232422bc84f75 ClientHash 0xc9c3bf6bbc58f9dd (SchemaVersion 1)
+LogAutomationController: control detected: HasherIgnoresFloatValue
+LogAutomationController: Display: Test Completed. Result={Success} Name={PresetClassesHygiene} Path={StealthGame.Tuning.PresetClassesHygiene}
+LogAutomationController: Display: Test Completed. Result={Success} Name={SchemaGenDeterministic} Path={StealthGame.Tuning.SchemaGenDeterministic}
+LogAutomationController: Display: Test Completed. Result={Success} Name={SchemaRowTypes} Path={StealthGame.Tuning.SchemaRowTypes}
+LogAutomationController: Display: Test Completed. Result={Success} Name={SchemaVersionBumped} Path={StealthGame.Tuning.SchemaVersionBumped}
+LogAutomationController: control detected: FieldChangedWithoutVersionBump
+LogAutomationController: control detected: VersionBumpedWithoutHistory
+LogAutomationController: control detected: TwoVersionsShareFingerprint
+LogAutomationController: Display: Test Completed. Result={Success} Name={ValidateClampAndNan} Path={StealthGame.Tuning.ValidateClampAndNan}

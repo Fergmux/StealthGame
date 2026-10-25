@@ -1,0 +1,5 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthTuningData.h 44f9d15de33ca918af5e12148caf57ee81cc2c3f
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthTuningCatalog.h 0a3eb426cf93a727b1749b99875fcba8bbc93922
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tuning/StealthTuningData.cpp dff5a38254e7a20d3b6a219a0e8e171f65ab725d
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Tuning/PresetClassesHygieneTest.cpp dc51539be739d334bad1408f53576451b795f620
+Story: production/epics/tuning-data-config/story-039-preset-asset-classes.md

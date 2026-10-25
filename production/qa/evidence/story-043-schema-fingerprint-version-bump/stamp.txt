@@ -1,0 +1,6 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthTuningVersion.h f056c590424a8dacc56418bb4d3b12350f6617eb
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthFnv1a64.h 73c308fd584ad17c3591fd53900687321707ad84
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl 6b241bc4bf38e5fe8fff689a716b701a880f85c1
+Reviewed-Content-Hash: Source/StealthGameEditor/Private/Tuning/StealthTuningSchemaGen.cpp e3f98244f5b30b2a481fdf4d38d66781f75dc585
+Reviewed-Content-Hash: Source/StealthGameEditor/Private/Tests/Tuning/SchemaVersionBumpedTest.cpp 0779c95d4731ba210f9b31dbc8ceb22cca392d39
+Story: production/epics/tuning-data-config/story-043-schema-fingerprint-version-bump.md

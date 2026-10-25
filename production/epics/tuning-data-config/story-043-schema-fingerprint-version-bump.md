@@ -1,12 +1,12 @@
 # Story 043: Schema fingerprint and the SchemaVersionBumped test
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From the plan amendment for story 043 (REVISED), scoped to this story:*
 
-- [ ] The generator writes a schema fingerprint and `StealthTuningVersion.h` holds `TuningSchemaVersion` plus an append-only `TuningSchemaHistory[] = {Version, Fingerprint}`; `StealthGame.Tuning.SchemaVersionBumped` fails when the generated fingerprint differs from the history entry of the current version (a field changed without bumping the version and appending history) and when two versions share one fingerprint; watched to fail once by a seeded field change.
+- [x] The generator writes a schema fingerprint and `StealthTuningVersion.h` holds `TuningSchemaVersion` plus an append-only `TuningSchemaHistory[] = {Version, Fingerprint}`; `StealthGame.Tuning.SchemaVersionBumped` fails when the generated fingerprint differs from the history entry of the current version (a field changed without bumping the version and appending history) and when two versions share one fingerprint; watched to fail once by a seeded field change.
 
 ---
 
@@ -70,6 +70,8 @@
 - `Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl` (fingerprint emitted by the generator)
 - `Source/StealthGameEditor/Private/Tuning/StealthTuningSchemaGenCommandlet.cpp` (fingerprint emission; shared with story 041)
 - `Source/StealthGameEditor/Private/Tests/Tuning/SchemaVersionBumpedTest.cpp`
+- `Source/StealthFoundation/Public/Server/StealthFnv1a64.h` (added: the shared FNV-1a-64 byte hash, reused by story 045)
+- `Source/StealthGameEditor/Private/Tuning/StealthTuningSchemaGen.cpp` (the generator file of story 041 under its final name)
 
 ---
 
@@ -91,7 +93,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameEditor/Private/Tests/Tuning/SchemaVersionBumpedTest.cpp` (`StealthGame.Tuning.SchemaVersionBumped`) must exist and pass, and the close note records that it was watched to fail once.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.SchemaVersionBumped`; watched to fail: see Completion Notes)
 
 ---
 
@@ -100,3 +102,16 @@
 - Depends on: `production/epics/tuning-data-config/story-041-schema-generator-commandlet.md`
 - Unlocks: `production/epics/tuning-data-config/story-044-schema-complete.md`
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story). Open design points: the fingerprint hash algorithm, the first version value, and whether a default-only change is intentionally outside the fingerprint.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: the generator writes `SchemaFingerprint` into the table; `StealthTuningVersion.h` holds `TuningSchemaVersion` = 1 and the append-only `TuningSchemaHistory[] = { {1, 0x4250230bdd621e89} }`; the test regenerates the fingerprint from reflection and passes when it equals the current version's entry, fails (negative controls, detected) for a seeded key rename without a bump, for a bump without a history append, and for two versions sharing one fingerprint, and passes after bump + append)
+**Watched to fail**: the seeded field change is a fixture (a reflected key renamed in a copy of the rows, never the real structs), and the "field changed without bump" check reported its failure inside the negative control (`control detected: FieldChangedWithoutVersionBump`, test log of this run); the real rename in the story-042 disposable worktree (see story 042) is the second, end-to-end observation
+**Decisions**: fingerprint = FNV-1a-64 (`StealthFnv1a64.h`, shared with the 045 hasher) over u8 len | key | u8 typeTag | u8 bPublic | u8 latch | u16le enum-value count, rows sorted by key; first version 1 whose fingerprint was cross-checked by an independent Python computation (`production/qa/evidence/story-043-schema-fingerprint-version-bump/fingerprint.py`, output 0x4250230bdd621e89 = generator output); the policy also requires ascending versions and the current version as the newest entry
+**Open for the story reviewer**: a default-only or range-only change is outside the fingerprint (asserted by the test as the current behaviour, per the ADR's field list); confirm that is intended. Removal of an old history entry is not detected (known limit)
+**Deviations**: Advisory: one added header (Files); the generator file name of story 041
+**Test Evidence**: `Source/StealthGameEditor/Private/Tests/Tuning/SchemaVersionBumpedTest.cpp`; `production/qa/evidence/story-043-schema-fingerprint-version-bump/` (`fingerprint.py`, `fingerprint-output.txt`, `stamp.txt`); full suite 61/61 green (cycle.ps1 -Tests -NoLaunch: Result: Succeeded, tests exit=0)
+**Run result**: N/A — build-time constant and editor test; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

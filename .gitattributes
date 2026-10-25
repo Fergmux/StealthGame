@@ -50,3 +50,5 @@
 *.uproject text
 *.uplugin text
 *.ini text
+# The generated tuning schema table is compared byte for byte with the generator output (LF, story tdc-041).
+Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl text eol=lf

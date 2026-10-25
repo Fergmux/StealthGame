@@ -1,12 +1,12 @@
 # Story 042: Bootstrap regeneration flow for the schema table
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 

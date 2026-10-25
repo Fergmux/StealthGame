@@ -1,12 +1,12 @@
 # Story 038: Schema row struct, type tags, latch enum and schema constants
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -34,7 +34,7 @@ This story lays the type vocabulary that every later tuning story uses. It creat
 
 *From the plan amendment for story 038 (REVISED) with the constants list fixed by Amendments 2, scoped to this story:*
 
-- [ ] `FTuningSchemaRow` (Key, TypeTag bool=0/int=1/float=2/enum=3, Get/Set function pointers, Default, HardMin, HardMax, SafeMin, SafeMax, bPublic, Latch, Owner, sentinel), `ETuningLatch {Round, Action, Use, Session}`, `GetTuningSchema()` and `Public/Server/StealthTuningConstants.h` exist, and the constants header defines exactly these schema constants, each with its GDD reference and none a preset field: `BlindGuessWarnPct` = 50 (I-4), `GraceMarginSec` = 30 (Round F4), `BushDomeInnerRadiusCm` = 90 (I-CS-4), `SclCapsuleRadiusCm` = 35 (I-ASN-1), `PingSkewTolSec` = 0.1 (Pings F1), `DueEpsilonMs` = 1 (Round R12); test `StealthGame.Tuning.SchemaRowTypes`. (The empty-table-under-BOOTSTRAP clause is verified by story 042, not here.)
+- [x] `FTuningSchemaRow` (Key, TypeTag bool=0/int=1/float=2/enum=3, Get/Set function pointers, Default, HardMin, HardMax, SafeMin, SafeMax, bPublic, Latch, Owner, sentinel), `ETuningLatch {Round, Action, Use, Session}`, `GetTuningSchema()` and `Public/Server/StealthTuningConstants.h` exist, and the constants header defines exactly these schema constants, each with its GDD reference and none a preset field: `BlindGuessWarnPct` = 50 (I-4), `GraceMarginSec` = 30 (Round F4), `BushDomeInnerRadiusCm` = 90 (I-CS-4), `SclCapsuleRadiusCm` = 35 (I-ASN-1), `PingSkewTolSec` = 0.1 (Pings F1), `DueEpsilonMs` = 1 (Round R12); test `StealthGame.Tuning.SchemaRowTypes`. (The empty-table-under-BOOTSTRAP clause is verified by story 042, not here.)
 
 ---
 
@@ -94,7 +94,7 @@ This story lays the type vocabulary that every later tuning story uses. It creat
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/SchemaRowTypesTest.cpp` (`StealthGame.Tuning.SchemaRowTypes`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.SchemaRowTypes`)
 
 ---
 
@@ -103,3 +103,14 @@ This story lays the type vocabulary that every later tuning story uses. It creat
 - Depends on: `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`
 - Unlocks: `production/epics/tuning-data-config/story-039-preset-asset-classes.md`
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story). Open design points: the `EnumValues` field timing, the `SoftRef` tag value, and the "exactly these constants" mechanism.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: `FTuningSchemaRow` (Key, TypeTag, Get/Set, Default, HardMin/HardMax, SafeMin/SafeMax, bPublic, Latch, Owner, Unit, bHasSentinel/Sentinel), type tags bool 0 / int 1 / float 2 / enum 3 (plus SoftRef 4 per the ADR-0004 amendment 2026-10-25b), `ETuningLatch {Round, Action, Use, Session}`, `GetTuningSchema()`, and `StealthTuningConstants.h` with exactly the six constants, each citing its GDD reference and none a preset field, checked by reflection over `UStealthTuningData` and both faces)
+**Decisions**: "exactly these constants" = the `StealthTuningConstants::All` list compared with the six expected pairs AND a scan of the header text for every `inline constexpr` declaration (a seeded extra constant is counted, control in the test); `EnumValues` is deferred to the first enum key (the generator rejects enum keys until then); the SoftRef tag value 4 is the ADR amendment's, its `AllowedClass`/`bAllowNull` columns stay with the Crowd schema-row story; a `Unit` column was added to the row (used by the AC-3b doc lint later); the empty-table clause is story 042 (`STEALTH_TUNING_SCHEMA_BOOTSTRAP`)
+**Deviations**: Advisory: the row carries `Unit` and `bHasSentinel` beyond the ADR Key Interfaces row (additive)
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/SchemaRowTypesTest.cpp`; `production/qa/evidence/story-038-schema-row-types/stamp.txt`; full suite 61/61 green (cycle.ps1 -Tests -NoLaunch: Result: Succeeded, tests exit=0)
+**Run result**: N/A — type vocabulary and constants only; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

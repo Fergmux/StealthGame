@@ -1,12 +1,12 @@
 # Story 040: The eight canonical keys and the client/server tuning faces
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From the plan (Exit B-2), scoped to this story:*
 
-- [ ] The eight canonical keys (`TeamSize`, `NpcCount` default 50, `AssassinationRangeCm`, `DefenceDurationSec`, `DefenceCooldownSec`, `NpcKillStrikeLimit`, `ObjectiveInteractSec`, `TargetRoundMinutes`) are declared once as UPROPERTYs with the type, default, hard range, safe range, audience, latch, owner and unit of the GDD Canonical Tunables table (hard range via ClampMin/ClampMax, safe via SafeMin/SafeMax, latch/owner/unit custom meta), inside `_Public`/`_Server` sub-structs, and `FStealthClientTuning` (all `_Public`, in `Public/View/`) and `FStealthServerTuning` (public + server, in `Public/Server/`) are distinct types. Test `StealthGame.Tuning.CanonicalKeys`.
+- [x] The eight canonical keys (`TeamSize`, `NpcCount` default 50, `AssassinationRangeCm`, `DefenceDurationSec`, `DefenceCooldownSec`, `NpcKillStrikeLimit`, `ObjectiveInteractSec`, `TargetRoundMinutes`) are declared once as UPROPERTYs with the type, default, hard range, safe range, audience, latch, owner and unit of the GDD Canonical Tunables table (hard range via ClampMin/ClampMax, safe via SafeMin/SafeMax, latch/owner/unit custom meta), inside `_Public`/`_Server` sub-structs, and `FStealthClientTuning` (all `_Public`, in `Public/View/`) and `FStealthServerTuning` (public + server, in `Public/Server/`) are distinct types. Test `StealthGame.Tuning.CanonicalKeys`.
 
 ---
 
@@ -73,6 +73,7 @@
 - `Source/StealthFoundation/Public/Server/StealthTuningSubstructs.h`
 - `Source/StealthFoundation/Public/Server/StealthTuningData.h` (edit: owner members; not in the plan list)
 - `Source/StealthFoundation/Private/Tests/Tuning/CanonicalKeysTest.cpp`
+- `Source/StealthFoundation/Public/View/StealthTuningPublicSubstructs.h` (added: the `_Public` sub-structs, so the client face names no `Server/` header)
 
 ---
 
@@ -94,7 +95,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/CanonicalKeysTest.cpp` (`StealthGame.Tuning.CanonicalKeys`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.CanonicalKeys`)
 
 ---
 
@@ -103,3 +104,14 @@
 - Depends on: `production/epics/tuning-data-config/story-039-preset-asset-classes.md`
 - Unlocks: `production/epics/tuning-data-config/story-041-schema-generator-commandlet.md`, `production/epics/tuning-data-config/story-047-derived-indicators.md`, `production/epics/tuning-data-config/story-056-default-preset-assets-and-catalog.md`, `production/epics/tuning-data-config/story-070-snapshot-struct-size-budget.md`
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story). Open design points: View-side placement of the `_Public` structs, Penalty/Objectives struct names, and the Unit source (no table column).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: each of the eight keys is declared once with the Canonical Tunables type, default, hard range (ClampMin/ClampMax), safe range (SafeMin/SafeMax), audience (sub-struct), latch, owner and unit meta; ServerOnly keys (`NpcCount`, `TargetRoundMinutes`) are absent from `FStealthClientTuning`; the faces are distinct types (`static_assert` in the header and the test); `UStealthTuningData` declares exactly the server face's members)
+**Decisions**: placement question settled without a lint exception: the `_Public` structs live in `Public/View/StealthTuningPublicSubstructs.h` and the `_Server` structs in `Public/Server/StealthTuningSubstructs.h` (which includes the View header); struct names `FRoundTuning_Public/_Server`, `FCrowdTuning_Server`, `FAssassinationTuning_Public`, `FPenaltyTuning_Public`, `FObjectivesTuning_Public`; members `<Owner>_<Audience>`; Owner meta = the short owner id (Round, Crowd, Assassination, Penalty, Objectives); Unit = the CR-15.2 name suffix (`Size`, `Count`, `Cm`, `Sec`, `Limit`, `Minutes`); the test stays in Foundation with its metadata clauses under `WITH_METADATA`
+**Deviations**: Advisory, for the story reviewer: (1) the AC asks for a unit but the Canonical Tunables table has none; the suffix rule gives `TeamSize` = `Size` and `TargetRoundMinutes` = `Minutes`, while the Round owner table says `Count` and `Min` (and `DefenceDurationSec` = `s` in the Assassination table): the AC-3b schema-row doc lint (story 034) will see these unit differences; (2) one added header (Files)
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/CanonicalKeysTest.cpp`; `production/qa/evidence/story-040-canonical-keys-and-faces/stamp.txt`; full suite 61/61 green (cycle.ps1 -Tests -NoLaunch: Result: Succeeded, tests exit=0)
+**Run result**: N/A — data declarations only; no gameplay system reads them yet
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

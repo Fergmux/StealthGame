@@ -585,47 +585,47 @@ stories:
     name: "Schema row struct, type tags, latch enum and schema constants"
     file: "production/epics/tuning-data-config/story-038-schema-row-types.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-039"
     name: "Preset data-asset classes with no Config back door"
     file: "production/epics/tuning-data-config/story-039-preset-asset-classes.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-040"
     name: "The eight canonical keys and the client/server tuning faces"
     file: "production/epics/tuning-data-config/story-040-canonical-keys-and-faces.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-041"
     name: "StealthTuningSchemaGen commandlet writes the generated schema table"
     file: "production/epics/tuning-data-config/story-041-schema-generator-commandlet.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-042"
     name: "Bootstrap regeneration flow for the schema table"
     file: "production/epics/tuning-data-config/story-042-schema-bootstrap-regeneration.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: "qa-lead"
     estimate_days: 0.25
     blocker: ""
@@ -635,11 +635,11 @@ stories:
     name: "Schema fingerprint and the SchemaVersionBumped test"
     file: "production/epics/tuning-data-config/story-043-schema-fingerprint-version-bump.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-044"
     name: "AC-3a SchemaComplete: rows, pins, mirrors and reflection hygiene"
@@ -655,31 +655,31 @@ stories:
     name: "AC-5 HashStableAndSensitive: FNV-1a-64 over the F-2 byte stream"
     file: "production/epics/tuning-data-config/story-045-hasher-golden.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-046"
     name: "AC-4 ValidateClampAndNan: the F-1 validation stage"
     file: "production/epics/tuning-data-config/story-046-f1-validate-clamp-nan.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-047"
     name: "AC-18 DerivedIndicators: the F-3 indicators"
     file: "production/epics/tuning-data-config/story-047-derived-indicators.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-048"
     name: "AC-17 InvariantBoundaries: invariants I-1 to I-5"

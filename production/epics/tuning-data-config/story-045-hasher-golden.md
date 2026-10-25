@@ -1,12 +1,12 @@
 # Story 045: AC-5 HashStableAndSensitive: FNV-1a-64 over the F-2 byte stream
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From GDD `design/gdd/tuning-data-config.md` AC-5, scoped to this story:*
 
-- [ ] **AC-5 (CR-7, F-2)**: GIVEN the committed fixture (fixed `SchemaVersion` and one key of each type tag), WHEN hashed on every CI platform, THEN the result equals the committed golden value. AND all of the following hold: permuting the input key order gives the same hash; a one-bit change to any field changes it; the hash function maps `-0.0` and `+0.0` equally; changing a server-only key changes `TuningHash` but not `ClientHash`, and changing a public key changes both; `Default` hashes equally on all CI platforms. (`StealthGame.Tuning.HashStableAndSensitive`)
+- [x] **AC-5 (CR-7, F-2)**: GIVEN the committed fixture (fixed `SchemaVersion` and one key of each type tag), WHEN hashed on every CI platform, THEN the result equals the committed golden value. AND all of the following hold: permuting the input key order gives the same hash; a one-bit change to any field changes it; the hash function maps `-0.0` and `+0.0` equally; changing a server-only key changes `TuningHash` but not `ClientHash`, and changing a public key changes both; `Default` hashes equally on all CI platforms. (`StealthGame.Tuning.HashStableAndSensitive`)
 
 ---
 
@@ -90,7 +90,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/HashStableAndSensitiveTest.cpp` (`StealthGame.Tuning.HashStableAndSensitive`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.HashStableAndSensitive`)
 
 ---
 
@@ -99,3 +99,15 @@
 - Depends on: `production/epics/tuning-data-config/story-041-schema-generator-commandlet.md`
 - Unlocks: `production/epics/tuning-data-config/story-050-resolve-fallback-to-default.md`
 - Open verification claims from the plan Note lines: none. The plan Note ("never `GetTypeHash`, `UE::HashStringFNV1a` or a struct memory image") is a settled rule, not an open claim. Open design point: the hasher overload that takes a fixture schema.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-5: the committed fixture (SchemaVersion 7; `bFixtureFlag` bool, `FixtureCount` int 42, `FixtureDelaySec` float 2.5, `FixtureMode` enum 3, `FixtureMotionAsset` SoftRef) hashes to the independently computed goldens TuningHash 0xe7bde85917144648 / ClientHash 0x49026584c2ec125e; the two GDD F-2 example encodings match byte for byte; reversed and rotated input orders hash equally; every bit of the int, float and enum values, the bool, the key name, the SchemaVersion and each type tag changes the hash; -0.0 and +0.0 hash equally; a server-only change moves TuningHash but not ClientHash and a public change moves both, on the fixture and on the real schema (`NpcCount` vs `DefenceDurationSec`); a SoftRef path and its lower-case twin hash equally; negative control `HasherIgnoresFloatValue` detected)
+**Default across platforms**: schema defaults hash to TuningHash 0xbfb232422bc84f75 / ClientHash 0xc9c3bf6bbc58f9dd at SchemaVersion 1 on MSVC x64 Win64 Development, the only platform run today (ADR-0008 section 9 wording: no cross-platform claim beyond the configurations actually run)
+**Decisions**: `FTuningHasher` has `Hash(values, version, publicOnly)` over the generated schema, `Hash(schema view, ...)` for fixture schemas and `HashEntries(version, entries)` for explicit fixtures (the golden form); the SoftRef canon of the ADR amendment (lower-case ASCII, u16le length) is included and in the fixture; the golden was computed by `production/qa/evidence/story-045-hasher-golden/golden.py`, a separate Python implementation of the GDD byte layout, never by the code under test
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/HashStableAndSensitiveTest.cpp`; `production/qa/evidence/story-045-hasher-golden/` (`golden.py`, `golden-output.txt`, `stamp.txt`); full suite 61/61 green (cycle.ps1 -Tests -NoLaunch: Result: Succeeded, tests exit=0)
+**Run result**: N/A — pure hashing core; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): one defect found by the first full run and fixed (the rotation case appended an element of the same array, a TArray aliasing assertion); no defects left

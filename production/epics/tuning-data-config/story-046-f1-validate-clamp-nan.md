@@ -1,12 +1,12 @@
 # Story 046: AC-4 ValidateClampAndNan: the F-1 validation stage
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From GDD `design/gdd/tuning-data-config.md` AC-4, scoped to this story:*
 
-- [ ] **AC-4 (CR-6, F-1)**: GIVEN the F-1 stage in isolation (the clamp-and-finite-test unit, run before the invariants; the whole-preset outcome of this fixture is covered by AC-6a and AC-17, because `NpcCount` 6 with `TeamSize` 5 would fail I-2) and a preset with `ObjectiveInteractSec` NaN, `DefenceDurationSec` 7.5, `AssassinationRangeCm` 50, `NpcKillStrikeLimit` 0 and `NpcCount` 0, WHEN validated, THEN the effective values are 3.0, 5.0, 100, 2 and 6, and the captured log holds one warning per key naming its authored and effective value. AND +Infinity and -Infinity each yield 3.0, AND `NpcKillStrikeLimit` 9 yields 5, AND values exactly on a bound produce no warning, AND `EndedAutoResetSec` 0 stays 0 with no warning while 1 yields 3 with one warning (sentinel rule), AND `NpcKillStrikeLimit` 0 yields 1 only for a preset flagged `bTestAllowsStrikeLimitOne`. (`StealthGame.Tuning.ValidateClampAndNan`)
+- [x] **AC-4 (CR-6, F-1)**: GIVEN the F-1 stage in isolation (the clamp-and-finite-test unit, run before the invariants; the whole-preset outcome of this fixture is covered by AC-6a and AC-17, because `NpcCount` 6 with `TeamSize` 5 would fail I-2) and a preset with `ObjectiveInteractSec` NaN, `DefenceDurationSec` 7.5, `AssassinationRangeCm` 50, `NpcKillStrikeLimit` 0 and `NpcCount` 0, WHEN validated, THEN the effective values are 3.0, 5.0, 100, 2 and 6, and the captured log holds one warning per key naming its authored and effective value. AND +Infinity and -Infinity each yield 3.0, AND `NpcKillStrikeLimit` 9 yields 5, AND values exactly on a bound produce no warning, AND `EndedAutoResetSec` 0 stays 0 with no warning while 1 yields 3 with one warning (sentinel rule), AND `NpcKillStrikeLimit` 0 yields 1 only for a preset flagged `bTestAllowsStrikeLimitOne`. (`StealthGame.Tuning.ValidateClampAndNan`)
 
 ---
 
@@ -92,7 +92,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/ValidateClampAndNanTest.cpp` (`StealthGame.Tuning.ValidateClampAndNan`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.ValidateClampAndNan`)
 
 ---
 
@@ -101,3 +101,14 @@
 - Depends on: `production/epics/tuning-data-config/story-041-schema-generator-commandlet.md`, `production/epics/tuning-data-config/story-009-log-capture-hook.md`
 - Unlocks: `production/epics/tuning-data-config/story-048-invariants-i1-i5.md`, `production/epics/tuning-data-config/story-049-safe-range-warn-only.md`
 - Open verification claims from the plan Note lines: none. The plan Note ("finite test runs before clamping; logs via UE_LOGF on LogStealthFoundation") is a rule, not an open claim; the `UE_LOGF` format-literal detail is [V `LogMacros.h:291`]. Open design point: how `bTestAllowsStrikeLimitOne` reaches the stage.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-4: `ObjectiveInteractSec` NaN, `DefenceDurationSec` 7.5, `AssassinationRangeCm` 50, `NpcKillStrikeLimit` 0, `NpcCount` 0 give 3.0, 5.0, 100, 2, 6 with exactly one LogStealthFoundation warning per key naming authored and effective value and no other warning; +Infinity and -Infinity each give 3.0; `NpcKillStrikeLimit` 9 gives 5; every key exactly on its hard minimum or maximum: no change, no warning; `EndedAutoResetSec` (fixture row, sentinel 0, range 3-600) 0 stays 0 with no warning and 1 gives 3 with one warning; `NpcKillStrikeLimit` 0 gives 1 only with `bTestAllowsStrikeLimitOne`, 2 without, and the flag lowers no other key)
+**Decisions**: the flag reaches F-1 as an explicit stage input `FTuningF1Options` (documented in `StealthTuningPipelineCore.h`; story 050 carries it in its resolve input) and is ignored under `UE_BUILD_SHIPPING`; F-1 takes the schema as a view (`RunF1(schema, values, options, report)`) and has a value-level `ApplyF1` for fixture rows without accessors; the warning text is "Tuning F-1: key K authored A effective E (reason)" with values printed as the shortest round-trip decimal ("7.5", "5") and "NaN"/"+Infinity"/"-Infinity"; the enum "undeclared value" branch exists in the action enum but no enum key exists yet
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/ValidateClampAndNanTest.cpp`; `production/qa/evidence/story-046-f1-validate-clamp-nan/stamp.txt`; full suite 61/61 green (cycle.ps1 -Tests -NoLaunch: Result: Succeeded, tests exit=0)
+**Run result**: N/A — validator core; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

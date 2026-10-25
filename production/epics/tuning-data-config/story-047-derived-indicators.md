@@ -1,12 +1,12 @@
 # Story 047: AC-18 DerivedIndicators: the F-3 indicators
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From the plan amendment for story 047 (REVISED), scoped to this story (the preset-scope clauses of AC-18 are story 098):*
 
-- [ ] (GDD AC-18, indicator clauses, test `StealthGame.Tuning.DerivedIndicators`): at defaults CrowdRatio is 5.0, DutyCycle within 0.0001 of 0.0667, BlindGuessSuccess within 0.001 of 0.249 and ExpectedBlindKills within 0.001 of 0.300; for NpcCount 15 and NpcKillStrikeLimit 3 BlindGuessSuccess is within 0.001 of 0.578; and no preset field named `BlindGuessWarnPct` exists (reflection). The preset-scope clauses of AC-18 are story 098.
+- [x] (GDD AC-18, indicator clauses, test `StealthGame.Tuning.DerivedIndicators`): at defaults CrowdRatio is 5.0, DutyCycle within 0.0001 of 0.0667, BlindGuessSuccess within 0.001 of 0.249 and ExpectedBlindKills within 0.001 of 0.300; for NpcCount 15 and NpcKillStrikeLimit 3 BlindGuessSuccess is within 0.001 of 0.578; and no preset field named `BlindGuessWarnPct` exists (reflection). The preset-scope clauses of AC-18 are story 098.
 
 ---
 
@@ -87,7 +87,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/DerivedIndicatorsTest.cpp` (`StealthGame.Tuning.DerivedIndicators`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.DerivedIndicators`)
 
 ---
 
@@ -96,3 +96,14 @@
 - Depends on: `production/epics/tuning-data-config/story-040-canonical-keys-and-faces.md`
 - Unlocks: `production/epics/tuning-data-config/story-048-invariants-i1-i5.md`, `production/epics/tuning-data-config/story-098-derived-indicators-preset-scope.md`
 - Open verification claims from the plan Note lines: none. The plan Note (the circular dependency on story 048's context) is resolved by the Amendments (REVISED 047 and NEW 098), not an open claim.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-18 indicator clauses: at the schema defaults CrowdRatio 5.0, DutyCycle 0.0667 (tolerance 0.0001), BlindGuessSuccess 0.249, ExpectedBlindKills 0.300, MissToHit 10; at NpcCount 15 / L 3 p 0.25, BlindGuessSuccess 0.578, ExpectedBlindKills 1.0 (tolerance 0.001); reflection over `UStealthTuningData` and both faces finds no field named `BlindGuessWarnPct`, which is the schema constant 50)
+**Decisions**: `FTuningDerived::Compute(const FStealthServerTuning&)` in double precision; a ratio whose denominator is not positive is reported as 0 on unclamped input (never divides by zero; F-1 always runs first in the pipeline); defaults come from the C++ initialisers (= the generated table's defaults), the expected numbers are test literals (boundary-value exception)
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/DerivedIndicatorsTest.cpp`; `production/qa/evidence/story-047-derived-indicators/stamp.txt`; full suite 61/61 green (cycle.ps1 -Tests -NoLaunch: Result: Succeeded, tests exit=0)
+**Run result**: N/A — design-indicator core; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left

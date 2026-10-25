@@ -1,0 +1,5 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthTuningSchema.h bb53968374ebd05e770931d376dcc69724175a3e
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/StealthTuningConstants.h 5808b02fc96ee0bc878e1bd893b47cb221e51f8d
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tuning/StealthTuningSchema.cpp 853424f967a50c8ea05370b8b532448d624ba119
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Tuning/SchemaRowTypesTest.cpp 44e9f190c92525b212f27ae05d89039dcc36fce2
+Story: production/epics/tuning-data-config/story-038-schema-row-types.md

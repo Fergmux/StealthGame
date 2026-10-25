@@ -1,12 +1,12 @@
 # Story 039: Preset data-asset classes with no Config back door
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From the plan (Exit B-2), scoped to this story:*
 
-- [ ] `UStealthTuningData : UPrimaryDataAsset` (one per owner `_Public`/`_Server` struct pair, no Config/DefaultConfig/GlobalUserConfig/PerObjectConfig on any tuning class or struct) and `UStealthTuningCatalog : UPrimaryDataAsset` (entries `{PresetId, TSoftObjectPtr Preset, bHostSelectable, bTestAllowsStrikeLimitOne}`, `Default` mandatory) exist, both override `GetPrimaryAssetId()` to return `StealthTuningPreset` / `StealthTuningCatalog`, and a catalog check rejects `bTestAllowsStrikeLimitOne` on `Default` and on any HostSelectable entry. Test `StealthGame.Tuning.PresetClassesHygiene`.
+- [x] `UStealthTuningData : UPrimaryDataAsset` (one per owner `_Public`/`_Server` struct pair, no Config/DefaultConfig/GlobalUserConfig/PerObjectConfig on any tuning class or struct) and `UStealthTuningCatalog : UPrimaryDataAsset` (entries `{PresetId, TSoftObjectPtr Preset, bHostSelectable, bTestAllowsStrikeLimitOne}`, `Default` mandatory) exist, both override `GetPrimaryAssetId()` to return `StealthTuningPreset` / `StealthTuningCatalog`, and a catalog check rejects `bTestAllowsStrikeLimitOne` on `Default` and on any HostSelectable entry. Test `StealthGame.Tuning.PresetClassesHygiene`.
 
 ---
 
@@ -91,7 +91,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Tuning/PresetClassesHygieneTest.cpp` (`StealthGame.Tuning.PresetClassesHygiene`) must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Tuning.PresetClassesHygiene`)
 
 ---
 
@@ -100,3 +100,14 @@
 - Depends on: `production/epics/tuning-data-config/story-038-schema-row-types.md`
 - Unlocks: `production/epics/tuning-data-config/story-040-canonical-keys-and-faces.md`, `production/epics/tuning-data-config/story-057-asset-manager-primary-types.md`
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story). Open design points: whether `bTestAllowsStrikeLimitOne` is compiled out of Shipping by `#if` on the field, and the asset-name part of the primary asset id.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: `UStealthTuningData` and `UStealthTuningCatalog` (`UPrimaryDataAsset`, `NotBlueprintType, NotBlueprintable`) carry no Config/DefaultConfig/GlobalUserConfig/PerObjectConfig flag and no `CPF_Config` property anywhere in the walked struct graph; `GetPrimaryAssetId()` returns `StealthTuningPreset` / `StealthTuningCatalog` with the object name; `UStealthTuningCatalog::CheckEntries` rejects `bTestAllowsStrikeLimitOne` on Default and on HostSelectable entries, accepts it on a non-selectable non-Default entry, and requires Default (also for an empty catalog))
+**Decisions**: `bTestAllowsStrikeLimitOne` stays a field in every configuration (one cooked layout) and F-1 ignores it under `UE_BUILD_SHIPPING` (story 046), which is how "compiled out of Shipping" is met; the asset-name part of the primary asset id is the object name; the hygiene walk follows struct members (and arrays of structs) from the classes and both faces, so new sub-structs are picked up
+**Deviations**: None
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Tuning/PresetClassesHygieneTest.cpp`; `production/qa/evidence/story-039-preset-asset-classes/stamp.txt`; full suite 61/61 green (cycle.ps1 -Tests -NoLaunch: Result: Succeeded, tests exit=0)
+**Run result**: N/A — C++ asset classes with no asset instance yet (assets are story 056); nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects left
