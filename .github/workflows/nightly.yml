@@ -1,0 +1,63 @@
+name: Nightly Gate
+
+# The nightly gate (ADR-0008 section 8, story tdc-023): everything the per-commit gate runs, plus the compile
+# probes, the T3 multi-process smoke under the StealthLeak2 and StealthClean net-emulation profiles, and the
+# Shipping-symbol check on a packaged Shipping build. tools/ci/nightly.ps1 sequences the components, prints one
+# "COMPONENT <id>: <verdict>" line each and decides the verdict; this file only starts it and uploads the logs.
+#
+# Unreal Engine cannot run on GitHub-hosted runners: like tests.yml this needs the SELF-HOSTED Windows runner with
+# Unreal Engine 5.8 installed and UE_ROOT set (e.g. C:/Program Files/Epic Games/UE_5.8). Until such a runner is
+# registered the job stays queued -- that is "not run", not a pass. The nightly also cooks and packages Development
+# and Shipping builds; the cook plus T3 time is estimated at 1-2 hours (ADR-0008), hence the long timeout.
+on:
+  schedule:
+    # 02:30 UTC daily.
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+# One nightly at a time on the one machine; a second run queues behind the first instead of fighting over Intermediate/.
+concurrency:
+  group: nightly-gate
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    name: Nightly gate (per-commit gate, compile probes, T3 suites, Shipping-symbol check)
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 240
+
+    # The quoted "{0}": the Windows runner passes bash its script path unquoted, so plain `shell: bash` fails when
+    # the runner's folder has a space (see tests.yml).
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      # Exit code of nightly.ps1: 0 PASS, 1 FAIL, 2 NOT ASSESSED. Both 1 and 2 fail the job: a component that did not
+      # run or could not decide is never a pass, and no step maps a missing tool or a skipped component to success.
+      - name: Nightly gate
+        run: |
+          set +e
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/ci/nightly.ps1 \
+            -LogDir "${{ github.workspace }}/Saved/Nightly/run" 2>&1 | tee nightly-output.log
+          code=${PIPESTATUS[0]}
+          set -e
+          case "$code" in
+            0) echo "nightly gate: PASS" ;;
+            1) echo "::error::nightly gate: FAIL (see the COMPONENT lines and the uploaded logs)"; exit 1 ;;
+            2) echo "::error::nightly gate: NOT ASSESSED (a component did not run or could not decide) -- failing the job"; exit 2 ;;
+            *) echo "::error::nightly gate exited $code, which is not a verdict -- failing the job"; exit 1 ;;
+          esac
+        shell: bash --noprofile --norc -eo pipefail "{0}"
+
+      # Logs are uploaded on success and on failure.
+      - name: Upload Logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-logs
+          path: |
+            Saved/Nightly/
+            Saved/Logs/
+            nightly-output.log

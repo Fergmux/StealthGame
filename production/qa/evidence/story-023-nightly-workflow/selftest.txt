@@ -1,0 +1,61 @@
+SELFTEST clean-run-passes ok
+SELFTEST all-four-groups-ran ok
+SELFTEST logs-collected-per-component-and-summary ok
+    NIGHTLY: starting (DRY RUN (stub components)); logs in C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run1
+    COMPONENT gate: running
+        STUB component gate verdict=pass
+    COMPONENT gate: PASS - stub component (pass) exited 0 (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run1\gate.log)
+    COMPONENT probes: running
+        STUB component probes verdict=pass
+    COMPONENT probes: PASS - stub component (pass) exited 0 (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run1\probes.log)
+    COMPONENT t3-StealthLeak2: running
+    T3 profile=StealthLeak2
+        STUB component t3-StealthLeak2 verdict=pass
+    COMPONENT t3-StealthLeak2: PASS - stub component (pass) exited 0 (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run1\t3-StealthLeak2.log)
+    COMPONENT t3-StealthClean: running
+    T3 profile=StealthClean
+        STUB component t3-StealthClean verdict=pass
+    COMPONENT t3-StealthClean: PASS - stub component (pass) exited 0 (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run1\t3-StealthClean.log)
+    COMPONENT shipping-symbol: running
+        STUB component shipping-symbol verdict=pass
+    COMPONENT shipping-symbol: PASS - stub component (pass) exited 0 (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run1\shipping-symbol.log)
+    GROUPS RAN: gate probes t3 shipping-symbol (4 of 4)
+    LOGS: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run1
+    ELAPSED: total=0s
+    NIGHTLY: PASS - every component ran and passed
+SELFTEST t3-profile-recorded-in-log ok
+SELFTEST seeded-failure-in-gate-fails-the-job ok
+SELFTEST seeded-failure-in-probes-fails-the-job ok
+    NIGHTLY: starting (DRY RUN (stub components)); logs in C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run3
+    COMPONENT gate: running
+        STUB component gate verdict=pass
+    COMPONENT gate: PASS - stub component (pass) exited 0 (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run3\gate.log)
+    COMPONENT probes: running
+        STUB component probes verdict=fail
+        OBSERVATION probes seeded failing observation
+    COMPONENT probes: FAIL - stub component (fail) exited 1 (it reported a failing observation; see the log) (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run3\probes.log)
+    COMPONENT t3-StealthLeak2: running
+    T3 profile=StealthLeak2
+        STUB component t3-StealthLeak2 verdict=pass
+    COMPONENT t3-StealthLeak2: PASS - stub component (pass) exited 0 (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run3\t3-StealthLeak2.log)
+    COMPONENT t3-StealthClean: running
+    T3 profile=StealthClean
+        STUB component t3-StealthClean verdict=pass
+    COMPONENT t3-StealthClean: PASS - stub component (pass) exited 0 (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run3\t3-StealthClean.log)
+    COMPONENT shipping-symbol: running
+        STUB component shipping-symbol verdict=pass
+    COMPONENT shipping-symbol: PASS - stub component (pass) exited 0 (log: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run3\shipping-symbol.log)
+    GROUPS RAN: gate probes t3 shipping-symbol (4 of 4)
+    LOGS: C:\Users\fergm\AppData\Local\Temp\stealth_nightly_selftest_b3ba37af7b2f4185932bddf0347f28ea\run3
+    ELAPSED: total=0s
+    NIGHTLY: FAIL - failing: probes
+SELFTEST seeded-failure-in-t3-StealthLeak2-fails-the-job ok
+SELFTEST seeded-failure-in-t3-StealthClean-fails-the-job ok
+SELFTEST seeded-failure-in-shipping-symbol-fails-the-job ok
+SELFTEST seeded-failing-observation-is-in-the-component-log ok
+SELFTEST not-assessed-component-gives-not-assessed ok
+SELFTEST component-with-no-verdict-did-not-run-not-assessed ok
+SELFTEST crashed-component-is-not-assessed-not-pass ok
+SELFTEST fail-wins-over-not-assessed ok
+SELFTEST only-subset-can-never-pass ok
+SELFTEST RESULT: PASS (15 cases)

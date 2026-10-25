@@ -1,12 +1,12 @@
 # Story 027: Pre-commit check compares changed assets with git lfs locks
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -67,7 +67,7 @@
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
 - `tools/ci/hooks/check-lfs-locks.sh`
-- `tools/ci/hooks/selftest/` (lock-source selftests)
+- `tools/ci/hooks/selftest/run-lfs-locks-selftest.sh` (19 cases, injected lock source)
 - `Source/StealthFoundation/Private/Tests/Build/LfsLockCheckTest.cpp` (G2 wrapper `StealthGame.Build.LfsLockCheck`)
 
 ---
@@ -90,7 +90,7 @@
 **Required evidence**:
 - Logic: the selftest under `tools/ci/hooks/selftest/` and the wrapper `StealthGame.Build.LfsLockCheck` (`Source/StealthFoundation/Private/Tests/Build/LfsLockCheckTest.cpp`) must exist and pass, plus the one recorded real-remote observation in this story
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`run-lfs-locks-selftest.sh` 19/19 cases; `StealthGame.Build.LfsLockCheck`; one real-remote observation recorded below)
 
 ---
 
@@ -99,3 +99,15 @@
 - Depends on: `production/epics/tuning-data-config/story-025-pre-commit-hook-framework.md`
 - Unlocks: None
 - Open verification claims: from the plan Note, real lock behaviour on the GitHub remote is [U] until observed once, and this story records that observation. Also [U]: ADR-0009 Verification Required (1) (provider plugin) and (3) (host quota). Open: the `git lfs locks` invocation and owner matching, and the Foundation-module dependency of the G2 wrapper.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1 through an injectable lock source `STEALTH_LFS_LOCKS_CMD` (default `git lfs locks --verify`): (a) a lock held by the committer (`O <path>` line) accepted; (b) no lock, or another owner's lock (two-space line), rejected naming the path with the hint `git lfs lock <path> first`; (c) a remote that reports no lock support (`does not support`, `not supported`, `locksverify`, or `missing protocol` for a repo with no remote) accepted with a printed `NOTE single-writer` reminder. Also: any other source failure (authentication, network) and an unparseable line are NOT ASSESSED (exit 2); a change with no `.uasset`/`.umap` never queries the source; several assets with one unlocked name only that one; `.umap` and an upper-case extension are checked; lock paths compare ignoring case; a deletion and the old path of a rename need the lock; an added asset needs no lock unless someone else holds that path; the same check inside the installed hook rejects an unlocked and accepts a locked asset)
+**Real observation (the story's [U], 2026-10-25, `production/qa/evidence/story-027-lfs-lock-commit-check/real-remote-observation.txt`)**: the GitHub remote `https://github.com/Fergmux/StealthGame.git` SUPPORTS Git LFS locking. `git lfs lock Content/Audio/Ambient/Starter_Birds01.uasset` -> `Locked ...`; `git lfs locks --verify` printed `O <path><TAB>Fergmux<TAB>ID:59189522` (the `O ` prefix = held by the person running git; others get two spaces; `--json` gives `{"ours":[...],"theirs":[...]}`); the check with the DEFAULT source rejected the asset before the lock and accepted it after; `git lfs unlock` -> `Unlocked ...`; the list was empty again afterwards. `lockable` is in `.gitattributes` (story 024). Not observed against a second account (another owner's lock) or the host quota (ADR-0009 Verification Required 3): the other-owner path is covered by the injected source only. Because the remote supports locking the degrade path is NOT the live behaviour here, but it is kept for a clone without a remote.
+**Decisions**: ownership comes from git-lfs's own `O ` marker in `--verify` output, so no matching of lock owner names to git identities is needed (the story left that open); only `.uasset`/`.umap` are checked (`STEALTH_LOCK_EXTENSIONS` overrides) though `.gitattributes` marks more types lockable; never-resave assets are not special-cased (story 026); no remote at all counts as "no lock support" (git-lfs says `missing protocol: ""`, observed in a temporary repo), which would otherwise block every commit there
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-027-lfs-lock-commit-check/` (`selftest.txt` 19/19, `real-remote-observation.txt`, `test-run.txt` 43/43 Success, `stamp.txt`)
+**Run result**: N/A — git hook tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): the missing-protocol hazard above was found by a selftest commit in a repo with no remote and fixed; no further defects found

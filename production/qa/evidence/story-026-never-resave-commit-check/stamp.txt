@@ -1,0 +1,4 @@
+Reviewed-Content-Hash: tools/ci/hooks/check-never-resave.sh 385455ee705f817518c88e57f37300a2379a813b
+Reviewed-Content-Hash: tools/ci/hooks/selftest/run-never-resave-selftest.sh c2959244edd1bb5c3bad140bd95ca238305e2fcd
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/NeverResaveCheckTest.cpp 7f6a38a15d13164b33ba4a0441cee0ffd913d032
+Story: production/epics/tuning-data-config/story-026-never-resave-commit-check.md

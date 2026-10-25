@@ -1,0 +1,6 @@
+#!/bin/sh
+# Git commit-msg hook (shim). The logic lives in commit-msg.sh next to this file (an LF-enforced *.sh, see
+# .gitattributes); this shim only forwards the message file path. The trailing "#" keeps a stray carriage
+# return (a CRLF checkout of this extensionless file on Windows) inside a comment instead of becoming part
+# of the path argument.
+exec bash "$(dirname "$0")/commit-msg.sh" "$@" #

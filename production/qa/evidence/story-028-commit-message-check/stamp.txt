@@ -1,0 +1,5 @@
+Reviewed-Content-Hash: tools/ci/hooks/commit-msg 0896f3aeeb6e24b35454144b6a1d72d8633f9192
+Reviewed-Content-Hash: tools/ci/hooks/commit-msg.sh ce8ef2c8b0e82624f9d4a7a74137ecb859639a29
+Reviewed-Content-Hash: tools/ci/hooks/selftest/run-commit-msg-selftest.sh ad84e59897d5349cd8c86c33f87f0b93f2e1a654
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/CommitMsgCheckTest.cpp b69d39f9a8c7d7253654d690b262b4f95157f9df
+Story: production/epics/tuning-data-config/story-028-commit-message-check.md

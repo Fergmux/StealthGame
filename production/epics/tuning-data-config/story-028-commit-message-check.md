@@ -1,12 +1,12 @@
 # Story 028: commit-msg hook enforces Conventional Commits with a story or ADR reference
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -64,8 +64,8 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `tools/ci/hooks/commit-msg`
-- `tools/ci/hooks/selftest/` (commit-msg selftest)
+- `tools/ci/hooks/commit-msg` (shim) and `tools/ci/hooks/commit-msg.sh` (rules)
+- `tools/ci/hooks/selftest/run-commit-msg-selftest.sh` (43 cases)
 - `Source/StealthFoundation/Private/Tests/Build/CommitMsgCheckTest.cpp` (G2 wrapper `StealthGame.Build.CommitMsgCheck`)
 
 ---
@@ -88,7 +88,7 @@
 **Required evidence**:
 - Logic: the selftest under `tools/ci/hooks/selftest/` and the wrapper `StealthGame.Build.CommitMsgCheck` (`Source/StealthFoundation/Private/Tests/Build/CommitMsgCheckTest.cpp`) must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`run-commit-msg-selftest.sh` 43/43 cases; `StealthGame.Build.CommitMsgCheck`)
 
 ---
 
@@ -97,3 +97,15 @@
 - Depends on: `production/epics/tuning-data-config/story-025-pre-commit-hook-framework.md`
 - Unlocks: None
 - Open verification claims: the plan has no Note line for this story. Open: whether a scoped prefix is accepted, the merge/revert and empty-message treatment, and the Foundation-module dependency of the G2 wrapper.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: the six prefixes with a `Story:` line accepted; `update:`, no prefix, `feat do`, `feat: ` with no description and upper-case `Feat:` rejected; a body with none of a `Story:`/`Task:`/`Decision:` line, an `ADR-NNNN` token or a `design/gdd/` or `docs/architecture/` path rejected, any one accepted; `ADR-12` and `ADR-00123` are not references; an ADR token in the subject only does not count; one real `git commit` with a bad prefix is rejected (HEAD unchanged) and a good one accepted)
+**Decisions**: a SCOPED prefix (`feat(ci):`) and a breaking `!` are accepted (the history uses scopes); `Task: <ID>` and `Decision: <ID>` lines count as references alongside `Story:` (the history uses all three); trailer lines (`Co-Authored-By:`, `Signed-off-by:`) are neither rejected nor counted (a trailer naming an ADR does not count); an empty or comment-only message is rejected; git-generated `Merge ...` and `Revert "..."` subjects are EXEMPT with a printed NOTE (`fixup!`/`squash!` are not); `#` comment lines and CR are ignored; only the BODY is searched for a reference
+**Existing style**: the hook was run over the 72 most recent real commits: 69 accepted. The 2 rejected (`7344aba chore(config): disable Android File Server ...` and `7b45fbd docs: D51 MaxPlayers=10`) carry no `Story:`/`Task:`/`Decision:`/ADR/path reference at all, so they are rejections by the rule, not by the style; the selftest case `real-history-style-accepted` asserts that no commit carrying a reference form is rejected. The hook is NOT installed in this working copy.
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-028-commit-message-check/` (`selftest.txt` 43/43, `test-run.txt` 43/43 Success, `stamp.txt`)
+**Run result**: N/A — git hook tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

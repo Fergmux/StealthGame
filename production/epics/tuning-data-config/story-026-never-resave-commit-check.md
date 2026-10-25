@@ -1,12 +1,12 @@
 # Story 026: Pre-commit check rejects changes to never-resave assets
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -65,7 +65,7 @@
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
 - `tools/ci/hooks/check-never-resave.sh`
-- `tools/ci/hooks/selftest/` (never-resave selftest)
+- `tools/ci/hooks/selftest/run-never-resave-selftest.sh` (16 cases, temporary list and repositories)
 - `Source/StealthFoundation/Private/Tests/Build/NeverResaveCheckTest.cpp` (G2 wrapper `StealthGame.Build.NeverResaveCheck`)
 - `production/never-resave-assets.md` (read only)
 
@@ -89,7 +89,7 @@
 **Required evidence**:
 - Logic: the selftest under `tools/ci/hooks/selftest/` and the wrapper `StealthGame.Build.NeverResaveCheck` (`Source/StealthFoundation/Private/Tests/Build/NeverResaveCheckTest.cpp`) must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`run-never-resave-selftest.sh` 16/16 cases; `StealthGame.Build.NeverResaveCheck`)
 
 ---
 
@@ -98,3 +98,15 @@
 - Depends on: `production/epics/tuning-data-config/story-025-pre-commit-hook-framework.md`
 - Unlocks: None
 - Open verification claims: the plan has no Note line for this story. Open: the deletion rule, and the Foundation-module dependency of the G2 wrapper.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: a staged change to a listed asset is rejected naming the path (`<path>:0 never-resave staged modification of a never-resave asset ...`, exit 1) and an unlisted change is accepted; through the installed hook in a temporary repo the listed change aborts the commit (`PRE-COMMIT check-never-resave: REJECTED`, HEAD unchanged) and the unlisted one commits. Edge cases: case and slash differences match (canned staged list in another case with backslashes); a rename of a listed asset is rejected, and a rename ONTO a listed path; the table header row, separator row, prose naming a path and a path in the second column are not parsed as paths; a missing list and a list with no asset paths are NOT ASSESSED (exit 2); the real `production/never-resave-assets.md` parses to its five camera assets)
+**Decisions**: deletion of a listed asset is rejected too (the story left it open: removing a camera asset breaks the CameraDirector chain as surely as resaving it); an addition of a listed path is rejected; parsing = first cell of a Markdown table row that contains a slash or backslash and ends in a file extension; comparison lower-cased with backslashes normalised; the check is a `check-*.sh` run by the story 025 hook through its contract; the list file is read only
+**Defect found by the selftest and fixed**: the first parser required a forward slash, so a backtick-quoted backslash path in the list was dropped (the list parsed 1 path instead of 2); the case `quoted-backslash-row-is-a-path` was watched failing before the fix
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-026-never-resave-commit-check/` (`selftest.txt` 16/16, `test-run.txt` 43/43 Success, `stamp.txt`)
+**Run result**: N/A — git hook tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): the backslash defect above; no further defects found

@@ -1,0 +1,56 @@
+SELFTEST prefix-feat-with-story-accepted ok
+SELFTEST prefix-fix-with-story-accepted ok
+SELFTEST prefix-chore-with-story-accepted ok
+SELFTEST prefix-docs-with-story-accepted ok
+SELFTEST prefix-test-with-story-accepted ok
+SELFTEST prefix-refactor-with-story-accepted ok
+SELFTEST wrong-prefix-rejected ok
+SELFTEST no-prefix-rejected ok
+SELFTEST prefix-needs-colon-space-rejected ok
+SELFTEST prefix-needs-description-rejected ok
+SELFTEST uppercase-prefix-rejected ok
+SELFTEST scoped-prefix-accepted ok
+SELFTEST breaking-prefix-accepted ok
+SELFTEST story-line-accepted ok
+SELFTEST task-line-accepted ok
+SELFTEST decision-line-accepted ok
+SELFTEST adr-token-accepted ok
+SELFTEST design-path-accepted ok
+SELFTEST architecture-path-accepted ok
+SELFTEST no-reference-rejected ok
+SELFTEST subject-only-rejected ok
+SELFTEST adr-two-digits-not-a-reference ok
+SELFTEST adr-five-digits-not-a-reference ok
+SELFTEST adr-in-subject-only-not-counted ok
+SELFTEST story-without-id-not-a-reference ok
+SELFTEST unrelated-path-not-a-reference ok
+SELFTEST path-after-punctuation-accepted ok
+SELFTEST path-inside-other-word-not-a-reference ok
+SELFTEST trailer-after-story-accepted ok
+SELFTEST trailer-alone-not-a-reference ok
+SELFTEST trailer-naming-an-adr-not-counted ok
+SELFTEST empty-message-rejected ok
+SELFTEST blank-message-rejected ok
+SELFTEST comments-only-message-rejected ok
+SELFTEST merge-subject-exempt ok
+SELFTEST revert-subject-exempt ok
+SELFTEST merge-word-inside-other-subject-not-exempt ok
+SELFTEST comment-lines-ignored ok
+SELFTEST crlf-message-accepted ok
+SELFTEST no-argument-exit-2 ok
+SELFTEST git-rejects-bad-message ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+    PRE-COMMIT lint: PASS
+    lfs-locks: PASS (no changed uasset umap path; the lock source was not queried)
+    PRE-COMMIT check-lfs-locks: PASS
+    never-resave: PASS (5 listed path(s), 1 changed path(s) checked)
+    PRE-COMMIT check-never-resave: PASS
+    PRE-COMMIT: PASS
+    commit-msg: REJECTED - subject must start with feat|fix|chore|docs|test|refactor (optionally scoped, e.g. feat(ci):) then ': ' and a description; got: update: not a conventional prefix
+      Expected: a subject `<type>[(scope)]: <description>` with type feat|fix|chore|docs|test|refactor, and a body
+      with at least one of:  `Story: <ID>` / `Task: <ID>` / `Decision: <ID>` line,  an ADR-NNNN token (four digits),
+      or a path under design/gdd/ or docs/architecture/.  (.claude/docs/coding-standards.md; ADR-0009 section 5)
+SELFTEST git-accepts-good-message ok
+SELFTEST real-history-style-accepted ok
+    history: 70 of 73 recent commits accepted; rejected (no reference in the message): 7344aba 7b45fbd
+SELFTEST RESULT: PASS (73 cases)

@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Run UE Automation Tests
+    name: Per-commit gate (T0 lint, build, automation)
     # Unreal Engine cannot run on GitHub-hosted runners. This job requires a
     # SELF-HOSTED Windows runner with Unreal Engine 5.8 installed, and the
     # UE_ROOT environment variable set on the runner to the engine folder
@@ -26,39 +26,33 @@ jobs:
         with:
           lfs: true
 
-      # Binaries/ is gitignored, so a fresh checkout has no compiled game
-      # module: without this step the editor stops with "The game module could
-      # not be found" before running any test. UnrealBuildTool.exe, not
-      # Build.bat -- from bash, Build.bat fails on an engine path with spaces.
-      - name: Build Editor Target
+      # ONE step runs the per-commit gate (ADR-0008 section 8, story tdc-021), the same script a developer runs, so
+      # CI and the dev machine cannot drift. The gate runs, in this order and stopping at the first failure:
+      #   1. T0 lint   tools/ci/lint/gate.sh (include lint rules a-j and the VCS conformance check); a finding
+      #                fails the job BEFORE the build starts
+      #   2. Build     StealthGameEditor Win64 Development (Binaries/ is gitignored, so a fresh checkout has no
+      #                compiled game module; without this the editor stops before running any test)
+      #   3. Run       UnrealEditor-Cmd ... -ExecCmds="Automation RunTests ^StealthGame.; Quit" (`^StealthGame.` is a
+      #                prefix match, the same filter as commands.test in project.yaml)
+      #   4. Verdict   decided from the automation OUTPUT, never from the editor exit code (it is 255 both when a
+      #                test fails and when nothing matched): PASS only with at least one "Test Completed" line and
+      #                no Result={Fail}; "No automation tests matched" is NOT ASSESSED
+      # Gate exit code: 0 PASS, 1 FAIL, 2 NOT ASSESSED. Both 1 and 2 fail the job: NOT ASSESSED is never a pass,
+      # and no step maps a missing tool, a skipped stage or a missing runner to success.
+      # The gate's own copy of the automation output goes to automation-output.log for the log upload below.
+      - name: Per-commit gate (T0 lint, then build, then ^StealthGame. automation)
         run: |
-          "$UE_ROOT/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe" StealthGameEditor Win64 Development \
-            -Project="${{ github.workspace }}/StealthGame.uproject"
-        shell: bash --noprofile --norc -eo pipefail "{0}"
-
-      # -stdout -FullStdOutLogOutput: without them the editor prints nothing
-      # here, and the results are only in Saved/Logs/.
-      # `^StealthGame.` is a prefix match, the same filter as commands.test in
-      # project.yaml (ADR-0008). The editor exits 255 both when a test fails
-      # and when nothing matched, so the output is checked explicitly.
-      - name: Run Automation Tests
-        run: |
-          "$UE_ROOT/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "${{ github.workspace }}/StealthGame.uproject" \
-            -nullrhi -nosound \
-            -ExecCmds="Automation RunTests ^StealthGame.; Quit" \
-            -unattended -stdout -FullStdOutLogOutput 2>&1 | tee automation-output.log || true
-          if grep -q "No automation tests matched" automation-output.log; then
-            echo "::error::No automation tests matched ^StealthGame. -- NOT ASSESSED, failing the job"
-            exit 1
-          fi
-          if ! grep -q "Test Completed" automation-output.log; then
-            echo "::error::No test completion lines found -- the run did not execute tests"
-            exit 1
-          fi
-          if grep -q "Result={Fail}" automation-output.log; then
-            echo "::error::One or more automation tests failed"
-            exit 1
-          fi
+          set +e
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/ci/gate-per-commit.ps1 \
+            -LogFile "${{ github.workspace }}/automation-output.log" 2>&1 | tee gate-output.log
+          code=${PIPESTATUS[0]}
+          set -e
+          case "$code" in
+            0) echo "per-commit gate: PASS" ;;
+            1) echo "::error::per-commit gate: FAIL (lint findings, a failed build or a failing test; see the log)"; exit 1 ;;
+            2) echo "::error::per-commit gate: NOT ASSESSED (no tests matched, nothing executed or a stage could not run) -- failing the job"; exit 2 ;;
+            *) echo "::error::per-commit gate exited $code, which is not a verdict -- failing the job"; exit 1 ;;
+          esac
         shell: bash --noprofile --norc -eo pipefail "{0}"
 
       - name: Upload Logs
@@ -69,3 +63,4 @@ jobs:
           path: |
             Saved/Logs/
             automation-output.log
+            gate-output.log

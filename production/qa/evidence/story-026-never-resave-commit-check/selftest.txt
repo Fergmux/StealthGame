@@ -1,0 +1,29 @@
+SELFTEST no-staged-files-accepted ok
+SELFTEST listed-modification-rejected-names-path ok
+    Content/Blueprints/Cameras/CameraRig_BaseDefaults.uasset:0 never-resave staged modification of a never-resave asset: Content/Blueprints/Cameras/CameraRig_BaseDefaults.uasset is listed in production/never-resave-assets.md
+    never-resave: REJECT (1 listed path(s) in the commit; never resave or commit these, restore from _snapshots/)
+SELFTEST unlisted-change-accepted ok
+SELFTEST quoted-backslash-row-is-a-path ok
+SELFTEST not-parsed-as-path-Mention ok
+SELFTEST not-parsed-as-path-Column ok
+SELFTEST header-row-not-a-path ok
+SELFTEST case-and-slash-differences-matched ok
+SELFTEST rename-of-listed-asset-rejected ok
+SELFTEST rename-onto-listed-path-rejected ok
+SELFTEST deletion-of-listed-asset-rejected ok
+SELFTEST missing-list-not-assessed ok
+SELFTEST empty-list-not-assessed ok
+SELFTEST real-list-parses-five-paths ok
+SELFTEST hook-rejects-listed-change ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+    PRE-COMMIT lint: PASS
+    NOTE single-writer: the remote reports no lock support, so locks cannot be checked. Only ONE session
+         saves Content/ assets at a time (ADR-0009 section 4): confirm no other session is editing these assets.
+    lfs-locks: PASS (degraded: lock support unavailable; single-writer reminder printed)
+    PRE-COMMIT check-lfs-locks: PASS
+    Content/Blueprints/Cameras/CameraRig_BaseDefaults.uasset:0 never-resave staged modification of a never-resave asset: Content/Blueprints/Cameras/CameraRig_BaseDefaults.uasset is listed in production/never-resave-assets.md
+    never-resave: REJECT (1 listed path(s) in the commit; never resave or commit these, restore from _snapshots/)
+    PRE-COMMIT check-never-resave: REJECTED
+    PRE-COMMIT: REJECTED - the commit was not made
+SELFTEST hook-accepts-unlisted-change ok
+SELFTEST RESULT: PASS (16 cases)

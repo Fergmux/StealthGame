@@ -1,0 +1,7 @@
+# Hooks that git-lfs generates into core.hooksPath (install-hooks.sh runs `git lfs install --local`).
+# Per-clone and untracked on purpose: they are extensionless shell scripts, and a CRLF checkout would
+# corrupt them. The hooks tracked here are pre-commit, commit-msg and their *.sh bodies.
+/post-checkout
+/post-commit
+/post-merge
+/pre-push

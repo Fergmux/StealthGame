@@ -284,11 +284,11 @@ stories:
     name: "CI workflow runs the T0 lint and the same gate"
     file: "production/epics/tuning-data-config/story-022-ci-workflow-t0-lint-step.md"
     priority: nice-to-have
-    status: in-progress
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: should-have
     carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
@@ -296,11 +296,11 @@ stories:
     name: "Nightly workflow: compile probes, T3 suites, Shipping-symbol check"
     file: "production/epics/tuning-data-config/story-023-nightly-workflow.md"
     priority: nice-to-have
-    status: in-progress
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: should-have
     carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
@@ -308,11 +308,11 @@ stories:
     name: "Tracked pre-commit hook framework running the T0 lint"
     file: "production/epics/tuning-data-config/story-025-pre-commit-hook-framework.md"
     priority: nice-to-have
-    status: in-progress
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: should-have
     carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
@@ -320,11 +320,11 @@ stories:
     name: "Pre-commit check rejects changes to never-resave assets"
     file: "production/epics/tuning-data-config/story-026-never-resave-commit-check.md"
     priority: nice-to-have
-    status: in-progress
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: should-have
     carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
@@ -332,11 +332,11 @@ stories:
     name: "Pre-commit check compares changed assets with git lfs locks"
     file: "production/epics/tuning-data-config/story-027-lfs-lock-commit-check.md"
     priority: nice-to-have
-    status: in-progress
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: should-have
     carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"
@@ -344,11 +344,11 @@ stories:
     name: "commit-msg hook enforces Conventional Commits with a story or ADR reference"
     file: "production/epics/tuning-data-config/story-028-commit-message-check.md"
     priority: nice-to-have
-    status: in-progress
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: should-have
     carryover_note: "In progress at Sprint 1 close (per user, 2026-10-25)"

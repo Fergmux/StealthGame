@@ -1,0 +1,5 @@
+#!/bin/sh
+# Git pre-commit hook (shim). The logic lives in pre-commit.sh next to this file (an LF-enforced *.sh, see
+# .gitattributes); this shim only forwards. The trailing "#" keeps a stray carriage return (a CRLF checkout of
+# this extensionless file on Windows) inside a comment instead of corrupting the last argument.
+exec bash "$(dirname "$0")/pre-commit.sh" "$@" #

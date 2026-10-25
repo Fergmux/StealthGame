@@ -1,12 +1,12 @@
 # Story 025: Tracked pre-commit hook framework running the T0 lint
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -68,10 +68,10 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `tools/ci/hooks/pre-commit`
-- `tools/ci/hooks/install-hooks.sh`
-- `tools/ci/hooks/selftest/` (temp-repo selftest)
-- `Source/StealthFoundation/Private/Tests/Build/PreCommitHookTest.cpp` (G2 wrapper `StealthGame.Build.PreCommitHook`)
+- `tools/ci/hooks/pre-commit` (shim), `tools/ci/hooks/pre-commit.sh` (hook body and the check contract), `tools/ci/hooks/commit-msg` and `commit-msg.sh` (story 028)
+- `tools/ci/hooks/install-hooks.sh`, `tools/ci/hooks/install-hooks.ps1` (opt-in installer, bash and PowerShell), `tools/ci/hooks/.gitignore` (the per-clone git-lfs hooks)
+- `tools/ci/hooks/selftest/lib.sh`, `tools/ci/hooks/selftest/run-pre-commit-selftest.sh` (temp-repo selftest, 17 cases)
+- `Source/StealthFoundation/Private/Tests/Build/PreCommitHookTest.cpp` (G2 wrapper `StealthGame.Build.PreCommitHook`), `Source/StealthFoundation/Private/Tests/Build/StealthBuildFileTestUtils.h` (added `RunBashSelftest`)
 
 ---
 
@@ -93,7 +93,7 @@
 **Required evidence**:
 - Logic: the temp-repo selftest under `tools/ci/hooks/selftest/` and the wrapper `StealthGame.Build.PreCommitHook` (`Source/StealthFoundation/Private/Tests/Build/PreCommitHookTest.cpp`) must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`run-pre-commit-selftest.sh` 17/17 cases; `StealthGame.Build.PreCommitHook`; ADR-0009 Validation 5: a commit with a seeded lint violation is rejected, a clean commit accepted, in a temporary repository)
 
 ---
 
@@ -102,3 +102,15 @@
 - Depends on: `production/epics/tuning-data-config/story-011-t0-lint-framework-and-gate.md`
 - Unlocks: `production/epics/tuning-data-config/story-026-never-resave-commit-check.md`, `production/epics/tuning-data-config/story-027-lfs-lock-commit-check.md`, `production/epics/tuning-data-config/story-028-commit-message-check.md`
 - Open verification claims: the plan has no Note line for this story. Open: the check-calling contract, staged-only versus full lint, the extensionless-hook line-ending rule (needs a user decision), and the Foundation-module dependency of the G2 wrapper.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: in temporary repositories holding a copy of the hooks, `install-hooks.sh` sets `core.hooksPath=tools/ci/hooks`, a second run changes nothing ("already installed", one config value), a foreign `core.hooksPath` is refused without `--force`, no tracked file changes; a clean commit is accepted and a commit staging `StealthNoGuard.h` (include-lint rule b) is rejected with `Source/StealthFoundation/Public/Server/StealthNoGuard.h:2 b first include ...`, `GATE: FAIL` and `PRE-COMMIT: REJECTED`, HEAD unchanged; nothing staged passes; a new `check-demo.sh` rejecting (exit 1), not assessed (exit 2) and passing is honoured without editing the hook body; CRLF-converted shims still work; the hook's lint rule list equals the gate's `$LintRules`)
+**Decisions**: the extensionless `pre-commit` and `commit-msg` are two-line shims that `exec bash <name>.sh`, with a trailing `#` so a CRLF checkout cannot corrupt the last argument: this resolves the story's open line-ending question WITHOUT touching `.gitattributes` (the logic is in LF-enforced `*.sh` files); installer = `core.hooksPath` (relative, `tools/ci/hooks`), `--status/--uninstall/--force`, refuses to overwrite a foreign value, plus a PowerShell twin; the check contract is documented in the header of `pre-commit.sh` (checks are `check-*.sh`, run with `STEALTH_HOOK_REPO` and `STEALTH_HOOK_STAGED`, exit 0 accept / 1 reject / 2 NOT ASSESSED, any nonzero aborts, all run); the hook runs the FULL T0 lint over the working tree on every commit (about 12 s on the real tree), not only staged files: open point recorded: a partly staged change is judged on disk, not in the index; the lint rule list is `include-lint-*.sh` plus `vcs-conformance.sh` and a selftest case asserts it equals the gate's list; hooks are opt-in and were NOT installed in this working copy (every commit these tests make is in a temporary repository)
+**Finding (new, important)**: git runs ONLY the hooks in `core.hooksPath` once it is set, so the git-lfs hooks (`pre-push` uploads LFS objects) in `.git/hooks` would silently stop running and a push would send pointer files without objects. The installer therefore runs `git lfs install --local`, which writes the four LFS hooks into `tools/ci/hooks`; they are per-clone and untracked (`tools/ci/hooks/.gitignore` lists them) because an extensionless CRLF checkout would corrupt them; the installer fails when the repository uses LFS and the hooks did not appear. Observed first when a selftest commit in a temp repo left `post-checkout/post-commit/post-merge/pre-push` untracked in the hooks folder. A second observation: `lockable` makes LFS files read-only after a commit (`git lfs post-commit`), so a later write needs `rm` first.
+**Deviations**: none; `StealthBuildFileTestUtils.h` gained the shared helper `RunBashSelftest` used by the four hook wrappers (stories 025-028)
+**Test Evidence**: `production/qa/evidence/story-025-pre-commit-hook-framework/` (`selftest.txt` 17/17, `test-run.txt` 43/43 Success, `stamp.txt`)
+**Run result**: N/A — git hook tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): the LFS-hooks hazard above and a read-only `lockable` write failure in the selftest were found and fixed; no further defects found

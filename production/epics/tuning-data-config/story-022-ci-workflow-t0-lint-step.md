@@ -1,12 +1,12 @@
 # Story 022: CI workflow runs the T0 lint and the same gate
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -65,7 +65,9 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `.github/workflows/tests.yml`
+- `.github/workflows/tests.yml` (the inline build and grep steps replaced by one call of `tools/ci/gate-per-commit.ps1`)
+- `Source/StealthFoundation/Private/Tests/Build/CiWorkflowsTest.cpp` (file-text test `StealthGame.Build.CiWorkflows`, shared with story 023)
+- `production/qa/smoke-2026-10-25_ci-workflows.md`
 
 ---
 
@@ -86,7 +88,7 @@
 **Required evidence**:
 - Config/Data: smoke check pass recorded in `production/qa/smoke-*.md` (the four file-text statements above; the real runner run is DEFERRED)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Smoke check recorded (`production/qa/smoke-2026-10-25_ci-workflows.md`: the four file-text statements hold, pinned by `StealthGame.Build.CiWorkflows`; the workflow step script ran locally against the real gate: PASS in 373 s; the real runner run is DEFERRED)
 
 ---
 
@@ -95,3 +97,15 @@
 - Depends on: `production/epics/tuning-data-config/story-021-per-commit-gate-script.md`
 - Unlocks: None
 - Open verification claims: the plan Note says registering the self-hosted runner is a user/devops action outside this story, so the real CI run is unobserved. Open: whether the bash step can invoke the PowerShell gate on the runner.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (real GitHub run DEFERRED: the self-hosted runner is not registered, a user action)
+**Criteria**: 1/1 passing at the file level, real run deferred (AC-1: the workflow's single gate step runs `tools/ci/gate-per-commit.ps1`, whose first stage is the T0 lint and which stops before the build on a finding; the prefix filter `^StealthGame.`, NOT ASSESSED on no match and FAIL on `Result={Fail}` live in the gate's verdict function, no longer inline; the "not run, not a pass" statement is kept; gate exit 1, 2 and any other code fail the step (`verdict-mapping.txt`). The step's `run:` block, extracted from the YAML and run in Git Bash with the workflow's shell flags, passed on the real tree: lint PASS, build Succeeded, `GATE-PER-COMMIT: PASS [automation] 43 test(s) completed, none failed`, total 373 s of the 600 s budget)
+**Decisions**: ONE step runs the whole gate (the story left separate lint/build/test steps open): the visible order lint, build, run is the gate's own, CI and the dev machine cannot drift, and a lint finding fails before the build; the gate's automation output goes to `automation-output.log` (`-LogFile`) and its console output to `gate-output.log` for the log upload; steps keep `shell: bash --noprofile --norc -eo pipefail "{0}"`; the bash step calls `powershell -NoProfile -ExecutionPolicy Bypass -File` (the story's open question: it works from Git Bash, observed); validated with a YAML parse and `actionlint 1.7.7` (clean)
+**Deferred**: register the runner and record one real run on GitHub (see the smoke record)
+**Deviations**: the story's Files list was workflow only; a text test `CiWorkflowsTest.cpp` was added so the statements stay pinned
+**Test Evidence**: `production/qa/smoke-2026-10-25_ci-workflows.md`, `production/qa/evidence/story-022-ci-workflow-t0-lint-step/` (`ci-step-local-run.txt`, `verdict-mapping.txt`, `test-run.txt` 43/43 Success, `stamp.txt`)
+**Run result**: N/A — CI configuration; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

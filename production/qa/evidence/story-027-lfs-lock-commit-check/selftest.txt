@@ -1,0 +1,33 @@
+SELFTEST lock-held-by-committer-accepted ok
+SELFTEST no-lock-rejected-names-path ok
+    Content/Props/SM_Crate.uasset:0 lfs-lock staged modification of Content/Props/SM_Crate.uasset without a lock held by you (it is not locked): git lfs lock Content/Props/SM_Crate.uasset first
+    lfs-locks: REJECT (1 changed asset(s) not covered by a lock you hold)
+SELFTEST other-owner-lock-rejected ok
+SELFTEST unsupported-remote-degrades-with-reminder ok
+    NOTE single-writer: the remote reports no lock support, so locks cannot be checked. Only ONE session
+         saves Content/ assets at a time (ADR-0009 section 4): confirm no other session is editing these assets.
+    lfs-locks: PASS (degraded: lock support unavailable; single-writer reminder printed)
+SELFTEST no-remote-degrades-with-reminder ok
+SELFTEST source-failure-not-assessed ok
+SELFTEST malformed-source-line-not-assessed ok
+SELFTEST non-asset-change-ignored ok
+SELFTEST several-assets-one-unlocked-names-only-it ok
+SELFTEST umap-checked ok
+SELFTEST uppercase-extension-checked ok
+SELFTEST lock-path-case-insensitive ok
+SELFTEST deletion-needs-lock ok
+SELFTEST rename-needs-lock-on-old-path ok
+SELFTEST rename-with-lock-on-old-path-accepted ok
+SELFTEST new-asset-needs-no-lock ok
+SELFTEST new-asset-locked-by-other-rejected ok
+SELFTEST hook-rejects-unlocked-asset ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+    PRE-COMMIT lint: PASS
+    Content/Props/SM_Crate.uasset:0 lfs-lock staged modification of Content/Props/SM_Crate.uasset without a lock held by you (it is not locked): git lfs lock Content/Props/SM_Crate.uasset first
+    lfs-locks: REJECT (1 changed asset(s) not covered by a lock you hold)
+    PRE-COMMIT check-lfs-locks: REJECTED
+    never-resave: PASS (5 listed path(s), 1 changed path(s) checked)
+    PRE-COMMIT check-never-resave: PASS
+    PRE-COMMIT: REJECTED - the commit was not made
+SELFTEST hook-accepts-locked-asset ok
+SELFTEST RESULT: PASS (19 cases)

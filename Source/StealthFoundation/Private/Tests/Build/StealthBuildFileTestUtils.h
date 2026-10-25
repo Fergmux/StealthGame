@@ -159,6 +159,41 @@ namespace StealthBuildTest
 		return Run;
 	}
 
+	/**
+	 * Shared body of the git-hook wrapper tests (G2): runs one hook selftest script (tools/ci/hooks/selftest/),
+	 * requires exit 0, its overall PASS line, every named case "ok" and every named observation echoed.
+	 * The selftests work in temporary git repositories only; the real working copy gets no hook and no commit.
+	 * The output is echoed only when this test already failed. Returns false when bash cannot be found.
+	 */
+	inline bool RunBashSelftest(FAutomationTestBase& Test, const FString& SelftestScript,
+		TConstArrayView<const TCHAR*> Cases, TConstArrayView<const TCHAR*> Observations)
+	{
+		const FString Bash = FindBash();
+		if (!Test.TestFalse(TEXT("A bash for the CI scripts was found (set STEALTH_BASH to override)"), Bash.IsEmpty()))
+		{
+			return false;
+		}
+		const FScriptRun Run = RunBashScript(Bash, SelftestScript);
+		if (Test.TestTrue(TEXT("Selftest script launched"), Run.bLaunched))
+		{
+			Test.TestEqual(TEXT("Selftest exit code"), Run.ExitCode, 0);
+			Test.TestTrue(TEXT("Selftest reports PASS"), Run.Output.Contains(TEXT("SELFTEST RESULT: PASS")));
+			for (const TCHAR* Case : Cases)
+			{
+				Test.TestTrue(FString::Printf(TEXT("Selftest case %s ok"), Case), Run.Output.Contains(FString::Printf(TEXT("SELFTEST %s ok"), Case)));
+			}
+			for (const TCHAR* Observation : Observations)
+			{
+				Test.TestTrue(FString::Printf(TEXT("Observation echoed: '%s'"), Observation), Run.Output.Contains(Observation));
+			}
+		}
+		if (Test.HasAnyErrors())
+		{
+			Test.AddInfo(Run.Output);
+		}
+		return true;
+	}
+
 	/** Parses the project's .uproject. Returns null when it cannot be read or parsed. */
 	inline TSharedPtr<FJsonObject> LoadUProject()
 	{

@@ -1,0 +1,12 @@
+stub gate
+per-commit gate: PASS
+gate exit 0 -> step rc=0
+stub gate
+::error::per-commit gate: FAIL (lint findings, a failed build or a failing test; see the log)
+gate exit 1 -> step rc=1
+stub gate
+::error::per-commit gate: NOT ASSESSED (no tests matched, nothing executed or a stage could not run) -- failing the job
+gate exit 2 -> step rc=2
+stub gate
+::error::per-commit gate exited 5, which is not a verdict -- failing the job
+gate exit 5 -> step rc=1

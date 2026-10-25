@@ -1,0 +1,9 @@
+stub nightly
+nightly gate: PASS
+nightly exit 0 -> step rc=0
+stub nightly
+::error::nightly gate: FAIL (see the COMPONENT lines and the uploaded logs)
+nightly exit 1 -> step rc=1
+stub nightly
+::error::nightly gate: NOT ASSESSED (a component did not run or could not decide) -- failing the job
+nightly exit 2 -> step rc=2

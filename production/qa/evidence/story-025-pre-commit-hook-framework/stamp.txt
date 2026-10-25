@@ -1,0 +1,9 @@
+Reviewed-Content-Hash: tools/ci/hooks/pre-commit d960ccd67d80b560eb8f8c9e92cd50aa8207e96a
+Reviewed-Content-Hash: tools/ci/hooks/pre-commit.sh 5cf1fb7e1585d7b240efd03b0654a4309c56ac2b
+Reviewed-Content-Hash: tools/ci/hooks/install-hooks.sh c64009151f71a339f50e0aeb3ae9baf880d1e883
+Reviewed-Content-Hash: tools/ci/hooks/install-hooks.ps1 2a98fde73bb152ff6a2f415c1f220f7a8419d713
+Reviewed-Content-Hash: tools/ci/hooks/selftest/lib.sh 8cf8f2ea784c6a7776b2c9633cb5830844f15283
+Reviewed-Content-Hash: tools/ci/hooks/selftest/run-pre-commit-selftest.sh 7b35282952e8300cfa8486edf07c068ec808fd03
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/PreCommitHookTest.cpp 5c485829dc3f6cc28751b84cd409b64e863153da
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/StealthBuildFileTestUtils.h 076e4103ca6edd94c4a1682e93831e67078c3f41
+Story: production/epics/tuning-data-config/story-025-pre-commit-hook-framework.md

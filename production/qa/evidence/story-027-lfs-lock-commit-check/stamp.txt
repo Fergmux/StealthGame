@@ -1,0 +1,4 @@
+Reviewed-Content-Hash: tools/ci/hooks/check-lfs-locks.sh 012eba1e7090e0629aaa5fee472c04a73ad14cc4
+Reviewed-Content-Hash: tools/ci/hooks/selftest/run-lfs-locks-selftest.sh 9b6f5df3167fa4c83d5c5a867c00463a075ac750
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/LfsLockCheckTest.cpp 0eaae4e8031fc1bf1494c031992a2f1c9d495372
+Story: production/epics/tuning-data-config/story-027-lfs-lock-commit-check.md

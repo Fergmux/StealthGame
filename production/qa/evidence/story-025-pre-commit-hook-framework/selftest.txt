@@ -1,0 +1,26 @@
+SELFTEST installer-sets-hookspath ok
+SELFTEST installer-idempotent ok
+SELFTEST installer-leaves-tracked-files-alone ok
+SELFTEST installer-writes-lfs-hooks-untracked-and-ignored ok
+SELFTEST installer-status-installed ok
+SELFTEST installer-refuses-foreign-hookspath ok
+SELFTEST installer-force-replaces ok
+SELFTEST installer-uninstall ok
+SELFTEST installer-powershell-twin ok
+SELFTEST no-staged-files-passes ok
+SELFTEST clean-commit-accepted ok
+SELFTEST seeded-lint-violation-rejected ok
+    Source/StealthFoundation/Public/Server/StealthNoGuard.h:2 b first include is "CoreMinimal.h", must be "StealthServerOnlyGuard.h"
+    GATE: FAIL (1 finding(s); 4 file(s) scanned)
+    PRE-COMMIT lint: REJECTED - the T0 lint reported findings (above)
+    lfs-locks: PASS (no changed uasset umap path; the lock source was not queried)
+    PRE-COMMIT check-lfs-locks: PASS
+    never-resave: PASS (5 listed path(s), 1 changed path(s) checked)
+    PRE-COMMIT check-never-resave: PASS
+    PRE-COMMIT: REJECTED - the commit was not made
+SELFTEST check-contract-reject-aborts ok
+SELFTEST check-contract-not-assessed-aborts ok
+SELFTEST check-contract-pass-and-env ok
+SELFTEST crlf-shims-still-work ok
+SELFTEST hook-rules-match-gate-rules ok
+SELFTEST RESULT: PASS (17 cases)

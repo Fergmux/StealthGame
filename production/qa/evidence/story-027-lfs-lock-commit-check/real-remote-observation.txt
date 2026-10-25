@@ -1,0 +1,18 @@
+# Real-remote observation, 2026-10-25 (origin = https://github.com/Fergmux/StealthGame.git; check-lfs-locks.sh with the DEFAULT lock source 'git lfs locks --verify'; staged list canned, nothing staged in the real index)
+$ git lfs locks --verify  (before)
+(rc=0)
+--- check, asset NOT locked
+Content/Audio/Ambient/Starter_Birds01.uasset:0 lfs-lock staged modification of Content/Audio/Ambient/Starter_Birds01.uasset without a lock held by you (it is not locked): git lfs lock Content/Audio/Ambient/Starter_Birds01.uasset first
+lfs-locks: REJECT (1 changed asset(s) not covered by a lock you hold)
+(check rc=1)
+--- git lfs lock
+Locked Content/Audio/Ambient/Starter_Birds01.uasset
+$ git lfs locks --verify
+O Content/Audio/Ambient/Starter_Birds01.uasset^IFergmux^IID:59189522$
+--- check, asset locked by me
+lfs-locks: PASS (1 changed asset path(s), each covered by a lock you hold or needing none)
+(check rc=0)
+--- git lfs unlock
+Unlocked Content/Audio/Ambient/Starter_Birds01.uasset
+$ git lfs locks --verify --json (after)
+{"ours":[],"theirs":[]}

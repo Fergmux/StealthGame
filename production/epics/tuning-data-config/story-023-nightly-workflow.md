@@ -1,12 +1,12 @@
 # Story 023: Nightly workflow: compile probes, T3 suites, Shipping-symbol check
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -69,9 +69,10 @@
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
 - `.github/workflows/nightly.yml`
-- `tools/ci/nightly.ps1`
-- `tools/ci/selftest/` (nightly dry-run selftest)
-- `Source/StealthFoundation/Private/Tests/Build/NightlyDryRunTest.cpp` (G2 wrapper `StealthGame.Build.NightlyDryRun`)
+- `tools/ci/nightly.ps1` (sequencing, verdicts, `-DryRun`, `-Only`, `-SelfTest`)
+- `tools/ci/selftest/nightly/stub-component.cmd` (stub component for the dry run)
+- `Source/StealthFoundation/Private/Tests/Build/NightlyDryRunTest.cpp` (G2 wrapper `StealthGame.Build.NightlyDryRun`), `Source/StealthFoundation/Private/Tests/Build/CiWorkflowsTest.cpp` (workflow file text, shared with story 022)
+- `production/qa/smoke-2026-10-25_ci-workflows.md`
 
 ---
 
@@ -93,7 +94,7 @@
 **Required evidence**:
 - Integration: the dry-run selftest under `tools/ci/selftest/` plus the wrapper `StealthGame.Build.NightlyDryRun` must exist and pass; the real nightly run is DEFERRED (self-hosted runner, cooked builds)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`nightly.ps1 -SelfTest` 15/15 cases; `StealthGame.Build.NightlyDryRun`; real T3 component run under both profiles; the full real nightly is DEFERRED)
 
 ---
 
@@ -102,3 +103,15 @@
 - Depends on: `production/epics/tuning-data-config/story-005-compile-probe-runner-and-guard-probe.md`, `production/epics/tuning-data-config/story-006-shipping-symbol-check.md`, `production/epics/tuning-data-config/story-020-gauntlet-multiprocess-smoke.md`, `production/epics/tuning-data-config/story-021-per-commit-gate-script.md`
 - Unlocks: `production/epics/tuning-data-config/story-089-no-shipping-back-door-scan.md`
 - Open verification claims: the plan has no Note line for this story. Inherited [U] items: Gauntlet topology and `WITH_DEV_AUTOMATION_TESTS` in cooked Development (story 020), profile lag semantics (story 017), nightly duration estimate of 1-2 hours. Open: the nightly uses the `StealthLeak2` and `StealthClean` profiles defined by story 017, which is not a declared dependency.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (the full real nightly DEFERRED: self-hosted runner and cooked Shipping/Development packages)
+**Criteria**: 1/1 passing on the dry run plus file review, real run deferred (AC-1: `nightly.yml` is self-hosted, scheduled and runs `tools/ci/nightly.ps1`, which runs the per-commit gate, the compile probes, the T3 smoke under `StealthLeak2` and `StealthClean` and the Shipping-symbol check, uploads logs with `if: always()` and fails on FAIL and on NOT ASSESSED. Dry run (`-DryRun`, each component a stub): a clean run passes with `GROUPS RAN: gate probes t3 shipping-symbol (4 of 4)` and a log per component plus `summary.txt`; a seeded failing observation from EACH of gate, probes, either T3 run and the Shipping check exits 1 while the other four still run; a component that is NOT ASSESSED, has no verdict (did not run) or crashes (exit 7) gives exit 2, never a pass; FAIL wins over NOT ASSESSED; `-Only` can never pass; each T3 run prints `T3 profile=<name>` and writes `PROFILE: <name>` into its log. Real component observed: the T3 node ran for real under `StealthLeak2` and `StealthClean` on this machine (both `result=Passed`, `BUILD SUCCESSFUL`, the profile on both processes' command lines))
+**Decisions**: dry-run switch = `-DryRun` with `-StubVerdicts "all=pass,<id>=fail|na|crash"` (stub = `tools/ci/selftest/nightly/stub-component.cmd`, exit 0/1/2/7), so the real exit-code mapping and logging are exercised; component exit convention 0 PASS / 1 FAIL / 2 NOT ASSESSED, any other code is NOT ASSESSED; all components always run, the verdict is decided at the end (FAIL beats NOT ASSESSED beats PASS); the T3 profile reaches both processes through the node's `-StealthRoleArgs=-PktEmulationProfile=<Name>` (ADR-0002's "symmetric" meaning); the T3 verdict needs `StealthGame.Harness.MP.Smoke ... result=Passed` (a run with no such line is NOT ASSESSED, `result=Failed` or `BUILD FAILED` is FAIL); Development and Shipping are staged with `BuildCookRun -pak -IgnoreCookErrors` (as story 020) into `Saved/Staged/NightlyDev` and `NightlyShipping`; relative `-LogDir` and stage paths are resolved against the repo root (RunUAT cannot resolve them: found by the first real T3 run); story 017 is not a declared dependency but the profiles exist in `Config/DefaultEngine.ini` and the real run applied them
+**Deferred (record when it exists)**: one real full nightly (workflow_dispatch) on the runner: elapsed time vs the 1-2 hour estimate, the packaged Shipping/Development harness binary name pattern and Shipping result for story 006, and the compile-probe component inside the nightly
+**Deviations**: none
+**Test Evidence**: `production/qa/smoke-2026-10-25_ci-workflows.md`, `production/qa/evidence/story-023-nightly-workflow/` (`selftest.txt` 15/15, `real-t3-both-profiles-run.txt`, `verdict-mapping.txt`, `test-run.txt` 43/43 Success, `stamp.txt`)
+**Run result**: OBSERVED — the T3 component was run for real (two cooked Development processes per profile, Gauntlet); nothing player-visible, the observation is the node verdict, not a screenshot
+**Reviewed by**: focused code review (self-applied, unattended run): the relative-path defect above and a function-output pollution (a bare string returned from a component function became part of its return value) were found and fixed; no further defects found
