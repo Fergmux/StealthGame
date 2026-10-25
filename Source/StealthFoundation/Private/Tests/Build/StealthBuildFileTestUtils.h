@@ -137,6 +137,28 @@ namespace StealthBuildTest
 		return Run;
 	}
 
+	/**
+	 * Path of Windows PowerShell (powershell.exe under %SystemRoot%), used to run the project's .ps1
+	 * tools. Empty when none is found (non-Windows hosts).
+	 */
+	inline FString FindPowerShell()
+	{
+		const FString SystemRoot = FPlatformMisc::GetEnvironmentVariable(TEXT("SystemRoot"));
+		const FString Candidate = FPaths::Combine(SystemRoot, TEXT("System32/WindowsPowerShell/v1.0/powershell.exe"));
+		return (!SystemRoot.IsEmpty() && FPaths::FileExists(Candidate)) ? Candidate : FString();
+	}
+
+	/** Runs a project-relative .ps1 script (no profile, execution policy bypassed) with extra arguments and captures its output. */
+	inline FScriptRun RunPowerShellScript(const FString& PowerShell, const FString& RelativeScript, const FString& ExtraArgs = FString())
+	{
+		FScriptRun Run;
+		const FString Args = FString::Printf(TEXT("-NoProfile -ExecutionPolicy Bypass -File \"%s\" %s"), *ProjectPath(RelativeScript), *ExtraArgs);
+		FString StdErr;
+		Run.bLaunched = FPlatformProcess::ExecProcess(*PowerShell, *Args, &Run.ExitCode, &Run.Output, &StdErr);
+		Run.Output += StdErr;
+		return Run;
+	}
+
 	/** Parses the project's .uproject. Returns null when it cannot be read or parsed. */
 	inline TSharedPtr<FJsonObject> LoadUProject()
 	{

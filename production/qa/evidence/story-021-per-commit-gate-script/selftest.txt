@@ -1,0 +1,90 @@
+SELFTEST no-tests-matched ok
+    GATE-PER-COMMIT: NOT ASSESSED [analyze] No automation tests matched the ^StealthGame. filter
+    ELAPSED: total=0s budget=600s
+SELFTEST one-failure ok
+    GATE-PER-COMMIT: FAIL [analyze] 1 test(s) reported Result={Fail}
+    ELAPSED: total=0s budget=600s
+SELFTEST all-pass ok
+    GATE-PER-COMMIT: PASS [analyze] 3 test(s) completed, none failed
+    ELAPSED: total=0s budget=600s
+SELFTEST pass-and-fail-is-fail ok
+    GATE-PER-COMMIT: FAIL [analyze] 1 test(s) reported Result={Fail}
+    ELAPSED: total=0s budget=600s
+SELFTEST empty-log-not-assessed ok
+    GATE-PER-COMMIT: NOT ASSESSED [analyze] no "Test Completed" line: the run did not execute tests
+    ELAPSED: total=0s budget=600s
+SELFTEST no-completion-lines-not-assessed ok
+    GATE-PER-COMMIT: NOT ASSESSED [analyze] no "Test Completed" line: the run did not execute tests
+    ELAPSED: total=0s budget=600s
+SELFTEST missing-log-not-assessed ok
+    GATE-PER-COMMIT: NOT ASSESSED [analyze] log not found: C:\Users\fergm\Documents\Unreal Projects\StealthGame\tools\ci\selftest\gate-per-commit\does-not-exist.txt
+    ELAPSED: total=0s budget=600s
+SELFTEST lint-failure-stops-before-build ok
+    STAGE lint: bash gate.sh --root C:/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/fixtures/seeded include-lint-abc.sh include-lint-def.sh include-lint-gh.sh include-lint-ij.sh vcs-conformance.sh
+    vcs-conformance: /c/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/fixtures/seeded is not the top level of a git checkout
+    Source/StealthFoundation/Public/Server/StealthNoGuard.h:2 b first include is "CoreMinimal.h", must be "StealthServerOnlyGuard.h"
+    Source/StealthFoundation/Public/StealthLooseHeader.h:1 a header in Public/ outside View/ and Server/ (only the module header and the guard may sit in Public/)
+    Source/StealthGameplay/Public/View/StealthLeakyView.h:3 c View header includes server header "Server/StealthGoodServer.h"
+    Source/StealthPresentation/Private/StealthDupName.h:1 f header name 'StealthDupName.h' is also used in module StealthGameplay (Source/StealthGameplay/Private/StealthDupName.h); project header names must be unique across modules
+    Source/StealthGameplay/Private/Core/StealthCoreUsesFeature.cpp:2 d Core file includes Features path "Features/StealthFeatureThing.h" (Core may not depend on Features)
+    Source/StealthFoundation/Private/StealthUpwardInclude.cpp:2 e StealthFoundation includes "StealthGameplayHelper.h", owned by module StealthGameplay (Source/StealthGameplay/Public/View/StealthGameplayHelper.h); Foundation depends on no upper module
+    Source/StealthGameplay/Public/Server/StealthBadClass.h:3 g server UCLASS must declare NotBlueprintType, NotBlueprintable
+    Source/StealthPresentation/Private/StealthHudSearch.cpp:4 h presentation code uses GetGameMode (no world searches or game-mode access; ADR-0007 rule h)
+    Source/StealthGameplay/Private/StealthLogLeak.cpp:4 i UE_LOGF argument names forbidden identifier FEventLogEntry (tools/ci/lint/log-forbidden-identifiers.txt)
+    Source/StealthGameplay/Private/Features/CityGenerator/StealthCityGenerator.cpp:2 j CityGenerator file includes "Server/Random/StealthSeedsServer.h" (Generator isolation: no Public/Server/Random/ include)
+    GATE: FAIL (10 finding(s); 18 file(s) scanned)
+    GATE-PER-COMMIT: FAIL [lint] T0 lint reported findings (see above); the build was not started
+    ELAPSED: total=6s budget=600s
+SELFTEST build-failure-stops-before-automation ok
+    STAGE lint: bash gate.sh --root C:/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/include-abc/fixtures/c-clean include-lint-abc.sh include-lint-def.sh include-lint-gh.sh include-lint-ij.sh vcs-conformance.sh
+    vcs-conformance: /c/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/include-abc/fixtures/c-clean is not the top level of a git checkout
+    GATE: PASS (1 file(s) scanned, 0 findings)
+    STAGE lint: PASS (3s)
+    STAGE build: C:\Users\fergm\Documents\Unreal Projects\StealthGame\tools\ci\selftest\gate-per-commit\build-fail.cmd StealthGameEditor Win64 Development -Project=C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject
+    stub build: error C2065: undeclared identifier
+    stub build: Result: Failed
+    GATE-PER-COMMIT: FAIL [build] build failed (UBT exit 6); the automation run was not started
+    ELAPSED: total=3s budget=600s
+SELFTEST full-flow-pass ok
+    STAGE lint: bash gate.sh --root C:/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/include-abc/fixtures/c-clean include-lint-abc.sh include-lint-def.sh include-lint-gh.sh include-lint-ij.sh vcs-conformance.sh
+    vcs-conformance: /c/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/include-abc/fixtures/c-clean is not the top level of a git checkout
+    GATE: PASS (1 file(s) scanned, 0 findings)
+    STAGE lint: PASS (3s)
+    STAGE build: C:\Users\fergm\Documents\Unreal Projects\StealthGame\tools\ci\selftest\gate-per-commit\build-ok.cmd StealthGameEditor Win64 Development -Project=C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject
+    stub build: Result: Succeeded
+    STAGE build: PASS (3s elapsed)
+    STAGE automation: C:\Users\fergm\Documents\Unreal Projects\StealthGame\tools\ci\selftest\gate-per-commit\editor-all-pass.cmd C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -nullrhi -nosound -ExecCmds="Automation RunTests ^StealthGame.; Quit" -unattended -stdout -FullStdOutLogOutput
+    editor exit code 0 (ignored: the verdict is taken from the output); log: C:\Users\fergm\AppData\Local\Temp\stealth_gate_selftest.log
+    Success  StealthGame.Build.A
+    Success  StealthGame.Build.B
+    Success  StealthGame.Build.C
+    GATE-PER-COMMIT: PASS [automation] 3 test(s) completed, none failed
+    ELAPSED: total=3s budget=600s
+SELFTEST full-flow-no-tests-matched ok
+    STAGE lint: bash gate.sh --root C:/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/include-abc/fixtures/c-clean include-lint-abc.sh include-lint-def.sh include-lint-gh.sh include-lint-ij.sh vcs-conformance.sh
+    vcs-conformance: /c/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/include-abc/fixtures/c-clean is not the top level of a git checkout
+    GATE: PASS (1 file(s) scanned, 0 findings)
+    STAGE lint: PASS (4s)
+    STAGE build: C:\Users\fergm\Documents\Unreal Projects\StealthGame\tools\ci\selftest\gate-per-commit\build-ok.cmd StealthGameEditor Win64 Development -Project=C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject
+    stub build: Result: Succeeded
+    STAGE build: PASS (4s elapsed)
+    STAGE automation: C:\Users\fergm\Documents\Unreal Projects\StealthGame\tools\ci\selftest\gate-per-commit\editor-no-match.cmd C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -nullrhi -nosound -ExecCmds="Automation RunTests ^StealthGame.; Quit" -unattended -stdout -FullStdOutLogOutput
+    editor exit code 255 (ignored: the verdict is taken from the output); log: C:\Users\fergm\AppData\Local\Temp\stealth_gate_selftest.log
+    GATE-PER-COMMIT: NOT ASSESSED [automation] No automation tests matched the ^StealthGame. filter
+    ELAPSED: total=4s budget=600s
+SELFTEST full-flow-one-failure ok
+    STAGE lint: bash gate.sh --root C:/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/include-abc/fixtures/c-clean include-lint-abc.sh include-lint-def.sh include-lint-gh.sh include-lint-ij.sh vcs-conformance.sh
+    vcs-conformance: /c/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/include-abc/fixtures/c-clean is not the top level of a git checkout
+    GATE: PASS (1 file(s) scanned, 0 findings)
+    STAGE lint: PASS (3s)
+    STAGE build: C:\Users\fergm\Documents\Unreal Projects\StealthGame\tools\ci\selftest\gate-per-commit\build-ok.cmd StealthGameEditor Win64 Development -Project=C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject
+    stub build: Result: Succeeded
+    STAGE build: PASS (3s elapsed)
+    STAGE automation: C:\Users\fergm\Documents\Unreal Projects\StealthGame\tools\ci\selftest\gate-per-commit\editor-one-failure.cmd C:\Users\fergm\Documents\Unreal Projects\StealthGame\StealthGame.uproject -nullrhi -nosound -ExecCmds="Automation RunTests ^StealthGame.; Quit" -unattended -stdout -FullStdOutLogOutput
+    editor exit code 255 (ignored: the verdict is taken from the output); log: C:\Users\fergm\AppData\Local\Temp\stealth_gate_selftest.log
+    Success  StealthGame.Build.A
+    Fail  StealthGame.Build.B
+    Success  StealthGame.Build.C
+    GATE-PER-COMMIT: FAIL [automation] 1 test(s) reported Result={Fail}
+    ELAPSED: total=3s budget=600s
+SELFTEST RESULT: PASS (12 cases)

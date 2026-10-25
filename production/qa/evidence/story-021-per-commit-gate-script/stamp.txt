@@ -1,0 +1,5 @@
+Reviewed-Content-Hash: tools/ci/gate-per-commit.ps1 dce5eef59696319faf32963084dfae71961fe5bd
+Reviewed-Content-Hash: tools/dev/cycle.ps1 0bfc618b2e84ac812eda17f3fcca0bd2dc92ee66
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/GatePerCommitTest.cpp b662df9b78d1acbd1e10574bdeb869d80b1c2a85
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/StealthBuildFileTestUtils.h 8206fe2c61cbbf191cc4658700f07e572e5f2155
+Story: production/epics/tuning-data-config/story-021-per-commit-gate-script.md

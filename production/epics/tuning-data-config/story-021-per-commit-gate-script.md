@@ -1,12 +1,12 @@
 # Story 021: Per-commit gate script: T0 lint, build, prefix-filtered automation run
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -68,9 +68,9 @@
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
 - `tools/ci/gate-per-commit.ps1`
-- `tools/ci/selftest/` (canned-log selftest for the gate)
-- `tools/dev/cycle.ps1` (filter `StealthGame.` becomes `^StealthGame.`)
-- `Source/StealthFoundation/Private/Tests/Build/GatePerCommitTest.cpp` (G2 wrapper `StealthGame.Build.GatePerCommit`)
+- `tools/ci/selftest/gate-per-commit/` (canned automation logs and stub build/editor tools)
+- `tools/dev/cycle.ps1` (test filter `StealthGame.` became `^StealthGame.`)
+- `Source/StealthFoundation/Private/Tests/Build/GatePerCommitTest.cpp` (G2 wrapper), `Source/StealthFoundation/Private/Tests/Build/StealthBuildFileTestUtils.h` (added `FindPowerShell`, `RunPowerShellScript`)
 
 ---
 
@@ -92,7 +92,7 @@
 **Required evidence**:
 - Integration: the gate selftest with canned logs under `tools/ci/selftest/` plus the wrapper `StealthGame.Build.GatePerCommit` (`Source/StealthFoundation/Private/Tests/Build/GatePerCommitTest.cpp`) must exist and pass, and one real run with its measured time recorded
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`tools/ci/gate-per-commit.ps1 -SelfTest` 12/12 cases; `StealthGame.Build.GatePerCommit`; one real run PASS in 205 s, 2026-10-25)
 
 ---
 
@@ -101,3 +101,14 @@
 - Depends on: `production/epics/tuning-data-config/story-011-t0-lint-framework-and-gate.md`, `production/epics/tuning-data-config/story-003-split-prototype-composition-root.md`
 - Unlocks: `production/epics/tuning-data-config/story-022-ci-workflow-t0-lint-step.md`, `production/epics/tuning-data-config/story-023-nightly-workflow.md`
 - Open verification claims: the plan has no Note line for this story. Open: the 10-minute budget on the dev machine is a measurement not yet taken; the G2 wrapper lives in the Foundation module (story 001), which is only transitively a dependency through story 003.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: canned logs: no tests matched -> NOT ASSESSED (exit 2); one `Result={Fail}` -> FAIL (1); all `Test Completed` with no failure -> PASS (0); a log with passes and a failure -> FAIL; empty log, a log with no completion line and a missing log -> NOT ASSESSED; with stub tools a lint finding stops before the build (`GATE-PER-COMMIT: FAIL [lint]`, no build stage), a build failure stops before the automation run (`FAIL [build]`), and the full flow gives PASS / NOT ASSESSED / FAIL. Real run: lint PASS (88 files, 0 findings), build Succeeded, `GATE-PER-COMMIT: PASS [automation] 37 test(s) completed, none failed`, `ELAPSED: total=205s budget=600s` on the dev machine. `cycle.ps1` filter is now `^StealthGame.`)
+**Decisions**: exit codes 0 PASS, 1 FAIL, 2 NOT ASSESSED, with the verdict word in the printed `GATE-PER-COMMIT:` line; the build uses `Build.bat` (as cycle.ps1) because UnrealBuildTool.exe called directly from PowerShell failed with a dotnet host error (exit -2147450730); a running editor makes the gate NOT ASSESSED unless `-CloseEditor`; the T0 lint stage runs rules a-j plus the VCS conformance check through `gate.sh`; verdict parsing is anchored on the engine's `Test Completed. Result={...}` line, found when the first real run reported FAIL because the G2 wrapper echoed canned `Result={Fail}` text into the automation log (the wrapper now echoes only on its own failure); compile probes stay a documented hook (`# HOOK: compile probes`), they belong to the nightly (story 023); budget exceeded prints `BUDGET: EXCEEDED` and is a note, never a verdict; the wrapper runs only `-SelfTest` so it cannot recurse into the full gate
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-021-per-commit-gate-script/` (`selftest.txt` 12/12, `gate-real-run.txt` (the real run: PASS in 205 s), `test-run.txt` 37/37 Success, `stamp.txt`)
+**Run result**: N/A — CI tooling; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): the echoed-verdict defect above was found and fixed; no further defects found

@@ -237,20 +237,20 @@ stories:
     name: "Per-commit gate script: T0 lint, build, prefix-filtered automation run"
     file: "production/epics/tuning-data-config/story-021-per-commit-gate-script.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "tdc-024"
     name: "VCS conformance check for ignore and attribute rules"
     file: "production/epics/tuning-data-config/story-024-vcs-conformance-check.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
   - id: "scl-045"
     name: "Net-emulation and traversal spike report (unblocks Exit B and starvation)"
     file: "production/epics/shared-character-locomotion/story-045-net-emulation-traversal-spike.md"

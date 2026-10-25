@@ -1,5 +1,5 @@
 param([switch]$Tests, [switch]$NoLaunch)
-# Dev loop: close the editor -> build the editor target -> (optionally run StealthGame.* automation tests)
+# Dev loop: close the editor -> build the editor target -> (optionally run the ^StealthGame. prefix-filtered automation tests, ADR-0008)
 # -> relaunch the editor and wait for its MCP server. Run from anywhere.
 # If the editor shows "Save Content" for the sample camera assets on close, it is force-closed: those
 # assets must NOT be resaved in 5.8 (see production/first-playable-report.md, Changed project content).
@@ -19,7 +19,7 @@ if (-not ($b -match 'Succeeded')) { "BUILD FAILED"; exit 1 }
 
 if ($Tests) {
   $testLog = Join-Path $env:TEMP "stealth_tests.log"
-  & "$ue\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $proj -ExecCmds="Automation RunTests StealthGame.; Quit" -unattended -nullrhi -stdout -FullStdOutLogOutput 2>&1 | Out-File $testLog -Encoding utf8
+  & "$ue\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" $proj -ExecCmds="Automation RunTests ^StealthGame.; Quit" -unattended -nullrhi -stdout -FullStdOutLogOutput 2>&1 | Out-File $testLog -Encoding utf8
   "tests exit=$LASTEXITCODE"
   Select-String -Path $testLog -Pattern 'Test Completed' | ForEach-Object { if ($_.Line -match 'Result=\{(\w+)\} Name=\{([^}]*)\} Path=\{([^}]*)\}') { "$($matches[1])  $($matches[3])" } }
 }
