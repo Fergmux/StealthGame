@@ -59,7 +59,7 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 
 Granularity `balanced` (2-4 acceptance criteria per story; GDD criteria with several independent cases are split into sub-criteria; criteria derived from an ADR or the epic where the GDD has none are labelled "derived" in the story). Manifest Version embedded: 2026-10-25f (the control-manifest header; the epic header says 25e, the 25f changes touch no Feature-layer City Generator rule). In dependency order: 001-004 foundations (keys, provider shell, streams, kit tables), 005-019 the pipeline stages S1-S12 and emission, 020-023 G-PRE and the candidate loop, 024-035 runtime (worker, failures, spawn, navigation, decoration, determinism, goldens, fixture, parity, fallback, freeze), 036-043 tools, audits and measurements, 044-045 tier G1 and prototype retirement, 046-047 the 10-player integration pass this epic owns.
 
-**Gates.** Story 008 is the PCG OQ9 / cross-review C-W24 grid-only final-court enumeration script (200 skeletons); it is Ready and releases 010, 011, 022 and 038 (BLOCKED until its report states the S4 anchor-jitter rule and the start-cell radius). 027 is BLOCKED on spike R1 (ADR-0022) and the Manifest wire-size spike (LSC story 010); 039 on spike R4 (LSC story 011); 041, 042, 043 on R1 and/or R4 and reference hardware (043 repeats them at generator scale); 044 on the mass-production gate (R1-R3); 046 and 047 (the 10-player pass: a ten-connection Gauntlet run and a real-network 5v5 session) on R1, R4 and the net-emulation spike (SCL story 045). Spike R1 has no story in any epic yet (performance-analyst owns the 3060-class capture); R4's graybox half is LSC story 011.
+**Gates.** Story 008 is the PCG OQ9 / cross-review C-W24 grid-only final-court enumeration script (200 skeletons); its script and report are committed (verdict CONCERNS, 2026-10-25; rule MOVING, jitter 0, radius 16 m) and it released 010, 011, 022 and 038. 027 is BLOCKED on spike R1 (ADR-0022) and the Manifest wire-size spike (LSC story 010); 039 on spike R4 (LSC story 011); 041, 042, 043 on R1 and/or R4 and reference hardware (043 repeats them at generator scale); 044 on the mass-production gate (R1-R3); 046 and 047 (the 10-player pass: a ten-connection Gauntlet run and a real-network 5v5 session) on R1, R4 and the net-emulation spike (SCL story 045). Spike R1 has no story in any epic yet (performance-analyst owns the 3060-class capture); R4's graybox half is LSC story 011.
 
 QL-STORY-READY: first review 20 ADEQUATE (002, 003, 005, 007, 011, 015, 018, 019, 022, 024, 025, 028, 029, 030, 031, 032, 033, 034, 035, 038) and 27 GAPS (001, 004, 006, 008, 009, 010, 012, 013, 014, 016, 017, 020, 021, 023, 026, 027, 036, 037, 039, 040, 041, 042, 043, 044, 045, 046, 047, each with at least one flagged criterion), 0 INADEQUATE; the flagged criteria were revised (qa-lead rewrites with open points resolved from the GDD or logged as proposals) and re-reviewed once: all became ADEQUATE except 008 AC3 (verdict rule), 012 AC3 (storey counting), 014 AC1 (M10 height), 040 AC1 and 044 AC3, whose qa-lead rewrites were adopted without a third round (decisions logged; the GDD owners should ratify 012, 014 and the proposed constants flagged in the stories).
 
@@ -72,10 +72,10 @@ QL-STORY-READY: first review 20 ADEQUATE (002, 003, 005, 007, 011, 015, 018, 019
 | 005 | Grid model, S1 Frame and F1 walkable target | Logic | Ready | ADR-0014 |
 | 006 | S2 Skeleton: lattice, widths, jogs, transpose and jitter | Logic | Ready | ADR-0014 |
 | 007 | F7 skeleton fairness pre-check | Logic | Ready | ADR-0014 |
-| 008 | OQ9 / C-W24 grid-only final-court enumeration script | Logic | Ready | ADR-0014 |
+| 008 | OQ9 / C-W24 grid-only final-court enumeration script | Logic | In Progress (script + report done; C++ wrappers DEFERRED) | ADR-0014 |
 | 009 | S3 Area types | Logic | Ready | ADR-0014 |
-| 010 | S4 Courts | Logic | Blocked (story 008 report) | ADR-0014 |
-| 011 | S5 Zones, anchors and start cells | Logic | Blocked (story 008 report) | ADR-0014 |
+| 010 | S4 Courts | Logic | Ready (008 reported CONCERNS) | ADR-0014 |
+| 011 | S5 Zones, anchors and start cells | Logic | Ready (008 reported CONCERNS) | ADR-0014 |
 | 012 | S6 Facade bay sequencer and F3 periodicity | Logic | Ready | ADR-0014 |
 | 013 | S7 Emergence alleys and ExitPoints | Logic | Ready | ADR-0014 |
 | 014 | S8 Traversal points | Logic | Ready | ADR-0014 |
@@ -86,7 +86,7 @@ QL-STORY-READY: first review 20 ADEQUATE (002, 003, 005, 007, 011, 015, 018, 019
 | 019 | Placement, bay stacks and Manifest emission | Logic | Ready | ADR-0014 |
 | 020 | G-PRE grid measure backend and guard bands | Logic | Ready | ADR-0014 |
 | 021 | G-PRE predicates A: navigation, reach, sight, emergence, clue, counts | Logic | Ready | ADR-0014 |
-| 022 | G-PRE predicates B: court, pool, bush, route, zones, fairness and role counts | Logic | Blocked (story 008 report) | ADR-0014 |
+| 022 | G-PRE predicates B: court, pool, bush, route, zones, fairness and role counts | Logic | Ready (008 reported CONCERNS) | ADR-0014 |
 | 023 | Candidate loop, work-unit cap and attempt metrics | Logic | Ready | ADR-0014 |
 | 024 | Worker task, cancellation and the generator state machine | Integration | Ready | ADR-0014 |
 | 025 | Failure modes and teardown | Integration | Ready | ADR-0014 |
@@ -102,7 +102,7 @@ QL-STORY-READY: first review 20 ADEQUATE (002, 003, 005, 007, 011, 015, 018, 019
 | 035 | Navmesh frozen after hand-off | Integration | Ready | ADR-0014 |
 | 036 | Developer commands and debug overlay | UI | Ready | ADR-0014 |
 | 037 | Batch harness and the F4/F6 audits | Logic | Ready | ADR-0014 |
-| 038 | Role-prior and LSC batch audits | Logic | Blocked (story 008 report) | ADR-0014 |
+| 038 | Role-prior and LSC batch audits | Logic | Ready (008 reported CONCERNS) | ADR-0014 |
 | 039 | G-PRE false-pass rate and guard-band sign | Integration | Blocked (spike R4) | ADR-0014 |
 | 040 | Stack and slab visual equivalence | Visual/Feel | Ready | ADR-0022 |
 | 041 | Client build time and first-frame completeness | Integration | Blocked (spikes R1, R4) | ADR-0014 |

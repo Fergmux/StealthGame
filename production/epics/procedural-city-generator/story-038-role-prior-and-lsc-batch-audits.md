@@ -1,7 +1,8 @@
 # Story 038: Role-prior and LSC batch audits
 
 > **Epic**: Procedural City Generator
-> **Status**: Blocked — BLOCKED: the OQ9 / C-W24 final-court enumeration (story 008) has not reported; AC3 (every accepted layout has >= 6 final-eligible courts, none in the temple ring) and AC2's axis-corner share cannot be judged until the S4 anchor-jitter rule and start-cell radius are fixed. Story 008 is Ready and releases this one.
+> **Status**: Ready
+> **Story 008 report (2026-10-25, verdict CONCERNS)**: `production/qa/spikes/2026-10-25_citygen-oq9-final-court-enumeration.md`. Adopted starting values: anchor-jitter rule MOVING (identical to fixed at jitter 0), `CityGenSkeletonJitterCount` 0 and start-cell radius 16 m at `StartToFinalMinPathCm` 44 m (a_R16+j0: 123/200 skeletons reach 6 under both policies; the defaults 44 m / 18 m / jitter 1 reach only 15-20/200). `FinalCandidatesMinCount` stays 6. The GDD/LSC text change (jitter default 0, radius 16 m) is a level-designer follow-up.
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M

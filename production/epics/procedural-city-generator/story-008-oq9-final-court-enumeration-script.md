@@ -1,12 +1,12 @@
 # Story 008: OQ9 / C-W24 grid-only final-court enumeration script
 
 > **Epic**: Procedural City Generator
-> **Status**: Ready
+> **Status**: In Progress — script, self-test, report and CSV done; the C++ Automation wrappers are DEFERRED (engine run pending)
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -68,7 +68,8 @@ Prototype replaced: none (the prototype logged a reachability check only).
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Private/Features/CityGenerator/CityGenFinalPoolProbe.h` (minimal anchor, start-cell and final-eligibility probe on the skeleton grid)
+- `tools/citygen/oq9_enumerate.py` (the implemented script and its `selftest`; created)
+- DEFERRED C++ ports: `Source/StealthGameplay/Private/Features/CityGenerator/CityGenFinalPoolProbe.h` (minimal anchor, start-cell and final-eligibility probe on the skeleton grid)
 - `Source/StealthGameplay/Private/Features/CityGenerator/CityGenFinalPoolProbe.cpp`
 - `Source/StealthGameplay/Private/Tests/CityGen/FinalPoolEnumerationTest.cpp` (class `FCityGenFinalPoolEnumeration200Test`, name `StealthGame.CityGen.FinalPool.Enumeration200`)
 - `Source/StealthGameplay/Private/Tests/CityGen/FinalPoolArithmeticFixturesTest.cpp` (class `FCityGenFinalPoolArithmeticFixturesTest`)
@@ -107,7 +108,14 @@ Prototype replaced: none (the prototype logged a reachability check only).
 **Required evidence**:
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/CityGen/` — must exist and pass, plus the committed report and CSV in `production/qa/spikes/` (`/story-done` checks that they EXIST)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Script, self-test and report created; [ ] C++ Automation wrappers DEFERRED (engine run pending)
+
+**Implementation decision (2026-10-25, unattended run, non-UE tools only):** the story's C++ probe/test files require the Unreal toolchain, which another agent held, and the stages it names (003, 005, 006) do not exist yet. The enumeration is implemented as a deterministic integer-only Python script, `tools/citygen/oq9_enumerate.py`, carrying a minimal copy of S1/S2/S4/S5 (model documented in its docstring), with `selftest` (27 checks: PCG32 known answers, AC2 fixtures, determinism, 200 rows per policy, histograms sum to 200, verdict recomputed from the CSV equals the report's word, exactly 0.30 passes, no lower `FinalCandidatesMinCount` proposed). Run: `python tools/citygen/oq9_enumerate.py run` then `selftest` (about 17 s).
+
+- AC1 (`FinalPool.Enumeration200`): MET by the script (200 skeletons x 2 policies x 11 scenarios in the CSV; histogram, fraction >= 6, (31, 31) margin distribution in the report). C++ Automation wrapper DEFERRED.
+- AC2 (`FinalPool.ArithmeticFixtures`): MET by the script (6 courts and 0.48 m at the mean fixture; 5 when (31, 31) moves 2 m outward in x). Finding: a diagonal 2 m outward move keeps 6 on the grid. C++ wrapper DEFERRED.
+- AC3 (`FinalPool.LeverReport`): MET. Verdict **CONCERNS** (baseline lower policy 15/200 = 0.075; jitter 0 reaches 0.34, start-cell radius 16 m + jitter 0 reaches 0.615). Report and CSV: `production/qa/spikes/2026-10-25_citygen-oq9-final-court-enumeration.md` and `.csv`. C++ wrapper DEFERRED.
+- DEFERRED (engine run pending): port `CityGenFinalPoolProbe` and the three Automation tests to `Source/StealthGameplay/Private/Tests/CityGen/` once stories 003, 005 and 006 land; the committed CSV is the oracle they must reproduce.
 
 ---
 
