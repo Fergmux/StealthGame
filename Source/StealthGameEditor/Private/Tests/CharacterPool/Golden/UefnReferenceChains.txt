@@ -1,0 +1,32 @@
+# UEFN reference skeleton measurements (art bible 1.3.2 / 1.3.5, OI-1 closed 2026-10-25).
+# Golden data for the pool conformance validator (story 008) and the Blender T1 audit (story 002).
+# Source: UE 5.8.4 editor run 2026-10-25 (production/qa/spikes/2026-10-25_S1-S2-S14.md section 4,
+# production/qa/logs/2026-10-25_A_mannequin-bone-dump.txt); re-measured in Blender on
+# assets/characters/reference/SKM_UEFN_Mannequin.fbx by tools/asset-pipeline/body_measure.py (identical chains).
+# Units: centimetres. Chains are bone-origin distances in the reference pose, through intermediate bones.
+# Format: key=value, one per line; '#' starts a comment. Never copy these numbers into code.
+reference_skeleton=/Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin
+reference_mesh=/Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin
+bone_count=88
+extra_bones_allowed=0
+root_bone=root
+stature_cm=165.6
+stature_tolerance_cm=2.0
+chain_tolerance_pct=3.0
+chain.thigh=thigh_l>calf_l:39.05
+chain.shin=calf_l>foot_l:42.56
+chain.foot=foot_l>ball_l:15.15
+chain.spine=pelvis>spine_01>spine_02>spine_03>spine_04>spine_05>neck_01:49.47
+chain.clavicle_to_upperarm=clavicle_l>upperarm_l:15.51
+chain.upperarm=upperarm_l>lowerarm_l:26.65
+chain.forearm=lowerarm_l>hand_l:22.35
+chain.hand=hand_l>middle_metacarpal_l>middle_01_l>middle_02_l>middle_03_l:16.23
+chain.hand_straight=hand_l>middle_03_l:15.44
+chain.neck=neck_01>neck_02>head:9.95
+# Re-derived body dimensions (chains win, art bible 1.3.2 OI-1 block); value:tolerance
+dim.head_height_cm=19.3:1.0
+dim.shoulder_width_cm=51.0:2.0
+dim.chest_depth_cm=27.6:2.0
+dim.hip_width_cm=34.8:2.0
+dim.foot_length_cm=26.3:1.5
+dim.sole_z_cm=0.0:0.5

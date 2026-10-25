@@ -1,12 +1,13 @@
 # Story 001: OI-1 closed: the UEFN mannequin measurements become the art-bible reference
 
 > **Epic**: Character Pool & Appearance
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Config/Data
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Manifest-Note**: current manifest is 2026-10-25f; its changes (HeadLook, ping, AppearanceId-on-takeover) do not touch this story (readiness 2026-10-25)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -34,9 +35,9 @@
 
 *From art bible 1.3.2 / 8.x.17 (OI-1) and GDD OQ-1 / OQ-2, scoped to this story:*
 
-- [ ] **AC-1** GIVEN the 2026-10-25 measurements (production/qa/spikes/2026-10-25_S1-S2-S14.md section 4 and production/qa/logs/2026-10-25_A_mannequin-bone-dump.txt), WHEN art bible 1.3.2 and 1.3.5 are amended, THEN they name `SK_UEFN_Mannequin` as the pool reference skeleton and record stature 165.6 cm (band ± 2 cm = 163.6 to 167.6 cm), 88 bones and the nine chain lengths (thigh 39.05, shin 42.56, foot 15.15, spine 49.47, clavicle to upper arm 15.51, upper arm 26.65, forearm 22.35, hand 16.23 (15.44 straight line), neck 9.95 cm), and the 175 cm working value and Manny's 180.5 cm are marked superseded.
-- [ ] **AC-2** GIVEN the stature is outside the old 173 to 177 cm band, WHEN dependent values are re-derived from the chain lengths (chains win, 1.3.2), THEN head height, shoulder, chest depth, hip, foot, hem, garment envelope, the 8.6 import scale and the 8.7 step 3 target each carry a re-derived number with its derivation line, a numeric per-chain tolerance for the validator is stated (proposed ± 3 %, art-director confirms), OI-1 is marked CLOSED with the date in 8.x.17 and the art-director re-sign of 1.3 is recorded.
-- [ ] **AC-3** GIVEN downstream values that assume a 175 cm figure (`TeammateMarkerAnchorCm` 195 and teammate-markers OQ7, the 8.5 reference-camera distance table, the T2 to T3 distances), WHEN OI-1 closes, THEN each is listed in a change-request list with its owning document and owner (this story edits none of those GDDs).
+- [x] **AC-1** GIVEN the 2026-10-25 measurements (production/qa/spikes/2026-10-25_S1-S2-S14.md section 4 and production/qa/logs/2026-10-25_A_mannequin-bone-dump.txt), WHEN art bible 1.3.2 and 1.3.5 are amended, THEN they name `SK_UEFN_Mannequin` as the pool reference skeleton and record stature 165.6 cm (band ± 2 cm = 163.6 to 167.6 cm), 88 bones and the nine chain lengths (thigh 39.05, shin 42.56, foot 15.15, spine 49.47, clavicle to upper arm 15.51, upper arm 26.65, forearm 22.35, hand 16.23 (15.44 straight line), neck 9.95 cm), and the 175 cm working value and Manny's 180.5 cm are marked superseded.
+- [x] **AC-2** GIVEN the stature is outside the old 173 to 177 cm band, WHEN dependent values are re-derived from the chain lengths (chains win, 1.3.2), THEN head height, shoulder, chest depth, hip, foot, hem, garment envelope, the 8.6 import scale and the 8.7 step 3 target each carry a re-derived number with its derivation line, a numeric per-chain tolerance for the validator is stated (proposed ± 3 %, art-director confirms), OI-1 is marked CLOSED with the date in 8.x.17 and the art-director re-sign of 1.3 is recorded.
+- [x] **AC-3** GIVEN downstream values that assume a 175 cm figure (`TeammateMarkerAnchorCm` 195 and teammate-markers OQ7, the 8.5 reference-camera distance table, the T2 to T3 distances), WHEN OI-1 closes, THEN each is listed in a change-request list with its owning document and owner (this story edits none of those GDDs).
 
 ---
 
@@ -65,13 +66,10 @@
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
-- `design/art/art-bible.md` (sections 1.3.2, 1.3.5, 8.6, 8.7, 8.x.17 only)
+- `design/art/art-bible.md` (sections 1.3.2, 1.3.5, 8.6, 8.7 step 3, 8.x.17)
 - `Source/StealthGameEditor/Private/Tests/CharacterPool/Golden/UefnReferenceChains.txt`
+- `tools/asset-pipeline/body_measure.py` (measurement definitions used for the re-derivation; reused by story 002)
 - `production/qa/smoke-oi1-closure.md`
-
----
 
 ## QA Test Cases
 
@@ -102,7 +100,7 @@
 **Required evidence**:
 - Config/Data: smoke check pass, `production/qa/smoke-oi1-closure.md` (advisory gate by default)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created — `production/qa/smoke-oi1-closure.md` (PASS, 2026-10-25)
 
 ---
 
@@ -110,3 +108,12 @@
 
 - Depends on: None
 - Unlocks: `production/epics/character-pool-appearance/story-002-body-base-blender-build-oi10.md`, `production/epics/character-pool-appearance/story-003-meshy-test-character-generate-normalise.md`, `production/epics/character-pool-appearance/story-008-pool-mesh-conformance-validator.md`
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 3/3 passing (AC-1, AC-2, AC-3 verified by `production/qa/smoke-oi1-closure.md` checks 1-8)
+**Deviations**: ADVISORY — re-derived head/shoulder/chest/hip/foot follow the chain-bound UEFN body, not the 0.9463 scale (chains win; decision log 2026-10-25). ADVISORY — 1.3.3 table still shows old numbers, superseded by the 1.3.2 OI-1 block until CR-OI1-4. OUT OF SCOPE (awareness) — `tools/asset-pipeline/body_measure.py` added as the measurement definition (shared with story 002).
+**Test Evidence**: `production/qa/smoke-oi1-closure.md` (Config/Data smoke, PASS)
+**Reviewed by**: self, no independent review (unattended run; focused review of `body_measure.py`)
+Run result: N/A — document and golden-data change; nothing renders (no engine run allowed or needed)
+Sprint status not updated: story not in `production/sprint-status.yaml` (sprint 1)

@@ -189,37 +189,96 @@ mass, height, finish or hue family.
 
 | Measure | Contract | Tolerance |
 | ------- | -------- | --------- |
-| Stature (sole of foot to skull crown, rest pose, headwear and hair excluded) | **175 cm** working value, **not yet measured** (OPEN ITEM OI-1). Replaced by the measured stature of the project's `SK_Mannequin` once, at pool setup. | **+/- 2 cm** (about 1.1 percent) |
-| Head height (chin to crown) | 23 cm | +/- 1 cm |
-| Bone chain lengths (thigh, shin, foot, spine chain, clavicle-to-upper-arm, forearm, hand, neck) | Equal to the project's Manny chain lengths after the stature set above. **Precedence: chain lengths win.** Every absolute dimension in this section (stature, head height, shoulder, chest, hip, foot length) is derived from the measured chains; if a chain-length check (+/- 3 percent) and an absolute-dimension check disagree on a model, the chain-length result decides and the absolute figure is re-derived, never the chain "corrected" to hit a round number | +/- 3 percent per chain |
-| Shoulder width (outer skin, under-garment body) | 40 cm | +/- 2 cm |
-| Chest depth (under-garment body) | 24 cm | +/- 2 cm |
-| Hip width (under-garment body) | 34 cm | +/- 2 cm |
+| Reference skeleton and mesh | **`SK_UEFN_Mannequin`** (`/Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin`, mesh `SKM_UEFN_Mannequin`), the skeleton the playable character `CBP_SandboxCharacter` and the crowd pool use (measured 2026-10-25, OI-1 closed). `SK_Mannequin` (Manny, 180.5 cm, 161 bones) is **not** the pool reference: every "Manny" in 1.3, 5.x and 8.x that names the pool reference reads `SK_UEFN_Mannequin` (the text edits outside this section are change requests CR-OI1-4 to CR-OI1-6, 1.3.2 OI-1 block). | exact asset |
+| Stature (sole of foot to skull crown, rest pose, headwear and hair excluded) | **165.6 cm**, measured (height of the `SKM_UEFN_Mannequin` LOD0 imported bounds, UE 5.8.4, 2026-10-25; Blender sole-to-crown on the reference FBX 165.57). *Superseded:* the 175 cm working value and Manny's 180.5 cm. | **+/- 2 cm**: **163.6 to 167.6 cm** |
+| Head height (chin to crown) | **19.3 cm** (re-derived 2026-10-25, see the OI-1 block) | +/- 1 cm |
+| Bone chain lengths (thigh, shin, foot, spine chain, clavicle-to-upper-arm, upper arm, forearm, hand, neck) | Equal to `SK_UEFN_Mannequin`'s measured chains (OI-1 block below; machine-readable copy `Source/StealthGameEditor/Private/Tests/CharacterPool/Golden/UefnReferenceChains.txt`). **Precedence: chain lengths win.** Every absolute dimension in this section (stature, head height, shoulder, chest, hip, foot length) is derived from the measured chains; if a chain-length check (+/- 3 percent) and an absolute-dimension check disagree on a model, the chain-length result decides and the absolute figure is re-derived, never the chain "corrected" to hit a round number | **+/- 3 percent per chain** (confirmed by the art-director 2026-10-25, the validator tolerance of story 008) |
+| Shoulder width (outer skin, under-garment body, at the `upperarm_l` joint height in the reference A-pose) | **51.0 cm** (re-derived; was 40) | +/- 2 cm |
+| Chest depth (under-garment body, torso section between `spine_03` and `upperarm_l`) | **27.6 cm** (re-derived; was 24) | +/- 2 cm |
+| Hip width (under-garment body, between `thigh_twist_01_l` and pelvis + 2 cm, hands excluded) | **34.8 cm** (re-derived; was 34) | +/- 2 cm |
 | Body_Base conformity (under-garment surface) | 95th percentile surface deviation from Body_Base | <= 1.5 cm; mean <= 1.0 cm |
-| Foot sole length / footwear thickness | 26 cm / <= 1.5 cm (the shared flat cactli sandal piece of 1.3.10 only; no bare feet, since a barefoot model in a sandalled pool is a tell) | +/- 1.5 cm / n.a. |
+| Foot sole length / footwear thickness | **26.3 cm** (re-derived; was 26) / <= 1.5 cm (the shared flat cactli sandal piece of 1.3.10 only; no bare feet, since a barefoot model in a sandalled pool is a tell) | +/- 1.5 cm / n.a. |
 | Foot contact | Sole plane at Z = 0 in rest pose | +/- 0.5 cm |
 | Scale | Imported object scale 1.0, no negative scale, no non-uniform scale | exact |
 
 Rationale for holding stature to +/- 2 cm: the motion-matching databases
-in the Game Animation Sample are authored against Manny. Stride length, foot
-placement and traversal heights all assume Manny's leg length. Scaling a
-character to differ visibly makes feet slide, and that sliding is a *tell that
-differs per model*. A tight stature band removes both the visible height
-difference and the slide. The 175 cm working figure is deliberately a working
-value: the contract is "Manny's stature +/- 2 cm," and the number is replaced
-by the measured value at setup so that no pool model ever needs a retarget
-scale.
+the playable character uses are played on the reference skeleton. Stride
+length, foot placement and traversal heights all assume its leg length.
+Scaling a character to differ visibly makes feet slide, and that sliding is a
+*tell that differs per model*. A tight stature band removes both the visible
+height difference and the slide. The contract is "the reference skeleton's
+measured stature +/- 2 cm", so that no pool model ever needs a retarget scale.
 
-**OPEN ITEM OI-1 (opened 2026-10-24, not closed).** Nobody has measured the
-project's `SK_Mannequin` in UE 5.8.4. *Owner:* technical-artist. *Check:* open
-the skeleton and mesh in the editor and record (a) stature sole to crown in the
-reference pose, (b) bone count, (c) each chain length listed in the table
-above, in this file next to the working values. *Consequence:* if the measured
-stature is outside **173 to 177 cm**, every dependent value is re-derived from
-the chain lengths (head height 23 cm, shoulder 40, chest depth 24, hip 34, foot
-26, hem 55 +/- 8, garment envelope 54 +/- 3, leg gap 14, the 8.6 import scale
-and the 8.7 step 3 target) and the art-director re-signs 1.3 before any model
-is generated. **OI-1 is a hard prerequisite for the first Meshy credit, including the single test character of the mass-production gate (8.x.14):** measuring the mannequin takes minutes in the editor, so no working value is accepted in its place for any generated model. Only the Blender-only Body_Base (1.3.9) may be started on the 175 cm working value, and it is re-scaled and re-accepted when OI-1 closes, before any credit is spent.
+**OI-1: CLOSED 2026-10-25.** *Measured:* UE 5.8.4 editor run of 2026-10-25
+(`production/qa/spikes/2026-10-25_S1-S2-S14.md` section 4, component-space
+reference-pose bone dump `production/qa/logs/2026-10-25_A_mannequin-bone-dump.txt`),
+re-measured in Blender 5.2.3 on `assets/characters/reference/SKM_UEFN_Mannequin.fbx`
+by `tools/asset-pipeline/body_measure.py` with identical chain results.
+*Decision (user instruction, 2026-10-25):* the pool reference is the UEFN
+mannequin at **165.6 cm**, not `SK_Mannequin`. *Owner:* technical-artist.
+
+| Measure (reference pose, cm) | `SK_UEFN_Mannequin` (contract) | Superseded |
+| --- | --- | --- |
+| Bones | **88** (`root` + 87). **Zero extra bones, reference = 88.** The prototype Meshy citizens `SK_Citizen02` to `05` carry **89**: Blender exported the `SKM_UEFN_Mannequin` empty above the armature as an extra root bone. Every pool FBX is checked for 88 skeleton nodes (one `Root` + 87 `LimbNode`, no `Null` above `root`) | Manny 161 (Manny Simple / Quinn Simple 89) |
+| Stature (LOD0 imported bounds) | **165.6** (band 163.6 to 167.6) | 175 working value; Manny 180.5 |
+| Thigh (`thigh_l` to `calf_l`) | **39.05** | Manny 43.34 |
+| Shin (`calf_l` to `foot_l`) | **42.56** | Manny 42.22 |
+| Foot (`foot_l` to `ball_l`) | **15.15** | Manny 16.78 |
+| Spine (`pelvis` through `spine_01..05` to `neck_01`) | **49.47** | Manny 57.56 |
+| Clavicle to upper arm (`clavicle_l` to `upperarm_l`) | **15.51** | Manny 17.81 |
+| Upper arm (`upperarm_l` to `lowerarm_l`) | **26.65** | Manny 27.77 |
+| Forearm (`lowerarm_l` to `hand_l`) | **22.35** | Manny 27.25 |
+| Hand (`hand_l` through the middle finger to `middle_03_l`) | **16.23** (straight line 15.44) | Manny 17.21 |
+| Neck (`neck_01` through `neck_02` to `head`) | **9.95** | Manny 10.02 |
+
+Per-chain validator tolerance: **+/- 3 percent** (proposed by story 001,
+confirmed by the art-director at the re-sign below).
+
+*Re-derived dependent values.* The stature (165.6) is outside the old 173 to
+177 cm band, so every dependent value was re-derived. Method, per value: (1)
+scale the old figure by **165.6 / 175 = 0.9463**; (2) sanity-check the result
+against the chain-bound reference body (`SKM_UEFN_Mannequin` is skinned to
+exactly these chains, measured by `body_measure.py`, definitions in its
+docstring); (3) where the two disagree by more than the tolerance, the
+chain-bound figure decides (chains win). The UEFN mannequin is not a scaled
+Manny (its forearm is 18 percent shorter and its shoulders broader), so most
+figures follow step 3:
+
+| Value | Old | Scaled (x 0.9463) | Reference body | Contract now | Derivation |
+| --- | --- | --- | --- | --- | --- |
+| Head height | 23 +/- 1 | 21.8 | 19.3 | **19.3 +/- 1** | crown 165.57 minus chin 146.25 on the reference mesh; the scaled 21.8 is 2.5 cm off, so the chain-bound figure decides |
+| Shoulder width | 40 +/- 2 | 37.9 | 51.0 | **51.0 +/- 2** | skin width at the `upperarm_l` joint height; the joints alone sit 2 x 17.78 = 35.6 cm apart (clavicle chain 15.51), so 37.9 cm would leave 1.2 cm of deltoid; chains decide |
+| Chest depth | 24 +/- 2 | 22.7 | 27.6 | **27.6 +/- 2** | torso section front-to-back maximum; chains decide |
+| Hip width | 34 +/- 2 | 32.2 | 34.8 | **34.8 +/- 2** | outer width between thigh twist and pelvis; scaled value 2.6 off; chains decide |
+| Foot sole length | 26 +/- 1.5 | 24.6 | 26.3 | **26.3 +/- 1.5** | heel to toe; foot chain 15.15 plus heel and toes; chains decide |
+| Hem height (1.3.3) | 55 +/- 8 | 52.0 +/- 7.6 | knee joint 51.8 | **52.0 +/- 7.6** (44.4 to 59.6) | scaled; check: the band still runs from just below the knee joint (`calf_l` at 51.76) to the upper calf, the original intent |
+| Garment envelope, front (1.3.3) | 54 +/- 3 | 51.1 | body shoulders 51.0 | **64.2 +/- 3** | the scaled 51.1 is narrower than the bare body, so the envelope is re-derived as the body shoulder 51.0 plus the old garment allowance scaled (54 - 40 = 14, x 0.9463 = 13.2) |
+| Garment envelope, side (1.3.3) | 34 max | 32.2 | body chest 27.6 | **37.1 max** | body chest depth 27.6 plus the old allowance scaled ((34 - 24) x 0.9463 = 9.5) |
+| Leg gap (1.3.3) | 14 (8 % of stature) | 13.2 | n.a. | **13.2** | 8 percent of 165.6 |
+| 8.6 import outcome | 175 cm | 165.6 | 165.6 | **imported at 165.6 cm (165.6 uu), import uniform scale 1.0** | the reference FBX is already at the reference stature, so no import scale differs from 1.0 |
+| 8.7 step 3 target | 175 +/- 2 | 165.6 +/- 2 | 165.6 | **165.6 +/- 2 (163.6 to 167.6)** | the measured stature |
+
+The 1.3.3 rows (envelope, side depth, hem height, leg gap) and hem width
+(44 +/- 4, not re-derived here) still carry the old numbers in their own table:
+this block supersedes them until the art-director edits 1.3.3 (CR-OI1-4).
+
+*Downstream values that assume 175 cm (change requests, owners edit their own
+documents; story 001 edits none of them):*
+
+| CR | Value | Owning document | Owner |
+| --- | --- | --- | --- |
+| CR-OI1-1 | `TeammateMarkerAnchorCm` 195 (= 175 + 7 + 13) and OQ7 "re-derive when OI-1 closes": proposed 186 (= 165.6 + 7 headwear cap + 13 clearance, rounded) | `design/gdd/teammate-markers.md` (F2 variable table, tuning knob table, OQ7) and the tuning data file | game-designer with ux-designer |
+| CR-OI1-2 | Reference-camera distance table (175 cm figure, "screen fraction about 1.5 / distance") in 8.5, `H_fig = 175` in SCL F-tier formula and ADR-0013 F7: re-derive with 165.6 (fraction about 1.43 / distance) | `design/art/art-bible.md` 8.5; `design/gdd/shared-character-locomotion.md` (H_fig row and example); `docs/architecture/adr-0013-animation-motion-matching-significance.md` | art-director (8.5); game-designer (SCL); technical-director (ADR-0013) |
+| CR-OI1-3 | T2 line-up (15 m arc, 1.5 m spacing) and T3 (20 m, 30 m) distances, the 20 to 30 m reading range and G-TWIN 15 m captures: confirm or re-derive for a 165.6 cm figure (about 5 percent smaller on screen) | `design/art/art-bible.md` 1.3.7; `design/gdd/character-pool-appearance.md` CP-15, AC-CP-23, AC-CP-24b | art-director; game-designer (CPA) |
+| CR-OI1-4 | 1.3.3 table: envelope 64.2 +/- 3, side depth 37.1, hem 52.0 +/- 7.6, leg gap 13.2; re-derive hem width 44 +/- 4 | `design/art/art-bible.md` 1.3.3 | art-director |
+| CR-OI1-5 | "Manny" / `SK_Mannequin` as the pool reference in 1.3.7 checklist items 1, 3, 17, 18, 1.3.9, 5.x and 8.x.7 (skeleton path) | `design/art/art-bible.md` | art-director |
+| CR-OI1-6 | GDD text naming Manny as the pool skeleton (CP-5 MVP tier "built on the Manny body") | `design/gdd/character-pool-appearance.md` | game-designer |
+
+**Re-sign of 1.3 (OI-1 closure):** art-director, 2026-10-25 (unattended
+build run authorised by the user; recorded in
+`production/session-logs/decision-log.md`). Body_Base (1.3.9) is built at
+165.6 cm on these chains (story 002); no working value remains in force.
+**OI-1 was a hard prerequisite for the first Meshy credit, including the single test character of the mass-production gate (8.x.14);** that prerequisite is now met, and OI-10 (Body_Base accepted) still gates the credit.
 
 *Alternatives considered:* a +/- 5 percent natural variation band (rejected,
 because a 9 cm height difference is visible at 20 m and is chosen by nobody),
@@ -319,11 +378,11 @@ it was 80 at 50 characters; working value since `NpcCount` 50 (user decision 202
 | LOD1 / LOD2 / LOD3 triangles | **<= 6,000 / <= 2,500 / <= 900**. |
 | Worst-case crowd estimate (re-derived 2026-10-24 against the 8.5 screen-height bands and the 8.x.8 tier caps) | The 8.x.8 caps limit how many characters can sit in each band: at most **8** at LOD0 (figure >= 19 percent of screen height), at most **14** in the LOD1 band, and the remaining **38** at LOD2 (the pessimistic case puts everyone inside 24 m, so none at LOD3). 8 x 14k (LOD0 at its upper tolerance) + 14 x 6k + 38 x 2.5k = 112k + 84k + 95k = **about 291k triangles** for 60 characters (was 266k at 50), before shadows (about 275k at the nominal 12k LOD0; working value since `NpcCount` 50 (user decision 2026-10-25), re-verify in spike R3). A typical frame is far lower because the 20 to 32 m reading range and beyond is LOD3 (900). The earlier 6 / 14 / 20 / 10 split was a scenario that did not follow from the bands and is withdrawn. 291k is an **ASSUMED design-density case**, not a verified ceiling: the arithmetic is exact, but the 8 / 14 / 38 caps hold only while the camera and spawn-density rule of OI-13 (owner level-design with game-designer) keeps at most 8 figures in the LOD0 band and 14 in the LOD1 band. It is about 36 % of the **800k non-Nanite scene ceiling (8.x.2), which includes characters**; props, foliage and bushes share the remaining **about 509k**. |
 | LOD behaviour | LOD switching is by **figure screen height alone** and is **identical for players and NPCs**; the screen-height table in **8.5 is authoritative** for every threshold and distance (5.6 defers to it). LOD silhouettes stay within 2 percent of LOD0 outline area, so a LOD pop is not readable as a change. **The 24 to 30 m part of the reading range is LOD3**, so the 900-triangle LOD3 mesh must keep the **back-weighted head mass** (the heading rule: at least 60 percent of hair volume behind the ear plane) and the **leg gap** (at least 14 cm at mid-stride); a LOD3 that loses either fails T1 item 16. |
-| Skeleton | The **project's Manny skeleton asset**, unmodified. Hierarchy and bone names identical to the asset. **Zero extra bones**: no cloth, hair, accessory or corrective bones on pool models. The bone count is read from the skeleton asset at setup and recorded here; it is the same number for all models. |
-| Skinning | Maximum **4 influences per vertex**. Weights transferred from Manny's weights (nearest-face-interpolated Data Transfer), then hand-corrected. LOD2 and below may strip fingers and twist bones; the same stripping applies to all models. |
+| Skeleton | The **project's reference skeleton asset `SK_UEFN_Mannequin`** (1.3.2, OI-1 closed 2026-10-25), unmodified. Hierarchy and bone names identical to the asset. **Zero extra bones**: no cloth, hair, accessory or corrective bones on pool models. **Measured bone count: 88** (`root` + 87, UE 5.8.4, 2026-10-25); it is the same number for all models, and an FBX whose skeleton has 89 nodes (an exported Blender armature object or empty above `root`, the prototype citizens' defect) fails. *Superseded:* "the project's Manny skeleton asset" (161 bones). |
+| Skinning | Maximum **4 influences per vertex**. Weights transferred from the `SKM_UEFN_Mannequin` body weights or from the accepted Body_Base (nearest-face-interpolated Data Transfer), then hand-corrected. LOD2 and below may strip fingers and twist bones; the same stripping applies to all models. |
 | Deformation quality | Across the standard pose set (walk, run, idle, brace, assassination, vault, reversal counter), no visible mesh intersection greater than **1.0 cm** and no collapsed or candy-wrapped joint beyond 15 degrees of twist. |
 | Physics asset | Identical capsule-based asset on all models; no simulated bodies. |
-| Rest pose | The project's Manny **reference pose** (A-pose). Per-bone rotation within **1 degree**, per-bone position within **0.5 cm** of Manny. Origin at ground level between the feet, forward axis matching the Unreal +X convention after export, and all transforms applied. |
+| Rest pose | The `SK_UEFN_Mannequin` **reference pose** (A-pose, upper arm about 42 degrees below horizontal). Per-bone rotation within **1 degree**, per-bone position within **0.5 cm** of the reference. Origin at ground level between the feet, forward axis matching the Unreal +X convention after export, and all transforms applied. |
 
 *Alternatives considered:* a 2048 x 2048 texture set (rejected, density of
 about 12 texels/cm is invisible at game distance and wastes memory and
@@ -3312,7 +3371,7 @@ skeletal experiment (1.3.5) is a separate decision gated by spike R6.
 | Scene units | Metric, unit scale 1.0, length in meters. 1 Blender unit = 1 m = 100 Unreal units. |
 | Transforms | Location, rotation and scale **applied**; scale exactly 1.0 and positive on all axes (no negative or non-uniform scale, which also flips Nanite winding, 1.3.2). |
 | FBX scale | Apply Scalings = **FBX Units Scale**; Unreal import uniform scale 1.0, rotation 0, no import offset. |
-| Axes | Up = Z, Forward = -Y (*proposed*, ASSUMED). **Outcome is the contract**: character faces Unreal +X, stands on Z = 0, imported at **175 cm** (175 Unreal units, the working Manny stature value until OI-1 measures `SK_Mannequin`; not the rounded 170 sometimes quoted) with no rotation. Verify on the first exported Manny round-trip, then freeze the setting in a Blender export preset. |
+| Axes | Up = Z, Forward = -Y (*proposed*, ASSUMED). **Outcome is the contract**: character faces Unreal +X, stands on Z = 0, imported at **165.6 cm** (165.6 Unreal units, the measured `SK_UEFN_Mannequin` stature, OI-1 closed 2026-10-25; *superseded:* the 175 cm working value) with import uniform scale 1.0 and no rotation. Derivation: the reference FBX is already at the reference stature, so the pipeline never rescales on import. Verify on the first exported UEFN round-trip (the Blender side of the preset is recorded by story 002 in `production/qa/evidence/body-base-evidence.md`), then freeze the setting in a Blender export preset. |
 | Mesh | Tangent space MikkTSpace computed in Blender and **imported from file** (one method for the whole pool, frozen), Smoothing = Face, triangulated, modifiers applied, no custom split normals unless needed. |
 | Armature | Add Leaf Bones **off**; deform bones only for LOD data; bone names identical to Manny. |
 | Pivot, characters | Origin at ground level between the feet; mesh and armature share it. |
@@ -3346,10 +3405,13 @@ first 6 models fail the Body_Base conform test, switch to the fallback of
    (kept, hidden, high-poly), `Work`, `Body_Proxy` (the accepted Body_Base of 1.3.9, never exported),
    `Manny_Ref` (project Manny mesh and armature, never exported).
 3. **Scale to stature.** Apply one uniform scale so sole-to-crown (hair and
-   headwear excluded) equals the measured Manny stature (**the OI-1 value, closed at step 0(a),
-   +/- 2 cm**). Apply scale. Then check head height 23 cm +/- 1, shoulders
-   40 +/- 2, chest depth 24 +/- 2, hips 34 +/- 2. Fix proportion errors by
-   sculpt or shrinkwrap to Body_Base, **never** by non-uniform scale.
+   headwear excluded) equals the measured reference stature: **165.6 cm +/- 2
+   (163.6 to 167.6)**, `SK_UEFN_Mannequin`, OI-1 closed 2026-10-25 (derivation:
+   1.3.2 OI-1 block; *superseded:* the 175 cm working value). Apply scale. Then
+   check head height 19.3 cm +/- 1, shoulders 51.0 +/- 2, chest depth
+   27.6 +/- 2, hips 34.8 +/- 2 (re-derived from the chains, 1.3.2). Fix
+   proportion errors by sculpt or shrinkwrap to Body_Base, **never** by
+   non-uniform scale.
 4. **Ground and face.** Soles at Z = 0 (+/- 0.5 cm), origin between the feet,
    figure faces the axis that exports to Unreal +X.
 5. **Match the rest pose.** Pose the figure to Manny's reference A-pose using
@@ -3786,7 +3848,7 @@ the check that closes it. Section references say where the value is used.
 
 | ID | Open item | Owner | Check that closes it | Used in |
 | -- | --------- | ----- | -------------------- | ------- |
-| OI-1 | `SK_Mannequin` stature, bone count and chain lengths unmeasured | technical-artist | Measure in UE 5.8.4; record in 1.3.2 / 1.3.5; if stature is outside 173 to 177 cm, re-derive dependent values (chains win) and re-sign 1.3 | 1.3.2, 1.3.5, 8.6, 8.7, M6 |
+| OI-1 | **CLOSED 2026-10-25.** Reference = `SK_UEFN_Mannequin` (user decision): 165.6 cm, 88 bones, nine chains recorded in 1.3.2 / 1.3.5; dependent values re-derived (chains win) and 1.3 re-signed by the art-director 2026-10-25; downstream change requests CR-OI1-1 to CR-OI1-6 (1.3.2) | technical-artist | Measured in UE 5.8.4 (2026-10-25 spike section 4) and Blender (`tools/asset-pipeline/body_measure.py`) | 1.3.2, 1.3.5, 8.6, 8.7, M6 |
 | OI-2 | Law 3b: P4 Canal Green (L\* 51), P5 Foliage Green (L\* 43) and bush leaf tips (L\* 42 to 48) fall in the excluded band as leg and forearm backdrops | art-director with technical-artist | Run the leg-and-forearm read test (4.1) on water edges, planting and the bush; adopt dark-value variants (L\* 38 or lower) if it fails | 4.1, 4.2, 3.6, 6.10 |
 | OI-3 | Hand-computed colour values need measurement: new P3 `#664335`, the skin band, garment hexes, Bone on Cochineal Deep, Cochineal Bright on the final plate | technical-artist (T1 audit script) | Re-measure; correct hexes, not the bands | 4.2, 4.3, 4.6 |
 | OI-4 | Sun azimuth of 45 degrees from the grid X axis is a working value | art-director with level-design | Graybox: confirm cornice shade bands in every street orientation and alley sun slivers | 2.1, 6.8 |
@@ -3807,7 +3869,7 @@ waived.
 
 | ID | Blocks | Needed by |
 | -- | ------ | --------- |
-| OI-1 | The first Meshy credit, the single test character included (1.3.2, 8.7 step 0(a)); final scale of Body_Base | Before the test character is generated |
+| OI-1 | **CLOSED 2026-10-25** (was: the first Meshy credit, the single test character included (1.3.2, 8.7 step 0(a)); final scale of Body_Base) | Met 2026-10-25 |
 | OI-2 | Bush family sign-off (3.6, 6.5) and the water-edge and low-planting variants of P4 and P5 (4.2) | Bush sign-off; at the latest the graybox greyscale tests before the vertical slice (3.6) |
 | OI-3 | Palette and swatch hex lock (4.2, 4.3, 4.6); T1 colour items 10 to 12 on the test character | Test character T1 audit |
 | OI-4 | Sun direction lock; cornice shade-band and alley-sliver checks (2.1, 6.8) | Graybox lighting sign-off, before the generator's layout rules are frozen |
