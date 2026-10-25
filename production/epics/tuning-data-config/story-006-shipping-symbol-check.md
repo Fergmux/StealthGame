@@ -1,12 +1,12 @@
 # Story 006: Shipping-symbol check: no harness module and no test-seam symbols in Shipping
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -63,12 +63,12 @@
 
 ## Files
 
-- `tools/ci/shipping-symbol-check.sh`
-- `tools/ci/selftest/shipping-symbol-check/` (selftest script)
-- `Source/StealthFoundation/Public/Server/Testing/StealthTestSeams.h` (sentinel and registration; the plan's `Public/StealthTestSeams.h` path is replaced, see Implementation Notes)
-- `Source/StealthFoundation/Private/Tests/Build/ShippingSymbolCheckTest.cpp` (G2 wrapper)
-
----
+- `tools/ci/shipping-symbol-check.sh` (observations per build/check + one gate step; 0 PASS / 1 FAIL / 2 NOT ASSESSED)
+- `tools/ci/selftest/shipping-symbol-check/run-selftest.sh` (synthetic packages built at run time, 10 cases)
+- `Source/StealthFoundation/Public/Server/Testing/StealthTestSeams.h` (sentinel registration API, under `WITH_STEALTH_TEST_SEAMS`; replaces the plan's `Public/StealthTestSeams.h`)
+- `Source/StealthFoundation/Private/Testing/StealthTestSeams.cpp` (sentinel literals, ASCII + UTF-16, stored in volatile globals)
+- `Source/StealthFoundation/Private/StealthFoundationModule.cpp` (StartupModule calls the registration under the macro)
+- `Source/StealthFoundation/Private/Tests/Build/ShippingSymbolCheckTest.cpp` (test `StealthGame.Build.ShippingSymbolCheck`)
 
 ## QA Test Cases
 
@@ -88,7 +88,7 @@
 **Required evidence**:
 - Integration: the selftest under `tools/ci/selftest/shipping-symbol-check/` plus the wrapper `StealthGame.Build.ShippingSymbolCheck` (`Source/StealthFoundation/Private/Tests/Build/ShippingSymbolCheckTest.cpp`) must exist and pass per commit (canned inputs, G2); the real Shipping and Development package scan is DEFERRED to a packaged build and the nightly job, with its observation recorded in the story (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Build.ShippingSymbolCheck` + selftest, 2026-10-25); packaged-build scan DEFERRED to the nightly job (story 023)
 
 ---
 
@@ -97,3 +97,15 @@
 - Depends on: `production/epics/tuning-data-config/story-004-test-harness-module-shipping-excluded.md`, `production/epics/tuning-data-config/story-008-fault-sink-and-test-seams-define.md`
 - Unlocks: `production/epics/tuning-data-config/story-023-nightly-workflow.md`
 - Open verification claims from the plan's Note lines: none (no Note line on 006). Related [U] items from the ADRs: cooked honouring of the harness deny list (ADR-0007 Verification 2) and the harness binary name pattern in packaged builds.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing at the per-commit level (G2), packaged part DEFERRED as the criterion states. The sentinel `STEALTH_TEST_SEAM_SENTINEL_7F3A9C2E` is stored once as UTF-16 (`TEXT`) and once as ASCII in volatile globals by `StealthRegisterTestSeamSentinel()`, called from StealthFoundation startup under `WITH_STEALTH_TEST_SEAMS`; the test asserts it was registered. `shipping-symbol-check.sh` selftest: clean pass (x2), seeded Shipping sentinel ASCII / UTF-16LE / harness file / harness name -> FAIL, blind control (nothing / no sentinel) -> FAIL, missing or empty dir -> NOT ASSESSED; all 10 as expected.
+**Decisions**: monolithic packages have no separate harness binary, so the harness counts as present when a file is named `*StealthTestHarness*` OR the module name appears inside a binary (IMPLEMENT_MODULE registers it); only binaries (*.exe/*.dll/*.so/*.dylib) are scanned. UTF-16LE detection strips NUL bytes and counts the extra matches (Git Bash `grep -P` rejected the C locale). Development control passes when the harness is found and the sentinel is found in at least one encoding.
+**Partial real observation**: run on the editor Development DLLs (`UnrealEditor-Stealth*.dll`) vs a clean stand-in: harness file `UnrealEditor-StealthTestHarness.dll` and both sentinel encodings found, gate PASS (see test-run.txt). Still to record from the nightly packaged scan: the packaged harness binary/name pattern and the Shipping result (ADR-0007 Verification 2 for Shipping).
+**Deviations**: Story 008 (its dependency, outside the 001-006 batch) was implemented first in this run. Sentinel header placed under `Public/Server/Testing/` as the story directs; a Private cpp was added for the definitions. Foundation startup now makes one call (the sentinel), an explicit exception to "StartupModule registers nothing", as this story asks. Manifest Version updated to 2026-10-25f.
+**Test Evidence**: `production/qa/evidence/story-006-shipping-symbol-check/test-run.txt` (build `Result: Succeeded`; 19/19 `StealthGame.` tests Success; partial real observation) and `stamp.txt`
+**Run result**: N/A — CI tooling and a build-time sentinel; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

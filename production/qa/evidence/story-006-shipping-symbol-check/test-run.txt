@@ -1,0 +1,27 @@
+Story: production/epics/tuning-data-config/story-006-shipping-symbol-check.md
+Command: powershell -ExecutionPolicy Bypass -File tools/dev/cycle.ps1 -Tests -NoLaunch (2026-10-25)
+Build: StealthGameEditor Win64 Development — Result: Succeeded
+Tests (StealthGame. filter): 19/19 Success
+  Result={Success} Name={CompileProbes} Path={StealthGame.Build.CompileProbes}
+  Result={Success} Name={FoundationLayout} Path={StealthGame.Build.FoundationLayout}
+  Result={Success} Name={HarnessModuleExclusions} Path={StealthGame.Build.HarnessModuleExclusions}
+  Result={Success} Name={PresentationGuardDefineIsPrivate} Path={StealthGame.Build.PresentationGuardDefineIsPrivate}
+  Result={Success} Name={ShippingSymbolCheck} Path={StealthGame.Build.ShippingSymbolCheck}
+  Result={Success} Name={exports an engine static mesh to FBX} Path={StealthGame.EditorTools.AssetToolset.ExportAssetToFile.exports an engine static mesh to FBX}
+  Result={Success} Name={raises when the asset is null} Path={StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the asset is null}
+  Result={Success} Name={raises when the path has no extension} Path={StealthGame.EditorTools.AssetToolset.ExportAssetToFile.raises when the path has no extension}
+  Result={Success} Name={returns an empty list when no play session is running} Path={StealthGame.EditorTools.PlayToolset.ListPlayInstances.returns an empty list when no play session is running}
+  Result={Success} Name={raises when no play session is running} Path={StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when no play session is running}
+  Result={Success} Name={raises when the command is empty} Path={StealthGame.EditorTools.PlayToolset.RunPlayConsoleCommand.raises when the command is empty}
+  Result={Success} Name={FaultSinkTeardownAssertion} Path={StealthGame.Harness.FaultSinkTeardownAssertion}
+  Result={Success} Name={ModuleLoadsInDevelopment} Path={StealthGame.Harness.ModuleLoadsInDevelopment}
+  Result={Success} Name={Assassination} Path={StealthGame.Rules.Assassination}
+  Result={Success} Name={Defence} Path={StealthGame.Rules.Defence}
+  Result={Success} Name={EliminationVictory} Path={StealthGame.Rules.EliminationVictory}
+  Result={Success} Name={NpcKillRemoval} Path={StealthGame.Rules.NpcKillRemoval}
+  Result={Success} Name={ObjectiveStages} Path={StealthGame.Rules.ObjectiveStages}
+  Result={Success} Name={TeamsAndMovement} Path={StealthGame.Rules.TeamsAndMovement}
+
+Partial real observation (2026-10-25, NOT the deferred packaged scan): editor Development binaries UnrealEditor-Stealth*.dll as the development input, a clean stand-in exe as the shipping input:
+  development: harness-file=yes (UnrealEditor-StealthTestHarness.dll), harness-symbol=yes, sentinel-ascii=yes, sentinel-utf16le=yes; shipping stand-in: all no; GATE PASS
+  (the editor DLL also holds test code, so this shows the scan works on real MSVC binaries and the sentinel survives a Development compile; the packaged Shipping/Development scan stays DEFERRED to story 023's nightly job)
