@@ -1,0 +1,49 @@
+SELFTEST complete-table-silent ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST effect-matched-by-leading-word ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST missing-latch-reported ok
+    design/gdd/one.md:5 knob-columns Tuning Knobs table is missing the CR-15 column 'Latch'
+    GATE: FAIL (1 finding(s); 1 file(s) scanned)
+SELFTEST missing-effect-reported ok
+    design/gdd/one.md:5 knob-columns Tuning Knobs table is missing the CR-15 column 'Effect'
+    GATE: FAIL (1 finding(s); 1 file(s) scanned)
+SELFTEST missing-hard-range-reported ok
+    design/gdd/one.md:5 knob-columns Tuning Knobs table is missing the CR-15 column 'Hard range'
+    GATE: FAIL (1 finding(s); 1 file(s) scanned)
+SELFTEST each-missing-column-is-its-own-finding ok
+    design/gdd/one.md:5 knob-columns Tuning Knobs table is missing the CR-15 column 'Type'
+    design/gdd/one.md:5 knob-columns Tuning Knobs table is missing the CR-15 column 'Owner'
+    GATE: FAIL (2 finding(s); 1 file(s) scanned)
+SELFTEST reordered-columns-silent ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST extra-column-silent ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST two-tables-checked-one-by-one ok
+    design/gdd/one.md:11 knob-columns Tuning Knobs table is missing the CR-15 column 'Unit'
+    GATE: FAIL (1 finding(s); 1 file(s) scanned)
+SELFTEST preamble-supplies-owner-audience-latch-silent ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST preamble-without-latch-reported ok
+    design/gdd/one.md:7 knob-columns Tuning Knobs table is missing the CR-15 column 'Latch'
+    GATE: FAIL (1 finding(s); 1 file(s) scanned)
+SELFTEST preamble-audience-only-reports-owner-and-latch ok
+    design/gdd/one.md:7 knob-columns Tuning Knobs table is missing the CR-15 column 'Owner'
+    design/gdd/one.md:7 knob-columns Tuning Knobs table is missing the CR-15 column 'Latch'
+    GATE: FAIL (2 finding(s); 1 file(s) scanned)
+SELFTEST table-without-preamble-reports-all-three ok
+    design/gdd/one.md:5 knob-columns Tuning Knobs table is missing the CR-15 column 'Owner'
+    design/gdd/one.md:5 knob-columns Tuning Knobs table is missing the CR-15 column 'Audience'
+    design/gdd/one.md:5 knob-columns Tuning Knobs table is missing the CR-15 column 'Latch'
+    GATE: FAIL (3 finding(s); 1 file(s) scanned)
+SELFTEST consumed-elsewhere-table-silent ok
+    GATE: PASS (1 file(s) scanned, 0 findings)
+SELFTEST no-owned-table-is-not-assessed ok
+    GATE: NOT ASSESSED (0 file(s) scanned; an empty or broken lint scope is not a pass)
+SELFTEST empty-scope-is-not-assessed ok
+    GATE: NOT ASSESSED (0 file(s) scanned; an empty or broken lint scope is not a pass)
+SELFTEST base-fixture-clean ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST real-tree-zero-findings ok
+    GATE: PASS (19 file(s) scanned, 0 findings)
+SELFTEST RESULT: PASS (18 cases)

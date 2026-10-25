@@ -1,0 +1,30 @@
+SELFTEST mirror-exit-zero ok
+    MIRROR missing 1
+    ADDED BetaLimitCount design/gdd/beta-system.md:10
+    MIRROR result: added 1, existing 7 untouched
+SELFTEST missing-key-reported-and-added ok
+SELFTEST added-constant-has-every-field ok
+SELFTEST old-text-is-byte-identical ok
+SELFTEST existing-constant-not-altered ok
+SELFTEST altered-existing-constant-left-alone ok
+SELFTEST file-parses-with-no-duplicate-names ok
+SELFTEST yaml-safe-load-parses skipped (PyYAML is not installed; the lint reader above is the check)
+SELFTEST second-run-adds-nothing ok
+SELFTEST second-run-leaves-the-file-identical ok
+SELFTEST dry-run-reports ok
+SELFTEST dry-run-writes-nothing ok
+SELFTEST pair-key-added-for-its-owner ok
+SELFTEST reference-row-not-mirrored-as-owned ok
+SELFTEST pair-key-takes-its-own-half-of-each-cell ok
+SELFTEST bool-key-added ok
+SELFTEST bool-value-bare-and-unit-bool ok
+SELFTEST placeholder-ranges-write-no-field ok
+SELFTEST placeholder-safe-range-writes-no-field ok
+SELFTEST crlf-registry-mirrored ok
+SELFTEST crlf-old-text-byte-identical ok
+SELFTEST crlf-appended-lines-end-in-crlf ok
+SELFTEST unsupported-layout-exits-2 ok
+SELFTEST unsupported-layout-reported ok
+SELFTEST unsupported-layout-writes-nothing ok
+SELFTEST real-tree-mirror-complete ok
+SELFTEST RESULT: PASS (25 cases)

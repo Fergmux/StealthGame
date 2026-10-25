@@ -1,12 +1,12 @@
 # Story 036: Doc lint: invariant-read keys must say "bounded by <Id>"
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -66,11 +66,12 @@
 
 ## Files
 
-- `tools/ci/lint/knob-lint-bounded-by.*`
-- `tools/ci/lint/knob-bounded-by-baseline.txt`
-- `tools/ci/lint/fixtures/` (conforming and non-conforming row fixtures; sub-path open)
-- `tools/ci/lint/selftest/` (G2 selftest)
-- `Source/StealthFoundation/Private/Tests/Build/KnobLintBoundedByTest.cpp` (G2 wrapper)
+- `tools/ci/lint/knob-lint-bounded-by.sh` (rule script, with the G3 shrink-only check) over the `bounded-by` rule of `tools/ci/lint/knob_lint.py`
+- `tools/ci/lint/knob-bounded-by-baseline.txt` (147 entries, each citing TD-REG-2)
+- `tools/ci/lint/fixtures/knob/base/` (conforming and non-conforming row fixtures, by mutation in the selftest)
+- `tools/ci/lint/selftest/knob_lint_bounded_by_selftest.sh` (22 cases)
+- `Source/StealthFoundation/Private/Tests/Build/KnobLintBoundedByTest.cpp` (G2 wrapper `StealthGame.Build.KnobLintBoundedBy`)
+- `docs/tech-debt-register.md` (new row TD-REG-2, the citation of every baseline entry)
 
 ---
 
@@ -92,7 +93,7 @@
 **Required evidence**:
 - Logic: the automation wrapper `Source/StealthFoundation/Private/Tests/Build/KnobLintBoundedByTest.cpp` (`StealthGame.Build.KnobLintBoundedBy`) must exist and pass; the selftest under `tools/ci/lint/selftest/` must pass in the T0 gate step (G2).
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`knob_lint_bounded_by_selftest.sh` 22/22 cases; `StealthGame.Build.KnobLintBoundedBy`)
 
 ---
 
@@ -101,3 +102,14 @@
 - Depends on: `production/epics/tuning-data-config/story-029-knob-table-parser.md`
 - Unlocks: None
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story). The wording variants of the C-W18 "bounded by" text are an open design point, not a verification claim.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: the key-to-invariant map is read from the TDC GDD Formulas section (the `**I-1**` to `**I-5**` bullets and the Owner invariants table; 64 invariant rows, offline rows skipped), keys are the backtick-quoted names that exist in the key set; a conforming row passes, a non-conforming row is reported per key and invariant at its file:line, a key read by two invariants needs both ids, an id range row is satisfied by any id of the range; the baseline hides a listed pair, reports a stale entry and a malformed entry; a baseline that grows fails the shrink-only check against a temporary repository with a base commit, a shrinking baseline and the creating commit are clean; real tree: 20 files scanned, 0 findings beyond the baseline)
+**Decisions**: wording accepted is the literal "bounded by <Id>", case-insensitive, with an optional "above"/"below" and at most three words before the id ("bounded below by Generator I-PCG-2" conforms; "I-AB-10" does not satisfy "I-AB-1"); offline invariant rows are skipped; the real tree has 147 (gdd, key, invariant) pairs whose owner rows do not say it, all accepted in `tools/ci/lint/knob-bounded-by-baseline.txt` citing the new tech debt row TD-REG-2 (adding the text is a change request to each owner GDD, which the story puts out of scope); the baseline id of a range row is its first id
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-036-doc-lint-bounded-by/` (`selftest.txt` 22/22, `stamp.txt`); `StealthGame.Build.KnobLintBoundedBy` passes (full suite 52/52)
+**Run result**: N/A — build-time doc lint; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): the message for a range row was reworded so it does not name a single id as required; no defects left

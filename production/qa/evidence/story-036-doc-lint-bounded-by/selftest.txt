@@ -1,0 +1,51 @@
+SELFTEST conforming-rows-pass ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST nonconforming-row-reported-with-file-and-line ok
+    design/gdd/beta-system.md:10 knob-bounded-by key BetaLimitCount is read by invariant I-AB-2 (design/gdd/tuning-data-config.md:22) but its Effect cell does not say 'bounded by I-AB-2'
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST bullet-invariant-read-like-a-table-row ok
+    design/gdd/alpha-system.md:20 knob-bounded-by key AlphaScaleMult is read by invariant I-1 (design/gdd/tuning-data-config.md:16) but its Effect cell does not say 'bounded by I-1'
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST below-by-owner-word-variant-conforms ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST longer-id-does-not-satisfy-a-shorter-one ok
+    design/gdd/alpha-system.md:13 knob-bounded-by key AlphaHoldSec is read by invariant I-AB-1 (design/gdd/tuning-data-config.md:21) but its Effect cell does not say 'bounded by I-AB-1'
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST mentioning-the-id-without-bounded-by-does-not-conform ok
+    design/gdd/alpha-system.md:13 knob-bounded-by key AlphaHoldSec is read by invariant I-AB-1 (design/gdd/tuning-data-config.md:21) but its Effect cell does not say 'bounded by I-AB-1'
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST second-invariant-needs-its-own-text ok
+    design/gdd/alpha-system.md:13 knob-bounded-by key AlphaHoldSec is read by invariant I-AB-4 (design/gdd/tuning-data-config.md:23) but its Effect cell does not say 'bounded by I-AB-4'
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST both-ids-present-passes ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST range-row-reported-once-naming-the-range ok
+    design/gdd/beta-system.md:10 knob-bounded-by key BetaLimitCount is read by invariant I-AB-5 to I-AB-7 (design/gdd/tuning-data-config.md:23) but its Effect cell does not say 'bounded by' any id of the range (baseline id I-AB-5)
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST any-id-of-the-range-satisfies-it ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST baselined-pair-is-not-reported ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST stale-entry-reported-so-the-list-shrinks ok
+    tools/ci/lint/knob-bounded-by-baseline.txt:1 knob-baseline-stale baseline entry 'design/gdd/beta-system.md | BetaLimitCount | I-AB-2' is not a finding any more; remove it (the baseline only shrinks)
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST entry-without-a-citation-or-in-another-shape-reported ok
+    tools/ci/lint/knob-bounded-by-baseline.txt:1 knob-baseline-malformed entry must read '<gdd-path> | <key> | <invariant-id> | <citation>' with a citation
+    tools/ci/lint/knob-bounded-by-baseline.txt:2 knob-baseline-malformed entry must read '<gdd-path> | <key> | <invariant-id> | <citation>' with a citation
+    GATE: FAIL (2 finding(s); 3 file(s) scanned)
+SELFTEST baseline-growth-fails-against-the-base ok
+    tools/ci/lint/knob-bounded-by-baseline.txt:3 shrink-only entry 'design/gdd/alpha-system.md | AlphaScaleMult | I-1 | TD-REG-2: added to hide a new violation' is not in the list at HEAD; the list may only shrink (G3)
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST unchanged-baseline-is-clean ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST shrinking-baseline-is-clean ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST commit-creating-the-baseline-is-exempt ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST unresolvable-base-ref-fails-exit ok
+SELFTEST unresolvable-base-ref-is-reported ok
+SELFTEST non-git-tree-with-a-baseline-fails-exit ok
+SELFTEST non-git-tree-baseline-is-unverifiable ok
+SELFTEST real-tree-zero-findings ok
+    GATE: PASS (20 file(s) scanned, 0 findings)
+SELFTEST RESULT: PASS (22 cases)

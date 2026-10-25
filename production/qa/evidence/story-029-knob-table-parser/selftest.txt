@@ -1,0 +1,38 @@
+SELFTEST record-count-per-gdd ok
+SELFTEST pair-row-split-per-key ok
+SELFTEST column-order-variant-mapped-by-name ok
+SELFTEST preamble-style-inherits-owner-audience-latch ok
+SELFTEST standard-style-has-nothing-inherited ok
+SELFTEST consumed-table-row-is-not-ownership ok
+SELFTEST retired-row-is-listed-not-owned ok
+SELFTEST retired-row-has-no-knob-record ok
+SELFTEST reference-row-is-listed-not-owned ok
+SELFTEST reference-row-does-not-double-own-AlphaMaxCount ok
+SELFTEST record-carries-gdd-and-line ok
+SELFTEST table-record-lists-header-cells ok
+SELFTEST clean-fixture-scanned ok
+SELFTEST clean-fixture-no-observations ok
+SELFTEST seeded-count-mismatch-reported ok
+SELFTEST seeded-count-mismatch-is-the-only-observation ok
+    design/gdd/tuning-data-config.md:9 knob-count design/gdd/alpha-system.md: Registered Owner Keys says 5, the owner Tuning Knobs table has 4 record(s) (the owner table is authoritative, CR-15)
+SELFTEST seeded-duplicate-key-reported ok
+    design/gdd/alpha-system.md:20 knob-duplicate-key key AlphaHoldSec has a second row in this GDD (first at line 13)
+SELFTEST seeded-missing-section-reported ok
+    design/gdd/gamma-system.md:0 knob-no-section GDD has no Tuning Knobs section
+SELFTEST seeded-short-row-reported ok
+    design/gdd/beta-system.md:10 knob-row-shape row has 6 cells, header has 7
+    design/gdd/tuning-data-config.md:10 knob-count design/gdd/beta-system.md: Registered Owner Keys says 2, the owner Tuning Knobs table has 1 record(s) (the owner table is authoritative, CR-15)
+SELFTEST real-tree-record-count ok
+SELFTEST real-tree-owned-table-per-gdd ok
+SELFTEST real-tree-every-section-yields-records ok
+SELFTEST real-tree-preamble-style-lsc ok
+SELFTEST real-tree-preamble-style-generator ok
+SELFTEST real-tree-pair-tail-expansion ok
+SELFTEST real-tree-ellipsis-expansion ok
+SELFTEST real-tree-whole-key-after-slash ok
+SELFTEST real-tree-no-retired-key-record ok
+SELFTEST real-tree-observations-keep-the-contract ok
+    observed: design/gdd/game-concept.md:0 knob-no-section GDD has no Tuning Knobs section
+    observed: design/gdd/tuning-data-config.md:109 knob-count design/gdd/level-socket-contract.md: Registered Owner Keys says 80, the owner Tuning Knobs table has 84 record(s) (the owner table is auth
+    observed: design/gdd/tuning-data-config.md:122 knob-count Registered Owner Keys row 'Tuning Data & Config' gives no leading key count; owner table has 3 record(s)
+SELFTEST RESULT: PASS (29 cases)

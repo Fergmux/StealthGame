@@ -1,0 +1,113 @@
+# Fixture registry for the knob doc-lint selftests (same layout as design/registry/entities.yaml).
+version: 1
+last_updated: "2026-10-25"
+
+entities: []
+
+constants:
+  - name: AlphaHoldSec
+    status: active
+    source: design/gdd/alpha-system.md
+    referenced_by:
+      - design/gdd/alpha-system.md
+      - design/gdd/beta-system.md
+    value: 2
+    unit: s
+    hard_range: 1-6
+    safe_range: 1.5-4
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-25
+    revised: ""
+  - name: AlphaMinCount
+    status: active
+    source: design/gdd/alpha-system.md
+    referenced_by:
+      - design/gdd/alpha-system.md
+    value: 4
+    unit: count
+    hard_range: 2-10
+    safe_range: 3-5
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-25
+    revised: ""
+  - name: AlphaMaxCount
+    status: active
+    source: design/gdd/alpha-system.md
+    referenced_by:
+      - design/gdd/alpha-system.md
+    value: 8
+    unit: count
+    hard_range: 4-16
+    safe_range: 6-10
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-25
+    revised: ""
+  - name: AlphaScaleMult
+    status: active
+    source: design/gdd/alpha-system.md
+    referenced_by:
+      - design/gdd/alpha-system.md
+    value: 60
+    unit: mult
+    hard_range: 30-90
+    safe_range: 50-70
+    audience: All
+    latch: Use
+    added: 2026-10-25
+    revised: ""
+  - name: BetaWindowSec
+    status: active
+    source: design/gdd/beta-system.md
+    referenced_by:
+      - design/gdd/beta-system.md
+      - design/gdd/alpha-system.md
+    value: 3
+    unit: s
+    hard_range: 1-10
+    safe_range: 2-6
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-25
+    revised: ""
+  - name: BetaLimitCount
+    status: active
+    source: design/gdd/beta-system.md
+    referenced_by:
+      - design/gdd/beta-system.md
+    value: 5
+    unit: count
+    hard_range: 1-9
+    safe_range: 3-6
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-25
+    revised: ""
+  - name: TdcSelfSec
+    status: active
+    source: design/gdd/tuning-data-config.md
+    referenced_by:
+      - design/gdd/tuning-data-config.md
+    value: 10
+    unit: s
+    hard_range: 5-60
+    safe_range: 8-20
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-25
+    revised: ""
+  - name: BetaOldSec
+    status: deprecated
+    source: design/gdd/beta-system.md
+    referenced_by:
+      - design/gdd/beta-system.md
+    value: 1
+    unit: s
+    hard_range: 1-2
+    safe_range: 1-2
+    audience: ServerOnly
+    latch: Round
+    added: 2026-10-25
+    revised: ""

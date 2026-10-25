@@ -604,7 +604,7 @@ Every key is registered under Tuning Data & Config CR-15 with the Level Socket C
 | `FinalAmbiguityMinCount` | int | 3 | 2-5 | 3-4 | Count | D8 prefix ambiguity. Low: a team can deduce the final from its own chain |
 | `SunPoolSamplesMinCount` | int | 144 (36 m²) | 144-192 | 144-176 | Count | Low: no exposure moment (art 2.5) |
 | `SunPoolParityPct` | float | 20 | 10-30 | 15-25 | Pct | High: one court stands out |
-| `SunPoolBeaconRangeCm` / `bSunPoolBeaconIsReject` | float / bool | 4,000 / false | 3,000-6,000 | — | Cm | Art 2.5 flag; true once the playtest confirms the threshold |
+| `SunPoolBeaconRangeCm` / `bSunPoolBeaconIsReject` | float / bool | 4,000 / false | 3,000-6,000 / true, false | — | Cm | Art 2.5 flag; true once the playtest confirms the threshold |
 | `BushSitesMinCount` / `MaxCount` | int | 8 / 14 | 4-20 | 8-14 | Count | Concealment availability (Concealment GDD may refine); max also bounded by sectors (D5) |
 | `BushCellsPerSiteCount` | int | 250 | 150-400 | 200-300 | Count | Area per bush (D5) |
 | `BushSpacingCm` | float | 1,200 | 600-2,000 | 1,000-1,600 | Cm | Low: bush clusters (hide-and-wait). High: cannot fit |

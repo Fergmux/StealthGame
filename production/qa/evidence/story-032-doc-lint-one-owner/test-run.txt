@@ -1,0 +1,12 @@
+Build and full suite: powershell -ExecutionPolicy Bypass -File tools/dev/cycle.ps1 -Tests -NoLaunch (2026-10-25)
+Build Result line: Result: Succeeded (StealthGameEditor Win64 Development)
+Tests: 52 Success, 0 Fail (all StealthGame. automation tests; 46 before this batch plus the 6 new wrappers)
+Targeted re-run after the final code review edits (UnrealEditor-Cmd -ExecCmds "Automation RunTests <the six Knob/Registry wrappers>"):
+Display: Test Completed. Result={Success} Name={KnobLintBoundedBy} Path={StealthGame.Build.KnobLintBoundedBy}
+Display: Test Completed. Result={Success} Name={KnobLintColumns} Path={StealthGame.Build.KnobLintColumns}
+Display: Test Completed. Result={Success} Name={KnobLintOwner} Path={StealthGame.Build.KnobLintOwner}
+Display: Test Completed. Result={Success} Name={KnobLintRegistry} Path={StealthGame.Build.KnobLintRegistry}
+Display: Test Completed. Result={Success} Name={KnobTableParser} Path={StealthGame.Build.KnobTableParser}
+Display: Test Completed. Result={Success} Name={RegistryMirror} Path={StealthGame.Build.RegistryMirror}
+This story: Display: Test Completed. Result={Success} Name={KnobLintOwner} Path={StealthGame.Build.KnobLintOwner}
+Full-suite line for this story: Success  StealthGame.Build.KnobLintOwner

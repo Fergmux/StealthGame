@@ -1,12 +1,12 @@
 # Story 031: Doc lint: every Tuning Knobs table has the CR-15 columns
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -69,8 +69,8 @@ AC-3b is the design-document lint that keeps the owner GDDs, the generated schem
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `tools/ci/lint/knob-lint-columns.*`
-- `tools/ci/lint/selftest/` (column-lint selftest and fixtures)
+- `tools/ci/lint/knob-lint-columns.sh` (rule script) over the `columns` rule of `tools/ci/lint/knob_lint.py`
+- `tools/ci/lint/selftest/knob_lint_columns_selftest.sh` (18 cases)
 - `Source/StealthFoundation/Private/Tests/Build/KnobLintColumnsTest.cpp` (G2 wrapper `StealthGame.Build.KnobLintColumns`)
 
 ---
@@ -93,7 +93,7 @@ AC-3b is the design-document lint that keeps the owner GDDs, the generated schem
 **Required evidence**:
 - Logic: the selftest under `tools/ci/lint/selftest/` and the wrapper `StealthGame.Build.KnobLintColumns` (`Source/StealthFoundation/Private/Tests/Build/KnobLintColumnsTest.cpp`) must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`knob_lint_columns_selftest.sh` 18/18 cases; `StealthGame.Build.KnobLintColumns`)
 
 ---
 
@@ -102,3 +102,14 @@ AC-3b is the design-document lint that keeps the owner GDDs, the generated schem
 - Depends on: `production/epics/tuning-data-config/story-029-knob-table-parser.md`
 - Unlocks: `production/epics/tuning-data-config/story-035-doc-lint-duplicate-fixture.md`
 - Open verification claims: the plan has no Note line for this story. Open: the `Effect` header match, whether reordered or extra columns are findings, and the Foundation-module dependency of the G2 wrapper.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: a table missing a CR-15 column is reported as `<gdd>:<header line> knob-columns ... column '<Name>'`; a complete table is silent; reordered columns, an extra column, the two spellings of the Effect column, an owner-level preamble table that states Owner, Audience and Latch once and a consumed-elsewhere table are silent; a preamble that does not state a missing column is reported; several tables in one file are checked one by one; a scope with no knob table is NOT ASSESSED; the real design/gdd/*.md pass: 19 files scanned, 0 findings)
+**Decisions**: presence only (reordered and extra columns are not findings); the Effect column is matched by its leading word because the real tables spell it "Effect / breaks if too high or low" or "Effect / what breaks"; a preamble-style table (LSC, Generator) is accepted when the preamble supplies the Owner, Audience or Latch column it lacks (the TDC Registered Owner Keys table records this as accepted)
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-031-doc-lint-cr15-columns/` (`selftest.txt` 18/18, `stamp.txt`); `StealthGame.Build.KnobLintColumns` passes (full suite 52/52)
+**Run result**: N/A — build-time doc lint; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

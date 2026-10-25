@@ -1,0 +1,29 @@
+SELFTEST single-owner-silent ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST two-owners-reported-with-both-files ok
+    design/gdd/alpha.md:7 knob-owner key SharedSec is owned by 2 Tuning Knobs rows (design/gdd/alpha.md:7 and design/gdd/beta.md:7); one key has one owner GDD (CR-15.3)
+    GATE: FAIL (1 finding(s); 3 file(s) scanned)
+SELFTEST one-gdd-owning-a-key-twice-reported ok
+    design/gdd/alpha.md:7 knob-owner key SharedSec is owned by 2 Tuning Knobs rows (design/gdd/alpha.md:7 and design/gdd/alpha.md:8); one key has one owner GDD (CR-15.3) [same GDD twice]
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST zero-owner-reported-at-the-registry-line ok
+    design/registry/entities.yaml:5 knob-owner registry constant OrphanSec (source design/gdd/alpha.md) is owned by no GDD Tuning Knobs table (zero owners)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST deprecated-constant-is-not-in-the-universe ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST referenced-not-owned-silent ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST renamed-key-shows-as-zero-owner-under-its-old-name ok
+    design/registry/entities.yaml:2 knob-owner registry constant OldSec (source design/gdd/alpha.md) is owned by no GDD Tuning Knobs table (zero owners)
+    GATE: FAIL (1 finding(s); 2 file(s) scanned)
+SELFTEST retired-row-is-not-a-second-owner ok
+    GATE: PASS (3 file(s) scanned, 0 findings)
+SELFTEST missing-registry-is-not-assessed ok
+    knob-lint: registry not found: design/registry/entities.yaml
+    note: rule script /c/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/../knob-lint-owner.sh exited 3
+    GATE: NOT ASSESSED (0 file(s) scanned; an empty or broken lint scope is not a pass)
+SELFTEST base-fixture-clean ok
+    GATE: PASS (4 file(s) scanned, 0 findings)
+SELFTEST real-tree-zero-findings ok
+    GATE: PASS (21 file(s) scanned, 0 findings)
+SELFTEST RESULT: PASS (11 cases)

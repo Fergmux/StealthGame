@@ -1,12 +1,12 @@
 # Story 030: Mirror the missing owner keys into entities.yaml (TD-REG-1 first task)
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -69,10 +69,11 @@ TD-REG-1 (`docs/tech-debt-register.md`, opened 2026-10-25) records that owner ke
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `design/registry/entities.yaml`
-- `tools/ci/lint/registry_mirror.py`
-- `tools/ci/lint/selftest/` (registry-mirror selftest)
+- `design/registry/entities.yaml` (124 constants appended)
+- `tools/ci/lint/registry_mirror.py`, `tools/ci/lint/registry_io.py` (registry reader and comparison rules, shared with story 033)
+- `tools/ci/lint/selftest/registry_mirror_selftest.sh` (25 cases)
 - `Source/StealthFoundation/Private/Tests/Build/RegistryMirrorTest.cpp` (G2 wrapper `StealthGame.Build.RegistryMirror`)
+- `production/qa/smoke-2026-10-25_registry-mirror.md` (smoke check)
 
 ---
 
@@ -93,7 +94,7 @@ TD-REG-1 (`docs/tech-debt-register.md`, opened 2026-10-25) records that owner ke
 **Required evidence**:
 - Config/Data: smoke check pass recorded in `production/qa/smoke-*.md` (parser re-run shows zero missing keys, byte-identical old constants, `yaml.safe_load` succeeds, zero duplicates), plus (G2) the mirror selftest under `tools/ci/lint/selftest/` and the wrapper `StealthGame.Build.RegistryMirror`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`registry_mirror_selftest.sh` 25/25 cases; `StealthGame.Build.RegistryMirror`; smoke check `production/qa/smoke-2026-10-25_registry-mirror.md`)
 
 ---
 
@@ -102,3 +103,14 @@ TD-REG-1 (`docs/tech-debt-register.md`, opened 2026-10-25) records that owner ke
 - Depends on: `production/epics/tuning-data-config/story-029-knob-table-parser.md`
 - Unlocks: `production/epics/tuning-data-config/story-033-doc-lint-registry-match.md`, `production/epics/tuning-data-config/story-037-close-td-reg-1.md`
 - Open verification claims: the plan Note ties this to TD-REG-1 and OQ-15 (a tracked tech debt item, not an engine claim). Open: the "about 130 keys" figure conflicts with the GDD's "about 110" and is replaced by the parser's observed count; the Foundation-module dependency of the G2 wrapper.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: the mirror added 124 constants (the parser's observed count; the plan said about 130 and the TDC prose about 110) with the owner row's default, ranges, audience, latch and `source:`; 291 existing constants byte-identical (append-only, `cmp` of the original against the new file); `yaml.safe_load` parses 415 constants; 0 duplicate names; a second run adds nothing; no key renamed, no existing constant altered by this story)
+**Decisions**: the file is appended to and never re-serialised; a new constants block is introduced by a comment that supersedes the 2026-10-24 "single-GDD keys are not mirrored" scope note without editing it; `value` is the Default cell stripped of markup, annotations and thousands separators (annotations kept as `default_note`, capped at 200 characters); placeholder cells write no field; `referenced_by` lists the owner GDD only; unit spelling follows the file (Sec to s, Cm to cm, PerSec to per_s); Crowd unkeyed constants (OQ-14) have no row, so none was invented; the TDC schema constant and catalog flags are not preset fields and are not mirrored. The follow-up registry-match lint (story 033) then found 9 field differences in constants that already existed; they are fixed in story 033's commit, so this story's old-text proof holds
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-030-registry-mirror-completion/` (`selftest.txt` 25/25, `stamp.txt`) and the smoke check `production/qa/smoke-2026-10-25_registry-mirror.md`; `StealthGame.Build.RegistryMirror` passes (full suite 52/52)
+**Run result**: N/A — data change to a YAML registry; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): the append self-check (prefix identical, layout, distinct names) is in the script itself; no defects found

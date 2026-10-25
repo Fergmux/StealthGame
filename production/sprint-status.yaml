@@ -495,51 +495,51 @@ stories:
     name: "Parser for the Tuning Knobs tables of every GDD"
     file: "production/epics/tuning-data-config/story-029-knob-table-parser.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-030"
     name: "Mirror the missing owner keys into entities.yaml (TD-REG-1 first task)"
     file: "production/epics/tuning-data-config/story-030-registry-mirror-completion.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-031"
     name: "Doc lint: every Tuning Knobs table has the CR-15 columns"
     file: "production/epics/tuning-data-config/story-031-doc-lint-cr15-columns.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-032"
     name: "Doc lint: every key appears as owned in exactly one GDD"
     file: "production/epics/tuning-data-config/story-032-doc-lint-one-owner.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-033"
     name: "Doc lint: every owned key matches an entities.yaml constant"
     file: "production/epics/tuning-data-config/story-033-doc-lint-registry-match.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-034"
     name: "Doc lint: every owned key matches a schema row, with a shrinking pending-owner baseline"
@@ -565,21 +565,21 @@ stories:
     name: "Doc lint: invariant-read keys must say 'bounded by <Id>'"
     file: "production/epics/tuning-data-config/story-036-doc-lint-bounded-by.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-037"
     name: "Close TD-REG-1 in the tech-debt register"
     file: "production/epics/tuning-data-config/story-037-close-td-reg-1.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "lead-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
   - id: "tdc-038"
     name: "Schema row struct, type tags, latch enum and schema constants"

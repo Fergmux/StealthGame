@@ -1,12 +1,12 @@
 # Story 033: Doc lint: every owned key matches an entities.yaml constant
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -69,9 +69,10 @@ The third bullet of AC-3b says every owned key matches a schema row and a `desig
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `tools/ci/lint/knob-lint-registry.*`
-- `tools/ci/lint/selftest/` (registry-match selftest and fixtures)
+- `tools/ci/lint/knob-lint-registry.sh` (rule script) over the `registry` rule of `tools/ci/lint/knob_lint.py`; comparison rules in `tools/ci/lint/registry_io.py`
+- `tools/ci/lint/selftest/knob_lint_registry_selftest.sh` (9 cases)
 - `Source/StealthFoundation/Private/Tests/Build/KnobLintRegistryTest.cpp` (G2 wrapper `StealthGame.Build.KnobLintRegistry`)
+- `design/registry/entities.yaml` (5 existing lines corrected where the lint found a real difference) and `design/gdd/level-socket-contract.md` (one hard-range cell made explicit); see Completion Notes
 
 ---
 
@@ -93,7 +94,7 @@ The third bullet of AC-3b says every owned key matches a schema row and a `desig
 **Required evidence**:
 - Logic: the selftest under `tools/ci/lint/selftest/` and the wrapper `StealthGame.Build.KnobLintRegistry` (`Source/StealthFoundation/Private/Tests/Build/KnobLintRegistryTest.cpp`) must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`knob_lint_registry_selftest.sh` 9/9 cases; `StealthGame.Build.KnobLintRegistry`)
 
 ---
 
@@ -102,3 +103,15 @@ The third bullet of AC-3b says every owned key matches a schema row and a `desig
 - Depends on: `production/epics/tuning-data-config/story-029-knob-table-parser.md`, `production/epics/tuning-data-config/story-030-registry-mirror-completion.md`
 - Unlocks: `production/epics/tuning-data-config/story-035-doc-lint-duplicate-fixture.md`, `production/epics/tuning-data-config/story-037-close-td-reg-1.md`
 - Open verification claims: the plan has no Note line for this story. Open: the range and default normalisation rules (only 60 versus 60.0 is specified), and the Foundation-module dependency of the G2 wrapper.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: every owned key (413 preset-field rows) is compared with its registry constant; one observation per mismatching field naming key and field (source GDD, default, hard range, safe range, audience, latch), a name that differs only by case reported as a name finding, a missing constant reported once; 60 versus 60.0, thousands separators, "10 to 20" versus "10-20", annotations, case and a placeholder against an absent field are silent; real tree after the fixes: 20 files scanned, 0 findings)
+**Decisions**: comparison rules are documented in `tools/ci/lint/registry_io.py` and listed in the selftest (markup, parenthetical annotations, thousands separators, trailing zeros, range spelling and case ignored; a placeholder equals an absent field; nothing else is equal); the TDC schema constant and catalog flags are not compared; Unit is not compared (not in the AC)
+**Real defects the first run found (9 fields), fixed in the documents, none baselined and no rule weakened**: registry `CrowdDecoyEarlyReleaseMaxSec` latch Round to Action (the owner row gives the Min/Max pair one latch); registry `ReachDetourMult` value, hard range and safe range follow the LSC derived-alias row; registry `TeammateMarkerLargeMult` hard-range wording follows its owner row; registry `CrowdMotionProfileAsset`, `CrowdFullStateTreeAsset`, `CrowdRestrictedStateTreeAsset` gain the hard-range text of their owner rows; LSC row `SunPoolBeaconRangeCm` / `bSunPoolBeaconIsReject` hard-range cell made explicit as `3,000-6,000 / true, false` (one cell had covered a float key and a bool key). Each changed registry line carries a comment with the old value
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-033-doc-lint-registry-match/` (`selftest.txt` 9/9, `stamp.txt`); `StealthGame.Build.KnobLintRegistry` passes (full suite 52/52)
+**Run result**: N/A — build-time doc lint; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

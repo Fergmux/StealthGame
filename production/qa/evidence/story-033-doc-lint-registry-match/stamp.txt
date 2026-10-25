@@ -1,0 +1,8 @@
+Reviewed-Content-Hash: tools/ci/lint/knob-lint-registry.sh e0d583fa7a0a73c681584b63be28b7d4143512f3
+Reviewed-Content-Hash: tools/ci/lint/knob_lint.py 510a97610d8f1ba46b1496eec8ef99759dcaf804
+Reviewed-Content-Hash: tools/ci/lint/registry_io.py 26ec26133dcc83da318410af1e68db28a7a62c91
+Reviewed-Content-Hash: tools/ci/lint/selftest/knob_lint_registry_selftest.sh fceb1604472ce8075a8e7402ad56c7e476a256d8
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Build/KnobLintRegistryTest.cpp 61e0c120f3464daaa68bab7182ad464489211c14
+Reviewed-Content-Hash: design/registry/entities.yaml 57c7b97ccc7d2814dd6650e6c9b99b74bdc204d6
+Reviewed-Content-Hash: design/gdd/level-socket-contract.md f9989085719f3fa9db96acaa1b4ab5af58d22c69
+Story: production/epics/tuning-data-config/story-033-doc-lint-registry-match.md

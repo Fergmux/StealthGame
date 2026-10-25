@@ -1,12 +1,12 @@
 # Story 037: Close TD-REG-1 in the tech-debt register
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -63,8 +63,8 @@ TD-REG-1 was opened on 2026-10-25 (`/review-all-gdds` 2026-10-25b warning W1, ru
 
 ## Files
 
-- `docs/tech-debt-register.md` (TD-REG-1 row only)
-- `production/qa/smoke-<date>.md` (smoke check record)
+- `docs/tech-debt-register.md` (TD-REG-1 row only: Resolved, with the OQ-15 change request text)
+- `production/qa/smoke-2026-10-25_td-reg-1-closure.md` (smoke check record)
 
 ---
 
@@ -85,7 +85,7 @@ TD-REG-1 was opened on 2026-10-25 (`/review-all-gdds` 2026-10-25b warning W1, ru
 **Required evidence**:
 - Config/Data: smoke check pass in `production/qa/smoke-*.md` (the lint output with zero findings, the register row diff, and a check that `design/gdd/tuning-data-config.md` is unchanged).
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`production/qa/smoke-2026-10-25_td-reg-1-closure.md`: lint zero findings, register row diff, TDC GDD unchanged)
 
 ---
 
@@ -94,3 +94,14 @@ TD-REG-1 was opened on 2026-10-25 (`/review-all-gdds` 2026-10-25b warning W1, ru
 - Depends on: `production/epics/tuning-data-config/story-030-registry-mirror-completion.md`, `production/epics/tuning-data-config/story-033-doc-lint-registry-match.md`
 - Unlocks: None
 - Open verification claims from the plan Note lines: none (the plan has no Note line for this story). The location of the OQ-15 change request text is open.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: the registry-match lint reports zero findings over `design/gdd/*.md` and `design/registry/entities.yaml` (`GATE: PASS (20 file(s) scanned, 0 findings)`), so `docs/tech-debt-register.md` row TD-REG-1 is Resolved with the story reference and date; OQ-15 is noted as answered as a change request to the TDC GDD owner in the register row, and `design/gdd/tuning-data-config.md` is byte-identical to HEAD)
+**Decisions**: the OQ-15 change-request paragraph lives in the register row's Status cell (the inputs did not say where); the new row TD-REG-2 (story 036's baseline) is separate and stays Open
+**Deviations**: none
+**Test Evidence**: `production/qa/smoke-2026-10-25_td-reg-1-closure.md`
+**Run result**: N/A — documentation-only change; nothing player-visible
+**Reviewed by**: self-applied: register diff limited to the TD-REG-1 row (plus the TD-REG-2 row added by story 036)

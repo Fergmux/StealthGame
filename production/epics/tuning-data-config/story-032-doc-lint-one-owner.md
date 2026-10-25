@@ -1,12 +1,12 @@
 # Story 032: Doc lint: every key appears as owned in exactly one GDD
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -69,8 +69,8 @@ CR-15.3 says every key has a single owner: another GDD using the value reference
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `tools/ci/lint/knob-lint-owner.*`
-- `tools/ci/lint/selftest/` (one-owner selftest and fixtures)
+- `tools/ci/lint/knob-lint-owner.sh` (rule script) over the `owner` rule of `tools/ci/lint/knob_lint.py`
+- `tools/ci/lint/selftest/knob_lint_owner_selftest.sh` (11 cases)
 - `Source/StealthFoundation/Private/Tests/Build/KnobLintOwnerTest.cpp` (G2 wrapper `StealthGame.Build.KnobLintOwner`)
 
 ---
@@ -93,7 +93,7 @@ CR-15.3 says every key has a single owner: another GDD using the value reference
 **Required evidence**:
 - Logic: the selftest under `tools/ci/lint/selftest/` and the wrapper `StealthGame.Build.KnobLintOwner` (`Source/StealthFoundation/Private/Tests/Build/KnobLintOwnerTest.cpp`) must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`knob_lint_owner_selftest.sh` 11/11 cases; `StealthGame.Build.KnobLintOwner`)
 
 ---
 
@@ -102,3 +102,14 @@ CR-15.3 says every key has a single owner: another GDD using the value reference
 - Depends on: `production/epics/tuning-data-config/story-029-knob-table-parser.md`
 - Unlocks: `production/epics/tuning-data-config/story-035-doc-lint-duplicate-fixture.md`
 - Open verification claims: the plan has no Note line for this story. Open: the key universe for the zero-owner case, and the Foundation-module dependency of the G2 wrapper.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: a key that is a row of two GDDs' Tuning Knobs tables (or twice in one) is reported once with every file and line; a registry constant that no GDD owns is reported as a zero-owner key at its registry line; a single owner, a key only referenced in a second GDD (consumed table, `**Owned by**` reference row, prose), a retired row and a deprecated constant are silent; a renamed key shows as a zero-owner constant under its old name; the real tree: 21 files scanned, 0 findings)
+**Decisions**: the zero-owner key universe is the active (not deprecated) constants of `design/registry/entities.yaml`; a tree without a registry is NOT ASSESSED (exit 3 from the rule), never a pass; quantities held under two names (CR-15.3) are not detectable by name and are not attempted
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-032-doc-lint-one-owner/` (`selftest.txt` 11/11, `stamp.txt`); `StealthGame.Build.KnobLintOwner` passes (full suite 52/52)
+**Run result**: N/A — build-time doc lint; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

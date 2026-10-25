@@ -3249,10 +3249,11 @@ constants:
     referenced_by:
       - design/gdd/level-socket-contract.md
       - design/gdd/tuning-data-config.md
-    value: 2.0
+    value: "derived: = DetourMaxMult"  # was 2.0, hard 1.6-2.4, safe "= DetourMaxMult"; owner row (level-socket-contract.md:594) is authoritative; fixed 2026-10-25 by the registry-match lint (story tdc-033)
+    default_note: "2.0 at the DetourMaxMult default"
     unit: mult
-    hard_range: 1.6-2.4
-    safe_range: "= DetourMaxMult"
+    hard_range: "follows DetourMaxMult (1.8-2.4)"
+    safe_range: "follows DetourMaxMult"
     audience: ServerOnly
     latch: Round
     note: "DERIVED alias of DetourMaxMult since the cross-review fix 2026-10-25 (C-W19, LSC): not an independent knob or preset field; I-LSC-4 is retired as an invariant. Kept here so old references resolve."
@@ -4154,6 +4155,7 @@ constants:
       - design/gdd/tuning-data-config.md
     value: DA_CrowdMotionProfile_Default
     unit: asset
+    hard_range: valid asset of that class  # added 2026-10-25 by the registry-match lint fix (story tdc-033): owner row, crowd-npc-behaviour.md
     audience: ServerOnly
     latch: Round
     note: "soft ref to UCrowdMotionProfileData (ADR-0016 §5); added by user decision 2026-10-25"
@@ -4167,6 +4169,7 @@ constants:
       - design/gdd/tuning-data-config.md
     value: ST_CrowdFull
     unit: asset
+    hard_range: valid StateTree on the crowd schema  # added 2026-10-25 by the registry-match lint fix (story tdc-033): owner row, crowd-npc-behaviour.md
     audience: ServerOnly
     latch: Round
     note: "soft ref, unbound-NPC StateTree (ADR-0016 §3); added by user decision 2026-10-25"
@@ -4180,6 +4183,7 @@ constants:
       - design/gdd/tuning-data-config.md
     value: ST_CrowdRestricted
     unit: asset
+    hard_range: valid StateTree on the crowd schema  # added 2026-10-25 by the registry-match lint fix (story tdc-033): owner row, crowd-npc-behaviour.md
     audience: ServerOnly
     latch: Round
     note: "soft ref, participant-bound restricted StateTree (ADR-0016 §3); added by user decision 2026-10-25"
@@ -4653,7 +4657,7 @@ constants:
       - design/gdd/tuning-data-config.md
     value: 1.0
     unit: mult
-    hard_range: "{1.0, 1.5} (discrete set; outside TDC F-1 continuous clamp)"
+    hard_range: "discrete set {1.0, 1.5} (not a continuous range)"  # was "{1.0, 1.5} (discrete set; outside TDC F-1 continuous clamp)"; owner row (teammate-markers.md:438) is authoritative; fixed 2026-10-25 by the registry-match lint (story tdc-033)
     safe_range: "{1.0, 1.5}"  # C-W19, TMK: discrete two-step setting (cross-review fix 2026-10-25)
     audience: Client
     latch: Use
@@ -4891,7 +4895,7 @@ constants:
     hard_range: 1.0-5.0
     safe_range: 2.2-2.9
     audience: ServerOnly
-    latch: Round
+    latch: Action  # was Round; owner row (crowd-npc-behaviour.md:418) gives Min and Max the one latch Action; fixed 2026-10-25 by the registry-match lint (story tdc-033)
     note: "upper bound of the decoy early release; invariant I-CNB-6 (reject): CrowdDecoyEarlyReleaseMaxSec < ObjectiveInteractSec (carried C-W1 / C-W10); registered by the cross-review fix 2026-10-25 (C-W16)"
     added: 2026-10-25
     revised: ""
@@ -5760,5 +5764,1745 @@ constants:
     audience: ServerOnly
     latch: Round
     note: "LSC Tuning Knobs (level-socket-contract.md:618); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b; provisional pending traversal spike"
+    added: 2026-10-25
+    revised: ""
+
+  # ─── Owner-table mirror (CR-15.7, TD-REG-1, story tdc-030) ───
+  # Appended by tools/ci/lint/registry_mirror.py: every owner Tuning Knobs key that had no constant above,
+  # with the owner table's default, ranges, audience and latch. This supersedes the 2026-10-24 scope note
+  # in the constants header (single-GDD keys are now mirrored); the owner table stays authoritative.
+  - name: ViewHeadLeadMaxDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: disabled
+    unit: deg
+    default_note: 35 when enabled
+    hard_range: 15-70
+    safe_range: 25-45
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/camera-system.md:550 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CameraEdgePushDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 5
+    unit: deg
+    hard_range: 2-10
+    safe_range: 3-8
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:552 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: EdgePushMinRateDegPerSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 15
+    unit: deg/s
+    hard_range: 5-40
+    safe_range: 10-25
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:553 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: EdgePushRelaxDegPerSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 60
+    unit: deg/s
+    hard_range: 20-200
+    safe_range: 40-120
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:556 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CameraEdgeSoftYawDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 10
+    unit: deg
+    hard_range: 0-15
+    safe_range: 6-12
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:557 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CameraEdgeSoftPitchDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 5
+    unit: deg
+    hard_range: 0-10
+    safe_range: 3-6
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:557 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CameraPivotLagSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 0.10
+    unit: s
+    default_note: 0.12 in traversal
+    hard_range: 0-0.25
+    safe_range: 0.06-0.14
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:558 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: PivotMaxVertCmPerSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 300
+    unit: cm/s
+    hard_range: 100-600
+    safe_range: 200-400
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:559 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BoomLengthCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 180
+    unit: cm
+    hard_range: 100-250
+    safe_range: 150-200
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:560 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: ShoulderOffsetCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 45
+    unit: cm
+    hard_range: 0-60
+    safe_range: 35-50
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:561 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BoomHeightOffsetCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 15
+    unit: cm
+    hard_range: 0-25
+    safe_range: 5-20
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:562 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CameraGuardRadiusCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 2
+    unit: cm
+    hard_range: 1-5
+    safe_range: 2
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:563 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CameraProbeRadiusCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 14
+    unit: cm
+    hard_range: 10-20
+    safe_range: 12-16
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:563 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BoomRecoverHoldSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 0.15
+    unit: s
+    hard_range: 0-0.5
+    safe_range: 0.1-0.2
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:564 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BoomRecoverTauSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 0.30
+    unit: s
+    hard_range: 0.1-0.6
+    safe_range: 0.25-0.4
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:564 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BoomRecoverCmPerSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 300
+    unit: cm/s
+    hard_range: 100-800
+    safe_range: 200-450
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:564 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: ShoulderSqueezeInSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 0.15
+    unit: s
+    hard_range: 0.05-0.5
+    safe_range: 0.1-0.2
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:565 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: ShoulderSqueezeOutSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 0.40
+    unit: s
+    hard_range: 0.1-1
+    safe_range: 0.3-0.5
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:565 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BoomCloseCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 60
+    unit: cm
+    hard_range: 30-100
+    safe_range: 50-80
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:566 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: FpForwardOffsetCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 8
+    unit: cm
+    hard_range: 0-20
+    safe_range: 5-12
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:568 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CameraNearClipCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 5
+    unit: cm
+    hard_range: 1-15
+    safe_range: 3-8
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:570 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: EyeMaskFadeSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 0.10
+    unit: s
+    hard_range: 0.05-0.30
+    safe_range: 0.08-0.12
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:573 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: EyeMaskNearCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 2000
+    unit: cm
+    hard_range: 1000-4000
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:574 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: EyeMaskRangeCm
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 6000
+    unit: cm
+    hard_range: 3000-10000
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:574 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: EyeMaskNearHz
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 60
+    unit: Hz
+    hard_range: 30-60
+    safe_range: 45-60
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:575 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: EyeMaskFarHz
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 15
+    unit: Hz
+    hard_range: 10-30
+    safe_range: 12-20
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:575 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: ShoulderSwapBlendSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 0.25
+    unit: s
+    hard_range: 0-0.5
+    safe_range: 0.2-0.35
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:577 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: FovVMinDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 55
+    unit: deg
+    hard_range: 45-90
+    safe_range: 55
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/camera-system.md:580 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: FovVMaxDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 75
+    unit: deg
+    hard_range: 45-90
+    safe_range: 75
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/camera-system.md:580 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: StickCurveExp
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 1.5
+    unit: mult
+    hard_range: 1.0-2.0
+    safe_range: 1.0-2.0
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:583 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: StickYawRateDegPerSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 180
+    unit: deg/s
+    hard_range: 60-360
+    safe_range: 140-240
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:584 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: StickPitchRateDegPerSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+    value: 120
+    unit: deg/s
+    hard_range: 60-360
+    safe_range: 90-150
+    audience: Client
+    latch: Use
+    note: "mirrored from design/gdd/camera-system.md:584 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BushExitDurSec
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+    value: 0.9
+    unit: s
+    hard_range: 0.6-1.5
+    safe_range: 0.8-1.3
+    audience: All
+    latch: Round
+    note: "mirrored from design/gdd/concealment-bushes.md:296 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BushEntryReachCm
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+    value: 60
+    unit: cm
+    hard_range: 20-150
+    safe_range: 30-70
+    audience: All
+    latch: Round
+    note: "mirrored from design/gdd/concealment-bushes.md:299 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BushVictimMode
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+    value: UniformHash
+    unit: enum
+    hard_range: "UniformHash, EarliestCommitted, All"
+    safe_range: UniformHash
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/concealment-bushes.md:303 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: BushRustleAmplitudeCm
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+    value: 10
+    unit: cm
+    hard_range: 4-20
+    safe_range: 8-12
+    audience: All
+    latch: Use
+    note: "mirrored from design/gdd/concealment-bushes.md:304 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdAreaWeightCausewayMult
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 1.4
+    unit: mult
+    hard_range: 0.2-2.0
+    safe_range: 0.5-1.6
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:399 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdAreaWeightMarketMult
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 1.6
+    unit: mult
+    hard_range: 0.2-2.0
+    safe_range: 0.5-1.6
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:399 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdAreaWeightTempleMult
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 0.8
+    unit: mult
+    hard_range: 0.2-2.0
+    safe_range: 0.5-1.6
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:399 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdAreaWeightResidentialMult
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 0.6
+    unit: mult
+    hard_range: 0.2-2.0
+    safe_range: 0.5-1.6
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:399 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdYieldPct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 70
+    unit: pct
+    hard_range: 0-100
+    safe_range: 70-90
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:401 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdLongPausePct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 45
+    unit: pct
+    hard_range: 10-60
+    safe_range: 35-50
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:402 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdStallCoverMinPct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 10
+    unit: pct
+    hard_range: 0-30
+    safe_range: 10-20
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:404 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdConversationMinSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 6
+    unit: s
+    hard_range: 2-60
+    safe_range: 5-20
+    audience: ServerOnly
+    latch: Action
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:406 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdConverseStartPct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 50
+    unit: pct
+    hard_range: 0-100
+    safe_range: 30-70
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:407 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdConverseReplyPct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 60
+    unit: pct
+    hard_range: 0-100
+    safe_range: 40-80
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:407 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdGroupDriftSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 5
+    unit: s
+    hard_range: 0-20
+    safe_range: 3-8
+    audience: ServerOnly
+    latch: Action
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:408 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdAmbientTouchMinSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 0.8
+    unit: s
+    hard_range: 0.3-3.0
+    safe_range: 0.6-1.5
+    audience: ServerOnly
+    latch: Action
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:409 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdRunIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 405
+    unit: s
+    hard_range: 60-3600
+    safe_range: 300-600
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:412 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdVaultIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 1443
+    unit: s
+    hard_range: 120-7200
+    safe_range: "±40 %"
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:413 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdClimbIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 3409
+    unit: s
+    hard_range: 120-7200
+    safe_range: "±40 %"
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:413 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdBraceCapSharePct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 55
+    unit: pct
+    hard_range: 0-100
+    safe_range: 40-70
+    audience: ServerOnly
+    latch: Action
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:415 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdBushDwellMedianSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 15
+    unit: s
+    hard_range: 3-120
+    safe_range: 8-25
+    audience: ServerOnly
+    latch: Action
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:420 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdBushDwellSigma
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 0.8
+    unit: none
+    hard_range: 0.3-1.5
+    safe_range: 0.6-1.0
+    audience: ServerOnly
+    latch: Action
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:420 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdReversalIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 395
+    unit: s
+    hard_range: 60-3600
+    safe_range: "±40 %"
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:421 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdAlleyDawdleIntervalSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 1200
+    unit: s
+    hard_range: 300-7200
+    safe_range: 900-1800
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:422 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdStrikeReactRadiusCm
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 1500
+    unit: cm
+    hard_range: 500-3200
+    safe_range: 1000-2000
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:423 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdStartleRadiusCm
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 600
+    unit: cm
+    hard_range: 200-1000
+    safe_range: 400-800
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:424 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdPanicRunPct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 3
+    unit: pct
+    hard_range: 0-20
+    safe_range: 2-5
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:425 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdStartleBracePct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 8
+    unit: pct
+    hard_range: 0-20
+    safe_range: 5-12
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:425 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdStrikeResponderLimit
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 8
+    unit: count
+    hard_range: 1-20
+    safe_range: 6-10
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:427 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdReactRefractorySec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 8
+    unit: s
+    hard_range: 0-30
+    safe_range: 5-12
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:428 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdCycleGapMinSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 6
+    unit: s
+    hard_range: 2-60
+    safe_range: 5-25
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:430 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdCycleGapMaxSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 20
+    unit: s
+    hard_range: 2-60
+    safe_range: 5-25
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:430 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdDecisionPerSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 4
+    unit: per_s
+    hard_range: 1-10
+    safe_range: 3-6
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:433 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdSteerPerSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 30
+    unit: per_s
+    hard_range: 10-60
+    safe_range: 20-30
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:433 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdPathStartsPerFrameLimit
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+    value: 2
+    unit: count
+    hard_range: 1-8
+    safe_range: 2-4
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/crowd-npc-behaviour.md:434 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenGridSideMaxCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 66
+    unit: count
+    hard_range: 56-76
+    safe_range: 60-68
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:345 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenPerimeterRowCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 3
+    unit: count
+    hard_range: 2-4
+    safe_range: 3
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:346 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenWalkableTargetPct
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 64
+    unit: pct
+    hard_range: 55-70
+    safe_range: 60-66
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:347 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenWalkableTolPct
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 5
+    unit: pct
+    hard_range: 3-10
+    safe_range: 4-6
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:348 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenBlockSizeMinCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 7
+    unit: count
+    hard_range: 6-12
+    safe_range: 7-10
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:349 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenBlockSizeMaxCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 10
+    unit: count
+    hard_range: 6-12
+    safe_range: 7-10
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:349 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenSkeletonJitterCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 0
+    unit: count
+    hard_range: 0-2
+    safe_range: 0-1
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:350 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenRouteNodeSpacingCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 3
+    unit: count
+    hard_range: 2-5
+    safe_range: 2-3
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:352 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenRunMaxCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 12
+    unit: count
+    hard_range: 8-14
+    safe_range: 10-12
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:353 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenCanalShareMaxPct
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 12
+    unit: pct
+    hard_range: 0-20
+    safe_range: 8-12
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:354 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenGPrePathGuardPct
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 8
+    unit: pct
+    hard_range: 0-15
+    safe_range: 6-10
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:356 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenZoneCandidatesCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 2
+    unit: count
+    hard_range: 2 or 4
+    safe_range: 2
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:357 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenSunPoolRepairMaxCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 20
+    unit: count
+    hard_range: 0-40
+    safe_range: 10-20
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:360 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenCandidateDrawsCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 8
+    unit: count
+    hard_range: 1-16
+    safe_range: 6-12
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:361 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenGPreGuardBandPct
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 4
+    unit: pct
+    hard_range: 0-10
+    safe_range: 2-6
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:362 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenAttemptStartMinSec
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 4
+    unit: s
+    hard_range: 3-7
+    safe_range: 4-5
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:363 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenTimeoutAbortCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 2
+    unit: count
+    hard_range: 1-6
+    safe_range: 2-3
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:364 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenInstanceCapCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 5000
+    unit: count
+    hard_range: 3000-7500
+    safe_range: 4000-5000
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:366 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenDecorReserveCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 1500
+    unit: count
+    hard_range: 500-2000
+    safe_range: 1000-1500
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:367 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenFacadePeriodRepeatMaxCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 3
+    unit: count
+    hard_range: 2-3
+    safe_range: 3
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:369 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenEntropyRatioMinPct
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 55
+    unit: pct
+    hard_range: 45-65
+    safe_range: 50-60
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:370 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenJaccardP95MaxPct
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 60
+    unit: pct
+    default_note: provisional
+    hard_range: 50-75
+    safe_range: 55-65
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:371 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenMirrorAssignMaxPct
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 15
+    unit: pct
+    hard_range: 5-30
+    safe_range: 10-20
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:372 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenGoldenSeedCount
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 20
+    unit: count
+    hard_range: 10-50
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:373 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: CityGenGoldenMarginMinPct
+    status: active
+    source: design/gdd/procedural-city-generator.md
+    referenced_by:
+      - design/gdd/procedural-city-generator.md
+    value: 5
+    unit: pct
+    hard_range: 3-10
+    audience: ServerOnly
+    latch: Round
+    note: "mirrored from design/gdd/procedural-city-generator.md:373 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: RunExitHysteresisCmPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 25
+    unit: cm/s
+    hard_range: 0-100
+    safe_range: 15-40
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/shared-character-locomotion.md:527 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: WalkStartSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.40
+    unit: s
+    hard_range: 0.2-1.0
+    safe_range: 0.3-0.5
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:528 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: RunStartSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.60
+    unit: s
+    hard_range: 0.3-1.5
+    safe_range: 0.5-0.8
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:533 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: WalkTurnRateDegPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 60
+    unit: per_s
+    hard_range: 30-120
+    safe_range: 50-64
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:535 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: RunTurnRateDegPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 180
+    unit: per_s
+    hard_range: 90-360
+    safe_range: 150-220
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:536 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: PivotSpeedCmPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 20
+    unit: cm/s
+    hard_range: 5-50
+    safe_range: 15-30
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:538 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: LookEaseSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.15
+    unit: s
+    hard_range: 0.0-0.5
+    safe_range: 0.1-0.25
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:543 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: TraversalHeightToleranceCm
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 10
+    unit: cm
+    hard_range: 2-20
+    safe_range: 5-12
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:548 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: TraversalReachCm
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 100
+    unit: cm
+    hard_range: 50-200
+    safe_range: 80-120
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:549 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: TraversalFacingHalfAngleDeg
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 45
+    unit: deg
+    hard_range: 20-80
+    safe_range: 35-55
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:550 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: TraversalAnticipationSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.15
+    unit: s
+    hard_range: 0.0-0.3
+    safe_range: 0.1-0.2
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:551 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: PawnSmoothLocationSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.10
+    unit: s
+    hard_range: 0.07-0.25
+    safe_range: 0.08-0.12
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:554 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: StarvationCatchUpMaxMult
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 1.15
+    unit: mult
+    hard_range: 1.0-1.5
+    safe_range: 1.05-1.25
+    audience: ServerOnly
+    latch: Use
+    note: "mirrored from design/gdd/shared-character-locomotion.md:556 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimTierAMinScreenPct
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 19
+    unit: pct
+    hard_range: 10-30
+    safe_range: 17-21
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:557 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimTierBMinScreenPct
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 8
+    unit: pct
+    hard_range: 4-15
+    safe_range: 7-10
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:558 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimTierCMinScreenPct
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 3
+    unit: pct
+    hard_range: 1-6
+    safe_range: 2.5-4
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:559 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimTierHysteresisPct
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 8
+    unit: pct
+    hard_range: 0-20
+    safe_range: 5-10
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:560 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimTierMinHoldSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.5
+    unit: s
+    hard_range: 0.0-2.0
+    safe_range: 0.3-0.8
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:561 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimTierACapCount
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 8
+    unit: count
+    hard_range: 4-12
+    safe_range: 6-10
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:562 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimTierBCapCount
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 14
+    unit: count
+    hard_range: 8-24
+    safe_range: 12-16
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:563 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimTierCCapCount
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 28
+    unit: count
+    hard_range: 20-50
+    safe_range: 24-32
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:564 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimSearchIntervalTierBSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.067
+    unit: s
+    hard_range: 0.033-0.2
+    safe_range: 0.05-0.1
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:565 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: FootstepCadenceSlowPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 1.8
+    unit: per_s
+    hard_range: 1.6-2.0
+    safe_range: 1.75-1.9
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:566 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: FootstepCadenceFullPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 2.0
+    unit: per_s
+    hard_range: 1.8-2.2
+    safe_range: 1.9-2.05
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:567 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: FootstepStartDelaySec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.30
+    unit: s
+    hard_range: 0.2-0.5
+    safe_range: 0.25-0.4
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:568 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: FootstepStrideRunCm
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 130
+    unit: cm
+    hard_range: 90-180
+    safe_range: 115-145
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:569 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: PivotExitAngleDeg
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 10
+    unit: deg
+    hard_range: 5-20
+    safe_range: 8-12
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:570 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: ReversalHysteresisDeg
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 10
+    unit: deg
+    hard_range: 5-20
+    safe_range: 8-15
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:571 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: TurnInPlaceExitFrac
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.5
+    unit: mult
+    hard_range: 0.2-0.8
+    safe_range: 0.4-0.6
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:572 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimSearchIntervalTierCSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 0.133
+    unit: s
+    hard_range: 0.067-0.3
+    safe_range: 0.1-0.17
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:573 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: AnimTierDVisibleMinHz
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 8
+    unit: per_s
+    hard_range: 6-15
+    safe_range: 8-10
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:574 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-25
+    revised: ""
+  - name: ContactBrushMinRelSpeedCmPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 40
+    unit: cm/s
+    hard_range: 10-100
+    safe_range: 30-60
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:575 (CR-15.7, TD-REG-1, story tdc-030)"
     added: 2026-10-25
     revised: ""

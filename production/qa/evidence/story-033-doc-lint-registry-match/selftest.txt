@@ -1,0 +1,29 @@
+SELFTEST equivalent-spellings-silent ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST one-finding-per-mismatching-field ok
+    design/gdd/alpha.md:7 knob-registry key KDefault: default differs: owner row '5' vs registry '6' (registry line 7)
+    design/gdd/alpha.md:8 knob-registry key KHard: hard range differs: owner row '1-9' vs registry '1-10' (registry line 22)
+    design/gdd/alpha.md:9 knob-registry key KSafe: safe range differs: owner row '2-4' vs registry '2-5' (registry line 36)
+    design/gdd/alpha.md:10 knob-registry key KAudience: audience differs: owner row 'ServerOnly' vs registry 'All' (registry line 50)
+    design/gdd/alpha.md:11 knob-registry key KLatch: latch differs: owner row 'Round' vs registry 'Use' (registry line 64)
+    design/gdd/alpha.md:12 knob-registry key KSource: source GDD differs: owner row 'design/gdd/alpha.md' vs registry 'design/gdd/beta.md' (registry line 69)
+    design/gdd/alpha.md:13 knob-registry key NameSec: name differs from registry constant 'nameSec' (registry line 80)
+    design/gdd/alpha.md:14 knob-registry key KMissing: missing constant in design/registry/entities.yaml (mirror it with tools/ci/lint/registry_mirror.py)
+    design/gdd/alpha.md:15 knob-registry key KTwo: default differs: owner row '5' vs registry '7' (registry line 98)
+    design/gdd/alpha.md:15 knob-registry key KTwo: latch differs: owner row 'Round' vs registry 'Use' (registry line 103)
+    design/gdd/alpha.md:16 knob-registry key KExtraPart: hard range differs: owner row '1-9' vs registry '1-9 or 12' (registry line 113)
+    GATE: FAIL (11 finding(s); 2 file(s) scanned)
+SELFTEST missing-constant-is-one-observation-not-one-per-field ok
+SELFTEST matching-key-is-silent ok
+SELFTEST finding-is-at-the-owner-row-line ok
+SELFTEST schema-constant-and-catalog-flag-rows-not-compared ok
+    GATE: PASS (2 file(s) scanned, 0 findings)
+SELFTEST missing-registry-is-not-assessed ok
+    knob-lint: registry not found: design/registry/entities.yaml
+    note: rule script /c/Users/fergm/Documents/Unreal Projects/StealthGame/tools/ci/lint/selftest/../knob-lint-registry.sh exited 3
+    GATE: NOT ASSESSED (0 file(s) scanned; an empty or broken lint scope is not a pass)
+SELFTEST base-fixture-clean ok
+    GATE: PASS (4 file(s) scanned, 0 findings)
+SELFTEST real-tree-zero-findings ok
+    GATE: PASS (20 file(s) scanned, 0 findings)
+SELFTEST RESULT: PASS (9 cases)

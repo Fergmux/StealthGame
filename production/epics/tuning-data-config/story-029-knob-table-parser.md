@@ -1,12 +1,12 @@
 # Story 029: Parser for the Tuning Knobs tables of every GDD
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -71,8 +71,10 @@ This is the first story of Exit B-1 (doc lint and registry completion, TD-REG-1,
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `tools/ci/lint/knob_tables.py`
-- `tools/ci/lint/selftest/knob_tables_selftest.*`
+- `tools/ci/lint/knob_tables.py` (the parser; also the table-style, pair-row and invariant extraction used by 031 to 036)
+- `tools/ci/lint/selftest/knob_tables_selftest.sh` (29 cases), `tools/ci/lint/selftest/knob-lib.sh` (shared selftest helpers)
+- `tools/ci/lint/knob-common.sh` (interpreter launcher shared by the doc-lint rule scripts and selftests)
+- `tools/ci/lint/fixtures/knob/base/` (fixture GDDs and registry)
 - `Source/StealthFoundation/Private/Tests/Build/KnobTableParserTest.cpp` (G2 wrapper `StealthGame.Build.KnobTableParser`)
 
 ---
@@ -95,7 +97,7 @@ This is the first story of Exit B-1 (doc lint and registry completion, TD-REG-1,
 **Required evidence**:
 - Logic: `tools/ci/lint/selftest/knob_tables_selftest.*` (run with `python -I`) and the wrapper `StealthGame.Build.KnobTableParser` (`Source/StealthFoundation/Private/Tests/Build/KnobTableParserTest.cpp`) must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`knob_tables_selftest.sh` 29/29 cases; `StealthGame.Build.KnobTableParser`)
 
 ---
 
@@ -104,3 +106,14 @@ This is the first story of Exit B-1 (doc lint and registry completion, TD-REG-1,
 - Depends on: `production/epics/tuning-data-config/story-011-t0-lint-framework-and-gate.md`
 - Unlocks: `production/epics/tuning-data-config/story-030-registry-mirror-completion.md`, `production/epics/tuning-data-config/story-031-doc-lint-cr15-columns.md`, `production/epics/tuning-data-config/story-032-doc-lint-one-owner.md`, `production/epics/tuning-data-config/story-033-doc-lint-registry-match.md`, `production/epics/tuning-data-config/story-034-doc-lint-schema-row-match.md`, `production/epics/tuning-data-config/story-036-doc-lint-bounded-by.md`
 - Open verification claims: the plan Note (Python only as a build-time tool, never an editor gate, run with `python -I`) is a rule, not an engine claim. Open: the owner-level preamble layout, the record stream format, whether cross-review files are in scope, and the Foundation-module dependency of the G2 wrapper.
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing (AC-1: `python -I tools/ci/lint/knob_tables.py --records` emits one record per key with Key, Type, Owner, Default, Hard range, Safe range, Audience, Latch, Unit (plus Effect, source GDD and line) for the standard style and the owner-level preamble style of the LSC and Generator GDDs; 416 records over 19 GDDs. Per-GDD counts match the TDC Registered Owner Keys table for every GDD except two, listed as observations: LSC (table says 80, owner table has 84 owned rows) and the TDC row, which gives no leading number)
+**Decisions**: owned table = Key plus a Hard or Safe range column, so Roster's consumed-elsewhere table gives no record (CR-15.3); struck-through rows are `retired` records and `**Owned by** X` rows are `ref` records, neither counts as ownership (the LSC lists two SCL traversal heights this way); pair rows (`A` / `B`, `A` / `MaxCount`, `...MarketMult`) are expanded per name and every cell is split in step; the preamble style takes Owner, Audience and Latch from the text above the table and lists them in `inherited`; `scope` marks the TDC schema constant and catalog flags (not preset fields); records are JSON lines with `kind` table/knob/ref/retired; the cross-review reports and `systems-index.md` are outside the scan, `game-concept.md` is scanned and reported by `knob-no-section`
+**Deviations**: none
+**Test Evidence**: `production/qa/evidence/story-029-knob-table-parser/` (`selftest.txt` 29/29, `stamp.txt`); `StealthGame.Build.KnobTableParser` passes (full suite 52/52)
+**Run result**: N/A — build-time Markdown parser; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): dead code and a stale docstring removed; no defects left
