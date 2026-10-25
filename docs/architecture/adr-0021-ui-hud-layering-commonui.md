@@ -121,7 +121,7 @@ Every layer below 100 is `HitTestInvisible`, not focusable, has no input binding
 - **Widgets are dumb.** Each layer widget receives the view-model sub-struct for its cluster and applies it (visibility, text, brush, render opacity). No UMG property bindings, no Blueprint graph logic, no widget animation assets; widget Blueprints carry layout and style only (ADR-0007 widget audit).
 - **Time.** Every timed element uses `ServerNowEst = EstimatedServerNow(World)` (ADR-0002) and its one slewed offset; until `IsServerClockSynced()` the HUD shows persistent clusters but defers timed plates per F2's cap. Read holds are multiplied by `HudReadHoldMult` (HUD-R16).
 - **Strings.** All player-facing text comes from a string table (`ST_Hud`), never from data on the wire; dynamic values are formatted locally (names from C-Public `DisplayName` by `PublicHandle`, numbers from owner data). The language rule word list is linted over the string table (AC-HUD-12 support).
-- **Client-local stores that outlive the controller** (HUD-R7 interim tally copy keyed by `RoundEpoch`, the third-person-hint profile flag) live in a `ULocalPlayerSubsystem` (`UStealthHudLocalStore`), never in a replicated value.
+- **Client-local stores that outlive the controller** (HUD-R7 tally display cache keyed by `RoundEpoch`, bridging until the C-TeamView owner re-push lands, the third-person-hint profile flag) live in a `ULocalPlayerSubsystem` (`UStealthHudLocalStore`), never in a replicated value.
 
 ### 5. Teammate markers model (TM-R3..R8, R10, R11, R14)
 
@@ -161,7 +161,7 @@ Presentation reads exactly (architecture Presentation contract): its own control
  CARRIERS (own PlayerController, owner-only)          PUBLIC / LOCAL
   URosterTeamViewComponent  UObjectiveTeamViewComponent   FRoundPublicState (GameState)   client tuning face
   UTeamPositionFeedComponent  owner reply sink (ClientCommandReplies)   Camera view facade   IsAllyBodyHidden
-  Penalty owner part (T_due slot pending)              own pawn FActionState/FDeathState   OnRoleChangePresented
+  Penalty owner part (tally re-push, T_due)            own pawn FActionState/FDeathState   OnRoleChangePresented
             │  (sampled every frame by value; no RepNotify dependency — host == client)
             ▼
  UStealthPresentationBootstrap (owned by AStealthHUD; Bind(FStealthClientViewHandles))
@@ -354,3 +354,9 @@ The prototype `AStealthHUD` (canvas drawing, `DrawTeammateMarkers` world iterati
 ## Amendments
 Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.md`); decision unchanged, Status unchanged (Proposed).
 - Requests answered (2026-10-24): the ADR-0011 §9 context-gate and `IOwnerCommandClientView` amendments, the ADR-0015 §6 `GetScreenFade()` amendment and the ADR-0007 `IOwnerCommandClientView` handle (Related) are applied by their owners. The Status line's "with the context-gate amendment requested in §8" and "with the screen-fade amendment requested in §3" conditions are met. The GDD re-reviews and UI-V1..V4 it names are unchanged — architecture-review fix 2026-10-25 (Conflict 9).
+- Project config applied 2026-10-25 (phase 2, user-authorised): `CommonUI` plugin enabled in `StealthGame.uproject`; `Config/DefaultGame.ini [/Script/CommonInput.CommonInputSettings] bEnableEnhancedInputSupport=True`; `Config/DefaultEngine.ini [/Script/Engine.Engine] GameViewportClientClassName=/Script/CommonUI.CommonGameViewportClient`. **`UIScaleRule` left at the engine default (`ShortestSide`)**: `UStealthDpiScalingRule` does not exist in code yet, and pointing `CustomScalingRuleClass` at a missing class would fail to resolve; the implementing story sets `UIScaleRule=Custom` and `CustomScalingRuleClass=/Script/<module>.StealthDpiScalingRule` when it adds the class. The viewport-client swap is not exercised by the headless (-nullrhi) run; a PIE check is an editor follow-up.
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- §2 data inputs — user decision 2026-10-25: the presenter reads `T_due` and `{WrongTargetTally, LastResultSeq}` from the C-TeamView owner part (ADR-0001 §5-§6); HUD-E11 shows a live "Returning in {s}" countdown, static "Returning" only at `s ≤ 0`.
+- §2 — user decision 2026-10-25: `FStrikeResult.ContactServerTime` is the attacker plate's show-time input (HUD F2); the positional matcher remains for the defender and as fallback.
+- §2 — user decision 2026-10-25: the latency icon threshold key is `HudLatencyWarnRttSec` only; `InformantKilled` removal-card suppression confirmed; the wrong-target tally confirmed.

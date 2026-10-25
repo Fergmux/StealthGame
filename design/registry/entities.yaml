@@ -54,7 +54,7 @@
 #   in any other shape is reported as unsupported layout, with its number.
 
 version: 1
-last_updated: "2026-10-24"
+last_updated: "2026-10-25"
 
 # ─── ENTITIES ──────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -197,10 +197,11 @@ entities:
       - design/gdd/objectives-chain.md
       - design/gdd/round-match-framework.md
       - design/gdd/teammate-markers.md
-    content: "per-viewer team view: teammate {PublicHandle, State, PawnRef}; own State and Team"
+    content: "per-viewer team view: owner {PublicHandle, Team, State, RoundEpoch, WrongTargetTally, LastResultSeq, T_due} (last three Owner-only, user decision 2026-10-25); teammate {PublicHandle, State, PawnRef, IsConcealed, RetireAtServerTime} (RetireAtServerTime Team, user decision 2026-10-25); IVP R8 fallback feed entries {PublicHandle, Pos, Seq}"
     rule: "all presentation on every machine (including the listen host) reads only its viewer C-TeamView"
+    # owner tally/T_due fields, teammate RetireAtServerTime and feed Seq added by user decision 2026-10-25; bPawnBound declined
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: pawn_command
     status: active
     source: design/gdd/input-interaction-framework.md
@@ -253,10 +254,10 @@ entities:
       - design/gdd/participant-state-roster.md
     server_outcomes: [Kill, Reversal, Whiff]
     owner_plates: [RivalEliminated, WrongTarget, NoContact, Reversed]
-    reply: "FStrikeResult {ClientCommandSeq, Result, TallyAfter, bExiled}, Owner-only, shown by HUD at the local contact frame"
+    reply: "FStrikeResult {ClientCommandSeq, Result, TallyAfter, bExiled, ContactServerTime}, Owner-only, shown by HUD at the local contact frame (ContactServerTime added by user decision 2026-10-25)"
     rule: "WrongTarget is identical for every non-rival victim kind (NPC or enemy informant)"
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: on_pawn_killed
     status: active
     source: design/gdd/assassination-defence-reversal.md
@@ -313,8 +314,9 @@ entities:
     audience: Owner
     range: "0-255 saturating; tally >= strike count always (Penalty F1)"
     rule: "never reveals whether a WrongTarget victim was an NPC or an enemy informant"
+    # confirmed by the user 2026-10-25 (Penalty OQ-NKP-1 closed); carriers FStrikeResult.TallyAfter and the C-TeamView owner re-push
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: informant_respawn
     status: active
     source: design/gdd/npc-kill-penalty-informants.md
@@ -326,11 +328,12 @@ entities:
       - design/gdd/participant-state-roster.md
       - design/gdd/procedural-city-generator.md
       - design/gdd/round-match-framework.md
-    method: "takeover of an unseen crowd pawn inside RespawnRegion near the team TeamSpawn (rule C1)"
+    method: "takeover of an unseen crowd pawn inside RespawnRegion near the team TeamSpawn (rule C1, confirmed by the user 2026-10-25)"
     chain: "LSC PickRespawnPawn -> CPA TakeNpcCard -> Crowd TryReleaseNpc -> SCL TakeOverCrowdPawn"
     rule: "no player pawn is ever spawned mid-round"
+    due_time: "T_due, Owner-only on the C-TeamView owner part (user decision 2026-10-25); HUD shows a live countdown"
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: appearance
     status: active
     source: design/gdd/character-pool-appearance.md
@@ -364,8 +367,9 @@ entities:
     copies: "at least DeckCopiesFloorCount (4) per appearance; per-appearance counts differ by at most 1"
     conservation: "per-appearance counts fixed at the deal for the whole round; a replacement NPC takes the vacated card"
     dealer: "AllocateAppearances(Players, NpcCount), server-only, called by Round once per round in Preparing"
+    # balanced deck confirmed by the user 2026-10-25; default D = 60 (12 x 5) at NpcCount 50
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: bush
     status: active
     source: design/gdd/concealment-bushes.md
@@ -454,8 +458,9 @@ entities:
     definition: "delayed team-visible notice of a rival completion, released on a global quantum grid"
     keys: "RivalSignalDelayMinSec 30, RivalSignalDelayMaxSec 165, RivalSignalReleaseQuantumSec 30"
     bound: "Objectives F4 (LR_sig <= 2.4)"
+    default: "ON (bRivalSignalEnabled true; confirmed by the user 2026-10-25)"
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: emergence_socket
     status: active
     source: design/gdd/level-socket-contract.md
@@ -537,8 +542,9 @@ entities:
     fields: "ClientHash (TDC F-2 over public keys) and PoolHash (CPA)"
     mismatch: "ParamsMismatch, then Roster Disconnect"
     deadline: "TravelLoadTimeoutSec, absolute from travel start"
+    world_ready_stage: "ServerWorldReady(FAckEpoch) -> OnParticipantWorldReady (Round CR-13 (d), user decision 2026-10-25)"
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: tuning_snapshot
     status: active
     source: design/gdd/tuning-data-config.md
@@ -803,7 +809,7 @@ formulas:
       - L
     output_range: "per indicator"
     expression: "BlindGuessSuccess = 1 - (1 - p)^L, p = TeamSize / (TeamSize + NpcCount); DutyCycle = DefenceDurationSec / DefenceCooldownSec"
-    notes: "TDC F-3; invariant I-4 warns when 100 * BlindGuessSuccess > BlindGuessWarnPct (50). 0.298 at defaults."
+    notes: "TDC F-3; invariant I-4 warns when 100 * BlindGuessSuccess > BlindGuessWarnPct (50). 0.249 at defaults (NpcCount 50; was 0.298 at 40)."
     added: 2026-10-24
     revised: ""
   - name: tuning_canonical_hash
@@ -1809,7 +1815,7 @@ constants:
     latch: Round
     added: 2026-10-24
     revised: ""
-  - name: ConcealServerCullEnabled
+  - name: bConcealServerCull
     status: active
     source: design/gdd/information-visibility-policy.md
     referenced_by:
@@ -1887,29 +1893,31 @@ constants:
     referenced_by:
       - design/gdd/crowd-npc-behaviour.md
       - design/gdd/assassination-defence-reversal.md
-    value: 2400
+    value: 3000
     unit: s
     hard_range: 300-7200
-    safe_range: 1600-3600
+    safe_range: 2000-4500
     audience: ServerOnly
     latch: Use
+    # was 2400; per-NPC rates scale by 40/50 with NpcCount 50 (Crowd F2, 2026-10-25)
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: CrowdBushIntervalSec
     status: active
     source: design/gdd/crowd-npc-behaviour.md
     referenced_by:
       - design/gdd/crowd-npc-behaviour.md
       - design/gdd/tuning-data-config.md
-    value: 316
+    value: 315
     unit: s
     default_note: "r_N 0.19/min"
     hard_range: 120-320
-    safe_range: 240-320
+    safe_range: 240-315
     audience: ServerOnly
     latch: Use
+    # was 316; at NpcCount 50 the IVP F5 requirement r_N >= 0.190 needs <= 315 s (Crowd, 2026-10-25)
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: CrowdConversationMaxSec
     status: active
     source: design/gdd/crowd-npc-behaviour.md
@@ -1959,14 +1967,15 @@ constants:
     referenced_by:
       - design/gdd/crowd-npc-behaviour.md
       - design/gdd/objectives-chain.md
-    value: 10500
+    value: 13125
     unit: s
     hard_range: 1800-60000
-    safe_range: 8400-13500
+    safe_range: 10500-16875
     audience: ServerOnly
     latch: Use
+    # was 10500; per-NPC rates scale by 40/50 with NpcCount 50 (Crowd F2, 2026-10-25)
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: CrowdExitGiveUpSec
     status: active
     source: design/gdd/crowd-npc-behaviour.md
@@ -1987,14 +1996,15 @@ constants:
     referenced_by:
       - design/gdd/crowd-npc-behaviour.md
       - design/gdd/tuning-data-config.md
-    value: 480
+    value: 600
     unit: s
     hard_range: 120-3600
     safe_range: "±40 %"
     audience: ServerOnly
     latch: Use
+    # was 480; per-NPC rates scale by 40/50 with NpcCount 50 (Crowd F2, 2026-10-25)
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: CrowdIdleMaxSec
     status: active
     source: design/gdd/crowd-npc-behaviour.md
@@ -2395,7 +2405,7 @@ constants:
     latch: Use
     added: 2026-10-24
     revised: ""
-  - name: EyeMaskHideFails
+  - name: EyeMaskHideFailCount
     status: active
     source: design/gdd/camera-system.md
     referenced_by:
@@ -2826,7 +2836,7 @@ constants:
     added: 2026-10-24
     revised: ""
   - name: LatencyWarnRttSec
-    status: active
+    status: deprecated
     source: design/gdd/input-interaction-framework.md
     referenced_by:
       - design/gdd/input-interaction-framework.md
@@ -2837,8 +2847,10 @@ constants:
     safe_range: 0.15-0.25
     audience: All
     latch: Use
+    # retired by user decision 2026-10-25 (cross-review C-W14): one quantity, one key; use HudLatencyWarnRttSec (HUD)
+    replaced_by: HudLatencyWarnRttSec
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: LayoutAttemptTimeoutSec
     status: active
     source: design/gdd/level-socket-contract.md
@@ -2883,7 +2895,7 @@ constants:
     latch: Round
     added: 2026-10-24
     revised: ""
-  - name: LayoutSliceWorkUnitsMax
+  - name: LayoutSliceWorkUnitsLimit
     status: active
     source: design/gdd/level-socket-contract.md
     referenced_by:
@@ -2924,11 +2936,12 @@ constants:
     value: 3250
     unit: count
     hard_range: "1,500-4,000"
-    safe_range: "2,000-2,250"
+    safe_range: "2,000-2,700"
     audience: ServerOnly
     latch: Round
+    # safe range was 2,000-2,250; V-AREA band widened by NpcCount 50 (LSC, 2026-10-25)
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: LayoutWalkableCellsMinCount
     status: active
     source: design/gdd/level-socket-contract.md
@@ -2939,11 +2952,12 @@ constants:
     value: 2000
     unit: count
     hard_range: "1,500-4,000"
-    safe_range: "2,000-2,250"
+    safe_range: "2,000-2,700"
     audience: ServerOnly
     latch: Round
+    # safe range was 2,000-2,250; V-AREA band widened by NpcCount 50 (LSC, 2026-10-25)
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: LookMaxRateDegPerSec
     status: active
     source: design/gdd/shared-character-locomotion.md
@@ -3048,15 +3062,17 @@ constants:
       - design/gdd/round-match-framework.md
       - design/gdd/shared-character-locomotion.md
       - design/gdd/tuning-data-config.md
-    value: 40
+    value: 50
     unit: count
     hard_range: "per TDC"
     safe_range: "per TDC"
     audience: ServerOnly
     latch: Round
     user_locked: true
+    # was 40 (user-locked ~40); changed by the user 2026-10-25 (TDC canonical row, Crowd)
+    note: "user_locked default changed by user 2026-10-25 (40 -> 50); 5v5 gives 60 characters (perf working value, re-verify in spike R3)"
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: NpcKillStrikeLimit
     status: active
     source: design/gdd/npc-kill-penalty-informants.md
@@ -3070,14 +3086,15 @@ constants:
       - design/gdd/tuning-data-config.md
     value: 3
     unit: count
-    hard_range: 1-5
+    hard_range: 2-5
     safe_range: 2-4
     audience: All
     latch: Round
     user_locked: true
-    note: "raising the hard minimum to 2 is a pending user decision (NKP OQ-12)"
+    note: "L = 1 only in a non-selectable test preset with bTestAllowsStrikeLimitOne (TDC, user decision 2026-10-25)"
+    # was 1-5; hard minimum 2 by user decision 2026-10-25 (Penalty OQ-NKP-11, TDC OQ-12)
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: ObjectiveInteractSec
     status: active
     source: design/gdd/objectives-chain.md
@@ -3232,7 +3249,7 @@ constants:
     latch: Action
     added: 2026-10-24
     revised: ""
-  - name: RespawnPoolMinExpected
+  - name: RespawnPoolMinExpectedCount
     status: active
     source: design/gdd/level-socket-contract.md
     referenced_by:
@@ -3479,7 +3496,7 @@ constants:
     latch: Round
     added: 2026-10-24
     revised: ""
-  - name: StickDeadZone
+  - name: StickDeadZoneFrac
     status: active
     source: design/gdd/camera-system.md
     referenced_by:
@@ -3494,7 +3511,7 @@ constants:
     user_setting: true
     added: 2026-10-24
     revised: ""
-  - name: StickOuterZone
+  - name: StickOuterZoneFrac
     status: active
     source: design/gdd/camera-system.md
     referenced_by:
@@ -4012,14 +4029,15 @@ constants:
     referenced_by:
       - design/gdd/level-socket-contract.md
       - design/gdd/crowd-npc-behaviour.md
-    value: 1.8
+    value: 1.5
     unit: mult
     hard_range: 1.2-2.5
     safe_range: 1.5-2.0
     audience: ServerOnly
     latch: Round
+    # was 1.8 (workaround while NpcCount was 40); reverted 2026-10-25 with NpcCount 50 (LSC)
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: bAllowEmptyTeamDev
     status: active
     source: design/gdd/round-match-framework.md
@@ -4056,4 +4074,71 @@ constants:
     audience: ServerOnly
     latch: Round
     added: 2026-10-24
+    revised: ""
+  - name: LayoutExactRefineMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/tuning-data-config.md
+    value: 2000
+    unit: count
+    hard_range: "200-20,000"
+    safe_range: "1,000-4,000"
+    audience: ServerOnly
+    latch: Round
+    note: "caps exact path refinements in Validate (ADR-0014 §5.2); added by user decision 2026-10-25"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdMotionProfileAsset
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: DA_CrowdMotionProfile_Default
+    unit: asset
+    audience: ServerOnly
+    latch: Round
+    note: "soft ref to UCrowdMotionProfileData (ADR-0016 §5); added by user decision 2026-10-25"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdFullStateTreeAsset
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: ST_CrowdFull
+    unit: asset
+    audience: ServerOnly
+    latch: Round
+    note: "soft ref, unbound-NPC StateTree (ADR-0016 §3); added by user decision 2026-10-25"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdRestrictedStateTreeAsset
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: ST_CrowdRestricted
+    unit: asset
+    audience: ServerOnly
+    latch: Round
+    note: "soft ref, participant-bound restricted StateTree (ADR-0016 §3); added by user decision 2026-10-25"
+    added: 2026-10-25
+    revised: ""
+  - name: bTestAllowsStrikeLimitOne
+    status: active
+    source: design/gdd/tuning-data-config.md
+    referenced_by:
+      - design/gdd/tuning-data-config.md
+      - design/gdd/npc-kill-penalty-informants.md
+    value: false
+    unit: bool
+    audience: ServerOnly
+    latch: Round
+    note: "catalog flag per preset; lowers NpcKillStrikeLimit hard minimum to 1 in non-selectable test presets only; compiled out of Shipping (user decision 2026-10-25)"
+    added: 2026-10-25
     revised: ""

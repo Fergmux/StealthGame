@@ -1,6 +1,6 @@
 # Procedural City Generator
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (revisions applied; re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24
+> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (revisions applied; re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (derived kit assets — merged bay stacks, paving slabs, G0 primitive placeholders — allowed before the mass-production gate; no longer held for spikes, still provisional on spike results; `NpcCount` 50)
 > **Design Review**: NEEDS REVISION 2026-10-24, lean depth (10 blocking items fixed in place; log: design/gdd/reviews/procedural-city-generator-review-log.md)
 > **Creative Director Review (CD-GDD-ALIGN)**: CONCERNS 2026-10-24, then REVISED 2026-10-24 (6 revisions applied: corner-zone read made a measured pillar question with a decision rule, mirror-intercept audit and LSC request, ≥ 2 final-eligible courts outside the temple ring plus court-class and 30% prior audits, golden seeds excluded from practice and live draws, G0 data non-representative, half-predictability walkthrough test)
 > **Provisional**: pending spikes R1/R4 (runtime ISM / Lumen / Chaos costs, server navmesh build) and the Manifest wire-size spike; all † values
@@ -15,7 +15,7 @@ The Procedural City Generator builds a fresh, compact city (about 128 m square) 
 > **Quick reference** — Layer: `Feature` · Priority: `MVP` (built last) · Key deps: `Level Socket Contract; Tuning Data & Config; Session & Travel (seed, soft); Round & Match Framework (ordering, soft); Shared Character & Locomotion (values, soft)`
 
 ## Overview
-The Procedural City Generator ("the Generator"; not to be confused with Unreal's PCG framework, which it does not depend on) is the second implementation of the Level Socket Contract (LSC, `design/gdd/level-socket-contract.md`). It registers with the LSC layout service as the provider of kind `Generated` and, from the public geometry seed `PublicSubSeed(Layout, LayoutAttempt)` (Session & Travel F5), assembles a compact city of about 124-132 m square (default 128 m; the LSC V-AREA band at 50 pawns sets the size) from the 2.0 m modular kit (art bible 6.2, M01-M12). It hands the service the socket set and the integer Layout Manifest.
+The Procedural City Generator ("the Generator"; not to be confused with Unreal's PCG framework, which it does not depend on) is the second implementation of the Level Socket Contract (LSC, `design/gdd/level-socket-contract.md`). It registers with the LSC layout service as the provider of kind `Generated` and, from the public geometry seed `PublicSubSeed(Layout, LayoutAttempt)` (Session & Travel F5), assembles a compact city of about 124-132 m square (default 128 m; the LSC V-AREA band at 60 pawns sets the size) from the 2.0 m modular kit (art bible 6.2, M01-M12). It hands the service the socket set and the integer Layout Manifest.
 
 The contract owns *what* a valid city is: socket vocabulary, predicates V-*, Selection, the Manifest and `LayoutHash`, reseed and fallback, D1-D9. **This GDD does not restate those rules; it references them by id.** The Generator owns *how* a city that passes them is made: the macro method (frame, street/canal/causeway/plaza/court skeleton on the integer grid); module selection, rotation and anti-repetition (art bible 6.7); socket placement built to pass the predicates; a grid pre-validator that discards most bad cities before any geometry exists; the build split (server builds and validates, clients instantiate from the Manifest, decoration is client-side and deterministic); time, memory and instance budgets; failure modes; determinism tests and golden seeds; and the kit content the MVP Generator needs.
 
@@ -85,7 +85,7 @@ Cells are 2.0 m ("c"). Area types are LSC R1's. Every stage is a pure function o
 #### R-G6. Module selection, rotation and anti-repetition
 1. **Placement:** every module on the 2.0 m grid and 1.6 m course, pivot bottom-left, yaw from the facade normal (exact 4 rotations), scale exactly 1.0, **never mirrored** (determinant > 0 asserted). Projections (cornice, talud) overhang the neighbour's air only (art 6.2).
 2. **Bay sequencer:** per facade run, a constrained random walk over the recipe's bay types. It enforces F3 (periodicity excess ≤ 1, covering identical runs ≤ 6 bays and no repeated short pattern), door gaps of 2-5 bays with no gap value three times in a row, door bays never adjacent (art 3.3), and no unique variant within 6 m of a socket (LSC V-ZONE). After the run, the occurrence rule (every variant ≥ 3 times in the layout or not at all) is enforced by S11.4.
-3. **Bay stacks** (instance budget, F2): a ground bay plus its optional upper storey and cornice is one derived mesh, baked by script from the same module sources (not a new authored variant; producer to confirm against the mass-production gate). Kept separate: vault and climb walls (traversal exactness), M05, M07, M08, M12.
+3. **Bay stacks** (instance budget, F2): a ground bay plus its optional upper storey and cornice is one derived mesh, baked by script from the same module sources (not a new authored variant; allowed before the mass-production gate by user decision 2026-10-25, art bible 6.2 / 8.x.14). Kept separate: vault and climb walls (traversal exactness), M05, M07, M08, M12.
 4. **Floor slabs:** walkable floor is covered greedily in canonical order by M06 slabs of 2 × 2, 2 × 4, 2 × 8, 4 × 4 and 8 × 8 m on 2 m multiples (joints stay hidden by the world-aligned material); scored and drain-channel cells stay 2 × 2. The cover is computed on the server and emitted in the Manifest, so clients derive nothing.
 
 #### R-G7. What is built where
@@ -109,7 +109,7 @@ Cells are 2.0 m ("c"). Area types are LSC R1's. Every stage is a pure function o
 | Budget | Bound | Source |
 |---|---|---|
 | Attempt time | ≤ LSC `LayoutAttemptTimeoutSec` (7 s); all attempts ≤ 45 s | F5, LSC R4.5 |
-| Game-thread frame (host and clients) | ≤ 33 ms; slices of ≤ LSC `LayoutSliceWorkUnitsMax` | LSC R4.5 |
+| Game-thread frame (host and clients) | ≤ 33 ms; slices of ≤ LSC `LayoutSliceWorkUnitsLimit` | LSC R4.5 |
 | Kit + decoration instances | ≤ 5,000 (target ≤ 4,000) | F2, art 8.x.2 |
 | Manifest entries | ≤ `CityGenManifestEntriesMaxCount` (3,500 = 31.5 KB raw) | F2 |
 | Collision shapes | ≤ 20,000 on server and each client | art 8.x.10 |
@@ -175,11 +175,11 @@ The grid_walkable formula is defined as: `N_int = N − 2 · P`; `T = clamp(roun
 | P | int | 3 | data file (`CityGenPerimeterRowCount`) | Sealed perimeter rows |
 | f_walk | float | 0.55-0.70 (default 0.64) | data file (`CityGenWalkableTargetPct`) | Target walkable share of the interior |
 | tol | float | 0.03-0.10 (default 0.05) | data file (`CityGenWalkableTolPct`) | Tolerance round the target |
-| A_min, A_max | int | 2,000 / 2,250 at defaults | LSC keys, TDC `NpcCount` (40), `TeamSize` (5) | LSC V-AREA band |
-| N_walk | int | 2,000-2,250 | calculated | Walkable cells of the candidate |
+| A_min, A_max | int | 2,000 / 2,700 at defaults | LSC keys, TDC `NpcCount` (50), `TeamSize` (5) | LSC V-AREA band |
+| N_walk | int | 2,000-2,419 | calculated | Walkable cells of the candidate |
 
-**Output Range:** at the defaults T is 2,000-2,250 cells (8,000-9,000 m²) for every N in 62-66; at N = 62, T = round(0.64 · 3,136) = 2,007; at N = 66, T = round(0.64 · 3,600) = 2,304 → clamped to 2,250. A larger `NpcCount` raises A_max and lets larger cities through.
-**Example:** N = 64: N_int = 58, T = round(0.64 · 3,364) = 2,153, band = [max(2,000, 2,046), min(2,250, 2,260)] = [2,046, 2,250]. The 5 × 5 lattice of 8 c blocks with 3 c corridors (5 · 8 + 6 · 3 = 58) leaves 1,764 corridor cells. Canals turn corridor into water: `N_walk ≈ 1,764 − 3 · L_c + 2 · L_c + 400`, where L_c is the canal length in cells (3 c of water each, quays carved 1 c into both flanking blocks) and 400 is Z-alleys (+~250) plus widened courts and plazas (+~150). At the 12% canal cap, L_c ≈ 84 c gives about 2,080, which passes; at the earlier ~20% share (L_c ≈ 140 c) it gives about 2,024, below the 2,046 floor (and about 1,744 without carved quays). In G0 canals are disabled (L_c = 0, about 2,160). (Review 2026-10-24: the earlier example ignored water; Open Question 7 can still move the canal width.)
+**Output Range:** at the defaults T is 2,007-2,304 cells (about 8,000-9,200 m²) for every N in 62-66; at N = 62, T = round(0.64 · 3,136) = 2,007; at N = 66, T = round(0.64 · 3,600) = 2,304 (inside A_max 2,700 since `NpcCount` 50, no clamp). A larger `NpcCount` raises A_max and lets larger cities through.
+**Example:** N = 64: N_int = 58, T = round(0.64 · 3,364) = 2,153, band = [max(2,000, 2,046), min(2,700, 2,260)] = [2,046, 2,260]. The 5 × 5 lattice of 8 c blocks with 3 c corridors (5 · 8 + 6 · 3 = 58) leaves 1,764 corridor cells. Canals turn corridor into water: `N_walk ≈ 1,764 − 3 · L_c + 2 · L_c + 400`, where L_c is the canal length in cells (3 c of water each, quays carved 1 c into both flanking blocks) and 400 is Z-alleys (+~250) plus widened courts and plazas (+~150). At the 12% canal cap, L_c ≈ 84 c gives about 2,080, which passes; at the earlier ~20% share (L_c ≈ 140 c) it gives about 2,024, below the 2,046 floor (and about 1,744 without carved quays). In G0 canals are disabled (L_c = 0, about 2,160). (Review 2026-10-24: the earlier example ignored water; Open Question 7 can still move the canal width.)
 
 ### F2. Instance count and Manifest size †
 The instance_budget formula is defined as: `N_entries = N_slab + N_bay · k_bay + N_corner + N_roof + N_prop + N_water + N_temple + N_trav + N_bush + N_fixture`; `N_bay ≈ 2 · N_walk / w̄ − E_open`; `Bytes = 8 + 9 · N_entries` (LSC D7); `N_inst = N_entries + N_decor ≤ InstanceCap`
@@ -187,7 +187,7 @@ The instance_budget formula is defined as: `N_entries = N_slab + N_bay · k_bay 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| N_walk | int | 2,000-2,250 | F1 | Walkable cells |
+| N_walk | int | 2,000-2,419 | F1 | Walkable cells |
 | w̄ | float | 3.0-3.5 | calculated | Mean corridor width in cells |
 | E_open | int | 150-250 | calculated | Facade edges lost to junction and court openings |
 | N_bay | int | 1,000-1,300 | calculated | Facade bays |
@@ -224,7 +224,7 @@ The layout_diversity formula is defined as: `J*(a, b) = max over g ∈ G of |M_a
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| M_a, M_b | cell set | 2,000-2,250 cells | calculated | Walkable masks of two accepted layouts |
+| M_a, M_b | cell set | 2,000-2,419 cells | calculated | Walkable masks of two accepted layouts |
 | G | set | 8 symmetries (square grids) | constant | Rotations and reflections |
 | pairs | int | 1,225 for 50 seeds | calculated | All unordered pairs |
 | JaccardMax | float | 0.50-0.75 (default 0.60, provisional) | data file (`CityGenJaccardP95MaxPct`) | Set at baseline + 3σ from a 200-seed simulation |
@@ -308,7 +308,7 @@ The skeleton_skew formula is defined as: `R_skel = max(C̃_0, C̃_1) / min(C̃_0
 - **If the mirror pair of a zone would differ in area type** (asymmetric fill): area types are assigned on the skeleton before fill, so zone parity (V-ZONE) holds by construction; fill may change only bays, props, bushes and alleys within a half.
 
 **Network, host and players**
-- **If the listen-server host is also rendering the briefing screen:** generation runs off the game thread; spawning is sliced by `LayoutSliceWorkUnitsMax`; the host's frame stays ≤ 33 ms like every client's. (Host leave and late join during generation: LSC Edge Cases; a joining client only ever receives a published Manifest.)
+- **If the listen-server host is also rendering the briefing screen:** generation runs off the game thread; spawning is sliced by `LayoutSliceWorkUnitsLimit`; the host's frame stays ≤ 33 ms like every client's. (Host leave and late join during generation: LSC Edge Cases; a joining client only ever receives a published Manifest.)
 - **If a modified client runs the Generator on the public seed:** it previews the geometry (the seed is public by design) and learns no role, zone mapping or spawn order (R-G2.3).
 - **If players learn generator tendencies** (for example "the anti-diagonal corners are the zones" or "the final is in an axis corner"): corner zones are public and are **not** harmless: with the sun fixed on the mirror axis, the enemy always starts on the far side of that line, so "a figure arriving from the far side early" is a structural read; and with corner zones the final is always in one of the two axis corners (S4; no temple-ring court can be final-eligible). MVP accepts both under V-SEP (no contact for ≥ 15 s), splits the final pool between two far-apart corners (≥ 6 candidates, more than one team can camp) and measures both (Open Question 5, with decision rules to make 4-zone mode the default). Roles are bounded by LSC `RoleShareMaxPct`, prefix ambiguity and the R-G11.4 audits (single-metric final prior ≤ 30%, axis-corner share ≤ 60%, mirror assignments ≤ 15%).
 - **Pillar 1 leak by geometry:** no module, prop, decal or light is chosen because of a socket's role; S9 bushes and S10 props read no role data; the LSC VA-1 human tests run on generated layouts too (AC-G19).
@@ -386,7 +386,7 @@ Registered under Tuning Data & Config CR-15; owner Procedural City Generator for
 
 | Tier | When | Content | What the Generator can build |
 |---|---|---|---|
-| **G0 (gate)** | Until spikes R1-R3 lift the mass-production gate (art 8.x.14) | The 8 graybox modules at one variant each: M01 (blank; vault and climb variants are traversal pieces and need producer approval), M02, M03, M04, M05, M06, M09 civic, M10 (edge + water). The 4 derived bay stacks (M01+M04, M02+M04, M01+M03+M04, M02+M03+M04) and the slab sizes, baked by script. **Primitive placeholders** (producer to allow): planter + bush silhouette (real outline per LSC VA-5), court fixture, 2-3 ground props | Residential and stall-less Market only; canals disabled (no M11 bridges, `Causeway` blocks become Residential); the temple precinct is a stand-in platform of M01 climb + M09 civic + a sealed mass; variety from rhythm only. Enough for every spike, determinism test and batch audit. **G0 data is non-representative for pillar validation**: P4 objective-ending rate, AC-G21 and read tests count only on G1 layouts |
+| **G0 (gate)** | Until spikes R1-R3 lift the mass-production gate (art 8.x.14) | The 8 graybox modules at one variant each: M01 (blank; vault and climb variants are traversal pieces and need producer approval), M02, M03, M04, M05, M06, M09 civic, M10 (edge + water). The 4 derived bay stacks (M01+M04, M02+M04, M01+M03+M04, M02+M03+M04) and the slab sizes, baked by script. **Primitive placeholders** (allowed by user decision 2026-10-25, with the derived bay stacks and slab sizes, before the gate lifts): planter + bush silhouette (real outline per LSC VA-5), court fixture, 2-3 ground props | Residential and stall-less Market only; canals disabled (no M11 bridges, `Causeway` blocks become Residential); the temple precinct is a stand-in platform of M01 climb + M09 civic + a sealed mass; variety from rhythm only. Enough for every spike, determinism test and batch audit. **G0 data is non-representative for pillar validation**: P4 objective-ending rate, AC-G21 and read tests count only on G1 layouts |
 | **G1 (MVP Generator)** | After the gate | G0 plus M07, M08, M09 temple, M11 deck and bridge, M12 awning + counter, M01 frieze variant and a second M03 window variant (up to 6 stacks), the real planter + bush family (art 3.6), the court fixture family (≥ 3 decor copies per site), prop families ≥ 3 per area type (art 6.4), ground-class decoration set | The full pipeline R-G4 |
 
 > **Asset Spec** — run `/asset-spec system:procedural-city-generator` after the art bible pass for the stacks, slab sizes and the mitred M05 cornice.
@@ -496,7 +496,7 @@ Developer UI only, compiled out of Shipping (extends the LSC developer UI): `ste
 - **AC-G25 (R-G12.4)** [Integration/BLOCKING] GIVEN the Manifest fixture provider with a committed golden Manifest, THEN a 2-client PIE builds, hashes, acks and reaches `Active`. `Fixture.ManifestPath`
 
 **Formulas**
-- **AC-G26 (F1)** [Logic/BLOCKING] GIVEN N = 62, 64, 66 at defaults, THEN T = 2,007, 2,153 and 2,250, and every accepted batch layout has N_walk inside its band. `Formula.WalkableBand`
+- **AC-G26 (F1)** [Logic/BLOCKING] GIVEN N = 62, 64, 66 at defaults, THEN T = 2,007, 2,153 and 2,304, and every accepted batch layout has N_walk inside its band. `Formula.WalkableBand`
 - **AC-G27 (F2)** [Logic/ADVISORY] GIVEN 50 seeds, THEN the F2 estimate is within ± 15% of the measured entry count, and Bytes = 8 + 9 · entries exactly. `Formula.InstanceModel`
 - **AC-G28 (F3)** [Logic/BLOCKING] Vectors: `ABABAB` → 1.0 pass, `ABABABAB` → 1.33 fail, `AABAABAAB` → 1.0 pass, `AAAAAAA` → 1.17 fail. `Formula.PeriodicityExcessVectors`
 - **AC-G29 (F4)** [Logic/BLOCKING once calibrated; ADVISORY before] GIVEN 50 accepted layouts, THEN p95 J* ≤ `CityGenJaccardP95MaxPct`. `Formula.LayoutDiversity`
@@ -525,4 +525,4 @@ Developer UI only, compiled out of Shipping (extends the LSC developer UI): `ste
 | 5 | **Pillar question (CD-GDD-ALIGN):** do fixed anti-diagonal start corners make early reads structural? Decision rule: in G1 playtests, if correct enemy reads in the first 60 s exceed 1.5× the later-round rate, make 4-zone mode the default and accept the lower p (F6). **Added by review 2026-10-24:** with 2 corner zones the final is always in one of the two axis corners (S4 geometry consequence), so both teams know the final region in advance (equally, and split between two far-apart corners). Same decision rule plus: if telemetry shows teams pre-positioning at an axis corner before completing a preliminary in > 25% of rounds, make 4-zone mode the default (the final region then depends on the secret zone pair). Creative-director to confirm the 2-corner reading is acceptable for MVP. | creative-director + level-designer + systems-designer | First G1 playtests |
 | 6 | Does the regular lattice feel gridded, and does the transpose make the unseen half predictable? G1 walkthrough test: after walking only their own half, can a tester sketch the other half? If yes, raising `CityGenSkeletonJitterCount` to 2 (and re-checking F7) becomes the default fix. | level-designer + art-director | First G1 walkthrough |
 | 7 | Canal width: does the art 3.3 "6 m canal" include the quays? If yes, about 300 walkable cells move to water and F1's target shifts. | art-director | Art bible revision |
-| 8 | Is "provisional pending spikes" (navmesh, ISM, Manifest size) acceptable for the Generator milestone plan, or should the Generator GDD be re-reviewed after R1/R4? (Recorded with the PR-SCOPE adjustment 9 pending decision.) | producer | Spike reports |
+| 8 | **Answered by the user 2026-10-25 (PR-SCOPE adjustment 9 declined):** the Generator GDD is not held for the spikes; it stays provisional on their results (navmesh, ISM, Manifest size) and its † values are re-set from the spike reports. | producer | Spike reports (values only) |

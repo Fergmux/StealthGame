@@ -94,7 +94,7 @@ Build TDC as **(1) a generated schema table, (2) a plain-C++ pipeline core, (3) 
   The client face is a distinct type with no server field, so `GetClientTuning()->CrowdIdleMinSec` does not compile (AC-28). Audience is structural: membership in a `_Public` struct is the audience; no audience flag can disagree with replication (CR-8, AC-7).
 - Field types are restricted to `bool`, `int32`, `float` and `UENUM(): uint8` enums with explicit values (CR-3). A range pair is two scalar keys plus I-5.
 - No tuning class or struct carries `Config`, `DefaultConfig`, `GlobalUserConfig` or `PerObjectConfig` (CR-13; AC-3a reflection check).
-- The catalog is `UStealthTuningCatalog : UPrimaryDataAsset`: an array of `{ FName PresetId; TSoftObjectPtr<UStealthTuningData> Preset; bool bHostSelectable; }` with `Default` mandatory (CR-2).
+- The catalog is `UStealthTuningCatalog : UPrimaryDataAsset`: an array of `{ FName PresetId; TSoftObjectPtr<UStealthTuningData> Preset; bool bHostSelectable; bool bTestAllowsStrikeLimitOne; }` with `Default` mandatory (CR-2). `bTestAllowsStrikeLimitOne` (user decision 2026-10-25, Penalty OQ-NKP-11) lowers `NpcKillStrikeLimit`'s hard minimum from 2 to 1 for that preset in F-1 only; the catalog check rejects it on `Default` and on any `HostSelectable` entry, and it is compiled out of Shipping. Shipping always resolves `Default` (confirmed by the user 2026-10-25, TDC OQ-6 closed).
 - **One root asset, not several per-domain assets.** A preset is one package: one load, one validation unit, one hash, and the cross-owner invariants see one value set. Per-domain assets were rejected (Alternative 4).
 - **Session-latched keys** (`FSessionTuning_Server`, CR-11) live in the same preset class but are validated once at session open and copied from the session-frozen values into every round's set, so a between-round preset change never alters them.
 
@@ -142,7 +142,7 @@ float CrowdIdleMinSec = 6.0f;                          // C++ initialiser = sche
 - **Evaluation:** for each probe, set only k, run F-1 and every non-offline invariant, with `bIsPublic = true` (the strictest scope). Report each `(key, probe value, invariant Id, severity)` that fails.
 - **Also reported:** safe range outside hard range; default outside safe range; a key read by an invariant whose owner GDD row does not say "bounded by <Id>" (the C-W18 pattern, from the AC-3b doc lint).
 - **Single-key probing only.** Joint corners (two keys at safe extremes together) are not linted; the TDC design does not promise them, and a full joint sweep over ~400 keys is not useful. The catalog check (AC-29) covers the presets that actually ship.
-- **The lint reports, it never fixes** (`.claude/scripts` observation rule; AQ-12). Gate: CI fails on any finding **not** listed in the committed baseline `Source/StealthFoundation/Private/Tests/Data/TuningLintBaseline.json`; each baseline entry must cite the pending GDD change request or OQ that will remove it (today: C-W2, C-W17, C-W18, C-W19, C-W22 where still open, C-W14 duplicate latency key, C-W21 renames, OQ-12 `NpcKillStrikeLimit` minimum). The baseline may only shrink; adding to it needs a reviewer.
+- **The lint reports, it never fixes** (`.claude/scripts` observation rule; AQ-12). Gate: CI fails on any finding **not** listed in the committed baseline `Source/StealthFoundation/Private/Tests/Data/TuningLintBaseline.json`; each baseline entry must cite the pending GDD change request or OQ that will remove it (today: C-W2, C-W17, C-W18, C-W19, C-W22 where still open; C-W14 duplicate latency key, C-W21 renames and OQ-12 `NpcKillStrikeLimit` minimum were resolved by the user 2026-10-25 and must not appear in the baseline). The baseline may only shrink; adding to it needs a reviewer.
 
 ### 5. Freeze, hashes, self-check
 
@@ -387,7 +387,7 @@ class FTuningHasher { public: static uint64 Hash(const FStealthServerTuning&, in
 | tuning-data-config.md | F-1 validate; F-2 canonical hash; F-3 derived indicators; F-4 snapshot ≤ 2,048 B | §3, §5, `FTuningDerived`, §7 |
 | tuning-data-config.md | I-1 to I-5 and owner invariants (reject/warn table, offline rows excluded) | §3 invariant table |
 | gdd-cross-review-2026-10-24.md | Note for `/create-architecture`: safe ranges must satisfy all invariants at defaults of other keys (C-W2, C-W17, C-W18, C-W19, C-W22) | §4 safe-range lint |
-| architecture.md AQ-12 | Pending tuning-schema items reported, not fixed | §4 baseline citing C-W14, C-W21, OQ-12 |
+| architecture.md AQ-12 | Pending tuning-schema items reported, not fixed | §4 baseline (C-W14, C-W21, OQ-12 resolved 2026-10-25 and removed from the baseline) |
 | All 18 owner GDDs | Tuning Knobs tables (~400 keys) | §1-§2 schema rows; AC-3b lint |
 
 ## Performance Implications
@@ -417,7 +417,7 @@ class FTuningHasher { public: static uint64 Hash(const FStealthServerTuning&, in
 - ADR-0009 (VCS lock policy for preset assets).
 - ADR-0024 (Iris serializer if the driver changes).
 - **GDD sync (2026-10-24):** `tuning-data-config.md` Acceptance Criteria preamble names the test root `Source/StealthGame/Private/Tests/`; under ADR-0007's module layout the runtime-core tests live in `Source/StealthFoundation/Private/Tests/` and metadata tests in `Source/StealthGameEditor/Private/Tests/` (test names `StealthGame.Tuning.*` unchanged). ADR-0007's facade example names the client struct `FStealthPublicTuning`; the final name is `FStealthClientTuning` (this ADR, matching architecture.md API Boundaries). Neither document was edited by this run.
-- Design: `design/gdd/tuning-data-config.md` (CR-1..CR-15, F-1..F-4, invariants, AC-1..AC-31, OQ-2 answered here, OQ-3/OQ-6/OQ-12 still open); `design/gdd/gdd-cross-review-2026-10-24.md` (C-W2, C-W14, C-W17-C-W22); `docs/architecture/architecture.md` (Foundation Tuning row, API Boundaries, AQ-12).
+- Design: `design/gdd/tuning-data-config.md` (CR-1..CR-15, F-1..F-4, invariants, AC-1..AC-31, OQ-2 answered here, OQ-1/OQ-6/OQ-12 closed by the user 2026-10-25, OQ-3 still open); `design/gdd/gdd-cross-review-2026-10-24.md` (C-W2, C-W14, C-W17-C-W22); `docs/architecture/architecture.md` (Foundation Tuning row, API Boundaries, AQ-12).
 
 ## Amendments (2026-10-24 sync)
 Inter-ADR amendment pass; decision unchanged, Status unchanged (Proposed).
@@ -428,3 +428,9 @@ Inter-ADR amendment pass; decision unchanged, Status unchanged (Proposed).
 Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.md`); decision unchanged, Status unchanged (Proposed).
 - ADR Dependencies: the edge to the deferred, unwritten ADR-0024 is reworded as a conditional note in the Ordering Note (applies only if Iris is adopted); Depends On keeps ADR-0001 only — architecture-review fix 2026-10-25 (dependency order).
 - Naming (Conflict 7): ADR-0017's `FConcealClientTuning` removed in ADR-0017; its pure functions take this ADR's client face `FStealthClientTuning` and read `FConcealmentTuning_Public` / `FAssassinationTuning_Public`; no change to this ADR — architecture-review fix 2026-10-25 (Conflict 7).
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- §1 catalog, F-1 — user decision 2026-10-25: `NpcKillStrikeLimit` hard range 2-5; catalog flag `bTestAllowsStrikeLimitOne` allows 1 only in non-selectable test presets (Penalty OQ-NKP-11, TDC OQ-12).
+- §1, §9 — user decision 2026-10-25: Shipping uses `Default` only; host-selectable presets never ship (TDC OQ-6).
+- Scope — user decision 2026-10-25: Tuning Data stays a GDD; this ADR covers the implementation (TDC OQ-1 / PR-SCOPE 6 declined).
+- Schema rows — user decision 2026-10-25: TDC CR-10 renames (`bConcealServerCull`, `EyeMaskHideFailCount`, `StickDeadZoneFrac`/`StickOuterZoneFrac`, `LayoutSliceWorkUnitsLimit`, `RespawnPoolMinExpectedCount`); `LatencyWarnRttSec` retired (HUD's `HudLatencyWarnRttSec` stays); new keys `LayoutExactRefineMaxCount` (LSC), `CrowdMotionProfileAsset`, `CrowdFullStateTreeAsset`, `CrowdRestrictedStateTreeAsset` (Crowd `_Server` sub-struct, soft references; suffix `Asset` added to the CR-15.2 list); `NpcCount` default 50. The lint baseline drops C-W14, C-W21 and OQ-12.

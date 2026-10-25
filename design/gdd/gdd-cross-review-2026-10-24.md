@@ -889,3 +889,9 @@ Population and cards balance, and every output is a valid next input.
 | tuning-data-config.md | S-W1 (W-NKP-5 mirror) | Low |
 | objectives-chain.md | S-I1 (log a latched Complete), S-I4 (which connection state OC-10 reads) | Low |
 | character-pool-appearance.md | S-I3 ("same-look" replacement wording) | Low |
+
+## User decisions 2026-10-25 (appended; review text above unchanged)
+- C-W5 closed: `T_due` is an Owner-only field of the C-TeamView owner part (ADR-0001 §6 option (a); Roster R6, IVP R3, Penalty PEN-R15, HUD F7 live countdown).
+- C-W14 closed: IIF `LatencyWarnRttSec` retired; HUD `HudLatencyWarnRttSec` is the one key (IIF F5, IVP, AC-IVP-12 repointed).
+- C-W21 closed: TDC CR-10 renames applied everywhere (`bConcealServerCull`, `EyeMaskHideFailCount`, `StickDeadZoneFrac`/`StickOuterZoneFrac`, `LayoutSliceWorkUnitsLimit`, `RespawnPoolMinExpectedCount`).
+- D-W1..D-W3 scope options deferred by the user until telemetry from the first playtest (ADR-0023 probes); the non-scope options stay recorded above.

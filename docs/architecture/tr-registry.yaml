@@ -797,9 +797,9 @@ requirements:
 - id: TR-scl-008
   system: scl
   gdd: design/gdd/shared-character-locomotion.md
-  requirement: "≤ 4 ms animation at 50 characters; ≤ 30 KB/s pawn replication per client"
+  requirement: "≤ 4 ms animation at 60 characters; ≤ 36 KB/s pawn replication per client (working values since NpcCount 50, user decision 2026-10-25)"
   created: 2026-10-25
-  revised: ""
+  revised: "2026-10-25"
   status: active
 
 - id: TR-scl-009
@@ -909,7 +909,7 @@ requirements:
 - id: TR-camera-008
   system: camera
   gdd: design/gdd/camera-system.md
-  requirement: "Eye-mask trace cost bounded at 50 pawns: the same line-of-sight traces at every range in rate bands (15 Hz near, 5 Hz beyond EyeMaskRangeCm), never a distance cutoff (CS-R5, F3)"
+  requirement: "Eye-mask trace cost bounded at 60 pawns: the same line-of-sight traces at every range in rate bands (15 Hz near, 5 Hz beyond EyeMaskRangeCm), never a distance cutoff (CS-R5, F3)"
   created: 2026-10-25
   revised: ""
   status: active
@@ -1213,7 +1213,7 @@ requirements:
 - id: TR-pen-006
   system: pen
   gdd: design/gdd/npc-kill-penalty-informants.md
-  requirement: "Owner-only data (tally, `bExiled`, `T_due` — carrier pending user decision)"
+  requirement: "Owner-only data (tally, `bExiled`, `T_due`; `T_due` and the tally re-push carried on the C-TeamView owner part, user decision 2026-10-25)"
   created: 2026-10-25
   revised: ""
   status: active
@@ -1453,7 +1453,7 @@ requirements:
 - id: TR-hud-007
   system: hud
   gdd: design/gdd/hud.md
-  requirement: "Latency warning threshold (duplicate key pending, C-W14)"
+  requirement: "Latency warning threshold (HudLatencyWarnRttSec; IIF duplicate retired by user decision 2026-10-25, C-W14)"
   created: 2026-10-25
   revised: ""
   status: active

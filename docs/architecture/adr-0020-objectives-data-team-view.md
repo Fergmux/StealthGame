@@ -99,7 +99,7 @@ Objectives spawns **no actor** of any kind: there is no per-court objective acto
 UObjectiveChainData { uint16 ChainSerial (authored, stable, unique); TArray<FObjectiveDef> Definitions; }
 FObjectiveDef { FName ObjectiveId; EObjectiveStage StageKind {Prelim1, Prelim2, Final};
                 EObjectiveEligibility TeamEligibility {Team0, Team1, Both}; EObjectiveSiteRole SiteRole {P1, P2, Final};
-                TOptional-like float InteractSecOverride (bOverrideInteractSec + value); int32 CompletionsRequiredCount;
+                int32 CompletionsRequiredCount;   // InteractSecOverride removed (user decision 2026-10-25)
                 FText CardTitle; FText CardLine; EClueForm ClueForm {AreaAndFeature}; }
 ```
 
@@ -109,7 +109,7 @@ FObjectiveDef { FName ObjectiveId; EObjectiveStage StageKind {Prelim1, Prelim2, 
   1. per team exactly `ObjectivesPerStageCount` rows of `Prelim1` and of `Prelim2` with that team's eligibility, exactly one `Final` row with `Both`; `SiteRole` matches `StageKind`; ids unique; card text non-empty;
   2. `ObjectivesPerStageCount` must be 1 until LSC Selection draws several courts per stage (OC-3, GDD OQ2);
   3. `CompletionsRequiredCount` = 1 (MVP; >1 needs a GDD rule for partial progress);
-  4. **`bOverrideInteractSec` must be false on every row** (see §5: the hold duration must be identical at every court; `D` is fixed at Begin, so a per-definition override would make it depend on the court's role, an IVP R7.4a / AC-OC-08 timing oracle). The field is kept only because GDD OC-2 lists it; removing it from the definition is a data-schema change to the GDD and is left to the user (pending decision), while validation rejects any set value.
+  4. ~~`bOverrideInteractSec` must be false on every row~~ — **moot since 2026-10-25**: the user removed `InteractSecOverride` from OC-2's `FObjectiveDef`, so the definition has no per-row hold time and there is nothing to reject (the hold duration stays one chain-wide `ObjectiveInteractSec`, §5; IVP R7.4a, AC-OC-08). The rule number is kept so later rule numbers stay stable.
 - Row count is bounded by 16 (`CompletedDefMask` width, §4); validation rejects more.
 
 ### 3. Server state, binding and progress (OC-1, OC-3, OC-4, OC-17)
@@ -227,7 +227,7 @@ All arithmetic in **integer milliseconds** (ADR-0006 §5; `MinMs`, `MaxMs`, `QMs
 3. `ScheduleAt(t_rel_ms / 1000.0, TimerFired{StageSignal, ViewingTeam = opponent of e's team, Ordinal = k}, Expected = round epoch)`; record it as pending. One item per pending release; nothing is scheduled when nothing is pending (AC-OC-16).
 4. The `StageSignal` resolver (registered by the composition root with `RegisterTimerResolver(ETimerKind::StageSignal, …)`, ADR-0002 §5) increments that viewing team's released count, appends `StageSignalReleased(viewingTeam, count)` (server-only), and writes the viewing team's view. Two releases due on one grid tick resolve in the same drain and reach clients as one change (count may rise 0 → 2; releases are unordered, so no coupling between steps). The count never decreases and never exceeds 2 (asserted).
 5. The final is never counted. After the latch the queue returns `Rejected_Latched` for pending releases (nothing published in `Ended`); `Reset` drops them by epoch; `OnRosterReset` clears the pending list.
-6. `bRivalSignalEnabled == false`, or a 1v0 dev round (`bAllowEmptyTeamDev` with an empty team), schedules nothing; `RivalPrelimCount` stays 0 and is never written (AC-OC-09).
+6. `bRivalSignalEnabled` is true by default (ON in MVP, confirmed by the user 2026-10-25); `bRivalSignalEnabled == false`, or a 1v0 dev round (`bAllowEmptyTeamDev` with an empty team), schedules nothing; `RivalPrelimCount` stays 0 and is never written (AC-OC-09).
 
 The grid anchor t0 is Round's server-only `ActivePhaseStart`; the grid is shared by both teams, so a release time carries no team-specific timing.
 
@@ -316,7 +316,7 @@ private:
 - Team-audience objective data must travel only in `UObjectiveTeamViewComponent::View`; it must never appear on the GameState, `FRoundPublicState`, a PlayerState, a pawn, a fixture or an RPC.
 - The view must never contain a locked site, an opponent site, opponent progress other than `RivalPrelimCount`, anyone's hold progress, or the final before the team's preliminaries are complete; it must be written only by `UObjectivesService` and only inside a queue slot, the `OnRoundActive` step or the Roster rebind-event handler; every write must mark the push-model property dirty.
 - The Interact predicate must read only the court, its claim count and the pawn's legality class; it must return `Reject(NotNow)` or `Allow` and never `AllowNoEffect` at Begin.
-- The hold duration must be one value for every court (`GetInteractHoldSec()` has no court parameter); a chain row with `bOverrideInteractSec` must fail validation.
+- The hold duration must be one value for every court (`GetInteractHoldSec()` has no court parameter); `FObjectiveDef` must not gain a per-row hold time (the field was removed 2026-10-25).
 - Completion must be judged only in `OnInteractEnded(Completed)` inside the `HoldTimer(Complete)` slot, against live state, with gate (a)-(e); the final must call `DeclareObjectiveWin(Team, CurrentKey())` in that slot.
 - A completion must never cancel another pawn's hold.
 - The rival delay must be drawn only from `FSecretStream(GetServerSubSeed(StageSignal, Ordinal), Tag("OC_STAGE"))` in integer milliseconds, keyed only by the round-global prelim ordinal; release times must lie on the grid `t0 + k·Q` anchored at `ActivePhaseStart`.
@@ -368,7 +368,7 @@ private:
 - **Description**: Let a definition set its own `D`, as OC-2 describes.
 - **Pros**: Design flexibility for future chains.
 - **Cons**: `D` would differ between a live site and every other court, a timing oracle (IVP R7.4a, AC-OC-08); the client ring predicts `D` from public tuning and would be wrong.
-- **Rejection Reason**: Breaks hidden-site parity; deferred to a future chain-wide override that also reaches clients.
+- **Rejection Reason**: Breaks hidden-site parity; the field itself was removed from OC-2 by the user 2026-10-25. Any future variation must be a chain-wide value that also reaches clients.
 
 ## Consequences
 
@@ -382,7 +382,7 @@ private:
 ### Negative
 - One amendment to ADR-0011 is needed (interact-target interface and its lifecycle rules); until it lands, the Objectives stories cannot start.
 - Two GDD rule interpretations need game-designer sign-off before acceptance (§2, §5.3).
-- `InteractSecOverride` is unusable in MVP (validation rejects it), narrowing the GDD's per-definition field.
+- `InteractSecOverride` no longer exists (removed from OC-2 by the user 2026-10-25), so no validation rule is needed for it.
 - Clients carry both teams' card text in the cooked asset (static, public chain data; the secret is the court, not the text).
 - A stand-point claim models "occupied" as "being tended"; a body standing idle at a face blocks only physically.
 
@@ -429,7 +429,7 @@ private:
 The prototype's `AStealthObjective` (replicated actor per site), its local progress ticking, `UStealthSettings::ObjectiveInteractTime` and the city generator's objective relocation are replaced, not migrated (ADR-0007 promotion rule). The prototype keeps compiling until the Objectives epic lands; deleting its files needs user approval. Project config needed by the implementing story (outside this run's write scope): Asset Manager primary asset type `ObjectiveChain` with `AlwaysCook` in `DefaultGame.ini`.
 
 ## Validation Criteria
-- Headless (`StealthGame.Objectives.*`, ADR-0008 layout): `ChainBindAndValidate` (AC-OC-01, incl. override rejection), `ProgressOnlyByCompletion` (02), `PredicateSiteAndClassOnly` (04, static include check), `NoStackNoCancel` (05), `CompletionGate` (06), `FollowOnInSlot` (07), `RivalSignalReleaseGrid` (09), `RivalSignalDistribution` (10), `ResetAndRejoin` (15), `WaitingEarnsNothing` (16), `FinalNeedsOwnUnlock` (17), `RivalSignalBound` (22, with ADR-0004), `ClueBoundAndRoleBlind` (13), `ClueTooBroadLogged` (28), `NoTeamViewBeforeActive` (29), `TendCueDelay` (32).
+- Headless (`StealthGame.Objectives.*`, ADR-0008 layout): `ChainBindAndValidate` (AC-OC-01), `ProgressOnlyByCompletion` (02), `PredicateSiteAndClassOnly` (04, static include check), `NoStackNoCancel` (05), `CompletionGate` (06), `FollowOnInSlot` (07), `RivalSignalReleaseGrid` (09), `RivalSignalDistribution` (10), `ResetAndRejoin` (15), `WaitingEarnsNothing` (16), `FinalNeedsOwnUnlock` (17), `RivalSignalBound` (22, with ADR-0004), `ClueBoundAndRoleBlind` (13), `ClueTooBroadLogged` (28), `NoTeamViewBeforeActive` (29), `TendCueDelay` (32).
 - PIE-2/net harness: `TeamViewContents` (03), `HiddenSiteOracle` (08, byte-exact owner replies), `CompletionNoWorldSignature` (12), `IngressAcceptsAnyCourt` (26, with AC-IVP-41), `EndToEndCacaoChain` (14), AC-IVP-19 and AC-IVP-40.
 - Allowlist audit passes with the `UObjectiveTeamViewComponent::View` row; include lint shows no client module including Objectives `Public/Server/` headers.
 
@@ -437,10 +437,14 @@ The prototype's `AStealthObjective` (replicated actor per site), its local progr
 - Depends on ADR-0001, ADR-0002, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0010, ADR-0011, ADR-0014; enables ADR-0021, ADR-0016 (decoy predicate), ADR-0023.
 - Design: `design/gdd/objectives-chain.md`, `design/gdd/information-visibility-policy.md`, `design/gdd/round-match-framework.md`, `design/gdd/input-interaction-framework.md`, `design/gdd/level-socket-contract.md`, `design/gdd/hud.md`.
 - **Amendment requests (not applied here):** ADR-0011 — add `IInteractTargetOwner` and `UActionHub::RegisterInteractTargetOwner` with the §5.1 lifecycle rules (release-only call with an invalid key outside a slot, `D` read once, claim kept through a pending debounced End, single owner, drain-end consistency check); Roster/ADR-0005 — name the Roster event raised after `RebindView` that feature parts subscribe to (§6); ADR-0014 — own the `FCourtFixtureId` (= court SocketId) declaration and publish per-court `ClueTag` when LSC delivers it (§3.1, §4).
-- **GDD sync requests (not applied here):** objectives-chain.md OC-2 — `InteractSecOverride` is rejected by validation until a chain-wide, client-visible override exists (§2, Alternative 7); OC-8 — "physically occupied" is implemented as active-hold claims (§5.3); both need game-designer sign-off (acceptance condition); removing `InteractSecOverride` from OC-2 is a pending user decision (schema_changes); round-match-framework.md — define R13's "human-controlled" re-validation as "control epoch unchanged since the hold's Begin and no hand-over pending" (§5.4 (c)), and list the Event Log entries `TendCompleted`, `StageSignalReleased`, `ClueTooBroad` (already requested by Objectives CR 4).
+- **GDD sync requests (not applied here):** objectives-chain.md OC-2 — `InteractSecOverride` is rejected by validation until a chain-wide, client-visible override exists (§2, Alternative 7; superseded 2026-10-25: the field was removed); OC-8 — "physically occupied" is implemented as active-hold claims (§5.3); both need game-designer sign-off (acceptance condition); removing `InteractSecOverride` from OC-2 was approved by the user and applied 2026-10-25; round-match-framework.md — define R13's "human-controlled" re-validation as "control epoch unchanged since the hold's Begin and no hand-over pending" (§5.4 (c)), and list the Event Log entries `TendCompleted`, `StageSignalReleased`, `ClueTooBroad` (already requested by Objectives CR 4).
 
 ## Amendments
 Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.md`); decision unchanged, Status unchanged (Proposed).
 - §6, Key Interfaces: the rebind event is named `URosterStore::OnParticipantViewRebound(FParticipantId)` (ADR-0005 §2), which is the Roster GDD's `OnViewRebound(ParticipantId)` — architecture-review fix 2026-10-25 (other finding).
 - `TimerFired(StageSignal)` items use ADR-0002 §2a's generic Foundation `FTimerPayload` (`Subject` = court fixture, `Seq` = completion ordinal `k`, `Phase` = team) — architecture-review fix 2026-10-25 (Conflict 1).
 - Requests answered (2026-10-24): the ADR-0011 `IInteractTargetOwner` amendment, the ADR-0005 rebind-event naming and the ADR-0014 `FCourtFixtureId` ownership (Related) are applied by their owners. The Status line's "ADR-0011 (with the interact-target amendment requested in §5)" condition is met. The GDD sign-offs and pending user decisions it names are unchanged — architecture-review fix 2026-10-25 (Conflict 9).
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- §2 (schema, validation rule 4), guidelines, Alternative 7, Consequences — user decision 2026-10-25: `InteractSecOverride` removed from OC-2 `FObjectiveDef`; the reject rule is moot (kept as a numbered placeholder).
+- §6 — user decision 2026-10-25: the `RivalPrelimCount` signal is ON by default in MVP (confirmed).

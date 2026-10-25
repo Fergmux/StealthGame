@@ -1,7 +1,7 @@
 # Game Concept: Smoking Mirror (working title)
 
 *Created: 2026-10-24*
-*Status: Under Review — written in an unattended autonomous run; director gates CD-PILLARS (CONCERNS → revisions applied), AD-CONCEPT-VISUAL (STRONG), PR-SCOPE (OPTIMISTIC), TD-FEASIBILITY (see Technical Considerations). Open user decisions are listed in "Pending User Decisions".*
+*Status: Reviewed — NEEDS REVISION 2026-10-25 (/design-review, full mode; revisions below applied by the reviewer, none touch a user-confirmed rule; an independent re-review is required before Approved). Director gates CD-PILLARS (CONCERNS → revisions applied), AD-CONCEPT-VISUAL (STRONG), PR-SCOPE (OPTIMISTIC), TD-FEASIBILITY (see Technical Considerations). Items the review left for the user are listed under "Review Follow-ups (2026-10-25)". Review log: `design/gdd/reviews/game-concept-review-log.md`.*
 
 *Sources: `GAME_BUILD_HANDOFF.md` (the user's outline, authoritative for confirmed rules) and the user's answers recorded in `production/session-state/active.md` on 2026-10-24.*
 
@@ -25,7 +25,7 @@
 | **Platform** | PC (Windows) — recorded for `/setup-engine`; storefront TBD |
 | **Target Audience** | Mid-core to hardcore PvP players who prize observation over reflexes (see Target Player Profile) |
 | **Player Count** | Online multiplayer, 10 players (5v5), client-server (listen server for prototype; dedicated server later) |
-| **Session Length** | ~12-minute rounds (tuning target, no hard time limit); sessions of 3–5 rounds, 45–60 min |
+| **Session Length** | ~12-minute rounds (`TargetRoundMinutes`, a tuning target: no time limit and no match-end rule in MVP); a session is whatever rounds the group chooses to play, typically 3–5 rounds, about 36–60 min of play plus intermissions |
 | **Monetization** | None yet (decide post-vertical-slice) |
 | **Estimated Scope** | Large (18–24 months, solo developer + AI agents) — see Scope Tiers |
 | **Comparable Titles** | Assassin's Creed Brotherhood multiplayer (2010), SpyParty (2018), The Ship (2006) |
@@ -76,15 +76,17 @@ The fantasy is solo-framed while the game is 5v5; the team angle (teammates you 
 - Players will **test suspects** — approach a suspect and watch whether they brace, flee or keep walking.
 - Teams will **split roles** — one player progresses the objective while teammates watch the approaches.
 - Informants will **shadow suspects** and ping sightings, turning elimination into intelligence work.
-- Players will **use the objective as a lens** — whoever interacts with an objective is exposed, so watching objective sites is the strongest read.
+- Players will **use the objective as a lens** — whoever interacts with an objective is exposed, so passers-by at an objective court get the strongest read. The preliminary courts are team-specific and hidden, so exposure there comes from chance sightings, and a watcher who loiters at a court is itself a tell. Deliberately watching or camping the shared final is a pressure the objective structure must counter (Pillar 4, "NOT a hide-and-wait game"; see Design Risks), not an intended strategy.
 
 ### Core Mechanics (Systems we build)
 
-1. **Crowd anonymity** — a fixed pool of character models shared by players and ~40 wandering NPCs; teammate-only markers; no enemy identification aids of any kind.
+1. **Crowd anonymity** — a fixed pool of character models shared by players and ~50 wandering NPCs (`NpcCount` 50, user-changed from ~40 on 2026-10-25); teammate-only markers; no enemy identification aids of any kind.
 2. **One-strike assassination with prepared reversal** — eliminate an active enemy in one action; a defender who is holding the ~4 s preparation (once per 60 s, not while running/parkour) reverses it and eliminates the attacker.
 3. **NPC-kill penalty and informants** — the 3rd NPC kill removes a player; eliminated/removed players become informants (observe, communicate, huntable, respawn as informants, never return to active play).
 4. **Team objective race** — two team-specific preliminary stages, then one shared final objective; first team to complete it wins, or eliminate every active enemy.
 5. **Concealment and city** — per-viewer bush invisibility (blind-attackable); seeded modular city layout identical on every client; motion-matched locomotion and traversal; first/third-person toggle.
+
+**Sources of readable deviation (the tell inventory).** Under Pillar 1 nobody differs from the crowd involuntarily, so every tell is a choice with a price. The authoritative list, with each tell's NPC red-herring rate, is the Baseline and Tell Matrix (T1–T17) in `design/gdd/crowd-npc-behaviour.md` (CNB-R16). In summary: running and traversal (speed, lean, arc), objective interaction (a 3 s two-handed pose), bracing (planted stance), entering or leaving a bush, a gaze held too long on a passer-by, abrupt reversals, loitering longer than the crowd does, and, above all, the strike itself. The Core Fantasy's "turned their head one beat too late" is a gaze tell (T13).
 
 ---
 
@@ -113,7 +115,7 @@ The fantasy is solo-framed while the game is 5v5; the team angle (teammates you 
 
 - **Onboarding curve**: First round with a short in-world primer card: "Walk like them. Watch for who doesn't." A private-lobby practice mode with NPCs only (post-MVP) teaches the tells safely.
 - **Difficulty scaling**: Skill scales with opponents (PvP); crowd density and NPC behaviour variety are tuning knobs that set the baseline readability.
-- **Feedback clarity**: Kill confirmation after an attack (player vs NPC); strike counter for NPC kills; team objective progress; reversal is visibly dramatic.
+- **Feedback clarity**: Kill confirmation after an attack (player vs NPC); wrong-target tally (an Owner-only "Wrong targets: n" line that ticks identically for NPC and informant kills, an upper bound on strikes; the true strike count stays server-only — user decision 2026-10-25, Penalty CR-15); team objective progress; reversal is visibly dramatic.
 - **Recovery from failure**: Elimination keeps you in the match as an informant; next round starts fresh in ~12 minutes with a new layout.
 
 ---
@@ -126,11 +128,11 @@ Walk at crowd pace, scan figures, and decide: move toward the objective, close o
 
 ### Short-Term (5-15 minutes)
 
-One round. Each team works through two preliminary objective stages that force suspicious interactions in semi-public spaces (exposure is the price of progress), then both teams converge on the shared final target where contact is unavoidable. "One more round" lives in the post-round reveal: who was who, and the read you almost made.
+One round. Each team works through two preliminary objective stages that force suspicious interactions in semi-public spaces (exposure is the price of progress), then both teams converge on the shared final target where contact is unavoidable. "One more round" is meant to live in a post-round reveal: who was who, and the read you almost made. The reveal is a Vertical Slice system (Post-Round Reveal & Results), not in the MVP list below; MVP rounds end with the result banner only.
 
-### Session-Level (30-120 minutes)
+### Session-Level (about 40-60 minutes)
 
-3–5 rounds (~45–60 min) on freshly seeded layouts. Natural stopping point at each round end; the reason to come back is that every round was a different read on different people.
+Typically 3–5 rounds (~36–60 min of play plus intermissions) on freshly seeded layouts; the group chooses when to stop (no match-end rule in MVP). Natural stopping point at each round end; the reason to come back is that every round was a different read on different people.
 
 ### Long-Term Progression
 
@@ -248,7 +250,7 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 | **Art Style** | 3D stylised-realistic ("Held Breath") |
 | **Art Pipeline Complexity** | High (custom 3D) mitigated by AI generation: Meshy MCP → Blender MCP (normalise, rig/retarget prep) → Unreal MCP |
 | **Audio Needs** | Moderate — diegetic city ambience; footsteps at player/NPC parity; reversal/kill stingers |
-| **Networking** | Client-server; listen server through vertical slice; dedicated servers at Alpha (needs a source-built engine) |
+| **Networking** | Client-server; legacy NetDriver with Iris pinned off (ADR-0001, ADR-0003; Iris migration deferred); listen server through vertical slice, with the host able to see server-only state (see Technical Risks); dedicated servers at Alpha (needs a source-built engine) |
 | **Content Volume** | MVP: 1 compact city kit (~8–12 modules), 6–8 pool characters, 1 objective chain; full vision: 3+ districts/kits, 10+ objective types |
 | **Procedural Systems** | Server-seeded modular city assembly with objective-site and spawn placement and validation |
 
@@ -256,9 +258,9 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 - **Crowd identity is a networking/animation property, not only art** (highest risk): one pawn class for players and NPCs; AI drives it through the same movement/input path; no "is AI"-keyed LOD or anim budget (distance/significance only); hide the PlayerState link from non-team clients; teammate markers created only on teammates' clients. To be ADR-001.
 - **The migrated sample is CharacterMovementComponent-based** (`CBP_SandboxCharacter`, with replicated traversal functions `Traversal_ServerImplementation` / `OnRep_TraversalResult`); commit to CMC for MVP, do not adopt Mover. Spike networked locomotion with net emulation (~100 ms, 1 % loss) before relying on traversal.
-- **Crowd performance on a listen server**: proposed budget — 16.6 ms frame, ≤ 4 ms animation for all characters, ≤ 1.5 ms AI+nav, ≤ 50 KB/s per client (assumed RTX 3060-class, 1080p60). Stress-test 50 characters; no MetaHumans or runtime retargeting in the crowd.
+- **Crowd performance on a listen server**: the concept's original proposal (16.6 ms frame, ≤ 4 ms animation, ≤ 1.5 ms AI+nav, ≤ 50 KB/s per client) is superseded by the accepted budgets in ADR-0022 (the binding case is the listen-host game thread, ≤ 12.0 ms p95; all figures are assumed on an RTX 3060-class, 1080p60 reference that nobody yet owns). Crowd size is now 10 players + 50 NPCs = 60 characters; the only measurements (RTX 5090, 50 characters, graybox, no crowd AI or real connections) leave about 0.8 ms of game-thread headroom, so the budget is unproven at 60 and the lower-`NpcCount` fallback must stay an explicit option. Stress-test 60 characters; no MetaHumans or runtime retargeting in the crowd.
 - **No version control** on a 3.7 GB agent-edited binary project — Git + LFS recommended (needs the user's go-ahead to commit).
-- **Seeded generation**: integer-grid `FRandomStream` generation, server-spawned replicated gameplay actors, server-only dynamic navmesh, round start via `ServerTravel` with the seed as a URL option; generation last in MVP.
+- **Seeded generation**: integer-grid deterministic generation from a public geometry seed only (hidden placement uses server-only sub-seeds, ADR-0006), server-spawned replicated gameplay actors, server-side dynamic navmesh rebuild gated by a build lock (ADR-0014), round start via `ServerTravel` with the public seed as a URL option; generation last in MVP.
 - **Meshy pool**: weight pool meshes to the Manny skeleton in Blender so motion-matching databases work natively.
 - **Design flag**: if NPCs never enter bushes, entering one is itself a tell — intended under Pillar 2, but must be a deliberate choice.
 
@@ -268,7 +270,7 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 ### Design Risks
 
-- 5v5 with ~40 NPCs may make enemies too easy or too hard to read — crowd density and NPC behaviour variety are the tuning knobs.
+- 5v5 with ~50 NPCs may make enemies too easy or too hard to read — crowd density and NPC behaviour variety are the tuning knobs.
 - Objectives may force reveals too strongly (everyone camps objective sites) or too weakly.
 - No time limit + elimination win + full bush invisibility + a known final site create a camping incentive (Pillar 4 must be enforced through objective structure, e.g. final site hidden until preliminaries are done).
 - Informant respawn loop could be griefable (informants body-blocking or spamming pings).
@@ -276,10 +278,12 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 ### Technical Risks
 
-- Animation parity: players and NPCs must share the same motion-matching quality; 50 replicated motion-matched characters is a performance risk (spike first).
+- Animation parity: players and NPCs must share the same motion-matching quality; 60 replicated motion-matched characters (10 players + 50 NPCs) is a performance risk (spike first, on 3060-class hardware).
 - Per-viewer visibility (bush concealment) requires owner/relevancy-aware hiding, not global hiding.
+- **Listen-host secrecy**: the host process holds server-only facts (the hidden final site, which pawns are players), so Pillar 1 is not literally enforceable against the host until the dedicated server exists (ADR-0014, ADR-0007). Until then, competitive play and evidence playtests need a non-competing host.
 - Seeded runtime layout + navmesh rebuild + validation before round start.
-- Mover/NetworkPrediction plugins are experimental — use CharacterMovementComponent for MVP.
+- Mover/NetworkPrediction plugins are experimental — use CharacterMovementComponent for MVP; the plugins are disabled and no Mover or NetworkPrediction type may be referenced (ADR-0010). Motion Warping, used by traversal, is Beta in 5.8.4.
+- Camping the final site (see Design Risks) is the main threat to Pillar 4; the downstream Objectives Chain GDD owns the structural counter.
 - Dedicated server builds require a source-built UE 5.8.
 
 ### Market Risks
@@ -338,14 +342,14 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 
 ## Pending User Decisions
 
-Decided autonomously while the user was away (logged in `production/session-logs/decision-log.md`); the user should confirm or change:
+Decided autonomously while the user was away (logged in `production/session-logs/decision-log.md`). **All six items below were confirmed by the user 2026-10-25** (no item changed):
 
-1. **PR-SCOPE re-scope** (always-ask category, not applied): the producer recommends moving procedural layout to the vertical slice, using mannequin variants instead of Meshy characters in the MVP, and deferring traversal and the camera toggle to an "MVP-plus". Applied only as a *build order*; all 7 MVP items remain.
-2. **Pillar rewordings** (CD-PILLARS): adopted "Every Advantage Is a Tell", "One Strike, Lasting Consequence", "A Race, Not a Hunt", the widened Pillar 1, and two new anti-pillars.
-3. **Kill confirmation**: the attacker learns after the attack whether the target was a player or an NPC.
-4. **Informant communication**: momentary player-sent pings + team chat only; no sticky tracking marker.
-5. **Visual anchor**: "Held Breath".
-6. **Working title**: "Smoking Mirror".
+1. **PR-SCOPE re-scope** (always-ask category, not applied): the producer recommends moving procedural layout to the vertical slice, using mannequin variants instead of Meshy characters in the MVP, and deferring traversal and the camera toggle to an "MVP-plus". Applied only as a *build order*; all 7 MVP items remain. — *Confirmed by the user 2026-10-25.*
+2. **Pillar rewordings** (CD-PILLARS): adopted "Every Advantage Is a Tell", "One Strike, Lasting Consequence", "A Race, Not a Hunt", the widened Pillar 1, and two new anti-pillars. — *Confirmed by the user 2026-10-25.*
+3. **Kill confirmation**: the attacker learns after the attack whether the target was a player or an NPC. — *Confirmed by the user 2026-10-25.*
+4. **Informant communication**: momentary player-sent pings + team chat only; no sticky tracking marker. — *Confirmed by the user 2026-10-25.*
+5. **Visual anchor**: "Held Breath". — *Confirmed by the user 2026-10-25.*
+6. **Working title**: "Smoking Mirror". — *Confirmed by the user 2026-10-25.*
 
 ---
 

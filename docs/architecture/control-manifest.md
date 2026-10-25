@@ -2,7 +2,7 @@
 
 > **Engine**: Unreal Engine 5.8 (installed 5.8.4, CL 58902052)
 > **Last Updated**: 2026-10-25
-> **Manifest Version**: 2026-10-25
+> **Manifest Version**: 2026-10-25b (same-day regeneration after the user decisions of 2026-10-25; see "Changes in 2026-10-25b" at the end)
 > **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016, ADR-0017, ADR-0018, ADR-0019, ADR-0020, ADR-0021, ADR-0022, ADR-0023 (all **Accepted** 2026-10-25; several conditionally, see "Conditional acceptance")
 > **Status**: Active — regenerate with `/create-control-manifest update` when ADRs change
 
@@ -70,10 +70,10 @@ ready until its spike has reported.
 | ADR-0011 | Engine Compatibility verification items (V1-V6); `input-interaction-framework.md` re-review |
 | ADR-0012 | CPA-V1..CPA-V5 |
 | ADR-0013 | R3 on RTX 3060-class hardware; ANIM-V1..ANIM-V6 |
-| ADR-0016 | 50-character spike (AC-CNB-26 capture on the reference host); §10 cost rule provisional until then |
-| ADR-0017 | S-CON-1, R5, S9/S10; schema slots `FActionState.StartServerTime`, `FDeathState.bDiedConcealed` stay user-pending |
+| ADR-0016 | 60-character spike (`NpcCount` 50 + 10 players; AC-CNB-26 capture on the reference host); §10 cost rule provisional until then |
+| ADR-0017 | S-CON-1, R5, S9/S10 (`FActionState.StartServerTime` and `FDeathState.bDiedConcealed` approved 2026-10-25) |
 | ADR-0018 | Through its dependencies: S1, S2, S10, S14; amendment requests to owning ADRs |
-| ADR-0019 | User decision on the `T_due` carrier (ADR-0001 §6); amendment requests to owning ADRs |
+| ADR-0019 | Amendment requests to owning ADRs (the `T_due` carrier was decided 2026-10-25: C-TeamView owner part) |
 | ADR-0020 | Objectives Chain GDD re-review; game-designer sign-off on the two GDD interpretations (§2, §5.3) — no spike |
 | ADR-0021 | UI-V1..UI-V4; HUD and Teammate Markers GDD re-reviews |
 | ADR-0022 | R1, R2, R3 on RTX 3060-class hardware at 1080p; pending project-config items (no `Config/` edit) |
@@ -106,6 +106,8 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **`AStealthPlayerController` clears `Owner`/`PlayerState` client-locally on its previous pawn** — source: ADR-0001
 - **AI issues every command through `UPawnCommandComponent` entry points and moves only through the CMC input and control-rotation consumers a human uses; nothing writes a pawn's velocity or rotation directly for AI** — source: ADR-0001
 - **Team-audience data travels only in a `UTeamViewComponentBase` subclass on the receiving teammate's own PlayerController; owner-audience data only on the owner's PlayerController** — source: ADR-0001
+- **The Roster part carries owner `{Handle, Team, State, RoundEpoch, WrongTargetTally, LastResultSeq, T_due}` (last three Owner-only) and per teammate `{Handle, State, PawnRef, bIsConcealed, RetireAtServerTime}`; Penalty supplies tally and `T_due` only through `SetOwnerTally` / `SetOwnerRespawnDue`, and the retire time comes through `RetireBinding(Pawn, RetireAtServerTime)`; the Roster push step is the only writer** — source: ADR-0001, ADR-0019
+- **`WrongTargetTally`/`LastResultSeq` are written to C-TeamView only on reclaim, rejoin and `OnRosterReset`; `RetireAtServerTime` is non-zero only in the retiring update (the kill's `ContactServerTime` or the release slot time)** — source: ADR-0001, ADR-0018, ADR-0019
 - **Every new replicated field, fact, audience, condition or replicated class ships with a Visibility Policy row and a signed-off allowlist row**; the reflection audit fails the build otherwise — source: ADR-0001, ADR-0003
 - **The game NetDriver runs the legacy replication system and the harness asserts it at startup** — source: ADR-0001
 - **Pawn net config is set only from tuning values, through the 5.5+ setters (`SetNetUpdateFrequency`, `SetMinNetUpdateFrequency`, `SetNetCullDistanceSquared`), identically for every pawn** — source: ADR-0003
@@ -115,7 +117,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Every simulated proxy uses exponential smoothing with the same tuning values**, including the listen-server simulated smoothing times — source: ADR-0003
 - **Outcome-bearing replicated structs serialise to a fixed bit width** — source: ADR-0003
 - **The concealment cull lands on the global boundary grid and closes the channel explicitly per denied connection in the cull tick**, with no client acknowledgement wait; un-cull happens in the same server step as the state change — source: ADR-0003
-- **The teammate fallback feed is added in the same frame a teammate's channel goes missing, to teammate connections only** — source: ADR-0003
+- **The teammate fallback feed is added in the same frame a teammate's channel goes missing, to teammate connections only; every entry carries a `uint8 Seq` advanced on every feed tick** — source: ADR-0003
 - **Client code tolerates a relevancy destroy and initialises a re-created actor from replicated state only** — source: ADR-0003
 
 **Resolution queue**
@@ -146,6 +148,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 
 **Session and travel**
 - **The game mode derives from `AGameModeBase`** — source: ADR-0005
+- **The round acknowledgement has two stages: `ClientRequestRoundAck`/`ServerRoundAck` (hashes) and, once per epoch in `Preparing`, `ServerWorldReady(FAckEpoch)` when the client holds `ExpectedPawnCount` pawns; Session raises `OnParticipantWorldReady`; the second stage never fails and never disconnects** — source: ADR-0005
 - **`HandleStartingNewPlayer` is a no-op; every pawn comes from `UStealthPawnFactory`** — source: ADR-0005, ADR-0010
 - **Authoritative match state lives only in the four game-instance stores**, keyed by `ParticipantId`, never by controller or PlayerState pointer — source: ADR-0005
 - **A rejoiner adopts its retained PlayerState in `InitPlayerState`**; `OnDeactivated` does not destroy the PlayerState while admission is `RejoinOnly` — source: ADR-0005
@@ -222,13 +225,13 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never enable ReplicationGraph** — it filters actors, not properties, and conflicts with the cull path — source: ADR-0001, ADR-0003
 - **Never switch to Iris now** — off by default in 5.8.4, Beta-flagged, condition behaviour unverified; deferred to ADR-0024 — source: ADR-0001, ADR-0003
 - **Never feed anything except screen height and the eye-mask rendered flag into animation tiering, URO, budget allocation, mesh LOD or audio concurrency; never a gameplay fact** (no AI-specific animation budget or LOD) — source: ADR-0001
-- **Never implement the `T_due` carrier until the user decides it and ADR-0001 is amended** — source: ADR-0001, ADR-0019
+- **Never carry `T_due` anywhere but the owner's C-TeamView owner part (no reply entry, pawn field or client derivation)** — source: ADR-0001, ADR-0019
 - **Never give a pawn dormancy, a cull distance, `bOnlyRelevantToOwner`, `bNetUseOwnerRelevancy`, a per-instance priority or team relevancy; never change net config per instance, kind or on possession** — source: ADR-0003
 - **Never call `ForceNetRelevant()` or `ForceActorRelevantNextUpdate()` on a pawn** — source: ADR-0003
 - **Never rely on the relevancy override alone to cull** — the channel closes 1-6 s late with jitter (a timing channel) — source: ADR-0003
 - **Never hide concealment client-side only or replicate a concealed flag** (internal development switch only); never use dormancy or distance culling for concealment — source: ADR-0003
-- **Never re-open a culled pawn in a strike's outcome slot; a killed-concealed victim stays culled for non-allies until the user decides `bDiedConcealed`** — source: ADR-0003
-- **Never implement `FActionState.StartServerTime` or the fallback feed's per-entry sequence until the user decides them** — source: ADR-0003, ADR-0017, ADR-0018
+- **Never re-open a culled pawn in a strike's outcome slot; a killed-concealed victim re-opens only at the death write, with `bDiedConcealed = true`** — source: ADR-0003
+- **Never skip `FActionState.StartServerTime` in an `FActionState` write, and never send a feed entry without advancing its `Seq`** — source: ADR-0003, ADR-0017, ADR-0018
 - **Never mutate gameplay state outside the drain; never resolve inline in an RPC body or AI source** — source: ADR-0002
 - **Never order events with a feature-local clock, timestamp, tick-function order or `FTimerManager`** — cross-actor tick order is unspecified and join-order biased — source: ADR-0002
 - **Never use `FTimerManager`, a feature tick or a latent action for a gameplay timer** — source: ADR-0002
@@ -298,7 +301,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Queue drain + staging + teardown + Roster flush**: ≤ 0.5 ms listen-host game thread — source: ADR-0002
 - **Clock exchange**: < 50 B/s per client after warm-up — source: ADR-0002
 - **Server frame**: the drain runs once per server frame after CMC and AI ticks; listen-host frame time ≤ 1/60 s (p99 under the profiled load), measured by the harness frame-time capture, not a `NetServerMaxTickRate` setting — source: ADR-0002, ADR-0003
-- **Replication**: relevancy override O(1) per pawn-connection pair, inside the 1.5 ms replication line; pawns at a fixed 15 Hz within 30 KB/s worst case; fallback feed ≤ 96 B/s per client — source: ADR-0003
+- **Replication**: relevancy override O(1) per pawn-connection pair, inside the 1.5 ms replication line; pawns at a fixed 15 Hz within 36 KB/s worst case (60 pawns; working value since `NpcCount` 50); fallback feed ≤ 104 B/s per client — source: ADR-0003
 - **Tuning**: 0 per frame; validation < 1 ms at `Preparing`; < 100 KB memory; snapshot ≤ 2,048 bytes per client per round — source: ADR-0004
 - **Session**: silence clocks and ack bookkeeping inside the 0.5 ms line; travel load bounded by `TravelLoadTimeoutSec` (60 s) — source: ADR-0005
 - **Random streams**: hidden draws well under 0.05 ms/frame — source: ADR-0006
@@ -388,7 +391,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Clients build only from a complete `FLayoutManifest`; `AStealthLayoutGeometry` and every layout-derived component are `bReplicates = false`, created locally** — source: ADR-0014
 - **Kit instances are added with batch `AddInstances(…, bUpdateNavigation = false)`, before component registration where possible** — source: ADR-0014
 - **Every V-* predicate exists once, written against `ILayoutMeasureBackend`** — source: ADR-0014
-- **Time slicing bounds work by `LayoutSliceWorkUnitsMax`; a wall-clock guard may only defer work** — source: ADR-0014
+- **Time slicing bounds work by `LayoutSliceWorkUnitsLimit`; a wall-clock guard may only defer work** — source: ADR-0014
 - **Draw sites use the ADR-0006 shapes and stream tags `LSC_SITE`, `LSC_PLCE`, `LSC_ZONE`, `LSC_EMRG`, `LSC_RSPN`** — source: ADR-0014
 - **Graybox marker classes are editor-only (`StealthGameEditor`, `bIsEditorOnlyActor`); the baked asset stores records as an opaque versioned byte blob** — source: ADR-0014
 - **`bAllowClientSideNavigation=false`** (clients hold no navigation data) — source: ADR-0014
@@ -483,10 +486,10 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 ### Performance Guardrails
 
 - **Movement shaping**: well under 5 % of the 3.0 ms CMC game-thread line (40 server-simulated NPCs + proxies) — source: ADR-0010
-- **Pawn network**: `TraversalState` 7 bytes per change; total within the ≤ 30 KB/s pawn line (SCL F9) — source: ADR-0010
+- **Pawn network**: `TraversalState` 7 bytes per change; total within the ≤ 36 KB/s pawn line (SCL F9) — source: ADR-0010
 - **Command interface**: stage 2 a few µs/frame at the IIF F3 worst case (≈ 5 items/frame), inside the 0.5 ms queue line; uplink ≤ 20 reliable RPCs/s per connection (transport bucket); at most one reply RPC per connection per drain — source: ADR-0011
 - **Character pool**: deal ≤ 0.2 ms once per round; client `ApplyAppearance` ≈ 2-5 ms one-off at round start [U]; pool ≤ 40 MB textures; `AppearanceId` ≈ 100-150 B per client per round, 0 B/s steady — source: ADR-0012
-- **Animation**: `C_anim` ≤ 4.0 ms (GT + workers, p95) and GT ≤ 2.0 ms at 50 characters on an RTX 3060-class PC at 1080p; tier A ≤ 8; tier subsystem ≤ 0.05 ms GT — source: ADR-0013
+- **Animation**: `C_anim` ≤ 4.0 ms (GT + workers, p95) and GT ≤ 2.0 ms at 60 characters on an RTX 3060-class PC at 1080p; tier A ≤ 8; tier subsystem ≤ 0.05 ms GT — source: ADR-0013
 - **Layout (server, `Preparing`)**: game-thread frames ≤ 33 ms; Generator worker ≤ 1 s per attempt; kit spawn + collision + navmesh ≤ 3.0 s wall time (graybox navmesh ≤ 1 s); Validate + Select ≤ ~1.5 s in ≤ 4 ms GT slices; ≤ 45 s worst case including reseeds — source: ADR-0014
 - **Layout (server, `Active`)**: no navmesh rebuild; runtime services ≤ 0.1 ms average and ≤ 0.5 ms in a respawn-pick frame; ≤ 1 pick per frame; ≤ ~400 `ViewBlock` traces per pick — source: ADR-0014
 - **Layout (clients)**: Manifest build in ≤ 10 ms slices, ≤ 3 s p95; ≤ 5,000 instances, ~48 ISM components, ≤ 20,000 collision shapes; Manifest 13.5-31.5 KB once per round (≤ 4 chunks), zero layout traffic in `Active` — source: ADR-0014
@@ -533,7 +536,8 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **The driver kind comes from the `ICrowdControl` call** — source: ADR-0016
 - **Ambient schedule events are `TimerFired(CrowdSchedule)` queue items; emergence spawns go through `RequestEmergence` and `SpawnSharedPawn`; absorptions through `RequestTeardown`** — source: ADR-0016
 - **Every behavioural draw is `FCrowdDraws::Draw`/`DrawBelow`/`DrawWeighted(Ordinal, Decision, ...)` on domain `CrowdBehaviour`** (rejection retries extend the tuple); continuous samples use `UnitFraction53` and the named inverse CDFs with golden vectors; schedule draws use `AmbientSchedule` counter-as-Attempt; start placement uses `NpcRoutes`; decision counters are keyed by ordinal in the Director — source: ADR-0016
-- **Rates and profiles come from the frozen tuning snapshot and `UCrowdMotionProfileData`** — source: ADR-0016
+- **Rates and profiles come from the frozen tuning snapshot and `UCrowdMotionProfileData`, referenced by the registered key `CrowdMotionProfileAsset`; the two StateTrees by `CrowdFullStateTreeAsset` / `CrowdRestrictedStateTreeAsset`** — source: ADR-0016, ADR-0004
+- **Legs along a `CrowdRoute` edge follow the edge's pre-baked path (server-only, stored with the route graph); other legs use `FindPathAsync`** — source: ADR-0014, ADR-0016
 - **A cancelled schedule item resolves `Voided(Revalidation)` by ledger re-check** — source: ADR-0016
 - **Cost cuts are global values from the fixed cut order** — source: ADR-0016
 - **Crowd diagnostics use `UE_LOGF` with no participant, team or binding data** — source: ADR-0016
@@ -543,7 +547,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Bushes are built locally from the Manifest on every machine** — source: ADR-0017
 - **Every Hide enters through `UPawnCommandComponent`** — source: ADR-0017
 - **Commit, crossing and end are `TimerFired(ConcealmentTransition)` queue items carrying the transition generation** — source: ADR-0017
-- **Cull state is pushed only through `IConcealmentCullSource` inside the slot; un-cull happens in the same slot as exit execution or break; a concealed kill calls `MarkKilledConcealed`** — source: ADR-0017
+- **Cull state is pushed only through `IConcealmentCullSource` inside the slot; un-cull happens in the same slot as exit execution or break; a concealed kill un-culls at the death write together with `FDeathState.bDiedConcealed = true`** — source: ADR-0003, ADR-0017
 - **Owner/Team `bIsConcealed` is set at commit and cleared at the crossing; for a killed-concealed pawn it clears at the server body removal or the participant's rebind, whichever comes first** — source: ADR-0017
 - **Client presentation hides and shows bodies only through `EvaluateBodyHidden` from `EstimatedServerNow()`; every non-owner pawn actor is created presentation-hidden and evaluated in `PostNetInit`; clips are seeked, never restarted** — source: ADR-0017
 - **A fresh non-owner actor starts hidden before any RepNotify and does not clear while a living teammate entry's `PawnRef` is unresolved on that client** — source: ADR-0017
@@ -555,7 +559,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Concealment log rows go to the Event Log store only** — source: ADR-0017
 
 **Encounter outcome timing (Assassination and Defence Reversal)**
-- **`FActionState` serialises to exactly 144 bits and `FDeathState` to exactly 64 bits for every value** — source: ADR-0018
+- **`FActionState` serialises to exactly 208 bits (incl. `StartServerTime`) and `FDeathState` to exactly 65 bits (incl. `bDiedConcealed`) for every value; `FStrikeResult` carries `ContactServerTime` for every `Result`** — source: ADR-0018
 - **`FActionState.Seq` advances by one on every write of that pawn** — source: ADR-0018
 - **At the Attack's slot only the attacker's `FActionState` (and its movement/root-motion state) changes on the wire** — source: ADR-0018
 - **`WarpPoint` is derived only from an honoured `PawnRef`'s extrapolation or the submitted `WorldPoint` (clamped)** — source: ADR-0018
@@ -613,15 +617,15 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never spawn a replicated actor for concealment; never use per-bush replicated actors** — source: ADR-0017
 - **Never let Hide legality, replies or timing read occupancy, controller kind or team; never add a dwell, capacity, reveal or timeout key** — source: ADR-0017
 - **Never drive concealment transitions or the hide by anim notifies, engine timers, feature ticks or overlap** — source: ADR-0017
-- **Never re-open a killed-concealed pawn while slot B is open** — source: ADR-0017
+- **Never re-open a killed-concealed pawn before the death write, and never draw its body on a non-owner client** — source: ADR-0017
 - **Never use `SetActorHiddenInGame`/`bHidden` for concealment** — `bHidden` replicates and feeds relevancy — source: ADR-0017
 - **Never toggle `bCastHiddenShadow`, `bAffectIndirectLightingWhileHidden` or `bRayTracingFarField` at runtime** — source: ADR-0017
 - **Never store collision state from a notify** — source: ADR-0017
 - **Never let a guard-failure exit be a `PawnCommand`** — source: ADR-0017
 - **Never use `bServerAcceptClientAuthoritativePosition` for the owner warp** — source: ADR-0017, ADR-0003
 - **Never use `RoundSeed`, a public seed or `mod` for the bush spot pick** — source: ADR-0017
-- **Never implement `StartServerTime` or `bDiedConcealed` until the user decides them and ADR-0003/0017/0018 are amended** — source: ADR-0017
-- **Never log concealment rows through `UE_LOG`/`UE_LOGF`; never ship `ConcealServerCullEnabled = false` outside internal development builds** — source: ADR-0017
+- **Never read a hide-pose start from `ContactServerTime`; read `FActionState.StartServerTime`** — source: ADR-0017, ADR-0018
+- **Never log concealment rows through `UE_LOG`/`UE_LOGF`; never ship `bConcealServerCull = false` outside internal development builds** — source: ADR-0017
 - **Never use an optional, conditional or magnitude-packed field in `FActionState` or `FDeathState`** — source: ADR-0018
 - **Never let `FActionState.Seq` carry, derive from or correlate with a `ClientCommandSeq`** — exposes command cadence NPCs cannot reproduce — source: ADR-0018
 - **Never change anything on the victim or a defender before the death write** — source: ADR-0018
@@ -631,7 +635,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never send any outcome field besides `FStrikeResult`/`FDefenceResult`** — source: ADR-0018
 - **Never present an outcome on receipt, snap, or use arrival time except as the matcher's floor and lost-data cap** — source: ADR-0018
 - **Never react to the arrival of the Roster's owner state in own-role presentation** — source: ADR-0018
-- **Never implement `ContactServerTime` in `FStrikeResult` until the user decides it** — source: ADR-0018
+- **Never show the attacker's plate from an inferred contact time when `FStrikeResult.ContactServerTime` is present (the matcher is fallback and defender-only)** — source: ADR-0018
 - **Never set a strike or counter warp target through `UMotionWarpingComponent`'s replicated `WarpTargets`** — source: ADR-0018
 - **Never release or remove bodies with engine timers or by destroying the possessed pawn** — source: ADR-0018
 - **Never make Penalty state a replicated property; never let `StrikeCount` reach a client before `Ended`** — source: ADR-0019
@@ -642,7 +646,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never schedule a respawn from a Penalty subscription to Roster state events, or when latched** — source: ADR-0019
 - **Never schedule a timer for a respawn cause on a `Disconnected` participant; never restart or skip the delay on reclaim** — source: ADR-0019
 - **Never relax the unseen test** — source: ADR-0019
-- **Never send `T_due` to a client (no countdown field, reply entry or client derivation) until the user decides ADR-0001 §6** — source: ADR-0019
+- **Never write the tally to C-TeamView on a strike; `T_due` reaches only its owner, through the owner part** — source: ADR-0019
 - **Never add an informant-only movement, collision, sight or region rule; never have Penalty call `BindPawn` itself** — source: ADR-0019
 - **Never spawn an actor for a court, objective or site, replicated or not** (court fixtures stay local non-replicated layout components) — source: ADR-0020
 - **Never give Objectives a tick function, `FTimerManager` timer or latent action** (only `TimerFired(StageSignal)` items) — source: ADR-0020
@@ -650,7 +654,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 - **Never put objective data on the GameState, `FRoundPublicState`, a PlayerState, a pawn, a fixture or an RPC; never put it in the Roster's C-TeamView part** — source: ADR-0020
 - **Never put a locked site, an opponent site, opponent progress other than `RivalPrelimCount`, anyone's hold progress, or the final before the team's preliminaries are complete in the view** — source: ADR-0020
 - **Never return `AllowNoEffect` at Begin from the Interact predicate** — source: ADR-0020
-- **Never set a per-court hold duration** (a chain row with `bOverrideInteractSec` fails validation) — source: ADR-0020
+- **Never set a per-court hold duration** (`FObjectiveDef` has no hold-time field since 2026-10-25) — source: ADR-0020
 - **Never let a completion cancel another pawn's hold; never judge completion from an `OnActionCompleted` subscription** — source: ADR-0020
 - **Never use per-team timers, a fixed delay or the engine timer manager for the rival signal** — source: ADR-0020
 - **Never replicate card text (`FText`) or clue strings** — source: ADR-0020
@@ -661,7 +665,7 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 
 ### Performance Guardrails
 
-- **Crowd**: ≤ 1.5 ms p99 / ≤ 0.8 ms mean per frame at 50 pawns, 60 fps (provisional pending the 50-character spike; F5 estimate ≈ 0.62 ms mean); < 10 MB memory; no network of its own — source: ADR-0016
+- **Crowd**: ≤ 1.5 ms p99 / ≤ 0.8 ms mean per frame at 60 pawns, 60 fps (provisional pending the 60-character spike; F5 estimate ≈ 0.74 ms mean); < 10 MB memory; no network of its own — source: ADR-0016
 - **Concealment**: negligible server CPU inside the 1.0 ms "camera traces + concealment/IIF/objectives misc" line; client hide/show rebuilds the render proxy (profile in R5); one owner-only bool on the PlayerController — source: ADR-0017
 - **Encounter**: µs per Attack inside the 0.5 ms queue line; 18 + 8 bytes replicated state per pawn; one forced update per strike and per death-write pawn — source: ADR-0018
 - **Penalty**: O(1) inside the 0.5 ms queue line; the respawn pick is ADR-0014's budget (≤ 1 pick per frame) — source: ADR-0019
@@ -746,10 +750,10 @@ TD-MANIFEST was not re-run (lean: no rule changed).
 
 - **HUD**: ≤ 0.3 ms CPU (AC-HUD-22), ≤ 0.5 ms with markers; UI GPU ≤ 0.5 ms at 1080p on the reference GPU (inside ADR-0022's frame budget) — source: ADR-0021
 - **Kit rendering (R1, gate)**: kit Lumen + Nanite at 1,000 / 3,000 / 5,000 runtime ISM instances ≤ 5.0 ms GPU on an RTX 3060 at 1080p — source: ADR-0022
-- **Characters (R2, gate)**: character skinning + character shadows ≤ 2.5 ms GPU with 50 characters and VSM — source: ADR-0022
+- **Characters (R2, gate)**: character skinning + character shadows ≤ 2.5 ms GPU with 60 characters and VSM — source: ADR-0022
 - **Listen host (RC-1)**: game thread ≤ 12.0 ms p95 with 10 connections on 3060-class hardware — source: ADR-0022
 - **Client GPU headroom (RC-2)**: whole-frame GPU ≥ 2.0 ms headroom on the client reference scene — source: ADR-0022
-- **Masked character master (RC-3)**: GPU delta vs opaque ≤ 0.3 ms at 50 characters — source: ADR-0022
+- **Masked character master (RC-3)**: GPU delta vs opaque ≤ 0.3 ms at 60 characters — source: ADR-0022
 - **Client render and RHI threads**: ≤ 12.0 ms p95 each on the client reference scene — source: ADR-0022 §4.3
 - **Client GPU total**: ≤ 14.6 ms p95 (≥ 2.0 ms headroom, RC-2) — source: ADR-0022 (note: ADR-0021 cites a "14.4 ms allocation"; ADR-0022 owns the figure)
 - **Draw calls / triangles**: non-Nanite main-view draw calls ≤ 1,500 (PROPOSED; Generator share ≈ 300-500); non-Nanite tris on screen before shadows ≤ 800k (ASSUMED) — source: ADR-0022
@@ -833,7 +837,7 @@ These APIs are deprecated, removed or obsolete for UE 5.8 and apply to what this
 - **Secrets stay server-side**: sub-seeds, `DealDigest`, assignments, bindings, Event Log content never reach logs, traces, Blueprint, URLs or the wire — source: ADR-0006, ADR-0007, ADR-0012, ADR-0014, ADR-0020, ADR-0023
 - **Data-driven values**: gameplay numbers come from validated tuning, never literals, ini or CVars — source: ADR-0004
 - **Server/View header split**: client and presentation code include only `Public/View/` headers — source: ADR-0007
-- **User-pending items stay unimplemented**: `T_due` carrier, `FActionState.StartServerTime`, `bDiedConcealed`, `ContactServerTime` in `FStrikeResult` — source: ADR-0001, ADR-0003, ADR-0017, ADR-0018, ADR-0019
+- **Formerly user-pending schema items are decided (2026-10-25) and must be implemented as specified**: `T_due` on the C-TeamView owner part, `FActionState.StartServerTime`, `FDeathState.bDiedConcealed`, `FStrikeResult.ContactServerTime`, teammate `RetireAtServerTime`, feed `Seq`, the `ServerWorldReady` ack stage — source: ADR-0001, ADR-0003, ADR-0005, ADR-0017, ADR-0018, ADR-0019
 - **Evidence standard**: performance evidence from cooked Development standalone captures on 3060-class reference hardware; PIE/editor or RTX 5090 numbers are not evidence — source: ADR-0013, ADR-0022
 - **Doc comments on public APIs; dependency injection over singletons (plain-C++ cores)** — source: coding-standards.md, ADR-0007
 
@@ -844,3 +848,13 @@ These APIs are deprecated, removed or obsolete for UE 5.8 and apply to what this
 - **Sound Cue → MetaSounds**: ADR-0013 fixes footstep sound class/attenuation but not the asset type; applicability unclear.
 - **Substrate (legacy material nodes)**: contradicted by ADR-0022 (Substrate stays off); excluded.
 - **Not applicable to the code the ADRs describe**: Control Rig Blueprint `FindBone`/`FindControl`/`FindNull`, Waveform Editor fade functions, plugin `PluginName.ini` naming, `r.Water.SingleLayer.ForceVelocity`, `EWindowType::GameWindow`, IK Retargeter/legacy Control Rig rows.
+
+## Changes in 2026-10-25b
+
+Regenerated after the user decisions of 2026-10-25 (recorded as "user decision 2026-10-25" Amendments in ADR-0001, 0003, 0004, 0005, 0011, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0020, 0021, 0022, 0023). Rules added or changed:
+- Foundation: Roster C-TeamView part fields (owner tally re-push, `T_due`; teammate `RetireAtServerTime`) and their writers; fallback feed `Seq`; `T_due` single-carrier ban replaces "never implement the carrier"; `StartServerTime`/feed-`Seq` rule replaces "never implement"; replication line 36 KB/s at 60 pawns and feed ≤ 104 B/s.
+- Core: pawn-network line 36 KB/s; animation gate at 60 characters.
+- Feature: concealed kill un-culls at the death write with `bDiedConcealed` (replaces `MarkKilledConcealed` and the slot-B ban); `FActionState` 208 bits, `FDeathState` 65 bits, `FStrikeResult.ContactServerTime`; tally never written to C-TeamView per strike; `InteractSecOverride` gone; Crowd asset keys and pre-baked route-edge paths; Crowd budget at 60 pawns.
+- Presentation: GPU character lines measured at 60 characters.
+- Global: user-pending list replaced by "decided, implement as specified"; conditional-acceptance rows for ADR-0016/0017/0019 updated.
+- Tuning (ADR-0004, no separate rule line): `NpcKillStrikeLimit` hard minimum 2 (`bTestAllowsStrikeLimitOne` test presets only); `LatencyWarnRttSec` retired; TDC CR-10 renames; `LayoutExactRefineMaxCount`; `NpcCount` 50.

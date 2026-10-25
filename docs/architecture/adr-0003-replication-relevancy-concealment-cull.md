@@ -60,7 +60,7 @@ ADR-0001 fixed that every pawn is one class with one replication configuration a
 | **Depends On** | ADR-0001 (identity invariants, carriers, legacy NetDriver; this ADR implements its pawn-side mechanisms and is scoped to the legacy cull path because ADR-0001 chose legacy); ADR-0002 (`ServerNow`, the drain and staging pass order, the death-write step at which a non-concealment cull re-opens); ADR-0007 (module boundaries: Visibility Policy in `StealthFoundation`, pawn in `StealthGameplay`); ADR-0008 (raw-bunch capture, allowlist audit, net-emulation profiles) |
 | **Enables** | ADR-0010 (Shared Pawn implements the net config, `ForceNetUpdate` and `PreReplication` overrides), ADR-0017 (Concealment pushes cull state; clip scheduling), ADR-0018 (encounter data uses the fixed-width serialisers and the forced-update policy), ADR-0021 (Markers read the fallback feed), ADR-0024 (Iris migration re-expresses the cull as exclusion group filters) |
 | **Blocks** | Shared Character & Locomotion net work, Concealment, Assassination encounter replication, Teammate Markers feed, the leak test suites |
-| **Ordering Note** | Third in table order. The Iris filter path is **not** specified here (ADR-0001 picked legacy; TD concern 6): it moves to ADR-0024. Two always-ask items stay open and are only slotted here: `FActionState.StartServerTime` (Concealment CR 10(b)) and the per-entry sequence of the fallback feed (Markers OQ14) — both schema_changes pending the user (architecture AQ-11) |
+| **Ordering Note** | Third in table order. The Iris filter path is **not** specified here (ADR-0001 picked legacy; TD concern 6): it moves to ADR-0024. The two schema items once slotted here, `FActionState.StartServerTime` (Concealment CR 10(b)) and the per-entry sequence of the fallback feed (Markers OQ14), were approved by the user 2026-10-25 and are specified in §4 and §7 (architecture AQ-11 closed) |
 
 ## Context
 
@@ -83,7 +83,7 @@ With ~50 pawns always relevant to ~10 connections, every per-kind difference in 
 - Forced updates only for `FActionState`/`TraversalState` writes and death writes, same cap for every kind (IVP R5, ASN-R21).
 - `RemoteViewPitch16` written from the `Look`/`HeadLook` source for every pawn (IVP R5, SCL R8.4).
 - Smoothing parity incl. listen-host remote-client pawns (SCL R14).
-- Concealment cull: quantised delay `ConcealCullDelayMs` (F3); cull at the first net-update boundary ≥ `t0 + D`, all culls of one frame at one boundary; never ack-dependent; un-cull in the same server step; killed-concealed interim rule; based-on clause dropped (IVP R7, L27).
+- Concealment cull: quantised delay `ConcealCullDelayMs` (F3); cull at the first net-update boundary ≥ `t0 + D`, all culls of one frame at one boundary; never ack-dependent; un-cull in the same server step; killed-concealed re-open at the death write with `bDiedConcealed`; based-on clause dropped (IVP R7, L27).
 - Fixed-width serialisation of outcome-bearing structs (ASN-R21).
 - One checked-in allowlist with an audit that fails the build (IVP R11).
 - Team fallback position feed with the TM-R4a invariant (IVP R8).
@@ -123,16 +123,16 @@ No per-class or per-instance override of any row exists. Every pawn is relevant 
 
 ### 4. Fixed-width serialisers
 
-- `FActionState {Pose, Seq, Variant, ContactServerTime, WarpPoint}` (Foundation `Public/View`; **declared once, in ADR-0018's Key Interfaces**, which owns its semantics, its `EActionPose` type and its `WithNetSerializer` + `WithIdentical` traits; this section fixes only the wire rule; `FFixedWarpOffset` is a `USTRUCT` whose members are all `UPROPERTY`s, or it provides `WithIdentical`, because legacy change detection compares UPROPERTYs) implements `NetSerialize` with `WithNetSerializer` and writes **the same number of bits for every value**: `Pose` 8 bits, `Seq` 16, `Variant` 8, `ContactServerTime` 64 (double), `WarpPoint` as three fixed-width signed offsets from the attacker (bit width and resolution chosen in ADR-0018 from F1's translation bound). No magnitude-packed vector, no optional field, no conditional bit. Kill, whiff and reversal produce byte-identical sizes (E12 spike).
-- `FDeathState {DeathServerTime}` (double, sentinel −1), `TraversalState` and `HeadLook` yaw are fixed-width likewise.
-- **Slot (pending user):** `FActionState.StartServerTime` (Concealment CR 10(b), schema_changes). Until decided, `ContactServerTime` carries the start time for hide poses (CON-R6a interim). If approved, it is added as another fixed 64-bit field; the struct stays fixed-width.
+- `FActionState {Pose, Seq, Variant, StartServerTime, ContactServerTime, WarpPoint}` (Foundation `Public/View`; **declared once, in ADR-0018's Key Interfaces**, which owns its semantics, its `EActionPose` type and its `WithNetSerializer` + `WithIdentical` traits; this section fixes only the wire rule; `FFixedWarpOffset` is a `USTRUCT` whose members are all `UPROPERTY`s, or it provides `WithIdentical`, because legacy change detection compares UPROPERTYs) implements `NetSerialize` with `WithNetSerializer` and writes **the same number of bits for every value**: `Pose` 8 bits, `Seq` 16, `Variant` 8, `ContactServerTime` 64 (double), `WarpPoint` as three fixed-width signed offsets from the attacker (bit width and resolution chosen in ADR-0018 from F1's translation bound). No magnitude-packed vector, no optional field, no conditional bit. Kill, whiff and reversal produce byte-identical sizes (E12 spike).
+- `FDeathState {DeathServerTime, bDiedConcealed}` (double, sentinel −1), `TraversalState` and `HeadLook` yaw are fixed-width likewise.
+- `FActionState.StartServerTime` (Concealment CR 10(b); approved by the user 2026-10-25) is another fixed 64-bit field written in every `FActionState` write for every pawn kind, so the struct stays fixed-width; `ContactServerTime` no longer doubles as the hide-pose start time. `FDeathState.bDiedConcealed` (Concealment CR 10(a); approved the same day) is a fixed 1-bit field written only in the death write.
 - Iris serialisers for these structs are ADR-0024's.
 
 ### 5. The concealment cull (legacy NetDriver only)
 
 **5.1 Ownership.** Concealment (Feature) decides concealment; the Visibility Policy (Foundation) owns the audience and the cull; the Shared Pawn provides the relevancy hook. Concealment pushes state through the consumer-owned `IConcealmentCullSource` (architecture: `SetCullState(Pawn, bConcealed, CommitServerTime)`); the Policy never names a feature type.
 
-**5.2 Per-pawn cull record** (server-only, in the Policy): `{ECullState State ∈ {Visible, CullPending, Culled}; double CommitServerTime; double CullDeadline; ECullReason Reason}`. `Reason` is `Concealment` or `KilledConcealed` (the interim rule below).
+**5.2 Per-pawn cull record** (server-only, in the Policy): `{ECullState State ∈ {Visible, CullPending, Culled}; double CommitServerTime; double CullDeadline; ECullReason Reason}`. `Reason` is `Concealment` (the reconciliation-era `KilledConcealed` reason is retired with the interim rule, user decision 2026-10-25).
 
 **5.3 Deadline on one global grid.** `CullDeadline` = the first point of a **global boundary grid** (multiples of `1 / PawnNetUpdateHz` from the round's `Active` entry, shared by every pawn) at or after `CommitServerTime + ConcealCullDelayMs` (IVP F3: default 250 ms at `LeakNetProfile`). Every cull committed in one server frame therefore lands at the same boundary, its timing carries no fine information, and it never waits on a client acknowledgement (IVP R7.2). The grid **replaces** R7.2's "first pawn net-update boundary": per-pawn boundaries carry a random offset (E14) and are not a common grid, so they could not satisfy "all culls of one frame at one boundary". **IVP change request (wording):** R7.2 reads "the first point of the global pawn-update grid".
 
@@ -146,11 +146,11 @@ The viewer is resolved from `RealViewer` (the connection's PlayerController) thr
 
 **5.6 Un-cull in the same server step.** On `HideExit` execution, on `OnConcealmentBroken` (attacking from the bush), or on a cull cancelled during `CullPending`, Concealment pushes `bConcealed = false` inside the queue slot; the record returns to `Visible` immediately, so the override returns true in that frame's replication flush. Each of these events is an `FActionState` write that already forces an update under §2 (`BushExit`, `Strike`), so the pawn is **considered in the same frame**; with the §1 client-throttle row, every client is updated that frame and gets its channel opened then (E15: without that row, skipped clients would wait for the pawn's next regular update, with per-client differences that would break F4's `T_uncull` assumption). Clients show the body only at the outward leaf-plane instant (`T_exit_occluded ≥ T_uncull`, IVP F4; Concealment owns the clip timing).
 
-**5.7 Kills.** Nothing re-opens in the strike's outcome slot (ASN-R21). A victim culled for a reason other than concealment re-opens at Assassination's **death write** (ADR-0002 staging pass), already falling, carrying `DeathServerTime` so clients fast-forward, identically for every victim kind. A victim **killed while concealed** keeps `Reason = KilledConcealed` and stays culled for every non-allied connection through fall, linger and removal (**interim rule**, IVP R7.5, ASN-R10, CON-R9) while `FDeathState.bDiedConcealed` is a pending user decision (schema_changes); the death write's forced update does not re-open it (E4). If that field is approved, the record returns to `Visible` at the death write instead, carrying `bDiedConcealed` so every non-owner client keeps the body presentation-hidden.
+**5.7 Kills.** Nothing re-opens in the strike's outcome slot (ASN-R21). A victim culled for a reason other than concealment re-opens at Assassination's **death write** (ADR-0002 staging pass), already falling, carrying `DeathServerTime` so clients fast-forward, identically for every victim kind. A victim **killed while concealed** returns to `Visible` at the death write too (Concealment pushes `bConcealed = false` in the staging pass, same server step), carrying `FDeathState.bDiedConcealed = true` so every non-owner client keeps the body presentation-hidden (IVP R7.5, ASN-R10, CON-R9; `bDiedConcealed` approved by the user 2026-10-25, which retires the earlier interim rule of keeping it culled through fall and removal).
 
 **5.8 Re-open behaviour.** A re-open creates a new client actor (E11). Client-side registries (animation significance, audio, decals, pawn lists, Markers) must tolerate a relevancy destroy and re-create; the new actor initialises its presentation from the replicated state (`FActionState`, `FDeathState`, `HeadLook`, `AppearanceId`) through the same idempotent `RefreshPresentation(EstimatedServerNow)` path, never from arrival; nothing gameplay-visible distinguishes a cull from a real destroy. NetGUID reuse and AnimBP initialisation are S10's.
 
-**5.9 Parity and switches.** The cull applies identically to every pawn kind; a concealed NPC is culled for every connection (IVP R7.1). `ConcealServerCullEnabled = false` (client-side hide only) exists only for internal development builds (L29 CRITICAL) and never ships by default; there is no automatic fallback if Crowd misses F5 (IVP R7.6).
+**5.9 Parity and switches.** The cull applies identically to every pawn kind; a concealed NPC is culled for every connection (IVP R7.1). `bConcealServerCull = false` (client-side hide only) exists only for internal development builds (L29 CRITICAL) and never ships by default; there is no automatic fallback if Crowd misses F5 (IVP R7.6).
 
 **5.10 Iris.** Not specified here. If ADR-0024 ever adopts Iris, the cull becomes per-connection exclusion group filter status with the F3 delay applied at the filter flip, and S1, S2, S7, S9, S10 and F1/F2 are rerun first.
 
@@ -166,8 +166,8 @@ The viewer is resolved from `RealViewer` (the connection's PlayerController) thr
 
 - A Visibility Policy-owned C-TeamView part, `UTeamPositionFeedComponent` (`UTeamViewComponentBase`, ADR-0001 §5), on each player's controller carries entries `{PublicHandle, Pos}` with `Pos` the teammate pawn's **feet** (skeletal mesh world location) quantised to a 10 cm grid as `int16 × 3` (IVP R8, F6).
 - **Trigger, per connection:** during `Active`, a teammate's pawn exists on the server and that connection has **no open actor channel** for it, or has one whose open is **not yet acknowledged** (`FindActorChannelRef == null`, or the channel's open not acked [U `UChannel::OpenAcked`]: travel re-push, a takeover in flight, initial channel latency, any future cull). The entry is added in the **same server frame** in which the channel goes missing (or the `PawnRef` is re-pushed unresolved) and is removed only **one feed update after the channel's open is acknowledged**, because the client's `PawnRef` resolves only after the open bunch arrives; so a client never sees "null `PawnRef`, no feed" for an existing pawn for longer than one update (TM-R4a). With the §1 client-throttle row, "same server frame" holds for every client.
-- Rate `TeamPositionFeedHz` (safe 1.5-4); bandwidth `B_feed = N_u · 12 B · h` ≤ 96 B/s (F6). Only teammate connections ever receive it.
-- **Slot (pending user):** a per-entry sequence for staleness (Markers CR-11c, OQ14; schema_changes). Until decided, Markers' staleness rule F5 is inactive.
+- Rate `TeamPositionFeedHz` (safe 1.5-4); bandwidth `B_feed = N_u · 13 B · h` ≤ 104 B/s (F6). Only teammate connections ever receive it.
+- **Per-entry sequence** (Markers CR-11c, OQ14; approved by the user 2026-10-25): each entry carries `uint8 Seq`, advanced (wrapping) by the builder on every feed tick, so a stationary ally's entry still changes under change-only replication and Markers' staleness rule F5 is active.
 
 ### 8. The replicated-property allowlist and audit
 
@@ -204,7 +204,7 @@ The viewer is resolved from `RealViewer` (the connection's PlayerController) thr
 // --- StealthFoundation Public/Server: Visibility Policy cull --------------------------------
 class IConcealmentCullSource            // push API implemented BY the Policy, called by Concealment
 { public: virtual void SetCullState(APawn* Pawn, bool bConcealed, double CommitServerTime) = 0;
-          virtual void MarkKilledConcealed(APawn* Pawn) = 0; };          // interim rule (§5.7)
+          /* MarkKilledConcealed retired 2026-10-25: killed-concealed re-opens at the death write (§5.7) */ };
 enum class ECullState : uint8 { Visible, CullPending, Culled };
 UCLASS() class UVisibilityPolicy : public UWorldSubsystem /* , public IConcealmentCullSource */
 {
@@ -228,12 +228,13 @@ struct FStealthForcedNetUpdate { explicit FStealthForcedNetUpdate(AStealthPawn&,
 // --- StealthFoundation Public/View: wire structs ---------------------------------------------
 // FActionState, FFixedWarpOffset, FDeathState: declared in ADR-0018 Key Interfaces (single declaration;
 // EActionPose Pose, WithNetSerializer + WithIdentical, 144 / 64 bits). This ADR owns only the rules of §4:
-// fixed bit width for every value, no optional/conditional field, StartServerTime slot pending user.
+// fixed bit width for every value, no optional/conditional field (StartServerTime included, 2026-10-25).
 
 // --- C-TeamView part (ADR-0001 family) ------------------------------------------------------
 USTRUCT() struct FTeamPositionFeedEntry { GENERATED_BODY()
     UPROPERTY() FPublicHandle Handle; UPROPERTY() int16 X = 0; UPROPERTY() int16 Y = 0;
-    UPROPERTY() int16 Z = 0;  /* 10 cm grid, feet; per-entry sequence: slot pending user */ };
+    UPROPERTY() int16 Z = 0;  /* 10 cm grid, feet */
+    UPROPERTY() uint8 Seq = 0; /* advanced every feed tick, wraps (user decision 2026-10-25) */ };
 UCLASS() class UTeamPositionFeedComponent : public UTeamViewComponentBase
 { GENERATED_BODY() UPROPERTY(Replicated) TArray<FTeamPositionFeedEntry> Entries; };  // <= 4
 ```
@@ -248,11 +249,11 @@ UCLASS() class UTeamPositionFeedComponent : public UTeamViewComponentBase
 - Every simulated proxy must use exponential smoothing with the same tuning values, including the listen-server simulated smoothing times.
 - Outcome-bearing replicated structs must serialise to a fixed bit width with no value-dependent size.
 - The concealment cull must land on the global boundary grid, close the channel explicitly per denied connection in the cull tick, and never wait for a client acknowledgement; un-cull must happen in the same server step as the state change.
-- Nothing may re-open a culled pawn in a strike's outcome slot; a killed-concealed victim must stay culled for non-allies until the user decides `bDiedConcealed`.
+- Nothing may re-open a culled pawn in a strike's outcome slot; a killed-concealed victim must re-open only at the death write, in the same step as `FDeathState {DeathServerTime, bDiedConcealed = true}`.
 - Client presentation must tolerate a relevancy destroy and initialise a re-created actor from replicated state only.
 - A new replicated property, condition or replicated class must not ship without an allowlist row signed off by its owners; the audit must fail the build otherwise.
 - The fallback feed must be added in the same frame a teammate's channel goes missing and only to teammate connections.
-- `FActionState.StartServerTime` and the feed's per-entry sequence must not be implemented until the user decides them.
+- `FActionState.StartServerTime` must be written in every `FActionState` write for every pawn kind; the feed's `Seq` must advance on every feed tick for every entry.
 
 ## Alternatives Considered
 
@@ -305,7 +306,7 @@ UCLASS() class UTeamPositionFeedComponent : public UTeamViewComponentBase
 - The relevancy override runs per pawn per considered connection (~50 × 10 at 15 Hz); it must stay allocation-free and O(1).
 - The explicit close relies on S9 (E10) for "stays closed".
 - Every client must handle pawn destroy/re-create robustly (significance, audio, markers) — real work for presentation code.
-- Two schema slots (`StartServerTime`, feed sequence) remain open and keep interim rules alive (hide clips seek from `ContactServerTime`; Markers F5 inactive).
+- ~~Two schema slots remain open~~ — closed 2026-10-25 (user decision): `StartServerTime` and the feed `Seq` are specified; the feed costs ≤ 104 B/s while entries exist.
 - L14 (every client holds every visible pawn's position) remains accepted until Anti-Cheat (Alpha).
 
 ## Risks
@@ -331,7 +332,7 @@ UCLASS() class UTeamPositionFeedComponent : public UTeamViewComponentBase
 | information-visibility-policy.md | R11 replicated-property audit, net config audit | §8 |
 | shared-character-locomotion.md | R13 network parity configuration (values in config; bans; forced updates; allowlist); R14 smoothing parity | §1, §2, §3, §8 |
 | participant-state-roster.md | R6 pawn replication parity | §1, §8 |
-| concealment-bushes.md | CON-R6a one clock from replicated server start time (slot pending); CON-R10 per-viewer result, no same-bush clause | §4 slot, §5.4 |
+| concealment-bushes.md | CON-R6a one clock from replicated server start time (`StartServerTime`, approved 2026-10-25); CON-R10 per-viewer result, no same-bush clause | §4 slot, §5.4 |
 | assassination-defence-reversal.md | ASN-R21 fixed-width `FActionState`, uniform forced updates, nothing re-opens in the outcome slot, re-open at the death write | §2, §4, §5.7 |
 | level-socket-contract.md | R2.6 zero replicated actors from the contract | §6 |
 | round-match-framework.md | R20 `FRoundPublicState`, forced GameState updates, host calls the handler | §2, §6 |
@@ -341,7 +342,7 @@ UCLASS() class UTeamPositionFeedComponent : public UTeamViewComponentBase
 - **CPU**: Relevancy override O(1) per considered pawn-connection pair (~7,500 calls/s at 15 Hz × 50 × 10); cull tick touches only records at their deadline; within the 1.5 ms replication line (to be measured on target-class hardware, AQ-18).
 - **Memory**: One cull record per pawn; one viewer-cache entry per connection; allowlist loaded only by tests.
 - **Load Time**: None.
-- **Network**: Fixed 15 Hz pawns within 30 KB/s worst case (SCL F9); culled pawns cost nothing to non-allies; fallback feed ≤ 96 B/s per client; fixed-width structs cost a few bytes more than packed ones for a kill/whiff (accepted).
+- **Network**: Fixed 15 Hz pawns within 30 KB/s worst case (SCL F9); culled pawns cost nothing to non-allies; fallback feed ≤ 104 B/s per client; fixed-width structs cost a few bytes more than packed ones for a kill/whiff (accepted).
 
 ## Migration Plan
 The prototype replicates `bConcealed`/`bRevealedUntilExit` to every client and hides bushes client-side (`AStealthCharacter::UpdateConcealmentVisibility`), uses separate `bDying`/`bPreparingDefence` bools, default net config and no relevancy override (first-playable report, known issue 2). None of it is promoted; the cull, the overrides and the serialisers are written new under this ADR once Accepted, behind the allowlist audit from the first commit.
@@ -373,3 +374,10 @@ Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.
 - §1 server-tick row, E17 (new, [V]), Verification Required: the listen-host server tick is stated on the host frame time (`NetServerMaxTickRate` has no effect without `bClampListenServerTickRate`); `U_eff ≤ 1/PawnNetUpdateHz + T_frame`; no integer-multiple requirement or `NetServerMaxTickRate` startup check; harness frame-time capture instead. The clamp-flag alternative is a pending user item (Config edit) — architecture-review fix 2026-10-25 (Engine finding 2; logged as `design`).
 - §1 client-throttle row: `MaxFps` defined (host frame-rate limit `t.MaxFPS` when set, else the 240 fps design ceiling) — architecture-review fix 2026-10-25 (Engine finding 2).
 - §2 (Conflict 3): no change; ADR-0001 §4.2 now uses this ADR's "dropped; the next cadence update carries the change" — architecture-review fix 2026-10-25.
+- Config applied 2026-10-25 (phase 2, user-authorised): `[/Script/Engine.Engine] NetClientTicksPerSecond=2400` (= 10 connections x 240 fps design ceiling) in `Config/DefaultEngine.ini`. `bClampListenServerTickRate` deliberately **not** set (option (b), host frame-time basis). The E15 startup assertion remains a harness item.
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- §4, Key Interfaces, guidelines — user decision 2026-10-25: `FActionState.StartServerTime` (fixed 64-bit) and `FDeathState.bDiedConcealed` (fixed 1-bit) are adopted (Concealment CR 10 (a)-(b)); the "slot pending user" text is replaced.
+- §5.2, §5.7, Key Interfaces — user decision 2026-10-25: a killed-concealed victim re-opens at the death write with `bDiedConcealed = true`; the interim `KilledConcealed` cull reason and `MarkKilledConcealed` are retired.
+- §7, Key Interfaces — user decision 2026-10-25: the fallback feed entry carries a wrapping `uint8 Seq` advanced every feed tick (Markers CR-11c / OQ14); `B_feed = N_u · 13 B · h` ≤ 104 B/s (IVP F6).
+- Key renames — user decision 2026-10-25 (TDC CR-10): `ConcealServerCullEnabled` is `bConcealServerCull`.

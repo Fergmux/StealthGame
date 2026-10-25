@@ -7,7 +7,7 @@ Source review: `docs/architecture/architecture-review-2026-10-25.md` (full mode,
 - Total requirements: 177 (170 baseline IDs from architecture.md Appendix A, registered permanent; 7 new from the 2026-10-24 ADR-GDD sync)
 - Covered by an Accepted ADR (✅): 0 (0 %) — every ADR-0001..0023 is `Proposed`
 - Covered by a Proposed ADR (🟡): 175 (98.9 %)
-- Partial (⚠️): 2 — TR-con-005, TR-pen-006 (pending user schema decisions). TR-round-013 moved to 🟡 at the re-check (ADR-0023 amended to Round R19)
+- Partial (⚠️): 0 — TR-con-005 and TR-pen-006 were closed by the user decisions of 2026-10-25 (`StartServerTime` adopted; `T_due` on the C-TeamView owner part). TR-round-013 moved to 🟡 at the re-check (ADR-0023 amended to Round R19)
 - Gaps (❌): 0
 
 🟡 is not a pass state: it caps the verdict at CONCERNS until each ADR is moved to `Accepted` with `/architecture-decision accept ADR-NNNN` (after its spikes and the user's decisions). Stories citing these TR-IDs stay Blocked while their ADR is Proposed.
@@ -106,7 +106,7 @@ Source review: `docs/architecture/architecture-review-2026-10-25.md` (full mode,
 | TR-scl-005 | shared-character-locomotion.md | SCL | One look path; `RemoteViewPitch16` written from `Look` for every pawn | ADR-0001, ADR-0003 | 🟡 Proposed |
 | TR-scl-006 | shared-character-locomotion.md | SCL | One AnimBP, motion-matching database, chooser and pose set; `ActionPose`-driven states | ADR-0013 | 🟡 Proposed |
 | TR-scl-007 | shared-character-locomotion.md | SCL | Significance-only tiers by screen height; caps; client-local tie key; server always-ticks pose | ADR-0013 | 🟡 Proposed |
-| TR-scl-008 | shared-character-locomotion.md | SCL | ≤ 4 ms animation at 50 characters; ≤ 30 KB/s pawn replication per client | ADR-0013, ADR-0022 | 🟡 Proposed |
+| TR-scl-008 | shared-character-locomotion.md | SCL | ≤ 4 ms animation at 60 characters; ≤ 36 KB/s pawn replication per client (working values, `NpcCount` 50) | ADR-0013, ADR-0022 | 🟡 Proposed |
 | TR-scl-009 | shared-character-locomotion.md | SCL | Net parity config (15 Hz fixed, priority 3.0, `DORM_Never`, no cull distance, no pawn multicast) | ADR-0003 | 🟡 Proposed |
 | TR-scl-010 | shared-character-locomotion.md | SCL | Smoothing parity and input-starvation rule | ADR-0003, ADR-0010 | 🟡 Proposed |
 | TR-scl-011 | shared-character-locomotion.md | SCL | Footstep path parity from one step clock | ADR-0013 | 🟡 Proposed |
@@ -119,7 +119,7 @@ Source review: `docs/architecture/architecture-review-2026-10-25.md` (full mode,
 | TR-camera-005 | camera-system.md | Camera | One shared `GetAimRay` | ADR-0015 | 🟡 Proposed |
 | TR-camera-006 | camera-system.md | Camera | `GetViewState` for HUD/markers; no-pawn view states | ADR-0015, ADR-0021 | 🟡 Proposed |
 | TR-camera-007 | camera-system.md | Camera | Audio listener at the eye pivot | ADR-0015 | 🟡 Proposed |
-| TR-camera-008 | camera-system.md | Camera | Eye-mask trace cost bounded at 50 pawns (time slicing beyond 60 m) | ADR-0015 | 🟡 Proposed |
+| TR-camera-008 | camera-system.md | Camera | Eye-mask trace cost bounded at 60 pawns (time slicing beyond 60 m) | ADR-0015 | 🟡 Proposed |
 | TR-crowd-001 | crowd-npc-behaviour.md | Crowd | Server-only Crowd Director subsystem | ADR-0016 | 🟡 Proposed |
 | TR-crowd-002 | crowd-npc-behaviour.md | Crowd | StateTree per NPC (~4 Hz) + follower emitting `Move`/`Look` through the IIF; no path-following driving | ADR-0016 | 🟡 Proposed |
 | TR-crowd-003 | crowd-npc-behaviour.md | Crowd | Async path queries ≤ 2 starts/frame; navmesh frozen at `OnLayoutReady`; 2 m spatial hash | ADR-0014, ADR-0016 | 🟡 Proposed |
@@ -134,7 +134,7 @@ Source review: `docs/architecture/architecture-review-2026-10-25.md` (full mode,
 | TR-con-002 | concealment-bushes.md | Concealment | Entry/exit legality through IIF predicates; no occupancy check | ADR-0017 | 🟡 Proposed |
 | TR-con-003 | concealment-bushes.md | Concealment | Hide volumes block non-hiding pawns | ADR-0017 | 🟡 Proposed |
 | TR-con-004 | concealment-bushes.md | Concealment | Owner-side warp for the enter transition (S-CON-1) | ADR-0017 | 🟡 Proposed |
-| TR-con-005 | concealment-bushes.md | Concealment | Hide clips scheduled from replicated server start time | ADR-0003, ADR-0017 | ⚠️ Partial — `StartServerTime` slot pending user (stopgap `HidePoseStartServerTime`) |
+| TR-con-005 | concealment-bushes.md | Concealment | Hide clips scheduled from replicated server start time | ADR-0003, ADR-0017 | 🟡 Covered — `StartServerTime` adopted by user decision 2026-10-25 (ADR-0017 §8 A) |
 | TR-con-006 | concealment-bushes.md | Concealment | Fail-closed client latch; hide removes body, attachments, shadow, Lumen and RT | ADR-0017, ADR-0022 | 🟡 Proposed |
 | TR-con-007 | concealment-bushes.md | Concealment | `IsConcealedFrom` server-only; blind-strike spot zones | ADR-0017 | 🟡 Proposed |
 | TR-con-008 | concealment-bushes.md | Concealment | Server cull per the hybrid; un-cull in the same server step | ADR-0003, ADR-0017 | 🟡 Proposed |
@@ -155,7 +155,7 @@ Source review: `docs/architecture/architecture-review-2026-10-25.md` (full mode,
 | TR-pen-003 | npc-kill-penalty-informants.md | Penalty | Respawn as a due-time-heap item at `T_due`; Absent path for disconnected victims | ADR-0002, ADR-0019 | 🟡 Proposed |
 | TR-pen-004 | npc-kill-penalty-informants.md | Penalty | Takeover of an unseen crowd pawn in one call stack; retries and widening | ADR-0019 | 🟡 Proposed |
 | TR-pen-005 | npc-kill-penalty-informants.md | Penalty | Informant-kill invariant: perception identical to an NPC kill | ADR-0001, ADR-0019 | 🟡 Proposed |
-| TR-pen-006 | npc-kill-penalty-informants.md | Penalty | Owner-only data (tally, `bExiled`, `T_due` — carrier pending user decision) | ADR-0001, ADR-0019 | ⚠️ Partial — `T_due` carrier pending user (ADR-0001 §6 slot; interim static Returning) |
+| TR-pen-006 | npc-kill-penalty-informants.md | Penalty | Owner-only data (tally, `bExiled`, `T_due` on the C-TeamView owner part, user decision 2026-10-25) | ADR-0001, ADR-0019 | 🟡 Covered — carrier decided 2026-10-25 (ADR-0001 §6, ADR-0019 §6) |
 | TR-pen-007 | npc-kill-penalty-informants.md | Penalty | Informant restrictions enforced by their owners; Tell row T7 | ADR-0019 | 🟡 Proposed |
 | TR-pen-008 | npc-kill-penalty-informants.md | Penalty | Event Log rows | ADR-0019 | 🟡 Proposed |
 | TR-oc-001 | objectives-chain.md | Objectives | Chain data asset of `FObjectiveDef` rows | ADR-0020 | 🟡 Proposed |
@@ -185,7 +185,7 @@ Source review: `docs/architecture/architecture-review-2026-10-25.md` (full mode,
 | TR-hud-004 | hud.md | HUD | Server-clock timing: plates at local contact frame, tally with plate, `PresentedOwnState` | ADR-0018, ADR-0021 | 🟡 Proposed |
 | TR-hud-005 | hud.md | HUD | Round surfaces from `FRoundPublicState`; rebuild on `RoundEpoch` change | ADR-0021 | 🟡 Proposed |
 | TR-hud-006 | hud.md | HUD | Client-local settings hooks (scale, reduce motion, high contrast) | ADR-0021 | 🟡 Proposed |
-| TR-hud-007 | hud.md | HUD | Latency warning threshold (duplicate key pending, C-W14) | ADR-0021 | 🟡 Proposed |
+| TR-hud-007 | hud.md | HUD | Latency warning threshold (`HudLatencyWarnRttSec`; duplicate retired 2026-10-25) | ADR-0021 | 🟡 Proposed |
 | TR-roster-012 | participant-state-roster.md | Roster | Server-only `OnViewRebound` after `RebindView`; feature team views rebuild from it | ADR-0005, ADR-0020 | 🟡 Proposed |
 | TR-iif-013 | input-interaction-framework.md | IIF | `PossessionEpoch` owner-only via `ClientSetPossessionEpoch`; stale epochs rejected at ingress | ADR-0011 | 🟡 Proposed |
 | TR-round-013 | round-match-framework.md | Round | Event Log ring bound; kill timeline protected from eviction; `TruncatedCount`; telemetry section | ADR-0023, ADR-0007 | 🟡 Proposed (re-check 2026-10-25: ADR-0023 §1, §5, R-4 and its GDD row now follow Round R19) |
@@ -199,8 +199,8 @@ No requirement lacks an ADR. Partial rows and what closes them:
 
 | TR-ID | What is missing | Closes when |
 |---|---|---|
-| TR-con-005 | Hide clips scheduled from replicated server start time: `FActionState.StartServerTime` is a reserved slot (Concealment CR-10 b, schema_changes); ADR-0017 §8 runs the `HidePoseStartServerTime` stopgap | User decides CR-10 b; ADR-0003/0017/0018 amended |
-| TR-pen-006 | Owner-only `T_due` has no carrier (C-W5, AQ-02, schema_changes); HUD F7 shows a static "Returning" interim | User decides the carrier; ADR-0001 §6 slot filled; ADR-0019 consumes it |
+| ~~TR-con-005~~ | Closed 2026-10-25: `FActionState.StartServerTime` adopted (user decision); ADR-0003/0017/0018 amended | — |
+| ~~TR-pen-006~~ | Closed 2026-10-25: `T_due` carried on the C-TeamView owner part (user decision); ADR-0001 §6 and ADR-0019 §6 amended; HUD F7 live countdown | — |
 
 Closed at the re-check (2026-10-25): TR-round-013 (ADR-0023 amended by the architecture-review fix pass to match Round R19).
 

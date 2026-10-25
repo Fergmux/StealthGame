@@ -12,7 +12,7 @@ Accepted — 2026-10-25, by the user (blanket acceptance of ADR-0001..0023, reco
 2026-10-24 (design against npc-kill-penalty-informants.md, level-socket-contract.md R5b, crowd-npc-behaviour.md CNB-R11, character-pool-appearance.md CP-12b/CP-13 and round-match-framework.md R17/R18 in their "reconciled 2026-10-24" state; no new engine API is introduced, engine facts are inherited from ADR-0002/0010/0014)
 
 ## Decision Makers
-Autonomous design pipeline (`/architecture-decision`, rigor full); technical-director (TD-ADR) and unreal-specialist validation (gate record at the end); acceptance reserved for the user. Orchestrator decision C1 (informant respawn = takeover of an unseen crowd pawn near the team spawn) is the design input; it is itself listed in active.md for user confirmation.
+Autonomous design pipeline (`/architecture-decision`, rigor full); technical-director (TD-ADR) and unreal-specialist validation (gate record at the end); acceptance reserved for the user. Orchestrator decision C1 (informant respawn = takeover of an unseen crowd pawn near the team spawn) is the design input; it was confirmed by the user 2026-10-25.
 
 ## Summary
 An eliminated player stays in the match as an informant who must periodically receive a body, without any client being able to tell, from the wire or the screen, that a citizen has just become a person. This ADR fixes the server-side informant lifecycle owned by NPC-Kill Penalty & Informants: the per-participant store and its states (Active, Awaiting, Picking, Embodied, Absent, RoundEnded), the respawn as a due-time-heap item at `T_due`, the one-call-stack commit `PickRespawnPawn → TryReleaseNpc → TakeOverCrowdPawn → TakeNpcCard`, retries and widening, the exile hand-off of the surviving body to the crowd, the strike/tally store that feeds `FStrikeResult`, and the informant restriction enforcement map; it consumes ADR-0001's open `T_due` carrier slot without choosing a schema.
@@ -33,10 +33,10 @@ An eliminated player stays in the match as an informant who must periodically re
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0001 (carrier model; **`T_due` carrier slot, pending user decision**), ADR-0002 (`ScheduleAt`, `ETimerKind::InformantRespawn`, resolvers, epoch tokens, latch, Roster flush barrier), ADR-0004 (Penalty/LSC/Round keys), ADR-0006 (secret streams consumed through ADR-0014), ADR-0010 (`TakeOverCrowdPawn`, `RequestHandOver`, hand-over pass, `ReleaseBody` requested by ADR-0018), ADR-0011 (informant legality, reply sink), ADR-0012 (`TakeNpcCard`, `ReleaseCard`, ledger pairing), ADR-0014 (`PickRespawnPawn`, widening, `RespawnPick` stream), ADR-0016 (`ITakeoverEligibilitySource::TryReleaseNpc`, `ICrowdControl::AdoptReleasedPawn`), ADR-0017 (`IsInBushOrTransition` inside Crowd eligibility), ADR-0018 (`OnPawnKilled`, `GetScheduledDeathServerTime`, `IStrikeTallySource`, body release before takeover). All must be Accepted before implementation. |
+| **Depends On** | ADR-0001 (carrier model; **`T_due` in the C-TeamView owner part**, ADR-0001 §6 as decided by the user 2026-10-25), ADR-0002 (`ScheduleAt`, `ETimerKind::InformantRespawn`, resolvers, epoch tokens, latch, Roster flush barrier), ADR-0004 (Penalty/LSC/Round keys), ADR-0006 (secret streams consumed through ADR-0014), ADR-0010 (`TakeOverCrowdPawn`, `RequestHandOver`, hand-over pass, `ReleaseBody` requested by ADR-0018), ADR-0011 (informant legality, reply sink), ADR-0012 (`TakeNpcCard`, `ReleaseCard`, ledger pairing), ADR-0014 (`PickRespawnPawn`, widening, `RespawnPick` stream), ADR-0016 (`ITakeoverEligibilitySource::TryReleaseNpc`, `ICrowdControl::AdoptReleasedPawn`), ADR-0017 (`IsInBushOrTransition` inside Crowd eligibility), ADR-0018 (`OnPawnKilled`, `GetScheduledDeathServerTime`, `IStrikeTallySource`, body release before takeover). All must be Accepted before implementation. |
 | **Enables** | ADR-0021 (HUD tally, exile card and returning countdown read Penalty's owner data), ADR-0023 (Penalty Event Log rows), Informant Pings (VS, system 20: embodied/awaiting states) |
-| **Blocks** | NPC-Kill Penalty & Informants epic (strike count, tally, exile, informant respawn, returning informant); the HUD returning-countdown story (until the `T_due` carrier is decided, see §6) |
-| **Ordering Note** | Should-have before Penalty is built (architecture.md). The `T_due` carrier is consumed as a slot: Penalty computes `T_due` regardless; the carrier adapter (§6) is implemented only after the user decides ADR-0001 §6 and ADR-0001 is amended. Penalty OQ-NKP-1 (tally vs live strike count) and CR-19 (C-TeamView tally re-push) are pending user decisions; this ADR implements the tally as written and reserves the re-push. |
+| **Blocks** | NPC-Kill Penalty & Informants epic (strike count, tally, exile, informant respawn, returning informant); the HUD returning-countdown story (carrier decided 2026-10-25, §6) |
+| **Ordering Note** | Should-have before Penalty is built (architecture.md). The user decided 2026-10-25: `T_due` rides the C-TeamView owner part (ADR-0001 §6, option (a); §6 below); the tally is confirmed (Penalty OQ-NKP-1) and the C-TeamView tally re-push is adopted (Penalty CR-19, §2.2a). |
 
 ## Context
 
@@ -48,7 +48,7 @@ Three locked rules meet here: an eliminated player becomes an informant who stay
 - **One order:** every step runs inside queue slots; timers are due-time-heap items (ADR-0002); possession changes are committed in a slot and executed by the hand-over pass (ADR-0010).
 - **One random draw:** `PickRespawnPawn` is the only draw; `TakeNpcCard` is a card move (Penalty CR-6, ADR-0012 guideline 5).
 - **Ordering constraints from accepted-track ADRs:** `TakeOverCrowdPawn` owns the eligibility check and `BindPawn`, and no card move may be committed unless it returned `Applied` (ADR-0010 §3.2); `TakeNpcCard` runs in the same call stack as its Roster counterpart (ADR-0012).
-- **Pending user decisions (always-ask):** the `T_due` carrier (ADR-0001 §6, AQ-02); the tally re-push fields (Penalty CR-19); the tally itself vs a live count (OQ-NKP-1); `NpcKillStrikeLimit` hard minimum (OQ-NKP-11). None is decided here.
+- **User decisions taken 2026-10-25:** the `T_due` carrier is option (a) (ADR-0001 §6, AQ-02); the tally re-push fields are adopted (Penalty CR-19); the tally replaces a live count (OQ-NKP-1); `NpcKillStrikeLimit` hard minimum is 2, `L = 1` only behind TDC's test-preset flag (OQ-NKP-11); informant respawn = rule C1 confirmed.
 - **Layering:** Penalty (Feature) may call Core and Foundation services; Round (Core) reaches Penalty only through a consumer-owned interface it declares (architecture TD concern 1).
 
 ### Requirements
@@ -57,7 +57,7 @@ Three locked rules meet here: an eliminated player becomes an informant who stay
 - One respawn path for every cause; `T_due = max(t_lost + D, t_floor, t_now)` (PEN-R7, R8, F2); disconnected victim → Absent, keeps `t_lost`, no timer (PEN-R8, cross-review S-B3).
 - The commit sequence in one server call stack with re-validation, retries every `EmergenceRetrySec`, LSC widening, never relaxing the unseen test (PEN-R9, R10; LSC R5b).
 - Disconnect, reclaim and lost-body rules (PEN-R11; Round R17.5, R17.9, R18).
-- Owner-only data: tally and `bExiled` via `FStrikeResult` (ADR-0018), `T_due` via the pending carrier (PEN-R15).
+- Owner-only data: tally and `bExiled` via `FStrikeResult` (ADR-0018), `T_due` via the C-TeamView owner part (PEN-R15, ADR-0001 §6).
 - The informant restriction contract enforced by its named owners (PEN-R12, R13).
 - Event Log rows (PEN-R17).
 
@@ -72,7 +72,7 @@ Three locked rules meet here: an eliminated player becomes an informant who stay
 | `WrongTargetTally` (uint8, saturating 255) | Owner (only through `FStrikeResult.TallyAfter`) | PEN-R3, F1 `t` |
 | `LifeState` | ServerOnly | `Active`, `Awaiting`, `Picking`, `Embodied`, `Absent`, `RoundEnded` (§3) |
 | `LostServerTime` (`t_lost`), `FloorServerTime` (`t_floor`) | ServerOnly | F2 inputs |
-| `DueServerTime` (`T_due`) | Owner (carrier pending, §6) | F2 output |
+| `DueServerTime` (`T_due`) | Owner (C-TeamView owner part, §6) | F2 output |
 | `RespawnRequestSeq` (uint32) | ServerOnly | one per respawn request; all retries reuse it (§4.3) |
 | `PickStartServerTime`, `LastWideningLevel` | ServerOnly | retry bookkeeping and logging (§4.3) |
 | `TimerHandle` | ServerOnly | the pending `InformantRespawn` item |
@@ -94,6 +94,8 @@ Seams (all registered weakly from the composition root, ADR-0007):
 - A `Player` victim (Assassinated / ReversedAgainst) is handled by the Roster state event that the same slot already raised (§3.2).
 
 **2.2 `GetTallyForResult(Attacker, Result)`** (called by Assassination after the fan-out, ADR-0018 §4.2): if `Result = WrongTarget`, `t := min(t + 1, 255)`; return `{TallyAfter = t, bExiled = (this slot exiled Attacker)}`. Every other result returns the current `t` and `bExiled = false`. The invariant `StrikeCount ≤ WrongTargetTally` is asserted after each update (development builds fault; Shipping logs).
+
+**2.2a Tally re-push** (Penalty CR-19; adopted by the user 2026-10-25): on reclaim, rejoin (`OnViewRebound`) and `OnRosterReset`, Penalty writes `{WrongTargetTally, LastResultSeq}` for that participant through the Roster server face `SetOwnerTally(P, Tally, LastResultSeq)` (ADR-0001 §5); it never writes them per strike, so the per-strike tally travels only in `FStrikeResult` and a C-TeamView update can never beat a plate (HUD-R7 gate).
 
 **2.3 Exile sequence** (one call stack, still in the slot, depth-first after the strike write, PEN-R4):
 1. `Roster.RequestTransition(P, Informant, StrikeLimit, ExpectedEpoch)`; the Roster performs `ReleaseToCrowd(Pawn)` inside the transition (Roster R8/R9, Penalty CR-3), so the pawn is `Unbound` from this call on.
@@ -168,8 +170,8 @@ Penalty adds no restriction of its own (an informant-only rule would itself be a
 | Respawns near its team spawn, never returns to Active this round | this ADR §3-§4; Roster (no revival transition) | takeover in the respawn region | §Validation |
 | Tell Matrix T7 (never seen running, vaulting, climbing, interacting, bracing, hiding) | ADR-0011 + ADR-0010 clamps; Crowd T7 calibration (ADR-0016) | the above | AC-NKP-17 / AC-CNB-30 |
 
-### 6. The `T_due` carrier: consumed slot (pending user decision)
-Penalty always computes and stores `DueServerTime` (§3.2) and raises a server-side notification on every change: `OnDueTimeChanged(P, TOptional<double> T_due)` (set at scheduling and readmission; unset at embodiment, cancellation, round end and reset). The **carrier adapter** that turns this into owner-visible data is **not implemented** until the user decides ADR-0001 §6 (architecture AQ-02; category schema_changes) and ADR-0001 is amended. For each recorded option the adapter is:
+### 6. The `T_due` carrier (decided by the user 2026-10-25: option (a))
+Penalty always computes and stores `DueServerTime` (§3.2) and raises a server-side notification on every change: `OnDueTimeChanged(P, TOptional<double> T_due)` (set at scheduling and readmission; unset at embodiment, cancellation, round end and reset). The **carrier adapter** is option (a), chosen by the user 2026-10-25 (ADR-0001 §6; AQ-02 closed): on `OnDueTimeChanged` Penalty writes `T_due` (double; 0 when unset) into the owner part through the Roster server face `SetOwnerRespawnDue(P, T_due)`, never while `IsLatched()`; it survives reconnects as replicated state, and HUD F7 shows a live countdown. The options that were analysed for the decision:
 
 | ADR-0001 §6 option | Adapter (only after the decision) | Reconnect / rejoin | Inputs the client would need, and whether it already holds them |
 |---|---|---|---|
@@ -177,7 +179,7 @@ Penalty always computes and stores `DueServerTime` (§3.2) and raises a server-s
 | (b) field in an owner reply | an `FInformantDueReply {DueServerTime}` entry in ADR-0011's `ClientCommandReplies` batch on every change, resent on `OnInformantReadmitted` | resent by Penalty on readmission; lost on a client restart until the next change unless resent | `T_due` itself (new Owner reply entry: needs an IVP leak-catalogue row) |
 | (c) client derivation | no carrier | derived again from the inputs on rebuild | `D` = `InformantRespawnDelaySec` (held: public tuning); own `DeathServerTime` (held: `FDeathState`, All); `T_v` of the killing strike (held only if the client can identify the killing strike's `FActionState`, which names no victim); `NoPawnFadeSec`, `DeathFallSec` (held: tuning); exile slot time (held by the exiled owner via its own strike write); **`t_lost` after a disconnect/reclaim and `t_now` of the reclaim (not held: server-only)** |
 
-**Interim until decided:** no countdown value leaves the server. HUD-E11 has no input and can present only its `s ≤ 0` form ("Returning", static; UI-NKP-4), which reveals nothing and needs no new field (GDD sync note to HUD F7; ADR-0021 owns the presentation). Nothing else in this ADR changes when the carrier is decided.
+~~**Interim until decided**~~ (static "Returning" only) — superseded 2026-10-25: HUD-E11 counts down from the carried `T_due` and keeps the static "Returning" only for `s ≤ 0` (UI-NKP-4; ADR-0021 owns the presentation).
 
 ### 7. Event Log and telemetry hooks
 Penalty writes (server-only, `PostRoundEligible` unless stated; never `UE_LOG`/`UE_LOGF`, output log or trace channels; ADR-0002, Round R19): `StrikeCounted{Killer, StrikeAfter, TallyAfter, Graced}`, `RespawnScheduled{Participant, Cause, t_lost, T_due}`, `InformantRespawn{Participant, PickLatencySec, WideningLevel}`, `RespawnCancelled{Participant, Reason}`, `PawnLost{Participant, Cause}`; LSC writes `RespawnStarved`; Round writes `StrikeLimit` with the transition.
@@ -201,7 +203,7 @@ Penalty writes (server-only, `PostRoundEligible` unless stated; never `UE_LOG`/`
  Round (after its elimination check, not latched) ─► IInformantBodyProvider::OnInformantAwaitingBody ─► ScheduleRespawn (or Absent if Disconnected)
  Round R18 readmission ─► IInformantBodyProvider::OnInformantReadmitted ─► Awaiting / commit now
  Round R17.9 informant pawn lost ─► OnInformantPawnLost ─► commit now (D = 0)
- OnDueTimeChanged ─► [T_due carrier adapter: SLOT, pending user decision]
+ OnDueTimeChanged ─► [T_due adapter: Roster SetOwnerRespawnDue → C-TeamView owner part]
 ```
 
 ### Key Interfaces
@@ -223,7 +225,7 @@ UCLASS(NotBlueprintType) class UPenaltyService : public UWorldSubsystem,
     public IStrikeTallySource /*ADR-0018*/, public IInformantBodyProvider, public IQueueResolver /*InformantRespawn*/
 {
 public:
-    FOnDueTimeChanged OnDueTimeChanged;                       // consumed only by the T_due carrier adapter (slot)
+    FOnDueTimeChanged OnDueTimeChanged;                       // consumed by the T_due adapter (SetOwnerRespawnDue, §6)
     EInformantLifeState GetLifeState(FParticipantId) const;   // server-only queries (tests, Round assertions)
     TOptional<double>   GetDueServerTime(FParticipantId) const;
     // IStrikeTallySource
@@ -254,7 +256,7 @@ public:
 - Respawns for `Active → Informant` causes must be scheduled only from Round's `OnInformantAwaitingBody` call (after its elimination check, never when latched), never from a Penalty subscription to Roster state events.
 - A respawn cause on a `Disconnected` participant must schedule no timer; reclaim must recompute `T_due` from the kept `t_lost` and `t_floor`, never restart the delay and never skip it.
 - Retries must reuse the request's `RespawnRequestSeq`; the unseen test must never be relaxed and widening must come only from LSC.
-- `T_due` must be computed and logged but must not reach any client until the user decides ADR-0001 §6; no countdown field, reply entry or client derivation may be implemented before that.
+- `T_due` must reach only its owner, only through the C-TeamView owner part (§6); no reply entry or client derivation may carry it.
 - Penalty must add no informant-only movement, collision, sight or region rule; restrictions are enforced only by the owners in §5.
 
 ## Alternatives Considered
@@ -263,7 +265,7 @@ public:
 - **Description**: Spawn a new Shared Pawn for the informant at a start cell or emergence socket of its team.
 - **Pros**: Simple; matches the rule's wording; no crowd coordination.
 - **Cons**: A new actor and NetGUID mid-round, appearing near a team's own spawn, is both a network tell and a location tell (P1/P2); Roster R9 forbids mid-round player-pawn spawns; LSC R5 forbids player emergence.
-- **Rejection Reason**: Breaks Pillar 1; orchestrator decision C1 replaced it (pending user confirmation in active.md).
+- **Rejection Reason**: Breaks Pillar 1; decision C1 replaced it (confirmed by the user 2026-10-25).
 
 ### Alternative 2: Re-possess the dead body or keep the participant's old look
 - **Description**: Bring the informant back in its own body or a same-look pawn.
@@ -315,7 +317,7 @@ public:
 - **Order between a Roster disconnect event and a due item in the same drain** — the key order decides; a disconnected participant's item re-validates and voids (step 1), so no bind lands on an unconnected participant. **Reverse race:** a takeover commits and a later disconnect slot in the same drain releases the pawn while the AI → player hand-over is still pending. ADR-0010 is asked to rule that a later `RequestHandOver` on the same pawn replaces the pending one, and that a `Player` target whose controller is invalid when the pass runs is dropped (the pawn stays crowd-possessed).
 - **`Unresponsive` informant at commit** — PEN-R9 counts `Unresponsive` as connected, so the takeover commits; the pawn holds the last command for `HandoverHoldSec` and then brakes by the baseline, an undriven stop. Round R17.1's AI hand-over covers only `Active` participants; Round/ADR-0016 are asked to extend it to informant-bound pawns (Move/Look only). Until then the stop is a known risk.
 - **Exile body and the owner's camera** — the PlayerController unpossesses the released body after its strike lockout; without §4.4's `OnUnPossess`/`bAutoManageActiveCameraTarget` changes the owner's view would cut to the controller. Covered by §4.4 and the Camera ACs.
-- **Pending OQ-NKP-1** — if the user picks a live exact strike count, only `GetTallyForResult` changes (returns `StrikeCount`) and Roster R10 narrows; the lifecycle is unaffected.
+- ~~Pending OQ-NKP-1~~ — closed 2026-10-25: the user confirmed the tally.
 
 ## GDD Requirements Addressed
 
@@ -331,7 +333,7 @@ public:
 | npc-kill-penalty-informants.md | PEN-R11 disconnect, return, lost bodies | §3.3 rows Embodied/Absent/PawnLost |
 | npc-kill-penalty-informants.md | PEN-R12/R13 informant contract and T7 | §5 enforcement map |
 | npc-kill-penalty-informants.md | PEN-R14 informant-kill invariant | §2.1 no strike; ADR-0018 byte-identical result |
-| npc-kill-penalty-informants.md | PEN-R15 owner data incl. `T_due` | §2.2 via `FStrikeResult`; §6 slot + interim |
+| npc-kill-penalty-informants.md | PEN-R15 owner data incl. `T_due` | §2.2 via `FStrikeResult`; §2.2a re-push; §6 owner-part carrier |
 | npc-kill-penalty-informants.md | PEN-R17 Event Log rows | §7 |
 | level-socket-contract.md | R5b request, eligibility, draw, result, starvation | §4.1 step 2, §4.3 (mechanism ADR-0014) |
 | crowd-npc-behaviour.md | CNB-R11 takeover supply, `TryReleaseNpc`, `AlleyExit` for the exile body | §4.1 step 4; §2.3 step 3 |
@@ -356,7 +358,7 @@ The prototype's informant respawn (spawn at team start, `PlayerStart`-based, `So
 - `StealthGame.Penalty.TakeoverInvisible` (multi-process, raw-bunch capture): a rival client observes no change on the taken pawn at the takeover frame or the hand-over frame beyond its ordinary 15 Hz movement updates (AC-IVP-45 parity).
 - `StealthGame.Penalty.Starvation` (integration): all region pawns watched → level 1 after 10 s, level 2 after 20 s, then indefinite wait with one `RespawnStarved`; no spawn.
 - `StealthGame.Penalty.ExileSequence` (integration): the exile body is `Unbound`, card `NpcLive`, crowd-driven with the lockout restriction, takes the next scheduled exit slot, is never the participant's own respawn pawn; the round latches at once when it was the team's last `Active` player and no respawn is scheduled.
-- `StealthGame.Penalty.TDueNotOnWire` (reflection/bunch audit): until ADR-0001 §6 is amended, no replicated property, RPC parameter or reply entry is derived from `DueServerTime`.
+- `StealthGame.Penalty.TDueOwnerOnly` (reflection/bunch audit): `DueServerTime` reaches only the owner's C-TeamView owner part; no other connection's bunches and no RPC parameter or reply entry carry it.
 
 ## Related
 - **Depends on**: ADR-0001, ADR-0002, ADR-0004, ADR-0006, ADR-0010, ADR-0011, ADR-0012, ADR-0014, ADR-0016, ADR-0017, ADR-0018.
@@ -372,7 +374,7 @@ The prototype's informant respawn (spawn at team start, `PlayerStart`-based, `So
   8. **Participant State & Roster (GDD) / Roster ADR owner:** R8/R9 "release, not retire" for `StrikeLimit` inside `RequestTransition` (Penalty CR-3).
   9. **Round (Core):** call `IInformantBodyProvider::OnInformantAwaitingBody` from its own transition handler after the elimination check (never when latched), and `OnInformantReadmitted` only after the returner's Session acknowledgement.
 - **GDD sync notes (not applied; GDDs owned by their authors)**: PEN-R9 steps 4/5 order (card after takeover); PEN-R9 step 3 "Crowd `TryReleaseNpc`" stays Penalty's call (ADR-0016 text says via LSC); Round R18/R17 gain the `OnInformantAwaitingBody` call after the elimination check; Roster R9 and Round R18 name Penalty as the `BindPawn` caller, under ADR-0010 `TakeOverCrowdPawn` binds on its behalf; HUD F7/HUD-E11 interim form while `T_due` has no carrier; LSC R5b.3 stream key (`RespawnPick` by `RespawnRequestSeq`, ADR-0014) instead of `LayoutAttempt`.
-- **Pending user decisions consumed (already listed in active.md; nothing new)**: `T_due` carrier (C-W5 / AQ-02); Penalty OQ-NKP-1 (tally vs live count) and CR-19 (tally re-push); decision C1 confirmation; OQ-NKP-11 (strike limit hard minimum).
+- **Formerly pending user decisions (all decided 2026-10-25)**: `T_due` carrier (C-W5 / AQ-02: option (a)); Penalty OQ-NKP-1 (tally confirmed) and CR-19 (re-push adopted); decision C1 (confirmed); OQ-NKP-11 (hard minimum 2).
 
 ## Validation gates
 - **TD-ADR (technical-director), 2026-10-24: CONCERNS → REVISED.** (1) `TryReleaseNpc` caller conflict with ADR-0016/0014 → confirmation requests (Related 5), plus `ReleaseControl` idempotence and `AdoptReleasedPawn` as exact reversal. (2) In-slot re-pick cap unreachable under ADR-0014's one-pick-per-frame guard → one pick per slot, exclusion set in the request record, next-frame retry strictly after the drain start (§4.1, §4.3). (3) `TakeNpcCard` failure after `Applied` → takeover stands, `LedgerMismatch`, no rollback. (4) Flush subscriber order → scheduling moved to Round's `OnInformantAwaitingBody` call after its elimination check, never when latched (§1, §2.3, §3.3). (5) Reverse disconnect race → ADR-0010 request + risk row. (6) `Unresponsive` informant at commit → risk row + Round/ADR-0016 request. (7) Controller not always pawnless → pass order request; engine tolerance [V]. (8) `NotEligible` not a defect until the pre-check exists. (9) §6 table made neutral (inputs held / not held); `TDueNotOnWire` reworded. (10) Missing-provider fault; layering wording. (11) Roster CR-3, exile view target, R18 after Session ack added to Related.
@@ -384,3 +386,9 @@ Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.
 - §3.2, §1 store table, Key Interfaces: `FInformantRespawnPayload` removed; the `InformantRespawn` item uses ADR-0002 §2a's Foundation `FTimerPayload` (`Subject` = participant, `Seq` = `RespawnRequestSeq`), and `FPawnHandle` is ADR-0002's — architecture-review fix 2026-10-25 (Conflict 1, blocking).
 - Related item 8 ("release, not retire" for `StrikeLimit` inside `RequestTransition`, with the Roster calling `ReleaseToCrowd` internally) is now applied in ADR-0005 and in ADR-0012's caller wording — architecture-review fix 2026-10-25 (Conflict 8).
 - Requests answered (2026-10-24 and 2026-10-25): Related items 1 and 6 (ADR-0010), 2 (ADR-0014), 3, 7 and 9 (ADR-0005, ADR-0015, ADR-0010), 5 (ADR-0016) and 8 (ADR-0005/ADR-0012, this pass) are applied by their owners; item 4 is input to the user's pending `T_due` carrier decision (ADR-0001 §6). The Status line's "before the amendment requests listed under Related are answered" condition is met except for that pending user decision, which the Status line already names separately; the Status line itself is not edited — architecture-review fix 2026-10-25 (Conflict 9).
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- §6, diagram, Key Interfaces, guidelines, validation — user decision 2026-10-25: the `T_due` carrier is ADR-0001 §6 option (a); the adapter writes the C-TeamView owner part through `SetOwnerRespawnDue`; the static-"Returning" interim is superseded by a live countdown; `TDueNotOnWire` becomes `TDueOwnerOnly`.
+- §2.2a (new) — user decision 2026-10-25: Penalty CR-19 tally re-push adopted (`SetOwnerTally` on reclaim, rejoin, `OnRosterReset`; never per strike).
+- Context, Risks — user decision 2026-10-25: the tally replaces a live strike count (Penalty OQ-NKP-1 confirmed); decision C1 confirmed; `NpcKillStrikeLimit` hard minimum 2 (OQ-NKP-11; `L = 1` only with TDC's `bTestAllowsStrikeLimitOne`).
+- §3.2 — user decision 2026-10-25: the `InformantKilled` own-view reason is confirmed (Penalty CR-18 / OQ-NKP-12).

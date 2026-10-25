@@ -52,7 +52,7 @@ A strike's outcome is decided in one server queue slot, but anything a client ca
 | **Depends On** | ADR-0001 (one pawn class; carrier model: `All` facts on the pawn, Owner data on the PlayerController; no pawn RPC), ADR-0002 (queue slot, inline follow-ons, typed staged writes `DeathWrite`/`CounterPose`, staging pass, `RoundEndStep` binding by `CauseKey`, due-time heap, `EstimatedServerNow`), ADR-0003 (fixed-width serialisers, `FStealthForcedNetUpdate` reasons `ActionStateWrite`/`DeathWrite`, uniform net config, re-open at the death write, killed-concealed interim), ADR-0010 (`Disabled` through the movement freeze flag, hand-over pass, possession only through the factory), ADR-0011 (`UPawnCommandComponent::WriteActionState` as the only `FActionState` writer, the per-connection reply batch `ClientCommandReplies`, `FClientCommandSeq`), ADR-0012 (`VacateCard`), ADR-0013 (AnimBP reads `FActionState`/`FDeathState`; one fall montage), ADR-0017 (spot occupants, bush footprint, `HidePoseStartServerTime` stopgap, `MarkKilledConcealed`), ADR-0004 (Assassination and HUD tuning keys), ADR-0008 (byte-capture and net-emulation harness). All must be Accepted before this ADR is implemented. |
 | **Enables** | ADR-0019 (informant lifecycle reads the scheduled `DeathServerTime` for the `T_due` floor and the body release), ADR-0021 (HUD result plates, own-removal card and brace indicator schedule from this ADR's data and dispatch), ADR-0016 (Crowd consumes `OnPawnKilled` with the victim-driving rule of §3.4), ADR-0023 (Event Log rows for strikes and staged writes) |
 | **Blocks** | Assassination & Defence Reversal epic (all stories touching the strike, the death write, bodies or owner results); the HUD result-plate, removal-card and brace-indicator stories; the NPC-Kill Penalty tally/exile stories that fill `FStrikeResult` |
-| **Ordering Note** | Should-have before Assassination is built (architecture.md). Three pending user decisions are carried as **reserved slots** and must not be implemented until decided: `ContactServerTime` in `FStrikeResult` (HUD OQ15), `FActionState.StartServerTime` (Concealment CR-10 b; ADR-0017 slot A), `FDeathState.bDiedConcealed` (Concealment CR-10 a; ADR-0017 slot B). Amendment requests to ADR-0002, ADR-0010, ADR-0012 and ADR-0016 (Related) gate acceptance of this ADR, not its authoring; all were answered on 2026-10-24 (see Amendments). **Acceptance pair with ADR-0017** (architecture-review fix 2026-10-25): the two ADRs depend on each other's contracts (this ADR reads Concealment's spot queries and kill hook; Concealment reads this ADR's `FActionState`/`FDeathState` semantics and implements `IBodyRemovalObserver`), so they are reviewed and accepted together in one step. The edge is declared here only (ADR-0018 → ADR-0017); ADR-0017 records the pair in its Ordering Note instead of listing this ADR under Depends On, so the declared graph stays acyclic. |
+| **Ordering Note** | Should-have before Assassination is built (architecture.md). The three fields once carried as reserved slots — `ContactServerTime` in `FStrikeResult` (HUD OQ15), `FActionState.StartServerTime` (Concealment CR-10 b; ADR-0017 §8 A), `FDeathState.bDiedConcealed` (Concealment CR-10 a; ADR-0017 §8 B) — were approved by the user 2026-10-25 and are specified in §1. Amendment requests to ADR-0002, ADR-0010, ADR-0012 and ADR-0016 (Related) gate acceptance of this ADR, not its authoring; all were answered on 2026-10-24 (see Amendments). **Acceptance pair with ADR-0017** (architecture-review fix 2026-10-25): the two ADRs depend on each other's contracts (this ADR reads Concealment's spot queries and kill hook; Concealment reads this ADR's `FActionState`/`FDeathState` semantics and implements `IBodyRemovalObserver`), so they are reviewed and accepted together in one step. The edge is declared here only (ADR-0018 → ADR-0017); ADR-0017 records the pair in its Ordering Note instead of listing this ADR under Depends On, so the declared graph stays acyclic. |
 
 ## Context
 
@@ -65,12 +65,12 @@ This decision is needed now because Assassination, the HUD and Penalty are writt
 - **Pillar 1 / IVP:** a pawn carries only `All` facts, identical in type, size and timing for every pawn kind; no pawn RPC, no multicast, no effect actor (ADR-0001, ADR-0003, IVP L15).
 - **One authoritative order:** every gameplay decision is made in a queue slot; outcome-revealing presentation state is applied only by typed staged writes, which decide nothing (ADR-0002 §5-§6).
 - **Server clock only:** client presentation schedules from `EstimatedServerNow()` (ADR-0002 §9), never from the arrival time of a replicated value.
-- **Pending schema decisions** (always-ask): `ContactServerTime` in `FStrikeResult`, `FActionState.StartServerTime`, `FDeathState.bDiedConcealed`, `RetireAtServerTime` on the C-TeamView retire (Markers). None may be added here.
+- **Schema decisions taken by the user 2026-10-25:** `ContactServerTime` in `FStrikeResult`, `FActionState.StartServerTime`, `FDeathState.bDiedConcealed` (all specified in §1) and `RetireAtServerTime` on the C-TeamView retire (Roster R6; this ADR supplies the kill's contact time, §3 step 3).
 - **Listen server:** the host process holds server state; its presentation must pass through the same gate (ASN-R23).
 - **No new tuning keys:** every timing value already exists in the ASN/HUD/Penalty knob tables.
 
 ### Requirements
-- Fixed-width `FActionState {Pose, Seq, Variant, ContactServerTime, WarpPoint}` and `FDeathState {DeathServerTime}`, the same size for every outcome and victim kind (ASN-R21).
+- Fixed-width `FActionState {Pose, Seq, Variant, StartServerTime, ContactServerTime, WarpPoint}` and `FDeathState {DeathServerTime, bDiedConcealed}`, the same size for every outcome and victim kind (ASN-R21).
 - One outcome-blind cue at the slot (the attacker's strike pose); every outcome-revealing write at `ContactServerTime − StrikeNetLeadSec` in one server step, written even after the round latch (ASN-R21).
 - `WarpPoint` never reads a pawn the attacker cannot know (ASN-R21, revised at design review).
 - Victim untouched until the death write (ASN-R16); one body sequence for every victim (ASN-R17); possession stays through the fall (ASN-R22).
@@ -84,22 +84,23 @@ This decision is needed now because Assassination, the HUD and Penalty are writt
 
 ### 1. Wire structs (StealthFoundation `Public/View`)
 
-**1.1 `FActionState`** — one `ReplicatedUsing=OnRep_ActionState` property on `AStealthPawn`, `All` audience, written only by `UPawnCommandComponent::WriteActionState` inside `FStealthForcedNetUpdate(ActionStateWrite)` (ADR-0011 §7, ADR-0003 §2). Custom `NetSerialize` (`WithNetSerializer`) and `Identical` (`WithIdentical`) (E1), **144 bits for every value** (E2):
+**1.1 `FActionState`** — one `ReplicatedUsing=OnRep_ActionState` property on `AStealthPawn`, `All` audience, written only by `UPawnCommandComponent::WriteActionState` inside `FStealthForcedNetUpdate(ActionStateWrite)` (ADR-0011 §7, ADR-0003 §2). Custom `NetSerialize` (`WithNetSerializer`) and `Identical` (`WithIdentical`) (E1), **208 bits for every value** (E2; was 144 before `StartServerTime`, user decision 2026-10-25):
 
 | Field | Bits | Meaning (this ADR owns encounter semantics; ADR-0011 owns the pose list) |
 |---|---|---|
 | `Pose` (`EActionPose`, uint8) | 8 | `None`, `Strike`, `Brace`, `Counter`, `Interact`, `BushEnter`, `BushExit` (IIF R12 list; append-only). |
 | `Seq` (uint16) | 16 | Per-pawn write counter **assigned by `WriteActionState` itself** (a caller's `Seq` is ignored): +1 on **every** write of that pawn, any pose, any pawn kind; default 1 (sentinel); wraps 65535 → 1. Compared only for equality ("differs from the last consumed write"). Never carries or encodes a `ClientCommandSeq` (ASN-R23: a command sequence on an `All` struct exposes a client's command cadence, which NPCs cannot match). |
 | `Variant` (uint8) | 8 | For `Strike`: bits 0-1 entry variant (0 `Strike_F`, 1 `Strike_L60`, 2 `Strike_R60`; chosen from the bearing θ by ASN-R16), bit 2 `BushPreface`; other bits 0. For every other pose 0. |
-| `ContactServerTime` (double) | 64 | For `Strike`: slot server time + `StrikeContactSec` (+ `BushStrikeEmergeSec` when `BushPreface`). For `Counter`: the reversed strike's `ContactServerTime`. For `BushEnter`/`BushExit`: the pose start time (ADR-0017 slot-A stopgap; readers use `HidePoseStartServerTime`). Otherwise −1. |
+| `StartServerTime` (double) | 64 | Server time the pose began, for every write and pose (`Strike` and its bush preface: the slot time; `Counter`: the death-write time; `BushEnter`/`BushExit`: the transition start, ADR-0017 §8 A; `None`: the write time). Added by user decision 2026-10-25 (Concealment CR-10 b). |
+| `ContactServerTime` (double) | 64 | For `Strike`: slot server time + `StrikeContactSec` (+ `BushStrikeEmergeSec` when `BushPreface`). For `Counter`: the reversed strike's `ContactServerTime`. Otherwise −1 (no longer overloaded with the hide-pose start, 2026-10-25). |
 | `WarpPoint` (`FFixedWarpOffset`) | 48 | Three `int16` in **0.1 cm** units, **world axes**, offset of the strike's warp target (the victim-capsule point the lunge aims at) from the attacker's server capsule location at the slot; `(0,0,0)` for every non-`Strike` pose. Range ±3,276.7 cm, far above the semantic clamp of §2.2, so the clamp, not the encoding, bounds it. `FFixedWarpOffset`'s members are `UPROPERTY`s (legacy change detection, ADR-0003 §4). |
 
-No optional field, no conditional bit, no magnitude-packed vector. `NetSerialize` writes with `SerializeBits` and always returns `true`; `Identical` compares all five fields (E1); `WithNetSharedSerialization` may be set. The attacker's pawn changes no other replicated property at the slot except replicated movement and `RepRootMotion` (the strike clip is a root-motion montage; its asset differs only by `Variant`, which is already public).
+No optional field, no conditional bit, no magnitude-packed vector. `NetSerialize` writes with `SerializeBits` and always returns `true`; `Identical` compares all six fields (E1); `WithNetSharedSerialization` may be set. The attacker's pawn changes no other replicated property at the slot except replicated movement and `RepRootMotion` (the strike clip is a root-motion montage; its asset differs only by `Variant`, which is already public).
 
-**1.2 `FDeathState`** — one `ReplicatedUsing=OnRep_DeathState` property on `AStealthPawn`, `All`, `double DeathServerTime = −1.0` (64 bits; sentinel −1). Written once per pawn, only by the death write (§3.2), equal to the deciding strike's `ContactServerTime`. Never reset (bodies are never re-possessed, ASN-R17). **Slot B** (`bDiedConcealed`, pending user) is reserved and not implemented (ADR-0017 §8).
+**1.2 `FDeathState`** — one `ReplicatedUsing=OnRep_DeathState` property on `AStealthPawn`, `All`, `double DeathServerTime = −1.0` (64 bits; sentinel −1). Written once per pawn, only by the death write (§3.2), equal to the deciding strike's `ContactServerTime`. Never reset (bodies are never re-possessed, ASN-R17). `bool bDiedConcealed` (1 bit, so `FDeathState` is 65 bits; user decision 2026-10-25, Concealment CR-10 a): true only when the victim was `Concealed`/`CullPending` at the death write, written in the same write, identical for every victim kind (ADR-0017 §8 B).
 
 **1.3 `FStrikeResult`** (Owner) — an entry kind of ADR-0011's per-connection reply batch `ClientCommandReplies` (owner-only reliable RPC on `AStealthPlayerController`), never a property:
-`{ FClientCommandSeq ClientCommandSeq; EStrikeResult Result; uint8 TallyAfter; bool bExiled; }` with `EStrikeResult { RivalEliminated, WrongTarget, NoContact, Reversed }`. Same shape and size for every `Result` (ASN-R19). `TallyAfter` (saturating at 255) and `bExiled` are supplied by Penalty in the slot through `IStrikeTallySource` (§4.2); they are provisional on Penalty OQ-NKP-1. **Reserved slot:** `double ContactServerTime` (HUD OQ15, pending user, schema_changes) — not implemented; §5.3 is the MVP rule without it.
+`{ FClientCommandSeq ClientCommandSeq; EStrikeResult Result; uint8 TallyAfter; bool bExiled; }` with `EStrikeResult { RivalEliminated, WrongTarget, NoContact, Reversed }`. Same shape and size for every `Result` (ASN-R19). `TallyAfter` (saturating at 255) and `bExiled` are supplied by Penalty in the slot through `IStrikeTallySource` (§4.2); the tally was confirmed by the user 2026-10-25 (Penalty OQ-NKP-1). `double ContactServerTime` (user decision 2026-10-25, HUD OQ15): the strike's contact server time (equal to the attacker's strike-write `ContactServerTime`; for `NoContact` the whiff's nominal contact time), so every `Result` keeps one shape; HUD F2 reads it first (§5.3).
 
 **1.4 `FDefenceResult`** (Owner) — another entry kind of the same batch: `{ EDefenceResult Result /* Reversed */ }`, sent only to a bound defender's connection on a reversal (null sink for an NPC defender). Carries no time and no attacker reference (ASN-R19).
 
@@ -110,9 +111,9 @@ No optional field, no conditional bit, no magnitude-packed vector. `NetSerialize
 **2.1 Order inside the Attack's slot** (the IIF executes the `Attack` and calls Assassination's follow-on inline; all of it before slot end, ADR-0002 §5):
 1. Victim resolution and outcome (ASN-R8, R10, F1, F4) from live state. For a bush spot, Assassination filters Concealment's occupants by F1 reach and draws the victim from the `BushSpotPick` secret stream (`ESeedDomain` 14, tag `CON_SPOT`, ADR-0017 §7, ADR-0006), never `H(...) mod n` (amendment 2026-10-24, confirmation requested by ADR-0017).
 2. `WriteActionState(Attacker, {Strike, Variant, ContactServerTime, WarpPoint})` (Seq assigned by the writer) — the only replicated change at the slot (forced update `ActionStateWrite`), identical in shape for a kill, a whiff and a reversal.
-3. Roster transition if any (`RequestTransition(V, Informant, Assassinated)` or `(A, Informant, ReversedAgainst)`), before `OnPawnKilled` (ASN-R10).
+3. Roster transition if any (`RequestTransition(V, Informant, Assassinated)` or `(A, Informant, ReversedAgainst)`), before `OnPawnKilled` (ASN-R10); the binding retirement passes `RetireAtServerTime` = this strike's `ContactServerTime` (Roster R6, Teammate Markers TM-R6; user decision 2026-10-25).
 4. `UAppearanceAllocator::VacateCard(Dead pawn)` for the killed pawn (kill: V; reversal: A), with no kind parameter (ADR-0012 guideline 7; CP-12b). It runs **in the slot**, because the card ledger is server-only gameplay state and must not be mutated in the staging pass (ADR-0002 §5 allows no new mutation there); see the ADR-0012 sweep amendment under Related.
-5. Concealment: for a victim killed while concealed, `IConcealmentCullSource::MarkKilledConcealed(V)` and the occupancy exit (ADR-0017, ASN-R10 interim).
+5. Concealment: for a victim killed while concealed, the occupancy exit in the slot; the un-cull is staged with the death write, which sets `bDiedConcealed = true` (ADR-0017 §8 B, ADR-0003 §5.7; user decision 2026-10-25).
 6. `OnPawnKilled(Victim, Killer, VictimKind, Cause)` for kills and reversals (subscribers inline: Penalty strike/tally/exile, Crowd vacancy, Round log). Not emitted for a whiff.
 7. Stage the outcome writes (§3.1) with `CauseKey` = this slot's `RootCauseKey`.
 8. Build `FStrikeResult` (Penalty fills `TallyAfter`/`bExiled` through `IStrikeTallySource`, §4.2) and, on a reversal by a bound defender, `FDefenceResult`; append both to their sinks' per-pass reply buffers (ADR-0011 §8: within one slot the IIF's own reply precedes the feature result).
@@ -174,7 +175,7 @@ No optional field, no conditional bit, no magnitude-packed vector. `NetSerialize
 - A result `r` (`FStrikeResult`, or `FDefenceResult` for the defender) is `Pending` until the **first** `FActionState` observation on the captured handle with `Pose = Strike` (defender: `Counter`), `Seq ≠ last consumed Seq` and `ContactServerTime > last consumed contact time`; that write is consumed and gives `t_c`. Order of arrival of `r` and the write does not matter (E6).
 - Show time (HUD F2): `t_show = min(max(t_c,local, t_arrival), t_arrival + HudResultPlateMaxHoldBackSec)`; if no matching write by the cap, show at the cap (lost-data fallback, still at or after contact by I-HUD-1). Late processing never drops an unshown, non-duplicate result in live play; duplicates are dropped by `(PossessionEpoch, Seq)` order and a last-8 ring.
 - **Uniqueness:** at most one strike write per pawn is in flight, because `AttackAttemptLockoutSec` (hard min 1.2 s) ≥ the longest execution-to-contact delay (≤ 1.2 s by I-ASN-3); a strict-inequality warning is requested of TDC (Related).
-- **Reserved:** if the user approves `ContactServerTime` in `FStrikeResult` (OQ15), `t_c` comes from the result itself, the matcher is retired for the attacker side, and §1.3 gains the field (one fixed 64-bit member); the defender side keeps the matcher.
+- **Adopted 2026-10-25 (user decision, OQ15):** for the attacker `t_c` comes from `FStrikeResult.ContactServerTime` itself; the positional matcher above remains for the defender's `FDefenceResult` and as the attacker-side fallback.
 
 **5.4 Tally and exile.** HUD applies `TallyAfter` at the plate's `t_show` (HUD-R7), and raises the exile card at `t_show + ExileBeatSec` when `bExiled` (HUD-R9, PEN-R16). No other path presents either.
 
@@ -196,7 +197,7 @@ No optional field, no conditional bit, no magnitude-packed vector. `NetSerialize
  SERVER (listen host)                                   WIRE                          CLIENTS
  Attack slot k (TG_PostPhysics drain)
   1 resolve victim/outcome (ASN-R8,R10)
-  2 WriteActionState(A,{Strike,Seq,Var,Tc,Warp}) ─────► FActionState(A) [All, 144 b] ─► Refresh: strike clip,
+  2 WriteActionState(A,{Strike,Seq,Var,Ts,Tc,Warp}) ──► FActionState(A) [All, 208 b] ─► Refresh: strike clip,
   3 Roster transition   4 VacateCard (slot)              forced update                 contact at Tc, local warp
   5 Concealment kill hook                                                                (outcome-blind, every kind)
   6 OnPawnKilled ─► Penalty (strike, tally, exile), Crowd, Round
@@ -228,22 +229,22 @@ USTRUCT() struct FFixedWarpOffset { GENERATED_BODY()
 
 USTRUCT() struct FActionState { GENERATED_BODY()
     UPROPERTY() EActionPose Pose = EActionPose::None; UPROPERTY() uint16 Seq = 1;
-    UPROPERTY() uint8 Variant = 0; UPROPERTY() double ContactServerTime = -1.0;
+    UPROPERTY() uint8 Variant = 0; UPROPERTY() double StartServerTime = -1.0;
+    UPROPERTY() double ContactServerTime = -1.0;
     UPROPERTY() FFixedWarpOffset WarpPoint;
-    /* StartServerTime: RESERVED, pending user (Concealment CR-10 b; ADR-0017 slot A). Do not implement. */
-    bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);  // always 144 bits
+    bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);  // always 208 bits
     bool Identical(const FActionState* Other, uint32 PortFlags) const; };
 template<> struct TStructOpsTypeTraits<FActionState> : TStructOpsTypeTraitsBase2<FActionState>
 { enum { WithNetSerializer = true, WithIdentical = true }; };
 
 USTRUCT() struct FDeathState { GENERATED_BODY()
     UPROPERTY() double DeathServerTime = -1.0;
-    /* bDiedConcealed: RESERVED, pending user (Concealment CR-10 a; ADR-0017 slot B). Do not implement. */ };
+    UPROPERTY() bool bDiedConcealed = false; };   // always 65 bits (user decision 2026-10-25)
 
 USTRUCT() struct FStrikeResult { GENERATED_BODY()          // entry of ClientCommandReplies (ADR-0011)
     UPROPERTY() FClientCommandSeq ClientCommandSeq; UPROPERTY() EStrikeResult Result = EStrikeResult::NoContact;
     UPROPERTY() uint8 TallyAfter = 0; UPROPERTY() bool bExiled = false;
-    /* ContactServerTime: RESERVED, pending user (HUD OQ15). Do not implement. */ };
+    UPROPERTY() double ContactServerTime = -1.0; };   // user decision 2026-10-25 (HUD OQ15)
 USTRUCT() struct FDefenceResult { GENERATED_BODY() UPROPERTY() EDefenceResult Result = EDefenceResult::Reversed; };
 
 UCLASS() class UDefenceOwnerComponent : public UActorComponent   // on AStealthPlayerController, owner-only
@@ -290,7 +291,7 @@ public:
 
 ### Implementation Guidelines
 
-- `FActionState` must serialise to exactly 144 bits and `FDeathState` to exactly 64 bits for every value; there must never be an optional, conditional or magnitude-packed field in either.
+- `FActionState` must serialise to exactly 208 bits and `FDeathState` to exactly 65 bits for every value; there must never be an optional, conditional or magnitude-packed field in either.
 - `FActionState.Seq` must advance by one on every write of that pawn and must never carry, derive from or correlate with a `ClientCommandSeq`.
 - At the Attack's slot only the attacker's `FActionState` (and its movement/root-motion state) may change on the wire; nothing on the victim or a defender may change before the death write.
 - `WarpPoint` must be derived only from an honoured `PawnRef`'s extrapolation or from the submitted `WorldPoint` (clamped); it must never read a culled or concealed pawn's position.
@@ -300,7 +301,7 @@ public:
 - `FStrikeResult` must be sent for every executed Attack and `FDefenceResult` for every reversal by a bound defender, as entries of the ADR-0011 reply batch, with the same shape for every result; no other outcome field may reach any connection.
 - Client presentation must go through one idempotent `Refresh(EstimatedServerNow())` called from every RepNotify, re-open and the host's direct path; it must never present an outcome on receipt, never snap, and never use arrival time except as the matcher's floor and lost-data cap.
 - Own-role presentation (HUD, Camera, input contexts, owner audio) must subscribe only to `OnRoleChangePresented`; it must never react to the arrival of the Roster's owner state.
-- Result plates must be matched to their strike positionally on the pawn handle captured at the press; `ContactServerTime` in `FStrikeResult`, `FActionState.StartServerTime` and `FDeathState.bDiedConcealed` must not be implemented until the user decides them and this ADR is amended.
+- Result plates must be matched to their strike positionally on the pawn handle captured at the press; for the attacker the result's own `ContactServerTime` is used first; `FActionState.StartServerTime` and `FDeathState.bDiedConcealed` must be filled in every write as §1 specifies (user decisions 2026-10-25).
 - No code may set a strike or counter warp target through `UMotionWarpingComponent`'s replicated `WarpTargets`; the pawn's motion-warping component must not replicate it.
 - Bodies must be released from their controller at `DeathServerTime + DeathFallSec` and torn down after the linger and grace through the queue, never by an engine timer, and identically for every victim kind.
 
@@ -353,8 +354,8 @@ public:
 
 ### Negative
 - Two layers of state (slot and staged) and a client matcher are more machinery than "replicate the outcome".
-- The positional matcher is an inference with a lost-data fallback that can show a plate up to `HudResultPlateMaxHoldBackSec` after arrival when the strike write is lost; only the pending `ContactServerTime` field removes it.
-- `ContactServerTime` carries a hide-pose start time for `BushEnter/BushExit` until the user decides `StartServerTime` (semantic overload owned by ADR-0017).
+- The positional matcher is an inference with a lost-data fallback that can show a plate up to `HudResultPlateMaxHoldBackSec` after arrival when the strike write is lost; the `ContactServerTime` field adopted 2026-10-25 removes it for the attacker; it remains for the defender.
+- ~~`ContactServerTime` hide-pose overload~~ — removed 2026-10-25 (`StartServerTime` adopted).
 - Four amendments to accepted-track ADRs (ADR-0002 timer kinds, ADR-0010 `ReleaseBody` and warp-target replication, ADR-0012 sweep wording, ADR-0016 victim driving) must land before this ADR can be accepted.
 
 ## Risks
@@ -397,7 +398,7 @@ public:
 The prototype (`Source/StealthGame`) uses separate pawn bools (`bDying`, `bPreparingDefence`) and `Server*` RPCs on the pawn; ADR-0001's migration list already marks them for replacement by `FActionState` and the command component. Nothing is ported: Assassination is written fresh against this ADR once it and its dependencies are Accepted. The sample pawn's `UMotionWarpingComponent` is replaced by `UStealthMotionWarpingComponent` when the Blueprint is reparented (ADR-0010 migration).
 
 ## Validation Criteria
-- `StealthGame.Assassination.WireWidth` (unit, on an `FNetBitWriter`): `FActionState` always 144 bits, `FDeathState` 64 bits, across randomised values incl. extremes; `NetSerialize` returns true; `Identical` matches field equality on all five fields.
+- `StealthGame.Assassination.WireWidth` (unit, on an `FNetBitWriter`): `FActionState` always 208 bits, `FDeathState` 65 bits, across randomised values incl. extremes; `NetSerialize` returns true; `Identical` matches field equality on all six fields.
 - `StealthGame.Assassination.LungeOutcomeBlind` (integration): the attacker's `RepRootMotion` and replicated movement up to contact are identical for a hit, a whiff and a reversal with the same `WarpPoint` (no server re-track).
 - `StealthGame.Assassination.ByteIdentity` (integration, harness raw-bunch capture): kill, whiff and reversal produce identical `FActionState` bunch sizes on a bystander; `FDeathState` bunches identical for NPC, player and informant victims (AC-ASN-35 support).
 - `StealthGame.Assassination.NothingAtSlot` (integration): between the slot and `T_dw`, a bystander receives no change on the victim or defender pawn; the victim's movement continues (human and NPC).
@@ -420,7 +421,7 @@ The prototype (`Source/StealthGame`) uses separate pawn bools (`bDying`, `bPrepa
   5. **ADR-0004 / TDC (warning, not a new key):** cross-field warning `AttackAttemptLockoutSec > StrikeContactSec + BushStrikeEmergeSec` (strict), protecting the matcher's uniqueness.
   6. **ADR-0015 / ADR-0010 coordination:** `AStealthPlayerController::OnUnPossess` keeps the view target when the unpossess comes from `ReleaseBody` (E9), so Camera's own fade governs the view.
 - **GDD sync notes (not applied; GDDs are owned by their authors)**: ASN-R21 "Clients schedule from the GameState server clock" is read as `EstimatedServerNow()` (ADR-0002 §9); ASN-R16 "only the server may re-track the victim's capsule" is not used: the server lunge warps to the fixed `WarpPoint` (§2.2, E8); ASN-R19 `FStrikeResult` travels as an entry of ADR-0011's `ClientCommandReplies` batch rather than a stand-alone RPC; IIF R12's pose list gains no value from this ADR; HUD F2 `ServerNowEst` = `EstimatedServerNow()`.
-- **Pending user decisions consumed as reserved slots (already listed in active.md; nothing new)**: `ContactServerTime` in `FStrikeResult` (HUD OQ15); `FActionState.StartServerTime` and `FDeathState.bDiedConcealed` (Concealment CR-10); `RetireAtServerTime` (Markers OQ3, not read by this ADR).
+- **Formerly pending user decisions (all approved 2026-10-25)**: `ContactServerTime` in `FStrikeResult` (HUD OQ15); `FActionState.StartServerTime` and `FDeathState.bDiedConcealed` (Concealment CR-10); `RetireAtServerTime` (Markers OQ3; supplied in §3 step 3).
 
 ## Validation gates
 - **TD-ADR (technical-director), 2026-10-24: CONCERNS → REVISED.** (1) Card vacated in the slot confirmed correct; same-look replacement beside a body bounded by I-ASN-5w (§6.4, ADR-0012 request). (2) Kill-only crowd reactions before the death write → §3.4 extended to every `OnPawnKilled` subscriber, `KillServerTime` defined, ADR-0016 request widened. (3) Body release coherent; `OnUnPossess` view-target jump handled (§6.1, ADR-0015 coordination); post-latch collision divergence accepted under the round-end freeze (§6.3). (4) `IStrikeTallySource` read conditions (inline fan-out, overflow deferral, `bExiled` from Penalty's own decision) (§4.2). (5) `Seq` owned by `WriteActionState`; "live pawn" defined for ADR-0002 §8.4(f). (6) Pending decisions confirmed reserved only. (7) Status prerequisites aligned with Depends On. (8) `WarpTargets` validation reads `COND_Never`.
@@ -439,3 +440,11 @@ Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.
 - Engine Compatibility, Knowledge Risk: MotionWarping is Beta in 5.8.4; the protected `WarpTargets` disable is on the engine-upgrade checklist — architecture-review fix 2026-10-25 (Engine finding 3).
 - `FActionState`: this ADR's Key Interfaces block is the single declaration; ADR-0003 §4 and its Key Interfaces now point here — architecture-review fix 2026-10-25 (Conflict 2).
 - Requests answered (2026-10-24): every amendment request under Related (items 1-6) has been applied by its owner (ADR-0002, ADR-0010, ADR-0012, ADR-0016, ADR-0015; item 5 queued in ADR-0004 for the TDC GDD). The Status line's "before the amendment requests listed under Related are answered" condition is therefore met; the Status line itself is not edited (Status changes are reserved for the user) — architecture-review fix 2026-10-25 (Conflict 9).
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- §1.1, Key Interfaces, guidelines, validation — user decision 2026-10-25: `FActionState.StartServerTime` added (fixed 64-bit; the struct is now 208 bits); `ContactServerTime` loses its hide-pose overload.
+- §1.2, §3 step 5, Key Interfaces — user decision 2026-10-25: `FDeathState.bDiedConcealed` added (1 bit; 65 bits); a killed-concealed victim re-opens at the death write (ADR-0003 §5.7, ADR-0017 §8 B).
+- §1.3, §5.3, Key Interfaces — user decision 2026-10-25: `FStrikeResult.ContactServerTime` added (Owner-only); HUD F2 reads it first; the positional matcher remains for the defender and as fallback (HUD OQ15 closed).
+- §1.3 — user decision 2026-10-25: `TallyAfter`/`bExiled` no longer provisional (Penalty OQ-NKP-1 confirmed).
+- §3 step 3 — user decision 2026-10-25: the binding retirement passes the strike's `ContactServerTime` as the Team-audience `RetireAtServerTime` (Roster R6, Markers CR-13).
+- §5.2 — user decision 2026-10-25: the `InformantKilled` role-change reason is confirmed (Penalty CR-18 / OQ-NKP-12).

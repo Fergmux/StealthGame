@@ -60,7 +60,7 @@ Pillar 1 ("an enemy cannot tell a player from an NPC") can be broken by a single
 | **Depends On** | ADR-0009 (version control and binary asset workflow; user decision pending) → ADR-0007 (module layout, composition root, include boundaries: the `Public/View` vs `Public/Server` split this ADR's carrier rules use) → ADR-0008 (test and automation strategy: the multi-client/multi-process harness and raw-bunch capture that S1, S2, S14 run in). All three must be Accepted, and S1/S2/S14 must report, before this ADR can be Accepted |
 | **Enables** | ADR-0003 (replication, relevancy and the concealment cull: implements the pawn parity and pointer mechanisms; scoped to the legacy cull path once this ADR picks legacy), ADR-0010 (Shared Pawn: class, factory, possession parity), ADR-0011 (pawn command interface), ADR-0013 (significance-only animation), ADR-0019 (informant lifecycle; consumes the `T_due` slot), ADR-0020 (objectives team-view sub-struct), ADR-0021 (HUD and markers read only carriers), ADR-0024 (Iris migration path) |
 | **Blocks** | Every epic that replicates a pawn, PlayerState or PlayerController field: Shared Character & Locomotion, Information Visibility Policy, Participant State & Roster carriers, Teammate Markers, HUD, NPC-Kill Penalty & Informants (takeover), Session & Travel (rejoin/hand-over shape) |
-| **Ordering Note** | Written first by mandate, accepted after ADR-0009 → ADR-0007/ADR-0008 → spikes (architecture.md "Bootstrap order"). Until then stories that touch the identity boundary stay Blocked by design. The `T_due` carrier slot (Decision §6) stays open until the user decides it (pending, schema_changes); ADR-0019 cannot be Accepted before that slot is filled by an amendment to this ADR |
+| **Ordering Note** | Written first by mandate, accepted after ADR-0009 → ADR-0007/ADR-0008 → spikes (architecture.md "Bootstrap order"). Until then stories that touch the identity boundary stay Blocked by design. The `T_due` carrier slot (Decision §6) was filled by the user decision 2026-10-25 (option (a), the C-TeamView owner part; see Amendments) |
 
 ## Context
 
@@ -160,16 +160,16 @@ Each audience has exactly one kind of carrier, and a carrier holds only its audi
 
 **C-TeamView** is a set of replicated `UActorComponent`s owned by the PlayerController, all derived from `UTeamViewComponentBase` (Foundation `Public/View/`), registered on the controller's registered sub-object list (E11). The PlayerController is relevant only to its owner (E6), so every part reaches exactly one connection:
 
-- **Roster part** (`URosterTeamViewComponent`, Roster R6): owner `{PublicHandle, Team, State, RoundEpoch}`; per teammate (at most four) `{PublicHandle, State, PawnRef, IsConcealed}`. Pushed on change only, at most once per server frame, all changes in a frame coalesced; `PawnRef`s cleared at `InvalidateAllBindings` and re-pushed after each controller swap and on reclaim. **`IsConcealed` input** (architecture-review fix 2026-10-25): the Roster server face exposes `SetTeammateConcealed(FParticipantId, bool)` (`URosterStore`, `Public/Server`), whose only caller is Concealment (ADR-0017 §3). It records the flag in the participant's record and marks the participant's teammates dirty. The Roster's push step stays the **only writer** of the replicated entry. The flag is per participant: Concealment clears it at the crossing, at the body removal or on the participant's rebind (ADR-0017 §3), and the Roster clears every record's flag at `OnRosterReset`.
-- **Fallback position feed** (IVP R8, F6): `{PublicHandle, Pos}` entries for teammates whose `PawnRef` does not resolve on that connection; built by the Visibility Policy, carried here (ADR-0003 owns the builder and timing).
+- **Roster part** (`URosterTeamViewComponent`, Roster R6): owner `{PublicHandle, Team, State, RoundEpoch, WrongTargetTally, LastResultSeq, T_due}`; per teammate (at most four) `{PublicHandle, State, PawnRef, IsConcealed, RetireAtServerTime}` (user decision 2026-10-25). The three added owner fields are **Owner** audience and Penalty-sourced: `WrongTargetTally`/`LastResultSeq` are written only on reclaim, rejoin and `OnRosterReset` (never per strike, Penalty CR-19), `T_due` when Penalty schedules or reschedules a respawn and cleared at the binding (§6). `RetireAtServerTime` is **Team** audience and is non-zero only in the update that retires the teammate's binding (the kill's `ContactServerTime`, or the release slot time; Teammate Markers TM-R6). Penalty supplies the owner values through the Roster server face (`SetOwnerTally`, `SetOwnerRespawnDue`); Assassination/Penalty pass the retire time through `RetireBinding(Pawn, RetireAtServerTime)`; the Roster's push step stays the only writer. Pushed on change only, at most once per server frame, all changes in a frame coalesced; `PawnRef`s cleared at `InvalidateAllBindings` and re-pushed after each controller swap and on reclaim. **`IsConcealed` input** (architecture-review fix 2026-10-25): the Roster server face exposes `SetTeammateConcealed(FParticipantId, bool)` (`URosterStore`, `Public/Server`), whose only caller is Concealment (ADR-0017 §3). It records the flag in the participant's record and marks the participant's teammates dirty. The Roster's push step stays the **only writer** of the replicated entry. The flag is per participant: Concealment clears it at the crossing, at the body removal or on the participant's rebind (ADR-0017 §3), and the Roster clears every record's flag at `OnRosterReset`.
+- **Fallback position feed** (IVP R8, F6): `{PublicHandle, Pos, Seq}` entries (`Seq`: one wrapping byte advanced every feed tick so staleness works under change-only replication; user decision 2026-10-25, Markers OQ14) for teammates whose `PawnRef` does not resolve on that connection; built by the Visibility Policy, carried here (ADR-0003 owns the builder and timing).
 - **Feature team sub-structs ride C-TeamView** (cross-review C-W6): each feature that needs a Team audience adds its own `UTeamViewComponentBase` subclass to the controller (MVP: `UObjectiveTeamViewComponent` carrying `FObjectiveTeamView`, ADR-0020). The Roster owns none of their contents, and the Roster lists are its part, not a closed schema. Adding a part is a change request to the Visibility Policy (new fact row and allowlist row) — never a local decision.
 - **Teammate markers only on teammates' clients.** Markers are built from the local controller's C-TeamView entries and feed only (TM-R1, TM-R2). An opponent's controller is never relevant to you, so an opponent's client holds no entry and no feed for your team and never creates a marker for it: the locked rule is enforced by the absence of data, not by a client-side filter.
 - **Host parity.** The listen host's presentation reads its own local controller's C-TeamView through the same component path as a remote client (Session rule 3, HUD-R1); it never reads another controller's view or a server store.
 - Presentation finds parts with `FindComponentByClass<>()` on its own controller, so `StealthPresentation` never includes the root module's `AStealthPlayerController` header.
 
-### 6. Open slot: owner-only `T_due` carrier (pending user decision)
+### 6. Owner-only `T_due` carrier (decided by the user 2026-10-25: option (a))
 
-The informant countdown end `T_due` (server time; PEN-R15, HUD) has audience **Owner** and must reach only the awaiting informant's connection. Its carrier is **not chosen here**: it is a pending user decision (cross-review C-W5; category schema_changes; architecture AQ-02). The options recorded for the user are (a) a field in the C-TeamView owner part, (b) a field in an owner reply, (c) client derivation from public tuning and the owner's own fall time. Options (a) and (b) must satisfy: Owner audience only; on the PlayerController carrier family of §5 or an owner reply, never on the pawn; adds no byte to any non-owner changelist; gets an IVP fact row and an allowlist row. Option (c) has no carrier; it must instead show that every input it derives from is already Owner- or All-audience data the client legitimately holds, and that the derived value matches the server's `T_due` within the presentation tolerance. The decision is recorded as an amendment to this section, and ADR-0019 consumes it.
+The informant countdown end `T_due` (server time; PEN-R15, HUD) has audience **Owner** and must reach only the awaiting informant's connection. **Decision (user, 2026-10-25; cross-review C-W5, architecture AQ-02 closed): option (a), a field `T_due` (double, server time, 0 = none) in the C-TeamView owner part (§5).** It satisfies the constraints below: Owner audience only, on the PlayerController carrier family, no byte in any non-owner changelist (the controller is relevant only to its owner), with an IVP fact row and allowlist row (IVP R3 `T_due` row). The options that were recorded for the user were (a) a field in the C-TeamView owner part, (b) a field in an owner reply, (c) client derivation from public tuning and the owner's own fall time. Options (a) and (b) must satisfy: Owner audience only; on the PlayerController carrier family of §5 or an owner reply, never on the pawn; adds no byte to any non-owner changelist; gets an IVP fact row and an allowlist row. Option (c) has no carrier; it must instead show that every input it derives from is already Owner- or All-audience data the client legitimately holds, and that the derived value matches the server's `T_due` within the presentation tolerance. The decision is recorded in the Amendments below, and ADR-0019 consumes it (§6 of ADR-0019).
 
 ### 7. Replication system: legacy NetDriver, Iris pinned off
 
@@ -192,7 +192,7 @@ If S1 shows any non-owner receives a distinguishable bunch for the three pointer
  │        │ copy team & owner data per connection       │
  │        ▼                                             │
  │ AStealthPlayerController(C)  [bOnlyRelevantToOwner]──┼──► C-TeamView parts (Roster, feed,      (never relevant: X receives
- │   ├ URosterTeamViewComponent                         │      Objectives, [T_due slot])          nothing from C's controller)
+ │   ├ URosterTeamViewComponent                         │      Objectives, owner T_due)            nothing from C's controller)
  │   ├ UObjectiveTeamViewComponent ...                  │
  │   └ owner data / replies                             │
  │                                                      │
@@ -262,11 +262,16 @@ class UTeamViewComponentBase : public UActorComponent
 USTRUCT() struct FTeamViewOwnerPart
 {   GENERATED_BODY()
     UPROPERTY() FPublicHandle Handle;  UPROPERTY() ETeam Team;
-    UPROPERTY() EParticipantState State;  UPROPERTY() uint32 RoundEpoch = 0; };
+    UPROPERTY() EParticipantState State;  UPROPERTY() uint32 RoundEpoch = 0;
+    // Owner-only, Penalty-sourced (user decision 2026-10-25):
+    UPROPERTY() uint8 WrongTargetTally = 0;        // written only on reclaim, rejoin, OnRosterReset
+    UPROPERTY() FClientCommandSeq LastResultSeq;   // HUD re-push gate (HUD-R7)
+    UPROPERTY() double T_due = 0.0; };             // informant respawn due (server time); 0 = none
 USTRUCT() struct FTeamViewTeammateEntry
 {   GENERATED_BODY()
     UPROPERTY() FPublicHandle Handle;  UPROPERTY() EParticipantState State;
-    UPROPERTY() TObjectPtr<APawn> PawnRef;  UPROPERTY() bool bIsConcealed = false; };
+    UPROPERTY() TObjectPtr<APawn> PawnRef;  UPROPERTY() bool bIsConcealed = false;
+    UPROPERTY() double RetireAtServerTime = 0.0; };   // Team; set only in the retiring update (user decision 2026-10-25)
 // Roster server face (URosterStore, Public/Server; ADR-0005 §2): the only input to the teammate IsConcealed field.
 //   void SetTeammateConcealed(FParticipantId Participant, bool bConcealed);   // caller: Concealment only (ADR-0017)
 UCLASS() class URosterTeamViewComponent : public UTeamViewComponentBase
@@ -275,9 +280,9 @@ UCLASS() class URosterTeamViewComponent : public UTeamViewComponentBase
     UPROPERTY(Replicated) FTeamViewOwnerPart OwnerPart;
     UPROPERTY(Replicated) TArray<FTeamViewTeammateEntry> Teammates;   // <= 4
 };
-// Fallback feed entries {PublicHandle, Pos int16x3 @ 10 cm}: IVP builder, ADR-0003.
+// Fallback feed entries {PublicHandle, Pos int16x3 @ 10 cm, uint8 Seq}: IVP builder, ADR-0003.
 // Feature parts (e.g. UObjectiveTeamViewComponent / FObjectiveTeamView): ADR-0020.
-// T_due: OPEN SLOT — carrier pending user decision (Decision §6). Do not implement.
+// T_due: carried in FTeamViewOwnerPart (Decision §6, user decision 2026-10-25).
 ```
 
 ### Implementation Guidelines
@@ -296,7 +301,7 @@ UCLASS() class URosterTeamViewComponent : public UTeamViewComponentBase
 - Presentation code must never read a pawn's `PlayerState`, `Controller` or `Owner`, must never iterate world pawns to find people, and must read only its own controller's carriers, the GameState public structs and client-local queries.
 - A new replicated field, fact or audience must not ship without a Visibility Policy row and an allowlist row; the reflection audit must fail the build otherwise.
 - The game NetDriver must run the legacy replication system; the harness must assert it at startup; ReplicationGraph must not be enabled.
-- The `T_due` carrier must not be implemented until the user decides it and this ADR is amended.
+- `T_due`, `WrongTargetTally` and `LastResultSeq` must travel only in the C-TeamView owner part; the tally fields must never be written per strike (only on reclaim, rejoin, `OnRosterReset`); `RetireAtServerTime` must be non-zero only in the retiring update.
 - Prototype code (`Source/StealthGame`) must not be promoted into the production modules under this ADR until it is Accepted; the prototype patterns listed under Migration Plan must be replaced, not ported.
 
 ## Alternatives Considered
@@ -365,7 +370,7 @@ UCLASS() class URosterTeamViewComponent : public UTeamViewComponentBase
 | Iris behaviour of the condition resets differs from legacy (E12 is [U] under Iris) | n/a in MVP | High if Iris is adopted | Legacy pinned (§7); S7 rerun is a gate in ADR-0024 |
 | A feature adds a replicated field outside the carrier model | Medium | High (silent leak) | Reflection allowlist audit fails the build (IVP R11, ADR-0008); canary per commit (AC-IVP-37) |
 | Iris gets switched on by a config or command-line change | Low | High (cull and tests run on an unvalidated path) | Pin the cvar (pending user edit); harness startup assertion |
-| `T_due` decision stays open and blocks ADR-0019 | Medium | Medium (informant HUD countdown) | Listed in active.md pending decisions; options pre-analysed (§6) |
+| ~~`T_due` decision stays open and blocks ADR-0019~~ | — | — | Closed 2026-10-25: the user chose option (a) (§6) |
 
 ## GDD Requirements Addressed
 
@@ -379,7 +384,7 @@ UCLASS() class URosterTeamViewComponent : public UTeamViewComponentBase
 | input-interaction-framework.md | R2 no caller identity; R17 AI uses the same entry points | §2 |
 | character-pool-appearance.md | CP-16 one look for everyone; no per-viewer appearance or extra component | §1 (no per-instance component set), §5 (markers are UI on the controller, not pawn components) |
 | crowd-npc-behaviour.md | CNB-R2 identity blindness; CNB-R3 same commands, same rules | §2; §1 (no NPC PlayerState, one AIController) |
-| npc-kill-penalty-informants.md | PEN-R14 informant-kill invariant; PEN-R15 owner-only data (incl. `T_due`) | §5 Owner carrier; §6 open slot for `T_due` |
+| npc-kill-penalty-informants.md | PEN-R14 informant-kill invariant; PEN-R15 owner-only data (incl. `T_due`) | §5 Owner carrier; §6 `T_due` in the C-TeamView owner part |
 | teammate-markers.md | TM-R1 one source (own C-TeamView); TM-R2 no world iteration | §5 C-TeamView; §4.6 |
 | hud.md | HUD-R1 three carriers, nothing else | §4.6, §5 |
 | session-travel.md | Rule 3 host parity; rule 22 no pawn/PlayerState churn on connection events; rule 25 leak checklist (a)-(d) | §5 host parity; §4.3-4.4; §4.1-4.2 for 25(d); §7 legacy-vs-Iris choice (Session G) |
@@ -431,3 +436,11 @@ Inter-ADR amendment pass; decision unchanged, Status unchanged (Proposed).
 Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.md`); decision unchanged, Status unchanged (Proposed).
 - §4.2, guidelines: the possession `ForceNetUpdate` is "dropped; the next fixed-cadence update carries the change", matching ADR-0003 §2 (the replication owner decides; this still satisfies this ADR's invariant that possession produces no off-cadence non-owner update) and ADR-0010 §4.1 — architecture-review fix 2026-10-25 (Conflict 3).
 - §5, Key Interfaces: Roster server face `SetTeammateConcealed(FParticipantId, bool)` added (Concealment the only caller; the Roster push step the only writer of the replicated teammate `IsConcealed`) — architecture-review fix 2026-10-25 (Conflict 5).
+- Config applied 2026-10-25 (phase 2, user-authorised): `net.Iris.UseIrisReplication=0` pinned in `Config/DefaultEngine.ini [ConsoleVariables]` (legacy net driver, AQ-01 closed as recommended); startup log shows `Set CVar [[net.Iris.UseIrisReplication:0]]`. The harness assertion is still owed (ADR-0008).
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- §6, §5, Key Interfaces, guidelines, risks — user decision 2026-10-25: the `T_due` carrier is option (a), an Owner-only `double T_due` in `FTeamViewOwnerPart` (cross-review C-W5 / AQ-02 closed; ADR-0019 §6 consumes it).
+- §5, Key Interfaces — user decision 2026-10-25: the owner part gains Owner-only `WrongTargetTally` and `LastResultSeq` (Penalty CR-19; written only on reclaim, rejoin and `OnRosterReset`); the tally replacing the strike counter is confirmed (Penalty OQ-NKP-1).
+- §5, Key Interfaces — user decision 2026-10-25: the teammate entry gains Team-audience `RetireAtServerTime` (Teammate Markers CR-13 / OQ3), passed through `RetireBinding(Pawn, RetireAtServerTime)`.
+- §5, Key Interfaces — user decision 2026-10-25: the IVP fallback feed entry gains a wrapping `uint8 Seq` (Markers CR-11c / OQ14; ADR-0003 builds it).
+- §5 — user decision 2026-10-25: a team-only `bPawnBound` per teammate entry (Markers CR-12) is declined for MVP; the feed inference (TM-R4a) stands.

@@ -163,7 +163,7 @@ A command that passes executes inside its slot (writes `FActionState` through §
 
 ### 7. What replicates
 
-- **All, for every pawn**: `FActionState {Pose, Seq, Variant, ContactServerTime, WarpPoint}` on `AStealthPawn` (one `ReplicatedUsing` property, fixed-width serialiser per ADR-0003 §4, semantics per ADR-0018). Only `UPawnCommandComponent::WriteActionState` writes it, on the server, inside `FStealthForcedNetUpdate(ActionStateWrite)` (ADR-0003 §2), identically for NPC and player; Assassination's death-write `Counter` goes through it too. Observers drive animation from it and nothing else. `StartServerTime` is **not** added (pending user decision, schema_changes, Concealment CR 10b; ADR-0003 slot).
+- **All, for every pawn**: `FActionState {Pose, Seq, Variant, StartServerTime, ContactServerTime, WarpPoint}` on `AStealthPawn` (one `ReplicatedUsing` property, fixed-width serialiser per ADR-0003 §4, semantics per ADR-0018). Only `UPawnCommandComponent::WriteActionState` writes it, on the server, inside `FStealthForcedNetUpdate(ActionStateWrite)` (ADR-0003 §2), identically for NPC and player; Assassination's death-write `Counter` goes through it too. Observers drive animation from it and nothing else. `StartServerTime` (added by user decision 2026-10-25, Concealment CR 10b) is written by `WriteActionState` in every write: the pose's start server time (for a discrete command, `ActionStartServerTime`).
 - **Owner only, on `AStealthPlayerController`, never on the pawn**: `FHoldStatus {ClientCommandSeq, ActionType, Outcome ∈ {Active, Completed, Cancelled}, ServerStartTime, ServerEndTime}` (no cancel reason), `ClientCommandRejected` codes, and owner results from Assassination (`FStrikeResult`, `FDefenceResult`, ADR-0018), all carried by the reply step (§8). The owner's cooldown end time is Assassination's owner data (ADR-0018). Reply structs live in `StealthFoundation/Public/View` so Presentation reads them without including the root PlayerController.
 - **Nothing else.** No hold progress, start time, duration, cooldown, target or team ever replicates to anyone but the owner (IIF R12); no RPC exists on the pawn.
 
@@ -195,7 +195,7 @@ The crowd controller (ADR-0016) calls the same entry points on the server: `Move
 
 ### 11. Latency budget (IIF F5)
 
-A human discrete command costs: one-way uplink + at most one server frame (the RPC lands in its mailbox before the same frame's drain, E10) + the drain-end reply flush at the next net update. `L_confirm = RTT + dt_server + dt_client` (93-110 ms at 60 ms RTT; 183-200 ms at 150 ms RTT). Look is local (`L_look ≤ 33 ms`, camera transform changes in the input frame). The budget is met by construction because nothing waits for a timer, a second RPC or a client acknowledgement; AC 36 and AC 58 measure it (V4). Above `LatencyWarnRttSec` the owner sees the latency icon; no gameplay compensation is applied.
+A human discrete command costs: one-way uplink + at most one server frame (the RPC lands in its mailbox before the same frame's drain, E10) + the drain-end reply flush at the next net update. `L_confirm = RTT + dt_server + dt_client` (93-110 ms at 60 ms RTT; 183-200 ms at 150 ms RTT). Look is local (`L_look ≤ 33 ms`, camera transform changes in the input frame). The budget is met by construction because nothing waits for a timer, a second RPC or a client acknowledgement; AC 36 and AC 58 measure it (V4). Above HUD's `HudLatencyWarnRttSec` (IIF's duplicate `LatencyWarnRttSec` retired by user decision 2026-10-25) the owner sees the latency icon; no gameplay compensation is applied.
 
 ### Architecture Diagram
 
@@ -446,3 +446,8 @@ Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.
 - Key Interfaces, Migration Plan: `UPawnCommandComponent`, `ISharedPawnStateView` and the other server pieces sit in `StealthGameplay/Public/Server/Core/`. The pawn header forward-declares the component, and `ISharedPawnStateView` is implemented by a server-only `Private/` adapter. ADR-0007 lint rule (a) now passes — architecture-review fix 2026-10-25 (Conflict 4).
 - `FCommandPayload` / `FHoldTimerPayload`: declared by ADR-0002 §2a in Foundation `Public/Server`. This ADR owns the values of `Kind`, `Phase`, `Arg` and `ActionType` and maps its typed commands onto them at ingress — architecture-review fix 2026-10-25 (Conflict 1).
 - Requests answered (2026-10-24): the ADR-0002 `HoldTimer(ConditionCancel)` request under Related is applied in ADR-0002 §1 — architecture-review fix 2026-10-25 (Conflict 9).
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- §7 — user decision 2026-10-25: `FActionState.StartServerTime` adopted; `WriteActionState` fills it on every write (ADR-0018 §1.1 owns the width, now 208 bits).
+- §9 — user decision 2026-10-25: the latency icon threshold is HUD's `HudLatencyWarnRttSec`; IIF's `LatencyWarnRttSec` is retired (cross-review C-W14).
+- §8 — user decision 2026-10-25: `FStrikeResult` entries of `ClientCommandReplies` gain `ContactServerTime` (ADR-0018 §1.3).

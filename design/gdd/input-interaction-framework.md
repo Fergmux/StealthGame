@@ -1,6 +1,6 @@
 # Input & Interaction Framework
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24
+> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`FActionState.StartServerTime` adopted; `LatencyWarnRttSec` retired in favour of HUD's `HudLatencyWarnRttSec`)
 > **Author**: design-system pipeline (autonomous) + game-designer, ux-designer, gameplay-programmer, ue-replication-specialist, systems-designer, art-director, qa-lead, creative-director
 > **Last Updated**: 2026-10-24
 > **Last Verified**: 2026-10-24
@@ -173,7 +173,7 @@ Nothing auto-resumes after a preemptor ends. Attack recovery and lockout (`Attac
 
 **R12. What replicates.**
 
-- *To everyone, for every pawn*: one replicated action state, the struct **`FActionState {Pose, Seq, Variant, ContactServerTime, WarpPoint}`** with a single RepNotify (Assassination ASN-R21; reconciliation 2026-10-24: replaces the bare `ActionPose` enum, which is now its `Pose` field; "`ActionPose`" elsewhere in this GDD means `FActionState.Pose`). `Pose` ∈ {None, Brace, InteractPose, Strike, Counter, BushEnter, BushExit} (`BushTransition` split per Concealment change request 1; `Counter` per ASN-R14). `Seq` starts at 1 and increments on every write; `Variant` is the clip variant chosen by the owning feature (strike bearing, ASN-R16; never by outcome); `ContactServerTime` and `WarpPoint` are filled by Assassination for `Strike` and `Counter`, and hold fixed sentinel values for every other pose. The struct has the same shape and size for every pose and outcome (custom fixed-width serialiser, -> ADR; Assassination owns the field semantics). It is written only by the server in the component (Assassination's death-write `Counter` included, through the component), for NPC and player alike, with the class-default condition and the same cadence rules (the same net update settings for every pawn, and a forced net update on every write, so the replication delay U is identical). Observers drive animation from it and nothing else. It carries no progress, duration, cooldown, target reference or team. *Fields Concealment requested but not added (`StartServerTime` for hide-clip seeking) are pending a user decision (schema change; Concealment CR-10b).* **Relevancy parity bans** (owned and specified by Locomotion SCL R13; restated here; verify ForceNetUpdate behaviour under Iris in 5.8):
+- *To everyone, for every pawn*: one replicated action state, the struct **`FActionState {Pose, Seq, Variant, StartServerTime, ContactServerTime, WarpPoint}`** with a single RepNotify (Assassination ASN-R21; reconciliation 2026-10-24: replaces the bare `ActionPose` enum, which is now its `Pose` field; "`ActionPose`" elsewhere in this GDD means `FActionState.Pose`). `Pose` ∈ {None, Brace, InteractPose, Strike, Counter, BushEnter, BushExit} (`BushTransition` split per Concealment change request 1; `Counter` per ASN-R14). `Seq` starts at 1 and increments on every write; `Variant` is the clip variant chosen by the owning feature (strike bearing, ASN-R16; never by outcome); `ContactServerTime` and `WarpPoint` are filled by Assassination for `Strike` and `Counter`, and hold fixed sentinel values for every other pose. The struct has the same shape and size for every pose and outcome (custom fixed-width serialiser, -> ADR; Assassination owns the field semantics). It is written only by the server in the component (Assassination's death-write `Counter` included, through the component), for NPC and player alike, with the class-default condition and the same cadence rules (the same net update settings for every pawn, and a forced net update on every write, so the replication delay U is identical). Observers drive animation from it and nothing else. It carries no progress, duration, cooldown, target reference or team. `StartServerTime` (the server time the pose began, 64-bit; Concealment CR-10b, adopted by user decision 2026-10-25) lets a re-created or late-relevant actor seek any clip, including hide clips, from server time; it is written in every `FActionState` write, identically for every pawn kind. **Relevancy parity bans** (owned and specified by Locomotion SCL R13; restated here; verify ForceNetUpdate behaviour under Iris in 5.8):
 - No Shared Pawn uses net dormancy. Idle NPCs are tempting candidates for it, which is why the ban is explicit.
 - No Shared Pawn uses `bOnlyRelevantToOwner`.
 - No pawn gets per-class priority or relevancy overrides.
@@ -372,7 +372,7 @@ The latency_budget formulas are defined as:
 - L_look ≤ ~33 ms.
 - L_confirm is 93-110 ms at 60 ms RTT, and 183-200 ms at 150 ms RTT (60 Hz to 30 Hz host).
 - L_observer is 0.18-0.35 s at 150 ms RTT.
-- Above `LatencyWarnRttSec` (0.20 s RTT) an owner-only warning is shown.
+- Above HUD's `HudLatencyWarnRttSec` (0.20 s RTT; IIF's duplicate `LatencyWarnRttSec` retired by user decision 2026-10-25, TDC CR-15.3) an owner-only warning is shown.
 
 **Example:** RTT_a = RTT_o = 150 ms, 30 Hz host, t_interp 0.05, U 0.033. L_observer = 0.075 + 0.075 + 0.067 + 0.05 + 0.033 = 0.30 s. L_confirm = 0.15 + 0.033 + 0.017 = 0.20 s.
 
@@ -425,7 +425,7 @@ The interact_reach formula is defined as:
 - **If a reliable Begin or End is lost to 1 % packet loss**: it is resent, never dropped, and arrives about one RTT late. A late Prepare End extends the brace by at most that delay, and never past `DefenceDurationSec` (the CapEnd timer). A late Interact End that resolves after `HoldTimer(Complete)` finds no active action and is a no-op.
 - **If the server completes a hold within ±RTT/2 of the owner's release**: the server's key order decides (above). The ring reconciles to the `FHoldStatus.Outcome` the server sends. A completed Interact is never undone.
 - **If the client's server-time estimate drifts by more than 0.25 s**: the ring re-syncs, and the ring stays monotonic (F4). Only presentation is affected; the server timer is authoritative.
-- **If RTT exceeds `LatencyWarnRttSec` (0.20 s)**: everything works, but an owner-only latency warning shows. No gameplay compensation is applied and nothing is back-dated.
+- **If RTT exceeds `HudLatencyWarnRttSec` (0.20 s; HUD-owned)**: everything works, but an owner-only latency warning shows. No gameplay compensation is applied and nothing is back-dated.
 
 **Connection and possession**
 - **If the owner disconnects mid-hold**: the server treats it as an End resolved as `Released` (after the debounce). `ActionPose` → None. The pawn's further fate (it keeps standing like an NPC, or is removed) is Round's and Session's rule. The IIF only guarantees that the release blend is the same as for any other release.
@@ -534,7 +534,7 @@ Keys consumed here but owned elsewhere are listed after the table and not duplic
 | `UnmatchedEndPerSec` | float | IIF | 30 | 10-60 | 20-40 | ServerOnly | Use | 1/s | End-flood guard: Ends with no outstanding Begin on that connection are dropped at ingress above this rate. An End that matches an outstanding Begin is never dropped. |
 | `AbuseLogDropCount` | int | IIF | 20 | 5-100 | 10-40 | ServerOnly | Use | count | Number of ingress drops within `AbuseLogWindowSec` that writes a server-only abuse-log entry. Legitimate client rates can never reach it (F3). Too low: log noise. Too high: abuse goes unseen. Anti-Cheat (Alpha) adds a kick policy. |
 | `AbuseLogWindowSec` | float | IIF | 10 | 5-60 | 10-20 | ServerOnly | Use | s | Window for `AbuseLogDropCount`. |
-| `LatencyWarnRttSec` | float | IIF | 0.20 | 0.1-0.4 | 0.15-0.25 | All | Use | s | RTT above which the owner-only latency icon shows (F5). Too low: the warning nags. Too high: players get a bad experience with no explanation. |
+| ~~`LatencyWarnRttSec`~~ | — | — | — | — | — | — | — | — | **RETIRED 2026-10-25 (user decision, cross-review C-W14, TDC CR-15.3):** one quantity, one key; F5 and UI-7 read HUD's `HudLatencyWarnRttSec` (default 0.20 s, HUD Tuning Knobs). |
 | `CameraToggleLockoutSec` | float | IIF | 0.30 | 0-1 | 0.2-0.5 | All | Use | s | Local camera-toggle lockout (R14). Too low: the camera flickers. Too high: the toggle feels unresponsive. Interacts with Camera's blend time. |
 | `InformantPlateCooldownSec` | float | IIF | 3.0 | 1-10 | 2-5 | All | Use | s | Rate limit for the informant plate (UI 6). Too low: it nags. Too high: a press after a long gap may go unexplained. |
 | `RejectPlateCooldownSec` | float | IIF | 3.0 | 1-10 | 2-5 | All | Use | s | Rate limit for the rejection plate, per code (UI 5). |
@@ -655,10 +655,10 @@ Every element below is **owner-only**, screen-space, and derived from data the o
 
 | From | Request | Disposition |
 |---|---|---|
-| Assassination CR 1 | Replicated action state becomes `FActionState {Pose, Seq, Variant, ContactServerTime, WarpPoint}`; slot state `Countering`; cancel reason `Reversed`; Prepare reading confirmed; OQ2-4 answered; IIF CR 5 accepted | APPLIED (R12, R9, R11, R8, States, OQ2-4). Struct replaces the bare enum with the fields Assassination designed; no field beyond them added |
+| Assassination CR 1 | Replicated action state becomes `FActionState {Pose, Seq, Variant, StartServerTime, ContactServerTime, WarpPoint}`; slot state `Countering`; cancel reason `Reversed`; Prepare reading confirmed; OQ2-4 answered; IIF CR 5 accepted | APPLIED (R12, R9, R11, R8, States, OQ2-4). Struct replaces the bare enum with the fields Assassination designed; no field beyond them added |
 | Assassination CR 16 | Reversal `FHoldStatus.ServerEndTime = ContactServerTime`; replies to a struck target presented no earlier than its contact time | APPLIED (R6, R8 Prepare, UI 2, UI 5) |
 | Concealment CR 1 | Split `BushTransition` into `BushEnter`/`BushExit`; `Hide(Exit(Side))` 2-bit side; owner-side Hide clip prediction ≤ 50 ms; `WorldPoint` includes `HideVolume`; bush `NotNow` confirmed; `Cooldown` for `HideEnter` | APPLIED (R1, R6, R9, R10, R12, States, Visual, Game Feel) |
-| Concealment CR 10b | `FActionState.StartServerTime` for hide-clip seeking | PENDING-USER (schema_changes; already listed in active.md, Concealment review) — not added |
+| Concealment CR 10b | `FActionState.StartServerTime` for hide-clip seeking | APPLIED 2026-10-25 (user decision; R12) |
 | Concealment CR 15 | `Move` zeroed during Hide transitions (IIF part; warp, collision and gating are SCL's) | APPLIED (R7 note, States) |
 | Camera CR 1 | Shoulder swap binding in `IMC_Common` (X / middle mouse, D-pad Right; 3P only); R10 and Strike hint use `GetAimRay()`; "rendered" = mask α > 0 | APPLIED (R10, R13, R15, UI 4, Interactions, Dependencies) |
 | Objectives CR 1a | A completion no longer cancels other holds at the court with `TargetInvalid` | APPLIED (R8 cancel table, Edge Cases) |

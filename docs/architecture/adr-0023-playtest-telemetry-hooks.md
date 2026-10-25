@@ -145,7 +145,7 @@ High-rate commands (`Move`, `Look`) are never logged raw (R19); detectors summar
 ### 4. Bounds and budget
 
 - **Memory** (server process): events ≤ 16,384 × ≤ 64 B ≈ 1.0 MB worst case; aggregates (≤ 96 subject keys × ≤ 16 courts dwell, tell counters, ≤ 96 × 120 motion windows × 9 floats ≈ 0.4 MB) ≈ 0.5 MB. Expected 10-player 12-minute round: ≈ 2,500 events ≈ 160 KB.
-- **CPU** (listen host GT, inside ADR-0022's "Engine/world tick, other" 2.0 ms line): ≤ **0.15 ms** mean, ≤ 0.3 ms p99 at 50 pawns. Detector work is phase-staggered (50 pawns × 10 Hz ≈ 8-9 pawn evaluations per frame at 60 fps); court presence at 1 Hz is ≤ 50 × 16 distance checks; witness and reaction traces are async `ViewBlock` line tests issued only on run-bout starts and strikes (≤ 49 per strike). Insights scope `Stealth.Budget.Telemetry` (ADR-0022 §Key Interfaces); its name is a constant, never data.
+- **CPU** (listen host GT, inside ADR-0022's "Engine/world tick, other" 2.0 ms line): ≤ **0.15 ms** mean, ≤ 0.3 ms p99 at 60 pawns (`NpcCount` 50 since 2026-10-25). Detector work is phase-staggered (60 pawns × 10 Hz ≈ 10 pawn evaluations per frame at 60 fps); court presence at 1 Hz is ≤ 50 × 16 distance checks; witness and reaction traces are async `ViewBlock` line tests issued only on run-bout starts and strikes (≤ 49 per strike). Insights scope `Stealth.Budget.Telemetry` (ADR-0022 §Key Interfaces); its name is a constant, never data.
 - **Network**: zero (nothing replicates; no RPC).
 - **Disk**: one JSON file per terminated round, ≤ 2 MB worst case.
 
@@ -259,7 +259,7 @@ Plain structs only (no `USTRUCT`, no `ToString`), per ADR-0007. The detector cor
 - **Description**: Clients log their own view (e.g. whether an attacker was visible before a strike) and upload after the match.
 - **Pros**: Captures perception data the server cannot (what was on screen, device class).
 - **Cons**: Needs a new upload RPC or file collection from 10 machines; client files are tamperable; device-class reporting is a new client→server field (schema change).
-- **Rejection Reason**: Out of scope for MVP; recorded for the Alpha Telemetry GDD. The input-device mix needed by CNB R3.4 is collected by the playtest coordinator's sheet until then.
+- **Rejection Reason**: Out of scope for MVP; recorded for the Alpha Telemetry GDD. The input-device mix needed by CNB R3.4 is collected by the playtest coordinator's sheet; a client-reported device field was declined for MVP by the user 2026-10-25.
 
 ### Alternative 5: Owners push every tell (no detectors)
 - **Description**: Each owner system emits its own tell events for players and NPCs.
@@ -329,3 +329,9 @@ The prototype (`Source/StealthGame`) has no Event Log; nothing migrates. Build o
 Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.md`); decision unchanged, Status unchanged (Proposed).
 - §1, Architecture Diagram, §5, R-4, GDD Requirements row, Related item (1): aligned with Round R19 (synced 2026-10-24). The kill timeline (`KillResolved`, `Reversal`, `StateTransition`, `StrikeLimit`, `ObjectiveStage`, `FinalCompleted`, `WinLatched`) is protected from ring eviction, only non-protected entries are truncated, and per-type `TruncatedCount` is exported; the Round change request is marked answered. TR-round-013 is now fully addressed by this ADR — architecture-review fix 2026-10-25 (TR-round-013; other finding).
 - Requests answered (2026-10-24): Related items (5) ADR-0001 telemetry row selection, (6) ADR-0007 `Json` dependency and `Features/Telemetry/` folder, and (7) ADR-0016/ADR-0008 virtual-input stream attribution are applied by their owners. Item (8) needs no change. The GDD sync items (2)-(4) remain with the GDD owners — architecture-review fix 2026-10-25 (Conflict 9).
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- Alternative (client-reported data) — user decision 2026-10-25: a client-reported input-device field is declined for MVP; the manual playtest sheet stays.
+- Evidence playtests — user decision 2026-10-25: a headless (dedicated-style) evidence server is deferred to Alpha; the IVP R10 non-competing-host rule stands (AC-IVP-36).
+- Scope — user decision 2026-10-25: design-theory D-W1..D-W3 scope options are deferred until telemetry from the first playtest (the probes of §2.2 supply it).
+- user decision 2026-10-25: `NpcCount` default 50 (was ~40, user-locked default changed by the user), so 5v5 has 60 characters; CPU line restated at 60 pawns.

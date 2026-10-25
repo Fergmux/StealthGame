@@ -1,6 +1,6 @@
 # Camera System
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (revisions applied; re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24
+> **Status**: Reviewed - NEEDS REVISION 2026-10-24 (revisions applied; re-review pending); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (pitch −60°/+40° in both modes confirmed; `InformantKilled` confirmed; tap/hold toggle and left-handed shoulder deferred to VS settings; `EyeMaskHideFailCount`, `StickDeadZoneFrac`/`StickOuterZoneFrac` renames)
 > **Author**: design-system pipeline (autonomous) + ux-designer, gameplay-programmer, creative-director
 > **Design Review (2026-10-24, full)**: NEEDS REVISION. Revisions applied per creative-director rulings 1-10 (log: `design/gdd/reviews/camera-system-review-log.md`): one pitch envelope −60°/+40° for both modes; F1 edge push reads raw input with a 150 ms latch; F3 never draws a pawn without a line-of-sight result; `ConcealedBoomCm` 60; `ViewRelease` and `SetOwnerGrade` hooks; engine camera RPCs and host-side simulation guarded; acceptance criteria rebuilt.
 > **Last Updated**: 2026-10-24
@@ -72,7 +72,7 @@ Pillars served:
 **CS-R3. View envelope (both modes; SCL R9, OQ8 ruling as adjusted by D6, extended to both modes by the creative director at design review).** The view rotation is measured relative to the body's facing: actor yaw, with the body facing its direction of travel (SCL R5.4).
 1. **Clamp.**
    - **Yaw:** within ±`LookYawLimitDeg` (70°), SCL's head-look clamp, consumed here rather than duplicated (F1).
-   - **Pitch:** from −`ViewPitchDownLimitDeg` (60°) to +`ViewPitchUpLimitDeg` (40°), local only, **in both modes**. A first-person-only range would let 1P strike a bush at the player's feet while 3P could not, which turns the camera choice into a gameplay choice (CS-R2, creative-director ruling; user to confirm, OQ9).
+   - **Pitch:** from −`ViewPitchDownLimitDeg` (60°) to +`ViewPitchUpLimitDeg` (40°), local only, **in both modes**. A first-person-only range would let 1P strike a bush at the player's feet while 3P could not, which turns the camera choice into a gameplay choice (CS-R2, creative-director ruling; confirmed by the user 2026-10-25, OQ9 closed).
    - **What others see:** SCL clamps the replicated head pitch at ±`LookPitchLimitDeg` (20°) and holds it at the limit, so observers see an ordinary glance held at its limit (SCL R8.4, R9).
 2. **Elastic edge push.** The control rotation is the head-look target that SCL filters. While the player pushes outward at the yaw limit, the target may sit up to `CameraEdgePushDeg` (5°) beyond the limit.
    - **Pushing** means a raw (unscaled) outward input of at least `EdgePushMinRateDegPerSec` (15 °/s) at some time in the last `EdgePushLatchSec` (0.15 s). The latch makes a mouse, whose hand lifts and re-centres, equivalent to a held stick.
@@ -260,7 +260,7 @@ The camera's inputs are own input, own pawn state (body facing, eye pivot, own `
 **CS-R14. Look input.**
 - **Mouse:** raw input × sensitivity. No smoothing and no acceleration.
 - **Right stick:**
-  - radial dead zone `StickDeadZone` (0.15), outer dead zone `StickOuterZone` (0.98);
+  - radial dead zone `StickDeadZoneFrac` (0.15), outer dead zone `StickOuterZoneFrac` (0.98);
   - response `((|x| − dz)/(outer − dz))^StickCurveExp`, with exponent 1.5 (presets 1.0 / 1.5 / 2.0, F6);
   - full-deflection rates `StickYawRateDegPerSec` 180 °/s and `StickPitchRateDegPerSec` 120 °/s;
   - no acceleration ramp, no filtering, no aim assist of any kind (CS-R9, IIF R15);
@@ -376,7 +376,7 @@ The eye_mask formula is defined as:
 |----------|------|-------|--------|-------------|
 | C_h, C_v | float (°) | 40-70 / 25-50 | data file (`EyeConeHalfHDeg` 55, `EyeConeHalfVDeg` 38) | fixed physical eye cone |
 | Probes(T) | set | 5 | constant | head, chest, pelvis and two lateral capsule points |
-| N_h | int | 1-4 | data file (`EyeMaskHideFails` 2) | consecutive failed tests before hiding |
+| N_h | int | 1-4 | data file (`EyeMaskHideFailCount` 2) | consecutive failed tests before hiding |
 | T_f | float (s) | 0.05-0.3 | data file (`EyeMaskFadeSec` 0.10) | fade time, in and out |
 | P_m, z_eye | vector, float (cm) | world | calculated (CS-R4 pivot; real eye-socket height) | mask origin: never above the real eye |
 | D_near, D_max | float (cm) | 1000-4000 / 3000-10000 | data file (`EyeMaskNearCm` 2000, `EyeMaskRangeCm` 6000) | rate bands (never a cutoff) |
@@ -442,7 +442,7 @@ The stick_look formula is defined as:
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | x | float | 0-1 | calculated | stick deflection (radial) |
-| dz, outer | float | 0.05-0.40 / 0.9-1.0 | data file (`StickDeadZone` 0.15, `StickOuterZone` 0.98) | dead zones |
+| dz, outer | float | 0.05-0.40 / 0.9-1.0 | data file (`StickDeadZoneFrac` 0.15, `StickOuterZoneFrac` 0.98) | dead zones |
 | k | float | 1.0-2.0 | data file (`StickCurveExp` 1.5) | curve exponent |
 | Ω | float (°/s) | 60-360 | data file (`StickYawRateDegPerSec` 180, `StickPitchRateDegPerSec` 120) | full-deflection rate |
 | sens | float | 0.33-2 | user setting (default 1) | sensitivity multiplier |
@@ -564,7 +564,7 @@ The table uses the CR-15 columns. Every key is owner-local presentation with one
 | `FpForwardOffsetCm` | float | Camera | 8 | 0-20 | 5-12 | Client | Use | Cm | Low: the neck is visible. High: the lens passes a wall the face touches |
 | `CameraNearClipCm` | float | Camera | 5 | 1-15 | 3-8 | Client | Use | Cm | High: own hands and close walls clip |
 | `EyeConeHalfHDeg` / `EyeConeHalfVDeg` | float | Camera | 55 / 38 | 40-70 / 25-50 | 52-60 / 36-42 | Client | Round | Deg | High: 3P sees beside the body. Must stay ≥ the FOV slider maximum (I-CS-3) |
-| `EyeMaskHideFails` | int | Camera | 2 | 1-4 | 2-3 | Client | Use | Count | High: 3P keeps seeing briefly after the eye loses sight |
+| `EyeMaskHideFailCount` | int | Camera | 2 | 1-4 | 2-3 | Client | Use | Count | High: 3P keeps seeing briefly after the eye loses sight |
 | `EyeMaskFadeSec` | float | Camera | 0.10 | 0.05-0.30 | 0.08-0.12 | Client | Use | s | High: 3P is later than 1P. Low: hard pops |
 | `EyeMaskNearCm` / `EyeMaskRangeCm` | float | Camera | 2000 / 6000 | 1000-4000 / 3000-10000 | — | Client | Use | Cm | Trace-cost bands |
 | `EyeMaskNearHz` / `EyeMaskFarHz` / `EyeMaskBeyondHz` | float | Camera | 60 / 15 / 5 | 30-60 / 10-30 / 2-15 | 45-60 / 12-20 / 4-8 | Client | Use | Hz | Low: late reveal. High: trace cost. Beyond `EyeMaskRangeCm` the line-of-sight test still runs (F3) |
@@ -574,7 +574,7 @@ The table uses the CR-15 columns. Every key is owner-local presentation with one
 | `FpFovVDeg` * / `TpFovVDeg` * | float | Camera | 60 / 60 | 55-75 | 55-70 | Client | Use | Deg | 60 is the art bible reference camera |
 | `FovVMinDeg` / `FovVMaxDeg` | float | Camera | 55 / 75 | 45-90 | 55 / 75 | Client | Round | Deg | The maximum raises everyone's periphery equally |
 | `FovHMaxDeg` | float | Camera | 108 | 90-120 | 100-110 | Client | Round | Deg | Cap for any aspect (fairness) |
-| `StickDeadZone` * / `StickOuterZone` | float | Camera | 0.15 / 0.98 | 0.05-0.40 / 0.9-1 | 0.1-0.2 / 0.95-0.99 | Client | Use | Mult | Low: drift. High: a dead stick |
+| `StickDeadZoneFrac` * / `StickOuterZoneFrac` | float | Camera | 0.15 / 0.98 | 0.05-0.40 / 0.9-1 | 0.1-0.2 / 0.95-0.99 | Client | Use | Mult | Low: drift. High: a dead stick |
 | `StickCurveExp` * | float | Camera | 1.5 | 1.0-2.0 | 1.0-2.0 | Client | Use | Mult | Precision versus turn speed |
 | `StickYawRateDegPerSec` * / `StickPitchRateDegPerSec` * | float | Camera | 180 / 120 | 60-360 | 140-240 / 90-150 | Client | Use | DegPerSec | Low: cannot turn toward a sound. High: twitchy |
 
@@ -655,7 +655,7 @@ The MVP options listed in CS-R13 go on a minimal options panel: default camera m
    - Extend the R9 owner-local allowance to hiding the head, neck and hair in close 3P (lens within 60 cm).
    - The R5.5 trigger accepts the elastic 5° overshoot (minimum 2°, I-CS-5).
    - Server-side pose tick, bone refresh, root motion and notifies must not depend on local render state: always-tick for every pawn on the listen-server host. R11 "rendered" reads the mask flag (AC-CS-28).
-   - **R9 / OQ8:** record that the −60°/+40° view pitch applies in **both** modes (creative-director ruling at Camera design review, extending D6; user to confirm, OQ9).
+   - **R9 / OQ8:** record that the −60°/+40° view pitch applies in **both** modes (creative-director ruling at Camera design review, extending D6; confirmed by the user 2026-10-25, OQ9 closed).
    - Review raising `PivotTurnRateDegPerSec` from 120 to ≥ 150 °/s (OQ3).
 3. **Concealment:** items 1-2 (foliage channels, rustle tag) confirmed by Concealment; OQ7 answered and applied (CS-R11.3); change request 12 applied (`ConcealedBoomCm` 60).
    - **New:** Concealment's note "safe range capped at 80" becomes 70 under I-CS-4 (dome inner radius 90 cm − 20 cm margin). Concealment should publish the dome inner radius as a key or a fixed asset fact that Camera's lint can read.
@@ -680,7 +680,7 @@ The MVP options listed in CS-R13 go on a minimal options panel: default camera m
 | Assassination CR 19 | `Dying` entry and `ViewRelease` driven by `OnRoleChangePresented` (ASN-R23) | APPLIED (CS-R12.1) |
 | Assassination CR 6 | `StrikeWarpYawLimitDeg` 30; Camera lists Assassination as soft dependent | ALREADY DONE |
 | Penalty CR-10 (amended at Penalty review) | Exile `ViewRelease(StrikeLimit)` raised by HUD's card-entrance event, `ExileCardTimeoutSec` fallback | APPLIED (CS-R12.1, States, Edge Cases, consumed keys, AC); replaces the earlier contact-frame timer |
-| Penalty CR-18 | Own-view reason `InformantKilled` (fade from `DeathServerTime + DeathFallSec`, no card) | APPLIED (CS-R12.1, States, Edge Cases, AC). Judged not a schema change (client-local event reason, nothing replicated or stored); Penalty OQ-NKP-12 keeps the user confirmation open |
+| Penalty CR-18 | Own-view reason `InformantKilled` (fade from `DeathServerTime + DeathFallSec`, no card) | APPLIED (CS-R12.1, States, Edge Cases, AC). Judged not a schema change (client-local event reason, nothing replicated or stored); confirmed by the user 2026-10-25 (Penalty OQ-NKP-12 closed for this half) |
 | HUD CR-HUD-10 | Expose live/neutral view state and the fade layer (plates above the black; fade above HUD world-anchored layers, below cards) | APPLIED (CS-R15 layer order); `GetViewState()` ALREADY DONE |
 | Concealment CR 12 | `ConcealedBoomCm` 60, safe 40-80; OQ7 answered | ALREADY DONE |
 | Teammate Markers CR-3 | `GetViewState()`, fade layer above markers and below plates | ALREADY DONE |
@@ -892,7 +892,7 @@ Test names take the form `StealthGame.Camera.<Scenario>`; tests live in `Source/
 | OQ6 | Server-side view check or an Iris dynamic filter applied identically to all pawns (CS-R5c). | Anti-Cheat GDD / technical-director | Alpha |
 | OQ7 | **Closed (Concealment CON-R7, 2026-10-24):** a concealed hider's body yaw is locked; Look is free within the head clamp; the camera's edge push is off while concealed (CS-R3.2, CS-R11.3). | Concealment GDD | closed |
 | OQ8 | **Closed (Assassination ASN-R16, 2026-10-24):** `StrikeWarpYawLimitDeg` is 30°. | Assassination GDD | closed |
-| OQ9 | **User to confirm:** one view and aim pitch range of −60°/+40° in **both** modes (creative-director ruling at design review, extending SCL D6 from first person only). Applied provisionally. The alternative of −60°/+40° in 1P with ±20° in 3P was rejected because it makes the camera choice a gameplay choice (CS-R2). | user (creative-director recommends) | before the first camera story |
+| OQ9 | **CLOSED — confirmed by the user 2026-10-25.** One view and aim pitch range of −60°/+40° in **both** modes (creative-director ruling at design review, extending SCL D6 from first person only). Applied. The alternative of −60°/+40° in 1P with ±20° in 3P was rejected because it makes the camera choice a gameplay choice (CS-R2). | user (creative-director recommends) | closed 2026-10-25 |
 | OQ10 | Mask trace budget: worst case 245 traces per frame, about 1.2 ms at 5 µs per trace, against the 0.5 ms target (F3, AC-CS-13). The options are time-slicing the near band, fewer probes at distance, or GPU queries. The line-of-sight test is never dropped, and the 3P reveal must not be noticeably worse than 1P occlusion culling. | technical-director | mask spike (OQ5) |
 | OQ11 | **User decision, only if triggered:** if AC-CS-26 shows 1P reading better than 3P by more than 15 %, should the default mode change from `ThirdPerson` to `FirstPerson`? | user | after the graybox read-parity playtest |
-| OQ12 | **Pending user decision (scope):** a tap or hold toggle option, and a left-handed default shoulder. Recommended by ux-designer and allowed by the creative director as settings, but **not applied** because they add options to the MVP (always-ask). | user | Settings & Accessibility (VS) or earlier |
+| OQ12 | **CLOSED for MVP — declined by the user 2026-10-25; later as Vertical Slice settings.** A tap or hold toggle option and a left-handed default shoulder (recommended by ux-designer, allowed by the creative director as settings) are not in MVP; Settings & Accessibility (VS) adds them. | user | VS (Settings & Accessibility) |

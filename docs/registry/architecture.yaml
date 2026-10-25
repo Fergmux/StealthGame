@@ -69,7 +69,8 @@ state_ownership:
     status: active
     owner_system: information-visibility-policy
     adr: docs/architecture/adr-0001-crowd-identity-rules.md
-    interface: "UTeamViewComponentBase subclasses on each AStealthPlayerController (owner-only relevancy); Roster part URosterTeamViewComponent {OwnerPart, Teammates[<=4]}; feature parts (e.g. UObjectiveTeamViewComponent); presentation reads via FindComponentByClass on its own controller"
+    # old interface (2026-10-25, before user decision 2026-10-25): "UTeamViewComponentBase subclasses on each AStealthPlayerController (owner-only relevancy); Roster part URosterTeamViewComponent {OwnerPart, Teammates[<=4]}; feature parts (e.g. UObjectiveTeamViewComponent); presentation reads via FindComponentByClass on its own controller"
+    interface: "UTeamViewComponentBase subclasses on each AStealthPlayerController (owner-only relevancy); Roster part URosterTeamViewComponent {OwnerPart {Handle, Team, State, RoundEpoch, WrongTargetTally, LastResultSeq, T_due (last three Owner-only)}, Teammates[<=4] {Handle, State, PawnRef, bIsConcealed, RetireAtServerTime (Team)}}; feature parts (e.g. UObjectiveTeamViewComponent); presentation reads via FindComponentByClass on its own controller"
     # old write_access (2026-10-24): "each part written only by its owning system (Roster part by Roster push step; feature parts by the feature); audiences ratified by the Visibility Policy"
     write_access: "each part written only by its owning system (Roster part by Roster push step; feature parts by the feature); the Roster part's teammate IsConcealed input comes only through URosterStore::SetTeammateConcealed(FParticipantId, bool), whose only caller is Concealment (ADR-0001 §5); audiences ratified by the Visibility Policy"
     referenced_by:
@@ -133,12 +134,13 @@ state_ownership:
     status: active
     owner_system: information-visibility-policy
     adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
-    interface: "Per-pawn server-only record {Visible|CullPending|Culled, CommitServerTime, CullDeadline, Reason}; written only through IConcealmentCullSource (SetCullState, MarkKilledConcealed) by Concealment; read by AStealthPawn::IsNetRelevantFor via UVisibilityPolicy"
+    # old interface (2026-10-25, before user decision 2026-10-25): "Per-pawn server-only record {Visible|CullPending|Culled, CommitServerTime, CullDeadline, Reason}; written only through IConcealmentCullSource (SetCullState, MarkKilledConcealed) by Concealment; read by AStealthPawn::IsNetRelevantFor via UVisibilityPolicy"
+    interface: "Per-pawn server-only record {Visible|CullPending|Culled, CommitServerTime, CullDeadline, Reason}; written only through IConcealmentCullSource (SetCullState; MarkKilledConcealed retired 2026-10-25, a killed-concealed victim re-opens at the death write with bDiedConcealed) by Concealment; read by AStealthPawn::IsNetRelevantFor via UVisibilityPolicy"
     write_access: information-visibility-policy (state machine); concealment pushes inputs only
     referenced_by:
       - docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - state: replication_allowlist
     status: active
     owner_system: information-visibility-policy
@@ -153,12 +155,13 @@ state_ownership:
     status: active
     owner_system: information-visibility-policy
     adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
-    interface: "UTeamPositionFeedComponent (C-TeamView part) entries {PublicHandle, int16x3 feet position at 10 cm}; added the frame a teammate pawn has no open channel on that connection; per-entry sequence = open slot pending user"
+    # old interface (2026-10-25, before user decision 2026-10-25): "UTeamPositionFeedComponent (C-TeamView part) entries {PublicHandle, int16x3 feet position at 10 cm}; added the frame a teammate pawn has no open channel on that connection; per-entry sequence = open slot pending user"
+    interface: "UTeamPositionFeedComponent (C-TeamView part) entries {PublicHandle, int16x3 feet position at 10 cm, uint8 Seq advanced every feed tick}; added the frame a teammate pawn has no open channel on that connection; 13 B per entry, <= 104 B/s"
     write_access: information-visibility-policy-only
     referenced_by:
       - docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   # --- from adr-registry-staging\ADR-0004 ---
   - state: validated_tuning_set
     status: active
@@ -313,7 +316,7 @@ state_ownership:
     status: active
     owner_system: input-interaction-framework
     adr: docs/architecture/adr-0011-pawn-command-interface-input.md
-    interface: "AStealthPawn FActionState {Pose, Seq, Variant, ContactServerTime, WarpPoint} (All, one RepNotify); written only by UPawnCommandComponent::WriteActionState inside FStealthForcedNetUpdate(ActionStateWrite); semantics ADR-0018"
+    interface: "AStealthPawn FActionState {Pose, Seq, Variant, StartServerTime, ContactServerTime, WarpPoint} (All, one RepNotify); written only by UPawnCommandComponent::WriteActionState inside FStealthForcedNetUpdate(ActionStateWrite); semantics ADR-0018"
     write_access: input-interaction-framework-only (Assassination writes through the component)
     referenced_by:
       - docs/architecture/adr-0011-pawn-command-interface-input.md
@@ -488,7 +491,8 @@ state_ownership:
     status: active
     owner_system: assassination-defence-reversal
     adr: docs/architecture/adr-0018-encounter-outcome-timing.md
-    interface: "FActionState {Pose u8, Seq u16, Variant u8, ContactServerTime double, WarpPoint int16x3 @0.1 cm world-axis offset from the attacker} on AStealthPawn, All audience, fixed 144 bits (WithNetSerializer + WithIdentical); written only by UPawnCommandComponent::WriteActionState (ADR-0011); this ADR owns Strike/Counter/Variant/Contact/Warp semantics; Seq = per-pawn write counter, never a ClientCommandSeq"
+    # old interface (2026-10-25, before user decision 2026-10-25): "FActionState {Pose u8, Seq u16, Variant u8, ContactServerTime double, WarpPoint int16x3 @0.1 cm world-axis offset from the attacker} on AStealthPawn, All audience, fixed 144 bits (WithNetSerializer + WithIdentical); written only by UPawnCommandComponent::WriteActionState (ADR-0011); this ADR owns Strike/Counter/Variant/Contact/Warp semantics; Seq = per-pawn write counter, never a ClientCommandSeq"
+    interface: "FActionState {Pose u8, Seq u16, Variant u8, StartServerTime double, ContactServerTime double, WarpPoint int16x3 @0.1 cm world-axis offset from the attacker} on AStealthPawn, All audience, fixed 208 bits (WithNetSerializer + WithIdentical); written only by UPawnCommandComponent::WriteActionState (ADR-0011); this ADR owns Strike/Counter/Variant/Contact/Warp semantics; Seq = per-pawn write counter, never a ClientCommandSeq"
     write_access: input-interaction-framework-only (WriteActionState), semantics by assassination-defence-reversal
     referenced_by:
       - docs/architecture/adr-0018-encounter-outcome-timing.md
@@ -497,19 +501,20 @@ state_ownership:
       - docs/architecture/adr-0013-animation-motion-matching-significance.md
       - docs/architecture/adr-0017-concealment-per-viewer-presentation.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - state: death_state
     status: active
     owner_system: assassination-defence-reversal
     adr: docs/architecture/adr-0018-encounter-outcome-timing.md
-    interface: "FDeathState {double DeathServerTime = -1} on AStealthPawn, All, 64 bits; written once per pawn by the DeathWrite staged write at ContactServerTime - StrikeNetLeadSec; DeathServerTime = ContactServerTime; bDiedConcealed reserved (pending user)"
+    # old interface (2026-10-25, before user decision 2026-10-25): "FDeathState {double DeathServerTime = -1} on AStealthPawn, All, 64 bits; written once per pawn by the DeathWrite staged write at ContactServerTime - StrikeNetLeadSec; DeathServerTime = ContactServerTime; bDiedConcealed reserved (pending user)"
+    interface: "FDeathState {double DeathServerTime = -1, bool bDiedConcealed} on AStealthPawn, All, 65 bits; written once per pawn by the DeathWrite staged write at ContactServerTime - StrikeNetLeadSec; DeathServerTime = ContactServerTime; bDiedConcealed true only for a victim Concealed/CullPending at the death write (user decision 2026-10-25)"
     write_access: assassination-defence-reversal-only (staging pass)
     referenced_by:
       - docs/architecture/adr-0018-encounter-outcome-timing.md
       - docs/architecture/adr-0013-animation-motion-matching-significance.md
       - docs/architecture/adr-0017-concealment-per-viewer-presentation.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - state: strike_role_and_scheduled_death
     status: active
     owner_system: assassination-defence-reversal
@@ -673,11 +678,12 @@ interfaces:
     consumers:
       - hud
     adr: docs/architecture/adr-0001-crowd-identity-rules.md
-    signal_signature: "OPEN SLOT pending user decision (schema_changes, C-W5). Owner-audience only; carrier not chosen (options: C-TeamView owner part, owner reply field, client derivation)"
+    # old signal_signature (2026-10-25, before user decision 2026-10-25): "OPEN SLOT pending user decision (schema_changes, C-W5). Owner-audience only; carrier not chosen (options: C-TeamView owner part, owner reply field, client derivation)"
+    signal_signature: "T_due (double server time, 0 = none) in the C-TeamView owner part (ADR-0001 §6 option (a), user decision 2026-10-25); Owner-audience only; written by Penalty via URosterStore::SetOwnerRespawnDue; HUD F7 live countdown"
     referenced_by:
       - docs/architecture/adr-0001-crowd-identity-rules.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   # --- from adr-registry-staging\ADR-0002 ---
   - contract: queue_resolution
     status: active
@@ -807,11 +813,12 @@ interfaces:
     consumers:
       - information-visibility-policy
     adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
-    signal_signature: "IConcealmentCullSource::SetCullState(APawn*, bool bConcealed, double CommitServerTime); MarkKilledConcealed(APawn*) — called inside queue slots; the Policy never names a feature type"
+    # old signal_signature (2026-10-25, before user decision 2026-10-25): "IConcealmentCullSource::SetCullState(APawn*, bool bConcealed, double CommitServerTime); MarkKilledConcealed(APawn*) — called inside queue slots; the Policy never names a feature type"
+    signal_signature: "IConcealmentCullSource::SetCullState(APawn*, bool bConcealed, double CommitServerTime) — called inside queue slots (MarkKilledConcealed retired 2026-10-25); the Policy never names a feature type"
     referenced_by:
       - docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - contract: pawn_forced_net_update
     status: active
     pattern: direct_call
@@ -1302,12 +1309,13 @@ interfaces:
       - teammate-markers
       - shared-character-locomotion
     adr: docs/architecture/adr-0017-concealment-per-viewer-presentation.md
-    signal_signature: "HidePoseStartServerTime(FActionState, ClientTuning): BushEnter/BushExit => ContactServerTime carries the start (stopgap while FActionState.StartServerTime is pending user); BushStrike emerge => ContactServerTime - (BushStrikeEmergeSec + StrikeContactSec)"
+    # old signal_signature (2026-10-25, before user decision 2026-10-25): "HidePoseStartServerTime(FActionState, ClientTuning): BushEnter/BushExit => ContactServerTime carries the start (stopgap while FActionState.StartServerTime is pending user); BushStrike emerge => ContactServerTime - (BushStrikeEmergeSec + StrikeContactSec)"
+    signal_signature: "FActionState.StartServerTime carries every pose start (BushEnter/BushExit transition start; BushStrike emerge start = slot time); HidePoseStartServerTime stopgap retired 2026-10-25"
     referenced_by:
       - docs/architecture/adr-0017-concealment-per-viewer-presentation.md
       - docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   # --- from adr-registry-staging\ADR-0018 ---
   - contract: owner_strike_and_defence_results
     status: active
@@ -1317,13 +1325,14 @@ interfaces:
       - hud
       - npc-kill-penalty-informants
     adr: docs/architecture/adr-0018-encounter-outcome-timing.md
-    signal_signature: "FStrikeResult {FClientCommandSeq ClientCommandSeq, EStrikeResult Result {RivalEliminated, WrongTarget, NoContact, Reversed}, uint8 TallyAfter, bool bExiled} and FDefenceResult {Reversed} as entries of ADR-0011 ClientCommandReplies (owner-only reliable RPC, end of drain); same shape for every result; ContactServerTime reserved (pending user, HUD OQ15)"
+    # old signal_signature (2026-10-25, before user decision 2026-10-25): "FStrikeResult {FClientCommandSeq ClientCommandSeq, EStrikeResult Result {RivalEliminated, WrongTarget, NoContact, Reversed}, uint8 TallyAfter, bool bExiled} and FDefenceResult {Reversed} as entries of ADR-0011 ClientCommandReplies (owner-only reliable RPC, end of drain); same shape for every result; ContactServerTime reserved (pending user, HUD OQ15)"
+    signal_signature: "FStrikeResult {FClientCommandSeq ClientCommandSeq, EStrikeResult Result {RivalEliminated, WrongTarget, NoContact, Reversed}, uint8 TallyAfter, bool bExiled, double ContactServerTime} and FDefenceResult {Reversed} as entries of ADR-0011 ClientCommandReplies (owner-only reliable RPC, end of drain); same shape for every result; ContactServerTime added (HUD OQ15, user decision 2026-10-25); tally confirmed (Penalty OQ-NKP-1)"
     referenced_by:
       - docs/architecture/adr-0018-encounter-outcome-timing.md
       - docs/architecture/adr-0011-pawn-command-interface-input.md
       - docs/architecture/adr-0019-informant-lifecycle-takeover.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - contract: on_pawn_killed
     status: active
     pattern: event
@@ -1437,12 +1446,13 @@ interfaces:
     consumers:
       - participant-state-roster
     adr: docs/architecture/adr-0019-informant-lifecycle-takeover.md
-    signal_signature: "UPenaltyService::OnDueTimeChanged(FParticipantId, TOptional<double> T_due) server-only; consumed only by the T_due carrier adapter, which is NOT implemented until the user decides ADR-0001 section 6 (AQ-02, schema_changes); interim: no T_due value leaves the server"
+    # old signal_signature (2026-10-25, before user decision 2026-10-25): "UPenaltyService::OnDueTimeChanged(FParticipantId, TOptional<double> T_due) server-only; consumed only by the T_due carrier adapter, which is NOT implemented until the user decides ADR-0001 section 6 (AQ-02, schema_changes); interim: no T_due value leaves the server"
+    signal_signature: "UPenaltyService::OnDueTimeChanged(FParticipantId, TOptional<double> T_due) server-only; consumed by the T_due adapter, which writes the C-TeamView owner part through URosterStore::SetOwnerRespawnDue (ADR-0001 section 6 option (a), user decision 2026-10-25)"
     referenced_by:
       - docs/architecture/adr-0019-informant-lifecycle-takeover.md
       - docs/architecture/adr-0001-crowd-identity-rules.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   # --- from adr-registry-staging\ADR-0020 ---
   - contract: interact_target_owner
     status: active
@@ -1592,11 +1602,12 @@ performance_budgets:
     status: active
     budget_ms: 1.5
     adr: docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
-    notes: "Listen-host game thread for NetDriver replication of 10 connections and ~50 pawns incl. the relevancy override and cull tick (architecture CPU table; ASSUMED until target-hardware capture). Bandwidth: pawns <= 30 KB/s, total <= 50 KB/s per client"
+    # old notes (2026-10-25, before user decision 2026-10-25): "Listen-host game thread for NetDriver replication of 10 connections and ~50 pawns incl. the relevancy override and cull tick (architecture CPU table; ASSUMED until target-hardware capture). Bandwidth: pawns <= 30 KB/s, total <= 50 KB/s per client"
+    notes: "Listen-host game thread for NetDriver replication of 10 connections and ~50 pawns incl. the relevancy override and cull tick (architecture CPU table; ASSUMED until target-hardware capture). Bandwidth: pawns <= 36 KB/s (60 pawns since NpcCount 50; working value), total <= 50 KB/s per client"
     referenced_by:
       - docs/architecture/adr-0003-replication-relevancy-concealment-cull.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   # --- from adr-registry-staging\ADR-0012 ---
   - system: character-pool-appearance
     status: active
@@ -1612,11 +1623,12 @@ performance_budgets:
     status: active
     budget_ms: 4.0
     adr: docs/architecture/adr-0013-animation-motion-matching-significance.md
-    notes: "C_anim = GT + worker sum (pawn mesh ticks, anim update/eval tasks incl. PoseSearch and choosers, tier subsystem, step clocks), p95 over 60 s, 50 characters, RTX 3060-class 1080p; game-thread share <= 2.0 ms (architecture.md listen-host GT table). Excludes CMC proxy/server movement and GPU skinning. ASSUMED until spike R3 on target hardware."
+    # old notes (2026-10-25, before user decision 2026-10-25): "C_anim = GT + worker sum (pawn mesh ticks, anim update/eval tasks incl. PoseSearch and choosers, tier subsystem, step clocks), p95 over 60 s, 50 characters, RTX 3060-class 1080p; game-thread share <= 2.0 ms (architecture.md listen-host GT table). Excludes CMC proxy/server movement and GPU skinning. ASSUMED until spike R3 on target hardware."
+    notes: "C_anim = GT + worker sum (pawn mesh ticks, anim update/eval tasks incl. PoseSearch and choosers, tier subsystem, step clocks), p95 over 60 s, 60 characters (NpcCount 50 since 2026-10-25), RTX 3060-class 1080p; game-thread share <= 2.0 ms (architecture.md listen-host GT table). Excludes CMC proxy/server movement and GPU skinning. ASSUMED until spike R3 on target hardware."
     referenced_by:
       - docs/architecture/adr-0013-animation-motion-matching-significance.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   # --- from adr-registry-staging\ADR-0014 ---
   - system: layout-service-runtime
     status: active
@@ -1631,7 +1643,7 @@ performance_budgets:
     status: active
     budget_ms: 33.0
     adr: docs/architecture/adr-0014-layout-service-generation-navmesh.md
-    notes: "Longest game-thread frame on host and clients during Preparing (LSC R4.3). Wall budgets: attempt <= 7 s, total <= 45 s, server spawn + nav <= 3.0 s (spike R4), client build <= 3.0 s p95; validation slices <= LayoutSliceWorkUnitsMax units and <= 4 ms."
+    notes: "Longest game-thread frame on host and clients during Preparing (LSC R4.3). Wall budgets: attempt <= 7 s, total <= 45 s, server spawn + nav <= 3.0 s (spike R4), client build <= 3.0 s p95; validation slices <= LayoutSliceWorkUnitsLimit units and <= 4 ms."
     referenced_by:
       - docs/architecture/adr-0014-layout-service-generation-navmesh.md
     added: 2026-10-24
@@ -1651,11 +1663,12 @@ performance_budgets:
     status: active
     budget_ms: 1.5
     adr: docs/architecture/adr-0016-crowd-ai-architecture.md
-    notes: "Listen-host game thread, scopes Crowd.Director/StateTree/Follower/Perception/NavQuery/Dispatch summed: <= 1.5 ms p99, <= 0.8 ms mean at 50 pawns, 60 fps (AC-CNB-26). Excludes CMC simulation of AI-moved pawns (SCL line) and task-graph path search. Provisional pending the 50-character spike"
+    # old notes (2026-10-25, before user decision 2026-10-25): "Listen-host game thread, scopes Crowd.Director/StateTree/Follower/Perception/NavQuery/Dispatch summed: <= 1.5 ms p99, <= 0.8 ms mean at 50 pawns, 60 fps (AC-CNB-26). Excludes CMC simulation of AI-moved pawns (SCL line) and task-graph path search. Provisional pending the 50-character spike"
+    notes: "Listen-host game thread, scopes Crowd.Director/StateTree/Follower/Perception/NavQuery/Dispatch summed: <= 1.5 ms p99, <= 0.8 ms mean at 60 pawns, 60 fps (AC-CNB-26; estimate 0.74 ms mean). Excludes CMC simulation of AI-moved pawns (SCL line) and task-graph path search. Provisional pending the 50-character spike"
     referenced_by:
       - docs/architecture/adr-0016-crowd-ai-architecture.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   # --- from adr-registry-staging\ADR-0020 ---
   - system: objectives-chain
     status: active
@@ -1696,12 +1709,13 @@ performance_budgets:
     status: active
     budget_ms: 3.0
     adr: docs/architecture/adr-0022-rendering-performance-budgets.md
-    notes: "Listen-host GT: ~40 server-simulated NPC CMCs + simulated proxies; allocated by ADR-0022, implemented and measured under ADR-0010 (SCL R12 reports it separately from animation). ASSUMED until RC-1."
+    # old notes (2026-10-25, before user decision 2026-10-25): "Listen-host GT: ~40 server-simulated NPC CMCs + simulated proxies; allocated by ADR-0022, implemented and measured under ADR-0010 (SCL R12 reports it separately from animation). ASSUMED until RC-1."
+    notes: "Listen-host GT: ~50 server-simulated NPC CMCs + simulated proxies (sized for ~40; projects ~3.75 ms, re-verify at 60 characters in R3/RC-1); allocated by ADR-0022, implemented and measured under ADR-0010 (SCL R12 reports it separately from animation). ASSUMED until RC-1."
     referenced_by:
       - docs/architecture/adr-0022-rendering-performance-budgets.md
       - docs/architecture/adr-0010-shared-pawn-cmc-possession.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - system: ui-hud-game-thread
     status: active
     budget_ms: 0.5
@@ -1754,24 +1768,26 @@ performance_budgets:
     status: active
     budget_ms: 2.5
     adr: docs/architecture/adr-0022-rendering-performance-budgets.md
-    notes: "GPU timeline; 50 characters with VSM, incl. masked-dither master overhead (RC-3 <= 0.3 ms); pass line of spike R2 (gates mass production)."
+    # old notes (2026-10-25, before user decision 2026-10-25): "GPU timeline; 50 characters with VSM, incl. masked-dither master overhead (RC-3 <= 0.3 ms); pass line of spike R2 (gates mass production)."
+    notes: "GPU timeline; 60 characters with VSM, incl. masked-dither master overhead (RC-3 <= 0.3 ms); pass line of spike R2 (gates mass production)."
     referenced_by:
       - docs/architecture/adr-0022-rendering-performance-budgets.md
       - docs/architecture/adr-0012-character-pool-appearance-allocation.md
       - docs/architecture/adr-0013-animation-motion-matching-significance.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   # --- from adr-registry-staging\ADR-0023 ---
   - system: playtest-telemetry
     status: active
     budget_ms: 0.15
     adr: docs/architecture/adr-0023-playtest-telemetry-hooks.md
-    notes: "Listen-host GT mean (<= 0.3 ms p99) at 50 pawns: 10 Hz staggered detectors, 1 Hz court presence, async ViewBlock witness/reaction traces; inside ADR-0022's 'Engine/world tick, other' 2.0 ms line. Export snapshot <= 0.2 ms once per round; serialisation off the game thread. Memory <= ~1.1 MB per round, freed after export."
+    # old notes (2026-10-25, before user decision 2026-10-25): "Listen-host GT mean (<= 0.3 ms p99) at 50 pawns: 10 Hz staggered detectors, 1 Hz court presence, async ViewBlock witness/reaction traces; inside ADR-0022's 'Engine/world tick, other' 2.0 ms line. Export snapshot <= 0.2 ms once per round; serialisation off the game thread. Memory <= ~1.1 MB per round, freed after export."
+    notes: "Listen-host GT mean (<= 0.3 ms p99) at 60 pawns: 10 Hz staggered detectors, 1 Hz court presence, async ViewBlock witness/reaction traces; inside ADR-0022's 'Engine/world tick, other' 2.0 ms line. Export snapshot <= 0.2 ms once per round; serialisation off the game thread. Memory <= ~1.1 MB per round, freed after export."
     referenced_by:
       - docs/architecture/adr-0023-playtest-telemetry-hooks.md
       - docs/architecture/adr-0022-rendering-performance-budgets.md
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
 
 # Example:
 #
@@ -3112,7 +3128,8 @@ forbidden_patterns:
     adr: docs/architecture/adr-0017-concealment-per-viewer-presentation.md
     added: 2026-10-24
   - pattern: pending_concealment_fields_implemented
-    status: active
+    # retired 2026-10-25: the user approved FActionState.StartServerTime and FDeathState.bDiedConcealed (ADR-0003/0017/0018 amended)
+    status: "superseded_by: ADR-0017"
     description: "FActionState.StartServerTime and FDeathState.bDiedConcealed are not implemented until the user decides them and ADR-0003/0017/0018 are amended; the field-free stopgaps apply"
     why: "Both are pending schema_changes decisions (always-ask)"
     adr: docs/architecture/adr-0017-concealment-per-viewer-presentation.md
@@ -3252,3 +3269,16 @@ forbidden_patterns:
 #       ownership model. The owning system must be the sole writer."
 #     adr: docs/architecture/adr-0000-architecture-principles.md
 #     added: 2026-03-26
+  # --- user decisions 2026-10-25 ---
+  - pattern: tally_written_per_strike_on_teamview
+    status: active
+    description: "Writing WrongTargetTally/LastResultSeq into the C-TeamView owner part on a strike (they are written only on reclaim, rejoin and OnRosterReset; the per-strike tally travels only in FStrikeResult)"
+    why: "A C-TeamView update could beat the result plate to the screen (Penalty PEN-R3, CR-19; HUD-R7)"
+    adr: docs/architecture/adr-0019-informant-lifecycle-takeover.md
+    added: 2026-10-25
+  - pattern: t_due_outside_owner_part
+    status: active
+    description: "Carrying T_due anywhere but the owner's C-TeamView owner part (no reply entry, no pawn field, no client derivation)"
+    why: "Owner-only fact; one carrier (ADR-0001 §6 option (a), user decision 2026-10-25)"
+    adr: docs/architecture/adr-0001-crowd-identity-rules.md
+    added: 2026-10-25

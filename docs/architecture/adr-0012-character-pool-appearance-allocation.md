@@ -394,7 +394,7 @@ void ApplyAppearanceVisuals();          // idempotent look path; server direct, 
 
 ## Performance Implications
 - **CPU (server)**: deal ≤ 0.2 ms once per round (D ≤ 110, a few hundred SipHash evaluations); replacement draw and ledger ops O(|V|) ≤ a few µs; subset table built once per session (< 1 ms). Counted inside the 0.5 ms "queue drain, resolvers, Roster" line (architecture.md GT budget).
-- **CPU (client)**: `ApplyAppearance` per pawn at spawn (mesh + material set, render-state recreation) — about 50 calls in the round-start frame, inside the loading screen; estimate 2-5 ms one-off [U, measured in CPA-V1]. Steady state 0.
+- **CPU (client)**: `ApplyAppearance` per pawn at spawn (mesh + material set, render-state recreation) — about 60 calls in the round-start frame (`NpcCount` 50), inside the loading screen; estimate 2.4-6 ms one-off [U, measured in CPA-V1]. Steady state 0.
 - **Memory**: whole pool resident for the session: ≤ 40 MB textures for 8 models (art bible 8.x.5) plus ≤ 16 skeletal meshes (8 models + accessory variants) at 12k/6k/2.5k/0.9k tris; the subset table < 64 KB.
 - **Load Time**: + warm-up time per round load (PSO compile on a cold cache, mip streaming); bounded by `TravelLoadTimeoutSec`.
 - **Network**: `AppearanceId` ≈ 1 B payload + handle per pawn per channel open, ≈ 100-150 B per client per round, 0 B/s steady (F-9, AC-CP-32); `PoolHash` is 8 B inside the existing acknowledgement.
@@ -427,3 +427,7 @@ Inter-ADR amendment pass; decision unchanged, Status unchanged (Proposed).
 
 Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.md`); decision unchanged, Status unchanged (Proposed).
 - §3 callers and pairing: `ReleaseCard` callers are Round (after its own `ReleaseToCrowd`, disconnect expiry) and Penalty (after `RequestTransition(StrikeLimit)`, inside which the Roster calls `ReleaseToCrowd`); "Round/Penalty call `ReleaseToCrowd`" wording removed — requested by ADR-0019 (item 8); architecture-review fix 2026-10-25 (Conflict 8).
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- user decision 2026-10-25: `NpcCount` default 50 (was ~40, user-locked default changed by the user), so 5v5 has 60 characters; the default deck is `D = 60`, `K = 12`, `q = 5`, `r = 0` (every look 5 copies); the G-DECK suite (F-8) keeps its reference configuration `N = 40` (`D = 50`, `r = 2`) so its copy-count tests stay meaningful (CPA F-8).
+- Deck rule — user decision 2026-10-25: the balanced appearance deck is confirmed.

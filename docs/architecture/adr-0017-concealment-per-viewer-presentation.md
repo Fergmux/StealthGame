@@ -17,7 +17,7 @@ Accepted — 2026-10-25, by the user (blanket acceptance of ADR-0001..0023, reco
 Autonomous design pipeline (`/architecture-decision`, rigor full); technical-director (TD-ADR) and unreal-specialist validation; acceptance reserved for the user.
 
 ## Summary
-A pawn in a bush must vanish for every non-ally (no body, shadow, light, sound or packet) while allies see a hatched marker, the owner keeps its body, NPCs use the same path, and every observer sees the entry and exit at the leaf plane exactly, independent of network arrival. Concealment is one non-replicated component on every pawn plus a server-only service (state machine, occupancy records, bush runtime built from the Manifest, transition timers as queue items, spot-zone queries, concealment log) that pushes cull state to the Visibility Policy (ADR-0003), and a client-side, fail-closed, state-derived body-hidden latch scheduled from the replicated server start time — carried today by `FActionState.ContactServerTime` because `StartServerTime` and `bDiedConcealed` are pending user decisions.
+A pawn in a bush must vanish for every non-ally (no body, shadow, light, sound or packet) while allies see a hatched marker, the owner keeps its body, NPCs use the same path, and every observer sees the entry and exit at the leaf plane exactly, independent of network arrival. Concealment is one non-replicated component on every pawn plus a server-only service (state machine, occupancy records, bush runtime built from the Manifest, transition timers as queue items, spot-zone queries, concealment log) that pushes cull state to the Visibility Policy (ADR-0003), and a client-side, fail-closed, state-derived body-hidden latch scheduled from the replicated server start time `FActionState.StartServerTime`, with `FDeathState.bDiedConcealed` for killed-concealed bodies (both approved by the user 2026-10-25).
 
 ## Engine Compatibility
 
@@ -48,16 +48,16 @@ A pawn in a bush must vanish for every non-ally (no body, shadow, light, sound o
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0001 (one pawn class; carrier model; C-TeamView teammate entry `bIsConcealed`; owner data on the PlayerController). ADR-0002 (queue, slots, `EstimatedServerNow`, staging pass; this ADR **requests an amendment** adding `ETimerKind::ConcealmentTransition`, §3). ADR-0003 (`IConcealmentCullSource`, cull grid, explicit close, un-cull in the same step, `MarkKilledConcealed`, fixed-width `FActionState`, the `StartServerTime` slot). ADR-0006 (secret streams; this ADR **requests an amendment** appending a `BushSpotPick` seed domain, §7). ADR-0010 (Shared Pawn: root-motion sources, capsule, collision profiles, `bPresentationHidden` presentation gate for footsteps/foley/Niagara/decals). ADR-0011 (`Hide(Enter/Exit)` entry points, `CanBegin` registration, slot arbitration, `BushEnter`/`BushExit` poses, owner prediction hook). ADR-0014 (`BushSite` in the Manifest; zero replicated actors). ADR-0016 (Crowd consumes `ICrowdPerceptionFilter`). ADR-0007/ADR-0008 (module placement, harness) |
+| **Depends On** | ADR-0001 (one pawn class; carrier model; C-TeamView teammate entry `bIsConcealed`; owner data on the PlayerController). ADR-0002 (queue, slots, `EstimatedServerNow`, staging pass; this ADR **requests an amendment** adding `ETimerKind::ConcealmentTransition`, §3). ADR-0003 (`IConcealmentCullSource`, cull grid, explicit close, un-cull in the same step, `MarkKilledConcealed`, fixed-width `FActionState` incl. `StartServerTime`). ADR-0006 (secret streams; this ADR **requests an amendment** appending a `BushSpotPick` seed domain, §7). ADR-0010 (Shared Pawn: root-motion sources, capsule, collision profiles, `bPresentationHidden` presentation gate for footsteps/foley/Niagara/decals). ADR-0011 (`Hide(Enter/Exit)` entry points, `CanBegin` registration, slot arbitration, `BushEnter`/`BushExit` poses, owner prediction hook). ADR-0014 (`BushSite` in the Manifest; zero replicated actors). ADR-0016 (Crowd consumes `ICrowdPerceptionFilter`). ADR-0007/ADR-0008 (module placement, harness) |
 | **Enables** | ADR-0018 (spot-zone and candidate queries), ADR-0019 (`IsInBushOrTransition` for takeover eligibility), ADR-0021 (Teammate Markers read `IsAllyBodyHidden`), ADR-0015 (concealed camera framing reads the owner `IsConcealed`) |
 | **Blocks** | Concealment (Bushes) epic; Assassination blind-strike stories; Teammate Markers hatch rule; informant takeover eligibility |
-| **Ordering Note** | Implements IVP R7's hybrid, which ADR-0003 mechanises on the wire; this ADR owns behaviour and presentation. The two pending fields are slots (§8): no story may implement them until the user decides and ADR-0003/ADR-0018/this ADR are amended. S-CON-1 must report before the transition stories start. **Acceptance pair with ADR-0018** (architecture-review fix 2026-10-25): this ADR consumes ADR-0018's `FActionState`/`FDeathState` semantics, outcome slot vs death write, `BushStrike` variant and spot-pick consumer, and implements ADR-0018's consumer-owned `IBodyRemovalObserver`; ADR-0018 consumes this ADR's spot queries and kill hook. The two are reviewed and accepted together in one step. The edge is declared once, in ADR-0018's Depends On (ADR-0018 → ADR-0017), and not here, so the declared dependency graph stays acyclic. The Status line's "ADR-0018 … Accepted" prerequisite is read as "accepted together with ADR-0018" (the Status line is not edited; Status changes are reserved for the user) |
+| **Ordering Note** | Implements IVP R7's hybrid, which ADR-0003 mechanises on the wire; this ADR owns behaviour and presentation. The two fields once slotted in §8 were approved by the user 2026-10-25 and are specified there (ADR-0003, ADR-0018 amended the same day). S-CON-1 must report before the transition stories start. **Acceptance pair with ADR-0018** (architecture-review fix 2026-10-25): this ADR consumes ADR-0018's `FActionState`/`FDeathState` semantics, outcome slot vs death write, `BushStrike` variant and spot-pick consumer, and implements ADR-0018's consumer-owned `IBodyRemovalObserver`; ADR-0018 consumes this ADR's spot queries and kill hook. The two are reviewed and accepted together in one step. The edge is declared once, in ADR-0018's Depends On (ADR-0018 → ADR-0017), and not here, so the declared dependency graph stays acyclic. The Status line's "ADR-0018 … Accepted" prerequisite is read as "accepted together with ADR-0018" (the Status line is not edited; Status changes are reserved for the user) |
 
 ## Context
 
 ### Problem Statement
 
-The locked rules say a hidden player is fully invisible to enemies yet can be blind-attacked. IVP R7 chose a hybrid: the server culls the pawn for non-allies (so no packet carries a concealed position) and every client hides the body locally at the leaf-plane instant of the enter clip (so the hide happens at occlusion, not on the network's schedule). Making that work needs decisions the GDDs mark "-> ADR": where per-pawn state lives without adding a replicated field to the pawn; how bushes exist without replicated actors; how clips and the hide are scheduled from server time without the pending `StartServerTime`; how the client hide is fail-closed through re-creation, death and rejoin without the pending `bDiedConcealed`; which primitive flags actually remove a hidden body from shadows, Lumen and ray tracing; how the owner's warp avoids a correction hitch; and how NPCs use the same path. The prototype proves per-viewer concealment is feasible (PIE test E PASS) but leaks: it replicates `bConcealed` to everyone, keys concealment on overlap, and hides with a client `SetVisibility` driven by that flag (first-playable report, known issue 2).
+The locked rules say a hidden player is fully invisible to enemies yet can be blind-attacked. IVP R7 chose a hybrid: the server culls the pawn for non-allies (so no packet carries a concealed position) and every client hides the body locally at the leaf-plane instant of the enter clip (so the hide happens at occlusion, not on the network's schedule). Making that work needs decisions the GDDs mark "-> ADR": where per-pawn state lives without adding a replicated field to the pawn; how bushes exist without replicated actors; how clips and the hide are scheduled from server time (since 2026-10-25 via `StartServerTime`); how the client hide is fail-closed through re-creation, death and rejoin (since 2026-10-25 with `bDiedConcealed`); which primitive flags actually remove a hidden body from shadows, Lumen and ray tracing; how the owner's warp avoids a correction hitch; and how NPCs use the same path. The prototype proves per-viewer concealment is feasible (PIE test E PASS) but leaks: it replicates `bConcealed` to everyone, keys concealment on overlap, and hides with a client `SetVisibility` driven by that flag (first-playable report, known issue 2).
 
 ### Constraints
 
@@ -66,7 +66,7 @@ The locked rules say a hidden player is fully invisible to enemies yet can be bl
 - ADR-0002: every interacting state change resolves in the queue; timers are due-time-heap items; presentation schedules from `EstimatedServerNow()`.
 - IVP R7.6: NPC parity mandatory; no automatic client-hide fallback in any build that leaves the team.
 - Concealment has **no timer of any kind on dwell** and no capacity or occupancy check (CON-R3, CON-R7).
-- Pending user decisions (schema_changes): `FActionState.StartServerTime`, `FDeathState.bDiedConcealed`. Not decidable here.
+- `FActionState.StartServerTime` and `FDeathState.bDiedConcealed` were approved by the user 2026-10-25 (§8).
 - Listen host: the host holds every server fact; its presentation must still run the same latch (CON-R16).
 
 ### Requirements
@@ -102,11 +102,11 @@ The bush mesh itself (VA-1: one mesh family, one MI, no per-instance data) is pl
 
 ### 3. Transitions as queue items (server)
 
-- `HideEnter` executes in the command's slot: state `Entering`, `TransitionGeneration++`, `TransitionStartServerTime = ServerNow()`, `FActionState {Pose = BushEnter, ...}` written with the start time (§8 slot A), and the root-motion warp to the anchor started (§4). Two timer items are scheduled with `ScheduleAt` (ADR-0002 §4): `Commit` at `Start + BushEnterSwapSec`, `End` at `Start + BushEnterDurSec`. `HideExit` likewise schedules `Cross` at `Start + BushExitCrossSec` and `End` at `Start + BushExitDurSec`. The bush-emerge strike (Attack while `Concealed`, executed by Assassination's slot) schedules `Cross` at `ContactServerTime − StrikeContactSec` (the same formula clients use, §8 slot A, so server and clients cannot round differently).
+- `HideEnter` executes in the command's slot: state `Entering`, `TransitionGeneration++`, `TransitionStartServerTime = ServerNow()`, `FActionState {Pose = BushEnter, StartServerTime, ...}` written with the start time (§8 A), and the root-motion warp to the anchor started (§4). Two timer items are scheduled with `ScheduleAt` (ADR-0002 §4): `Commit` at `Start + BushEnterSwapSec`, `End` at `Start + BushEnterDurSec`. `HideExit` likewise schedules `Cross` at `Start + BushExitCrossSec` and `End` at `Start + BushExitDurSec`. The bush-emerge strike (Attack while `Concealed`, executed by Assassination's slot) schedules `Cross` at `ContactServerTime − StrikeContactSec` (the same formula clients use, §8 slot A, so server and clients cannot round differently).
 - These are `TimerFired(ConcealmentTransition)` items carrying `{PawnHandle, Phase ∈ {Commit, Cross, End}, TransitionGeneration, FEpochToken}` in ADR-0002 §2a's generic Foundation `FTimerPayload` (`Subject` = the pawn's `FPawnHandle`, `Generation` = `TransitionGeneration`, `Phase` = `EConcealPhase`, `Seq` = 0; the epoch rides on the item); **this needs an ADR-0002 amendment** adding `ConcealmentTransition` to the closed `ETimerKind` set (an internal enum; no replicated schema changes) **and naming it as a third post-latch exemption**: these items keep resolving after the latch, may write only Concealment state, the cull record and the Owner/Team concealment flags (never an outcome, a Roster transition or a win), and are dropped by generation/epoch at `Reset`. Without it a `Commit` rejected after the latch would leave an `Entering` pawn unculled, its position on the wire in `Ended`, breaking "concealed pawns stay culled". An item whose generation or epoch is stale, or whose pawn is dead or pending teardown, resolves `Voided` with no effect (States table rule; ADR-0002 §7).
 - **Commit** (in the item's slot): guard — the capsule lies wholly inside the `HideVolume`; on failure no commit, `ReportFault(ConcealGuard)`, and an ordinary exit on the entry side follows (AC-CON-29): during `Active` through the normal Hide path; after the latch as an **internal transition** run by the same resolver (state `Exiting`, `BushExit` pose, `Cross`/`End` items), never a `PawnCommand`, which would be `Rejected_Latched`. On success: state `Concealed`, occupancy record insert with `CommitSeq`, `IConcealmentCullSource::SetCullState(Pawn, true, ServerNow())` (ADR-0003 §5: `CullPending`, deadline on the global grid), Roster `SetTeammateConcealed(Participant, true)` for the pawn's participant if bound, owner `bIsConcealed = true`, log row `Commit`, host latch event (§5).
 - **HideExit execution / `OnConcealmentBroken`**: `SetCullState(Pawn, false, ...)` **in the same slot** (un-cull in the same server step, ADR-0003 §5.6); state `Exiting`/`Emerging`. **Cross**: leave the occupancy record; Roster `SetTeammateConcealed(Participant, false)` and owner `bIsConcealed = false`; log row; host latch event. **End**: state `Outside`; cooldown starts.
-- **Kill of a concealed pawn** (Assassination's outcome slot, ADR-0018): leave the occupancy record in the slot; call `IConcealmentCullSource::MarkKilledConcealed(Pawn)` (ADR-0003 §5.7 interim rule); **do not** clear Owner/Team `bIsConcealed` until the body's removal (cross-review S-W2; CON-R9). The removal instant is a **server** event: Concealment clears both flags at the server's body removal of that pawn: ADR-0018's `BodyRemoval` resolver calls the consumer-owned `IBodyRemovalObserver::OnBodyRemovalCommitted(Body)` (declared by ADR-0018, implemented here by `UConcealmentService::OnConcealedBodyRemoved`, registered by the composition root) in the same slot, just before ADR-0002 `RequestTeardown`; **or** when the participant is bound to a new pawn (`BindPawn`/`TakeOverCrowdPawn`, ADR-0010/ADR-0019), whichever comes first — the flags are per participant, so they must never carry concealed framing or the ally latch onto the new body. A body that already exists on an ally client stays hidden after the clear by CON-R6b rule 4 (death after the commit never clears the latch). ADR-0004 is asked to add the cross-field warning `DeathFallSec + BodyLingerSec + BodyRemovalGraceSec < InformantRespawnDelaySec` so the normal order is removal first. Nothing re-opens in the outcome slot or at the death write while slot B is open (§8).
+- **Kill of a concealed pawn** (Assassination's outcome slot, ADR-0018): leave the occupancy record in the slot; at the death write push `bConcealed = false` in the staging pass so the victim re-opens carrying `FDeathState.bDiedConcealed = true` (ADR-0003 §5.7; user decision 2026-10-25); **do not** clear Owner/Team `bIsConcealed` until the body's removal (cross-review S-W2; CON-R9). The removal instant is a **server** event: Concealment clears both flags at the server's body removal of that pawn: ADR-0018's `BodyRemoval` resolver calls the consumer-owned `IBodyRemovalObserver::OnBodyRemovalCommitted(Body)` (declared by ADR-0018, implemented here by `UConcealmentService::OnConcealedBodyRemoved`, registered by the composition root) in the same slot, just before ADR-0002 `RequestTeardown`; **or** when the participant is bound to a new pawn (`BindPawn`/`TakeOverCrowdPawn`, ADR-0010/ADR-0019), whichever comes first — the flags are per participant, so they must never carry concealed framing or the ally latch onto the new body. A body that already exists on an ally client stays hidden after the clear by CON-R6b rule 4 (death after the commit never clears the latch). ADR-0004 is asked to add the cross-field warning `DeathFallSec + BodyLingerSec + BodyRemovalGraceSec < InformantRespawnDelaySec` so the normal order is removal first. Nothing re-opens in the outcome slot; the re-open happens only at the death write (§8 B).
 - **Same-tick ordering** is the queue's: commands, kills and these items order by key (Concealment Edge Cases); two commits in one frame share one cull boundary (ADR-0003 §5.3).
 - **Ownership changes** (CON-R11): a bound-AI hold never issues Hide; transitions in flight complete; `ReleaseToCrowd` leaves the pawn `Concealed` (the Policy re-evaluates former allies on the Roster's binding event, ADR-0003 §5.5); Crowd later exits it with an ordinary `Hide(Exit)` (ADR-0016 §7).
 - **Phases**: in `Ended` Hide commands are rejected `NotNow`/`RoundEnded`, in-flight transitions complete through the post-latch exemption above, concealed pawns stay culled; `Reset` destroys every pawn, drops every pending item by epoch and clears every record on `OnRosterReset`.
@@ -124,7 +124,7 @@ bool EvaluateBodyHidden(const FActionState& A, const FDeathState& D, bool bAllyI
                         bool bIsOwner, double Now /* EstimatedServerNow() */);
 ```
 - **Owner**: always false (the owner keeps its body; CON-R6).
-- **Set** while: a `BushEnter` pose with `Now ≥ Start + BushEnterSwapSec`; `bAllyIsConcealed` true (ally clients, from C-TeamView); a `BushExit` pose with `Now < Start + BushExitCrossSec`; a bush-emerge strike with `Now < Start + BushStrikeEmergeSec`; (slot B) `D.bDiedConcealed`.
+- **Set** while: a `BushEnter` pose with `Now ≥ Start + BushEnterSwapSec`; `bAllyIsConcealed` true (ally clients, from C-TeamView); a `BushExit` pose with `Now < Start + BushExitCrossSec`; a bush-emerge strike with `Now < Start + BushStrikeEmergeSec`; `D.bDiedConcealed` (§8 B).
 - **Clear** only when no set rule holds **and** the last transition evidence is an exit/emerge crossing that has passed, or there is no concealment evidence at all (pose `None`, ally flag false). A pose change to `None`, a death pose or a strike pose never clears it; death after the swap never clears it (CON-R6b rules 2-4).
 - **Precedence** (CON-R6b rule 4): `BushEnter` before its swap with the ally flag false waits for the swap; the ally flag true before the pose sets at once; death before the commit cancels the pending swap (ordinary visible kill).
 - **Fresh actor** (re-open, rejoin, late arrival): every non-owner pawn actor is created **presentation-hidden** at construction / `PostInitializeComponents` (before any RepNotify can run, E8); no RepNotify before `PostNetInit` may clear it. The latch is first evaluated in `PostNetInit` from the full replicated state and clears only if no set rule applies (AC-CON-08). **Unresolved ally evidence:** on an ally client a `Concealed` teammate's only evidence after its pose returns to `None` is the C-TeamView flag, reached through a `PawnRef` that cannot resolve before the new actor's `PostNetInit` (E8). So while any living teammate entry on this client has an unresolved `PawnRef`, a fresh actor does **not** clear its hidden state; it re-evaluates when that `PawnRef` resolves (or the entry changes), bounded by the TM-R4a one-update rule (the fallback feed covers the marker meanwhile). New test: ally rejoin and re-open while a teammate is `Concealed` with pose `None` show no body frame (extends AC-CON-08, AC-CON-32).
@@ -144,24 +144,17 @@ When the latch is set on a client (or the host), `UConcealmentComponent` applies
 
 ### 7. Server queries: per-viewer result, spot zones, eligibility, perception filter
 
-- `bool IsConcealedFrom(FViewerId, const AStealthPawn*) const` = `State ∈ {Concealed} ∪ {Exiting, Emerging before Cross}` (or killed while concealed, interim) ∧ `¬CanViewerKnow(Viewer, Pawn, Position)` per IVP R7.8's answer over time; server-only; the truth table is AC-CON-05's checked-in table.
+- `bool IsConcealedFrom(FViewerId, const AStealthPawn*) const` = `State ∈ {Concealed} ∪ {Exiting, Emerging before Cross}` (or killed while concealed, until the death write) ∧ `¬CanViewerKnow(Viewer, Pawn, Position)` per IVP R7.8's answer over time; server-only; the truth table is AC-CON-05's checked-in table.
 - `TOptional<FBushId> TargetsBush(FVector WorldPoint) const`: horizontal distance from `WorldPoint` to a footprint ≤ `BushSpotToleranceCm` (F4; zones never overlap at `BushSpacingCm`).
 - `void GetSpotOccupants(FBushId, const AStealthPawn* Attacker, TArray<AStealthPawn*>& Out) const`: the occupancy record minus the attacker and its allies (Roster `GetRelation`), including pawns in `Exiting`/`Emerging` before their crossing, ordered by `CommitSeq`. Assassination (ADR-0018) filters by its F1 reach at each candidate's server position at the slot, then picks one. **The pick** uses `FSecretStream(GetServerSubSeed(BushSpotPick, LayoutAttempt), Tag("CON_SPOT"))` and ADR-0006's unbiased `UniformBelow` over a draw keyed by `(ServerTickIndex, AttackerCommandSeq, BushId)`, replacing F4's `H(...) mod n` (unbiased, and the salt comes from the secret service, never `RoundSeed`). **This needs an ADR-0006 amendment** appending a `BushSpotPick` domain (value assigned at amendment; not chosen here to avoid clashing with concurrent amendments).
 - `bool IsInBushOrTransition(const AStealthPawn*) const`: true for every state except `Outside` (AC-CON-30); consumed by Crowd's eligibility and Penalty (ADR-0016 §8, ADR-0019).
 - `ICrowdPerceptionFilter` (ADR-0016 §5): `IsPerceivable = State != Concealed`; `IsSteeringObstacle = State == Outside`; identical for every pawn kind, no viewer input. Concealment exposes **no occupancy query** to Crowd.
 
-### 8. The two pending fields: field-free stopgaps and slots
+### 8. The two fields (approved by the user 2026-10-25; formerly slots with stopgaps)
 
-**Slot A — `FActionState.StartServerTime` (pending user decision, schema_changes).** Until decided:
-- For `BushEnter` and `BushExit` poses, `FActionState.ContactServerTime` **carries the pose's start server time** (ADR-0003 §4 interim; Assassination never reads contact time for these poses).
-- For the bush-emerge strike (pose `Strike`, variant `BushStrike`), `ContactServerTime` keeps its strike meaning; clients derive `Start = ContactServerTime − (BushStrikeEmergeSec + StrikeContactSec)` from the client tuning snapshot (both keys `All` audience), so the crossing is `ContactServerTime − StrikeContactSec`.
-- If the user approves the field, it is added as one more fixed 64-bit member (ADR-0003 §4 keeps the struct fixed-width), every hide pose and the emerge preface read it, and `ContactServerTime` returns to contact-only meaning. Only `EvaluateBodyHidden` and the clip seek change.
+**A — `FActionState.StartServerTime`** (Concealment CR 10 (b); approved 2026-10-25). One more fixed 64-bit member (ADR-0003 §4 keeps the struct fixed-width), written in every `FActionState` write: for `BushEnter` and `BushExit` the transition start (`TransitionStartServerTime`); for the bush-emerge strike (pose `Strike`, variant `BushStrike`) the emerge start, so the crossing is `StartServerTime + BushStrikeEmergeSec`. `ContactServerTime` keeps contact-only meaning. `EvaluateBodyHidden` and the clip seek read `StartServerTime`; the earlier stopgap (`ContactServerTime` carrying the start for hide poses; `HidePoseStartServerTime`) is retired.
 
-**Slot B — `FDeathState.bDiedConcealed` (pending user decision, schema_changes).** Until decided (interim rule; IVP R7.5, CON-R9, ASN-R10):
-- A pawn killed while `Concealed`/`CullPending` is marked `KilledConcealed` in the Policy and **stays culled for every non-allied connection through fall, linger and removal**; non-allies never hold the body.
-- Allies keep it presentation-hidden: the existing actor's latch never clears after a post-commit death (CON-R6b rule 4), and the C-TeamView `bIsConcealed` stays true until the server body removal or the participant's rebind (§3), which is a latch set rule for a fresh ally actor (rejoin, with the unresolved-`PawnRef` rule of §5). The owner sees its own fall.
-- An NPC killed while concealed is culled for every connection, so nobody holds its body.
-- If the user approves the field: the Policy re-opens the victim at the death write carrying `bDiedConcealed`, the latch's slot-B set rule hides the body on every non-owner client, and the `bIsConcealed` hold becomes redundant but harmless. ADR-0003 §5.7 and ADR-0018 are amended together with this section.
+**B — `FDeathState.bDiedConcealed`** (Concealment CR 10 (a); approved 2026-10-25; IVP R7.5, CON-R9, ASN-R10). A pawn killed while `Concealed`/`CullPending` re-opens at the death write (Concealment un-culls in the staging pass, same step as the death write) carrying `bDiedConcealed = true`; the latch's B set rule hides the body on every non-owner client (allies and opponents) through fall, linger and removal; the owner sees its own fall. The C-TeamView `bIsConcealed` hold until body removal stays (it keeps the victim's own concealed framing and is harmless for allies). An NPC killed while concealed follows the same path. The reconciliation-era interim (`KilledConcealed` cull reason, never re-opening the victim to non-allies) is retired.
 
 ### 9. Rustle and audio parity (presentation, client-local)
 
@@ -174,7 +167,7 @@ Server-only rows `{Tick, BushId, PawnKind, Event ∈ {Commit, ExitCross, Emerge,
 
 ### 11. Switch and parity
 
-`ConcealServerCullEnabled = false` (client-side hide only) exists only in internal development builds (IVP R7.6, L29 CRITICAL); Concealment's own rules do not change in that mode. No automatic fallback exists if Crowd misses F5. Every rule above is identical for NPC and player pawns.
+`bConcealServerCull = false` (client-side hide only) exists only in internal development builds (IVP R7.6, L29 CRITICAL); Concealment's own rules do not change in that mode. No automatic fallback exists if Crowd misses F5. Every rule above is identical for NPC and player pawns.
 
 ### Architecture Diagram
 
@@ -184,7 +177,7 @@ Server-only rows `{Tick, BushId, PawnKind, Event ∈ {Commit, ExitCross, Emerge,
  ├─ TG_PostPhysics drain ───────────────────────────────────────────┐
  │  Hide resolver (UConcealmentService): CanBegin re-check          │
  │    Enter: state Entering, gen++, FActionState{BushEnter,         │──► FActionState (All, fixed width) ─► RefreshPresentation(EstNow)
- │           ContactServerTime=Start (slot A)}, warp MoveToForce    │      seek clip to Now−Start             (same, own body kept;
+ │           StartServerTime=Start}, warp MoveToForce    │      seek clip to Now−Start             (same, own body kept;
  │           ScheduleAt Commit(+Swap), End(+Dur)                    │      latch: hide at Start+Swap          warp per S-CON-1)
  │  TimerFired(ConcealmentTransition):                              │
  │    Commit: guard ─► Concealed, occupancy+CommitSeq,              │
@@ -193,7 +186,7 @@ Server-only rows `{Tick, BushId, PawnKind, Event ∈ {Commit, ExitCross, Emerge,
  │    Exit exec / Broken: SetCullState(false) same slot             │──► re-open; body hidden until Start+Cross
  │    Cross: leave occupancy, flags false; End: Outside, cooldown   │
  │  Attack slot (ADR-0018): GetSpotOccupants ─► reach filter ─►     │
- │    BushSpotPick secret draw ─► victim; MarkKilledConcealed       │──► non-allies: nothing, ever (slot B interim)
+ │    BushSpotPick secret draw ─► victim; re-open at death write   │──► all: falling body, kept hidden (bDiedConcealed)
  │  host: Commit/Cross items call RefreshPresentation on host copy  │
  └──────────────────────────────────────────────────────────────────┘
  Every machine: UBushRuntimeSubsystem builds FBushRuntime + local non-replicated ABushVolumeSet from FLayoutManifest
@@ -261,7 +254,7 @@ bool IsAllyBodyHidden(const AStealthPawn* Pawn);              // client-local la
 // --- Pure functions (headless-testable) ----------------------------------------------------------
 bool EvaluateBodyHidden(const FActionState&, const FDeathState&, bool bAllyIsConcealed,
                         bool bIsOwner, double Now, const FStealthClientTuning&);
-double HidePoseStartServerTime(const FActionState&, const FStealthClientTuning&);   // slot A stopgap
+// HidePoseStartServerTime retired 2026-10-25: read FActionState.StartServerTime (§8 A)
 // Tuning: the ADR-0004 client face; reads FConcealmentTuning_Public and FAssassinationTuning_Public
 // (BushStrikeEmergeSec, StrikeContactSec) through it — no Concealment-specific client tuning type.
 FConcealCollision ComputeConcealCollision(EConcealState, double ElapsedInTransition);
@@ -273,7 +266,7 @@ FConcealCollision ComputeConcealCollision(EConcealState, double ElapsedInTransit
 - Bushes must be built locally from the Manifest on every machine; Concealment must spawn no replicated actor.
 - Every Hide must enter through `UPawnCommandComponent`; legality, replies and timing must never read occupancy, controller kind or team; no dwell, capacity, reveal or timeout key may exist.
 - Commit, crossing and end must be `TimerFired(ConcealmentTransition)` queue items carrying the transition generation; they must never be anim notifies, engine timers or feature ticks.
-- Cull state must be pushed only through `IConcealmentCullSource` inside the slot; un-cull must happen in the same slot as exit execution or break; a concealed kill must call `MarkKilledConcealed` and must never re-open the pawn while slot B is open.
+- Cull state must be pushed only through `IConcealmentCullSource` inside the slot; un-cull must happen in the same slot as exit execution or break; a concealed kill must re-open the pawn only at the death write, together with `bDiedConcealed = true`.
 - Owner/Team `bIsConcealed` must be set at commit and cleared at the crossing, or at body removal for a killed-concealed pawn.
 - Client presentation must hide and show bodies only through `EvaluateBodyHidden` from `EstimatedServerNow()`; every non-owner pawn actor must be created presentation-hidden and evaluated in `PostNetInit`; clips must be seeked, never restarted; anim notifies must never gate the hide.
 - Hiding must apply the full §6 flag set and the presentation aim channel response; `SetActorHiddenInGame`/`bHidden` must never be used for concealment.
@@ -284,9 +277,9 @@ FConcealCollision ComputeConcealCollision(EConcealState, double ElapsedInTransit
 - A fresh non-owner actor must start hidden before any RepNotify and must not clear while a living teammate entry's `PawnRef` is unresolved on that client.
 - The owner warp must never use `bServerAcceptClientAuthoritativePosition`.
 - The spot pick must use the secret `BushSpotPick` stream with an unbiased ranged draw; it must never use `RoundSeed`, a public seed or `mod` on the result.
-- `StartServerTime` and `bDiedConcealed` must not be implemented until the user decides them and ADR-0003, ADR-0018 and this ADR are amended; until then the §8 stopgaps apply.
+- `StartServerTime` must be written in every `FActionState` write and read for every hide clip; `bDiedConcealed` must be set only in the death write and only for a victim in `Concealed`/`CullPending` (§8).
 - Concealment log rows must go to the Event Log store only, never through `UE_LOG`/`UE_LOGF`.
-- `ConcealServerCullEnabled = false` must be compiled or configured only into internal development builds.
+- `bConcealServerCull = false` must be compiled or configured only into internal development builds.
 
 ## Alternatives Considered
 
@@ -332,11 +325,11 @@ FConcealCollision ComputeConcealCollision(EConcealState, double ElapsedInTransit
 - No concealment byte exists on the wire for any non-ally: position hiding is the Policy's cull, presentation is a client-local function of All-audience state plus the viewer's own carriers.
 - One state-derived latch on every machine (host included) gives frame-exact swaps, fail-closed re-creation and no dependence on arrival order.
 - NPCs and players share every line of code; Crowd sees only a perception filter, never occupancy.
-- The two pending decisions are isolated in two slots; approving either is a local amendment.
+- The two fields were isolated in slots, so their approval (2026-10-25) was a local amendment.
 
 ### Negative
-- `ContactServerTime` carrying a start time for hide poses is a semantic overload until slot A is decided; every reader must use `HidePoseStartServerTime`.
-- The killed-concealed interim keeps the body culled for non-allies (no fall seen by non-allies who could not see the pawn anyway) and relies on the C-TeamView flag being held until removal.
+- ~~`ContactServerTime` overload~~ removed 2026-10-25: `StartServerTime` carries the start.
+- A killed-concealed body is re-opened at the death write but never drawn on non-owner clients (latch B); the per-viewer hide is what keeps it unseen.
 - Two cross-ADR amendments (ADR-0002 timer kind, ADR-0006 seed domain) before implementation.
 - The R5 leak matrix and S-CON-1 are prerequisites with real schedule cost.
 
@@ -362,8 +355,8 @@ FConcealCollision ComputeConcealCollision(EConcealState, double ElapsedInTransit
 | concealment-bushes.md | CON-R4 collision as a pure function; avoidance exclusion | §4; §7 `ICrowdPerceptionFilter` |
 | concealment-bushes.md | CON-R4a owner-side warp (-> ADR, S-CON-1) | §4 ordered mechanisms, AC-CON-31 |
 | concealment-bushes.md | CON-R5 commit at the swap as a queue timer item; guard | §3 |
-| concealment-bushes.md | CON-R6, R6a one clock from replicated server start time; R6b fail-closed latch | §5; §8 slot A stopgap |
-| concealment-bushes.md | CON-R9 breaks; kill of a concealed pawn (interim and target rule) | §3; §8 slot B |
+| concealment-bushes.md | CON-R6, R6a one clock from replicated server start time; R6b fail-closed latch | §5; §8 A |
+| concealment-bushes.md | CON-R9 breaks; kill of a concealed pawn (rule in force since 2026-10-25) | §3; §8 B |
 | concealment-bushes.md | CON-R10 per-viewer result | §7 `IsConcealedFrom` |
 | concealment-bushes.md | CON-R11 ownership changes | §3 |
 | concealment-bushes.md | CON-R12, F4 spot zone and pick | §7 (unbiased secret pick; ADR-0006 amendment) |
@@ -374,7 +367,7 @@ FConcealCollision ComputeConcealCollision(EConcealState, double ElapsedInTransit
 | concealment-bushes.md | VA-4 leak closures | §6 flag set, R5 |
 | concealment-bushes.md | F3 timing chain (a)-(f) | §3 timers from tuning; validator invariants are ADR-0004's |
 | information-visibility-policy.md | R7.1-R7.3 hybrid: server cull + client hide at the swap | §3 cull push (mechanism ADR-0003); §5-§6 |
-| information-visibility-policy.md | R7.5 un-cull in the same step; kills (interim rule) | §3; §8 slot B |
+| information-visibility-policy.md | R7.5 un-cull in the same step; kills (re-open at the death write with `bDiedConcealed`) | §3; §8 B |
 | information-visibility-policy.md | R7.6 NPC parity, no automatic fallback | §11; ADR-0016 |
 | information-visibility-policy.md | R7.7 registries tolerate relevancy destroy; fresh actor | §5 fresh-actor rule |
 | information-visibility-policy.md | R7.8 `Position` answer over time | §7 `IsConcealedFrom` |
@@ -393,7 +386,7 @@ The prototype (`AStealthBush` overlap volumes, replicated `bConcealed`/`bReveale
 ## Validation Criteria
 - AC-CON-01a/01b, 02, 03, 04, 05 (per-viewer visibility, cull timing, truth table).
 - AC-CON-06-12 (legality, exit/uncull timing, fresh-actor latch, inside rules, timing chain, no dwell timer).
-- AC-CON-13-15, 25, 26 (breaks, spot zone and pick, blind-strike parity, no immunity, killed-concealed under the interim rule).
+- AC-CON-13-15, 25, 26 (breaks, spot zone and pick, blind-strike parity, no immunity, killed-concealed with `bDiedConcealed`).
 - AC-CON-16-23, 27-32 (lifecycle, rustle parity, NPC same path, host parity, F5 log, Manifest parity, R5 matrix, collision, guard, eligibility, owner warp, rejoin).
 - Spikes S-CON-1, R5, S9, S10 and OQ9 reported.
 
@@ -413,3 +406,8 @@ Architecture-review fix pass (`docs/architecture/architecture-review-2026-10-25.
 - Key Interfaces: `FConcealClientTuning` removed; `EvaluateBodyHidden` and `HidePoseStartServerTime` take ADR-0004's client face `FStealthClientTuning` and read `FConcealmentTuning_Public` and `FAssassinationTuning_Public` through it. This is the reviewer's naming fix, applied as the client face because the stopgap reads two owners' keys (`BushStrikeEmergeSec`, `StrikeContactSec`) — architecture-review fix 2026-10-25 (Conflict 7).
 - ADR Dependencies: ADR-0018 moved from Depends On to the Ordering Note as an acceptance pair — architecture-review fix 2026-10-25 (dependency cycle).
 - Requests answered (2026-10-24): the ADR-0002 `ConcealmentTransition` amendment and its post-latch exemption, the ADR-0006 `BushSpotPick = 14` domain, the ADR-0003 §5.4 reading and the ADR-0004 cross-field warning (queued for the TDC GDD) are all applied by their owners; the Status line's "with the `ConcealmentTransition` timer amendment" condition is met — architecture-review fix 2026-10-25 (Conflict 9).
+
+User decisions (2026-10-25); decision unchanged in substance, Status unchanged (Accepted).
+- §8 A, §3, Key Interfaces, guidelines — user decision 2026-10-25: `FActionState.StartServerTime` adopted; `ContactServerTime` no longer carries hide-pose start times; `HidePoseStartServerTime` stopgap retired.
+- §8 B, §3, §5, diagram, guidelines — user decision 2026-10-25: `FDeathState.bDiedConcealed` adopted; a killed-concealed victim re-opens at the death write and is kept hidden by the client latch; the `KilledConcealed` interim and `MarkKilledConcealed` call are retired (ADR-0003 §5.7).
+- Key renames — user decision 2026-10-25 (TDC CR-10): `bConcealServerCull`.
