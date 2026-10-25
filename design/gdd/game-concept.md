@@ -305,7 +305,7 @@ Midday Tenochtitlan — causeways, canals, markets, stepped temples — hot, ord
 - Do NPCs ever enter bushes? If not, entering a bush is itself a visible confession and a blind-strike target; the downstream Concealment GDD currently models NPC bush use as a red herring (T5, 0.19/min), so this is decided in design and the concept's Technical Considerations flag stands only as a reminder to keep it deliberate.
 - What is the minimum supported team size for friend groups (private-lobby fallback), and does `NpcCount` scale with it? (Extends the 2v2 measurement caveat; see Review Follow-ups.)
 - What is the right crowd count for readability at 5v5? (Perf spike + blending playtest.)
-- ~~Kill-removal wording: "Arrested" or "Exiled"?~~ Resolved in design 2026-10-25 (HUD OQ5): the removal card reads "Informant" / "Too many wrong targets"; "Target exiled" stays the rival-kill plate.
+- ~~Kill-removal wording: "Arrested" or "Exiled"?~~ Resolved in design 2026-10-25 (HUD OQ5): the removal card reads "Informant" / "Too many wrong targets"; the rival-kill plate reads "Target eliminated" (D29, cross-review fix 2026-10-25: "exile" is reserved for the NPC-kill removal; was "Target exiled").
 - How do informants communicate beyond pings and team chat? (Voice out of first scope.)
 
 ---

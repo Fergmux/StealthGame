@@ -48,7 +48,7 @@ Without this system the game would have to choose between two failures. It could
 Either way, the only way to see around the corner is to walk to it, and the crowd can see you walking. The camera is the one control that says nothing out loud: nobody can tell which view you chose, and neither view is better for hunting. It must never feel like a scope, a drone or a security monitor. It should feel like being someone in the crowd.
 
 Pillars served:
-- **P2** ("Every Advantage Is a Tell"): watching from cover costs a body standing in the open.
+- **P2** ("Every Advantage Is a Tell"): watching from cover costs a body standing in the open. Since the D14 idle gaze layer (SCL R8.9) the price is the body's position and the length of the stand only: after 3 s of an unchanged view the head scans like an NPC's, so where the camera points is never a tell for a still view (accepted, decision D27; the > 20 s stand stays a tell).
 - **P1**: camera mode is part of "network presentation", so it must not differ between players.
 - **Anti-pillar "not a reflex game"**: no aim assist and no snapping; first person is not twitch play.
 
@@ -61,7 +61,7 @@ Pillars served:
 - **What stays local.** Camera mode, boom state, FOV and shoulder side are client settings. No RPC, replicated property, component, pose, animation tier, footstep or sound depends on them (SCL R9, AC-SCL-30).
 - **What reaches the server.** Only the standard control rotation in movement updates. It is the same in both modes, because the view envelope (CS-R3) is identical. The custom camera manager disables every engine path that sends the lens transform to the server: `ServerUpdateCamera` and client-side camera updates **[verify 5.8]**. AC-CS-27 traces the network and requires zero such calls.
 - **View target and listener.** `bAutoManageActiveCameraTarget` is false, so possession never switches the view by itself. That flag alone does not stop every engine view-target change (seamless-travel world load, reset, unpossess), so the PlayerController's view-target setter accepts only targets the camera manager requests, and an unpossess started by the pawn factory (exile hand-over, body release) keeps the current view target (ADR-0015 §1, R-5; ADR-0018, ADR-0019 §4.4). The camera owns the cut and the fade (CS-R12). The audio listener is set through the listener-override path at the eye pivot (CS-R5d) **[verify]**.
-- **Host.** The listen-server host follows the same rule for its own pawn. **The mask never reduces authoritative simulation.** On the host, every pawn ticks its pose and refreshes its bones whatever its render state, using always-tick. "Not rendered" for IIF R10, the Strike hint and SCL R11 is a flag the mask sets. It is never the engine's was-recently-rendered test (SCL change request; AC-CS-28).
+- **Host.** The listen-server host follows the same rule for its own pawn. **The mask never reduces authoritative simulation.** On the host, every pawn's authoritative pose, montages, root motion and notifies advance whatever its render state: the pose ticks every frame with accumulated delta time and only full evaluation is rate-limited by the same significance tier clients use (decision D3, 2026-10-25: the host tiers every non-locally-controlled pawn with the same bands, no host-only rate-1 posing; SCL R11.5). "Not rendered" for IIF R10, the Strike hint and SCL R11 is a flag the mask sets. It is never the engine's was-recently-rendered test (SCL change request; AC-CS-28).
 - **What the camera reads.** Its own possessed pawn through the local controller only, plus Owner-audience client data: own binding presence, own Informant state, own `IsConcealed` and own action contact times. It never includes server query headers (Policy, Roster, Round, LSC, Penalty, Objectives). It never calls `GetPlayerState`, `GetController`, `IsPlayerControlled` or `GetOwner` on any other pawn (IVP AC-IVP-17; AC-CS-39).
 - **Server.** The server has no camera-mode field and runs no view check in the MVP (CS-R5c).
 
@@ -145,7 +145,7 @@ Rules for the mask:
 - **Fade.** The fade uses the shared character material's dither. It is driven by a per-pawn value: the custom primitive data slot `CPD_EyeMaskAlpha` (one project-wide index reserved in the shared character material and every attachable pawn material; ADR-0015 §4.4). Skeletal meshes do not take per-*instance* custom data, but per-*primitive* custom data applies (spike confirms). Every pawn uses the same parameter path.
 - **"Visible" and "not rendered".** A pawn is mask-visible while α > 0. A pawn with α = 0 counts as not rendered for IIF R10, the Strike hint and SCL R11, through the flag the mask sets (CS-R1). It is the same as an occlusion-culled pawn in 1P.
 - **False-hide budget.** 3P may hide a pawn that a 1P eye sees only as a sliver. Hides where a dense 25-point oracle sees at least 5 points are capped at 5 % of samples (AC-CS-05). Above that, the mask is too strict and fails review.
-- **First person:** the mask is off for hiding, because the eye is the camera; the evaluator still runs in **flag-only** mode and computes the rendered flag (`IsEyeMaskVisible`) with the same cone and probes, which targeting and animation tiering read (ADR-0015 §4.5; no behaviour change for the viewer). It is also off in 3P when the free boom length is below 20 cm, and comes back on only above 20 + `CameraMaskOffHysteresisCm` (10) = 30 cm, so a boom hovering near 20 cm never toggles the mask frame by frame (CS-R6; decision D6, 2026-10-25).
+- **First person:** the mask is off for hiding, because the eye is the camera; the evaluator still runs in **flag-only** mode and computes the rendered flag (`IsEyeMaskVisible`) with the same cone and probes, which targeting and animation tiering read (ADR-0015 §4.5; no behaviour change for the viewer). It is also off in 3P when the free boom length is below **25 cm**, and comes back on only above 25 + `CameraMaskOffHysteresisCm` (10) = 35 cm, so a boom hovering near 25 cm never toggles the mask frame by frame (CS-R6; decision D6, 2026-10-25, threshold restated 2026-10-25 by the cross-review, C-W25). **Geometry:** the pivot is on the capsule axis, so a lens backed flush against a wall cannot be closer than `r_c − CameraProbeRadiusCm` = 35 − 14 = 21 cm; D6's 20 cm could never be reached at the default capsule radius. The threshold is that geometric minimum plus 4 cm, so flush wall contact always turns the mask off; if SCL moves the capsule radius (provisional, range 30-45 cm), re-derive it as `r_c − CameraProbeRadiusCm + 4`.
 - **Hearing is not masked.** A masked pawn's sound still plays. Hearing is a mechanic and is equal in both modes.
 - **Stated residual: whole-pawn reveal (CD-GDD-ALIGN).** The mask draws the whole pawn once any one probe is clear. At a corner the eye may see only a head, while the lens 45 cm to the side sees the full gait, and gait is the reading skill. Accepted for the MVP. The OQ5 spike also costs **partial masking** (per-section or screen-space clipping to the eye's visible region) as the fix if playtests show 3P reading gait at corners earlier than 1P (AC-CS-26).
 
@@ -167,7 +167,7 @@ A server-side fog-of-war would have to filter every pawn (up to 60 at `NpcCount`
 - **Pull-in** is instant: the lens is never inside a wall for a frame.
 - **Recovery** waits `BoomRecoverHoldSec` (0.15 s), then eases out exponentially (τ `BoomRecoverTauSec` 0.30 s), capped at `BoomRecoverCmPerSec` (300).
 - **Shoulder squeeze.** Against a wall on the shoulder side, the shoulder offset slides from 45 to 0 cm over `ShoulderSqueezeInSec` (0.15 s) and returns over `ShoulderSqueezeOutSec` (0.40 s). Shoulders never flip automatically.
-- **Close third person.** If the free length falls below `BoomCloseCm` (60), the own head, neck and hair are hidden as in 1P, with 15 cm of hysteresis. Below 20 cm the camera is effectively at the eye and the mask is off; it turns back on above 30 cm (`CameraMaskOffHysteresisCm` 10, D6).
+- **Close third person.** If the free length falls below `BoomCloseCm` (60), the own head, neck and hair are hidden as in 1P, with 15 cm of hysteresis. Below 25 cm (flush against a wall: the geometric minimum is 21 cm at the default capsule) the camera is effectively at the eye and the mask is off; it turns back on above 35 cm (`CameraMaskOffHysteresisCm` 10, D6, threshold restated by C-W25).
 - **Pivot overlap.** If the sweep starts overlapping geometry, the free length is 0.
 - **Near clip** is `CameraNearClipCm` (5) in both modes.
 
@@ -201,7 +201,7 @@ The camera's inputs are own input, own pawn state (body facing, eye pivot, own `
 
 **CS-R10. Toggle and shoulder swap.**
 - **Toggle.** V on keyboard, Y on gamepad (IIF R14). Behaviour:
-  - It blends over `CameraToggleBlendSec` (0.20 s), shorter than the IIF lockout of 0.30 s (F4). At runtime the blend is clamped to at most the lockout minus one frame, whatever the two keys say (I-CS-1).
+  - It blends over `CameraToggleBlendSec` (0.20 s), shorter than the IIF lockout of 0.30 s (F4). The two keys are kept apart by the load-time lint, not by the runtime: a set with the blend above the lockout minus one frame is rejected at load (I-CS-1, TDC CR-6: invariants reject and never repair), so the runtime never clamps the blend.
   - The mask applies from t = 0 in both directions.
   - The head hides at u ≥ 0.85 going into 1P, and shows at u ≤ 0.15 coming out.
   - It works whenever a pawn is possessed: mid-hold, mid-move, during montages, in a bush and as an informant.
@@ -283,7 +283,7 @@ The camera's inputs are own input, own pawn state (body facing, eye pivot, own `
 |---|---|---|---|---|
 | `NoPawn` (neutral view) | no possessed pawn (Preparing, awaiting a pawn, Ended without a pawn) | client-local camera actor (IVP R13): black + HUD plates, no world render; `GetViewState() = Neutral` | n/a | `FirstPerson`/`ThirdPerson` on binding (cut + fade in) |
 | `FirstPerson` | remembered mode or toggle | eye camera (CS-R7) | off | `Blend` on toggle; `Dying`; `NoPawn` on binding loss |
-| `ThirdPerson` | remembered mode or toggle | boom; sub-states normal / squeezed / close (CS-R6) / concealed (CS-R11.3) | on (off below 20 cm, back on above 30 cm) | `Blend`; `Dying`; `NoPawn` |
+| `ThirdPerson` | remembered mode or toggle | boom; sub-states normal / squeezed / close (CS-R6) / concealed (CS-R11.3) | on (off below 25 cm, back on above 35 cm) | `Blend`; `Dying`; `NoPawn` |
 | `Blend` | toggle accepted (outside the lockout) | interpolates position and FOV over `CameraToggleBlendSec` | on | target mode at blend end |
 | `Dying` | own local contact frame of an elimination (kill, reversal, or the exile strike) | current mode, no control, transient grade | as mode | fade over `NoPawnFadeSec` when `ViewRelease` falls due (`DeathFallSec` after contact; for an exile, HUD's card entrance or the `ExileCardTimeoutSec` fallback; for `InformantKilled`, `DeathServerTime + DeathFallSec`), then `NoPawn` |
 
@@ -360,13 +360,13 @@ The boom_position formula is defined as:
 | t_ray, t_s | float | 0-1 | calculated | hit fractions of the 2 cm ray and the 14 cm sweep |
 | t_hold, τ, V_rec | s, s, cm/s | 0-0.5, 0.1-0.6, 100-800 | data file (`BoomRecoverHoldSec` 0.15, `BoomRecoverTauSec` 0.30, `BoomRecoverCmPerSec` 300) | recovery |
 
-**Output Range:** the free length is 0 to about 186 cm (√(180² + 45² + 15²)), about 258 cm at the hard maximums, and at most 60 cm while concealed. The camera is at eye height + 0-15 cm. Pull-in happens in the same frame. Recovery reaches 95 % of the gap about 1.1 s after the obstacle clears: 0.15 s hold, then 0.15 s at the 300 cm/s cap, then exponential. It never moves faster than 300 cm/s.
+**Output Range:** the free length is about 21 cm (the geometric minimum for a lens backed flush against a wall: capsule radius 35 minus sweep radius 14, C-W25) to about 186 cm (√(180² + 45² + 15²)), about 258 cm at the hard maximums, and at most 60 cm while concealed. The camera is at eye height + 0-15 cm. Pull-in happens in the same frame. Recovery reaches 95 % of the gap about 1.1 s after the obstacle clears: 0.15 s hold, then 0.15 s at the 300 cm/s cap, then exponential. It never moves faster than 300 cm/s.
 
 **Example:** walking into a 1.2 m alley with the right shoulder near the wall.
 - The squeeze slides the offset to 0 over 0.15 s.
 - A pillar at the back gives `t_s · d_max` = 52 cm, and the camera is at 52 cm that frame.
 - Stepping clear: 0.15 s hold, then about 1 s back to 186 cm.
-- Backed against a wall (free length 18 cm): close 3P with the head hidden, and the mask off.
+- Backed flush against a wall (free length 21 cm, the minimum at capsule radius 35 and probe radius 14): close 3P with the head hidden, and the mask off (below the 25 cm threshold).
 
 ### F3. Eye-origin visibility mask
 
@@ -404,14 +404,14 @@ The eye_mask formula is defined as:
 
 The toggle_blend formula is defined as:
 
-`u = smoothstep(clamp(t / T_b, 0, 1))` ; `C = lerp(C_from, C_to, u)` ; `FOV_v = lerp(FOV_from, FOV_to, u)` ; head hidden when into-1P `u ≥ 0.85` or out-of-1P `u ≤ 0.15` ; constraint `T_b < T_lock`
+`u = smoothstep(clamp(t / T_b, 0, 1))` ; `C = lerp(C_from, C_to, u)` ; `FOV_v = lerp(FOV_from, FOV_to, u)` ; head hidden when into-1P `u ≥ 0.85` or out-of-1P `u ≤ 0.15` ; constraint `T_b ≤ T_lock − 1 frame` (I-CS-1, reject)
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | t | float (s) | 0-T_b | calculated | time since the press |
-| T_b | float (s) | 0-0.30 | data file (`CameraToggleBlendSec` 0.20; 0.08 crossfade under Reduce camera motion) | blend time |
-| T_lock | float (s) | 0.2-0.5 | data file (IIF `CameraToggleLockoutSec` 0.30) | lockout, consumed |
+| T_b | float (s) | 0-0.28 | data file (`CameraToggleBlendSec` 0.20; 0.08 crossfade under Reduce camera motion) | blend time |
+| T_lock | float (s) | 0.25-0.5 (IIF safe range, narrowed by the cross-review fix 2026-10-25, C-W11) | data file (IIF `CameraToggleLockoutSec` 0.30) | lockout, consumed |
 | C_from, C_to | vector | | calculated (F2 / CS-R7, re-evaluated every frame) | endpoints |
 
 **Output Range:** the blend ends 0.10 s before the next toggle can be accepted. The peak lens speed is about 1.5 · 186 / 0.20 ≈ 14 m/s, which is the smoothstep peak.
@@ -492,7 +492,7 @@ The stick_look formula is defined as:
 - **If the player is exiled (third NPC strike)**: the view holds on their released body without control until HUD's card-entrance event (plate show time + `ExileBeatSec`), or `ExileCardTimeoutSec` (2.0 s) after the owner's `StrikeLimit` state if no card enters, then fades (PEN-R16, Penalty CR-10 amended).
 - **If the player's informant body is killed**: the view stays on the falling body and fades from `DeathServerTime + DeathFallSec`; no removal card; the neutral view and countdown follow (Penalty CR-18).
 - **If a strike whiffs**: no transient grade on any camera; the attacker's `NoContact` plate appears on the same frame (VA-ASN-4).
-- **If the host masks a pawn in 3P**: its authoritative pose, root motion and notifies tick exactly as for an unmasked pawn (always-tick; CS-R1, AC-CS-28).
+- **If the host masks a pawn in 3P**: its authoritative root motion and notifies advance exactly as for an unmasked pawn (never gated by the mask; the pose is tiered by screen height like any pawn, SCL R11.5 D3; CS-R1, AC-CS-28).
 - **If an informant respawn takes over a pawn facing another way**: the camera cuts and fades in. The control rotation starts from the new pawn's `HeadLook` (SCL R4.2), so observers see no head move.
 
 **Host, session and rejoin**
@@ -516,7 +516,7 @@ Source: `design/gdd/systems-index.md` row 10 (Depends On: Input & Interaction Fr
 |---|---|---|---|
 | Tuning Data & Config (1) | Camera keys (Tuning Knobs, CR-15) via `GetClientTuning()`; SCL and IIF keys read from the same snapshot | Hard | In Review |
 | Input & Interaction Framework (3) | Look axis, toggle (R14, `CameraToggleLockoutSec`), `IMC_Common`, shoulder-swap binding (change request) | Hard | In Review |
-| Shared Character & Locomotion (9) | body facing, eye socket height, capsule, `IsInTraversal`, look clamps, `TurnInPlaceDelaySec`, R9 (incl. D6 pitch), `PawnSmoothSnapThresholdCm`, always-tick | Hard | In Review |
+| Shared Character & Locomotion (9) | body facing, eye socket height, capsule, `IsInTraversal`, look clamps, `TurnInPlaceDelaySec`, R9 (incl. D6 pitch), `PawnSmoothSnapThresholdCm`, server pose advance independent of render state (R11.5, D3 tiering) | Hard | In Review |
 | Participant State & Roster (2) | own binding and owner-audience state (pawn present, Informant) for CS-R12 | Soft | In Review |
 | Round & Match Framework (6) | phase, for the `Preparing`/`Ended` neutral view | Soft | In Review |
 | Information Visibility Policy (7) | L17 (local-only components), R13 (neutral view without spectator state), AC-IVP-17 (presentation include check), own `IsConcealed` (Owner audience) | Soft | In Review |
@@ -566,14 +566,14 @@ The table uses the CR-15 columns. Every key is owner-local presentation with one
 | `BoomCloseCm` | float | Camera | 60 | 30-100 | 50-80 | Client | Use | Cm | Low: the lens is inside the head. High: frequent headless 3P |
 | `ConcealedBoomCm` | float | Camera | 60 | 0-70 | 40-60 | Client | Use | Cm | Straight back, no shoulder or height offset. High: the lens leaves the leaf dome and the hider surveys from behind the bush (P2; I-CS-4). Low: the leaf framing fills the screen |
 | `FpForwardOffsetCm` | float | Camera | 8 | 0-20 | 5-12 | Client | Use | Cm | Low: the neck is visible. High: the lens passes a wall the face touches |
-| `CameraMaskOffHysteresisCm` | float | Camera | 10 | 5-30 | 8-15 | Client | Use | Cm | Added 2026-10-25 (D6): the mask turns off below 20 cm of free boom and back on only above 20 + this (30 cm at the default). Low: the mask flickers on a boom hovering near 20 cm. High: a longer stretch of near-eye 3P without the mask (the lens is still within 50 cm of the eye, so little parallax) |
+| `CameraMaskOffHysteresisCm` | float | Camera | 10 | 5-30 | 8-15 | Client | Use | Cm | Added 2026-10-25 (D6): the mask turns off below 25 cm of free boom (restated from 20 cm by the cross-review, C-W25: the geometric minimum is 21 cm) and back on only above 25 + this (35 cm at the default). Low: the mask flickers on a boom hovering near 25 cm. High: a longer stretch of near-eye 3P without the mask (the lens is still within 50 cm of the eye, so little parallax) |
 | `CameraNearClipCm` | float | Camera | 5 | 1-15 | 3-8 | Client | Use | Cm | High: own hands and close walls clip |
-| `EyeConeHalfHDeg` / `EyeConeHalfVDeg` | float | Camera | 55 / 38 | 40-70 / 25-50 | 52-60 / 36-42 | Client | Round | Deg | High: 3P sees beside the body. Must stay ≥ the FOV slider maximum (I-CS-3) |
+| `EyeConeHalfHDeg` / `EyeConeHalfVDeg` | float | Camera | 55 / 38 | 40-70 / 25-50 | 54-60 / 38-42 | Client | Round | Deg | High: 3P sees beside the body. Must stay ≥ half the FOV maximum (I-CS-3, reject): at the defaults `FovHMaxDeg` 108 / 2 = 54 and `FovVMaxDeg` 75 / 2 = 37.5, so the safe minima are 54 and 38 (were 52 and 36, which I-CS-3 rejected; cross-review C-W17) |
 | `EyeMaskHideFailCount` | int | Camera | 2 | 1-4 | 2-3 | Client | Use | Count | High: 3P keeps seeing briefly after the eye loses sight |
 | `EyeMaskFadeSec` | float | Camera | 0.10 | 0.05-0.30 | 0.08-0.12 | Client | Use | s | High: 3P is later than 1P. Low: hard pops |
 | `EyeMaskNearCm` / `EyeMaskRangeCm` | float | Camera | 2000 / 6000 | 1000-4000 / 3000-10000 | — | Client | Use | Cm | Trace-cost bands |
 | `EyeMaskNearHz` / `EyeMaskFarHz` / `EyeMaskBeyondHz` | float | Camera | 60 / 15 / 5 | 30-60 / 10-30 / 2-15 | 45-60 / 12-20 / 4-8 | Client | Use | Hz | Low: late reveal. High: trace cost. Beyond `EyeMaskRangeCm` the line-of-sight test still runs (F3) |
-| `CameraToggleBlendSec` | float | Camera | 0.20 | 0-0.29 | 0.15-0.25 | Client | Use | s | Must be < `CameraToggleLockoutSec` (I-CS-1) |
+| `CameraToggleBlendSec` | float | Camera | 0.20 | 0-0.28 | 0.15-0.25 | Client | Use | s | Must be ≤ `CameraToggleLockoutSec` − 1 frame (I-CS-1, reject, no runtime clamp). Hard maximum 0.28 so every value passes at the lockout default 0.30 |
 | `ShoulderSwapBlendSec` | float | Camera | 0.25 | 0-0.5 | 0.2-0.35 | Client | Use | s | Low: jarring. High: sluggish |
 | `NoPawnFadeSec` | float | Camera | 0.5 | 0-1.5 | 0.3-0.8 | Client | Use | s | Presentation |
 | `FpFovVDeg` * / `TpFovVDeg` * | float | Camera | 60 / 60 | 55-75 | 55-70 | Client | Use | Deg | 60 is the art bible reference camera |
@@ -584,7 +584,7 @@ The table uses the CR-15 columns. Every key is owner-local presentation with one
 | `StickYawRateDegPerSec` * / `StickPitchRateDegPerSec` * | float | Camera | 180 / 120 | 60-360 | 140-240 / 90-150 | Client | Use | DegPerSec | Low: cannot turn toward a sound. High: twitchy |
 
 Invariants:
-- **I-CS-1**: `CameraToggleBlendSec` ≤ `CameraToggleLockoutSec` − 1 frame. The lint enforces it, and the runtime also clamps the blend, because the IIF's lockout hard range (0-1 s) reaches below the blend.
+- **I-CS-1** (reject): `CameraToggleBlendSec` ≤ `CameraToggleLockoutSec` − 1 frame (1/60 s, the 60 fps floor). TDC rejects a violating set at load and never repairs it (TDC CR-6); there is **no runtime clamp**. Satisfiable ranges (cross-review C-W11, 2026-10-25): at the lockout default 0.30 s the blend must be ≤ 0.2833 s, so the blend hard maximum is **0.28** (was 0.29, which failed) and every blend in 0-0.28 passes; at the blend default 0.20 s the IIF-owned lockout must be ≥ 0.2167 s (IIF narrows its safe minimum above that; a lockout of 0 can never pass).
 - **I-CS-2**: `BoomHeightOffsetCm` ≤ 25.
 - **I-CS-3**: `EyeConeHalfHDeg` ≥ ½ · `FovHMaxDeg`, and `EyeConeHalfVDeg` ≥ ½ · `FovVMaxDeg`.
 - **I-CS-4**: `ConcealedBoomCm` ≤ bush dome inner radius − 20 cm (90 − 20 = 70 cm for the 1.8 m dome of Concealment CON-R7), and ≤ `BoomLengthCm`.
@@ -661,7 +661,7 @@ The MVP options listed in CS-R13 go on a minimal options panel: default camera m
    - Camera's pivot is capsule-derived and uses only the eye socket's height.
    - Extend the R9 owner-local allowance to hiding the head, neck and hair in close 3P (lens within 60 cm).
    - The R5.5 trigger accepts the elastic 5° overshoot (minimum 2°, I-CS-5).
-   - Server-side pose tick, bone refresh, root motion and notifies must not depend on local render state: always-tick for every pawn on the listen-server host. R11 "rendered" reads the mask flag (AC-CS-28).
+   - Server-side montage time, root motion and notifies must not depend on local render state: they advance for every pawn on the listen-server host (the pose evaluation rate follows the uniform significance tiering of SCL R11.5, decision D3). R11 "rendered" reads the mask flag (AC-CS-28).
    - **R9 / OQ8:** record that the −60°/+40° view pitch applies in **both** modes (creative-director ruling at Camera design review, extending D6; confirmed by the user 2026-10-25, OQ9 closed).
    - Review raising `PivotTurnRateDegPerSec` from 120 to ≥ 150 °/s (OQ3).
 3. **Concealment:** items 1-2 (foliage channels, rustle tag) confirmed by Concealment; OQ7 answered and applied (CS-R11.3); change request 12 applied (`ConcealedBoomCm` 60).
@@ -731,7 +731,7 @@ Test names take the form `StealthGame.Camera.<Scenario>`; tests live in `Source/
   - **Then** zero `ServerUpdateCamera` (or equivalent lens-transform) calls are sent, and the server-side PlayerCameraManager holds no lens transform from the client **[verify 5.8 names]**.
 - **AC-CS-28** [N] `HostMaskedSimParity`:
   - **Given** the listen-server host in 3P, with NPC dummy A masked behind a wall and mirrored dummy B in view, both on the same scripted path with a strike montage and footsteps.
-  - **Then** on the server, A and B have identical pose-tick counts, root-motion displacement (within 0.1 cm) and notify sequences (footsteps, strike windows).
+  - **Then** on the server, A and B have identical root-motion displacement (within 0.1 cm) and notify sequences (footsteps, strike windows); montage time advances every frame for both. Pose-evaluation counts may differ only as SCL F7 tiering prescribes (A is masked, so alpha 0 and tier D; D3), and a build that evaluates A at the tier rate passes.
   - **And** a client observing both receives identical data.
   - **And** "not rendered" for IIF R10 and SCL R11 equals the mask's α = 0 flag on every frame.
 
@@ -834,7 +834,7 @@ Test names take the form `StealthGame.Camera.<Scenario>`; tests live in `Source/
   - **Given** 3P → 1P, when V is pressed, then the blend completes in 0.20 s (12 frames at 60 fps).
   - The head is hidden from frame 10 (u ≥ 0.85), and at no frame does the near plane intersect the own head bounds.
   - A second press at 0.25 s is ignored; one at 0.31 s is accepted.
-  - With `CameraToggleLockoutSec` set to 0.15, the blend is clamped to ≤ 0.133 s.
+  - With `CameraToggleLockoutSec` set to 0.15 and the blend at its 0.20 default, the tuning set is rejected at load by I-CS-1 (no runtime clamp, no repair); with the blend set to 0.13 s and the lockout 0.15 s the set loads and the blend completes in 0.13 s.
 - **AC-CS-17** [P][E] `FirstPersonHeadHidden`:
   - **Given** 1P looking down at −20° and at −60°.
   - **When** captured locally and on an observer.

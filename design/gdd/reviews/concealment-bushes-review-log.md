@@ -82,3 +82,9 @@ Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8ed
 - CON-R12 / AC-CON-24(c): multi-occupant share cap is max(40 %, m0 + 10 pp) (D1), replacing the double cap.
 - `BushEnterSwapSec` safe lower bound is now 0.46 s in F3 and the knob table, matching the registry (0.45 failed F3(d) by 1 cm/s at Reach 60).
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- C-W8: Crowd row labelled Hard upstream with the direction stated; Downstream Crowd row says Soft for Crowd's use, Hard the other way.
+- C-W17(i): `BushEnterSwapSec` safe 0.46-0.7 -> 0.46-0.65 (F3a).
+- C-W21: F1 / F2 recomputed at r_N 0.20: E[O] 0.43, m0 0.349, pick lands on the player 0.81, P_hide 0.107, D1 cap 45 %; Player Fantasy, CON-R12, AC-CON-24(c), OQ3 and the Crowd references updated.
+- D-W6 / D26: Interactions, Dependencies and Cross-References record that a concealed player cannot ping (no spotter post).

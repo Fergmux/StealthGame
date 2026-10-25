@@ -139,3 +139,14 @@ Reviewed-Content-Hash: design/art/art-bible.md ba9f28821285a7933cad48bee9f4ccf28
 ## Closeout cross-doc pass 2026-10-25
 - D6 applied: AC-CS-05 oracle and mask use the capsule axis origin; `CameraMaskOffHysteresisCm` 10 (off at 20 cm, on at 30 cm); AC-CS-23 retagged document review; hide latency beyond 60 m stated as a Game Feel limit.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- C-W11: I-CS-1 says reject (no runtime clamp), CS-R7 text and AC-CS-16 follow; `CameraToggleBlendSec` hard 0-0.29 -> 0-0.28 (F4 range too).
+- C-W14: Camera key count recounted from the Tuning Knobs table: 49.
+- C-W17(b): `EyeConeHalfHDeg` / `EyeConeHalfVDeg` safe minima 52 / 36 -> 54 / 38 (I-CS-3).
+- C-W25: mask-off threshold 20 cm -> 25 cm (on above 35 cm, hysteresis key unchanged at 10) because the geometric minimum free boom is 21 cm; F2 example corrected to 21 cm.
+- C-W37: CS-R1, edge case, dependency row, host note and AC-CS-28 reworded to the observable result under D3 tiering (no "always-tick", no identical pose-tick counts).
+- D-W7 / D27: P2 Player Fantasy line records that watching costs body position and stand length only.
+
+### Cross-review fix 2026-10-25 — main-session follow-ups
+- C-W11 follow-up: F4 T_lock range follows the IIF lockout safe range 0.25-0.5. C-W25 threshold change (25/35 cm) mirrored into TDC, registry, ADR-0004 and ADR-0015 (amends D6).

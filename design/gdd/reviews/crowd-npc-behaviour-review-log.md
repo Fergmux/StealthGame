@@ -89,3 +89,13 @@ Reviewed-Content-Hash: docs/architecture/adr-0016-crowd-ai-architecture.md a5553
 ## Closeout cross-doc pass 2026-10-25
 - D7: bush target default 300 s (from 315 s) to absorb r_P drift (registry updated); Crowd consumes the SCL `StopMinSec` key (D2).
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- C-W8: Concealment is Hard in the Concealment-needs-Crowd direction, Soft in the other; Downstream gets its own Concealment row.
+- C-W10: `CrowdDecoyEarlyReleaseMaxSec < ObjectiveInteractSec` named I-CNB-6 (reject); Max safe 2.2-3.0 -> 2.2-2.9.
+- C-W17(f): `CrowdMaxIdleSec` safe 15-25 -> 20-25 (I-CNB-2).
+- C-W23: F3 `N_E` range 12-16 with the outputs at 12 (lambda 0.150/s, D mean 16.7 s, p95 30.0 s).
+- C-W36: G1 uses SCL R8.9's single trigger definition.
+- D-W7 / D27: G1 hold accounting (idle-scan holds are not T13), camping accepted, T13 row cites SCL R8.8's definition, AC-CNB-16 excludes G1 holds.
+- D-W8 / D28: Tell Matrix row T18 (Ping: no animation, no replicated pawn state, no tell); AC-CNB-30 range and Cross-References updated; Pings listed Downstream (Soft).
+- R3.1 notes the pace set is an SCL R5.1 constant held by no key.

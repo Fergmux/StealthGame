@@ -363,3 +363,6 @@ User decisions (2026-10-25); decision unchanged in substance, Status unchanged (
 Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-25_rereview-followups.md`); decision unchanged, Status unchanged (Accepted).
 - §4.2 eye-mask row: mask cost stated for the 295-trace worst case (59 x 5, about 1.5 ms physics, GT share target 0.5 ms unchanged, two-frame drain at the 160 cap), consistent with ADR-0015 and the camera GDD F3/OQ10 (camera re-review xdoc).
 - §4.2 animation row: closeout D3 adopted: the listen host tiers every non-locally-controlled pawn with the clients' significance bands and uniform `TickPose` escalation (no host-only rate-1 posing); R3 (listen host + 9 remote clients) confirms or measures it (SCL OQ16).
+
+Cross-review fix 2026-10-25 (`design/gdd/gdd-cross-review-2026-10-25.md` S-W3; decision unchanged, Status unchanged):
+- The one-frame round-end step (Round R9: Roster net updates, GameState, ping clear, crowd halt, about 60 pawn stops) carries a budget of ≤ 2.0 ms added listen-host game-thread time in that frame; the R3 listen-host capture must include one round end (Round AC 65, ADR-0002).

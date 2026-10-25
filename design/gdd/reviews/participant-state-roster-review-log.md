@@ -82,3 +82,13 @@ Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8ed
 - Dependencies status cells set to In Review; R11 projection details: `Rejoining` projects `Disconnected` in every phase; failed supersede-rejoin bumps `ConnectionGeneration` with a fresh `DisconnectedAt`; kick path (D9) accepted for `Expired`.
 - D10 applied on `RetireBinding` (log only).
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- S-B1 (D23): R6 `bReconnecting` is cleared only by an event (Rejoined, GraceExpired, Cleared), never by a timer; new Team-audience `ReconnectEndCause` (None, Rejoined, GraceExpired, Cleared) written in the same net update; the "cleared by time at GraceExpiryMs, same instant for an Informant" wording removed; F7 entry size note (packed in the flags byte, 94 B worst case).
+- S-B1: AC-PSR-53 rewritten as cases a-f (Active ally, informant ally at grace expiry, Active ally killed while disconnected, supersede rejoin outlasting G_eff, kicked ally, round end).
+- S-B2 (D24): R11 projection details, grace bullet, duplicate-connection bullet and the Connection row: a supersede is a disconnect at the supersede instant (DisconnectedAt, one generation bump); the earlier fresh-DisconnectedAt and second bump on a failed supersede-rejoin removed; edge case aligned.
+- C-W30: `NotifyConnectionChanged` gains an optional `bKicked`; a kicked teammate clears `bReconnecting` silently (Cleared).
+- C-W31: R8 `RequestTransition` gains an optional `RetireAtServerTime` (source for the retire inside the call); new AC-PSR-57.
+- C-W33: Downstream rows for Teammate Markers and HUD list `RetireAtServerTime`, `bReconnecting` and `ReconnectEndCause`.
+- C-W8: Upstream "none" reconciled with the Downstream Crowd row (mutual peer contract, not an upstream edge).
+- C-W9: stale "no ADR exists yet" and "every row is provisional" text corrected; status cells untouched.

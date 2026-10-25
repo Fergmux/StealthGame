@@ -88,3 +88,15 @@ Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8ed
 ## Closeout cross-doc pass 2026-10-25
 - Cross-doc follow-ups from the lean re-review applied (ClueMatchMaxCount use in the ClueTooBroad edge case, Generator OQ9 closure by D4, concept median vs F1 ~9 min).
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+Source: design/gdd/gdd-cross-review-2026-10-25.md; fixes applied unattended under the user's authorisation. Status cells and header untouched.
+- C-W20 / 2C-W2: F1 `v_run` 3.5 -> 4.5 m/s (SCL `RunSpeedCmPerSec` 450); `T_rush` 50-91 s -> 41 / 54 / 73 s at L 120 / 170 / 240 (example added); `T_chain` 307-535 s and `T_round` unchanged.
+- C-W18 / 2B-W10a: I-OC2 warn bound moved out of the safe range: `RivalSignalDelayMaxSec` safe 150-200 -> 163-200, `RivalSignalReleaseQuantumSec` safe 20-45 -> 28-45, `RivalSignalDelayMinSec` safe kept 30-60 but restated (warn-free alone only to 32; above that raise Max or Q).
+- C-W35 / 2A-W18 / 2D-W12: a final `Complete` rejected by the latch is logged as `TendCompleted(..., NoEffect)` (edge case, F5 note, change request 4); Round adds the log rule.
+- D-W9 / D29 / 2C-W8: F1 stated as the source of the about 9 minute median cited by Round F7 and Pillar 4; the 12 minute figure is a non-binding tuning target; chain-target lever (220 m) and OQ4 now cite LSC D4's walk share (0.29 at 220 m).
+- C-W9: the "add Crowd and Session upstream" change request marked done; OQ9 notes the jitter pass rate is still OPEN (C-W24); `TargetRoundMinutes` noted as not read by Objectives.
+
+
+### Cross-review fix 2026-10-25 — main-session follow-ups
+- C-W10 follow-up: `ObjectiveInteractSec` safe range 2.5-4.5 -> 2.9-4.5 so it passes Crowd I-CNB-6 at `CrowdDecoyEarlyReleaseMaxSec` default 2.8 (TDC canonical row and registry mirrored).

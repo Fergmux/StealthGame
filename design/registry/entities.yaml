@@ -516,8 +516,8 @@ entities:
     zone_ids: "ZoneId 0-3, never a team; ZoneCandidatesMinCount (2) to 4 candidates, exactly 2 used per round"
     start_cells: "at least TeamSize + 1 start cells, StartCellSpacingCm (8 m) apart, within StartCellMaxRadiusCm (18 m) of the anchor"
     density_disc: "TeamZoneRadiusCm (35 m)"
-    respawn_region: "walkable cells within InformantRespawnPathCm (45 m path) of the NEARER anchor of the zone pair (per team: the anchor of that team's own zone; Pillar-1 review of the restriction pending, CPA OQ-14)"
-    # wording changed 2026-10-25 (LSC re-review: nearer-anchor, per zone pair; was "of the anchor")
+    respawn_region: "walkable cells within InformantRespawnPathCm (45 m path) of the team's OWN zone anchor, restricted to cells strictly nearer by path to that anchor than to the partner zone's anchor (LSC TeamSpawn RespawnRegion(zone, partner), R5b; the two teams' regions are disjoint, never a union of both discs). Pillar-1 review of the restriction: Penalty OQ-NKP-13 (taken over from CPA OQ-14)"
+    # wording changed 2026-10-25 (LSC re-review: nearer-anchor, per zone pair; was "of the anchor"); clarified again 2026-10-25 cross-review fix C-W40 (own anchor, strictly nearer; OQ pointer moved to Penalty OQ-NKP-13)
     added: 2026-10-24
     revised: "2026-10-25"
   - name: round_event_log
@@ -1477,7 +1477,7 @@ constants:
     value: 1.75
     unit: s
     hard_range: 1.2-3.0
-    safe_range: 1.5-2.5
+    safe_range: 1.5-2.0  # was 1.5-2.5; W-NKP-3 warns above 2.0 at Penalty default grace 2.0, C-W18 (cross-review fix 2026-10-25)
     audience: All
     latch: Action
     added: 2026-10-24
@@ -1577,7 +1577,7 @@ constants:
     value: 0.5
     unit: s
     hard_range: 0.3-0.8
-    safe_range: 0.46-0.7
+    safe_range: 0.46-0.65  # was 0.46-0.7; 0.66-0.7 rejected at other defaults, C-W17, CON (cross-review fix 2026-10-25)
     audience: All
     latch: Round
     note: "safe lower bound is conditional: F3(d) (BushEntryReachCm + r_c) / Swap <= 1.5 * v_walk = 210 cm/s holds at Reach 60 only for Swap >= 0.4524 s (so 0.46 s); Reach 70 needs Swap >= 0.5 s; the validator enforces (d), not the range"
@@ -1701,11 +1701,11 @@ constants:
     value: 0.30
     unit: s
     hard_range: 0-1
-    safe_range: 0.2-0.5
+    safe_range: 0.25-0.5  # was 0.2-0.5; 0.2-0.217 fail Camera I-CS-1 at blend default 0.20, C-W11, IIF (cross-review fix 2026-10-25)
     audience: All
     latch: Use
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: ChainFairnessMaxMult
     status: active
     source: design/gdd/level-socket-contract.md
@@ -2094,11 +2094,11 @@ constants:
     value: 20
     unit: s
     hard_range: 10-60
-    safe_range: 15-25
+    safe_range: 20-25  # was 15-25; 15-19.9 rejected at other defaults, C-W17, Crowd (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Use
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: CrowdReplacementMaxDelaySec
     status: active
     source: design/gdd/crowd-npc-behaviour.md
@@ -2405,11 +2405,11 @@ constants:
     value: 3
     unit: s
     hard_range: "1 to 10"
-    safe_range: "2 to 5"
+    safe_range: "3 to 5"  # was 2 to 5; W-RMF-5 EndedMinDwellSec >= HudBannerMaxDelaySec + 1.0, C-W27, Round (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Use
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: ExileBeatSec
     status: active
     source: design/gdd/npc-kill-penalty-informants.md
@@ -2421,11 +2421,11 @@ constants:
     value: 0.8
     unit: s
     hard_range: 0-2.0
-    safe_range: 0.75-1.2  # was 0.5-1.2; changed by npc-kill-penalty-informants.md (C-W2: bounded by I-HUD-3/I-HUD-5) (cross-review fixes 2026-10-24)
+    safe_range: 0.75-0.95  # was 0.75-1.2; I-HUD-6 allows up to 1.1 and W-NKP-5 up to 0.95, C-W17, Penalty (cross-review fix 2026-10-25)
     audience: All
     latch: Action
     added: 2026-10-24
-    revised: 2026-10-24
+    revised: "2026-10-25"
   - name: ExileCardTimeoutSec
     status: active
     source: design/gdd/npc-kill-penalty-informants.md
@@ -2437,11 +2437,11 @@ constants:
     value: 2.0
     unit: s
     hard_range: 1.0-4.0
-    safe_range: 1.5-2.5
+    safe_range: 2.0-2.5  # was 1.5-2.5; W-NKP-5 warns below 2.0 at defaults, C-W18, Penalty (cross-review fix 2026-10-25)
     audience: All
     latch: Action
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: EyeMaskBeyondHz
     status: active
     source: design/gdd/camera-system.md
@@ -2495,12 +2495,12 @@ constants:
     value: 6
     unit: count
     hard_range: 3-8
-    safe_range: "TeamSize + 1-8"
+    safe_range: 6  # was TeamSize + 1-8; I-PCG-6 rejects higher values at CityGenCourtTargetCount 16, C-W17 (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Round
     note: "resolved 2026-10-24: objectives-chain.md SP-2, SP-4, OQ 9 now state the LSC floor 6"
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: FixtureInteractSideCount
     status: active
     source: design/gdd/objectives-chain.md
@@ -2930,11 +2930,11 @@ constants:
     value: 5
     unit: count
     hard_range: 0-10
-    safe_range: 3-6
+    safe_range: 3-5  # was 3-6; 6 breaks I-LSC-2 at the 45 s budget, C-W17 (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Round
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: LayoutProviderMode
     status: active
     source: design/gdd/level-socket-contract.md
@@ -2975,11 +2975,11 @@ constants:
     value: 45
     unit: s
     hard_range: 10-90
-    safe_range: 30-60
+    safe_range: 45-60  # was 30-60; below 45 fails I-LSC-2 at default reseed/timeout, C-W17 (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Round
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: LayoutWalkableCellsMaxCount
     status: active
     source: design/gdd/level-socket-contract.md
@@ -2989,7 +2989,7 @@ constants:
     value: 3250
     unit: count
     hard_range: "1,500-4,000"
-    safe_range: "2,000-2,700"
+    safe_range: "2,700-3,600"  # was 2,000-2,700; default 3,250 lay outside it, C-W15, LSC (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Round
     # safe range was 2,000-2,250; V-AREA band widened by NpcCount 50 (LSC, 2026-10-25)
@@ -3005,7 +3005,7 @@ constants:
     value: 2000
     unit: count
     hard_range: "1,500-4,000"
-    safe_range: "2,000-2,700"
+    safe_range: "2,000-2,025"  # was 2,000-2,700 shared row; above 2,025 the V-AREA floor exceeds the density cap at NpcCount 35, C-W15, LSC (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Round
     # safe range was 2,000-2,250; V-AREA band widened by NpcCount 50 (LSC, 2026-10-25)
@@ -3161,12 +3161,12 @@ constants:
     value: 3.0
     unit: s
     hard_range: 2.0-6.0
-    safe_range: 2.5-4.5
+    safe_range: 2.9-4.5  # was 2.5-4.5; I-CNB-6 CrowdDecoyEarlyReleaseMaxSec (default 2.8) < ObjectiveInteractSec rejects 2.5-2.8, C-W10 (cross-review fix 2026-10-25)
     audience: "All (owner ring prediction)"
     latch: Action
     user_locked: true
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: OpenSpotToleranceCm
     status: active
     source: design/gdd/assassination-defence-reversal.md
@@ -3244,7 +3244,7 @@ constants:
     added: 2026-10-24
     revised: ""
   - name: ReachDetourMult
-    status: active
+    status: derived
     source: design/gdd/level-socket-contract.md
     referenced_by:
       - design/gdd/level-socket-contract.md
@@ -3255,8 +3255,9 @@ constants:
     safe_range: "= DetourMaxMult"
     audience: ServerOnly
     latch: Round
+    note: "DERIVED alias of DetourMaxMult since the cross-review fix 2026-10-25 (C-W19, LSC): not an independent knob or preset field; I-LSC-4 is retired as an invariant. Kept here so old references resolve."
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: RejectPlateCooldownSec
     status: active
     source: design/gdd/input-interaction-framework.md
@@ -3355,11 +3356,11 @@ constants:
     value: 165
     unit: s
     hard_range: 70-300
-    safe_range: 150-200
+    safe_range: 163-200  # was 150-200; below 163 warns under I-OC2 at defaults, C-W18, OC (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Round
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: RivalSignalDelayMinSec
     status: active
     source: design/gdd/objectives-chain.md
@@ -3384,11 +3385,11 @@ constants:
     value: 30
     unit: s
     hard_range: 10-90
-    safe_range: 20-45
+    safe_range: 28-45  # was 20-45; below 28 warns under I-OC2 at defaults, C-W18, OC (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Round
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: RoleShareMaxPct
     status: active
     source: design/gdd/level-socket-contract.md
@@ -3518,11 +3519,11 @@ constants:
     value: 3.0
     unit: s
     hard_range: 1-10
-    safe_range: 2-5
+    safe_range: 2-3  # was 2-5; I-CNB-1 CrowdIdleMinSec >= SessionSoftTimeoutSec + 1 rejects 4-5, C-W17, Session (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Session
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: ShutdownFlushSec
     status: active
     source: design/gdd/session-travel.md
@@ -3589,11 +3590,11 @@ constants:
     value: 90
     unit: deg
     hard_range: 60-105
-    safe_range: 80-95
+    safe_range: 80-90  # was 80-95; 91-95 rejected at other defaults, C-W17, ASN (cross-review fix 2026-10-25)
     audience: All
     latch: Use
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: StrikeContactGapCm
     status: active
     source: design/gdd/assassination-defence-reversal.md
@@ -4029,11 +4030,11 @@ constants:
     value: 140
     unit: cm/s
     hard_range: 100-200
-    safe_range: 125-160
+    safe_range: 131-160  # was 125-160; 125-130.8 rejected at other defaults, C-W17, SCL (cross-review fix 2026-10-25)
     audience: "Client (owner prediction)"
     latch: Round
     added: 2026-10-24
-    revised: ""
+    revised: "2026-10-25"
   - name: WalkableCellsPerPawnMaxCount
     status: active
     source: design/gdd/level-socket-contract.md
@@ -4513,12 +4514,12 @@ constants:
     value: 0.25
     unit: s
     hard_range: 0.1-1
-    safe_range: 0.2-0.5
+    safe_range: 0.25-0.5  # was 0.2-0.5; floor L99 + 1/f_net = 0.217 s, C-W27, Round (cross-review fix 2026-10-25)
     audience: ServerOnly
     latch: Use
     note: "P7 lead between scheduling and ActiveAtServerTime; part of F6 T_needed; never shown as a countdown"
     added: 2026-10-25
-    revised: ""
+    revised: "2026-10-25"
   - name: PreparingWatchdogSec
     status: active
     source: design/gdd/round-match-framework.md
@@ -4652,14 +4653,14 @@ constants:
       - design/gdd/tuning-data-config.md
     value: 1.0
     unit: mult
-    hard_range: "1.0 or 1.5"
-    safe_range: "1.0 or 1.5"
+    hard_range: "{1.0, 1.5} (discrete set; outside TDC F-1 continuous clamp)"
+    safe_range: "{1.0, 1.5}"  # C-W19, TMK: discrete two-step setting (cross-review fix 2026-10-25)
     audience: Client
     latch: Use
     sentinel_note: "two valid steps only (the hatch must land on whole pixels); a value other than 1.0 or 1.5 is rejected"
     note: "F1; CR-14 USER SETTING (Settings & Accessibility, VS; fixed 1.0 in MVP): client-local, not a preset field, never replicated or hashed"
     added: 2026-10-25
-    revised: ""
+    revised: "2026-10-25"
   # --- HUD (audience Client = All with no server consumer, TDC CR-8) ---
   - name: HudPersistentAreaLimitPct
     status: active
@@ -4823,12 +4824,12 @@ constants:
     value: 0.5
     unit: s
     hard_range: 0.2-1.0
-    safe_range: 0.4-0.7
+    safe_range: 0.4-0.6  # was 0.4-0.7; I-SCL-16 StopMinSec <= min(WalkStopSec, RunStopSec) at WalkStopSec safe max 0.6, C-W19, SCL (cross-review fix 2026-10-25)
     audience: Client
     latch: Round
     note: "decision D2 (SCL OQ15): stop floor, effective decel d_eff = min(d, v / StopMinSec), so every stop lasts >= StopMinSec; Crowd consumes this same key (no separate pace-set key). Latch Round like WalkStopSec/RunStopSec (movement parity)."
     added: 2026-10-25
-    revised: ""
+    revised: "2026-10-25"
   - name: IdleGazeDelaySec
     status: active
     source: design/gdd/shared-character-locomotion.md
@@ -4841,9 +4842,218 @@ constants:
     unit: s
     hard_range: 1-10
     safe_range: 2-5
+    audience: ServerOnly
+    latch: Use
+    note: "decision D14 (pause-menu PM-1): any pawn with no look input for longer than this gets the shared NPC idle head-scan layer (scan every 3-7 s), whether the Escape menu is open or the player is idle; no AI hand-over. Audience/latch follow the SCL owner row (ServerOnly / Use; cross-review fix 2026-10-25, C-W13; was Client / Round)."
+    added: 2026-10-25
+    revised: "2026-10-25"
+  # --- Cross-review fix 2026-10-25 (C-W16): cross-system keys named by TDC invariants ---
+  - name: CrowdFullPacePct
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    value: 55
+    unit: pct
+    hard_range: 50-100
+    safe_range: 50-65
+    audience: ServerOnly
+    latch: Use
+    note: "walking-time share at pace 1.0 (SCL R5.1 floor 50); 55 since the walk-slower key (IIF R15a, user decision 2026-10-25); registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: CrowdDecoyEarlyReleaseMaxSec
+    status: active
+    source: design/gdd/crowd-npc-behaviour.md
+    referenced_by:
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/tuning-data-config.md
+    value: 2.8
+    unit: s
+    hard_range: 1.0-5.0
+    safe_range: 2.2-2.9
+    audience: ServerOnly
+    latch: Round
+    note: "upper bound of the decoy early release; invariant I-CNB-6 (reject): CrowdDecoyEarlyReleaseMaxSec < ObjectiveInteractSec (carried C-W1 / C-W10); registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: WalkSpeedScaleMinMult
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 0.80
+    unit: mult
+    hard_range: 0.6-1.0
+    safe_range: 0.75-0.80
     audience: Client
     latch: Round
-    note: "decision D14 (pause-menu PM-1): any pawn with no look input for longer than this gets the shared NPC idle head-scan layer (scan every 3-7 s), whether the Escape menu is open or the player is idle; no AI hand-over."
+    note: "slowest walk an analog stick or the AI may request; I-SCL-5 (reject): WalkSpeedScaleMinMult <= 0.8, the minimum of the fixed pace set {0.8, 0.9, 1.0} (C-W12); registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: WalkStopSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/crowd-npc-behaviour.md
+      - design/gdd/tuning-data-config.md
+    value: 0.60
+    unit: s
+    hard_range: 0.5-1.2
+    safe_range: 0.5-0.6
+    audience: Client
+    latch: Round
+    note: "stop time at the slowest pace; sets d = WalkSpeed x MinMult / WalkStopSec (SCL F2); I-SCL-4, I-SCL-16; registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: InputStarvationSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/session-travel.md
+      - design/gdd/tuning-data-config.md
+    value: 0.25
+    unit: s
+    hard_range: 0.25-1.0
+    safe_range: 0.25-0.4
+    audience: ServerOnly
+    latch: Use
+    note: "server time without a move from the owner before the pawn gets zero acceleration and brakes by the baseline (SCL R15, Session 25g); provisional pending traversal spike; registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: PrelimCandidatesPerStageMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/tuning-data-config.md
+    value: 3
+    unit: count
+    hard_range: 2-6
+    safe_range: "3"
+    audience: ServerOnly
+    latch: Round
+    note: "prelim courts per stage the layout must offer; I-PCG-6 (CityGenCourtTargetCount >= FinalCandidatesMinCount + 4 x this) bounds the safe range (C-W17); registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: ZoneCandidatesMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/tuning-data-config.md
+    value: 2
+    unit: count
+    hard_range: 2-4
+    safe_range: "2 (3-4 only with CityGenZoneCandidatesCount 4)"
+    audience: ServerOnly
+    latch: Round
+    note: "candidate zones per layout; invariant I-PCG-7 (reject): CityGenZoneCandidatesCount >= ZoneCandidatesMinCount (C-W19); registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: BushEnterDurSec
+    status: active
+    source: design/gdd/concealment-bushes.md
+    referenced_by:
+      - design/gdd/concealment-bushes.md
+      - design/gdd/tuning-data-config.md
+    value: 0.9
+    unit: s
+    hard_range: 0.6-1.5
+    safe_range: 0.8-1.3
+    audience: All
+    latch: Round
+    note: "bush entry transition; low fails F3a (exit before the cull lands); registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: CameraToggleBlendSec
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/input-interaction-framework.md
+      - design/gdd/tuning-data-config.md
+    value: 0.20
+    unit: s
+    hard_range: 0-0.28
+    safe_range: 0.15-0.25
+    audience: Client
+    latch: Use
+    note: "first/third-person toggle blend; I-CS-1 (reject, no runtime clamp): CameraToggleBlendSec <= CameraToggleLockoutSec - 1 frame; hard max 0.28 (was 0.29) so every value passes at lockout default 0.30 (C-W11); registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: EyeConeHalfHDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 55
+    unit: deg
+    hard_range: 40-70
+    safe_range: 54-60
+    audience: Client
+    latch: Round
+    note: "third-person eye cone half-angle, horizontal; I-CS-3 (reject): >= FovHMaxDeg / 2 (54 at defaults); safe was 52-60 (C-W17); registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: EyeConeHalfVDeg
+    status: active
+    source: design/gdd/camera-system.md
+    referenced_by:
+      - design/gdd/camera-system.md
+      - design/gdd/tuning-data-config.md
+    value: 38
+    unit: deg
+    hard_range: 25-50
+    safe_range: 38-42
+    audience: Client
+    latch: Round
+    note: "third-person eye cone half-angle, vertical; I-CS-3 (reject): >= FovVMaxDeg / 2 (37.5 at defaults); safe was 36-42 (C-W17); registered by the cross-review fix 2026-10-25 (C-W16)"
+    added: 2026-10-25
+    revised: ""
+  - name: StallFlagMinutes
+    status: active
+    source: design/gdd/round-match-framework.md
+    referenced_by:
+      - design/gdd/round-match-framework.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/tuning-data-config.md
+    value: 18
+    unit: min
+    hard_range: "10 to 60"
+    safe_range: "15 to 30"
+    audience: ServerOnly
+    latch: Use
+    note: "Round F7 reporting only (ruling D29, D-W9): a round longer than this is flagged as an Objectives stall-pressure defect, an Active abort longer than half of it too; never a timer or rule. 18 = twice Objectives F1's modelled median (~9 min). Replaces the old 2 x TargetRoundMinutes (1,440 s) flag. Added by the cross-review fix 2026-10-25."
+    added: 2026-10-25
+    revised: ""
+  - name: StartToFinalMinPathCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+      - design/gdd/procedural-city-generator.md
+      - design/gdd/objectives-chain.md
+      - design/gdd/tuning-data-config.md
+    value: 4400
+    unit: cm
+    hard_range: "4,000-10,000"
+    safe_range: "4,000-4,400 on the generator (hand-built maps up to 8,000 if they still pass FinalCandidatesMinCount)"
+    audience: ServerOnly
+    latch: Round
+    note: "decision D4 (PCG OQ9): V-SEP start-to-final path floor lowered 60 m -> 44 m. On the generator's corner-zone geometry a court at (x, y) from an axis corner is final-eligible iff x + y <= 110 - 1.08 * F (8 % path guard); 6 courts at >= 24 m spacing need F <= 44.4 m (Generator S4, LSC D5), hence 4,400 and the generator safe ceiling. FinalCandidatesMinCount is never lowered below 6. Registered by the cross-review fix pass 2026-10-25 (C-W16); the closeout had claimed the registry update without landing it. Margin at default jitter is open (C-W24, PCG OQ9 enumeration)."
     added: 2026-10-25
     revised: ""
   - name: CameraMaskOffHysteresisCm
@@ -4858,9 +5068,9 @@ constants:
     safe_range: 8-15
     audience: Client
     latch: Use
-    note: "decision D6: close-3P eye mask goes off at 20 cm free boom length and back on at 20 + this = 30 cm; mask and AC-CS-05 oracle both use the capsule axis origin. Range chosen by TDC (provisional): hard max 30 keeps the on-threshold (50 cm) below BoomCloseCm (60)."
+    note: "decision D6, threshold amended by the cross-review fix 2026-10-25 (C-W25): the close-3P eye mask goes off below 25 cm free boom length (the geometric minimum free length is about 21 cm = capsule radius 35 - sweep radius 14, so the D6 value 20 cm could never be the binding case) and back on above 25 + this = 35 cm; mask and AC-CS-05 oracle both use the capsule axis origin. Hard max 30 keeps the on-threshold (55 cm) below BoomCloseCm (60)."
     added: 2026-10-25
-    revised: ""
+    revised: "2026-10-25"
   - name: CityGenCourtTargetCount
     status: active
     source: design/gdd/procedural-city-generator.md

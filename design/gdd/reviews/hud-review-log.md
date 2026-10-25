@@ -112,3 +112,21 @@ Reviewed-Content-Hash: design/gdd/session-travel.md 1e185cf338c1b17880a81bc7057d
 - D11: removal card wording fixed to title "Informant" for every cause, subtitles "Too many wrong targets" (exile) and "Eliminated for the round" (assassinated/reversed), so OQ5 no longer collides with the Roster language rule.
 - D8: ranges of `HudResultPlateMaxHoldBackSec` and `HudOwnRemovalHoldCapSec` now start at 1.25 s (TDC hard minimum raised to match).
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+Source: design/gdd/gdd-cross-review-2026-10-25.md; rulings D15, D21, D23, D25, D26, D29 (production/design-closeout/2026-10-25_rereview-followups.md). Status lines and status cells untouched.
+- S-B1 (BLOCKING, ruling D23): HUD-R10a rewritten on the Roster's `ReconnectEndCause` (None, Rejoined, GraceExpired, Cleared, written with every clear of `bReconnecting`): "back" only on `Rejoined`, "— disconnected" on `GraceExpired`, nothing on `Cleared`; edges only (a rebuild never prints). Decision: a grace expiry that converts an `Active` ally shows only the HUD-R10 removal line (the "— disconnected" line is suppressed), so "disconnected" is shown for an informant ally still away. AC-HUD-28 extended to cases (a)-(h): informant still away at expiry, `Active` ally killed while disconnected, superseding rejoin outlasting `G_eff`, kicked ally, round end, rebuild.
+- C-B1 (ruling D21): F10 output range and the banner edge case now state exactly the bound AC-ASN-35 asserts: bystanders show the banner at `t_phase`, never before the death write, up to `StrikeNetLeadSec` (0.15 s) before `DeathServerTime`; AC-HUD-17 gains the bystander clause.
+- C-W1: Dependencies Upstream gains the Informant Pings row (`FTeamPingView`, L0 ping slot); the Downstream Pings row stays.
+- C-W2: Dependencies Downstream gains the Teammate Markers row (`HudSafeMarginPct`, UI scale, layer order).
+- C-W9: the "No ADR exists yet" claim replaced by the accepted ADRs (ADR-0021, 0002, 0018, 0019, 0001); "These become the UI ADR" now reads ADR-0021.
+- C-W33: HUD-R1 "HUD-E01 to HUD-E20" -> E22; HUD-R2's world-anchored list gains the ping rings (anchored to a ground point, never a pawn).
+- C-W34 / D15: HUD-R4 L4 described as display-only with the ADR-0021 L4 split (Session-owned modal at ZOrder 100); also in States preamble, Interactions and Dependencies Session rows, HUD-E20 and AC-HUD-24.
+- S-W2: HUD-R10 round-end rule (no feed line at or after `Ended`, pending lines discarded), F8, States `Ended` row, edge cases, AC-HUD-30; aligned with Teammate Markers TM-R6 step 6.
+- S-I1: HUD-R11 ping slot: a ring's name label drops at the sender's `OnAllyMarkerRetired`; the ring stays to expiry.
+- D26: HUD-R13 ping refusal while concealed (owner-only tone `PingConcealedRefused` + "Not now" plate, shared limiter), VA-HUD-6, HUD-E15 data, AC-HUD-31.
+- D29: every player-facing "Target exiled" renamed "Target eliminated" (Player Fantasy, HUD-R2, R6, HUD-E07, CR-HUD-8 item 5, OQ5 note, OQ10); internal exile names unchanged.
+- Cross-file needs: Roster R6 field `ReconnectEndCause`; Session Downstream row and L4 modal wording; art bible/UX sweep of "Target exiled" (main session); TDC/registry: cue id `PingConcealedRefused` is a cue event, not a key (no tuning key added).
+
+### Cross-review fix 2026-10-25 — main-session follow-ups
+- C-W17 follow-up: F4 variable table rows for `ExileBeatSec` (0.75-0.95, Penalty safe range) and `HudRemovalCardDelaySec` (I-HUD-3 rejects, was "warning") synced.

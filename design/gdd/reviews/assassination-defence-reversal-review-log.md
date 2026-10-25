@@ -58,7 +58,7 @@ Findings:
 - [RECOMMENDED, fixed] F1 Output Range: "caps reach at 260 cm" was wrong for the default 240 cm warp limit (240 + 35 + 15 = 290) -> corrected with the values at the safe and hard minimum warp limits; TDC hard maximum 250 unchanged.
 - [RECOMMENDED, fixed] Edge Cases (strike spam) and OQ-ASN-3 still quoted the `NpcCount` 40 figures (0.34 rival kills, 8.6 NPC kills per rival kill); F5 and AC-ASN-32/33 use `NpcCount` 50 (0.276 / 10.7) -> aligned.
 - [RECOMMENDED, fixed] AC-ASN-35: ally marker line described an exit fade from the arrival of the retire update; ASN-R23 and TM-R6 now schedule it from `RetireAtServerTime` -> aligned.
-- [OPEN] Replication-specialist re-verification of AC-ASN-05, 20, 21, 44, 45 (creative-director request, 2026-10-24 log) is not done in lean mode; run it in the next full-mode pass or at ADR-0003/0018 acceptance.
+- [DONE 2026-10-25 closeout, see the "Closeout cross-doc pass 2026-10-25" section below; cross-review C-W9] Replication-specialist re-verification of AC-ASN-05, 20, 21, 44, 45 (creative-director request, 2026-10-24 log) was not done in lean mode at the time of this entry; run it in the next full-mode pass or at ADR-0003/0018 acceptance.
 Cross-doc follow-ups (main session):
 - Systems index: set Assassination & Defence Reversal to Needs Revision (second review) with the date; this agent did not edit it.
 - SCL / ADR-0018: confirm the "death write never interrupts the lunge for a reversed attacker" clarification (ASN-R16) against the SCL `Disabled` timing and the server-side motion warp.
@@ -75,3 +75,15 @@ Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c8
 ## Closeout cross-doc pass 2026-10-25
 - Replication specialist (ue-replication-specialist) re-verified AC-ASN-05, 20, 21, 44, 45 and the ACs were rewritten: fresh paired control instances and consumed-move-timestamp comparison (05); 208-bit fixed-width sweep instead of a vacuous size comparison, stationary pawns, whiff writes no death state (20); actor-local bone comparison, parity and bearing groups split, both bearing signs, tag split (21); `Culled` precondition, zero-tolerance send-capture bound, per-frame latch assertion, attached actors and NetGUID exports (44); the unreachable "beyond cull distance" scenario replaced by a test-seam defensive path (45; pawns have no cull distance, SCL R13 / ADR-0003). Negative controls added to all five (ADR-0008 section 3).
 - Ref: production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- C-B1 (D21): AC-ASN-35 last clause now asserts the bound: no client shows the round-end presentation earlier than the death write (`DeathServerTime - StrikeNetLeadSec`); bystander clients may show it up to 0.15 s before the deciding strike's `DeathServerTime` (I-ASN-4 residual, HUD F10). ASN-R23 last bullet states the same bound.
+- C-W8: Upstream table gains a Character Pool & Appearance row (CP-12 / CP-12b rules consumed, Soft), reciprocating CPA's Downstream row.
+- C-W9: the [OPEN] replication re-verification line in this log is marked DONE (re-verified 2026-10-25 closeout, section above). The Status header line (which still says "still pending") was not edited by this pass (Status lines are owned by the main session).
+- C-W17 (ASN part): `StrikeBearingLimitDeg` safe range 80-95 -> 80-90 (I-ASN-8 bound is 90 at the default yaw limit 30).
+- C-W18: I-ASN-7 warning band stated inside the safe ranges (warn-free while `StrikeWarpLimitCm <= 600 x StrikeContactSec`); safe ranges not narrowed, AC-ASN-31 (h) unchanged.
+- C-W39: AC-ASN-39, AC-ASN-12 and the two disposition rows now name the `BushSpotPick` stream instead of a hash / `SpotSalt` (the test name `BushVictimHash` is kept as a stable identifier).
+- D-W10 / D29: player-facing "Target exiled" renamed "Target eliminated" in Player Fantasy, UI-ASN-1 and AC-ASN-16; `bExiled` and strike-limit exile terms unchanged.
+
+### Cross-review fix 2026-10-25 — main-session follow-ups
+- C-W18 follow-up: `AttackAttemptLockoutSec` safe 1.5-2.5 -> 1.5-2.0 (Penalty W-NKP-3 at grace 2.0). C-W31 follow-up: RetireAtServerTime may also ride Roster `RequestTransition`.

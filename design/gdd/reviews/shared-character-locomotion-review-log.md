@@ -98,3 +98,15 @@ Reviewed-Content-Hash: docs/architecture/adr-0003-replication-relevancy-concealm
 - OQ15 closed by D2 (stop floor `d_eff = min(d, v0 / StopMinSec)`, `StopMinSec` 0.5 s); AC-SCL-50 vectors include 93 cm/s, the floor boundary. OQ16 closed by D3 (uniform TickPose escalation, confirm in spike R3).
 - Bidirectionality paragraph and change request 12 marked met (index rows 5, 6, 9, 12 list SCL / LSC peer); status cells set to In Review.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- C-B2: R5.3 parenthetical rewritten to the D2 floor (`d_eff = min(d, v / StopMinSec)`, every stop lasts at least `StopMinSec`); OQ15 stays closed.
+- C-W5: Dependencies gain Level Socket Contract (soft) and Camera (soft) upstream rows; the Crowd row, Interactions row and Cross-References record the D2 (`StopMinSec`) and D14 (idle gaze) edges.
+- C-W12 / C-W17(h): I-SCL-5 restated as `WalkSpeedScaleMinMult <= 0.8` (the pace set is the R5.1 constant); `WalkSpeedScaleMinMult` safe 0.75-0.90 -> 0.75-0.80; `WalkSpeedCmPerSec` safe 125-160 -> 131-160 (I-SCL-6).
+- C-W13: `IdleGazeDelaySec` row confirmed ServerOnly / Use (default 3, hard 1-10, safe 2-5); registry and TDC mirror it.
+- C-W19: new I-SCL-16 `StopMinSec <= min(WalkStopSec, RunStopSec)`; `T_stop,max` defined for I-SCL-12 / I-SCL-15; `StopMinSec` safe 0.4-0.7 -> 0.4-0.6; `WalkStopSec` safe 0.5-0.8 -> 0.5-0.6.
+- C-W26: F9 `B_forced` cites IIF AC 52; `U_eff` described as the movement-channel delay, IIF F2 governs the ActionPose delay; listen-host upload figure added.
+- C-W36: one D14 trigger definition (control rotation unchanged; identical re-issued `Look` counts as unchanged); menu-open pawn gets zero Move, zero Look, holds ended; AC-SCL-49 gains the re-issuing-NPC case.
+- C-W37: R11.5 stale "rate 1" parenthetical removed.
+- C-W38: R2a.4 replacement card follows CPA CP-12(a).
+- D-W7 / D27: accepted trade-off recorded in R8.9 and the `IdleGazeDelaySec` row; one head-hold definition in R8.8; idle-scan holds excluded from T13.

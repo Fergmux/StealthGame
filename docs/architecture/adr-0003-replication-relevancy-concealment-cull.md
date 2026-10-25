@@ -73,7 +73,7 @@ With ~50 pawns always relevant to ~10 connections, every per-kind difference in 
 - ADR-0001: one pawn class, one replication configuration, owner-only possession pointers, legacy NetDriver, no ReplicationGraph, no team relevancy.
 - Relevancy may depend on concealment state and viewer relation only (IVP R6).
 - No dormancy, no distance cull, no per-kind priority, no multicast RPC on pawns (SCL R13, IIF R12).
-- Budgets: per-client ≤ 50 KB/s, pawns ≤ 30 KB/s worst case (SCL F9); replication ≤ 1.5 ms game thread on the listen host (architecture CPU table).
+- Budgets: per-client ≤ 50 KB/s, pawns ≤ 36 KB/s line, 31.1 KB/s worst case at NpcCount 50 (SCL F9; line raised from 30 KB/s, 2026-10-25); replication ≤ 1.5 ms game thread on the listen host (architecture CPU table).
 - The listen host does not receive RepNotify for its own writes (ASN-R21, Round R20).
 - Always-ask items (schema changes) cannot be decided here.
 
@@ -342,7 +342,7 @@ UCLASS() class UTeamPositionFeedComponent : public UTeamViewComponentBase
 - **CPU**: Relevancy override O(1) per considered pawn-connection pair (~7,500 calls/s at 15 Hz × 50 × 10); cull tick touches only records at their deadline; within the 1.5 ms replication line (to be measured on target-class hardware, AQ-18).
 - **Memory**: One cull record per pawn; one viewer-cache entry per connection; allowlist loaded only by tests.
 - **Load Time**: None.
-- **Network**: Fixed 15 Hz pawns within 30 KB/s worst case (SCL F9); culled pawns cost nothing to non-allies; fallback feed ≤ 104 B/s per client; fixed-width structs cost a few bytes more than packed ones for a kill/whiff (accepted).
+- **Network**: Fixed 15 Hz pawns within the 36 KB/s pawn line (31.1 KB/s worst case at NpcCount 50, SCL F9); culled pawns cost nothing to non-allies; fallback feed ≤ 104 B/s per client; fixed-width structs cost a few bytes more than packed ones for a kill/whiff (accepted).
 
 ## Migration Plan
 The prototype replicates `bConcealed`/`bRevealedUntilExit` to every client and hides bushes client-side (`AStealthCharacter::UpdateConcealmentVisibility`), uses separate `bDying`/`bPreparingDefence` bools, default net config and no relevancy override (first-playable report, known issue 2). None of it is promoted; the cull, the overrides and the serialisers are written new under this ADR once Accepted, behind the allowlist audit from the first commit.

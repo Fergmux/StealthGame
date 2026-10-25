@@ -453,3 +453,8 @@ User scope decisions (2026-10-25: "accept all recommendations"); decision unchan
 
 Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-25_rereview-followups.md`); decision unchanged, Status unchanged (Accepted).
 - §1, §2a (mapping table), Key Interfaces: `TimerFired(CrowdSchedule)` is confirmed as a member of the closed `ETimerKind` set (already added by the 2026-10-24 sync; the Crowd re-review follow-up that said the kind was still missing is closed). The `Phase` byte is a Crowd-owned `uint8` event kind (ambient exit, ambient entry, replacement, retry, exile-exit slot; ADR-0016 §6); adding an event kind is a Crowd/ADR-0016 change, not an amendment here, because the payload shape is unchanged. The "AI decision timing is input generation" definition requested by ADR-0016 is recorded in §4's guideline text and stands.
+
+Cross-review fix 2026-10-25 (`design/gdd/gdd-cross-review-2026-10-25.md` C-B5 ruling D22, S-W1, S-W3; decision unchanged, Status unchanged):
+- Due tolerance: an item is due when `DueServerTime <= NowServerTime + DueEpsilonMs` with the constant `DueEpsilonMs` = 1 ms (Round R12, Round AC 45); IIF R8/F1 and its hold AC cite it.
+- The round-end step also halts pawns in hand-over (Round R9 (f)).
+- Round-end step budget (Round R9, AC 65): added listen-host game-thread cost ≤ 2.0 ms in that frame and a burst of about 3.1 KB for 9 clients; to be measured in the queue / round-end spike together with ADR-0022.

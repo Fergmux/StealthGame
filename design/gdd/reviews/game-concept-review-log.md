@@ -83,3 +83,6 @@ Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bb
 ## Closeout cross-doc pass 2026-10-25
 - Cross-doc alignment only (NpcCount 50, objective duration near Objectives Chain F1 ~9 min median); no design change.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- D29 / D-W10: the resolved-question note now says the rival-kill plate reads "Target eliminated" ("exile" is reserved for the NPC-kill removal). No other concept change.

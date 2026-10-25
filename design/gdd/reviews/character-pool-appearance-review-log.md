@@ -82,3 +82,10 @@ Reviewed-Content-Hash: design/gdd/level-socket-contract.md 170946af3b310140bd789
 - Dependencies and Cross-References status cells set to In Review (all peer GDDs are In Review in the systems index).
 - Respawn-region Pillar-1 question (OQ-14) handed to Penalty OQ-NKP-13 and LSC.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+Source: design/gdd/gdd-cross-review-2026-10-25.md; fixes applied unattended under the user's authorisation. Status cells untouched.
+- C-W4 / 2A-W7: Information Visibility Policy rows (upstream and downstream) relabelled Hard, aligned with IVP's peer table.
+- C-W8 / 2A-W13: reciprocity rows added: Session & Travel (PoolHash, mutual with Session's Pool -> Session row) and Assassination & Defence Reversal (split out of the Penalty row, mutual with ASN's Upstream and Downstream rows); bidirectionality note updated.
+- C-W38 / 2E-W9: Cross-References records that CP-12(a) (uniform draw over vacant cards) is the authority over SCL R2a.4 and LSC AC-14 "the victim's card"; CPA text unchanged.
+

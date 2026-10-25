@@ -90,3 +90,19 @@ Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bb
 Reviewed-Content-Hash: design/gdd/hud.md 224977e0b36ac631f3ab286857b5b707178bc4dd
 Reviewed-Content-Hash: design/gdd/teammate-markers.md 24083d13eef70e3b1d1b20c9905a338859258db5
 Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6f5397e9f8ef2526f8d2c6c107100ba7a2db673b
+
+## Closeout cross-doc pass 2026-10-25 (entry recorded late, at the cross-review fix pass; C-W41)
+- D8: hard minimum of `HudResultPlateMaxHoldBackSec` and `HudOwnRemovalHoldCapSec` raised to 1.25 s (I-HUD-1/2 row).
+- D12: W-NKP-4 kept as a guard, marked "defensive; unreachable in hard ranges".
+- D13: Shipping cook of non-Default presets deferred to a later ADR-0004 amendment (OQ-13).
+- D2 / D6 / Generator: `StopMinSec`, `CameraMaskOffHysteresisCm` and `CityGenCourtTargetCount` registered; registry mirror completed (Registered Owner Keys note, CR-15.7).
+- Ref: production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+Source: design/gdd/gdd-cross-review-2026-10-25.md ("Fix pass 2026-10-25" section at its end). Applied by the main session.
+- C-W13: SCL row names `IdleGazeDelaySec` (D14) as ServerOnly / Use, matching the SCL owner row; registry corrected from Client / Round.
+- C-W14: counts fixed (Camera 49 in the Downstream table; LSC exactly 80 names; SCL 53; I-SCL-1 to I-SCL-16).
+- C-W16: `StartToFinalMinPathCm` (D4) listed on the LSC row and registered with 11 other cross-system keys named by invariants.
+- C-W9: Informant Pings is MVP (change request 9, prototype mapping row; `PingCooldown` is the refill bucket).
+- C-W41: I-ASN-1 row restates the 290 cm reach cap; this log gains the missing closeout entry above.
+- Mirrors of owner changes: I-SCL-5 rewritten (`WalkSpeedScaleMinMult <= 0.8`), I-SCL-16 new, I-SCL-12/15 use `T_stop,max`; I-CS-1 is a rejection with no clamp (blend hard max 0.28); I-CNB-6 new (decoy max < `ObjectiveInteractSec`, whose safe range is now 2.9-4.5); I-LSC-4 retired (`ReachDetourMult` derived); I-LSC-1 density-cap note; I-PCG-7, I-IVP-1, W-RMF-5 new; I-PNG-1 notes D25 and `PingSkewTolSec`; Round 18 keys (`StallFlagMinutes`); Session, Penalty (`ExileBeatSec` 0.75-0.95, `ExileCardTimeoutSec` 2.0-2.5) and TMK (`TeammateMarkerLargeMult` discrete set) rows updated; mask-off threshold note 25/35 cm (C-W25).

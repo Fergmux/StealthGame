@@ -78,7 +78,7 @@ This decision is needed now because Assassination, the HUD and Penalty are writt
 - Positional result-to-strike matching with no command sequence on an `All` struct (ASN-R23, HUD F2, CR-HUD-14).
 - One client-local own-role dispatch, `OnRoleChangePresented`, at the pawn's own `DeathServerTime` (ASN-R23, HUD-R6a, Camera CS-R12).
 - Tally moves with the plate (HUD-R7, PEN-R3, PEN-R14): `TallyAfter`/`bExiled` ride inside `FStrikeResult` (PEN-R15).
-- Budget: no measurable addition to the 0.5 ms queue/resolver line or the 30 KB/s pawn bandwidth line (architecture Performance budget).
+- Budget: no measurable addition to the 0.5 ms queue/resolver line or the 36 KB/s pawn bandwidth line (SCL F9, 31.1 KB/s worst case) (architecture Performance budget).
 
 ## Decision
 
@@ -393,7 +393,7 @@ public:
 - **CPU**: per Attack, one victim resolution (≤ a handful of capsule tests, ASN F1), one staged write or two, two body timers: microseconds inside the 0.5 ms queue/resolver line. Client `Refresh` runs only on RepNotify and while a clip is scheduled.
 - **Memory**: per pawn 18 + 8 bytes of replicated state; per round a few dozen staged writes and timers.
 - **Load Time**: none.
-- **Network**: per strike one forced update of the attacker (≈ 18 bytes of `FActionState` plus header and movement) and one forced update per death-write pawn (8 bytes); owner results ride the existing reply batch (≤ 4 bytes each plus `FClientCommandSeq`). At the maximum strike rate (one per 1.75 s per attacker) this is far below the 30 KB/s pawn line; removing `WarpTargets` replication saves bytes on every warped action.
+- **Network**: per strike one forced update of the attacker (≈ 18 bytes of `FActionState` plus header and movement) and one forced update per death-write pawn (8 bytes); owner results ride the existing reply batch (≤ 4 bytes each plus `FClientCommandSeq`). At the maximum strike rate (one per 1.75 s per attacker) this is far below the 36 KB/s pawn line; removing `WarpTargets` replication saves bytes on every warped action.
 
 ## Migration Plan
 The prototype (`Source/StealthGame`) uses separate pawn bools (`bDying`, `bPreparingDefence`) and `Server*` RPCs on the pawn; ADR-0001's migration list already marks them for replacement by `FActionState` and the command component. Nothing is ported: Assassination is written fresh against this ADR once it and its dependencies are Accepted. The sample pawn's `UMotionWarpingComponent` is replaced by `UStealthMotionWarpingComponent` when the Blueprint is reparented (ADR-0010 migration).

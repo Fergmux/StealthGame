@@ -85,3 +85,16 @@ Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 242977e3dcc0185347fd105
 - Interactions row for Session now lists `OnRoundTravelStarted` and `OnLobbyTravelComplete` semantics; R17.2 gains the failed-supersede-rejoin `OnParticipantDisconnected` handling (stale generation voids the old grace timer, new timer from the new loss).
 - Status cells in Dependencies set to In Review.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- C-B5 (D22): R11 and R12 define the due rule `DueServerTime <= NowServerTime + DueEpsilonMs` with `DueEpsilonMs` = 1 ms (a constant); AC 45 tests 0.5 ms (fires), 1 ms (fires), 2 ms (does not).
+- S-B2 (D24): R17.1 (a supersede does not hand back), R17.2 (supersede is a disconnect, grace basis, kick cite corrected, kicked participant cannot return, Round never writes bReconnecting), R17.3 sub-bullet rewritten, F4 DisconnectedAt, Edge Cases, AC 50 and new AC 62.
+- C-W30: R17.2 cites the transition-table kick row and edge case, not rule 13; new AC 66.
+- C-W3: Downstream gains CPA and IIF rows; Crowd and SCL resolved as mutual peer contracts (contained cycle); IIF-Round cycle labelled in Upstream and Downstream.
+- C-W9: Cross-References items 1, 20, 21 (closed by D9), 22 updated; Bidirectionality note; "no ADR exists yet" corrected.
+- C-W19: F5 `NpcCount` row cites I-LSC-1 (35 at the LSC defaults).
+- C-W27: new warn invariant W-RMF-5 `EndedMinDwellSec >= HudBannerMaxDelaySec + 1.0` (`EndedMinDwellSec` safe 2-5 to 3-5); `StartLeadSec` bound L99 + 1/f_net = 217 ms (safe 0.2-0.5 to 0.25-0.5, default 0.25 kept); F4 `L_soft` 3.0-3.3 s and `L_hard` 12.0-12.3 s equal to Session F2.
+- C-W35: R19 logs a latched final Complete as `TendCompleted(NoEffect, Latched = true)`; new AC 63.
+- D-W9 (D29): F7 re-based on Objectives F1 (~9 min): new knob `StallFlagMinutes` 18 (stall flag, abort flag at half), `ObjectiveEndShare` per team-size bucket with the concept's 0.70 gate over 20 rounds for 4v4 and larger; AC 35 updated.
+- S-W1: R9 (f) also stops pawns in hand-over (pawn-level Halt); AC 12b, new AC 64, Edge Cases.
+- S-W3: R9 round-end step budget (2.0 ms added host game-thread time, about 3.1 KB burst for 9 clients); new AC 65 [SPIKE]; constants list.

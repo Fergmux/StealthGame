@@ -86,3 +86,11 @@ Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6bf80120e5a3d8ac
 - OQ-NKP-13 added: Penalty owns the Pillar-1 review of the informant respawn-region restriction (taken over from Character Pool OQ-14, shared with LSC R5b).
 - D10 (InformantKilled reason) lives on `RetireBinding` in the Roster log, not as a transition reason; Penalty passes it, nothing replicates.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- C-W6: Concealment added to Upstream (Hard, as Concealment states it); Bidirectionality note lists it; index amendment requested of the main session.
+- C-W8: Crowd & NPC Behaviour added to Downstream (soft, mutual with the upstream row).
+- C-W29: PEN-R8 limited to the applied `Active -> Informant` causes; the informant-kill respawn is scheduled by Penalty itself in the kill slot.
+- C-W17 / C-W18: `ExileBeatSec` safe range 0.75-1.2 narrowed to 0.75-0.95 (cites I-HUD-6 and W-NKP-5); `ExileCardTimeoutSec` safe 1.5-2.5 narrowed to 2.0-2.5; `StrikeOutReleaseGraceSec` W-NKP-3 pairing stated.
+- D-W10 (D29): Player Fantasy now names the card ("Informant") and keeps "exile" as the design term for this removal alone; "voice and text" changed to voice only (text chat is Vertical Slice); OQ-NKP-4 notes the rival-kill plate is "Target eliminated".
+- C-W9: "no ADR exists yet" corrected (ADR-0018, ADR-0019 exist); status cells untouched.

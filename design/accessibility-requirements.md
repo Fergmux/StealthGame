@@ -107,7 +107,7 @@ Targets use px at the 1080p reference (UI scale = screen height / 1080, art bibl
 | Marker fill states | Turquoise fill vs hatch vs hollow | Teammate Active, Concealed, Informant | Solid, two-band stepped hatch, outline-only. Opacity encodes no state (art bible 7.x C1). Must separate in greyscale at 24 px (AC-TMK-21) | Specified |
 | Wrong-target tally | Cochineal filled vs Bone outline squares | Wrong strikes so far | `L` stepped squares filled versus outlined; numeral line "Wrong targets: {n}"; static upward danger triangle at n at or above L-1; audio twin (tally tick, threshold tick) | Specified |
 | Danger triangle | Cochineal | Finality or danger (tally threshold, "Wrong target", "Reversed", removal card) | Upward triangle with stepped base; every instance carries a text label | Specified |
-| Result plate stamp | Stamp vs triangle vs none | Target exiled / Wrong target / No contact / Reversed | Four plate texts; stamp shape differs; distinct result cue id per outcome | Specified |
+| Result plate stamp | Stamp vs triangle vs none | Target eliminated / Wrong target / No contact / Reversed | Four plate texts; stamp shape differs; distinct result cue id per outcome | Specified |
 | Removal card | Cochineal Deep title bar | Own elimination | Title text "Informant" with subtitle "Too many wrong targets" or "Eliminated for the round" (D11, D17), upward triangle, "You watch for your team now." | Specified |
 | End banner | Bone bar (Victory) vs Cochineal Deep bar (Defeat) | Round outcome | The words "Victory" and "Defeat" plus the reason line | Specified |
 | Interact ring | Bone vs Marigold | The tended court is one of my team's live sites | Four short outward ticks at the cardinal points on the live state, at least 3:1 luminance contrast against the plain ring (HUD-R13, ruling D6) | Specified |
@@ -167,7 +167,7 @@ Targets use px at the 1080p reference (UI scale = screen height / 1080, art bibl
 | **C-07** Cognitive load documentation | Comprehensive | Per game system | Partial | See the Per-Feature Accessibility Matrix, which counts the simultaneous items each system asks the player to track. A player tracks at most: own tally, brace state, two step bars, one stage card and up to three feed lines on the HUD (7 elements), against about 60 figures in the world. The HUD side is within the review trigger of 4 only by grouping (clusters); recorded as a review item for the HUD UX spec, not a defect. |
 | **C-08** Navigation assists | Standard | World navigation | **Intentionally omitted** | **No waypoint, compass, arrow, distance read-out or map exists** (HUD-R11, OC-15; anti-pillar). Fast travel is meaningless (compact city, no travel mechanic). The clue text on the stage card is the only wayfinding aid. See LIM-C3. |
 | **C-09** Motion-sickness and overload comfort | Standard | Camera and grades | Specified | V-14 to V-18 together; plus the 3P default and the free mode toggle. |
-| **C-10** Plain, consistent language | Standard | All player-facing strings | Not Started | Short, concrete strings already in the HUD GDD; language rule bans "dead", "lives", "tracked", "spotted" and similar (IIF, Roster). The removal wording collision (HUD OQ5) is resolved by D11/D17: title "Informant"; subtitles "Too many wrong targets" / "Eliminated for the round"; plate "Target exiled". |
+| **C-10** Plain, consistent language | Standard | All player-facing strings | Not Started | Short, concrete strings already in the HUD GDD; language rule bans "dead", "lives", "tracked", "spotted" and similar (IIF, Roster). The removal wording collision (HUD OQ5) is resolved by D11/D17: title "Informant"; subtitles "Too many wrong targets" / "Eliminated for the round"; plate "Target eliminated" (renamed from the earlier rival-kill wording by D29, 2026-10-25: "exile" is reserved for the NPC-kill removal). |
 
 ---
 
@@ -191,7 +191,7 @@ Targets use px at the 1080p reference (UI scale = screen height / 1080, art bibl
 
 | Sound Effect | What It Communicates | Visual Backup | Caption Required | Status |
 |-------------|---------------------|--------------|-----------------|--------|
-| Result cue, one id per outcome (Target exiled, Wrong target, No contact, Reversed) | Outcome of my own strike | Result plate (HUD-E07) with distinct text and stamp | No: the plate is the caption | Specified |
+| Result cue, one id per outcome (Target eliminated, Wrong target, No contact, Reversed) | Outcome of my own strike | Result plate (HUD-E07) with distinct text and stamp | No: the plate is the caption | Specified |
 | Defence result cue ("Strike reversed") | My brace reversed an attack | Defence plate (HUD-E08) | No | Specified |
 | Tally tick and threshold tick | A wrong-target square filled; one strike from removal | Tally squares, numeral, danger triangle | No | Specified |
 | Exile or removal cue | I have been removed from active play | Removal card (HUD-E10), informant frame | No | Specified |

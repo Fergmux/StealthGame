@@ -1540,3 +1540,105 @@ Owner: Session rule 21 (state whether a supersede raises a disconnect event or a
 | informant-pings-team-comms | S-I1, S-I5 | Low |
 | assassination-defence-reversal | S-W2 (ASN-R21 write after round-end step) | Low |
 | input-interaction-framework, camera-system, concealment-bushes, objectives-chain, character-pool-appearance, level-socket-contract, procedural-city-generator, information-visibility-policy, tuning-data-config | none (contracts verified consistent in these scenarios) | none |
+
+
+---
+
+## Fix pass 2026-10-25
+
+Applied the same day by the main session plus five Sonnet fix agents, each owning a separate set of files. It follows rulings D21-D29 (`production/design-closeout/2026-10-25_rereview-followups.md`) and this report's fix text. Ground rules for the pass:
+- No GDD Status line or systems-index Status cell was changed.
+- Decisions are in `production/session-logs/decision-log.md` (tag "cross-review fix").
+- Every changed GDD's review log has a "Cross-review fix 2026-10-25" entry.
+- `design/registry/entities.yaml` validates with `yaml.safe_load`.
+- Line numbers are after the edits. Abbreviations: ASN = assassination-defence-reversal, CON = concealment-bushes, PEN = npc-kill-penalty-informants, OC = objectives-chain, TMK = teammate-markers, PNG = informant-pings-team-comms, IDX = systems-index.md, REG = design/registry/entities.yaml.
+
+**Tally.**
+- Blocking: 7 of 7 resolved.
+- Warnings: 48 resolved, 1 partial, 1 open, across the 50 itemised warnings (41 C-W, 6 D-W, 3 S-W). The verdict line above says 51.
+- S-I1: resolved.
+
+### Blocking
+| ID | Status | Where | Note |
+|---|---|---|---|
+| C-B1 | RESOLVED | ASN:595 (AC-ASN-35), ASN-R23; hud.md:365 (F10), AC-HUD-17 | D21. The AC asserts no client shows the round end before the death write (`DeathServerTime − StrikeNetLeadSec`). Bystanders may show it up to 0.15 s before `DeathServerTime`. |
+| C-B2 | RESOLVED | shared-character-locomotion.md:68 | R5.3 now uses the D2 floor `d_eff = min(d, v / StopMinSec)`: every stop lasts ≥ 0.5 s, and OQ15 is closed. |
+| C-B3 | RESOLVED | level-socket-contract.md:220 | "≥ `StartToFinalMinPathCm` (44 m, D4)". |
+| C-B4 | RESOLVED | procedural-city-generator.md:80 | Now `ClueMatchMaxCount`. |
+| C-B5 | RESOLVED | round-match-framework.md:105, :110, :555, AC 45 :724; input-interaction-framework.md:280, :288, :783 | D22: `DueEpsilonMs` = 1 ms, due when `DueServerTime <= NowServerTime + 1 ms`. IIF cites Round, and the 3.0 s hold still stamps on tick 180. ADR-0002 amendment added. |
+| S-B1 | RESOLVED | participant-state-roster.md:108, AC-PSR-53; hud.md:86 (HUD-R10a), AC-HUD-28 :690; information-visibility-policy.md:81; TMK:100, AC-TMK-26 | D23: `bReconnecting` clears only on an event. The new Team field `ReconnectEndCause` {None, Rejoined, GraceExpired, Cleared} drives the HUD line: "back" for Rejoined only, "— disconnected" for GraceExpired (suppressed when an Active ally is converted, where "eliminated" shows instead), nothing for Cleared. ADR-0001 amendment added. |
+| S-B2 | RESOLVED | session-travel.md:100, :131-136, :168, :203, rule 25f, AC 17/51/66; round-match-framework.md:148, :150 (R17.1-R17.3); participant-state-roster.md:220, :227, :464 | D24: a supersede raises `OnParticipantDisconnected(Superseded)` at that instant, and grace and the window run from it. The pawn is AI-held until the rejoiner possesses, then `OnParticipantRejoined(Superseded)` fires. A failed rejoin does not restart grace. ADR-0005 amendment added. |
+
+### Consistency warnings
+| ID | Status | Where | Note |
+|---|---|---|---|
+| C-W1 | RESOLVED | input-interaction-framework.md:497; session-travel.md:467; hud.md:423, :436; PNG:244 | Pings links are reciprocal. |
+| C-W2 | RESOLVED | TMK:357; hud.md:436; IDX row 17 | TMK→HUD (`HudSafeMarginPct`). |
+| C-W3 | RESOLVED | input-interaction-framework.md:481-484; round-match-framework.md:524-527; IDX rows 3, 6 | Camera Hard on both sides; the Crowd/SCL–Round peer contract and the IIF–Round cycle are labelled. |
+| C-W4 | RESOLVED | information-visibility-policy.md:393-399; character-pool-appearance.md:317, :330; level-socket-contract.md:526; session-travel.md:454, :463; IDX rows 4, 5, 8 | Implementers label the Policy Hard; the Policy side is Soft. |
+| C-W5 | RESOLVED | shared-character-locomotion.md:491 + Camera row; Crowd row (D2, D14); IDX row 9 | |
+| C-W6 | RESOLVED | PEN:363; IDX row 14 | Concealment is a Hard upstream. |
+| C-W7 | RESOLVED | IDX rows 3-12, 14-18, 25 (Depends On column only) | |
+| C-W8 | RESOLVED | PEN:379; ASN:322; crowd-npc-behaviour.md:381; CON deps; Roster deps intro; procedural-city-generator.md:327; character-pool-appearance.md:328 | |
+| C-W9 | PARTIAL | IVP:18, :202, :501, :505, :613; hud.md:616; tuning-data-config.md:433, :463; PCG:438; Round CR 21; ASN review log :61 | The stale text is fixed. **Left by rule:** the header Status lines (ASN:3 "re-verification still pending", PCG:3, round-match-framework.md:3, shared-character-locomotion.md:3, hud.md:3) and the sibling status cells in the Cross-References tables go to the main session. |
+| C-W10 | RESOLVED | crowd-npc-behaviour.md:418, :436; TDC I-CNB-6; REG | `CrowdDecoyEarlyReleaseMaxSec` is registered. `ObjectiveInteractSec` safe range is now 2.9-4.5 (OC:327, TDC:90). |
+| C-W11 | RESOLVED | camera-system.md:587, :576, :414; input-interaction-framework.md:547 | Reject with no clamp; blend hard max 0.28; lockout safe 0.25-0.5. |
+| C-W12 | RESOLVED | shared-character-locomotion.md:524, :581; Crowd R3.1 | I-SCL-5 is `WalkSpeedScaleMinMult <= 0.8`; safe 0.75-0.80. |
+| C-W13 | RESOLVED | REG `IdleGazeDelaySec` (ServerOnly / Use); tuning-data-config.md:110; shared-character-locomotion.md:531 | |
+| C-W14 | RESOLVED | tuning-data-config.md:109 (LSC 80), :110 (SCL 53, I-SCL-1..16), :351 (Camera 49) | |
+| C-W15 | RESOLVED | level-socket-contract.md:556-557 | Max safe range 2,700-3,600; Min safe range 2,000-2,025. |
+| C-W16 | RESOLVED | REG `StartToFinalMinPathCm` (4,400 cm; hard 4,000-10,000; safe 4,000-4,400 on the generator) + 11 invariant-named keys + `StallFlagMinutes`; TDC registry note | About 38 LSC-only keys that no invariant names are still unregistered (follow-up). |
+| C-W17 | RESOLVED | ASN:346; Camera eye-cone row :571; LSC:551-553, :601; session-travel.md:483; crowd-npc-behaviour.md (`CrowdMaxIdleSec`); PEN:391; shared-character-locomotion.md (`WalkSpeedCmPerSec`); CON (`BushEnterSwapSec`); hud.md F4 table | All nine are narrowed to the satisfiable part and mirrored in REG and TDC. |
+| C-W18 | RESOLVED | OC:330-332; PEN:391-393; ASN:369; ASN `AttackAttemptLockoutSec` 1.5-2.0 | |
+| C-W19 | RESOLVED | TDC I-IVP-1, I-PCG-7, I-SCL-16; level-socket-contract.md:594 (`ReachDetourMult` derived, I-LSC-4 retired); TMK:438 (discrete set); Round F5 `NpcCount` cites I-LSC-1 | |
+| C-W20 | RESOLVED | OC:165, :173 | `v_run` 4.5 m/s; `T_rush` 41 / 54 / 73 s. |
+| C-W21 | RESOLVED | CON:154 + Player Fantasy, R12, AC-CON-24(c), F2, OQ3 | r_N 0.20: E[O] 0.43, m0 0.349, cap 45 %. |
+| C-W22 | RESOLVED | PNG:132, :59, :70, :269 | ε = `PingBucketPerSec × PingSkewTolSec` (0.1 s at every rate); edge-ring inputs stated. |
+| C-W23 | RESOLVED | level-socket-contract.md:318-323 (D4 at ~9 min), :380 (D6 about 1,800 m²), :220-221; crowd-npc-behaviour.md:237 (`N_E` 12-16) | LSC recommends raising the `NpcCount` safe minimum from 35 to 45. That has not been applied; it is a follow-up. |
+| C-W24 | **OPEN** | level-socket-contract.md:337, :587, LSC OQ15; procedural-city-generator.md:67, :531 | Recorded as unverified: 0.48 m margin against a 2 m jitter step. It closes only when the PCG OQ9 enumeration script runs. |
+| C-W25 | RESOLVED | camera-system.md:148, :170, :286, :569; REG; TDC:111; ADR-0004, ADR-0015 | The mask-off threshold is raised to 25 cm (on at 35 cm), which amends D6, because the geometric minimum free length is about 21 cm. The F2 example now reads 21 cm. |
+| C-W26 | RESOLVED | shared-character-locomotion.md:359 (AC 52); input-interaction-framework.md:306 (U owner); IVP F7 | |
+| C-W27 | RESOLVED | round-match-framework.md:547 (W-RMF-5), F4 bounds = Session F2, `StartLeadSec` safe 0.25-0.5; IIF F6 (0.29 s from rest); level-socket-contract.md:351 (NPCs); shared-character-locomotion.md:363 (listen-host upload ≈ 280 KB/s) | |
+| C-W28 | RESOLVED | ADR-0003:76, :345; ADR-0010:429; ADR-0018:81, :396; architecture.md:725 | 36 KB/s line, 31.1 KB/s worst case. |
+| C-W29 | RESOLVED | PEN:92 | Penalty schedules the informant-kill respawn itself. |
+| C-W30 | RESOLVED | session-travel.md:196 (kick → `Expired` row); round-match-framework.md:148; participant-state-roster.md:224 | A kicked participant cannot return; the flag clears silently. |
+| C-W31 | RESOLVED | participant-state-roster.md:146, AC-PSR-57; ASN:333 | Optional `RetireAtServerTime` on `RequestTransition`. |
+| C-W32 | RESOLVED | PNG:199, AC-PNG-18 | From the resolving slot onward the ping is dropped silently (no tone, which would tell the victim early). |
+| C-W33 | RESOLVED | hud.md:43 (E01-E22), HUD-R2 ping rings; TMK:53; participant-state-roster.md:297-298 | |
+| C-W34 | RESOLVED | session-travel.md:519-523, AC 62/67; hud.md:53 (HUD-R4), HUD-E20, AC-HUD-24 | D15 (ADR-0021 L4 split) cited. |
+| C-W35 | RESOLVED | round-match-framework.md:170, AC 63; OC:250, :260, :395 | Logged as `TendCompleted(NoEffect, Latched = true)`. |
+| C-W36 | RESOLVED | shared-character-locomotion.md:107 (R8.9); crowd-npc-behaviour.md:73 (G1); input-interaction-framework.md:449 | One trigger (control rotation unchanged); zero Move and Look while the menu is open. |
+| C-W37 | RESOLVED | camera-system.md:64, :664, :734 (AC-CS-28); SCL R11.5 | |
+| C-W38 | RESOLVED | shared-character-locomotion.md:52; level-socket-contract.md:759 | CPA CP-12(a) uniform draw. |
+| C-W39 | RESOLVED | ASN:507, :520, :560, :599 | Now the `BushSpotPick` stream. |
+| C-W40 | RESOLVED | REG:519; level-socket-contract.md:114 | Own anchor, strictly nearer; pointer to Penalty OQ-NKP-13. |
+| C-W41 | RESOLVED | reviews/tuning-data-config-review-log.md (closeout entry); tuning-data-config.md:249 (290 cm) | |
+
+### Design-theory warnings (D25-D29)
+| ID | Status | Where | Note |
+|---|---|---|---|
+| D-W5 | RESOLVED | PNG:68 (PNG-R6), AC-PNG-16; TDC I-PNG-1 | D25: one live ring per sender. |
+| D-W6 | RESOLVED | PNG:51, :55, :201, AC-PNG-17; hud.md:108, AC-HUD-31; CON:130, :283; IVP:82 | D26: a concealed sender is refused with an owner-only tone (`PingConcealedRefused`) plus the "Not now" plate; the server drops it with reason `Concealed`. |
+| D-W7 | RESOLVED | shared-character-locomotion.md:107, :531; crowd-npc-behaviour.md:73, :130 (T13) | D27 accepted. T13 counts only holds made with live look input; idle-scan holds are excluded. Camping telemetry is recommended. |
+| D-W8 | RESOLVED | crowd-npc-behaviour.md:135 (T18 Ping), AC-CNB-30; PNG:81; IVP:82 | D28. |
+| D-W9 | RESOLVED | round-match-framework.md:390-403 (F7), :538 (`StallFlagMinutes` 18); OC:173 | D29: cites OC F1 (~9 min). The Pillar 4 gate is ≥ 0.70 per bucket B ≥ 4. |
+| D-W10 | RESOLVED | ASN:25, :453, :566; hud.md (plate); PEN:27, :39, :584; art bible 7.3; accessibility-requirements; ux/hud.md; ux/interaction-patterns.md; game-concept.md:308 | D29: the rival-kill plate is now "Target eliminated", and "exile" is used only for the NPC-kill removal. Penalty text chat removed (voice only). |
+
+### Scenario warnings and info
+| ID | Status | Where | Note |
+|---|---|---|---|
+| S-W1 | RESOLVED | round-match-framework.md:99 (R9 f), AC 12b/64 | The round-end step also halts pawns in hand-over. |
+| S-W2 | RESOLVED | hud.md:84, AC-HUD-30 :693; TMK:89, AC-TMK-34 | From `Ended` on, pending ally lines are dropped and `Held`/`Exiting` markers complete instantly. |
+| S-W3 | RESOLVED | round-match-framework.md:99, AC 65; ADR-0002, ADR-0022 amendments | Budget: ≤ 2.0 ms added host game-thread time and a burst of about 3.1 KB at 9 clients (the ping-part and PlayerState figures are estimates). Spike verification is pending. |
+| S-I1 | RESOLVED | PNG:335 (AC-PNG-19); hud.md:99 | The ring stays until expiry; the name label drops at the sender's retirement. |
+
+### Residual follow-ups (not review items)
+- **I-SCL-15 boot check.** At `WalkSpeedScaleMinMult` 0.75, the bottom of its safe range, `T_stop,max` = 0.8 s, which needs `MaxClientForcedUpdateDuration` ≥ 1.30 s. The pinned value is 1.25 (ADR-0010 config). Either narrow `WalkSpeedScaleMinMult` safe to 0.80 or raise the pinned value.
+- **`NpcCount` safe minimum.** LSC recommends 35 → 45.
+- **LSC registry gap.** About 38 LSC-only keys are still not in REG.
+- **"Target eliminated" width.** It is 17 characters against 13; the HUD plate width must be re-checked in the UI story.
+- **Hand-over Halt.** Crowd and SCL should confirm that Halt on a hand-over pawn holds under either controller (Round S-W1).
+- **Line endings.** `level-socket-contract.md` may have been rewritten with CRLF line endings, so expect diff noise.
+- **Statuses.** Header Status lines and status cells are left to the main session (C-W9).
+
+Recommended next step: `/review-all-gdds since-last-review`.

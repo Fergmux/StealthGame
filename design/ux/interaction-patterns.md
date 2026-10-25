@@ -559,7 +559,7 @@ Patterns are grouped by what they are for, not by widget type. Groups: **FND** f
 
 | Outcome | Text | Glyph | Notes |
 |---------|------|-------|-------|
-| Rival eliminated | "Target exiled" | Stepped-square stamp | Bone plate |
+| Rival eliminated | "Target eliminated" | Stepped-square stamp | Bone plate |
 | Wrong target | "Wrong target" | Upward Cochineal triangle | Identical for an NPC and an informant victim |
 | No contact | "No contact" | none | Bone only; a miss is not finality |
 | Reversed (attacker) | "Reversed" | Upward triangle | Removal card follows and preempts |
@@ -1127,7 +1127,7 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 
 | Interaction Event | Sound Category | Text twin | Notes |
 |------------------|---------------|-----------|-------|
-| Result plate, per outcome (Target exiled, Wrong target, No contact, Reversed) | UI Result, one id per outcome | The plate | Fires at the plate show time, never before contact; `WrongTarget` is identical for any victim kind |
+| Result plate, per outcome (Target eliminated, Wrong target, No contact, Reversed) | UI Result, one id per outcome | The plate | Fires at the plate show time, never before contact; `WrongTarget` is identical for any victim kind |
 | Defence result ("Strike reversed") | UI Result, defence | The plate | Fires with the plate |
 | Tally increment and threshold | UI Tally Tick, Threshold Tick | Tally squares, numeral, triangle | Chosen by `n` alone; fired with the plate |
 | Exile or removal | UI Removal | The card | Fired with the card, never with the plate |

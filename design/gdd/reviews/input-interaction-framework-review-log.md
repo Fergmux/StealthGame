@@ -103,3 +103,13 @@ Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md dc19c6207e69961
 ## Closeout cross-doc pass 2026-10-25
 - Dependencies and Cross-References status cells set to In Review.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- C-B5 (D22): F1 variable table, F1 text, R8 server-timer bullet, the stale-uptime note and AC 32 now cite Round R12's epsilon (1 ms; due when `DueTime <= t_now + 1 ms`) instead of an own 1e-4; the output range is [D - 1 ms, D + dt); the 3.0 s hold still stamps on tick 180 at 60 Hz (tick 179 = 2.9833 s, +0.001 < 3.0) and tick 90 at 30 Hz.
+- C-W1: Dependencies Downstream gains an Informant Pings row (`IA_Ping`, R13/R15, controller RPC never a pawn command; gating/rejection live in Pings, concealed sender rejected with an owner-only tone, D26).
+- C-W3: Upstream gains Camera (Hard, decided: `WorldPoint` correctness; Camera's GDD already says Hard), Teammate Markers (moved from Downstream, Hard), Level Socket Contract (Soft) and Objectives Chain (Hard); Camera Downstream row now points to Upstream; bidirectionality note updated.
+- C-W11: `CameraToggleLockoutSec` safe range 0.2-0.5 -> 0.25-0.5 (I-CS-1 needs >= 0.217 s at the default blend, 0.233 s at 30 fps); the knob row explains the I-CS-1 coupling and the rejected hard values.
+- C-W26: F2's U row is now the single definition of the ActionPose delay U (0 to one server frame; not the 15 Hz movement period), naming AC 52 (ActionPose bandwidth) and AC 53; IVP F7 cites it.
+- C-W27: F6's "0.1 s of walking" corrected for the SCL start ramp (0.29 s from rest, 0.11 s at walking speed).
+- C-W36: the menu-open edge case and AC 5 now state zero Move and zero Look with the command stream continuing, position kept, holds ended (D14).
+- C-W9 (IIF side): Overview "ADR-001 / No ADR exists yet" replaced by the accepted ADR-0001 and ADR-0011.

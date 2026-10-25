@@ -462,3 +462,7 @@ Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-2
 - §8: heading and body now state the written fallback if S2 (PlayerState trims) fails later, per property (pinned-constant re-enable, sanitised `COND_InitialOnly` ids, a no-`SetOwner` rejoin path), keeping C-Public a closed allowlist (Roster re-review xdoc).
 - §5 `FTeamPingView`: slot-index rule for `Entries[TeamSize]` (slot `i` = sender's stable Roster team slot; never compacted or reordered; per-element delta preserved) and `Point` is `FVector_NetQuantize10` (0.1 cm), correcting "10 cm" (Pings re-review xdoc).
 - §3 (closeout D3, SCL OQ16): listen-host animation cost: the host tiers every non-locally-controlled pawn with the same significance bands and uniform `TickPose` escalation as clients (ADR-0013 §4); the kind-blind invariant is unchanged because the tier input is screen height only. §Parity: ADR-0013 §1 now states the removal of the sample AnimBP's `IsLocallyControlled` branch.
+
+Cross-review fix 2026-10-25 (`design/gdd/gdd-cross-review-2026-10-25.md` S-B1, ruling D23; decision unchanged, Status unchanged):
+- C-TeamView teammate entry gains `ReconnectEndCause` (uint8 enum None / Rejoined / GraceExpired / Cleared, Team audience), written in the same update as every clear of `bReconnecting`; packed into the entry's flags byte (no growth). `bReconnecting` is never cleared by a timer alone (Roster R6, IVP `TeammateReconnectEndCause` row, HUD-R10a).
+- `RequestTransition` takes an optional `RetireAtServerTime` for a retire inside the transition (Roster R8, C-W31).

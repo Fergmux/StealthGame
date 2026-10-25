@@ -61,7 +61,7 @@ Audiences: **Self** = the viewing player only; **Team** = the viewer's team incl
 | E04 | Own steps "Your house", exactly 3 | Objectives UI 2 | Team | `StageIndex` | Must Show |
 | E05 | Rival steps "Rival house", exactly 2, never a final step, never a time | Objectives UI 3, OC-12 | Team | `RivalPrelimCount` | Must Show |
 | E06 | Team feed: ally removal, ally reconnecting, ally back (max 3 lines) | UI-NKP-5, HUD-R10, R10a | Team | teammate `State`, `bReconnecting`, `DisplayName` | Contextual |
-| E07 | Result plate for the owner's own strike: Target exiled, Wrong target, No contact, Reversed | UI-ASN-1, UI-NKP-2, CON UI-5, HUD-R6 | Self | `FStrikeResult` | Contextual |
+| E07 | Result plate for the owner's own strike: Target eliminated, Wrong target, No contact, Reversed | UI-ASN-1, UI-NKP-2, CON UI-5, HUD-R6 | Self | `FStrikeResult` | Contextual |
 | E08 | Defence plate "Strike reversed" | UI-ASN-4 | Self (the reversing defender) | `FDefenceResult` | Contextual |
 | E09 | Informant brackets (four frame corners) | HUD-R15, art bible 7.3 row 10 | Self (informant) | own `State` | Must Show (informant) |
 | E10 | Removal card: "Informant" plus cause subtitle plus "You watch for your team now." | UI-ASN-5, UI-NKP-3, HUD-R9, OQ5 (D11) | Self (the removed player) | own `State`, `bExiled`, `FDeathState` | Contextual (once) |
@@ -256,7 +256,7 @@ Every element below is a **dumb widget** applying a view-model value (ADR-0021 Â
 
 ### String table `ST_Hud` (all player-facing text; none travels on the wire)
 
-Dynamic values are formatted locally. Wording is the HUD GDD's, including the user-ratified removal wording of 2026-10-25 (D11): title **"Informant"**, subtitles **"Too many wrong targets"** and **"Eliminated for the round"**, plate **"Target exiled"**.
+Dynamic values are formatted locally. Wording is the HUD GDD's, including the user-ratified removal wording of 2026-10-25 (D11): title **"Informant"**, subtitles **"Too many wrong targets"** and **"Eliminated for the round"**, plate **"Target eliminated"** (renamed from the earlier rival-kill wording by D29, 2026-10-25: "exile" is reserved for the NPC-kill removal).
 
 | Key | Text | Used by |
 |---|---|---|
@@ -270,7 +270,7 @@ Dynamic values are formatted locally. Wording is the HUD GDD's, including the us
 | `Hud.Reject.NotNow` / `.Busy` / `.OutOfReach` | Not now / Busy / Too far | E15 |
 | `Hud.Informant.Plate` | Informants can only observe | E16 |
 | `Hud.Hint.ThirdPerson` | Third person shows only what your character can see. | E17 |
-| `Hud.Result.Exiled` / `.WrongTarget` / `.NoContact` / `.Reversed` | Target exiled / Wrong target / No contact / Reversed | E07 |
+| `Hud.Result.RivalEliminated` / `.WrongTarget` / `.NoContact` / `.Reversed` | Target eliminated / Wrong target / No contact / Reversed | E07 |
 | `Hud.Result.Defence` | Strike reversed | E08 |
 | `Hud.Card.Title` | Informant | E10 |
 | `Hud.Card.Sub.Exile` / `.Sub.Removed` | Too many wrong targets / Eliminated for the round | E10 |
@@ -360,7 +360,7 @@ On an own objective win the Final step fills over `HudObjectiveStepSec` from the
 
 | Outcome | Text | Glyph slot |
 |---|---|---|
-| `RivalEliminated` | Target exiled | Bone stepped-square stamp |
+| `RivalEliminated` | Target eliminated | Bone stepped-square stamp |
 | `WrongTarget` | Wrong target | Cochineal Bright upward triangle (byte-identical for an NPC and an informant victim) |
 | `NoContact` | No contact | empty (a miss is not finality; no Cochineal) |
 | `Reversed` (attacker) | Reversed | Cochineal Bright upward triangle; the removal card follows and preempts |
@@ -728,7 +728,7 @@ The HUD owns **when** a cue event fires; the audio-director owns the sound (mood
 
 | Cue event | Fired at | Audience | Text twin |
 |---|---|---|---|
-| Result cue, one id per outcome (Target exiled, Wrong target, No contact, Reversed, Strike reversed) | the plate's show time (after contact, so legal); identical for `WrongTarget` whatever the victim kind | Self | the plate |
+| Result cue, one id per outcome (Target eliminated, Wrong target, No contact, Reversed, Strike reversed) | the plate's show time (after contact, so legal); identical for `WrongTarget` whatever the victim kind | Self | the plate |
 | Tally tick; threshold tick when `n >= L - 1` | with the plate; chosen by `n` alone | Self | squares, numeral, triangle |
 | Removal cue | with the card entrance (the `OnRemovalCardEntered` event), never with the plate | Self | the card |
 | Stage tone | an own counted completion | Team | stage card turn-over and own step fill |
@@ -953,10 +953,10 @@ Each criterion is verifiable by a QA tester on a build (or, where marked, by the
 - [ ] **UXA-HUD-15** Four ally removals in one update show three lines at once and the fourth after at least 2.0 s (evicting the oldest); a marker retiring without a state change creates no line; nothing is shown to a player of the other team. (AC-HUD-06, AC-HUD-16)
 - [ ] **UXA-HUD-16** A rejection plate shows at most once per 3 s per code, a `Cooldown` rejection shows no plate, and a different code arriving while a plate shows replaces it in one step; the plate sits to the right of the brace row and does not overlap the tally or the Notice slot.
 - [ ] **UXA-HUD-17** A rival-steps rise of 2 in one update fills both steps in one 0.5 s fill with one tick; the displayed rival count never decreases within a round.
-- [ ] **UXA-HUD-18** Every result plate (Target exiled, Wrong target, No contact, Reversed, Strike reversed) has the same size, slot, entrance (four steps in 250 ms), hold (3.0 s) and exit (600 ms), and appears no earlier than the owner's own contact frame; only the text and the glyph slot differ. (AC-HUD-01, AC-HUD-05, AC-HUD-09)
+- [ ] **UXA-HUD-18** Every result plate (Target eliminated, Wrong target, No contact, Reversed, Strike reversed) has the same size, slot, entrance (four steps in 250 ms), hold (3.0 s) and exit (600 ms), and appears no earlier than the owner's own contact frame; only the text and the glyph slot differ. (AC-HUD-01, AC-HUD-05, AC-HUD-09)
 
 **Wording** (strings must match exactly)
-- [ ] **UXA-HUD-19** The removal card title is "Informant" for every cause; the subtitle is "Too many wrong targets" after an exile and "Eliminated for the round" after an assassination or a reversal; the second line is "You watch for your team now."; a rival kill shows the plate "Target exiled"; the word "Exiled" appears on no card. (AC-HUD-13)
+- [ ] **UXA-HUD-19** The removal card title is "Informant" for every cause; the subtitle is "Too many wrong targets" after an exile and "Eliminated for the round" after an assassination or a reversal; the second line is "You watch for your team now."; a rival kill shows the plate "Target eliminated"; the word "Exiled" appears on no card. (AC-HUD-13)
 - [ ] **UXA-HUD-20** The end banner shows "Victory" or "Defeat", exactly one of "completed the final objective" or "every rival eliminated for the round", and "Your house {a} Â· Rival house {b}"; the round summary is exactly the two approved lines, own house first, and is absent before `Ended` and in a called-off round. (AC-HUD-17, AC-HUD-27)
 - [ ] **UXA-HUD-21** Over a 3-minute Active round with eliminations on both teams, no displayed string matches a time format outside "Brace in m:ss" and the returning countdown, an opponent count, "left", "remaining", or a banned word (dead, lives, revive, spectator, ghost, tracked, registered, detected, spotted). (AC-HUD-12)
 
@@ -996,7 +996,7 @@ Each criterion is verifiable by a QA tester on a build (or, where marked, by the
 | # | Type | Question or follow-up | Owner | Resolve by |
 |---|---|---|---|---|
 | HUD-UX-1 | CONFLICT | HUD-R5 says the bottom-left slot stacks "brace indicator, tally, rejection plate (stacked upward)"; HUD-R13, HUD-E15 and IIF UI 5 say the rejection plate sits **beside** the brace indicator (interaction-patterns P5). This spec places it beside the brace row (right of it, outside the persistent footprint). Confirm, and correct HUD-R5's wording. | ux-designer, HUD GDD owner | HUD re-review |
-| HUD-UX-2 | CONFLICT | The user-ratified removal wording (D11: title "Informant"; subtitles "Too many wrong targets" and "Eliminated for the round"; plate "Target exiled") is not yet in downstream documents: art bible 7.3 row 11 and 4.7 (still "Exiled"), `accessibility-requirements.md` (Colour audit row "Removal card", C-10 "the 'Exiled' wording collision must be resolved") and `interaction-patterns.md` PAT-CRD-1 ("Exiled"). This spec uses D11 throughout. **D17 (2026-10-25) applied** to `accessibility-requirements.md` and `interaction-patterns.md`; the art bible sweep remains with its own reviewer. | art-director | art bible next edit |
+| HUD-UX-2 | CONFLICT | The user-ratified removal wording (D11: title "Informant"; subtitles "Too many wrong targets" and "Eliminated for the round"; plate "Target eliminated") is not yet in downstream documents: art bible 7.3 row 11 and 4.7 (still "Exiled"), `accessibility-requirements.md` (Colour audit row "Removal card", C-10 "the 'Exiled' wording collision must be resolved") and `interaction-patterns.md` PAT-CRD-1 ("Exiled"). This spec uses D11 throughout. **D17 (2026-10-25) applied** to `accessibility-requirements.md` and `interaction-patterns.md`; the art bible sweep remains with its own reviewer. | art-director | art bible next edit |
 | HUD-UX-3 | CONFLICT | HUD VA-HUD-1 says "Turquoise never appears in any HUD element"; Informant Pings VA-PNG-3 gives the ping label plate a Turquoise keyline and cites art bible 4.6, whose table does permit "ally-only chat/ping chrome". This spec follows the art bible and the Pings GDD (2 px Turquoise stroke on the ping label, following the local accent). Reword VA-HUD-1 to "except ally chrome (marker, ping label)", or change the ping label to a Bone stroke. | art-director, creative-director | HUD re-review |
 | HUD-UX-4 | CONFLICT | The ping is MVP and team-wide since 2026-10-25 (no feed line, no spatial audio), but PAT-WLD-5 and its Gaps row still say "Vertical Slice", art bible 7.3 row 9 and 7.7 still say "informant viewers only", a feed line "Sighting near [landmark]" and a "spatial audio tick", and the accessibility document still lists the sighting ring and callout cue as VS and Informant Pings as "No (Not Started)". **D17 applied** to `accessibility-requirements.md` and `interaction-patterns.md` (pings are MVP, team-wide; PAT-WLD-5 updated); the art bible rows remain with their reviewer. This spec follows the Pings GDD (PNG-R7, PNG-R8). Accessibility F3 (a team channel for players who cannot use voice) is only partly answered: a ping is a place-mark with no text. | ux-designer, art-director, game-designer | next edit of each document |
 | HUD-UX-5 | RULING | (a) The approved banner reasons are lowercase fragments ("completed the final objective"); rendered after "Victory" or "Defeat" they need an initial capital or a joining word. (b) "every rival eliminated for the round" read by the **defeated** viewer sounds as if they eliminated every rival; the GDD allows no other phrase. The spec shows the approved phrase verbatim under the bar word and the score line; a viewer-relative phrasing needs Round's and the narrative-director's approval. | narrative-director, Round owner | HUD re-review |

@@ -722,7 +722,7 @@ Numbering is the creation order the orchestrator should follow with `/architectu
 | Animation, all characters (GT + worker sum) | ≤ 4 ms at 60 characters (`NpcCount` 50 since 2026-10-25; working value, re-verify in R3) | SCL R12, art 8.x.8 (ADR-0013, Proposed: summed GT + workers ≤ 4.0 ms with a GT share ≤ 2.0 ms) |
 | CMC simulated proxies | 1.5-3 ms, reported separately | SCL R12 |
 | Server AI + nav (listen host) | ≤ 1.5 ms steady | Crowd F5 |
-| Per-client bandwidth | ≤ 50 KB/s (pawns ≤ 30 KB/s worst case) | SCL F9 |
+| Per-client bandwidth | ≤ 50 KB/s (pawn line ≤ 36 KB/s; SCL F9 worst case 31.1 KB/s at NpcCount 50) | SCL F9 |
 | GPU allocation | 14.4 ms allocated + ≥ 2.0 ms headroom | art 8.x.16 |
 | Layout | ≤ 7 s/attempt, ≤ 45 s total, ≤ 33 ms frames; server spawn + nav ≤ 3 s; client build ≤ 3 s p95 | LSC R4, Generator R-G9 |
 | Draw calls (non-Nanite) / texture pool / package | ≤ 1,500 / ≤ 1.0 GB / ≤ 3 GB | art 8.x.2 (proposed; not yet in technical-preferences) |

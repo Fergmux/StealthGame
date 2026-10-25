@@ -92,3 +92,12 @@ Reviewed-Content-Hash: design/gdd/procedural-city-generator.md 959a9840a217d9c97
 - Kick wording aligned with Roster D9 (Roster accepts `Disconnect` for `Expired`; kicked pawn keeps the AI walk for the grace period).
 - Lobby `Rejoining` projection and failed-supersede `ConnectionGeneration` bump / fresh `DisconnectedAt` wording added (Roster R11); status cells set to In Review.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- S-B2 (D24): rule 15, rule 21 origin table, rule 25f, States and Transitions text, transition-table rows, edge cases, AC 17 (renamed SupersedeRaisesDisconnect), AC 51 and AC 66: in-round supersede raises `OnParticipantDisconnected(Superseded)` at the supersede instant; grace and window run from it; AI hold until `OnParticipantRejoined(Superseded)` at completion; failed rejoin raises no second event; Lobby supersede unchanged.
+- C-W30: transition table gains the kick to `Expired` row (cites rule 7 gate 3 and the kick edge case); `bKicked` flag on the Roster notify; AC 59 extended.
+- C-W34 / D15: UI Requirements status overlays are display-only (L4, below ZOrder 100); Cancel and OK live in a Session-owned modal at ZOrder 100; AC 62 and new AC 67; Interactions HUD row cites D15 (ADR-0021 L4 split).
+- C-W17: `SessionSoftTimeoutSec` safe range 2-5 narrowed to 2-3 (I-CNB-1); F2 Soft range text follows.
+- C-W1: Informant Pings listed as a soft Downstream row.
+- C-W4: Information Visibility Policy and Shared Character & Locomotion listed upstream as peer contracts (Hard for Session as implementer / soft mutual peer); Downstream labels match IVP.
+- C-W9: stale "no ADR exists yet" corrected, Open Question 12 closed; Cross-References gain received rows for this pass.

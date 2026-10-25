@@ -63,3 +63,14 @@ Reviewed-Content-Hash: design/gdd/tuning-data-config.md 89d049074c81e71b16f12697
 ## Closeout cross-doc pass 2026-10-25
 - Formula table NpcCount range set to safe 35-50, hard 6-100, default 50; `TeamPing` quantisation corrected from "10 cm" to 0.1 cm (`FVector_NetQuantize10`); status cells set to In Review.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+- C-W4: peer-contract table restated: the Policy's own edge to every peer is Soft; the second column records each implementer's own label (SCL Hard, IIF Hard, CPA Soft, LSC Soft, Session Soft/unrecorded upstream); the implementation obligation binds whichever label.
+- C-W9: "ADR-001 ... not yet written" (Overview), `-> ADR-001` (R13), S11 and the Concealment / Teammate Markers "(not written)" change requests updated: ADR-0001..ADR-0023 are accepted and both GDDs exist.
+- C-W19: new invariant I-IVP-1 `ConcealCullDelayMs mod 50 = 0` (reject, never repair; for TDC to register).
+- C-W26: F7 example names its channel (ActionPose `FActionState` delay U, defined once in IIF F2, uniform over 0 to one server frame; sigma 9.6 ms at 30 Hz, 4.8 ms at 60 Hz) and L8 cites IIF F2.
+- D-W6 / D-W8 (D26, D28): the TeamPing row states a ping plays no pawn animation and changes no replicated pawn state, and a concealed sender is rejected with an owner-only tone and no other-visible trace.
+- S-B1 (D23): new Team-audience fact row `TeammateReconnectEndCause` (`ReconnectEndCause` uint8 {None, Rejoined, GraceExpired, Cleared}, C-TeamView teammate entry, written with every `bReconnecting` clear; 1 byte per teammate entry, change-only); AC-IVP-46 includes it.
+
+### Cross-review fix 2026-10-25 — main-session follow-ups
+- C-W4 follow-up: peer table now records the implementers' final labels (Session, CPA, LSC all Hard as implementers; Policy side Soft), reconciling edits made concurrently in Session/CPA/LSC.

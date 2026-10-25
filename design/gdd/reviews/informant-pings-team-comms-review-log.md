@@ -52,3 +52,14 @@ Receipt: not stamped. The revisions above were applied after the review, so stam
 ## Closeout cross-doc pass 2026-10-25
 - PNG-R6 states that ping entries carry no stage, card, court or other world-state data; VA-PNG-2 copies the Teammate Markers F3 behind-camera bias ramp (`k_b` 0.25, `ε_b` 0.5) because the edge clamp is reused; status cells set to In Review.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+Source: design/gdd/gdd-cross-review-2026-10-25.md; rulings D25, D26, D28. Status lines and status cells untouched.
+- C-W1: Downstream gains the HUD row; the Upstream IIF, Camera and Session rows now state the reciprocal rows owed by the IIF and Session owners (Camera already lists Pings); Camera row no longer says "no Camera change" (C-W9).
+- C-W22: F1 skew tolerance is now `epsilon = PingBucketPerSec x PingSkewTolSec` (constant 0.1 s), 100 ms at every refill rate (was a constant 0.05 token, 25 ms at 2.0/s); PNG-R5 step 4 and AC-PNG-20; the edge ring states `W = H = max(32, round(32 * u * s_ui))`, `delta_h = round(4u)` and the inherited TM F3 ramp (PNG-R7, VA-PNG-2, AC-PNG-21).
+- C-W32 / S-I5: the strike-window edge case rewritten for both windows (accepted until the resolving slot; dropped silently from the slot until a body is bound, no token, no echo, no tone); the client gate reads `PresentedOwnState`; AC-PNG-18.
+- D-W5 / D25: PNG-R6 states one active ring per sender explicitly, on top of the refill bucket (replaced ring never refunded); AC-PNG-16.
+- D-W6 / D26: a concealed sender (`IsInBushOrTransition`) cannot ping: PNG-R2, PNG-R3 owner-only refusal (tone + HUD "Not now" plate), PNG-R5 step 2 drop reason `Concealed`, edge case, new Concealment upstream row, AC-PNG-17.
+- D-W8 / D28: PNG-R9 cross-reference to the Crowd Tell Matrix Ping row (no pawn animation, no replicated pawn state, verified against IVP).
+- S-I1: a removed sender's ring keeps to expiry but its name label drops at `OnAllyMarkerRetired` (PNG-R7, PNG-R10, edge cases, AC-PNG-19).
+- Cross-file needs: Crowd Tell Matrix Ping row; Concealment Downstream row for Pings; IIF and Session Downstream rows for Pings; TDC/registry: new constant `PingSkewTolSec` (not a key), no key range changed.

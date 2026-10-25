@@ -83,3 +83,12 @@ Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md 0ecd59c878842ff
 - D4/D5 applied: `StartToFinalMinPathCm` 44 m (<= 44.4 m admits 6 final-eligible courts), `FinalCandidatesMinCount` stays 6; S5 anchor wording adopted.
 - Cross-Reference and change-request status cells set to In Review.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+Source: design/gdd/gdd-cross-review-2026-10-25.md; fixes applied unattended under the user's authorisation. Status header lines untouched.
+- C-B4 / 2E-B3: G-PRE list now cites `ClueMatchMaxCount` (3, Objectives-owned, read only), not the non-existent `ClueTagCourtsMaxCount` (the only occurrence).
+- C-W24 / 2C-W10: S4 and Open Question 9 record the OPEN verification explicitly: margin 0.48 m against a default 2 m jitter step, whether jitter moves the S4 anchors unstated, 200-skeleton script not run, p_g unverified. `CityGenFinalEligibleTargetCount` safe-range note reworded accordingly.
+- C-W19: `CityGenZoneCandidatesCount` row states proposed invariant I-PCG-7 (reject): `CityGenZoneCandidatesCount >=` LSC `ZoneCandidatesMinCount`.
+- C-W8: Objectives Chain added as a soft upstream row (reciprocity with OC's Downstream row for #16); the Dependencies intro no longer says the Generator is unreferenced by requirement sources.
+- C-W9: follow-ups (a)-(e) in Cross-GDD item 12 marked DONE; the bidirectionality note now says TDC registered the `CityGen*` keys; the LSC Cross-References row drops the superseded "MAJOR REVISION NEEDED ... re-review pending" text (status column untouched).
+

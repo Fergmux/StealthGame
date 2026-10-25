@@ -92,3 +92,18 @@ Reviewed-Content-Hash: design/gdd/npc-kill-penalty-informants.md 12fe9795d9b3f3a
 - D4 applied in V-SEP/D5: `StartToFinalMinPathCm` 4,400 on the generator.
 - Dependencies and Cross-References status cells set to In Review.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+Source: design/gdd/gdd-cross-review-2026-10-25.md (review-all-gdds, FAIL); fixes applied unattended under the user's authorisation.
+- C-B3 / 2E-B2 / 2F-B1: R11.5 graybox checklist now says final-eligible courts are at least `StartToFinalMinPathCm` (44 m, D4) from every start cell; no other final-eligibility "60 m" remains (the remaining 60 m hits are the historical D4 note and the D6 contact example).
+- C-W16 / 2B-W8: `StartToFinalMinPathCm` knob row now carries owner, audience/latch, invariants and the C-W24 OPEN note, for the registry mirror (default 4,400; hard 4,000-10,000; safe 4,000-4,400).
+- C-W15 / 2B-W7: `LayoutWalkableCellsMinCount` / `MaxCount` split into two rows; default 3,250 kept (it does not bind below `NpcCount` 50: density term 2,700 cells), Max safe 2,700-3,600, Min safe 2,000-2,025. The safe range, not the default, was wrong.
+- C-W17 (LSC parts): reseeds safe 3-6 -> 3-5; `LayoutTotalBudgetSec` safe 30-60 -> 45-60 (I-LSC-2); Prelim / Final candidate counts safe 3-5 / TeamSize+1-8 -> 3 / 6 (I-PCG-6 at the Generator default 16).
+- C-W19: `ReachDetourMult` documented as derived (= `DetourMaxMult`, read-only alias; I-LSC-4 true by construction); `ZoneCandidatesMinCount` vs `CityGenZoneCandidatesCount` stated as proposed invariant I-PCG-7 (reject), safe range 2 (3-4 only with the Generator at 4).
+- C-W23: D6 requirement at `NpcCount` 35 corrected (about 1,800 m2, not 1,467 m2) with the general formula `10 A / (NpcCount + 2 TeamSize)`, consequence (about half of unconstrained layouts fail at 35-40; Generator disc margin 8-11 %), fix (two-term floor statement, R11.5 2,000 m2 disc rule below `NpcCount` 45, recommended NpcCount safe floor 45 to TDC; NpcCount itself unchanged); D4 walk share restated against Objectives F1 T_round about 9 min (S 0.16-0.32; quarter threshold reached at L about 190 m), D29.
+- C-W24 / 2C-W10: recorded as OPEN verification in D5, the `StartToFinalMinPathCm` row and new Open Question 15 (200-skeleton enumeration not run; no result claimed).
+- C-W27: "63 pawns" -> NPCs (about 63 NPCs at TeamSize 5 = 72 pawns).
+- C-W38: AC-14, R5b.4 cross-reference and the CPA change-request wording now say `DrawReplacement()` (CP-12(a), uniform over vacant cards; the victim's own card only when it is the sole vacancy); AC-14 asserts vacant-set membership.
+- C-W40 (LSC side): R5b.2 now states explicitly the respawn region is the team's own anchor disc, strictly nearer than the partner's, never a union (registry wording is the main session's fix).
+- C-W4: Information Visibility Policy relabelled Hard on the LSC upstream row (aligned with IVP's peer table); index row 8 to follow.
+

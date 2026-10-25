@@ -82,3 +82,12 @@ Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8ed
 ## Closeout cross-doc pass 2026-10-25
 - Dependencies and Cross-References status cells set to In Review; F3 bias ramp is mirrored in Informant Pings VA-PNG-2.
 - Ref: see production/design-closeout/2026-10-25_rereview-followups.md and 2026-10-25_gdd-pass-remaining.md.
+
+## Cross-review fix 2026-10-25
+Source: design/gdd/gdd-cross-review-2026-10-25.md; rulings D23. Status lines and status cells untouched.
+- C-W2: Dependencies Upstream gains the HUD row (`HudSafeMarginPct`, UI scale, L0 layer); the HUD lists Teammate Markers as a dependent. Index row 17 stays with the main session.
+- C-W33: TM-R1 now lists the six teammate-entry fields `{PublicHandle, State, PawnRef, IsConcealed, RetireAtServerTime, bReconnecting}` (also in the Overview data layer, the Roster Interactions row and the Roster Upstream row); `ReconnectEndCause` is HUD-only and the label suffix follows the flag alone.
+- S-W2: TM-R6 step 6 (markers in `Held` or `Exiting`, or retired after `Ended`, complete at once; `OnAllyMarkerRetired` fires once; other markers keep their frozen fills, which is the existing Ended rule); Edge Cases `Ended`; AC-TMK-34.
+- S-B1 (TMK side): TM-R11 suffix persists while the flag stays true (informant still away, `Active` ally killed while disconnected, superseding rejoin loading) and drops on any clear; AC-TMK-26 extended; the stale edge case that said grace expiry creates no HUD removal line was corrected (an `Active` ally's expiry converts it, so HUD-R10 shows the removal line; an informant ally's expiry shows "— disconnected").
+- C-W19: `TeammateMarkerLargeMult` presented as a two-step setting ({1.0, 1.5}), outside TDC F-1's continuous clamp; TDC/registry row to follow (cross-file need).
+- C-W9: "-> ADR-001 / UI ADR" replaced by ADR-0001 and ADR-0021; "Informant Pings (VS)" in TM-R13 corrected to MVP.
