@@ -3,6 +3,7 @@ Reviewed-Content-Hash: tools/asset-pipeline/render_body_base_reference.py 77e991
 Reviewed-Content-Hash: tools/asset-pipeline/body_measure.py 4573793eb488e372f6683ac58006f19ca1e7622e
 Reviewed-Content-Hash: assets/characters/meshy/test_character/TestCharacter.blend d28982d3c6f85c293f0bd7dcc9f5ccecdeb1a153
 Reviewed-Content-Hash: assets/characters/meshy/test_character/TestCharacter.fbx d108bc07b061cce64c0ca442d73441c6872b3df9
+Reviewed-Content-Hash: Source/StealthGameEditor/Private/Characters/CharacterImport.cpp 7d352be7acd16bc9eebed00dc503b8eca52d8c38
 Reviewed-Content-Hash: assets/characters/meshy/test_character/TestCharacter_LOD1.fbx e35c2e581f3f8e0a9f16f0256fb23c974bc4ef96
 Reviewed-Content-Hash: assets/characters/meshy/test_character/TestCharacter_LOD2.fbx e85cb1d4995a96cdfd0c8819355e33bb14ea6604
 Reviewed-Content-Hash: assets/characters/meshy/test_character/TestCharacter_LOD3.fbx 72f6c0f3f1b4cfb15d38433a842b93b51fbdc2fb

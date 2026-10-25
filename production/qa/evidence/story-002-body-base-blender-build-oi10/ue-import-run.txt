@@ -1,0 +1,82 @@
+=== Run 1 (12:42 UTC): TestCharacter + LODs, Body_Base (with materials; later moved to _snapshots and redone), SKM_UEFN_Mannequin reference report
+LogInterchangeEngine: Warning: [C:/Users/fergm/Documents/Unreal Projects/StealthGame/assets/characters/meshy/test_character/TestCharacter.fbx : '', Unknown] BindPose Matrix generation acquired 2 different Matrices from FbxCluster vs FbxPose.
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported /Game/StealthGame/Characters/TestCharacter/T_TestCharacter_D.T_TestCharacter_D (Texture2D)
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported /Game/StealthGame/Characters/TestCharacter/T_TestCharacter_N.T_TestCharacter_N (Texture2D)
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported /Game/StealthGame/Characters/TestCharacter/MI_Char_TestCharacter_Default.MI_Char_TestCharacter_Default (MaterialInstanceConstant)
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported /Game/StealthGame/Characters/TestCharacter/SKM_TestCharacter.SKM_TestCharacter (SkeletalMesh)
+LogInterchangePipelineMeshesUtilities: Warning: Possible LOD pattern missmatch. Expecting 'LODxx_Name', but found 'TestCharacter_LOD1'.
+LogInterchangeEngine: Warning: [C:/Users/fergm/Documents/Unreal Projects/StealthGame/assets/characters/meshy/test_character/TestCharacter_LOD1.fbx : '', Unknown] BindPose Matrix generation acquired 2 different Matrices from FbxCluster vs FbxPose.
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD1 from assets/characters/meshy/test_character/TestCharacter_LOD1.fbx: imported
+LogInterchangePipelineMeshesUtilities: Warning: Possible LOD pattern missmatch. Expecting 'LODxx_Name', but found 'TestCharacter_LOD2'.
+LogInterchangeEngine: Warning: [C:/Users/fergm/Documents/Unreal Projects/StealthGame/assets/characters/meshy/test_character/TestCharacter_LOD2.fbx : '', Unknown] BindPose Matrix generation acquired 2 different Matrices from FbxCluster vs FbxPose.
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD2 from assets/characters/meshy/test_character/TestCharacter_LOD2.fbx: imported
+LogInterchangePipelineMeshesUtilities: Warning: Possible LOD pattern missmatch. Expecting 'LODxx_Name', but found 'TestCharacter_LOD3'.
+LogInterchangeEngine: Warning: [C:/Users/fergm/Documents/Unreal Projects/StealthGame/assets/characters/meshy/test_character/TestCharacter_LOD3.fbx : '', Unknown] BindPose Matrix generation acquired 2 different Matrices from FbxCluster vs FbxPose.
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD3 from assets/characters/meshy/test_character/TestCharacter_LOD3.fbx: imported
+LogStealthCharacterImport: Display: STEALTH CHARACTER /Game/StealthGame/Characters/TestCharacter/SKM_TestCharacter.SKM_TestCharacter: bones 88, skeleton /Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin.SK_UEFN_Mannequin
+LogStealthCharacterImport: Display: STEALTH CHARACTER ref pose vs SK_UEFN_Mannequin (88 bones): bones not in skeleton 0; max position delta 0.0053 cm (index_03_r); max rotation delta 0.0147 deg (ik_foot_r)
+LogStealthCharacterImport: Display: STEALTH CHARACTER skeleton package dirty: no
+LogStealthCharacterImport: Display: STEALTH CHARACTER forward (foot_l -> ball_l, mesh space): (0.039, 0.999, 0.000)
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported bounds: min (-58.37, -17.69, -0.01) max (58.51, 15.01, 166.29); height 166.29 cm; sole Z -0.01
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD0: 12000 triangles, 10144 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD1: 5700 triangles, 5743 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD2: 2375 triangles, 2966 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD3: 855 triangles, 1274 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER materials: 1
+LogStealthCharacterImport: Display: STEALTH CHARACTER saved Content/StealthGame/Characters/TestCharacter/SKM_TestCharacter.uasset
+LogStealthCharacterImport: Display: STEALTH CHARACTER saved Content/StealthGame/Characters/TestCharacter/MI_Char_TestCharacter_Default.uasset
+LogStealthCharacterImport: Display: STEALTH CHARACTER saved Content/StealthGame/Characters/TestCharacter/T_TestCharacter_N.uasset
+LogStealthCharacterImport: Display: STEALTH CHARACTER saved Content/StealthGame/Characters/TestCharacter/T_TestCharacter_D.uasset
+LogStealthCharacterImport: Display: STEALTH CHARACTER import wall time 1.7 s
+Cmd: Stealth.Characters.Import /Game/StealthGame/Characters/BodyBase SKM_BodyBase assets/characters/body_base/Body_Base.fbx
+LogInterchangeEngine: Warning: [C:/Users/fergm/Documents/Unreal Projects/StealthGame/assets/characters/body_base/Body_Base.fbx : '', Unknown] BindPose Matrix generation acquired 2 different Matrices from FbxCluster vs FbxPose.
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported /Game/StealthGame/Characters/BodyBase/M_UEFN_Mannequin.M_UEFN_Mannequin (MaterialInstanceConstant)
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported /Game/StealthGame/Characters/BodyBase/SKM_BodyBase.SKM_BodyBase (SkeletalMesh)
+LogStealthCharacterImport: Display: STEALTH CHARACTER /Game/StealthGame/Characters/BodyBase/SKM_BodyBase.SKM_BodyBase: bones 88, skeleton /Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin.SK_UEFN_Mannequin
+LogStealthCharacterImport: Display: STEALTH CHARACTER ref pose vs SK_UEFN_Mannequin (88 bones): bones not in skeleton 0; max position delta 0.0053 cm (index_03_r); max rotation delta 0.0147 deg (ik_foot_r)
+LogStealthCharacterImport: Display: STEALTH CHARACTER skeleton package dirty: no
+LogStealthCharacterImport: Display: STEALTH CHARACTER forward (foot_l -> ball_l, mesh space): (0.039, 0.999, 0.000)
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported bounds: min (-59.58, -15.90, -0.01) max (59.55, 16.10, 165.51); height 165.52 cm; sole Z -0.01
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD0: 24000 triangles, 12002 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER materials: 1
+LogStealthCharacterImport: Display: STEALTH CHARACTER saved Content/StealthGame/Characters/BodyBase/SKM_BodyBase.uasset
+LogStealthCharacterImport: Display: STEALTH CHARACTER saved Content/StealthGame/Characters/BodyBase/M_UEFN_Mannequin.uasset
+LogStealthCharacterImport: Display: STEALTH CHARACTER import wall time 0.5 s
+Cmd: Stealth.Characters.Report /Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin.SKM_UEFN_Mannequin
+LogStealthCharacterImport: Display: STEALTH CHARACTER /Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin.SKM_UEFN_Mannequin: bones 88, skeleton /Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin.SK_UEFN_Mannequin
+LogStealthCharacterImport: Display: STEALTH CHARACTER ref pose vs SK_UEFN_Mannequin (88 bones): bones not in skeleton 0; max position delta 0.0000 cm (ring_03_l); max rotation delta 0.0000 deg (thigh_r)
+LogStealthCharacterImport: Display: STEALTH CHARACTER skeleton package dirty: no
+LogStealthCharacterImport: Display: STEALTH CHARACTER forward (foot_l -> ball_l, mesh space): (0.039, 0.999, 0.000)
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported bounds: min (-59.69, -15.95, -0.01) max (59.69, 16.11, 165.57); height 165.57 cm; sole Z -0.01
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD0: 9324 triangles, 6009 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER materials: 1
+
+=== Run 2: Body_Base re-import -NoMaterials, TestCharacter report, CBP_SandboxCharacter mesh rotation
+Cmd: Stealth.Characters.Import /Game/StealthGame/Characters/BodyBase SKM_BodyBase assets/characters/body_base/Body_Base.fbx -NoMaterials
+LogInterchangeEngine: Warning: [C:/Users/fergm/Documents/Unreal Projects/StealthGame/assets/characters/body_base/Body_Base.fbx : '', Unknown] BindPose Matrix generation acquired 2 different Matrices from FbxCluster vs FbxPose.
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported /Game/StealthGame/Characters/BodyBase/SKM_BodyBase.SKM_BodyBase (SkeletalMesh)
+LogStealthCharacterImport: Display: STEALTH CHARACTER /Game/StealthGame/Characters/BodyBase/SKM_BodyBase.SKM_BodyBase: bones 88, skeleton /Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin.SK_UEFN_Mannequin
+LogStealthCharacterImport: Display: STEALTH CHARACTER ref pose vs SK_UEFN_Mannequin (88 bones): bones not in skeleton 0; max position delta 0.0053 cm (index_03_r); max rotation delta 0.0147 deg (ik_foot_r)
+LogStealthCharacterImport: Display: STEALTH CHARACTER skeleton package dirty: no
+LogStealthCharacterImport: Display: STEALTH CHARACTER forward (foot_l -> ball_l, mesh space): (0.039, 0.999, 0.000)
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported bounds: min (-59.58, -15.90, -0.01) max (59.55, 16.10, 165.51); height 165.52 cm; sole Z -0.01
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD0: 24000 triangles, 12002 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER materials: 1
+LogStealthCharacterImport: Display: STEALTH CHARACTER saved Content/StealthGame/Characters/BodyBase/SKM_BodyBase.uasset
+LogStealthCharacterImport: Display: STEALTH CHARACTER import wall time 0.5 s
+Cmd: Stealth.Characters.Report /Game/StealthGame/Characters/TestCharacter/SKM_TestCharacter.SKM_TestCharacter
+LogStealthCharacterImport: Display: STEALTH CHARACTER /Game/StealthGame/Characters/TestCharacter/SKM_TestCharacter.SKM_TestCharacter: bones 88, skeleton /Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin.SK_UEFN_Mannequin
+LogStealthCharacterImport: Display: STEALTH CHARACTER ref pose vs SK_UEFN_Mannequin (88 bones): bones not in skeleton 0; max position delta 0.0053 cm (index_03_r); max rotation delta 0.0147 deg (ik_foot_r)
+LogStealthCharacterImport: Display: STEALTH CHARACTER skeleton package dirty: no
+LogStealthCharacterImport: Display: STEALTH CHARACTER forward (foot_l -> ball_l, mesh space): (0.039, 0.999, 0.000)
+LogStealthCharacterImport: Display: STEALTH CHARACTER imported bounds: min (-58.37, -17.69, -0.01) max (58.51, 15.01, 166.29); height 166.29 cm; sole Z -0.01
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD0: 12000 triangles, 10144 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD1: 5700 triangles, 5743 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD2: 2375 triangles, 2966 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER LOD3: 855 triangles, 1274 vertices, 1 section(s)
+LogStealthCharacterImport: Display: STEALTH CHARACTER materials: 1
+Cmd: Stealth.Characters.CharacterMeshRotation /Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter_C
+LogStealthCharacterImport: Display: STEALTH CHARACTER /Game/Blueprints/CBP_SandboxCharacter.CBP_SandboxCharacter_C mesh relative rotation: pitch 0.0 yaw -90.0 roll 0.0; mesh-space +Y maps to actor (1.000, 0.000, 0.000)
+
+=== grep -ci 'missing bones' in both logs:
+0

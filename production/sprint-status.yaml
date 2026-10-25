@@ -2495,10 +2495,10 @@ stories:
     name: "One Meshy test character generated and normalised to the UEFN skeleton"
     file: "production/epics/character-pool-appearance/story-003-meshy-test-character-generate-normalise.md"
     priority: should-have
-    status: in-progress
+    status: done
     owner: "technical-artist"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     sprint: 2
     carryover_note: "In flight when Sprint 1 closed (Meshy test character generated; UE import remains); not in the Sprint 1 plan"

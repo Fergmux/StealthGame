@@ -1,7 +1,7 @@
 # Story 003: One Meshy test character generated and normalised to the UEFN skeleton
 
 > **Epic**: Character Pool & Appearance
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: L
@@ -36,7 +36,7 @@
 
 - [x] **AC-1** GIVEN Body_Base accepted, WHEN exactly one Meshy image-to-3D generation is made from a mannequin-proportion reference rendered from Body_Base (A-pose, arms 30 to 45 degrees from the torso, flat sandals, matte undyed cloth) after the user confirms the cost, THEN the task id, model, credits and prompt are recorded (8.9) and no second test-character credit is spent before T1 passes (story 004).
 - [x] **AC-2** GIVEN the GLB normalised per art bible 8.7 steps 2 to 9 (one uniform scale to 165.6 cm, shrinkwrap or sculpt to Body_Base, never non-uniform scale; 12k retopology; UV density 5.12 texels/cm; bake; rig to a copy of the UEFN armature), THEN each arm region's skinned-vertex extent, measured with story 008's metric, is within ± 3 % of the same metric on `SK_UEFN_Mannequin` (clavicle-to-hand chain 80.74 cm) and the exported FBX has zero bones beyond the reference 88.
-- [ ] **AC-3** GIVEN the FBX imported into UE 5.8.4 against `SK_UEFN_Mannequin`, WHEN the editor loads it, THEN no "Skeleton is missing bones" message appears, the skeleton asset is not marked dirty or saved, total wall time is logged and is at most 8 h (over 8 h the story is recorded FAIL with the cause), and a retained viewport screenshot of the imported mesh and an art-director sign-off (name, date) are recorded.
+- [x] **AC-3** GIVEN the FBX imported into UE 5.8.4 against `SK_UEFN_Mannequin`, WHEN the editor loads it, THEN no "Skeleton is missing bones" message appears, the skeleton asset is not marked dirty or saved, total wall time is logged and is at most 8 h (over 8 h the story is recorded FAIL with the cause), and a retained viewport screenshot of the imported mesh and an art-director sign-off (name, date) are recorded.
 
 ---
 
@@ -77,7 +77,9 @@
 - `tools/asset-pipeline/render_body_base_reference.py` (new: the mannequin-proportion reference render)
 - `tools/asset-pipeline/body_measure.py` (arm-extent metric `arm_extent_cm`, shared definition with story 008)
 - `production/qa/evidence/test-character-import-evidence.md`, `production/qa/evidence/story-003-meshy-test-character-generate-normalise/` (renders, stamp)
-- `Content/StealthGame/Characters/Pool/` (test import; not referenced by `DA_CharacterPool`): DEFERRED with AC-3
+- `Content/StealthGame/Characters/TestCharacter/SKM_TestCharacter`, `MI_Char_TestCharacter_Default`, `T_TestCharacter_D`, `T_TestCharacter_N` (UE import, AC-3; not referenced by `DA_CharacterPool`; folder per the 2026-10-25 build batch instead of `Characters/Pool/`)
+- `Source/StealthGameEditor/Private/Characters/CharacterImport.cpp` (console commands `Stealth.Characters.Import` / `Report` / `CharacterMeshRotation` / `Open`), `Source/StealthGameEditor/StealthGameEditor.Build.cs` (+ InterchangeCore, InterchangeEngine, InterchangePipelines, SkeletalMeshEditor)
+- `production/qa/evidence/story-003-meshy-test-character-generate-normalise/ue-skm-testcharacter-mesh-editor.png`, `production/qa/evidence/story-003-meshy-test-character-generate-normalise-evidence.md`
 
 ---
 
@@ -110,7 +112,7 @@
 **Required evidence**:
 - Visual/Feel: a retained screenshot in `production/qa/evidence/` + sign-off in `production/qa/evidence/test-character-import-evidence.md`
 
-**Status**: [~] Partial — Blender renders retained in `production/qa/evidence/story-003-meshy-test-character-generate-normalise/` and recorded in `production/qa/evidence/test-character-import-evidence.md`; the UE viewport screenshot and art-director sign-off wait for AC-3 (engine run pending)
+**Status**: [x] Created — Blender renders and the UE 5.8.4 mesh-editor screenshot `ue-skm-testcharacter-mesh-editor.png` in `production/qa/evidence/story-003-meshy-test-character-generate-normalise/`; sign-off in `production/qa/evidence/test-character-import-evidence.md` (2026-10-25)
 
 ---
 
@@ -139,3 +141,11 @@
 **Reviewed by**: self, no independent review (unattended run; focused review of the new and changed pipeline scripts)
 Run result: OBSERVED — Blender renders of the conformed and LOD0 character in `production/qa/evidence/story-003-meshy-test-character-generate-normalise/`; the UE observation is part of deferred AC-3
 Sprint status not updated: story not in `production/sprint-status.yaml` (sprint 1)
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 3/3 passing — AC-1 and AC-2 as in the Progress Notes above; AC-3: `TestCharacter.fbx` + `_LOD1..3.fbx` imported into UE 5.8.4 onto `SK_UEFN_Mannequin` (`/Game/StealthGame/Characters/TestCharacter/SKM_TestCharacter`, Interchange, uniform scale 1.0, no rotation): no "missing bones" message in the log; 88 bones, reference pose within 0.0053 cm / 0.0147 deg of the skeleton; the skeleton package not dirty and never saved; height 166.29 cm (contract 165.6 +/- 2); facing identical to `SKM_UEFN_Mannequin` (mesh +Y, actor +X under `CBP_SandboxCharacter`'s -90 yaw); LODs 12,000 / 5,700 / 2,375 / 855 triangles; total wall time about 1 h 15 min (cap 8 h); retained screenshot `ue-skm-testcharacter-mesh-editor.png` (opened and viewed); art-director sign-off recorded under the user's unattended authorisation in `production/qa/evidence/test-character-import-evidence.md`.
+**Deviations**: ADVISORY — the import lives in `/Game/StealthGame/Characters/TestCharacter/` (build-batch instruction) rather than the `Characters/Pool/` folder this story first listed. ADVISORY — Interchange logged "BindPose Matrix ... FbxCluster vs FbxPose" per FBX (pose still matches to 0.005 cm) and an LOD-name pattern warning (LODs imported explicitly). ADVISORY — `_ORM` / `_M` textures are not referenced by the FBX and were not imported (master material, story 044). Visible issues for story 004: dark baked patch at the mouth / cheek, light texel specks on the left forearm and the cloak edge. The Progress Notes' advisory items (texel density 4.40/cm, bare-skin deviation p95 3.78 cm, LOD2/3 finger collapse) carry to story 004 / 053.
+**Test Evidence**: `production/qa/evidence/test-character-import-evidence.md`, `production/qa/evidence/story-003-meshy-test-character-generate-normalise-evidence.md`, `production/qa/evidence/story-003-meshy-test-character-generate-normalise/` (`ue-skm-testcharacter-mesh-editor.png`, Blender renders, `stamp.txt`)
+**Reviewed by**: self, no independent review (unattended run; focused review of `CharacterImport.cpp`)
+Run result: OBSERVED — UE 5.8.4 skeletal mesh editor on SKM_TestCharacter, reference pose on the UEFN skeleton: `production/qa/evidence/story-003-meshy-test-character-generate-normalise/ue-skm-testcharacter-mesh-editor.png`

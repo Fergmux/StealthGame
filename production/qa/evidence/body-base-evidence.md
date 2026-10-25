@@ -10,7 +10,7 @@
 | File | What |
 |---|---|
 | `assets/characters/body_base/Body_Base.blend` | Accepted file: collection `Body_Base` (armature `root` + mesh `Body_Base`), collection `Reference` (hidden `UEFN_Ref_Mesh`, the weight donor and conformity reference, never exported) |
-| `assets/characters/body_base/Body_Base.fbx` | Export-preset proof and the conform / weight-donor copy for story 003. Never imported to Unreal |
+| `assets/characters/body_base/Body_Base.fbx` | Export-preset proof and the conform / weight-donor copy for story 003. Imported to Unreal once as the preset check (`/Game/StealthGame/Characters/BodyBase/SKM_BodyBase`, 2026-10-25), never as a pool model |
 | `assets/characters/body_base/Body_Base_T1_report.txt` | T1 audit output (items 1-5, 17-18, pose set), `RESULT: PASS` |
 | `production/qa/evidence/story-002-body-base-blender-build-oi10/body-base-four-view.png` | Four-view render (front, side, back, three-quarter), rest A-pose, Workbench |
 | `production/qa/evidence/story-002-body-base-blender-build-oi10/body-base-pose-set.png` | One tile per proxy pose: idle, walk, run, brace, assassination, vault, reversal counter |
@@ -84,14 +84,27 @@ CoordAxis X; Root node scale 1.0.
 Verified in Blender (round trip: re-import of `Body_Base.fbx` matches the reference skeleton to 0.0009 cm and
 0 degrees; parse of the file shows 88 skeleton nodes and no Null). `blender_bind_to_mannequin.py` smoke test
 on `citizen_02_tpose.glb` with this preset: 88 skeleton nodes (was 89).
-**DEFERRED (engine run pending):** the Unreal side of the round trip (import onto `SK_UEFN_Mannequin` with no
-"Skeleton is missing bones" message, character faces +X at 165.6 uu) needs the editor, which this run was
-not allowed to use. Body_Base itself is never imported (1.3.9); the check uses its FBX or a bound test mesh.
+**Unreal side of the round trip (2026-10-25, UE 5.8.4; was DEFERRED):** `Body_Base.fbx` imported onto
+`SK_UEFN_Mannequin` by `Stealth.Characters.Import /Game/StealthGame/Characters/BodyBase SKM_BodyBase
+assets/characters/body_base/Body_Base.fbx -NoMaterials` (Interchange, `DefaultFBXOBJAssetsPipeline` copy: skeletal
+mesh only, no animation, no physics asset, no material; uniform scale 1.0, no rotation). Results: **no** "missing
+bones" message in the log; **88** bones, all in the skeleton; reference pose vs the skeleton max 0.0053 cm / 0.0147 deg;
+skeleton package **not dirty** and never saved; imported bounds height **165.52 cm**, sole Z -0.01 (SKM_UEFN_Mannequin
+165.57); forward (foot_l -> ball_l) identical to SKM_UEFN_Mannequin, mesh +Y, which `CBP_SandboxCharacter`'s -90 yaw
+mesh component maps to actor **+X**; LOD0 24,000 triangles, 12,002 vertices. Interchange logged "BindPose Matrix
+generation acquired 2 different Matrices from FbxCluster vs FbxPose" (information; the pose still matches). Screenshot
+(opened and viewed): `production/qa/evidence/story-002-body-base-blender-build-oi10/ue-skm-bodybase-mesh-editor.png`
+(skeletal mesh editor, reference pose, approx size 119 x 32 x 166, grey unisex mannequin body, soles on the floor).
+The preset is therefore verified end to end. A first import that brought in the FBX's material slot as an asset named
+`M_UEFN_Mannequin` (confusable with the sample's) was moved to `_snapshots/2026-10-25_bodybase-first-import/` and
+re-imported with `-NoMaterials`.
 
-## Not in Content/
+## In Content/ only as an engine check asset
 
-`find Content -iname "*body*base*"` returns only `Content/MetaHumans/Kellan/Body/Textures/T_Body_BaseColor.uasset`
-(unrelated MetaHuman texture). No Body_Base asset exists under `Content/`.
+By user instruction (2026-10-25 build batch, CPA-002's deferred engine check) Body_Base now has one Unreal asset,
+`/Game/StealthGame/Characters/BodyBase/SKM_BodyBase`, kept as the import-preset proof. It is not a pool model and nothing
+references it (`DA_CharacterPool` does not exist yet; story 005); the 1.3.9 rule that pool models carry Body_Base only as
+`Body_Proxy` in their `.blend` is unchanged.
 
 ## Sign-off
 

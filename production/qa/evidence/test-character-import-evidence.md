@@ -1,8 +1,7 @@
 # Evidence: Meshy test character (CPA story 003)
 
 Story: `production/epics/character-pool-appearance/story-003-meshy-test-character-generate-normalise.md`
-Date: 2026-10-25. Blender half complete; the Unreal import (AC-3) is DEFERRED (engine run pending: another
-agent held the Unreal toolchain during this run).
+Date: 2026-10-25. Blender half complete; the Unreal import (AC-3) done in the same day's build run (section AC-3).
 
 ## AC-1: one credit-gated generation (art bible 8.7 step 1, 8.9)
 
@@ -72,14 +71,53 @@ shows through the cloth in walk / run and the hem flips up in vault (T4 judges t
 in the vault tile; a small baked skin patch on the cloak's back panel; the right hand's fingers collapse at LOD2 /
 LOD3 (arm metric -8 % / -12 % there, information only).
 
-## AC-3: Unreal import (DEFERRED)
+## AC-3: Unreal import (UE 5.8.4)
 
-Pending an engine run (another agent held the Unreal toolchain): import `TestCharacter.fbx` with
-`TestCharacter_LOD1..3.fbx` against `SK_UEFN_Mannequin` (8.6 settings, never save the skeleton), check there is no
-"Skeleton is missing bones" message and the skeleton is not dirty, capture the viewport screenshot here, record the
-wall time (Blender half: about 55 minutes of the 8-hour cap, 06:55 to 07:50 UTC) and the art-director sign-off.
+Tool: console command `Stealth.Characters.Import` (`Source/StealthGameEditor/Private/Characters/CharacterImport.cpp`),
+run headless: `UnrealEditor-Cmd.exe StealthGame.uproject -ExecCmds="Stealth.Characters.Import
+/Game/StealthGame/Characters/TestCharacter SKM_TestCharacter assets/characters/meshy/test_character/TestCharacter.fbx
+..._LOD1.fbx ..._LOD2.fbx ..._LOD3.fbx,QUIT_EDITOR" -unattended -nullrhi`. Interchange with a transient copy of the
+engine's `DefaultFBXOBJAssetsPipeline`: skeletal mesh only, skeleton `SK_UEFN_Mannequin`, no animation, no morph targets,
+no physics asset, uniform scale 1.0, no rotation, materials and textures imported; LOD1-3 through
+`USkeletalMeshEditorSubsystem::ImportLOD`. Only the packages under `/Game/StealthGame/Characters/TestCharacter/` were
+saved, by explicit path (`SKM_TestCharacter`, `MI_Char_TestCharacter_Default`, `T_TestCharacter_D`, `T_TestCharacter_N`).
+
+| Check | Result |
+| --- | --- |
+| "Skeleton is missing bones" (or any missing-bone) message | **none** in the run log |
+| Bones / skeleton | **88**, `SK_UEFN_Mannequin`; 0 bones absent from the skeleton |
+| Reference pose vs `SK_UEFN_Mannequin` (component space) | max position delta **0.0053 cm** (index_03_r), max rotation delta **0.0147 deg** (ik_foot_r) (art bible 1.3.2: 0.5 cm / 1 deg) |
+| Skeleton package dirty after import / saved | **no** / never saved (`git status` shows no change under `Content/Characters/`) |
+| Height (LOD0 imported bounds) | **166.29 cm** incl. hair and sandals (Body_Base 165.52, `SKM_UEFN_Mannequin` 165.57; contract 165.6 +/- 2); sole Z -0.01 |
+| Facing | mesh-space forward (foot_l -> ball_l) (0.039, 0.999, 0) = `SKM_UEFN_Mannequin`'s exactly; `CBP_SandboxCharacter`'s mesh component has yaw -90, which maps mesh +Y to actor **+X** (art bible 8.6: "character faces Unreal +X") |
+| LODs (triangles) | LOD0 12,000 / LOD1 5,700 / LOD2 2,375 / LOD3 855; one section and one material slot each |
+| Wall time | engine import 1.7 s; AC-3 engine work about 20 min (12:35-12:55 UTC) + Blender half about 55 min: **about 1 h 15 min** of the 8 h cap (target 4 h) |
+
+Log observations (information): Interchange warned "BindPose Matrix generation acquired 2 different Matrices from
+FbxCluster vs FbxPose" for each FBX (the reference pose above still matches the skeleton to 0.005 cm), and "Possible LOD
+pattern mismatch" for the `TestCharacter_LODn` names (the LODs were imported explicitly, so the pattern is unused).
+`T_TestCharacter_ORM` / `_M` are not referenced by the FBX and were not imported (the master material, story 044, binds them).
+
+Retained screenshot (opened and viewed):
+`production/qa/evidence/story-003-meshy-test-character-generate-normalise/ue-skm-testcharacter-mesh-editor.png` — the
+UE 5.8.4 skeletal mesh editor on `SKM_TestCharacter`, "Previewing Reference Pose", LOD0 12,000 triangles, 10,144
+vertices, approx size 117 x 33 x 166: the dressed macehualli in the UEFN A-pose, undyed tilmatli knotted on the left
+shoulder over the maxtlatl, hair tied at the nape, arms and hands at mannequin proportion, standing on the floor.
+Visible issues (for story 004 T1-T4): a dark baked patch around the mouth / cheek of the face, and a few light texel
+specks on the figure's left forearm (image right) and along the cloak's open edge. Only the front is in this view; the
+back-panel skin patch noted in the Blender renders is not checked here.
+
+## Sign-off
 
 | Role | Name | Date | Verdict |
 |---|---|---|---|
 | technical-artist (Blender half) | Claude (unattended build run) | 2026-10-25 | [x] Approved |
-| art-director (after the UE import) | | | [ ] Pending (AC-3 deferred) |
+| technical-artist (UE import, AC-3) | Claude (unattended build run) | 2026-10-25 | [x] Approved |
+| art-director (after the UE import) | art-director role, unattended run authorised by the user | 2026-10-25 | [x] Approved |
+
+Art-director note (unattended authorisation): approved as the **pipeline proof** this story asks for (one Meshy
+character through generation, normalisation and a clean UE import onto the project skeleton): proportions read as the
+mannequin's, silhouette and cultural framing match the roster-row cut (k = 2 knot), no prohibited elements. It is **not**
+a T1-T4 pass: the face patch, texel density 4.40/cm, the bare-skin deviation (p95 3.78 cm) and the forearm / hem
+seams go to story 004's audit, and the mass-production gate (characters 2-8) stays closed until story 004 and spikes
+R1-R3 report.
