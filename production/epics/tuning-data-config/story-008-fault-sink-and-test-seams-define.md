@@ -1,12 +1,12 @@
 # Story 008: IStealthFaultSink and the WITH_STEALTH_TEST_SEAMS define
 
 > **Epic**: Tuning Data & Config
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25f
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -65,12 +65,11 @@
 
 ## Files
 
-- `Source/StealthFoundation/Public/Server/StealthFaultSink.h`
-- `Source/StealthFoundation/Public/Server/Testing/StealthFaultSinkTestSupport.h` (name proposed)
-- `Source/StealthFoundation/StealthFoundation.Build.cs`
-- `Source/StealthFoundation/Private/Tests/Harness/FaultSinkTest.cpp`
-
----
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h` (`EStealthFault`, `IStealthFaultSink::Report`)
+- `Source/StealthFoundation/Public/Server/Testing/StealthFaultSinkTestSupport.h` (recording sink, `GetUnexpectedFaults`, `EvaluateTeardown` result object; under `WITH_STEALTH_TEST_SEAMS`)
+- `Source/StealthFoundation/StealthFoundation.Build.cs` (public definition `WITH_STEALTH_TEST_SEAMS` = 0 in Shipping, 1 otherwise)
+- `Source/StealthFoundation/Private/Tests/Harness/FaultSinkTest.cpp` (test `StealthGame.Harness.FaultSinkTeardownAssertion`)
+- `Source/StealthPresentation/Public/StealthPresentationModule.h`, `Source/StealthPresentation/Private/StealthPresentationModule.cpp` (story 002's guard-define probe switched from `!UE_BUILD_SHIPPING` to `WITH_STEALTH_TEST_SEAMS`, as story 002 asked)
 
 ## QA Test Cases
 
@@ -90,7 +89,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Harness/FaultSinkTest.cpp` (test `StealthGame.Harness.FaultSinkTeardownAssertion`) must exist and pass (qa.level is full, so tests are required)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Harness.FaultSinkTeardownAssertion`, 2026-10-25)
 
 ---
 
@@ -100,3 +99,14 @@
 - Unlocks: `production/epics/tuning-data-config/story-006-shipping-symbol-check.md`
 - Sequencing note (not a plan dependency): stories 007, 009 and 010 need this story's define to compile their `WITH_STEALTH_TEST_SEAMS` helpers.
 - Open verification claims from the plan's Note lines: none (no Note line on 008). The `EStealthFault` member list is open (see Implementation Notes).
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25 (implemented ahead of its route position as the prerequisite of story 006, in the 001-006 build batch)
+**Criteria**: 1/1 passing (AC-1: `IStealthFaultSink::Report(EStealthFault, FName, int64)` in `Public/Server/`; `WITH_STEALTH_TEST_SEAMS` public definition, asserted 1 in this build; teardown helper cases (a) none -> clean, (b) undeclared -> listed unexpected with source/detail, (c) declared and raised -> clean; edges: declared-but-never-raised -> missing; same fault twice -> covered by one declaration / two unexpected when undeclared; source-scoped declaration)
+**Decisions**: `EStealthFault` members InvariantViolation=1, DeadRegistration=2, RejectedTuning=3, StaleEpoch=4 (0 reserved). One declaration covers any number of matching reports; `Source = NAME_None` matches any source. `GetUnexpectedFaults` lives on the recording sink, not the production interface.
+**Deviations**: Also switched story 002 probe guard to `WITH_STEALTH_TEST_SEAMS` (requested by story 002). Manifest Version updated to 2026-10-25f.
+**Test Evidence**: `production/qa/evidence/story-008-fault-sink-and-test-seams-define/test-run.txt` (build `Result: Succeeded`; 18/18 `StealthGame.` tests Success) and `stamp.txt`
+**Run result**: N/A — test-support interface and a build define; nothing player-visible
+**Reviewed by**: focused code review (self-applied, unattended run): no defects found

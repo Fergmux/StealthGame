@@ -13,7 +13,7 @@ public:
 
 IMPLEMENT_MODULE(FStealthPresentationModule, StealthPresentation);
 
-#if !UE_BUILD_SHIPPING
+#if defined(WITH_STEALTH_TEST_SEAMS) && WITH_STEALTH_TEST_SEAMS
 bool StealthPresentationSeesGuardDefine()
 {
 #if defined(STEALTH_PRESENTATION_MODULE) && STEALTH_PRESENTATION_MODULE
