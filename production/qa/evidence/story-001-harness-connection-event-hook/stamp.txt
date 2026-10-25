@@ -1,0 +1,4 @@
+Reviewed-Content-Hash: Source/StealthTestHarness/Private/Session/StealthConnectionEventHook.h a39cdc9a28b37edf69348abae546a472bd05410d
+Reviewed-Content-Hash: Source/StealthTestHarness/Private/Session/StealthConnectionEventHook.cpp 9fcc02069da39205c9200cebe8d4aaed69836f55
+Reviewed-Content-Hash: Source/StealthTestHarness/Private/Tests/PIE/Session/ConnectionEventHookPieTest.cpp a3f66c32addb7be4f17352c63fc0c173c51dc7a2
+Story: production/epics/session-travel/story-001-harness-connection-event-hook.md

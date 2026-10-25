@@ -400,11 +400,11 @@ stories:
     name: "PIE harness hook forces client disconnect, rejoin, supersede and host kick"
     file: "production/epics/session-travel/story-001-harness-connection-event-hook.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "network-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: must-have
   - id: "st-002"
