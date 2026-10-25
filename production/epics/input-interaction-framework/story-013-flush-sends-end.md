@@ -1,7 +1,7 @@
 # Story 013: AC 5 FlushSendsEnd
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Blocked — BLOCKED: spike V1 (story 008) and V5 (story 011) have not reported
+> **Status**: Blocked — BLOCKED: spike V5 (story 011) has not reported (V1, story 008, reported PASS 2026-10-25: production/qa/spikes/2026-10-25_V1-enhanced-input-edges-report.md)
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L

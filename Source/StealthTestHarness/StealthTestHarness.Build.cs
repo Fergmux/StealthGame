@@ -19,7 +19,7 @@ public class StealthTestHarness : ModuleRules
 		// (ENABLE_PIE_NETWORK_TEST needs WITH_EDITOR). UnrealEd loads the fixture map (story tdc-019).
 		if (Target.bBuildEditor)
 		{
-			PrivateDependencyModuleNames.AddRange(new string[] { "CQTest", "UnrealEd" });
+			PrivateDependencyModuleNames.AddRange(new string[] { "CQTest", "UnrealEd", "LevelEditor" });
 		}
 
 		// CQTest's PIENetworkComponent.h includes Iris replication headers.

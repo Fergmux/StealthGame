@@ -378,22 +378,22 @@ stories:
     name: "IA_* actions and IMC contexts exist and the trigger lint passes"
     file: "production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: must-have
   - id: "iif-008"
     name: "Spike V1 reports Enhanced Input edge behaviour on this project's contexts"
     file: "production/epics/input-interaction-framework/story-008-spike-v1-enhanced-input-edges.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-25"
     carryover_to_sprint: 2
     sprint2_priority: must-have
   - id: "st-001"

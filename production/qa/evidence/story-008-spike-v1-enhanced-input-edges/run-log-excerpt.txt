@@ -1,0 +1,6 @@
+LogPlayLevel: PIE: StaticDuplicateObject took: (0.041980s)
+LogPlayLevel: PIE: Created PIE world by copying editor world from /Game/StealthGame/Maps/L_Prototype.L_Prototype to /Game/StealthGame/Maps/UEDPIE_0_L_Prototype.L_Prototype (0.042031s)
+LogPlayLevel: PIE: World Init took: (0.002061s)
+LogWorld: Bringing World /Game/StealthGame/Maps/UEDPIE_0_L_Prototype.L_Prototype up for play (max tick rate 0) at 2026.10.25-12.38.51
+LogAutomationController: Display: Test Completed. Result={Success} Name={V1EnhancedInputEdges} Path={StealthSpike.Input.V1EnhancedInputEdges}
+LogAutomationController: V1 engine 5.8.4-58902052+++UE5+Release-5.8, CVar EnhancedInput.IgnoreHeldDigitalActionKeysOnFlush=true, 360 runs, results ../../../../../../Users/fergm/Documents/Unreal Projects/StealthGame/Saved/Spikes/V1/v1-results.json

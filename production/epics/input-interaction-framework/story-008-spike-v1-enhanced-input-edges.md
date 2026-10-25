@@ -1,12 +1,12 @@
 # Story 008: Spike V1 reports Enhanced Input edge behaviour on this project's contexts
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -37,7 +37,7 @@ It sits at the start of the risk-first order because a failed V1 is handled by a
 
 *ADR-derived spike. Source: ADR-0011 Engine Compatibility, Verification Required item V1; criterion text from the plan:*
 
-- [ ] **GIVEN** this project's `IMC_Common` and `IMC_Active` contexts and one held Boolean action **WHEN** the six V1 scenarios (plain press and release, context add while held, context remove while held with and without `bIgnoreAllPressedKeysUntilRelease`, window focus loss, menu open, the builder's outstanding-Begin flush) are each run N times **THEN** a report at `production/qa/spikes/` records engine build, contexts, CVar value and per-scenario `Started`/`Completed`/`Canceled` counts, shows `Started` on press and exactly one terminal edge (`Completed` or `Canceled`) per release in every scenario, and shows the builder's flush yielding exactly one End and no re-fired `Started`, stating PASS or FAIL per scenario and overall.
+- [x] **GIVEN** this project's `IMC_Common` and `IMC_Active` contexts and one held Boolean action **WHEN** the six V1 scenarios (plain press and release, context add while held, context remove while held with and without `bIgnoreAllPressedKeysUntilRelease`, window focus loss, menu open, the builder's outstanding-Begin flush) are each run N times **THEN** a report at `production/qa/spikes/` records engine build, contexts, CVar value and per-scenario `Started`/`Completed`/`Canceled` counts, shows `Started` on press and exactly one terminal edge (`Completed` or `Canceled`) per release in every scenario, and shows the builder's flush yielding exactly one End and no re-fired `Started`, stating PASS or FAIL per scenario and overall.
 
 ---
 
@@ -69,14 +69,13 @@ Prototype: new code, no prototype counterpart. Tuning keys: none.
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*Changed by /dev-story (2026-10-25).*
 
-- `production/qa/spikes/V1-enhanced-input-edges-report.md` (the report; final dated name chosen at write time)
-- `Source/StealthTestHarness/Private/SpikeV1EnhancedInputEdgesTest.cpp` (throwaway probe harness; not a gate test)
-
----
+- `production/qa/spikes/2026-10-25_V1-enhanced-input-edges-report.md` (the report; dated name)
+- `Source/StealthTestHarness/Private/Tests/Spikes/SpikeV1EnhancedInputEdgesTest.cpp` (throwaway probe harness, test `StealthSpike.Input.V1EnhancedInputEdges`, outside the `^StealthGame.` gate filter)
+- `Source/StealthTestHarness/StealthTestHarness.Build.cs` (+ LevelEditor, editor builds only, for the standalone PIE request)
+- `production/qa/evidence/story-008-spike-v1-enhanced-input-edges/` (`v1-results.json`, `run-log-excerpt.txt`)
+- `production/epics/input-interaction-framework/story-013-flush-sends-end.md`, `story-071-context-swap-on-state-and-possession.md` (Status line: V1 no longer listed as a blocker)
 
 ## QA Test Cases
 
@@ -100,7 +99,7 @@ checks scope against it.*
 **Required evidence**:
 - Integration: the spike report `production/qa/spikes/V1-enhanced-input-edges-report.md` (a documented result, retained) OR the probe harness test `Source/StealthTestHarness/Private/SpikeV1EnhancedInputEdgesTest.cpp`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created — report `production/qa/spikes/2026-10-25_V1-enhanced-input-edges-report.md` (PASS), raw data `production/qa/evidence/story-008-spike-v1-enhanced-input-edges/v1-results.json`
 
 ---
 
@@ -108,3 +107,12 @@ checks scope against it.*
 
 - Depends on: `production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md`
 - Unlocks: `production/epics/input-interaction-framework/story-013-flush-sends-end.md`, `production/epics/input-interaction-framework/story-071-context-swap-on-state-and-possession.md`
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing — the report records engine build 5.8.4 CL 58902052, contexts IMC_Common + IMC_Active (story 007), CVar `EnhancedInput.IgnoreHeldDigitalActionKeysOnFlush=true`, and per-scenario Started/Completed/Canceled counts over N = 20 runs per key (keyboard E and gamepad FaceButton_Left, 360 presses): Started on press and exactly one terminal edge (always Completed) per release in scenarios 1, 2, 3 (with and without `bIgnoreAllPressedKeysUntilRelease`), 3c (held across remove and re-add of the same mapping) and 5; scenario 6 (builder flush) yields exactly one End and no re-fired Started; scenario 4 (focus loss) DEFERRED to an interactive standalone run as the story specifies. Overall PASS.
+**Findings**: the engine's later Completed after a builder flush arrives every time and must be swallowed (ADR-0011 section 9 idempotent End is required); a control variant (held across remove and re-add with `bIgnoreAllPressedKeysUntilRelease = false`) re-fires Started (2 Begins per press), the evidence for the ADR rule that every context change sets the flag.
+**Deviations**: ADVISORY — scenario 5 simulates the menu (priority-100 context + `FlushPressedKeys`); the Common UI path is spike V5 (story 011). ADVISORY — the probe runs standalone PIE with `AGameModeBase`, not the prototype game mode, so the prototype pawn's legacy key bindings cannot interfere. ADVISORY — the harness is named `StealthSpike.` (not `StealthGame.`) so it stays out of the per-commit gate, per "not a gate test". Stories 013 and 071: V1 removed from their blocker lines (they remain Blocked on V5 and V2).
+**Test Evidence**: `production/qa/spikes/2026-10-25_V1-enhanced-input-edges-report.md`; `production/qa/evidence/story-008-spike-v1-enhanced-input-edges/`
+**Reviewed by**: self, no independent review (unattended run)
+Run result: N/A — a headless input-edge measurement; the counts in the report are the observation, nothing is drawn on screen

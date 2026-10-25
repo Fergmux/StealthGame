@@ -1,12 +1,12 @@
 # Story 007: IA_* actions and IMC contexts exist and the trigger lint passes
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Config/Data
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-25
 
 ## Context
 
@@ -41,7 +41,7 @@ It sits as a root story (no story dependency) so the spikes can start early; the
 
 *ADR-derived (no numbered GDD AC). Source: ADR-0011 Decision §9 ("Edges only"; "an editor data lint in ADR-0008 checks both and fails the build"; IMC membership) and Validation Criteria static scan ("no Hold/Tap/Pulse/HoldAndRelease/Chorded trigger on an `IA_*` action with server meaning; no `UPlayerMappableInputConfig` use"):*
 
-- [ ] **GIVEN** the assets under `Content/StealthGame/Input` **WHEN** the editor data lint runs **THEN** `IA_Move` and `IA_Look` are Axis2D, `IA_WalkSlower` is Axis1D and `IA_Run`, `IA_Traverse`, `IA_Interact`, `IA_Prepare`, `IA_Attack` and `IA_Hide` are Boolean with no Hold, HoldAndRelease, Tap, Pulse or Chorded-action trigger on the action or on any mapping of it; **AND** `IMC_Common` contains Move, Look, CameraToggle, ShoulderSwap, WalkSlower, Ping and menu, `IMC_Active` contains Run, Traverse, Interact, Prepare, Attack and Hide, and `IMC_Informant` contains no gameplay action; **AND** no `UPlayerMappableInputConfig` asset or reference exists.
+- [x] **GIVEN** the assets under `Content/StealthGame/Input` **WHEN** the editor data lint runs **THEN** `IA_Move` and `IA_Look` are Axis2D, `IA_WalkSlower` is Axis1D and `IA_Run`, `IA_Traverse`, `IA_Interact`, `IA_Prepare`, `IA_Attack` and `IA_Hide` are Boolean with no Hold, HoldAndRelease, Tap, Pulse or Chorded-action trigger on the action or on any mapping of it; **AND** `IMC_Common` contains Move, Look, CameraToggle, ShoulderSwap, WalkSlower, Ping and menu, `IMC_Active` contains Run, Traverse, Interact, Prepare, Attack and Hide, and `IMC_Informant` contains no gameplay action; **AND** no `UPlayerMappableInputConfig` asset or reference exists.
 
 ---
 
@@ -74,16 +74,15 @@ Prototype: new code and data, no prototype counterpart (the prototype binds keys
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*Changed by /dev-story (2026-10-25). The lint header sits in `Private/Input/` (not `Public/Input/` as planned): include-lint rule (a) allows Public headers only under `Public/View/` or `Public/Server/`, and nothing outside the module needs it.*
 
-- `Content/StealthGame/Input/IA_Move`, `IA_Look`, `IA_Run`, `IA_Traverse`, `IA_Interact`, `IA_Prepare`, `IA_Attack`, `IA_Hide`, `IA_CameraToggle`, `IA_ShoulderSwap`, `IA_WalkSlower`, `IA_Ping` (new assets, `.uasset`)
-- `Content/StealthGame/Input/IMC_Common`, `IMC_Active`, `IMC_Informant` (new assets)
-- `Source/StealthGameEditor/Private/Input/InputAssetLint.cpp`, `Source/StealthGameEditor/Public/Input/InputAssetLint.h`
+- `Content/StealthGame/Input/IA_Move`, `IA_Look`, `IA_CameraToggle`, `IA_ShoulderSwap`, `IA_WalkSlower`, `IA_Ping`, `IA_Menu`, `IA_Run`, `IA_Traverse`, `IA_Interact`, `IA_Prepare`, `IA_Attack`, `IA_Hide` (new `.uasset`)
+- `Content/StealthGame/Input/IMC_Common`, `IMC_Active`, `IMC_Informant` (new `.uasset`)
+- `Source/StealthGameEditor/Private/Input/InputAssetSpec.h` (the action / value type / context / key table, shared by authoring and lint)
+- `Source/StealthGameEditor/Private/Input/InputAssetLint.h`, `InputAssetLint.cpp` (the editor data lint)
+- `Source/StealthGameEditor/Private/Input/InputAssetAuthoring.cpp` (console commands `Stealth.Input.CreateAssets`, `Stealth.Input.Lint`)
+- `Source/StealthGameEditor/StealthGameEditor.Build.cs` (+ EnhancedInput, InputCore, AssetRegistry)
 - `Source/StealthGameEditor/Private/Tests/InputAssetsAndTriggerLintTest.cpp` (class `FInputInputAssetsAndTriggerLintTest`, name `StealthGame.Input.InputAssetsAndTriggerLint`)
-
----
 
 ## QA Test Cases
 
@@ -106,7 +105,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Config/Data: smoke check pass (`production/qa/smoke-<date>.md`, written when `/smoke-check` runs) plus the editor lint test `Source/StealthGameEditor/Private/Tests/InputAssetsAndTriggerLintTest.cpp`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created — `StealthGame.Input.InputAssetsAndTriggerLint` passes (45/45 run); smoke record `production/qa/smoke-2026-10-25_input-assets-lint.md`
 
 ---
 
@@ -114,3 +113,12 @@ QL-STORY-READY: GAPS
 
 - Depends on: None (cross-epic: tuning-data-config module skeleton and StealthGameEditor module, stories not yet written)
 - Unlocks: `production/epics/input-interaction-framework/story-008-spike-v1-enhanced-input-edges.md`, `production/epics/input-interaction-framework/story-011-spike-v5-commonui-menu-end.md`, `production/epics/input-interaction-framework/story-012-edges-not-repeat.md`, `production/epics/input-interaction-framework/story-014-camera-toggle-local.md`, `production/epics/input-interaction-framework/story-015-default-bindings.md`, `production/epics/input-interaction-framework/story-016-no-toggle-setting-mvp.md`, `production/epics/input-interaction-framework/story-017-walk-slower-scaling.md`, `production/epics/input-interaction-framework/story-072-informant-plate.md`, `production/epics/input-interaction-framework/story-094-controller-transport-skeleton.md`
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 1/1 passing — `StealthGame.Input.InputAssetsAndTriggerLint` (`Source/StealthGameEditor/Private/Tests/InputAssetsAndTriggerLintTest.cpp`): the real assets lint clean (value types, no trigger beyond the default on any action or mapping, exact IMC_Common / IMC_Active membership and R15 keys, IMC_Informant empty, zero `UPlayerMappableInputConfig` assets or source references), the lint leaves every package clean, and seeded negatives on transient copies (Hold on IA_Interact; HoldAndRelease, Tap, Pulse, Chorded on IA_Prepare; mapping-level Tap; IA_Attack as Axis1D; IA_Attack in IMC_Informant; a menu context mapping IA_Interact; IA_Ping removed; IA_Move missing) are each reported. The lint fails the per-commit gate through that test.
+**Table resolved (QL gap 1)**: recorded in `Source/StealthGameEditor/Private/Input/InputAssetSpec.h` and the smoke record: Move/Look Axis2D, WalkSlower Axis1D, every other action Boolean; "default trigger only" = an empty trigger list or one Down/Pressed. QL gaps 2-4 (mapping-level triggers fail; seeded Hold on IA_Interact fails; the lint never resaves) are covered by the test.
+**Deviations**: ADVISORY — `IA_Menu` added (Boolean, Escape / Gamepad_Special_Right): the GDD R13 "pause/menu" row has no asset name. ADVISORY — `IA_WalkSlower` carries the Move-magnitude reduction (Ctrl x0.2, Alt x0.1, default highest-value accumulation, so both held = 0.2; magnitude = 1 - value gives R15a's 0.8 / 0.9 / 0.8); story 017 owns the scaling and may change the encoding. ADVISORY — the lint header is in `Private/Input/` (include-lint rule (a)), not `Public/Input/`. ADVISORY — assets are authored by the console command `Stealth.Input.CreateAssets` (a commandlet cannot be found: StealthGameEditor loads at PostEngineInit). D37 respected: Left Ctrl is walk-slower; no sample asset (`Content/Input/*`, `IMC_Sandbox`, camera assets) was opened for edit, scanned or saved; only the 16 new packages were saved by explicit path.
+**Test Evidence**: `production/qa/smoke-2026-10-25_input-assets-lint.md`; `production/qa/evidence/story-007-input-assets-and-trigger-lint/` (`create-assets-run.txt`, `tests-45.txt`)
+**Reviewed by**: self, no independent review (unattended run; focused review of the changed files)
+Run result: N/A — input data assets and an editor lint; nothing binds them to a pawn yet (story 094), so nothing is on screen

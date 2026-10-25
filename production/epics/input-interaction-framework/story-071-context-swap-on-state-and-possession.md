@@ -1,7 +1,7 @@
 # Story 071: AC 55 ContextSwapOnStateAndPossession
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Blocked — BLOCKED: spike V1 (story 008) and V2 (story 009) have not reported
+> **Status**: Blocked — BLOCKED: spike V2 (story 009) has not reported (V1, story 008, reported PASS 2026-10-25: production/qa/spikes/2026-10-25_V1-enhanced-input-edges-report.md)
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
