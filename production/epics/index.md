@@ -8,7 +8,7 @@ Engine: Unreal Engine 5.8 (installed 5.8.4)
 | [Tuning Data & Config](tuning-data-config/EPIC.md) | Foundation | Tuning Data & Config | design/gdd/tuning-data-config.md | Not yet created | Ready |
 | [Participant State & Roster](participant-state-roster/EPIC.md) | Foundation | Participant State & Roster | design/gdd/participant-state-roster.md | 60 stories | Ready |
 | [Session & Travel](session-travel/EPIC.md) | Foundation | Session & Travel | design/gdd/session-travel.md | 93 stories | Ready |
-| [Information Visibility Policy](information-visibility-policy/EPIC.md) | Foundation | Information Visibility Policy | design/gdd/information-visibility-policy.md | Not yet created | Ready |
+| [Information Visibility Policy](information-visibility-policy/EPIC.md) | Foundation | Information Visibility Policy | design/gdd/information-visibility-policy.md | 55 stories | Ready |
 | [Input & Interaction Framework](input-interaction-framework/EPIC.md) | Core | Input & Interaction Framework | design/gdd/input-interaction-framework.md | 95 stories | Ready |
 | [Character Pool & Appearance](character-pool-appearance/EPIC.md) | Core | Character Pool & Appearance | design/gdd/character-pool-appearance.md | Not yet created | Ready |
 | [Round & Match Framework](round-match-framework/EPIC.md) | Core | Round & Match Framework | design/gdd/round-match-framework.md | Not yet created | Ready |

@@ -77,3 +77,4 @@ D43 Roster unowned work: add stories for the URosterStore facade + BeginMatch/En
 D44 PlayerState allowlist: ADR-0001 wording wins (PublicHandle + engine PlayerNamePrivate, which carries the display name); AC-PSR-44 text aligned.
 D45 ConnectionGeneration bumps only on entry to Disconnected (GDD, more specific); ADR-0005 amended to match.
 D46 ADR-0006 gets a MatchId seed domain row.
+D47 TeamPositionFeedHz: cap the hard range at 2 Hz (ADR-0003 §7 ceiling 104 B/s holds at 2 Hz x 4 entries); T1 tests that need fixtures read constexpr data, not files (TD call); Crowd T5 value 0.20/min is authoritative.
