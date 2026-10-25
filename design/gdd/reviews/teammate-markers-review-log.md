@@ -91,3 +91,10 @@ Source: design/gdd/gdd-cross-review-2026-10-25.md; rulings D23. Status lines and
 - S-B1 (TMK side): TM-R11 suffix persists while the flag stays true (informant still away, `Active` ally killed while disconnected, superseding rejoin loading) and drops on any clear; AC-TMK-26 extended; the stale edge case that said grace expiry creates no HUD removal line was corrected (an `Active` ally's expiry converts it, so HUD-R10 shows the removal line; an informant ally's expiry shows "— disconnected").
 - C-W19: `TeammateMarkerLargeMult` presented as a two-step setting ({1.0, 1.5}), outside TDC F-1's continuous clamp; TDC/registry row to follow (cross-file need).
 - C-W9: "-> ADR-001 / UI ADR" replaced by ADR-0001 and ADR-0021; "Informant Pings (VS)" in TM-R13 corrected to MVP.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- Ally-disconnects edge case: clear events listed exactly as Roster R6; grace-expiry edge case no longer promises a "disconnected" line.
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

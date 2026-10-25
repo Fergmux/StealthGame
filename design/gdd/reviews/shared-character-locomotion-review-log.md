@@ -110,3 +110,10 @@ Reviewed-Content-Hash: docs/architecture/adr-0003-replication-relevancy-concealm
 - C-W37: R11.5 stale "rate 1" parenthetical removed.
 - C-W38: R2a.4 replacement card follows CPA CP-12(a).
 - D-W7 / D27: accepted trade-off recorded in R8.9 and the `IdleGazeDelaySec` row; one head-hold definition in R8.8; idle-scan holds excluded from T13.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- I-SCL-15: pinned MaxClientForcedUpdateDuration raised to 1.40 s (follow-up a); WalkStopSec note and invariant text use T_stop,max.
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

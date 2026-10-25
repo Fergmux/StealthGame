@@ -1,6 +1,6 @@
 # Concealment (Bushes)
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-25 (second-round lean re-review: the 13 first-round blockers confirmed resolved; the stale-text and measurability items found are fixed in place; a third review decides Approved); reviewed - NEEDS REVISION 2026-10-24 (full); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`FDeathState.bDiedConcealed` and `FActionState.StartServerTime` adopted: CON-R9 target rule in force, CON-R6a final; `bConcealServerCull` rename; OQ10 closed)
+> **Status**: Approved — 2026-10-25 (main-session decision D35 under user authorisation; see production/design-closeout/2026-10-25_rereview-followups.md and design/gdd/gdd-cross-review-2026-10-25b.md). Prior status: Reviewed - NEEDS REVISION 2026-10-25 (second-round lean re-review: the 13 first-round blockers confirmed resolved; the stale-text and measurability items found are fixed in place; a third review decides Approved); reviewed - NEEDS REVISION 2026-10-24 (full); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`FDeathState.bDiedConcealed` and `FActionState.StartServerTime` adopted: CON-R9 target rule in force, CON-R6a final; `bConcealServerCull` rename; OQ10 closed)
 > **Author**: design-system pipeline (autonomous) + ue-replication-specialist, systems-designer, art-director, creative-director
 > **Last Updated**: 2026-10-24
 > **Last Verified**: 2026-10-24
@@ -127,7 +127,7 @@ Transitions are atomic (IIF R9: every other command `Busy`). Commits, leaf cross
 | Camera System | own `IsConcealed` (owner component) | CS-R11.3 clamp input; foliage channel; rustle tagged eye-masked | Camera |
 | Assassination & Defence Reversal | spot attacks (ASN-R8 rule 2, terminal), F1 reach filter, outcome slot and death write, `BushStrike` clip, `FActionState`/`FDeathState` carriers | `GetSpotOccupants`; `OnConcealmentBroken`; state at execution; uniform stream pick (F4); `bDiedConcealed` value; hide-pose start server time | Assassination |
 | Crowd & NPC Behaviour | NPC Hide commands | the one Hide path; no occupancy data | Crowd |
-| Informant Pings & Team Comms | — | own `IsConcealed` (owner audience) so Pings can refuse a ping from a concealed sender: **concealment does not grant a spotter post, no ping from inside a bush** (decision D26, 2026-10-25, cross-review D-W6; the rule is written in Pings, with the owner-only rejection tone and no signal to others) | Pings (rule), Concealment (`IsConcealed`) |
+| Informant Pings & Team Comms | — | `IsInBushOrTransition(Pawn)` (server gate) and the owner's own `IsConcealed` flag plus bush-action state (client gate, Pings PNG-R3) so Pings can refuse a ping from a sender in or moving through a bush: **concealment does not grant a spotter post, no ping from inside a bush** (decision D26, 2026-10-25, cross-review D-W6; the rule is written in Pings, with the owner-only rejection tone and no signal to others) | Pings (rule), Concealment (`IsConcealed`) |
 | NPC-Kill Penalty & Informants | — | `IsInBushOrTransition(Pawn)` for takeover eligibility (IVP R9c) | Penalty |
 | Teammate Markers / HUD | — | `IsConcealed` via C-TeamView and the client-local `IsAllyBodyHidden(Pawn)` latch (CON-R6b) for the hatched marker; owner grade trigger | Markers / HUD |
 | Crowd steering / avoidance | — | concealed and transitioning pawns excluded from RVO, crowd avoidance and steering queries (CON-R4) | Crowd |
@@ -145,7 +145,7 @@ The bush occupancy formula is defined as:
 | Variable | Type | Range | Source | Description |
 |---|---|---|---|---|
 | N_B | int | 8-14 | LSC D5 | Bushes in the layout |
-| n_N, n_P | int | 35-50 (safe; hard 6-100, TDC), 1-5 | `NpcCount`, `TeamSize` | NPCs; opponents of the viewer |
+| n_N, n_P | int | 45-50 (safe; hard 6-100, TDC), 1-5 | `NpcCount`, `TeamSize` | NPCs; opponents of the viewer |
 | r_N, r_P | float (/min) | ≥ 0 | Crowd tuning; entry log (CON-R15) | Bush entries per pawn per minute |
 | D_N, D_P | float (min) | > 0 | Crowd dwell distribution; entry log | Mean dwell per entry |
 | E[O] (λ) | float | 0-∞ (about 0.20-0.48 over the safe ranges at Crowd's shipped rate 0.20/min) | calculated | Mean occupants per bush |
@@ -280,7 +280,7 @@ The spot-attack hit formula is defined as:
 | HUD (#18) | owner `IsConcealed` for the prompt verb only (the hider's grade is a post-process, VA-5, not a HUD element); Concealment UI-1, UI-2 | Soft | In Review |
 | Objectives Chain (#15) | Interact rejected inside a bush. **Obligation:** Concealment has no timer, so Objectives' stall pressure (SP-1 to SP-8, SP-8 in place) is the only thing that pushes a hider out. Hiding indefinitely must never be a winning line (AC-CON-24) | Hard (for P4) | In Review |
 | Camera System (#10) | own `IsConcealed`; dome fact (VA-8) for I-CS-4 | Soft | In Review |
-| Informant Pings & Team Comms (#20) | owner `IsConcealed`, to reject a ping from a concealed sender (D26; a bush is a brief cover, not a post, anti-pillar "not hide-and-wait") | Soft | In Review |
+| Informant Pings & Team Comms (#20) | `IsInBushOrTransition` (server) and the owner's `IsConcealed` plus bush-action state (client), to reject a ping from a sender in or moving through a bush (D26; a bush is a brief cover, not a post, anti-pillar "not hide-and-wait") | Soft | In Review |
 | Diegetic Audio (#22, VS), Telemetry, Anti-Cheat (Alpha) | rustle parity; concealment log; cull surface | Soft | Not written |
 
 **Bidirectionality:** the systems index lists IVP, SCL, IIF, LSC and Roster as upstream. Change requests: add Round, TDC and Crowd (hard) and Camera (soft) as Concealment upstream; Penalty and Objectives should list Concealment. Assassination, Teammate Markers, IVP and Camera already list it (checked 2026-10-24).
@@ -464,7 +464,7 @@ Tags: [PIE-2] 2-client PIE (listen server + 1 client, or dedicated + 2 clients),
 - **AC-CON-27** [U] `StealthGame.Concealment.ManifestReject`: GIVEN a `BushSite` with an empty `EntryAxis` set, THEN V-BUSH-1 rejects the layout and no round starts with it.
 - **AC-CON-28** [U][PIE-2] `StealthGame.Concealment.CollisionAndAvoidance`: GIVEN an `Outside` pawn walking into a `HideVolume`, THEN it is blocked. GIVEN two pawns entering one bush, THEN neither collides with the other or with its own bush during the warp. GIVEN 100 NPC routes past a bush with fixed seeds, occupied vs empty, THEN the paths are identical. GIVEN an owner correction mid-warp, THEN the collision state after replay equals the state derived from the Concealment state and elapsed server time.
 - **AC-CON-29** [U] `StealthGame.Concealment.GuardFaultPath`: GIVEN a forced guard failure at the swap, THEN no commit occurs, the fault sink records one entry, and an ordinary exit on the entry side follows.
-- **AC-CON-30** [U] `StealthGame.Concealment.TakeoverEligibility`: GIVEN pawns in each of `Outside`, `Entering`, `Concealed`, `Exiting` and `Emerging`, THEN `IsInBushOrTransition` is false only for `Outside` (IVP R9c).
+- **AC-CON-30** [U] `StealthGame.Concealment.TakeoverEligibility`: GIVEN pawns in each of `Outside`, `Entering`, `Concealed`, `Exiting` and `Emerging`, THEN `IsInBushOrTransition` is false only for `Outside` (IVP R9c). The same predicate is the Pings consumer's (PNG-R2, PNG-R5 step 2, decision D33, 2026-10-25): a pawn in `Emerging` counts as concealed for the ping refusal (Pings D26) until fully out, and the client-side pre-check evaluates this same predicate (AC-PNG-17 case c2).
 - **AC-CON-31** [PIE-2][Net] `StealthGame.Concealment.OwnerWarpNoSnap` (spike S-CON-1): GIVEN 100 owner hides and 100 exits under [Net], THEN press-to-motion is ≤ 50 ms at 60 fps and no owner frame shows a positional correction > 5 cm during the transition.
 - **AC-CON-32** [PIE-2] `StealthGame.Concealment.RejoinConcealed`: GIVEN a concealed player who rejoins within grace, THEN its owner component reports `IsConcealed`, the camera enters CS-R11.3, and the packets to every non-ally connection are unchanged.
 - **AC-CON-33** [PIE-2][Net] `StealthGame.Concealment.OwnedActorsFollowCull` (CON-R2): GIVEN a concealed player holding a carried prop and an attached tend prop, WHEN an opponent connection's net log is read for 10 s after the cull lands, THEN no bunch is sent for either child actor and no actor on that connection reports the concealed pawn's position (control: the same props on an `Outside` pawn replicate normally).

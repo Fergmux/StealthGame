@@ -92,3 +92,10 @@ Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8ed
 - C-W33: Downstream rows for Teammate Markers and HUD list `RetireAtServerTime`, `bReconnecting` and `ReconnectEndCause`.
 - C-W8: Upstream "none" reconciled with the Downstream Crowd row (mutual peer contract, not an upstream edge).
 - C-W9: stale "no ADR exists yet" and "every row is provisional" text corrected; status cells untouched.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- N-B1 alignment: R6 HUD sentence, HUD (18) Downstream row and AC-PSR-53 (e) no longer mention a "disconnected" line.
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

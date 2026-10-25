@@ -113,3 +113,10 @@ Reviewed-Content-Hash: design/gdd/shared-character-locomotion.md dc19c6207e69961
 - C-W27: F6's "0.1 s of walking" corrected for the SCL start ramp (0.29 s from rest, 0.11 s at walking speed).
 - C-W36: the menu-open edge case and AC 5 now state zero Move and zero Look with the command stream continuing, position kept, holds ended (D14).
 - C-W9 (IIF side): Overview "ADR-001 / No ADR exists yet" replaced by the accepted ADR-0001 and ADR-0011.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- Round epsilon citations corrected to Round AC 45 (was "AC 711", a line number). Bidirectionality note updated.
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

@@ -63,3 +63,10 @@ Source: design/gdd/gdd-cross-review-2026-10-25.md; rulings D25, D26, D28. Status
 - D-W8 / D28: PNG-R9 cross-reference to the Crowd Tell Matrix Ping row (no pawn animation, no replicated pawn state, verified against IVP).
 - S-I1: a removed sender's ring keeps to expiry but its name label drops at `OnAllyMarkerRetired` (PNG-R7, PNG-R10, edge cases, AC-PNG-19).
 - Cross-file needs: Crowd Tell Matrix Ping row; Concealment Downstream row for Pings; IIF and Session Downstream rows for Pings; TDC/registry: new constant `PingSkewTolSec` (not a key), no key range changed.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- Session dependency row: the reciprocal Session row has landed.
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

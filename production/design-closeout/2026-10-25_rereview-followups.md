@@ -54,3 +54,11 @@ D26 D-W6 ping from a bush: a concealed player (inside a bush) cannot ping; the i
 D27 D-W7 idle gaze making camping cheaper: accepted; the >20 s stand remains a tell and the bush/court camping rules are unchanged.
 D28 D-W8 Crowd tell list gets a "Ping" row: pinging plays no pawn animation and changes no replicated pawn state → no tell (verified against IVP).
 D29 D-W9/D-W10 pacing + exile naming: Pillar 4 thresholds and Round pacing cite Objectives F1 (~9 min median); "exile" is reserved for the NPC-kill removal; the other use is renamed per D11 wording.
+
+# Rulings on /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking, 7 warnings)
+D30 W1 registry gap (~130 owner keys outside LSC): deferred to the TDC validator story (the AC-3b doc lint is built there and registers/validates keys as its first task). Recorded as tech debt TD-REG-1.
+D31 W2 idle-gaze input tolerance: look input below IdleGazeLookDeadzoneDegPerSec = 0.5 deg/s (safe 0.2-1.0, hard 0-3) counts as "no look input" for the idle-gaze timer.
+D32 W3 kick vs grace expiry in the same frame: the host kick is processed first; grace expiry for an already-kicked participant is a no-op. Both lead to the same removal, so the round outcome cannot flip.
+D33 W4 ping at bush edges: a pawn in Emerging state counts as concealed for D26 until fully out; the client-side pre-check uses the same predicate as the server; AC-PNG-17 gains the Emerging case.
+D34 W5 ping tracking (D-W5): OQ7 numeric failure threshold — playtest flag if any single walker carries a ping ring from one team for > 30 % of any 60 s window in more than 1 in 5 rounds; mitigation lever is the sender refill interval.
+D35 Approval: after second-round reviews, two cross-doc fix passes, and /review-all-gdds 2026-10-25b = CONCERNS (0 blocking), all 19 MVP GDDs are marked Approved by main-session decision under the user's 2026-10-25 authorisation ("finish approving the systems design"). Remaining warnings/open questions stay listed in each GDD and in the cross-review report.

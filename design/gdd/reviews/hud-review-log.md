@@ -130,3 +130,10 @@ Source: design/gdd/gdd-cross-review-2026-10-25.md; rulings D15, D21, D23, D25, D
 
 ### Cross-review fix 2026-10-25 — main-session follow-ups
 - C-W17 follow-up: F4 variable table rows for `ExileBeatSec` (0.75-0.95, Penalty safe range) and `HudRemovalCardDelaySec` (I-HUD-3 rejects, was "warning") synced.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- N-B1: the "— disconnected" reconnect line is retired (HUD-R10a GraceExpired bullet, ally-stays-gone edge case, AC-HUD-28 (b)-(d)); GraceExpired only arrives with the Active -> Informant conversion (Roster R6, AC-PSR-53). HUD-R10a Cleared causes and AC-HUD-28 (f) reworded (kick does not remove the record).
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

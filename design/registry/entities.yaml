@@ -1204,7 +1204,7 @@ formulas:
       - T_contact_z
     output_range: "NpcZoneMin >= 8 at TeamSize 5"
     expression: "NpcZoneMin_z = max(ceil(r * rho * A_z), ceil(P_z * (1 - s_max) / s_max))"
-    notes: "LSC D6; source of the NpcCount safe minimum 35 (I-LSC-1)."
+    notes: "LSC D6; source of the NpcCount hard-valid floor 35 (I-LSC-1, reject) and of the NpcCount safe minimum 45 (V-ZONEFILL margin; adopted at cross-review 2026-10-25-b)."
     added: 2026-10-24
     revised: ""
   - name: layout_hash
@@ -4847,6 +4847,21 @@ constants:
     note: "decision D14 (pause-menu PM-1): any pawn with no look input for longer than this gets the shared NPC idle head-scan layer (scan every 3-7 s), whether the Escape menu is open or the player is idle; no AI hand-over. Audience/latch follow the SCL owner row (ServerOnly / Use; cross-review fix 2026-10-25, C-W13; was Client / Round)."
     added: 2026-10-25
     revised: "2026-10-25"
+  - name: IdleGazeLookDeadzoneDegPerSec
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+      - design/gdd/tuning-data-config.md
+    value: 0.5
+    unit: per_s
+    hard_range: 0-3
+    safe_range: 0.2-1.0
+    audience: ServerOnly
+    latch: Use
+    note: "decision D31 (/review-all-gdds 2026-10-25b W2): control-rotation change slower than this counts as no look input for the idle-gaze timer (R8.9); audience/latch follow IdleGazeDelaySec."
+    added: 2026-10-25
+    revised: "2026-10-25"
   # --- Cross-review fix 2026-10-25 (C-W16): cross-system keys named by TDC invariants ---
   - name: CrowdFullPacePct
     status: active
@@ -5086,5 +5101,664 @@ constants:
     latch: Round
     note: "strata 6 + 6 + 4-6; must satisfy LSC D5: N_C >= FinalCandidatesMinCount + 4 * PrelimCandidatesPerStageMinCount - 2 = 16 (TDC I-PCG-6)"
     # was 15 (14-18) before the Generator lean re-review 2026-10-25
+    added: 2026-10-25
+    revised: ""
+  # LSC-only keys registered by /review-all-gdds 2026-10-25-b (follow-up c); values mirror level-socket-contract.md Tuning Knobs
+  - name: EmergenceSocketsMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 12
+    unit: count
+    hard_range: "8-32"
+    safe_range: "12-20"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:559); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: EmergenceSocketsMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 24
+    unit: count
+    hard_range: "8-32"
+    safe_range: "12-20"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:559); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: EmergenceCellsPerSocketCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 175
+    unit: count
+    hard_range: "100-300"
+    safe_range: "150-220"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:560); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: EmergenceWitnessDilationCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 200
+    unit: cm
+    hard_range: "0-400"
+    safe_range: "150-300"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:563); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: EmergenceClearRadiusCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 300
+    unit: cm
+    hard_range: "150-500"
+    safe_range: "250-400"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:564); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: EmergenceSpacingCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 1200
+    unit: cm
+    hard_range: "800-2000"
+    safe_range: "1000-1600"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:565); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: RespawnViewerCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 2
+    unit: count
+    hard_range: "1-5"
+    safe_range: "2-3"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:573); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: StartCellSpacingCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 800
+    unit: cm
+    hard_range: "300-1200"
+    safe_range: "600-1000"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:575); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: StartCellMaxRadiusCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 1800
+    unit: cm
+    hard_range: "1200-2500"
+    safe_range: "1500-2000"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:576); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: ZoneNpcWindowMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 3
+    unit: count
+    hard_range: "2-6"
+    safe_range: "3-5"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:580); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: ZoneContactMinSec
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 15
+    unit: s
+    hard_range: "8-40"
+    safe_range: "15-25"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:581); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: ZoneNpcDensityMinMult
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 0.8
+    unit: mult
+    hard_range: "0.5-1.5"
+    safe_range: "0.7-1.0"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:582); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: ZonePlayerShareMaxPct
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 40
+    unit: pct
+    hard_range: "25-50"
+    safe_range: "33-40"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:583); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: ZoneNpcShareMaxPct
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 60
+    unit: pct
+    hard_range: "30-70"
+    safe_range: "50-60"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:584); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: ZoneSeparationPathCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 7000
+    unit: cm
+    hard_range: "6000-12000"
+    safe_range: "7000-9000"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:585); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: ZoneParityPct
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 15
+    unit: pct
+    hard_range: "5-25"
+    safe_range: "10-15"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:586); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: EnemyZoneToPrelimMinCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 5000
+    unit: cm
+    hard_range: "3000-8000"
+    safe_range: "4000-6000"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:588); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: LegZoneToP1MinCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 3000
+    unit: cm
+    hard_range: "1500-8000"
+    safe_range: "3000-5000"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:589); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: LegP1ToP2MinCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 4000
+    unit: cm
+    hard_range: "1500-8000"
+    safe_range: "3000-5000"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:589); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: LegP2ToFinalMinCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 4000
+    unit: cm
+    hard_range: "1500-8000"
+    safe_range: "3000-5000"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:589); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: ChainLengthMaxCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 24000
+    unit: cm
+    hard_range: "10000-40000"
+    safe_range: "from the graybox histogram"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:590); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: FinalLegFairnessMaxMult
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 1.15
+    unit: mult
+    hard_range: "1.05-1.30"
+    safe_range: "1.10-1.18"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:592); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: TraversalFairnessMaxMult
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 1.2
+    unit: mult
+    hard_range: "1.10-1.40"
+    safe_range: "1.15-1.25"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:593); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b; provisional pending traversal spike"
+    added: 2026-10-25
+    revised: ""
+  - name: ReachBudgetFloorCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 2000
+    unit: cm
+    hard_range: "1000-3000"
+    safe_range: "—"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:595); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: ReachBudgetMaxCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 20000
+    unit: cm
+    hard_range: "15000-30000"
+    safe_range: "—"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:595); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: DetourP95MaxMult
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 1.6
+    unit: mult
+    hard_range: "1.4-1.8"
+    safe_range: "—"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:596); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: NavIslandRejectCellsCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 1
+    unit: count
+    hard_range: "1-4"
+    safe_range: "1"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:598); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: CourtSpacingCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 2400
+    unit: cm
+    hard_range: "1600-4000"
+    safe_range: "2400-3200"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:600); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: MinFairCombosCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 12
+    unit: count
+    hard_range: "6-50"
+    safe_range: "12-24"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:602); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: SunPoolSamplesMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 144
+    unit: count
+    hard_range: "144-192"
+    safe_range: "144-176"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:605); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: SunPoolParityPct
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 20
+    unit: pct
+    hard_range: "10-30"
+    safe_range: "15-25"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:606); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: SunPoolBeaconRangeCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 4000
+    unit: cm
+    hard_range: "3000-6000"
+    safe_range: "—"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:607); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: bSunPoolBeaconIsReject
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: false
+    unit: bool
+    hard_range: "true, false"
+    safe_range: "—"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:607); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: BushSitesMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 8
+    unit: count
+    hard_range: "4-20"
+    safe_range: "8-14"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:608); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: BushSitesMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 14
+    unit: count
+    hard_range: "4-20"
+    safe_range: "8-14"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:608); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: BushCellsPerSiteCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 250
+    unit: count
+    hard_range: "150-400"
+    safe_range: "200-300"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:609); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: BushPerSectorMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 2
+    unit: count
+    hard_range: "1-4"
+    safe_range: "2"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:611); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: BushChainBufferCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 2000
+    unit: cm
+    hard_range: "1000-3000"
+    safe_range: "—"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:613); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: BushChainDiffMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 2
+    unit: count
+    hard_range: "0-4"
+    safe_range: "—"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:613); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: BushBackdropTargetPct
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 50
+    unit: pct
+    hard_range: "20-80"
+    safe_range: "40-60"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:614); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: BushBackdropFloorPct
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 40
+    unit: pct
+    hard_range: "20-80"
+    safe_range: "40-60"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:614); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: RouteCoverageRadiusCm
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 1200
+    unit: cm
+    hard_range: "600-2000"
+    safe_range: "—"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:615); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: RouteCoverageMinPct
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 95
+    unit: pct
+    hard_range: "85-100"
+    safe_range: "—"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:615); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: RouteCyclesMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 8
+    unit: count
+    hard_range: "5-20"
+    safe_range: "8-12"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:617); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b"
+    added: 2026-10-25
+    revised: ""
+  - name: TraversalPointsMinCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 6
+    unit: count
+    hard_range: "4-30"
+    safe_range: "6-20"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:618); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b; provisional pending traversal spike"
+    added: 2026-10-25
+    revised: ""
+  - name: TraversalPointsMaxCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 20
+    unit: count
+    hard_range: "4-30"
+    safe_range: "6-20"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:618); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b; provisional pending traversal spike"
+    added: 2026-10-25
+    revised: ""
+  - name: TraversalCellsPerPointCount
+    status: active
+    source: design/gdd/level-socket-contract.md
+    referenced_by:
+      - design/gdd/level-socket-contract.md
+    value: 200
+    unit: count
+    hard_range: "100-400"
+    safe_range: "150-250"
+    audience: ServerOnly
+    latch: Round
+    note: "LSC Tuning Knobs (level-socket-contract.md:618); LSC-only, no invariant names it; registered by /review-all-gdds 2026-10-25-b; provisional pending traversal spike"
     added: 2026-10-25
     revised: ""

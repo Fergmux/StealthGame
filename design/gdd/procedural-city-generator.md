@@ -1,6 +1,6 @@
 # Procedural City Generator
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-25 (second round, lean: 2 blocking items open, S4 final-eligible pool feasibility and court count vs LSC N_C ≥ 16; the court-count text is fixed, the pool geometry is Open Question 9; re-review after a decision); first round NEEDS REVISION 2026-10-24 (revisions applied); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (derived kit assets — merged bay stacks, paving slabs, G0 primitive placeholders — allowed before the mass-production gate; no longer held for spikes, still provisional on spike results; `NpcCount` 50)
+> **Status**: Approved — 2026-10-25 (main-session decision D35 under user authorisation; see production/design-closeout/2026-10-25_rereview-followups.md and design/gdd/gdd-cross-review-2026-10-25b.md). Prior status: Reviewed - NEEDS REVISION 2026-10-25 (second round, lean: 2 blocking items open, S4 final-eligible pool feasibility and court count vs LSC N_C ≥ 16; the court-count text is fixed, the pool geometry is Open Question 9; re-review after a decision); first round NEEDS REVISION 2026-10-24 (revisions applied); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (derived kit assets — merged bay stacks, paving slabs, G0 primitive placeholders — allowed before the mass-production gate; no longer held for spikes, still provisional on spike results; `NpcCount` 50)
 > **Design Review**: NEEDS REVISION 2026-10-25, lean re-review (prior 10 blocking items resolved; 2 new blocking, see log); earlier NEEDS REVISION 2026-10-24, lean depth (10 blocking items fixed in place; log: design/gdd/reviews/procedural-city-generator-review-log.md)
 > **Creative Director Review (CD-GDD-ALIGN)**: CONCERNS 2026-10-24, then REVISED 2026-10-24 (6 revisions applied: corner-zone read made a measured pillar question with a decision rule, mirror-intercept audit and LSC request, ≥ 2 final-eligible courts outside the temple ring plus court-class and 30% prior audits, golden seeds excluded from practice and live draws, G0 data non-representative, half-predictability walkthrough test)
 > **Provisional**: pending spikes R1/R4 (runtime ISM / Lumen / Chaos costs, server navmesh build) and the Manifest wire-size spike; all † values
@@ -23,7 +23,7 @@ It is **built last** (systems index build order): the hand-built graybox impleme
 
 > **Provisional pending spikes.** Everything in this GDD that depends on runtime navmesh build time (art bible spike R4), runtime ISM / Lumen / Chaos costs (R1, R4) or Manifest wire size (LSC Open Question 2) is provisional until those spikes report. Sections marked † carry numbers from those spikes.
 
-*Framing (autonomous, logged): a technical provider whose player effect is indirect. No ADR exists yet; implementation choices are marked "-> ADR".*
+*Framing (autonomous, logged): a technical provider whose player effect is indirect. ADR-0014 (layout service, generation, navmesh) now covers the implementation; remaining choices are marked "-> ADR".*
 
 ## Player Fantasy
 *Framing: indirect. creative-director viewpoint applied inline under the run's specialist budget (the LSC anchor "The city has no seams" is the parent fantasy; this GDD inherits it rather than inventing a second one).*

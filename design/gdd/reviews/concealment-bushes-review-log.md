@@ -88,3 +88,10 @@ Reviewed-Content-Hash: design/gdd/game-concept.md 6dbca7dc538ed44d89a5f009dbc8ed
 - C-W17(i): `BushEnterSwapSec` safe 0.46-0.7 -> 0.46-0.65 (F3a).
 - C-W21: F1 / F2 recomputed at r_N 0.20: E[O] 0.43, m0 0.349, pick lands on the player 0.81, P_hide 0.107, D1 cap 45 %; Player Fantasy, CON-R12, AC-CON-24(c), OQ3 and the Crowd references updated.
 - D-W6 / D26: Interactions, Dependencies and Cross-References record that a concealed player cannot ping (no spotter post).
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- Pings rows name IsInBushOrTransition (server) plus owner concealment/bush-action state (client), matching Pings PNG-R3/R5. NpcCount safe range 45-50 in F1 variables.
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

@@ -87,3 +87,6 @@ Reviewed-Content-Hash: design/gdd/concealment-bushes.md a7075ec56f19ea43b29d27c8
 
 ### Cross-review fix 2026-10-25 — main-session follow-ups
 - C-W18 follow-up: `AttackAttemptLockoutSec` safe 1.5-2.5 -> 1.5-2.0 (Penalty W-NKP-3 at grace 2.0). C-W31 follow-up: RetireAtServerTime may also ride Roster `RequestTransition`.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

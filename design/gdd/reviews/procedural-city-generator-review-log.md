@@ -92,3 +92,10 @@ Source: design/gdd/gdd-cross-review-2026-10-25.md; fixes applied unattended unde
 - C-W8: Objectives Chain added as a soft upstream row (reciprocity with OC's Downstream row for #16); the Dependencies intro no longer says the Generator is unreferenced by requirement sources.
 - C-W9: follow-ups (a)-(e) in Cross-GDD item 12 marked DONE; the bidirectionality note now says TDC registered the `CityGen*` keys; the LSC Cross-References row drops the superseded "MAJOR REVISION NEEDED ... re-review pending" text (status column untouched).
 
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- Framing line cites ADR-0014.
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

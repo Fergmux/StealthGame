@@ -150,3 +150,6 @@ Reviewed-Content-Hash: design/art/art-bible.md ba9f28821285a7933cad48bee9f4ccf28
 
 ### Cross-review fix 2026-10-25 — main-session follow-ups
 - C-W11 follow-up: F4 T_lock range follows the IIF lockout safe range 0.25-0.5. C-W25 threshold change (25/35 cm) mirrored into TDC, registry, ADR-0004 and ADR-0015 (amends D6).
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

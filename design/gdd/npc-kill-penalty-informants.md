@@ -1,6 +1,6 @@
 # NPC-Kill Penalty & Informants
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-25 (second round, lean mode: all nine first-round blockers resolved; four small blockers found and revised in place; re-review pending); first review NEEDS REVISION 2026-10-24; reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (tally confirmed, OQ-NKP-1/11/12 closed, `T_due` carrier, C1 confirmed); user scope decisions 2026-10-25 applied (in-game informant ping MVP, OQ-NKP-7 closed; awaiting audio bed deferred to VS, OQ-NKP-12)
+> **Status**: Approved — 2026-10-25 (main-session decision D35 under user authorisation; see production/design-closeout/2026-10-25_rereview-followups.md and design/gdd/gdd-cross-review-2026-10-25b.md). Prior status: Reviewed - NEEDS REVISION 2026-10-25 (second round, lean mode: all nine first-round blockers resolved; four small blockers found and revised in place; re-review pending); first review NEEDS REVISION 2026-10-24; reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (tally confirmed, OQ-NKP-1/11/12 closed, `T_due` carrier, C1 confirmed); user scope decisions 2026-10-25 applied (in-game informant ping MVP, OQ-NKP-7 closed; awaiting audio bed deferred to VS, OQ-NKP-12)
 > **Author**: design-system pipeline (autonomous) + creative-director, systems-designer + game-designer, art-director, qa-lead
 > **Last Updated**: 2026-10-25
 > **Last Verified**: 2026-10-25

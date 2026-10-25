@@ -98,3 +98,10 @@ Reviewed-Content-Hash: design/gdd/crowd-npc-behaviour.md 242977e3dcc0185347fd105
 - D-W9 (D29): F7 re-based on Objectives F1 (~9 min): new knob `StallFlagMinutes` 18 (stall flag, abort flag at half), `ObjectiveEndShare` per team-size bucket with the concept's 0.70 gate over 20 rounds for 4v4 and larger; AC 35 updated.
 - S-W1: R9 (f) also stops pawns in hand-over (pawn-level Halt); AC 12b, new AC 64, Edge Cases.
 - S-W3: R9 round-end step budget (2.0 ms added host game-thread time, about 3.1 KB burst for 9 clients); new AC 65 [SPIKE]; constants list.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- R17.2: a Disconnected(Kicked) for a participant with a live grace timer sets Kicked on the existing record, no second timer or takeover (S8). AC 66 wording. CR 22 note: StallFlagMinutes is registered. F5 NpcCount: safe minimum 45 (follow-up b).
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

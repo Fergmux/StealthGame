@@ -1,6 +1,6 @@
 # Crowd & NPC Behaviour
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-25 (second round, lean mode; revisions applied; re-review pending); first round NEEDS REVISION 2026-10-24; reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`NpcCount` 50; motion-profile and StateTree asset keys registered; pre-baked route-edge paths stored with `CrowdRoute`; touch half of the idle overlay off (no touchable-prop records); sit/browse verb and client input-device field declined for MVP); user scope decision 2026-10-25 applied (keyboard walk-slower modifier exists: interim full-pace rule lifted, `CrowdFullPacePct` 55, C4 active, T16 Yes)
+> **Status**: Approved — 2026-10-25 (main-session decision D35 under user authorisation; see production/design-closeout/2026-10-25_rereview-followups.md and design/gdd/gdd-cross-review-2026-10-25b.md). Prior status: Reviewed - NEEDS REVISION 2026-10-25 (second round, lean mode; revisions applied; re-review pending); first round NEEDS REVISION 2026-10-24; reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`NpcCount` 50; motion-profile and StateTree asset keys registered; pre-baked route-edge paths stored with `CrowdRoute`; touch half of the idle overlay off (no touchable-prop records); sit/browse verb and client input-device field declined for MVP); user scope decision 2026-10-25 applied (keyboard walk-slower modifier exists: interim full-pace rule lifted, `CrowdFullPacePct` 55, C4 active, T16 Yes)
 > **Author**: design-system pipeline (autonomous) + ai-programmer, systems-designer, game-designer; creative-director (CD-GDD-ALIGN gate)
 > **Last Updated**: 2026-10-25
 > **Last Verified**: 2026-10-25
@@ -184,7 +184,7 @@ The crowd_density formula is defined as:
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| N | int | 35-50 (safe; hard 6-100, TDC) | data file (`NpcCount`, 50) at start placement; the live NPC count (R1) for destination weights | NPC count |
+| N | int | 45-50 (safe; hard 6-100, TDC) | data file (`NpcCount`, 50) at start placement; the live NPC count (R1) for destination weights | NPC count |
 | w_t | float | 0.5-1.6 | data file (`CrowdAreaWeightCausewayMult` 1.4, `...MarketMult` 1.6, `...TempleMult` 0.8, `...ResidentialMult` 0.6) | attractor weight; a court inherits its host's weight |
 | A_t | float (m²) | calculated | layout | walkable area of type t |
 | a_n | float (m²) | calculated | layout | node catchment area |
@@ -205,7 +205,7 @@ The red_herring_rate formula is defined as:
 |----------|------|-------|--------|-------------|
 | r_P | float (/min per player) | ≥ 0 | measured in playtest (provisional defaults below) | how often a non-ally active player shows the tell |
 | n_P | int | 1-5 | `TeamSize` | non-ally active players |
-| n_N | int | 35-50 (safe; hard 6-100, TDC) | `NpcCount` | NPCs |
+| n_N | int | 45-50 (safe; hard 6-100, TDC) | `NpcCount` | NPCs |
 | P* | float | 0.11-0.9 | data file (per-tell target, R16; the bush target is IVP F5's `k · b`) | target posterior that a pawn seen doing the tell is a player |
 | r_N | float (/min per NPC) | > 0 (floor: 25 % of the table default for every SCL, IIF or Concealment tell, even if a measured r_P is 0) | calculated → `Crowd<Tell>IntervalSec` = 60 / r_N | NPC red-herring rate (accepted) |
 | Λ, T_gap | float (/min), float (min) | 0.5-1.2, 0.17-2 | calculated; `CrowdTellChainGapSec` / 60 | total accepted tell rate per NPC; chain gap |

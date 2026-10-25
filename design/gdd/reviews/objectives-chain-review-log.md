@@ -100,3 +100,10 @@ Source: design/gdd/gdd-cross-review-2026-10-25.md; fixes applied unattended unde
 
 ### Cross-review fix 2026-10-25 — main-session follow-ups
 - C-W10 follow-up: `ObjectiveInteractSec` safe range 2.5-4.5 -> 2.9-4.5 so it passes Crowd I-CNB-6 at `CrowdDecoyEarlyReleaseMaxSec` default 2.8 (TDC canonical row and registry mirrored).
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- N_npc safe range 45-50 (follow-up b).
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

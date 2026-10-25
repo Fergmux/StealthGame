@@ -86,3 +86,7 @@ Reviewed-Content-Hash: design/gdd/systems-index.md b195f89efa215d57e7630933f75bb
 
 ## Cross-review fix 2026-10-25
 - D29 / D-W10: the resolved-question note now says the rival-kill plate reads "Target eliminated" ("exile" is reserved for the NPC-kill removal). No other concept change.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- Tell inventory cites T1-T18 (D28).
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.

@@ -89,3 +89,6 @@ Source: design/gdd/gdd-cross-review-2026-10-25.md; fixes applied unattended unde
 - C-W8 / 2A-W13: reciprocity rows added: Session & Travel (PoolHash, mutual with Session's Pool -> Session row) and Assassination & Defence Reversal (split out of the Penalty row, mutual with ASN's Upstream and Downstream rows); bidirectionality note updated.
 - C-W38 / 2E-W9: Cross-References records that CP-12(a) (uniform draw over vacant cards) is the authority over SCL R2a.4 and LSC AC-14 "the victim's card"; CPA text unchanged.
 
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

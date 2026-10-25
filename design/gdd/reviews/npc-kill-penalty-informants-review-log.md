@@ -94,3 +94,6 @@ Reviewed-Content-Hash: design/gdd/informant-pings-team-comms.md 6bf80120e5a3d8ac
 - C-W17 / C-W18: `ExileBeatSec` safe range 0.75-1.2 narrowed to 0.75-0.95 (cites I-HUD-6 and W-NKP-5); `ExileCardTimeoutSec` safe 1.5-2.5 narrowed to 2.0-2.5; `StrikeOutReleaseGraceSec` W-NKP-3 pairing stated.
 - D-W10 (D29): Player Fantasy now names the card ("Informant") and keeps "exile" as the design term for this removal alone; "voice and text" changed to voice only (text chat is Vertical Slice); OQ-NKP-4 notes the rival-kill plate is "Target eliminated".
 - C-W9: "no ADR exists yet" corrected (ADR-0018, ADR-0019 exist); status cells untouched.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

@@ -1,6 +1,6 @@
 # Objectives Chain
 
-> **Status**: Reviewed - NEEDS REVISION 2026-10-25 (second review, lean; one blocking item fixed in place, independent re-review pending); first review NEEDS REVISION 2026-10-24 (all 8 blockers verified resolved); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`InteractSecOverride` removed from `FObjectiveDef`; `RivalPrelimCount` ON by default confirmed; `NpcCount` 50)
+> **Status**: Approved — 2026-10-25 (main-session decision D35 under user authorisation; see production/design-closeout/2026-10-25_rereview-followups.md and design/gdd/gdd-cross-review-2026-10-25b.md). Prior status: Reviewed - NEEDS REVISION 2026-10-25 (second review, lean; one blocking item fixed in place, independent re-review pending); first review NEEDS REVISION 2026-10-24 (all 8 blockers verified resolved); reconciled 2026-10-24; ADR-synced 2026-10-24; user decisions applied 2026-10-25 (`InteractSecOverride` removed from `FObjectiveDef`; `RivalPrelimCount` ON by default confirmed; `NpcCount` 50)
 > **Author**: design pipeline (autonomous) + game-designer, level-designer, systems-designer
 > **Last Updated**: 2026-10-25
 > **Last Verified**: 2026-10-24
@@ -205,7 +205,7 @@ The tend_posterior formula is defined as (by duration class; revised at design r
 | n_full | float | 3-5 | calculated (3 counted holds + about 0.6 full-length feints; default 3.6) | Opponent team's full-length tends per chain |
 | R_full | float (/min) | 0.30-0.55 | calculated (3.6 / 9 = 0.40) | Opponent team's full-length tend rate |
 | R_short | float (/min) | 0.25-0.55 | calculated ((0.53 + 3) / 9 ≈ 0.39) | Opponent team's early-release tends (cancels plus probes, F2 `N_probe`) |
-| N_npc | int | 35-50 (TDC safe range; hard 6-100) | `NpcCount` (50) | NPCs. `r_N` is per NPC and tuned for 50: at 35 NPCs and the same interval `P_full` = 0.77 (above the band), so any `NpcCount` change rescales `CrowdDecoyTendIntervalSec` in proportion (as the 40 → 50 change did) |
+| N_npc | int | 45-50 (TDC safe range; hard 6-100) | `NpcCount` (50) | NPCs. `r_N` is per NPC and tuned for 50: at 35 NPCs and the same interval `P_full` = 0.77 (above the band), so any `NpcCount` change rescales `CrowdDecoyTendIntervalSec` in proportion (as the 40 → 50 change did) |
 | c | float | 0.6-0.9 | Crowd decoy completion share (75 %) | Share of decoy tends held to the full `D` |
 | r_N | float (/min/NPC) | ≥ 0 | Crowd (`CrowdDecoyTendIntervalSec` 13,125 s → 0.0046 at 50 NPCs, 2026-10-25; was 10,500 s → 0.0057 at 40 NPCs, and 18,750 s → 0.0032 before that) | Decoy tends per NPC per minute |
 | P_full | float | 0.65-0.75 (design band, target 0.70) | calculated | Probability that a seen full-length tend is an opponent player |

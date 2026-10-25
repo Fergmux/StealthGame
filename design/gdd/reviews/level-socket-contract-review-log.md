@@ -107,3 +107,10 @@ Source: design/gdd/gdd-cross-review-2026-10-25.md (review-all-gdds, FAIL); fixes
 - C-W40 (LSC side): R5b.2 now states explicitly the respawn region is the team's own anchor disc, strictly nearer than the partner's, never a union (registry wording is the main session's fix).
 - C-W4: Information Visibility Policy relabelled Hard on the LSC upstream row (aligned with IVP's peer table); index row 8 to follow.
 
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- ADR-0014 framing line; ReachDetourMult D2 variable row (derived alias); D6 recommendation recorded as adopted (NpcCount safe 45-50); LayoutWalkableCellsMinCount note cites the I-LSC-1 floor 35.
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

@@ -74,3 +74,10 @@ Reviewed-Content-Hash: design/gdd/tuning-data-config.md 89d049074c81e71b16f12697
 
 ### Cross-review fix 2026-10-25 — main-session follow-ups
 - C-W4 follow-up: peer table now records the implementers' final labels (Session, CPA, LSC all Hard as implementers; Policy side Soft), reconciling edits made concurrently in Session/CPA/LSC.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- TeammateReconnecting row definition (event-cleared, D23) and TeammateReconnectEndCause row (Cleared causes: Lobby removal, host kick, round end; no "disconnected" line). NpcCount safe range 45-50 in the formula table (follow-up b).
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

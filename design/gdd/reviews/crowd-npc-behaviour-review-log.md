@@ -99,3 +99,10 @@ Reviewed-Content-Hash: docs/architecture/adr-0016-crowd-ai-architecture.md a5553
 - D-W7 / D27: G1 hold accounting (idle-scan holds are not T13), camping accepted, T13 row cites SCL R8.8's definition, AC-CNB-16 excludes G1 holds.
 - D-W8 / D28: Tell Matrix row T18 (Ping: no animation, no replicated pawn state, no tell); AC-CNB-30 range and Cross-References updated; Pings listed Downstream (Soft).
 - R3.1 notes the pace set is an SCL R5.1 constant held by no key.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- NpcCount safe range 45-50 in F-table variables (follow-up b).
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

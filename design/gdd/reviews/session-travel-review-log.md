@@ -101,3 +101,10 @@ Reviewed-Content-Hash: design/gdd/procedural-city-generator.md 959a9840a217d9c97
 - C-W1: Informant Pings listed as a soft Downstream row.
 - C-W4: Information Visibility Policy and Shared Character & Locomotion listed upstream as peer contracts (Hard for Session as implementer / soft mutual peer); Downstream labels match IVP.
 - C-W9: stale "no ADR exists yet" corrected, Open Question 12 closed; Cross-References gain received rows for this pass.
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- Rule 15: the Roster notify precedes OnParticipantDisconnected(Superseded), so Round captures the bumped ConnectionGeneration (S3'). Rejoiner edge case: Informant exception (Round R18).
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.

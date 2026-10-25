@@ -106,3 +106,10 @@ Source: design/gdd/gdd-cross-review-2026-10-25.md ("Fix pass 2026-10-25" section
 - C-W9: Informant Pings is MVP (change request 9, prototype mapping row; `PingCooldown` is the refill bucket).
 - C-W41: I-ASN-1 row restates the 290 cm reach cap; this log gains the missing closeout entry above.
 - Mirrors of owner changes: I-SCL-5 rewritten (`WalkSpeedScaleMinMult <= 0.8`), I-SCL-16 new, I-SCL-12/15 use `T_stop,max`; I-CS-1 is a rejection with no clamp (blend hard max 0.28); I-CNB-6 new (decoy max < `ObjectiveInteractSec`, whose safe range is now 2.9-4.5); I-LSC-4 retired (`ReachDetourMult` derived); I-LSC-1 density-cap note; I-PCG-7, I-IVP-1, W-RMF-5 new; I-PNG-1 notes D25 and `PingSkewTolSec`; Round 18 keys (`StallFlagMinutes`); Session, Penalty (`ExileBeatSec` 0.75-0.95, `ExileCardTimeoutSec` 2.0-2.5) and TMK (`TeammateMarkerLargeMult` discrete set) rows updated; mask-off threshold note 25/35 cm (C-W25).
+
+## Cross-review 2026-10-25b (/review-all-gdds since-last-review)
+- I-SCL-15 row records the 1.40 s pin (follow-up a); NpcCount safe range 45-50 (follow-up b); registry note: 47 LSC-only key names mirrored (follow-up c) and the remaining unmirrored owner keys recorded as open (N-W1).
+Report: design/gdd/gdd-cross-review-2026-10-25b.md. Status line unchanged.
+
+## Approved 2026-10-25 (D35)
+- Approved 2026-10-25 (D35): main-session decision under user authorisation after /review-all-gdds 2026-10-25b (CONCERNS, 0 blocking); remaining warnings stay listed in the GDD and design/gdd/gdd-cross-review-2026-10-25b.md.
