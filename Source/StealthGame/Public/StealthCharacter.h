@@ -12,7 +12,7 @@ class UInputAction;
 
 /**
  * The one pawn class used for BOTH players and NPCs (ADR-001 candidate: crowd identity parity).
- * The Game Animation Sample character Blueprint (BP_StealthCharacter, a copy of CBP_SandboxCharacter)
+ * The Game Animation Sample character Blueprint (CBP_SandboxCharacter; BP_CrowdCharacter is its child)
  * is reparented onto this class, so motion matching, traversal and cameras come from the sample while
  * the stealth rules live here. Nothing on this class differs between an NPC and a player except the
  * controller, which other clients cannot see except through the PlayerState link (see AStealthPlayerState).

@@ -1,6 +1,6 @@
 # Accessibility Requirements
 
-> **Status**: In Design. The tier is committed (see below) but was chosen autonomously during the 2026-10-25 unattended run (`modes.automation: autonomous`); it awaits user confirmation. Until confirmed, treat the tier as the working commitment, not a user-ratified one.
+> **Status**: Committed (2026-10-25). Tier chosen autonomously, then committed under the user's blanket authorisation of 2026-10-25 ("make any decision you like ... progress to the next stage"). The user can revise it at any time.
 > **Author**: ux-designer (autonomous run; no user session)
 > **Last Updated**: 2026-10-25
 > **Accessibility Tier Target**: **Standard**, with named elevations from Comprehensive (see "This Project's Commitment")
