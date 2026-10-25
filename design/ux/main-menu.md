@@ -1,6 +1,6 @@
 # UX Spec: Main Menu
 
-> **Status**: In Design (authored in an unattended run, 2026-10-25; every choice is logged in `production/session-logs/decision-log.md`; not yet reviewed with `/ux-review`)
+> **Status**: In Design (authored in an unattended run, 2026-10-25; every choice is logged in `production/session-logs/decision-log.md`; reviewed with `/ux-review` 2026-10-25: NEEDS REVISION, revisions applied in place, report in `production/design-closeout/ux-review-main-menu.md`)
 > **Author**: ux-designer (autonomous run; no user session)
 > **Last Updated**: 2026-10-25
 > **Journey Phase(s)**: Front end, before the first round and between sessions (no `design/player-journey.md` exists; see Open Question MM-1)
@@ -16,7 +16,7 @@
 
 **Complete the sentence.** *The player arrives at this screen wanting to* **start or enter tonight's session with the people they came with.**
 
-**What goes wrong without it.** There is no other way to host or join: without this screen the MVP is console commands only. A hard-to-use address field, an unreadable rejection or an unlabelled wait would make the first thirty seconds of every playtest evening a support call. Pillar 1 adds a negative duty: the front end must say nothing about who else is online, in a round, or on which team; it is the only screen a not-yet-admitted person sees, and it never shows a count or a name of anyone else.
+**What goes wrong without it.** There is no other way to host or join: without this screen the MVP is console commands only. A hard-to-use address field, an unreadable rejection or an unlabelled wait would make the first thirty seconds of every playtest evening a support call. Pillar 1 adds a negative duty: the front end must say nothing about who else is online, in a round, or on which team beyond the six Session-defined rejection sentences (the `InProgress` sentence is the one place a round's existence is stated, and Session mandates it); it is the only screen a not-yet-admitted person sees, and it never shows a count or a name of anyone else.
 
 **What this screen is not.** It is not a lobby (participants, teams, ready state and Start belong to the minimal lobby panel now and to Lobby UI in the Vertical Slice), not a settings screen (Settings is a pushed screen), not a help screen (Vertical Slice) and not a server browser (Matchmaking, Full Vision).
 
@@ -122,7 +122,7 @@ Arrangement chosen (logged): **left-docked single column**, over a centred colum
 | M4 | Host button | Button | "Host a session" | Yes | PAT-MNU-1 Secondary |
 | M5 | Join heading | Static text | "Join a session" (Primary text size, Semibold) | No | n/a |
 | M6 | Address field | Text input | Label "Host address"; value = last address; accepts `ip` or `ip:port` (IPv4) or a hostname (Session rule 5); help line beneath: "Example: 192.168.0.5 or 192.168.0.5:7777" (from the string table); Clear control | Yes | PAT-MNU-8 |
-| M7 | Join button | Button | "Join" | Yes (disabled while M6 is empty or invalid, with the reason in the help line) | PAT-MNU-1 Primary |
+| M7 | Join button | Button | "Join" | Yes (disabled only while M6 is empty, with the reason in the help line; an invalid address leaves M7 enabled and is reported by M12 on press, see State: Invalid address) | PAT-MNU-1 Primary |
 | M8 | Settings button | Button | "Settings" | Yes | PAT-MNU-1 Secondary; opens PAT-MNU-11 Push |
 | M9 | Quit button | Button | "Quit" | Yes | PAT-MNU-1 Secondary (not Destructive; see Entry & Exit Points) |
 | M10 | First-launch notice (VS) | Modal | Photosensitivity and Reduce screen effects notice; single Primary "Continue"; link to the Reduce screen effects setting; no auto-dismiss | Yes | PAT-MNU-9 (notice form) |
@@ -263,7 +263,7 @@ Touch is not a supported input method for this game; its block is dropped.
 - [x] All elements reachable with the D-pad and left stick
 - [x] Face-button mapping consistent with platform convention: A confirm, B back (menus fixed, not remappable, PAT-MNU-1)
 - [x] No action requires analog precision
-- [ ] Trigger and bumper shortcuts: none used on this screen (nothing to document); tab switching is Settings'
+- [x] Trigger and bumper shortcuts: none used on this screen (nothing to document); tab switching is Settings'
 - [ ] Controller disconnected while this screen is open: **not specified by any source**; listed under Open Questions MM-7 as an implementation question, not ticked
 - [ ] Typing an address with a gamepad needs an OS on-screen keyboard: availability NOT SOURCEABLE (MM-7)
 
@@ -289,7 +289,7 @@ Committed tier: **Standard** with named elevations (`design/accessibility-requir
 | **V-13** photosensitivity | First-launch notice M10 before the menu is operable; no flashing anywhere on this screen | VS (no MVP owner for the notice, accessibility F8) |
 | **V-15** Reduce motion | Every transition in the table above has an instant variant | VS toggle; MVP hooks |
 | **M-01 / M-11** | Fully operable without a pointer; gamepad and keyboard complete; every control states its function in text | MVP (operability); remap UI is VS |
-| **M-12** mis-press protection | Quit is the only irreversible control; it sits last in order and is never reachable by Esc | MVP |
+| Mis-press safety (no accessibility row applies: M-12 concerns Strike only) | Quit is the only irreversible control; it sits last in the focus order and is never reachable by Esc. It is a Secondary button with no confirmation because exiting from the root menu loses nothing (an exception to PAT-MNU-1's Destructive rule, MM-15) | MVP |
 | **C-06** reading time | A rejection sentence never auto-dismisses | MVP |
 | **C-10** plain language | Strings obey Session's language rule: never "server", "map", "level", "seed", "travel", "player count" or "waiting for players"; "session" and "city" only | MVP |
 | **T-12 / LIM-V2** screen reader | Name, role and state are exposed if the F16 spike resolves; **NOT ASSESSED** until then (engine support is NOT SOURCEABLE in `docs/engine-reference/unreal/**`). Until then, visible focus and text labels only | Alpha |
@@ -334,6 +334,8 @@ All verifiable by a tester without any other document.
 - [ ] **Name rules**: a name over 20 characters cannot be entered (counter at 16 characters, input blocked at 20); the lobby shows the name after the host's trimming and duplicate suffixing
 - [ ] **Pillar 1 negative**: with a round in progress on the host, a client attempting to join sees no count, name, team or state of any other participant on this screen, only the `InProgress` sentence
 - [ ] **Accessibility (committed tier)**: every interactive element has a visible focus indicator that survives greyscale; at text scale 200 % and UI scale 150 % on 1920x1080 no message is truncated and every control is still reachable by Tab; all text on the panel measures at least 4.5:1 on its plate
+- [ ] **Busy retry**: with the host mid-travel (`Busy`), pressing Join shows "The session is changing cities. Trying again..." on the status overlay (not on this screen), retries without player input, and reaches the Lobby when the host is ready; Cancel returns here with the address intact
+- [ ] **Resolution**: at 1280 x 720, 1920 x 1080, 1920 x 1200, 2560 x 1440 and 3440 x 1440 the panel stays inside the 5 % safe margin, every control is reachable, and no text is clipped
 - [ ] **Input parity**: the same journey (name, Host, Settings, Back, Join, Cancel) can be completed with keyboard only and with gamepad only (OS keyboard permitting)
 - [ ] **Screenshot evidence**: a retained screenshot of the Default, Invalid address and Join-rejected states exists in `production/qa/evidence/` (UI story evidence)
 
@@ -363,4 +365,5 @@ All verifiable by a tester without any other document.
 | MM-11 | NOTE | Lobby UI, the minimal lobby panel, the connection status overlays and the host panel have no UX spec yet (Session & Travel UX flag; Round & Match UX flag). The next screens to spec: minimal lobby panel plus overlays, Settings (MVP options panel per camera CS-R13: default camera mode, FOV per mode, sensitivity, invert Y, stick dead zone and curve, Reduce camera motion). | ux-designer | Open |
 | MM-12 | GAP | No wrapping rule for a localisation-expanded control label (P12). The build label's 18 px size equals the art bible floor but sits below the 24 px menu minimum of V-01; confirm it is a "secondary label". | localization-lead, art-director | Open |
 | MM-13 | GAP | Which string the build label shows (engine build, `ProtocolVersion`, or both) is undefined; it must be comparable between two players to diagnose `VersionMismatch`. | network-programmer | Open |
+| MM-15 | CONFLICT | PAT-MNU-1 says an irreversible button is Destructive and always opens a confirmation ("no exceptions"); this screen's Quit is irreversible but Secondary with no dialog, while the pause menu's Quit is Destructive with a dialog. The exception here is deliberate (no session or state is at risk from the root menu). Confirm, and either word the pattern as "irreversible loss of session or state" or give Quit a dialog here. **Resolved by the pattern library review (2026-10-25):** PAT-MNU-1 now defines Destructive as irreversible for the session or saved state, and names Quit from the front-end root as Secondary. | ux-designer, art-director | Resolved in PAT-MNU-1 |
 | MM-14 | NOTE | Menu motion, hover and focus values are proposals shared with interaction-patterns P1, P2, P3; the art-director confirms them for all menu specs together. | art-director | Proposed |

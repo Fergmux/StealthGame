@@ -1,6 +1,6 @@
 # Interaction Pattern Library
 
-> **Status**: In Design (authored in an unattended run, 2026-10-25; not yet reviewed with `/ux-review`)
+> **Status**: In Design (authored in an unattended run, 2026-10-25; reviewed with `/ux-review` 2026-10-25: NEEDS REVISION, revisions applied in place, report in `production/design-closeout/ux-review-interaction-patterns.md`)
 > **Author**: ux-designer (autonomous run; no user session)
 > **Last Updated**: 2026-10-25
 > **Version**: 0.1
@@ -12,7 +12,7 @@
 > - `design/accessibility-requirements.md` — accessibility commitments (tier: Standard; row ids V-, M-, C-, A- are cited below)
 > - `design/gdd/hud.md`, `design/gdd/input-interaction-framework.md`, `design/gdd/teammate-markers.md`, `design/gdd/camera-system.md` — the sources of nearly every pattern here
 > - `docs/architecture/adr-0021-ui-hud-layering-commonui.md` — layer order and widget rules the patterns must obey
-> - `design/ux/[screen].md` — screen specs that reference these patterns. **None exist yet** (`design/ux/` held no file when this library was written), so every "Used In" entry names a GDD element id or a planned spec, and each is marked "(planned)".
+> - `design/ux/[screen].md` — screen specs that reference these patterns. **Three exist** (`hud.md`, `main-menu.md`, `pause-menu.md`); "Used In" entries for screens still unwritten (Lobby, Settings, Session overlays) are marked "(planned)".
 >
 > **Template**: Interaction Pattern Library
 
@@ -66,7 +66,7 @@ Most pattern libraries describe how a control feels. In Smoking Mirror the domin
 
 ## Pattern Catalog
 
-Patterns are grouped by what they are for, not by widget type. Groups: **FND** foundations, **WLD** world-anchored (layer L0), **PLT** persistent plates (L1), **TRN** transient slots (L2), **CRD** cards, banners and overlays (L3, L4), **FBK** full-screen feedback, **MNU** menu controls and navigation (layer 100; Vertical Slice except the MVP host/join menu).
+Patterns are grouped by what they are for, not by widget type. Groups: **FND** foundations, **WLD** world-anchored (layer L0), **PLT** persistent plates (L1), **TRN** transient slots (L2), **CRD** cards, banners and overlays (L3, L4), **FBK** full-screen feedback, **MNU** menu controls and navigation (layer 100; MVP: main menu and in-session menu; Vertical Slice: lobby and settings).
 
 ### Pattern Catalog Index
 
@@ -74,16 +74,16 @@ Patterns are grouped by what they are for, not by widget type. Groups: **FND** f
 
 | Pattern Name | Category | Description | Used In | Status |
 |-------------|----------|-------------|---------|--------|
-| **PAT-FND-1** Opaque Stepped Plate | Foundation / Layout | The one container: opaque Obsidian, stepped 4 px corners, 2 px stroke, text on plate only. | Every plate, card and menu panel; `hud.md` (planned) | Draft |
-| **PAT-FND-2** Bound-Input Glyph | Foundation / Input | Key glyph plate showing the currently bound key or button for the active device. | Context prompt, strike hint, brace label, third-person hint, menu hints; `hud.md` (planned) | Draft |
+| **PAT-FND-1** Opaque Stepped Plate | Foundation / Layout | The one container: opaque Obsidian, stepped 4 px corners, 2 px stroke, text on plate only. | Every plate, card and menu panel; `design/ux/hud.md` | Draft |
+| **PAT-FND-2** Bound-Input Glyph | Foundation / Input | Key glyph plate showing the currently bound key or button for the active device. | Context prompt, strike hint, brace label, third-person hint, menu hints; `design/ux/hud.md` | Draft |
 | **PAT-FND-3** Signal Glyph Set | Foundation | The shape vocabulary: down pentagon (ally), up triangle (danger), square (tally, stamp), circle (duration or place), stepped bar (progress). | All signal elements | Draft |
-| **PAT-FND-4** Slot Priority and Drop | Foundation / Feedback | Transient slots hold one message; a lower-priority arrival is dropped, never queued. | Result slot, Notice slot; `hud.md` (planned) | Draft |
+| **PAT-FND-4** Slot Priority and Drop | Foundation / Feedback | Transient slots hold one message; a lower-priority arrival is dropped, never queued. | Result slot, Notice slot; `design/ux/hud.md` | Draft |
 | **PAT-FND-5** Contact-Gated Presentation | Foundation / Feedback | Outcome-caused presentation is held until the viewer's own contact frame, fall or removal. | Result plate, defence plate, brace End, rejection replies, removal card, hold cancel | Draft |
-| **PAT-WLD-1** Ally Marker | Game-Specific / World | Down-pentagon marker above an ally; filled, hatched or hollow; edge-clamped variant. | HUD-(17); `hud.md` (planned) | Draft |
+| **PAT-WLD-1** Ally Marker | Game-Specific / World | Down-pentagon marker above an ally; filled, hatched or hollow; edge-clamped variant. | HUD-(17); `design/ux/hud.md` | Draft |
 | **PAT-WLD-2** Ally Name Label | Game-Specific / World | Opaque name plate beside a marker, by focus or by hold. | HUD-(17), TM-R11 | Draft |
 | **PAT-WLD-3** Context Action Prompt | Game-Specific / World | Bound glyph plus verb anchored to a court fixture or bush, never a person. | HUD-E13 | Draft |
 | **PAT-WLD-4** Predicted Hold Ring | Game-Specific / World | Linear progress ring at the interacted object, predicted from the press, clamped at 0.98. | HUD-E12 | Draft |
-| **PAT-WLD-5** Sighting Ping (VS) | Game-Specific / World | Static open ring on the ground with stepped stroke weight for age. | Informant Pings (planned) | Draft |
+| **PAT-WLD-5** Sighting Ping (MVP) | Game-Specific / World | Static open ring on the ground with stepped stroke weight for age. | Informant Pings; `design/ux/hud.md` (E22) | Draft |
 | **PAT-PLT-1** Brace Indicator | Game-Specific / Ability | Ready, pending, Protected, End and Cooling states of the defence; never closes or flashes. | HUD-E01 | Draft |
 | **PAT-PLT-2** Wrong-Target Tally | Game-Specific / Resource | Stepped squares plus a numeral line plus a threshold triangle. | HUD-E02 | Draft |
 | **PAT-PLT-3** Step Bar and Stage Card | Feedback / Layout | Discrete stepped progress (own 3, rival 2) with a stage card under it. | HUD-E03, E04, E05 | Draft |
@@ -95,25 +95,26 @@ Patterns are grouped by what they are for, not by widget type. Groups: **FND** f
 | **PAT-TRN-3** Strike Hint | Game-Specific / Input | Screen-fixed "[glyph] Strike", identical for every rendered non-ally in reach; no reticle. | HUD-E14 | Draft |
 | **PAT-TRN-4** One-Time Hint | Feedback / Onboarding | Once-per-profile plate that must also live in Help. | HUD-E17 | Draft |
 | **PAT-TRN-5** Returning Countdown | Feedback | Whole-second plate on the neutral view while an informant awaits a body. | HUD-E11 | Draft |
-| **PAT-CRD-1** Removal Card | Modal / Overlay | One-time central band on own removal; preempts the plate; collapses into the informant frame. | HUD-E10 | Draft |
-| **PAT-CRD-2** End Banner | Overlay | Victory or Defeat bar, one reason line, a match-score line. | HUD-E18 | Draft |
+| **PAT-CRD-1** Removal Card | Modal / Overlay | One-time central band on own removal; preempts the plate; fades out over 800 ms (the informant frame is already present). | HUD-E10 | Draft |
+| **PAT-CRD-2** End Banner | Overlay | Victory or Defeat bar, one reason line, a match-score line, then the round summary. | HUD-E18, E21 | Draft |
 | **PAT-CRD-3** Status Overlay | Feedback / Modal | Connection and loading text, owned by Session, hosted on L4. | HUD-E20; Session (planned) | Draft |
 | **PAT-FBK-1** Neutral View and Fade | Feedback | Camera-driven black layer above L0 and below L1. | Camera CS-R12, CS-R15 | Draft |
 | **PAT-FBK-2** Per-Viewer Grade | Feedback | Post-process mood grade on the owner's frame only, with Reduce screen effects and a non-visual twin. | Camera, Concealment UI-2, art bible 2.6 to 2.9 | Draft |
-| **PAT-MNU-1** Menu Button (Primary, Secondary, Destructive) | Input | Three weights; Destructive always opens a confirmation. | Host/Join, Lobby, Pause, Settings (planned) | Draft |
+| **PAT-MNU-1** Menu Button (Primary, Secondary, Destructive) | Input | Three weights; Destructive (irreversible for the session or saved state) always opens a confirmation. | `main-menu.md`, `pause-menu.md`; Lobby, Settings (planned) | Draft |
 | **PAT-MNU-2** Toggle | Input | Binary setting, state shown by fill and text. | Settings (planned) | Draft |
 | **PAT-MNU-3** Slider | Input | Continuous setting with a numeric value. | Settings (planned) | Draft |
 | **PAT-MNU-4** Dropdown / Select | Input | Pick one of 3 to 15. | Settings (planned) | Draft |
 | **PAT-MNU-5** Binding Row | Input | A remappable action row with capture, conflict warning and reset. | Settings (planned) | Draft |
 | **PAT-MNU-6** List Item | Layout / Input | Selectable row in a vertical list. | Lobby participants (planned), Settings | Draft |
 | **PAT-MNU-7** Tab Bar | Navigation | Same-screen sections. | Settings (planned) | Draft |
-| **PAT-MNU-8** Input Field | Input | Text entry (join address, display name). | Host/Join (planned) | Draft |
-| **PAT-MNU-9** Modal and Confirmation Dialog | Feedback / Layout | Blocking decision with a focus trap; Cancel is the default focus. | Leave round, reset settings (planned) | Draft |
+| **PAT-MNU-8** Input Field | Input | Text entry (join address, display name). | `main-menu.md` | Draft |
+| **PAT-MNU-9** Modal and Confirmation Dialog | Feedback / Layout | Blocking decision with a focus trap; Cancel is the default focus. | `pause-menu.md` (Leave, Quit); reset settings (planned) | Draft |
 | **PAT-MNU-10** Tooltip | Feedback | Contextual text on hover or focus; never the only place a fact lives. | Settings (planned) | Draft |
-| **PAT-MNU-11** Screen Push / Pop / Replace | Navigation | Stack navigation between menu screens. | All menus (planned) | Draft |
-| **PAT-MNU-12** Focus Management | Navigation | Where focus goes on open, close, disable and destroy. | All menus (planned) | Draft |
-| **PAT-MNU-13** Escape / Cancel | Navigation | Universal back; in a round the menu key opens an overlay and never pauses. | All menus, Pause (planned) | Draft |
-| **PAT-MNU-14** Loading, Empty and Error State | Feedback | How menu content states are shown. | Lobby, Join, Settings (planned) | Draft |
+| **PAT-MNU-11** Screen Push / Pop / Replace | Navigation | Stack navigation between menu screens. | `main-menu.md`, `pause-menu.md`; all menus | Draft |
+| **PAT-MNU-12** Focus Management | Navigation | Where focus goes on open, close, disable and destroy. | `main-menu.md`, `pause-menu.md`; all menus | Draft |
+| **PAT-MNU-13** Escape / Cancel | Navigation | Universal back; in a round the menu key opens an overlay and never pauses; a no-op at the front-end root. | `main-menu.md`, `pause-menu.md`; all menus | Draft |
+| **PAT-MNU-14** Loading, Empty and Error State | Feedback | How menu content states are shown. | `main-menu.md`; Lobby, Settings (planned) | Draft |
+| **PAT-MNU-15** Scroll Container | Layout / Navigation | A panel or list taller than its allowed height scrolls; focus is never hidden. | `main-menu.md`, `pause-menu.md` (text scale 150 % and above); Settings (planned) | Draft |
 
 **Template patterns deliberately not adopted** (so a reviewer does not read the omission as an oversight):
 
@@ -274,7 +275,7 @@ Patterns are grouped by what they are for, not by widget type. Groups: **FND** f
 
 **Category**: Game-Specific / World
 **Status**: Draft
-**Used In**: HUD element (17); `design/ux/hud.md` (planned).
+**Used In**: HUD element (17); `design/ux/hud.md`.
 
 **Description**: A Turquoise down-pentagon with a stepped top notch hangs above each teammate, always on top. Fill encodes the marked player's state independent of the viewer.
 
@@ -381,11 +382,11 @@ Patterns are grouped by what they are for, not by widget type. Groups: **FND** f
 
 ---
 
-#### PAT-WLD-5 Sighting Ping (Vertical Slice)
+#### PAT-WLD-5 Sighting Ping (MVP)
 
 **Category**: Game-Specific / World
 **Status**: Draft
-**Used In**: Informant Pings and Team Comms (planned; the system is not designed).
+**Used In**: Informant Pings and Team Comms (MVP since 2026-10-25, D17); `design/ux/hud.md` (E22).
 
 **Description**: A Marigold open ring (60 degree gap) on the ground marking a **place**, never a person.
 
@@ -393,14 +394,15 @@ Patterns are grouped by what they are for, not by widget type. Groups: **FND** f
 - World radius at least 4 m; screen-space minimum 32 px; static after placement; no centre mark.
 - Mandatory Obsidian keyline, 3 px (4 px beyond 20 m).
 - Age is shown by stepped stroke weight (6, 4, 3 px at thirds of its life, *proposed*), never by fade; hard expiry (starts at 8 s). Entrance 300 ms stepped; exit 600 ms ease or stepped under Reduce screen effects.
-- Edge-clamped ring at 32 px when off-screen.
-- Visible to informant viewers on the pinging team; whether active allies also see it is an open design question.
+- Edge ring: the same broken ring at 32 px clamped to the safe rectangle when the centre is off-screen or behind the camera; static, unrotated, never an arrow, no label (HUD E22).
+- Sender label: the sender's display name on an Obsidian plate with a 2 px Turquoise stroke (ally chrome), Minimum 18 px, ellipsised; own ping shows the own name.
+- Team-wide: visible to the pinging team (MVP, per the Informant Pings GDD); no feed line and no spatial audio per ping (PNG-R8).
 
 **When to Use**: Place sightings only. **When NOT to Use**: Never follows or attaches to anything; never on a person.
 
-**Accessibility**: Shape and stepped stroke carry meaning without colour; every ping needs a feed line and a text caption twin for its cue (SFX audit row "Teammate callout"). The ping input must be remappable.
+**Accessibility**: Shape and stepped stroke carry meaning without colour; the ring and its sender label are the caption for the ping tick (no feed line per ping, PNG-R8; SFX audit row "Teammate callout"). The ping input must be remappable.
 
-**Implementation Notes**: Placeholder only; finalise when the Informant Pings GDD exists.
+**Implementation Notes**: Specified by the HUD spec (E22 Team ping rings) and the Informant Pings GDD; finalise the *proposed* stroke values there.
 
 ---
 
@@ -493,13 +495,13 @@ Patterns are grouped by what they are for, not by widget type. Groups: **FND** f
 **Status**: Draft
 **Used In**: HUD-E06.
 
-**Description**: Up to three plain lines top-right, allies only. In MVP: "{Ally name} — eliminated for the round", identical for every removal reason, shown at the later of the state's arrival and the marker's retire event so the line enters with the marker's exit.
+**Description**: Up to three plain lines top-right, allies only. Line types in MVP (all identical for every cause): "{Ally} — eliminated for the round" (with the upward triangle, shown at the later of the state's arrival and the marker's retire event so the line enters with the marker's exit), "{Ally} — reconnecting" and "{Ally} — back" (text only, no triangle: a reconnect is not finality).
 
 **Specification**: Opaque plate, 20 px Bone text, upward triangle for removal; life and dwell per F8 and multiplied by `HudReadHoldMult`. Opponents receive nothing (no removal notice for the enemy team). Marker retirement alone (a release to the crowd on disconnect) never creates a line.
 
 **When to Use**: Team-visible facts. **When NOT to Use**: Joins, leaves and connection states of others are never shown in a round (Session rule 24).
 
-**Accessibility**: Text, not colour; line life is extendable (V-09 text scale and `HudReadHoldMult`); a reserved line type for informant sightings (VS) needs a caption twin.
+**Accessibility**: Text, not colour; line life is extendable (V-09 text scale and `HudReadHoldMult`); no feed line is created for a ping or a sighting (PNG-R8), so no caption twin is needed for one.
 
 **Implementation Notes**: Slots drop rather than queue beyond the three-line cap (PAT-FND-4).
 
@@ -676,7 +678,7 @@ Total on screen 3.85 s at defaults. Shown at the local contact frame (PAT-FND-5)
 **Status**: Draft
 **Used In**: HUD-E10.
 
-**Description**: A one-time central band shown to the removed player: "Exiled" or "Eliminated for the round", both with "You watch for your team now." (wording provisional, HUD OQ5). An opaque Cochineal Deep title bar with Bone text and an upward stepped triangle; at most 30 % of the screen; never full-bleed.
+**Description**: A one-time central band shown to the removed player: title "Informant" with subtitle "Too many wrong targets" (strike-limit exile) or "Eliminated for the round" (assassination or reversal), both with "You watch for your team now." (D11, D17; the word "Exiled" appears on no card). An opaque Cochineal Deep title bar with Bone text and an upward stepped triangle; at most 30 % of the screen; never full-bleed.
 
 **Specification**:
 
@@ -685,7 +687,7 @@ Total on screen 3.85 s at defaults. Shown at the local contact frame (PAT-FND-5)
 | Wait | Exile: plate show time + `ExileBeatSec` (0.8 s). Other removals: own fall start + `HudRemovalCardDelaySec` (0.8 s) | Fall is visible at least 0.8 s before the card |
 | Enter | 600 ms fade | The plate in the Result slot leaves over 0.25 s (stepped, never a cross-fade) |
 | Hold | `HudRemovalCardHoldSec` 4 s | Static |
-| Collapse | 800 ms into the informant frame | Ease-in-out |
+| Collapse | 800 ms fade-out (alpha 1 to 0); the informant frame is already present from the card entrance (HUD-UX-16 reading, art-director to confirm) | Ease-in-out |
 
 - Shows once; never replayed on reconnect or rejoin after the grace. A killed informant gets no card. If the removal ends the round, no card shows (or a showing card exits over 0.25 s as the banner enters).
 - No field names the killer, its kind or its team; no kill cam. The world fades to black over 0.5 s from the card entrance.
@@ -702,7 +704,7 @@ Total on screen 3.85 s at defaults. Shown at the local contact frame (PAT-FND-5)
 
 **Category**: Overlay
 **Status**: Draft
-**Used In**: HUD-E18.
+**Used In**: HUD-E18, HUD-E21; `design/ux/hud.md`.
 
 **Description**: On `Phase = Ended`: "Victory" (Bone bar) or "Defeat" (Cochineal Deep bar) in the viewer's own terms, exactly one approved reason line, and a score line "Your house {a} · Rival house {b}". No duration, no per-participant list, no opponent colours.
 
@@ -710,6 +712,7 @@ Total on screen 3.85 s at defaults. Shown at the local contact frame (PAT-FND-5)
 - Waits for an own pending result plate to show for `HudBannerMinPlateSec`, and for an own pending removal to reach its fall start; total wait capped by `HudBannerMaxDelaySec`; never shows before the own plate or fall (F10).
 - Persistent clusters fade out over 600 ms as the banner enters. Winners' Final step fills first (0.5 s).
 - Variants on `Reset`: "The round was called off" (clears every transient element at once); lobby line "The host will begin the next round" (non-host; no count beyond `n / capacity`).
+- Round summary (HUD-E21): one plate directly under the score line with two Minimum 18 px lines, own house first ("Your house — steps {s} of 3 · eliminated {e} · wrong targets {w}" and the same for "Rival house"); plain text, no icons, shown only at `Ended`, never in a called-off round.
 - The post-round reveal (art bible 7.3 row 13) is a separate Vertical Slice screen.
 
 **When to Use**: Round end. **When NOT to Use**: Never before `Ended`; never show elapsed time or opponent counts.
@@ -728,7 +731,7 @@ Total on screen 3.85 s at defaults. Shown at the local contact frame (PAT-FND-5)
 
 **Description**: Local connection and loading text on layer L4: "Connecting...", "Loading the city...", "Connection lost. Reconnecting..." with a Cancel option, "The session has ended." with an OK button. Rejection messages are one plain sentence per reason code ("This session is full.", "This round has already begun.", and so on).
 
-**Specification**: Opaque plate, text from a string table, one message at a time. The overlay sits over any HUD state and is orthogonal to it. No in-round element may show joins, leaves, connection states, pings or counts of other participants (Session rule 24). Cancel and OK are Menu Buttons (PAT-MNU-1) and make the overlay the one HUD layer that takes input; it hosts a focus trap while a button is showing.
+**Specification**: Opaque plate, text from a string table, one message at a time. The overlay sits over any HUD state and is orthogonal to it. No in-round element may show joins, leaves, connection states, pings or counts of other participants (Session rule 24). The overlay itself is display-only on L4 and never takes input (D15, ADR-0021 L4 split): Cancel and OK are Menu Buttons (PAT-MNU-1) on a Session-owned modal pushed at ZOrder 100, which hosts the focus trap while a button is showing.
 
 **When to Use**: Own connection state. **When NOT to Use**: Never show another participant's connection.
 
@@ -780,7 +783,7 @@ Total on screen 3.85 s at defaults. Shown at the local contact frame (PAT-FND-5)
 
 ### Menu Controls and Navigation (layer 100, Common UI)
 
-> **Scope.** The MVP has one minimal menu (Host / Join with an address field, a minimal lobby panel, status overlays). Lobby UI, Settings & Accessibility and Pause are Vertical Slice and are not designed. These patterns exist so those screens inherit one behaviour. **Values marked *proposed* are not in any GDD and need art-director confirmation** (Open Questions P1, P2, P3).
+> **Scope.** The MVP has the main menu (`main-menu.md`), the in-session menu (`pause-menu.md`), a minimal lobby panel and status overlays. Lobby UI and the full Settings & Accessibility screen are Vertical Slice and are not designed. These patterns exist so those screens inherit one behaviour. **Values marked *proposed* are not in any GDD and need art-director confirmation** (Open Questions P1, P2, P3).
 >
 > **Menu look.** Menus use plates, Bone, Bone Dim and Obsidian only. **No signal hue appears in a menu**: Turquoise is the ally's, Cochineal is danger and finality, and Marigold is progress or intel, so a saturated colour on screen always means a message (art bible 4.6).
 
@@ -804,9 +807,9 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 
 **Category**: Input
 **Status**: Draft
-**Used In**: Host/Join, Lobby, Pause, Settings, Status Overlay (all planned).
+**Used In**: `main-menu.md`, `pause-menu.md`; Lobby, Settings, Status Overlay (planned).
 
-**Description**: Primary is the screen's one main action; Secondary is cancel or an alternative; Destructive is irreversible.
+**Description**: Primary is the screen's one main action; Secondary is cancel or an alternative; Destructive is irreversible **for the session or for saved state** (Leave, Quit during a session, Reset all). Quit from the front-end root, where no session or state is at risk, is Secondary and executes directly (main-menu MM-15 resolved).
 
 **Specification**:
 - Primary: Bone plate with Obsidian text (inverted), at most one visible per screen. Secondary: baseline plate. Destructive: baseline plate with an **upward triangle glyph and the specific verb as label**; **no Cochineal** (reserved for danger and finality; *proposed*).
@@ -922,7 +925,11 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 
 **Specification**: A row of Menu Buttons; the active tab has a filled square marker and a 4 px stroke (state by shape, not colour). Left/Right or Q/E (menu only) or LB/RB switches tab; Tab key moves into the content. Switching is instant; under default motion a 150 ms cross-fade is the maximum.
 
+**When to Use**: Same-screen sections of one task (Settings). **When NOT to Use**: Navigating between screens (use PAT-MNU-11) or fewer than three sections.
+
 **Accessibility**: Active state is shape plus text; each tab's content is reachable by keyboard and gamepad; Help tab holds the permanent tutorial text (C-03).
+
+**Implementation Notes**: One Common UI tab list; tab state lives in the view-model, never in a widget animation.
 
 ---
 
@@ -930,11 +937,17 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 
 **Category**: Input
 **Status**: Draft
-**Used In**: Host/Join address field (MVP), display name (planned), chat if it ever ships.
+**Used In**: `main-menu.md` (address and display name fields); chat if it ever ships.
 
 **Specification**: Baseline plate with a visible caret; the Join address field remembers the last address. Validation shows an inline text line beneath, never a colour change alone ("Enter an address like 192.168.0.5:7777" style example text from the string table). A character limit shows a counter at 80 % and blocks further input. Escape clears focus without discarding text; a Clear control is provided.
 
+**When to Use**: Free text the player must type (address, name). **When NOT to Use**: Choosing from a known set (dropdown) or a number in a range (slider).
+
+**States**: baseline states plus Focused-with-caret, Invalid (inline text line replaces the help line), At-limit (counter at 80 %, input blocked) and Disabled.
+
 **Accessibility**: Label above the field, not placeholder-only; errors are text; works with an on-screen keyboard if the OS provides one. If in-game chat or voice is ever added, CVAA duties apply (accessibility F3).
+
+**Implementation Notes**: `UEditableText` inside a Common UI widget; value held in the view-model; validation runs on commit and on activation, never per keystroke.
 
 ---
 
@@ -942,16 +955,20 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 
 **Category**: Feedback / Layout
 **Status**: Draft
-**Used In**: Leave round, reset settings, reset bindings, photosensitivity notice (planned).
+**Used In**: `pause-menu.md` (Leave, Quit); reset settings, reset bindings, photosensitivity notice (planned).
 
 **Description**: A blocking decision. The confirmation form is always triggered by a Destructive button.
 
 **Specification**:
 - **Focus trap**: focus cycles inside the dialog only and returns to the trigger on close.
 - Structure: title (the action), one sentence stating the consequence, confirm button (Primary, **labelled with the specific action**, never "OK" or "Yes"), Cancel (Secondary). **Default focus is Cancel.**
-- In-round "Leave the round" confirms with the consequence in text ("The round continues without you. You can rejoin while the round is in progress.") because the game cannot pause (accessibility C-02, LIM-C1). Opening any menu in a round **does not pause the world** and the overlay says so.
+- In-round "Leave the session" (and "Quit the game") confirms with the consequence in text ("The round continues without you. You can rejoin while the round is in progress.") because the game cannot pause (accessibility C-02, LIM-C1). Opening any menu in a round **does not pause the world** and the overlay says so.
 - Esc or B equals Cancel. The first-launch **photosensitivity notice** uses the modal form with a single Primary "Continue", a link to the Reduce screen effects setting, and no timed auto-dismiss.
 - Open 200 ms ease-out, close 150 ms ease-in under default motion; instant under Reduce motion; no scale-pop.
+
+**When to Use**: Confirming a Destructive action; the first-launch notice. **When NOT to Use**: Reversible choices, or information that does not need a decision (use the plate patterns).
+
+**States**: Open (focus on Cancel), Confirming (the action runs and the dialog closes), Cancelled (returns to the trigger with nothing changed).
 
 **Accessibility**: Dialog title and body are text; no timed dismissal; screen reader announcement as an alert when F16 resolves.
 
@@ -967,7 +984,13 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 
 **Specification**: Appears on hover after 400 ms or on keyboard or gamepad focus after 400 ms; plate, 20 px text. **Never the only place a fact lives**: anything required to use a control is in its visible label or help line. Repositions to stay on screen; disappears on blur or any input. Appearance 120 ms ease-out, none under Reduce motion.
 
+**When to Use**: Optional detail for a settings control. **When NOT to Use**: Anything required to use the control, any in-round element, or any text about another participant.
+
+**States**: Hidden, Shown (after the 400 ms delay), Dismissed on blur or any input.
+
 **Accessibility**: Reachable by keyboard and gamepad (no hover-only information).
+
+**Implementation Notes**: Common UI tooltip widget on layer 100 only; never on layers below 100.
 
 ---
 
@@ -975,9 +998,15 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 
 **Category**: Navigation
 **Status**: Draft
-**Used In**: All menus (planned).
+**Used In**: `main-menu.md`, `pause-menu.md`; all menus.
 
 **Specification**: Push (deeper), Pop (back), Replace (peer, or to the loading screen). Default motion: Push and Pop are a 200 ms **stepped** slide of at most 8 px with a fade, not a full-width slide (a full-width slide breaks L5); Replace is a 200 ms fade out plus 200 ms fade in. **Reduce motion: instant cut or 100 ms fade at most.** Focus rules in PAT-MNU-12. A menu opened during a round is an overlay on layer 100 and never replaces the HUD.
+
+**When to Use**: Moving between menu screens. **When NOT to Use**: Showing a HUD element or a transient message.
+
+**States**: Pushed, Popped (focus restored on the trigger), Replaced.
+
+**Accessibility**: Focus is restored on pop (PAT-MNU-12); every motion has an instant variant under Reduce motion.
 
 **Implementation Notes**: `UCommonActivatableWidgetStack` (ADR-0021 §7).
 
@@ -987,7 +1016,7 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 
 **Category**: Navigation
 **Status**: Draft
-**Used In**: All menus (planned).
+**Used In**: `main-menu.md`, `pause-menu.md`; all menus.
 
 | Rule | Behaviour |
 |------|-----------|
@@ -999,24 +1028,30 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 | Visibility | The focus indicator is **always** visible for keyboard and gamepad; never suppressed |
 | Device change | The last input device decides glyphs; focus is kept |
 
+**When to Use**: Every menu screen. **When NOT to Use**: Never applies to the HUD (it has no focus). **Accessibility**: the focus indicator survives greyscale (stroke weight plus marker). **Implementation Notes**: Common UI focus routing; the default focus target is declared by each screen spec (Resume in the in-session menu, Join or the address field in the main menu).
+
 ---
 
 #### PAT-MNU-13 Escape / Cancel
 
 **Category**: Navigation
 **Status**: Draft
-**Used In**: All menus (planned).
+**Used In**: `main-menu.md`, `pause-menu.md`; all menus.
 
-**Specification**: Esc and gamepad B (platform mapping) go back one level; at the root of a menu they close it; in a round the menu key opens the pause overlay and pressing it again closes it. The overlay never pauses the world and never changes any HUD value. Cancelling a capture, a dropdown or a dialog never changes a setting. In a Confirmation dialog Esc equals Cancel.
+**Specification**: Esc and gamepad B (platform mapping) go back one level; at the root of a menu they close it; in a round the menu key opens the pause overlay and pressing it again closes it. The overlay never pauses the world and never changes any HUD value. Cancelling a capture, a dropdown or a dialog never changes a setting. In a Confirmation dialog Esc equals Cancel. **Exception: at the front-end root (the main menu) Esc is a no-op**: it never quits and never navigates (it only blurs a field or closes a dialog).
+
+**When to Use**: Every menu. **When NOT to Use**: Never as a way to quit the application.
 
 **Accessibility**: Reachable in one press from any gameplay state (accessibility C-02 mitigation).
+
+**Implementation Notes**: One Common UI back action in `IMC_Menu`; the menu key in a round is `IMC_Common` and flushes outstanding Begins first (ADR-0011 §9).
 
 ---
 
 #### PAT-MNU-14 Loading, Empty and Error State
 
 **Category**: Feedback
-**Used In**: Lobby, Join, Settings (planned).
+**Used In**: `main-menu.md` (invalid address, rejection); Lobby, Settings (planned).
 
 **Specification**:
 - **Loading**: plate with a text line ("Loading the city..."); a determinate Step Bar if progress is known, otherwise text only; a spinner, if used, is replaced by a static equivalent under Reduce motion. Text never counts or names other players.
@@ -1024,7 +1059,31 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 - **Error**: one plain sentence per reason code (Session's list); the cause in words, the next action as a button; no colour-only error; no harsh buzzer (a short dull UI tone is acceptable).
 - Success confirmation for settings is the control's own state change plus a one-line "Saved" in the plate for 3 s; never the only record.
 
+**When to Use**: Any menu content that waits, is empty or can fail. **When NOT to Use**: In-round HUD states (those are the HUD's slots and plates).
+
 **Accessibility**: All states are text; none auto-dismisses actionable text under 5 s.
+
+**Implementation Notes**: Error sentences come from the string table keyed by Session's reason code; no code is shown to the player.
+
+---
+
+#### PAT-MNU-15 Scroll Container
+
+**Category**: Layout / Navigation
+**Status**: Draft
+**Used In**: `main-menu.md` and `pause-menu.md` (panel overflow at text scale 150 % and above); Settings, Lobby list (planned).
+
+**Description**: A panel or list taller than its allowed height scrolls instead of clipping.
+
+**Specification**: Scrolls only when the content overflows; the mouse wheel and the right stick scroll; Up/Down and Tab move focus and scroll the focused control into view, so the focus indicator is never off screen. A visible scroll thumb (stepped, Bone Dim on an outline track, no hue) shows position; dragging it is never the only way to scroll. No scroll inertia or overshoot (L5). Scrolling never moves a HUD element.
+
+**When to Use**: Menu content that can exceed its height at large text scales. **When NOT to Use**: The HUD (nothing scrolls; plates grow) or content that fits.
+
+**States**: Not overflowing (no thumb), Overflowing (thumb shown), Scrolling by wheel or focus (instant, no animation under Reduce motion).
+
+**Accessibility**: Fully keyboard and gamepad operable; position is also shown in text where the list is long ("3 of 10", PAT-MNU-6).
+
+**Implementation Notes**: `UScrollBox` inside the Common UI activatable; the panel's allowed height is set by the screen spec (the in-session menu caps its bottom edge at 70 % of the screen height).
 
 ---
 
@@ -1077,7 +1136,7 @@ Minimum control height 48 px at 1080p; minimum menu text 24 px (accessibility V-
 | Brace protected and protection ended | UI Brace | Indicator state | Server-confirmed |
 | Brace ready-again | UI Ready (owner only, soft, 2D) | Cooling numeral resolves to Ready | Must stay unobservable to anyone else |
 | Rejection | UI Reject (quiet, level, 2D) | Rejection plate | Specified by IIF UI-5; not listed in HUD VA-HUD-6 (Open Questions P4); informant plate has no sound |
-| Teammate callout, sighting tick (VS) | UI Callout | Feed line, ping | Caption required |
+| Teammate callout, sighting tick (MVP) | UI Callout | Ping ring and sender label | The ring and label are the caption |
 | Being targeted | none | none | By design (ASN-R6) |
 | Menu hover / focus | UI Hover (menu only) | State change | Very short, non-fatiguing on rapid navigation |
 | Menu confirm / back | UI Confirm / UI Cancel (menu only) | State change | |
@@ -1094,8 +1153,8 @@ All UI sounds sit on the UI bus, which the player can mute knowing every in-roun
 
 | Gap | Needed by | Notes |
 |-----|-----------|-------|
-| Ping layer slot and sighting feed line | Informant Pings and Team Comms (VS) | PAT-WLD-5 is a placeholder; the HUD reserves a slot inside L0 and a feed line type. |
-| Team text channel and ping set | Informant Pings (VS) | Accessibility F3: the MVP has no in-game team channel. Needs an input-field and a message-line pattern. |
+| Ping layer slot | Informant Pings and Team Comms (MVP) | PAT-WLD-5 is specified in the HUD spec (E22); no feed line per ping (PNG-R8). |
+| Team text channel and pre-set ping set | Informant Pings (MVP ping; text channel not built) | Accessibility F3: the MVP has no in-game team channel. Needs an input-field and a message-line pattern. |
 | Round-end reveal rows | Post-Round Reveal and Results (VS) | Staggered rows one per 300 ms, each 500 ms ease-out (art bible 7.6); one pentagon silhouette for everyone. |
 | Lobby list with team and ready state | Lobby UI (VS) | PAT-MNU-6 covers the row; the screen is unspecified. |
 | Host panel | Round (MVP optional) | Start and Reset buttons; console commands are the MVP path. |
@@ -1122,11 +1181,11 @@ All UI sounds sit on the UI bus, which the player can mute knowing every in-roun
 | P2 | GAP | Menu motion values (push and pop 200 ms stepped, at most 8 px) are proposed to keep L5; the template's 250 ms full slide breaks the art bible rule. Confirm. | art-director, ux-designer | Menu specs | Proposed |
 | P3 | GAP | Menu hover and focus sounds are not in any audio document. Confirm they are allowed outside a round and stay on the UI bus. | audio-director | Event Feedback and Cues GDD | Unresolved |
 | P4 | CONFLICT | IIF UI-5 says a quiet 2D owner-only tone plays with a rejection plate; HUD VA-HUD-6 lists every HUD cue and omits a rejection tone. Decide whether the tone exists. The accessibility SFX audit assumes it does and lists the plate as its twin. | audio-director, ux-designer | HUD re-review | Unresolved |
-| P5 | CONFLICT (wording) | HUD-R5 says the bottom-left slot stacks "brace indicator, tally, rejection plate (stacked upward)"; HUD-R13 and HUD-E15 say the rejection plate sits "beside" the brace indicator. The HUD UX spec must pick one layout. | ux-designer | HUD UX spec | Unresolved |
+| P5 | CONFLICT (wording) | HUD-R5 says the bottom-left slot stacks "brace indicator, tally, rejection plate (stacked upward)"; HUD-R13 and HUD-E15 say the rejection plate sits "beside" the brace indicator. The HUD UX spec must pick one layout. | ux-designer | HUD UX spec | Resolved by `hud.md` (rejection plate beside the brace row) |
 | P6 | GAP | The `ShowTeamNames` hold input (TM CR-4) is pending user decision and is absent from IIF R15's default-binding table. PAT-WLD-2 works by focus alone until it exists. If added it needs a default binding, a toggle alternative and a place in the binding screen. | user, game-designer | Before Vertical Slice | Pending user |
 | P7 | GAP | ADR-0021 states every layer below 100 is hit-test-invisible with no input, but PAT-CRD-3 (status overlay with Cancel and OK buttons, owned by Session on L4) needs input. State how input is routed on L4 and whether a Common UI activatable is permitted there, given the ban on activatables below 100. | ue-umg-specialist, technical-director | ADR-0021 amendment | Resolved by D15 (ADR-0021 L4 split, 2026-10-25): layers below ZOrder 100 stay display-only; PAT-CRD-3's Cancel/OK buttons live on a Session-owned modal pushed at ZOrder 100 |
-| P8 | CONFLICT (accessibility) | The result plate default hold (3.0 s) is below the Standard-tier 5 s guideline; the library records it as a documented deviation mitigated by `HudReadHoldMult`. The HUD GDD should state the rationale. See accessibility F2. | ux-designer | HUD re-review | Unresolved |
+| P8 | CONFLICT (accessibility) | The result plate default hold (3.0 s) is below the Standard-tier 5 s guideline; the library records it as a documented deviation mitigated by `HudReadHoldMult`. The HUD GDD should state the rationale. See accessibility F2. | ux-designer | HUD re-review | Resolved by `hud.md` (Accessibility, "Reading time", documented deviation LIM-C2) |
 | P9 | GAP | The concealed grade has no non-visual twin and Reduce screen effects disables its vignette (accessibility F11). PAT-FBK-2 carries the gap until the Concealment GDD answers. | art-director, audio-director | Concealment re-review | Unresolved |
-| P10 | GAP | HUD-E19's latency icon and the `HudLatencyWarnRttSec` threshold specify no colour-independent shape; confirm in the HUD UX spec. | ux-designer | HUD UX spec | Unresolved |
-| P11 | RULING | In-round "Leave the round" has no GDD owner. The library specifies a confirmation that says the round continues without the player; confirm the wording and whether leaving as an Active player should become an informant or release the pawn to the crowd (Roster and Session decide). | game-designer | Lobby UI and Pause design | Unresolved |
+| P10 | GAP | HUD-E19's latency icon and the `HudLatencyWarnRttSec` threshold specify no colour-independent shape; confirm in the HUD UX spec. | ux-designer | HUD UX spec | Resolved by `hud.md` E19 (three-step stair glyph, hollow top step; art-director to approve) |
+| P11 | RULING | In-round "Leave the round" has no GDD owner. The library specifies a confirmation that says the round continues without the player; confirm the wording and whether leaving as an Active player should become an informant or release the pawn to the crowd (Roster and Session decide). | game-designer | Lobby UI and Pause design | Wording used in `pause-menu.md` ("Leave the session"); informant-or-release outcome tracked as pause-menu PM-6 |
 | P12 | GAP | No pattern exists for a localisation-expanded string (plates absorb expansion, but a menu control with a long label needs a wrapping rule). Define when `/localize` first runs. | localization-lead | Before string freeze | Unresolved |
