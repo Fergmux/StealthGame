@@ -21,6 +21,6 @@ Engine: Unreal Engine 5.8 (installed 5.8.4)
 | [NPC-Kill Penalty & Informants](npc-kill-penalty-informants/EPIC.md) | Feature | NPC-Kill Penalty & Informants | design/gdd/npc-kill-penalty-informants.md | 22 stories | Ready |
 | [Objectives Chain](objectives-chain/EPIC.md) | Feature | Objectives Chain | design/gdd/objectives-chain.md | 23 stories | Ready |
 | [Procedural City Generator](procedural-city-generator/EPIC.md) | Feature | Procedural City Generator | design/gdd/procedural-city-generator.md | Not yet created | Ready |
-| [Informant Pings & Team Communication](informant-pings-team-comms/EPIC.md) | Feature | Informant Pings & Team Communication | design/gdd/informant-pings-team-comms.md | Not yet created | Ready |
+| [Informant Pings & Team Communication](informant-pings-team-comms/EPIC.md) | Feature | Informant Pings & Team Communication | design/gdd/informant-pings-team-comms.md | 27 stories | Ready |
 | [Teammate Markers](teammate-markers/EPIC.md) | Presentation | Teammate Markers | design/gdd/teammate-markers.md | Not yet created | Ready |
 | [HUD](hud/EPIC.md) | Presentation | HUD | design/gdd/hud.md | Not yet created | Ready |

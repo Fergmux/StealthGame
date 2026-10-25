@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/informant-pings-team-comms.md
 > **Architecture Module**: Informant Pings in `StealthGameplay/Features/Pings` (`UTeamPingService` over headless `FTeamPingCore`, `UTeamPingViewComponent`; controller RPC `ServerTeamPing` declared on `AStealthPlayerController` in the composition root)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories informant-pings-team-comms`
+> **Stories**: 27 stories (see Stories below)
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 17 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -79,6 +79,40 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 - **Estimate**: about 12.5 bottom-up days (human-paced yardstick, `production/estimates/2026-10-25_mvp-rebaseline.md`, Method B work packages); planning figure about 7.5 days after the uniform 0.6 calibration. Low confidence: no sprint history exists, so run the 2-week calibration spike and re-baseline.
 - **Acceptance criteria in the GDD**: about 20 (counted as GIVEN-form criteria in the Acceptance Criteria section).
 - **MVP build order**: risk-first per `design/gdd/systems-index.md`: graybox map and mannequin-variant pool first, then camera toggle and traversal replication, then the Meshy pool swap, then the generator.
+
+## Stories
+
+Granularity `balanced` (2-4 acceptance criteria per story; GDD criteria with several independent cases are split into sub-criteria; criteria derived from an ADR or the epic where the GDD has none are labelled "derived"). Stories embed Control Manifest 2026-10-25f (the current manifest; the header above still reads 2026-10-25e). Rulings applied: D25 (one ring per sender), D26/D33 (no ping while concealed, `Emerging` included), D34 (OQ7 threshold, story 025), D36 (AC-PNG-10 blind sort ADVISORY with a three-agent pre-screen, story 021; the retained screenshots stay required). Stories 019, 020 and 021 are Blocked on ADR-0021 UI-V1..UI-V4 (the gates named in Build Order and Gates). QL-STORY-READY: 15 ADEQUATE (001, 002, 003, 004, 007, 008, 010, 011, 013, 014, 015, 016, 017, 021, 027) and 12 GAPS (005, 006, 009, 012, 018, 019, 020, 022, 023, 024, 025, 026) whose flagged criteria were revised on the qa-lead's own proposed rewrites (each story's QA Test Cases says what changed); 0 INADEQUATE. Open items for the GDD owner: AC-PNG-04's reason list has a second `Range` (the accepted ping is not a drop); AC-PNG-10's gate level in the GDD text (BLOCKING) differs from D36 (ADVISORY until human reviewers run it at the first playtest). Story sizes are per-story session sizes and sum to more than the epic's 12.5-day bottom-up figure: 8 S, 16 M, 3 L; re-baseline against velocity before sprint planning (the epic's own note flags days-per-AC for confirmation at story breakdown).
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Ping tuning keys and invariant I-PNG-1 | Logic | Ready | ADR-0004 |
+| 002 | Team ping wire types and fixed-slot view component | Integration | Ready | ADR-0001 |
+| 003 | Ping carrier registration and team-only audience audit | Logic | Ready | ADR-0003 |
+| 004 | Ping token bucket core | Logic | Ready | ADR-0011 |
+| 005 | Server validation core: order, drop reasons and range | Logic | Ready | ADR-0011 |
+| 006 | ServerTeamPing handler, service and host parity | Integration | Ready | ADR-0011 |
+| 007 | Ping lifecycle: clears, reset and travel | Integration | Ready | ADR-0002 |
+| 008 | Client ping-point rule | Logic | Ready | ADR-0015 |
+| 009 | Client gate and bucket mirror | Logic | Ready | ADR-0011 |
+| 010 | IA_Ping action, binding and send path | Integration | Ready | ADR-0011 |
+| 011 | Concealed-press refusal end to end | Integration | Ready | ADR-0017 |
+| 012 | Strike-window drop | Integration | Ready | ADR-0018 |
+| 013 | Opponent sees nothing | Integration | Ready | ADR-0001 |
+| 014 | Sender pawn parity | Integration | Ready | ADR-0008 |
+| 015 | One ring per sender | Integration | Ready | ADR-0001 |
+| 016 | Ring model and age | Logic | Ready | ADR-0021 |
+| 017 | Ring labels and the label drop | Logic | Ready | ADR-0021 |
+| 018 | Edge ring metrics and clamp | Logic | Ready | ADR-0021 |
+| 019 | Ring painter in the L0 leaf | UI | Blocked (ADR-0021 UI-V1, UI-V3) | ADR-0021 |
+| 020 | Edge ring painter and UI scale | UI | Blocked (ADR-0021 UI-V1, UI-V4) | ADR-0021 |
+| 021 | Ring UI evidence and blind-sort pre-screen | UI | Blocked (ADR-0021 UI-V1..UI-V4; stories 019, 020) | ADR-0021 |
+| 022 | Echo latency and no local prediction | Integration | Ready | ADR-0008 |
+| 023 | Bandwidth bound | Integration | Ready | ADR-0003 |
+| 024 | Ping telemetry statistics | Integration | Ready | ADR-0023 |
+| 025 | Playtest metrics: Fellowship follow-up and walker coverage | Integration | Ready | ADR-0023 |
+| 026 | Ping language, scope and no-feed lints | Logic | Ready | ADR-0021 |
+| 027 | Retire the prototype ping | Integration | Ready | ADR-0011 |
 
 ## Definition of Done
 
