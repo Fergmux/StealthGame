@@ -1,0 +1,122 @@
+{
+  "frames": 120,
+  "fps": 30,
+  "duration_s": 4.0,
+  "leg_scale": 0.95,
+  "z_offset_cm": -0.5,
+  "foot_drift_target": {
+    "l": {
+      "planted_frames": 120,
+      "runs": 1,
+      "max_run_drift_cm": 3.04,
+      "peak_planted_speed_cmps": 15.0
+    },
+    "r": {
+      "planted_frames": 120,
+      "runs": 1,
+      "max_run_drift_cm": 1.76,
+      "peak_planted_speed_cmps": 13.2
+    }
+  },
+  "foot_drift_source_scaled": {
+    "l": {
+      "planted_frames": 120,
+      "runs": 1,
+      "max_run_drift_cm": 0.58,
+      "peak_planted_speed_cmps": 4.5
+    },
+    "r": {
+      "planted_frames": 120,
+      "runs": 1,
+      "max_run_drift_cm": 1.51,
+      "peak_planted_speed_cmps": 20.4
+    }
+  },
+  "mesh_min_z_cm": -1.06,
+  "mesh_top_cm_first_last": [
+    155.4,
+    152.4
+  ],
+  "root_total_cm": 0.0,
+  "root_peak_speed_cmps": 0.0,
+  "move_onset_s": 1.1,
+  "stature_ratio_hold_min_mean": [
+    0.957,
+    0.974
+  ],
+  "stature_ratio_min_clip": 0.732,
+  "hold_pelvis_drift_cm": 4.24,
+  "hold_yaw_drift_deg": 1.95,
+  "hold_feet_drift_cm": {
+    "l": 0.25,
+    "r": 0.41
+  },
+  "feet_width_hold_cm": 61.7,
+  "feet_width_first_cm": 61.4,
+  "clip": "Brace_T2MSwift",
+  "kind": "brace",
+  "profile": "t2m",
+  "root_mode": "none",
+  "source": "assets/animations/spike-d54/source/T2M_Swift_Brace.bvh",
+  "source_action": null,
+  "source_frames": [
+    1,
+    120
+  ],
+  "fbx": {
+    "skeleton_nodes": 88,
+    "nulls": [],
+    "bytes": 1209612,
+    "reimport_frame_range": [
+      2.0,
+      121.0
+    ],
+    "reimport_frame_offset": 1,
+    "reimport_max_pos_err_cm": 0.0
+  },
+  "fbx_path": "assets/animations/spike-d54/A_D54_Brace_T2MSwift.fbx",
+  "render_frames": [
+    1,
+    18,
+    35,
+    52,
+    69,
+    86,
+    103,
+    120
+  ],
+  "renders": [
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_close_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_close_f018.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_close_f035.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_close_f052.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_close_f069.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_close_f086.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_close_f103.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_close_f120.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile20_f018.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile20_f035.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile20_f052.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile20_f069.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile20_f086.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile20_f103.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile20_f120.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile30_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile30_f018.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile30_f035.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile30_f052.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile30_f069.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile30_f086.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile30_f103.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_profile30_f120.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_front20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_front20_f018.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_front20_f035.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_front20_f052.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_front20_f069.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_front20_f086.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_front20_f103.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_T2MSwift_front20_f120.png"
+  ]
+}

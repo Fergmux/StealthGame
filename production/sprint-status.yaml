@@ -2555,3 +2555,13 @@ stories:
     completed: "2026-10-25"
     sprint: 2
     carryover_note: "In flight when Sprint 1 closed (Meshy test character generated; UE import remains); not in the Sprint 1 plan"
+  - id: "scl-056"
+    name: "Animation sourcing spike: strike, victim fall and brace from sample edits versus Meshy motion (D54)"
+    file: "production/epics/shared-character-locomotion/story-056-animation-sourcing-spike.md"
+    priority: should-have
+    status: in-progress
+    owner: "technical-artist"
+    estimate_days: 1.0
+    blocker: "UE half (route-A clips, UE import, same-scene comparison, AC-3 decision) deferred: engine in use by a parallel run"
+    completed: ""
+    sprint: 2

@@ -1,0 +1,122 @@
+{
+  "frames": 105,
+  "fps": 30,
+  "duration_s": 3.5,
+  "leg_scale": 1.0725,
+  "z_offset_cm": 1.78,
+  "foot_drift_target": {
+    "l": {
+      "planted_frames": 105,
+      "runs": 1,
+      "max_run_drift_cm": 6.39,
+      "peak_planted_speed_cmps": 33.3
+    },
+    "r": {
+      "planted_frames": 104,
+      "runs": 2,
+      "max_run_drift_cm": 5.9,
+      "peak_planted_speed_cmps": 31.1
+    }
+  },
+  "foot_drift_source_scaled": {
+    "l": {
+      "planted_frames": 105,
+      "runs": 1,
+      "max_run_drift_cm": 4.86,
+      "peak_planted_speed_cmps": 26.0
+    },
+    "r": {
+      "planted_frames": 94,
+      "runs": 2,
+      "max_run_drift_cm": 2.65,
+      "peak_planted_speed_cmps": 18.7
+    }
+  },
+  "mesh_min_z_cm": -3.5,
+  "mesh_top_cm_first_last": [
+    154.5,
+    154.5
+  ],
+  "root_total_cm": 0.0,
+  "root_peak_speed_cmps": 0.0,
+  "move_onset_s": 1.0,
+  "stature_ratio_hold_min_mean": [
+    0.983,
+    1.002
+  ],
+  "stature_ratio_min_clip": 0.972,
+  "hold_pelvis_drift_cm": 2.94,
+  "hold_yaw_drift_deg": 0.49,
+  "hold_feet_drift_cm": {
+    "l": 0.69,
+    "r": 1.02
+  },
+  "feet_width_hold_cm": 72.6,
+  "feet_width_first_cm": 72.5,
+  "clip": "Brace_LibBlock1",
+  "kind": "brace",
+  "profile": "meshyrig",
+  "root_mode": "none",
+  "source": "assets/animations/spike-d54/source/Lib_MeshyRig_FallForward_Block1.glb",
+  "source_action": "Block1",
+  "source_frames": [
+    0,
+    104
+  ],
+  "fbx": {
+    "skeleton_nodes": 88,
+    "nulls": [],
+    "bytes": 1133116,
+    "reimport_frame_range": [
+      2.0,
+      106.0
+    ],
+    "reimport_frame_offset": 1,
+    "reimport_max_pos_err_cm": 0.0
+  },
+  "fbx_path": "assets/animations/spike-d54/A_D54_Brace_LibBlock1.fbx",
+  "render_frames": [
+    1,
+    16,
+    31,
+    46,
+    60,
+    75,
+    90,
+    105
+  ],
+  "renders": [
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_close_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_close_f016.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_close_f031.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_close_f046.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_close_f060.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_close_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_close_f090.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_close_f105.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile20_f016.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile20_f031.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile20_f046.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile20_f060.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile20_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile20_f090.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile20_f105.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile30_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile30_f016.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile30_f031.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile30_f046.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile30_f060.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile30_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile30_f090.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_profile30_f105.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_front20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_front20_f016.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_front20_f031.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_front20_f046.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_front20_f060.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_front20_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_front20_f090.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Brace_LibBlock1_front20_f105.png"
+  ]
+}

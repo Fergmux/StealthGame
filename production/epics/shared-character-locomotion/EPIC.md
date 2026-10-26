@@ -133,3 +133,4 @@ Exit A (locomotion, look path, animation, net parity, factory and possession lif
 | 053 | NPCs actually run, vault and climb in the Crowd reference scene | Integration | Blocked (spike 045) | ADR-0001 |
 | 054 | Blind observers cannot tell a walking NPC from a walking player | Visual/Feel | Ready | ADR-0001 |
 | 055 | Net-emulation pass over traversal, the look path and pawn replication (exit criterion) | Integration | Blocked (spike 045) | ADR-0010 |
+| 056 | Animation sourcing spike: strike, victim fall and brace from sample edits versus Meshy motion (D54) | Integration | In Progress (route-B half done; UE half deferred) | ADR-0013 |

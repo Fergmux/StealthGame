@@ -1,0 +1,115 @@
+{
+  "frames": 66,
+  "fps": 30,
+  "duration_s": 2.2,
+  "leg_scale": 1.0725,
+  "z_offset_cm": -3.64,
+  "foot_drift_target": {
+    "l": {
+      "planted_frames": 20,
+      "runs": 1,
+      "max_run_drift_cm": 5.33,
+      "peak_planted_speed_cmps": 41.6
+    },
+    "r": {
+      "planted_frames": 17,
+      "runs": 2,
+      "max_run_drift_cm": 2.87,
+      "peak_planted_speed_cmps": 41.2
+    }
+  },
+  "foot_drift_source_scaled": {
+    "l": {
+      "planted_frames": 19,
+      "runs": 1,
+      "max_run_drift_cm": 6.57,
+      "peak_planted_speed_cmps": 34.6
+    },
+    "r": {
+      "planted_frames": 22,
+      "runs": 2,
+      "max_run_drift_cm": 2.83,
+      "peak_planted_speed_cmps": 30.6
+    }
+  },
+  "mesh_min_z_cm": -4.03,
+  "mesh_top_cm_first_last": [
+    147.0,
+    39.6
+  ],
+  "root_total_cm": 0.0,
+  "root_peak_speed_cmps": 0.0,
+  "move_onset_s": 0.033,
+  "fall_start_s": 0.067,
+  "fall_settle_s": 2.167,
+  "fall_duration_s": 2.1,
+  "final_pelvis_z_cm": 18.5,
+  "pelvis_travel_cm": 91.6,
+  "final_top_cm": 39.6,
+  "clip": "Fall_LibShotFallForward",
+  "kind": "fall",
+  "profile": "meshyrig",
+  "root_mode": "none",
+  "source": "assets/animations/spike-d54/source/Lib_MeshyRig_FallForward_Block1.glb",
+  "source_action": "Shot_and_Fall_Forward",
+  "source_frames": [
+    0,
+    65
+  ],
+  "fbx": {
+    "skeleton_nodes": 88,
+    "nulls": [],
+    "bytes": 919324,
+    "reimport_frame_range": [
+      2.0,
+      67.0
+    ],
+    "reimport_frame_offset": 1,
+    "reimport_max_pos_err_cm": 0.0
+  },
+  "fbx_path": "assets/animations/spike-d54/A_D54_Fall_LibShotFallForward.fbx",
+  "render_frames": [
+    1,
+    10,
+    20,
+    29,
+    38,
+    47,
+    57,
+    66
+  ],
+  "renders": [
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_close_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_close_f010.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_close_f020.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_close_f029.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_close_f038.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_close_f047.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_close_f057.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_close_f066.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile20_f010.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile20_f020.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile20_f029.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile20_f038.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile20_f047.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile20_f057.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile20_f066.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile30_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile30_f010.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile30_f020.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile30_f029.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile30_f038.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile30_f047.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile30_f057.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_profile30_f066.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_front20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_front20_f010.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_front20_f020.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_front20_f029.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_front20_f038.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_front20_f047.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_front20_f057.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_LibShotFallForward_front20_f066.png"
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "frames": 75,
+  "fps": 30,
+  "duration_s": 2.5,
+  "leg_scale": 0.95,
+  "z_offset_cm": -0.26,
+  "foot_drift_target": {
+    "l": {
+      "planted_frames": 50,
+      "runs": 3,
+      "max_run_drift_cm": 8.63,
+      "peak_planted_speed_cmps": 77.8
+    },
+    "r": {
+      "planted_frames": 59,
+      "runs": 2,
+      "max_run_drift_cm": 2.15,
+      "peak_planted_speed_cmps": 15.6
+    }
+  },
+  "foot_drift_source_scaled": {
+    "l": {
+      "planted_frames": 52,
+      "runs": 3,
+      "max_run_drift_cm": 12.02,
+      "peak_planted_speed_cmps": 87.3
+    },
+    "r": {
+      "planted_frames": 59,
+      "runs": 2,
+      "max_run_drift_cm": 1.68,
+      "peak_planted_speed_cmps": 11.8
+    }
+  },
+  "mesh_min_z_cm": -1.93,
+  "mesh_top_cm_first_last": [
+    164.1,
+    164.6
+  ],
+  "root_total_cm": 96.9,
+  "root_peak_speed_cmps": 155.7,
+  "move_onset_s": 0.133,
+  "contact_frame": 38,
+  "contact_s_from_clip_start": 1.233,
+  "contact_s_from_onset": 1.1,
+  "hand_reach_from_start_pelvis_cm": 138.1,
+  "reach90_frame": 33,
+  "reach90_s_from_clip_start": 1.067,
+  "root_at_reach90_cm": 67.5,
+  "root_at_contact_cm": 73.6,
+  "striking_hand": "hand_r",
+  "clip": "Strike_T2MSwift",
+  "kind": "strike",
+  "profile": "t2m",
+  "root_mode": "forward",
+  "source": "assets/animations/spike-d54/source/T2M_Swift_Strike.bvh",
+  "source_action": null,
+  "source_frames": [
+    1,
+    75
+  ],
+  "fbx": {
+    "skeleton_nodes": 88,
+    "nulls": [],
+    "bytes": 979948,
+    "reimport_frame_range": [
+      2.0,
+      76.0
+    ],
+    "reimport_frame_offset": 1,
+    "reimport_max_pos_err_cm": 0.0
+  },
+  "fbx_path": "assets/animations/spike-d54/A_D54_Strike_T2MSwift.fbx",
+  "render_frames": [
+    1,
+    12,
+    22,
+    33,
+    38,
+    43,
+    54,
+    64,
+    75
+  ],
+  "renders": [
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_close_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_close_f012.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_close_f022.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_close_f033.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_close_f038.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_close_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_close_f054.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_close_f064.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_close_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile20_f012.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile20_f022.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile20_f033.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile20_f038.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile20_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile20_f054.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile20_f064.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile20_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile30_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile30_f012.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile30_f022.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile30_f033.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile30_f038.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile30_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile30_f054.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile30_f064.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_profile30_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_front20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_front20_f012.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_front20_f022.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_front20_f033.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_front20_f038.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_front20_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_front20_f054.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_front20_f064.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwift_front20_f075.png"
+  ]
+}

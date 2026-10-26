@@ -1,0 +1,115 @@
+{
+  "frames": 75,
+  "fps": 30,
+  "duration_s": 2.5,
+  "leg_scale": 0.95,
+  "z_offset_cm": -1.0,
+  "foot_drift_target": {
+    "l": {
+      "planted_frames": 33,
+      "runs": 1,
+      "max_run_drift_cm": 2.98,
+      "peak_planted_speed_cmps": 17.4
+    },
+    "r": {
+      "planted_frames": 3,
+      "runs": 1,
+      "max_run_drift_cm": 0.83,
+      "peak_planted_speed_cmps": 22.2
+    }
+  },
+  "foot_drift_source_scaled": {
+    "l": {
+      "planted_frames": 34,
+      "runs": 1,
+      "max_run_drift_cm": 1.0,
+      "peak_planted_speed_cmps": 13.9
+    },
+    "r": {
+      "planted_frames": 30,
+      "runs": 1,
+      "max_run_drift_cm": 1.13,
+      "peak_planted_speed_cmps": 15.9
+    }
+  },
+  "mesh_min_z_cm": -8.11,
+  "mesh_top_cm_first_last": [
+    125.7,
+    29.7
+  ],
+  "root_total_cm": 0.0,
+  "root_peak_speed_cmps": 0.0,
+  "move_onset_s": 0.767,
+  "fall_start_s": 1.2,
+  "fall_settle_s": 2.467,
+  "fall_duration_s": 1.267,
+  "final_pelvis_z_cm": 11.5,
+  "pelvis_travel_cm": 149.2,
+  "final_top_cm": 29.7,
+  "clip": "Fall_T2MSwift",
+  "kind": "fall",
+  "profile": "t2m",
+  "root_mode": "none",
+  "source": "assets/animations/spike-d54/source/T2M_Swift_Fall.bvh",
+  "source_action": null,
+  "source_frames": [
+    1,
+    75
+  ],
+  "fbx": {
+    "skeleton_nodes": 88,
+    "nulls": [],
+    "bytes": 979836,
+    "reimport_frame_range": [
+      2.0,
+      76.0
+    ],
+    "reimport_frame_offset": 1,
+    "reimport_max_pos_err_cm": 0.0
+  },
+  "fbx_path": "assets/animations/spike-d54/A_D54_Fall_T2MSwift.fbx",
+  "render_frames": [
+    1,
+    12,
+    22,
+    33,
+    43,
+    54,
+    64,
+    75
+  ],
+  "renders": [
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_close_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_close_f012.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_close_f022.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_close_f033.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_close_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_close_f054.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_close_f064.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_close_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile20_f012.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile20_f022.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile20_f033.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile20_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile20_f054.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile20_f064.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile20_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile30_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile30_f012.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile30_f022.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile30_f033.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile30_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile30_f054.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile30_f064.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_profile30_f075.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_front20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_front20_f012.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_front20_f022.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_front20_f033.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_front20_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_front20_f054.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_front20_f064.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Fall_T2MSwift_front20_f075.png"
+  ]
+}

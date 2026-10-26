@@ -1,0 +1,128 @@
+{
+  "frames": 60,
+  "fps": 30,
+  "duration_s": 2.0,
+  "leg_scale": 0.95,
+  "z_offset_cm": -0.79,
+  "foot_drift_target": {
+    "l": {
+      "planted_frames": 35,
+      "runs": 2,
+      "max_run_drift_cm": 3.09,
+      "peak_planted_speed_cmps": 43.4
+    },
+    "r": {
+      "planted_frames": 33,
+      "runs": 3,
+      "max_run_drift_cm": 2.76,
+      "peak_planted_speed_cmps": 48.0
+    }
+  },
+  "foot_drift_source_scaled": {
+    "l": {
+      "planted_frames": 37,
+      "runs": 2,
+      "max_run_drift_cm": 3.33,
+      "peak_planted_speed_cmps": 41.4
+    },
+    "r": {
+      "planted_frames": 35,
+      "runs": 3,
+      "max_run_drift_cm": 2.36,
+      "peak_planted_speed_cmps": 35.8
+    }
+  },
+  "mesh_min_z_cm": -2.09,
+  "mesh_top_cm_first_last": [
+    160.7,
+    162.0
+  ],
+  "root_total_cm": 9.7,
+  "root_peak_speed_cmps": 146.1,
+  "move_onset_s": 0.0,
+  "contact_frame": 28,
+  "contact_s_from_clip_start": 0.9,
+  "contact_s_from_onset": 0.9,
+  "hand_reach_from_start_pelvis_cm": 149.6,
+  "reach90_frame": 21,
+  "reach90_s_from_clip_start": 0.667,
+  "root_at_reach90_cm": 55.1,
+  "root_at_contact_cm": 62.9,
+  "striking_hand": "hand_r",
+  "clip": "Strike_T2MSwiftFast",
+  "kind": "strike",
+  "profile": "t2m",
+  "root_mode": "forward",
+  "source": "assets/animations/spike-d54/source/T2M_Swift_StrikeFast.bvh",
+  "source_action": null,
+  "source_frames": [
+    1,
+    60
+  ],
+  "fbx": {
+    "skeleton_nodes": 88,
+    "nulls": [],
+    "bytes": 892764,
+    "reimport_frame_range": [
+      2.0,
+      61.0
+    ],
+    "reimport_frame_offset": 1,
+    "reimport_max_pos_err_cm": 0.001
+  },
+  "fbx_path": "assets/animations/spike-d54/A_D54_Strike_T2MSwiftFast.fbx",
+  "render_frames": [
+    1,
+    9,
+    18,
+    21,
+    26,
+    28,
+    35,
+    43,
+    52,
+    60
+  ],
+  "renders": [
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f009.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f018.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f021.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f026.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f028.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f035.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f052.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_close_f060.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f009.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f018.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f021.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f026.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f028.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f035.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f052.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile20_f060.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f009.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f018.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f021.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f026.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f028.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f035.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f052.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_profile30_f060.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f001.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f009.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f018.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f021.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f026.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f028.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f035.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f043.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f052.png",
+    "production/qa/evidence/story-056-animation-sourcing-spike/renders/Strike_T2MSwiftFast_front20_f060.png"
+  ]
+}
