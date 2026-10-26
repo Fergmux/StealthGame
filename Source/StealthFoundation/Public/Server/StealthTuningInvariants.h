@@ -98,6 +98,14 @@ namespace StealthTuningPendingOwnerKeys
 	 * registers it as a schema row (story SCL-003; the TD-TDC-I3 pattern).
 	 */
 	inline constexpr double SessionSoftTimeoutSec = 3.0;
+	/**
+	 * The Level Socket Contract keys I-CNB-3 and I-CNB-4 read (EmergenceExitCancelMaxPct 25, AmbientEmergencePerSocketMinPerMin
+	 * 0.5, EmergenceSocketCooldownSec 20; LSC GDD defaults), until the LSC epic registers them as schema rows (story cnb-003;
+	 * the TD-TDC-I3 pattern).
+	 */
+	inline constexpr double EmergenceExitCancelMaxPct = 25.0;
+	inline constexpr double AmbientEmergencePerSocketMinPerMin = 0.5;
+	inline constexpr double EmergenceSocketCooldownSec = 20.0;
 }
 
 /**

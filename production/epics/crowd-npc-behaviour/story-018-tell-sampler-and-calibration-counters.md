@@ -1,12 +1,12 @@
 # Story 018: Tell sampler: compensated clocks, chain-gap guard and calibration counters
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` CNB-R7, F2 and ADR-0016 section 9, scoped to this story:*
 
-- [ ] The sampler draws each tell's exponential clock at F2's compensated rate via `UnitFraction53` and the inverse CDF; golden-vector tests cover the compensation computed from the interval keys and `CrowdTellChainGapSec`.
-- [ ] A draw inside an NPC's chain-gap is discarded and that tell's clock restarts at the gap end; an R8 reaction that would be a tell inside the responder's gap becomes a glance.
-- [ ] Calibration counters (accepted runs, vaults, climbs, braces, decoy tends, bush entries, reversals, long head holds) are written only to the server telemetry section (ADR-0023), never to clients or `UE_LOG`.
+- [x] The sampler draws each tell's exponential clock at F2's compensated rate via `UnitFraction53` and the inverse CDF; golden-vector tests cover the compensation computed from the interval keys and `CrowdTellChainGapSec`.
+- [x] A draw inside an NPC's chain-gap is discarded and that tell's clock restarts at the gap end; an R8 reaction that would be a tell inside the responder's gap becomes a glance.
+- [x] Calibration counters (accepted runs, vaults, climbs, braces, decoy tends, bush entries, reversals, long head holds) are written only to the server telemetry section (ADR-0023), never to clients or `UE_LOG`.
 
 ---
 
@@ -66,10 +66,10 @@
 
 ## Files
 
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdTellSampler.cpp`
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdTellSampler.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdTellSampler.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdTellSamplerTest.cpp`
-- `Source/StealthGameplay/Private/Tests/Crowd/Fixtures/CrowdTellCompensationVectors.json`
+- `Source/StealthGameplay/Private/Tests/Crowd/Fixtures/CrowdTellCompensationVectors.h`
 
 ---
 
@@ -101,7 +101,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdTellSamplerTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Tells.CompensationGolden`, `StealthGame.Crowd.Tells.ChainGap`, `StealthGame.Crowd.Tells.AcceptedRates`, `StealthGame.Crowd.Tells.CountersServerOnly`; 2026-10-26)
 
 ---
 
@@ -109,3 +109,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-002-crowd-draws-and-streams.md`, `production/epics/crowd-npc-behaviour/story-003-crowd-tuning-keys-and-profile-data.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-019-run-traversal-reversal-herrings.md`, `production/epics/crowd-npc-behaviour/story-020-decoy-tending-herring.md`, `production/epics/crowd-npc-behaviour/story-021-brace-and-startle-herring.md`, `production/epics/crowd-npc-behaviour/story-022-bush-herring.md`, `production/epics/crowd-npc-behaviour/story-024-strike-stimulus-and-reactions.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 3/3 passing
+**Deviations**: The running clocks use EffectiveRatePerMin (F2 a_j with Lambda over the ENABLED tells): with only G6 built, the all-tells a_j over-ran its rate by 37 %; with all eight enabled it equals the golden a_j. No ADR-0023 telemetry store yet: counters go to the ICrowdTelemetrySink seam.
+**Test Evidence**: `StealthGame.Crowd.Tells.CompensationGolden`, `StealthGame.Crowd.Tells.ChainGap`, `StealthGame.Crowd.Tells.AcceptedRates`, `StealthGame.Crowd.Tells.CountersServerOnly`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

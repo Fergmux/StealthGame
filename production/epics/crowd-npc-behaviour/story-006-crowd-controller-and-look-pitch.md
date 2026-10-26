@@ -1,12 +1,12 @@
 # Story 006: AStealthCrowdController: no path following, Look pitch path and tick order
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From ADR-0016 sections 1, 2 and 4.4 and GDD AC-CNB-02 (the 10-minute gate is story 013), scoped to the controller:*
 
-- [ ] `AStealthCrowdController` has no `PathFollowingComponent` (or the never-ticked fallback adopted in story 001), `bWantsPlayerState` and `bStartAILogicOnPossess` are false, and it is the one controller class for every AI-driven pawn.
-- [ ] `UpdateControlRotation` is overridden to `SetControlRotation(LastLook)` with yaw and pitch; no `SetFocus`, `SetFocalPoint` or `FaceRotation` appears in Crowd code; a `Look` pitch of -15 degrees appears in the pawn's `RemoteViewPitch16` through the SCL `HeadLook` filter on an observer client.
-- [ ] Tick prerequisites are hand-over pass, then Director, then StateTree component, then controller, then the pawn's CMC (asserted at runtime); the follower and due-time list are stepped before `Super::Tick`.
-- [ ] AI possession adds no component to the pawn (component inventory before and after `OnPossess` is identical); `OnPossess` asks the Director for the pending driver configuration.
+- [x] `AStealthCrowdController` has no `PathFollowingComponent` (or the never-ticked fallback adopted in story 001), `bWantsPlayerState` and `bStartAILogicOnPossess` are false, and it is the one controller class for every AI-driven pawn.
+- [x] `UpdateControlRotation` is overridden to `SetControlRotation(LastLook)` with yaw and pitch; no `SetFocus`, `SetFocalPoint` or `FaceRotation` appears in Crowd code; a `Look` pitch of -15 degrees appears in the pawn's `RemoteViewPitch16` through the SCL `HeadLook` filter on an observer client.
+- [x] Tick prerequisites are hand-over pass, then Director, then StateTree component, then controller, then the pawn's CMC (asserted at runtime); the follower and due-time list are stepped before `Super::Tick`.
+- [x] AI possession adds no component to the pawn (component inventory before and after `OnPossess` is identical); `OnPossess` asks the Director for the pending driver configuration.
 
 ---
 
@@ -72,7 +72,9 @@
 
 - `Source/StealthGameplay/Features/Crowd/Public/Server/StealthCrowdController.h`
 - `Source/StealthGameplay/Features/Crowd/Private/StealthCrowdController.cpp`
+- `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdControllerTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/Crowd/CrowdPIETests.cpp`
 
 ---
 
@@ -109,7 +111,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdControllerTest.cpp` (automation plus PIE test `StealthGame.Crowd.PIE.LookPitchReachesObserver`) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Controller.Shape`, `StealthGame.Crowd.Controller.LookPitch`, `StealthGame.Crowd.Controller.TickOrder`, `StealthGame.Crowd.Controller.ComponentParity`, `StealthGame.Crowd.PIE.LookPitchReachesObserver.CrowdLookPitchReplicates`; 2026-10-26)
 
 ---
 
@@ -117,3 +119,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-001-spike-engine-verifications.md`, `production/epics/crowd-npc-behaviour/story-005-command-sinks-epoch-and-halt-filter.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-007-path-source-and-start-budget.md`, `production/epics/crowd-npc-behaviour/story-009-follower-shaping-pace-and-stops.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`, `production/epics/crowd-npc-behaviour/story-028-bound-pawn-restricted-driver.md`, `production/epics/crowd-npc-behaviour/story-032-spike-60-character-server-cost.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: Tick-order prerequisites are wired at PostInitializeComponents as well as BeginPlay (a world without a game mode never dispatches BeginPlay). CreateAiController spawns only AStealthCrowdController (D53).
+**Test Evidence**: `StealthGame.Crowd.Controller.Shape`, `StealthGame.Crowd.Controller.LookPitch`, `StealthGame.Crowd.Controller.TickOrder`, `StealthGame.Crowd.Controller.ComponentParity`, `StealthGame.Crowd.PIE.LookPitchReachesObserver.CrowdLookPitchReplicates`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

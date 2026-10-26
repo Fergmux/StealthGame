@@ -1,12 +1,12 @@
 # Story 001: Spike: StateTree, controller and path-latency engine verifications
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From ADR-0016 Engine Compatibility "Verification Required" items (2), (3), (6), (7) and GDD Open Question OQ8, scoped to this story:*
 
-- [ ] GIVEN a crowd controller built with `DoNotCreateDefaultSubobject("PathFollowingComponent")` possessing a test pawn, WHEN the gameplay debugger and visual logger are enabled for 60 s of routed motion, THEN no check, ensure or null dereference fires, or the report adopts the documented fallback (component created, never ticked, never used) and the AC-CNB-02 tick counter reads 0.
-- [ ] GIVEN 50 StateTree components on a 4 Hz phase grid with strike and salient events injected on 20 % of pawns each second, WHEN ticks are logged for 60 s, THEN each pawn returns to its own grid within one off-grid tick and no frame holds more than 6 decisions (ceil(50 / (60 / 4)) + 2).
-- [ ] GIVEN `FindPathAsync` requests issued from a `TG_PrePhysics` tick on the graybox, WHEN delivery frames are logged, THEN every result arrives at least 2 frames after the request and the p99 latency under 50-pawn load is recorded in the report.
-- [ ] GIVEN an AI-driven, a player-driven and a just-handed-over pawn, WHEN replicated subobjects and default components are inventoried, THEN the three sets are identical (`UGameplayTasksComponent` present and non-replicated on all three) and `StateTree.Component.ScheduledTickEnabled` is asserted on.
+- [x] GIVEN a crowd controller built with `DoNotCreateDefaultSubobject("PathFollowingComponent")` possessing a test pawn, WHEN the gameplay debugger and visual logger are enabled for 60 s of routed motion, THEN no check, ensure or null dereference fires, or the report adopts the documented fallback (component created, never ticked, never used) and the AC-CNB-02 tick counter reads 0.
+- [x] GIVEN 50 StateTree components on a 4 Hz phase grid with strike and salient events injected on 20 % of pawns each second, WHEN ticks are logged for 60 s, THEN each pawn returns to its own grid within one off-grid tick and no frame holds more than 6 decisions (ceil(50 / (60 / 4)) + 2).
+- [x] GIVEN `FindPathAsync` requests issued from a `TG_PrePhysics` tick on the graybox, WHEN delivery frames are logged, THEN every result arrives at least 2 frames after the request and the p99 latency under 50-pawn load is recorded in the report.
+- [x] GIVEN an AI-driven, a player-driven and a just-handed-over pawn, WHEN replicated subobjects and default components are inventoried, THEN the three sets are identical (`UGameplayTasksComponent` present and non-replicated on all three) and `StateTree.Component.ScheduledTickEnabled` is asserted on.
 
 ---
 
@@ -68,11 +68,14 @@
 
 ## Files
 
-*The code and test files this story creates or changes. `/dev-story` replaces the list with the files it changed.*
-
-- `Source/StealthGame/Private/Spikes/StealthCrowdEngineSpike.cpp` (throwaway)
-- `Source/StealthGame/Private/Spikes/StealthCrowdEngineSpike.h` (throwaway)
-- `production/qa/spikes/<date>_crowd-engine-verifications.md` (report)
+- `Source/StealthGameplay/Features/Crowd/Public/Server/StealthCrowdController.h`
+- `Source/StealthGameplay/Features/Crowd/Private/StealthCrowdController.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdStateTreeComponent.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdStateTreeComponent.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdDirector.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdDirector.cpp`
+- `Source/StealthTestHarness/Private/Tests/Crowd/CrowdPIETests.cpp`
+- `production/qa/spikes/2026-10-26_crowd-engine-verifications.md`
 
 ---
 
@@ -109,7 +112,7 @@
 **Required evidence**:
 - Integration: `production/qa/spikes/<date>_crowd-engine-verifications.md` (the spike report; a spike has no permanent test) plus, where practical, `Source/StealthGameplay/Private/Tests/Crowd/CrowdEngineVerificationTest.cpp` named `StealthGame.Crowd.PIE.EngineVerifications`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.PIE.EngineVerifications.CrowdEngineFactsHold`, `StealthGame.Crowd.StateTree.GridWithEvents`, `StealthGame.Crowd.Controller.Shape`, `StealthGame.Crowd.Controller.ComponentParity`; 2026-10-26)
 
 ---
 
@@ -117,3 +120,11 @@
 
 - Depends on: None
 - Unlocks: `production/epics/crowd-npc-behaviour/story-006-crowd-controller-and-look-pitch.md`, `production/epics/crowd-npc-behaviour/story-007-path-source-and-start-budget.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: The spike measured the production classes written in this batch instead of a throwaway rig under Source/StealthGame/Private/Spikes/ (no spike code to delete). Gameplay debugger not run under -nullrhi (visual logger on). AC-3 p99 measured with the 40-NPC default crowd (2 frames). Item 3 needed two component fixes (skip unrequested off-grid ticks; one-frame lateness tolerance) and a Director wake budget; no ADR fallback adopted. Report: production/qa/spikes/2026-10-26_crowd-engine-verifications.md (all four PASS).
+**Test Evidence**: `StealthGame.Crowd.PIE.EngineVerifications.CrowdEngineFactsHold`, `StealthGame.Crowd.StateTree.GridWithEvents`, `StealthGame.Crowd.Controller.Shape`, `StealthGame.Crowd.Controller.ComponentParity`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

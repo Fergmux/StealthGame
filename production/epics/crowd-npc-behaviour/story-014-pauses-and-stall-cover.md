@@ -1,12 +1,12 @@
 # Story 014: Pauses, stall-cover regulator and the stationary-stretch bound
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-12, AC-CNB-13 and CNB-R5 (C2), scoped to this story:*
 
-- [ ] (AC-CNB-12) GIVEN 10 min of the reference scene sampled every 1 s, WHEN NPCs in a stationary stretch already at least 4 s long are counted (the F4 metric), THEN the city-wide count is at least `ceil(0.1 * N_live)` in at least 98 % of samples, and the regulator never sets the long-pause share above 90 %; the per-viewer share (10 bot viewers, samples with at least 10 NPCs visible) is reported, not gated.
-- [ ] (AC-CNB-13) GIVEN 60 min of simulation, WHEN every visible stationary stretch of every NPC and restricted-driver pawn is measured, including chains of pause, conversation and reaction pause, THEN none exceeds `CrowdMaxIdleSec` (20 s); the stretch clock is suspended while the pawn is concealed.
-- [ ] C2 pauses: over at least 1,000 pauses the short share lies in the 99 % binomial interval of 0.55 with lengths in U(1, 3) s, and the long share in 0.45 with lengths in U(4, 16) s; a long pause ends facing a stall, mural or view within 3 m when one exists (within 30 degrees, a provisional QA tolerance), with no facing requirement when none exists; a pawn idle for `CrowdMaxIdleSec` receives a `Routing` leg in that tick.
+- [x] (AC-CNB-12) GIVEN 10 min of the reference scene sampled every 1 s, WHEN NPCs in a stationary stretch already at least 4 s long are counted (the F4 metric), THEN the city-wide count is at least `ceil(0.1 * N_live)` in at least 98 % of samples, and the regulator never sets the long-pause share above 90 %; the per-viewer share (10 bot viewers, samples with at least 10 NPCs visible) is reported, not gated.
+- [x] (AC-CNB-13) GIVEN 60 min of simulation, WHEN every visible stationary stretch of every NPC and restricted-driver pawn is measured, including chains of pause, conversation and reaction pause, THEN none exceeds `CrowdMaxIdleSec` (20 s); the stretch clock is suspended while the pawn is concealed.
+- [x] C2 pauses: over at least 1,000 pauses the short share lies in the 99 % binomial interval of 0.55 with lengths in U(1, 3) s, and the long share in 0.45 with lengths in U(4, 16) s; a long pause ends facing a stall, mural or view within 3 m when one exists (within 30 degrees, a provisional QA tolerance), with no facing requirement when none exists; a pawn idle for `CrowdMaxIdleSec` receives a `Routing` leg in that tick.
 
 ---
 
@@ -66,9 +66,10 @@
 
 ## Files
 
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdPauseTasks.cpp`
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdStallRegulator.cpp`
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdStallRegulator.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdStallRegulator.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdAgent.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdAgent.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdStallCoverTest.cpp`
 
 ---
@@ -101,7 +102,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdStallCoverTest.cpp` — must exist and pass (AC-1 and AC-2 run as headless accelerated simulations)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Pauses.StallCover`, `StealthGame.Crowd.Pauses.StretchBound`, `StealthGame.Crowd.Pauses.PauseMix`, `StealthGame.Crowd.Pauses.Watchdog`; 2026-10-26)
 
 ---
 
@@ -109,3 +110,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-013-identity-and-command-path-gate.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 3/3 passing
+**Deviations**: F4 regulator amended (decision logged): it raises the long share while the covered count OR the P_th look-ahead (pawns whose rest still runs at Now + P_th) is below ceil(f_min N) + 3 (CoverMarginNpcs); the GDD rule alone gave 85.7 % of samples. Result 99.2 %, mean 9.3 covered, never above 90 %. Watchdog lead 2.5 s (a forced leg turns and clears a partner first). 30-degree facing tolerance recorded as a provisional QA tolerance; long pauses that became a conversation are reported, not checked. Raise the margin/look-ahead to the GDD author (F4).
+**Test Evidence**: `StealthGame.Crowd.Pauses.StallCover`, `StealthGame.Crowd.Pauses.StretchBound`, `StealthGame.Crowd.Pauses.PauseMix`, `StealthGame.Crowd.Pauses.Watchdog`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "View/StealthQueueTypes.h"
 
 #include "StealthCrowdControl.generated.h"
 
@@ -67,3 +68,45 @@ public:
 	 */
 	virtual void RequestPawnStop(const struct FRoundLivePawn& Pawn, double BoundSec) = 0;
 };
+
+/**
+ * Per unbound NPC pawn, why it may or may not be taken over by an informant (CNB-R11, ADR-0016 section 8). Only
+ * Eligible pawns are candidates. Never computed from appearance, team or who is watching.
+ */
+enum class ETakeoverEligibility : uint8
+{
+	Eligible,
+	Tending,
+	Bracing,
+	Hiding,
+	Emerging,
+	Exiting,
+	Reacting,
+	Conversing,
+	Bound,
+	AlleyExit,
+};
+
+UINTERFACE(MinimalAPI, meta = (CannotImplementInterfaceInBlueprint))
+class UTakeoverEligibilitySource : public UInterface
+{
+	GENERATED_BODY()
+};
+
+/**
+ * ITakeoverEligibilitySource: the Core-owned consumer interface the Layout Service and Penalty read for informant
+ * takeover (ADR-0016 section 8, ADR-0019; story cnb-004 declares it, cnb-030 fills it). Crowd's Director implements it;
+ * the composition root registers it weakly.
+ */
+class STEALTHGAMEPLAY_API ITakeoverEligibilitySource
+{
+	GENERATED_BODY()
+
+public:
+	/** The pawn's eligibility, computed from authoritative sources at call time. */
+	virtual ETakeoverEligibility GetTakeoverEligibility(const AStealthPawn* Pawn) const = 0;
+
+	/** Penalty, inside its commit slot: re-checks Eligible atomically and releases the NPC from the crowd. */
+	virtual bool TryReleaseNpc(AStealthPawn* Pawn, FEpochToken Expected) = 0;
+};
+

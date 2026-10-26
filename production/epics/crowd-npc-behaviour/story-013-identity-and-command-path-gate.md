@@ -1,12 +1,12 @@
 # Story 013: Identity blindness and command-path gate: includes, IIF-only motion, no NPC strike, rates fixed
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-01, AC-CNB-02, AC-CNB-11 and AC-CNB-37, scoped to this story:*
 
-- [ ] (AC-CNB-01) A build-time include check finds no Crowd source including Roster, Objectives-assignment or Policy fact headers (zero Roster call sites; the driver is selected by `DriveBoundPawn` versus `AdoptReleasedPawn`), and an instrumented run of the reference scene records 0 calls to `IsPlayer`, `GetTeam`, `VictimKind` or `FSiteAssignment` from Crowd code.
-- [ ] (AC-CNB-02) GIVEN 10 min of the reference scene with movement-component writes instrumented, THEN 100 % of NPC velocity changes come from `Move` entry-point calls, there are 0 direct CMC velocity or `RequestDirectMove` writes from Crowd, 0 StateTree `MoveTo`/`AITask_MoveTo` uses and 0 path-following component ticks, and 0 AI commands are rejected by the IIF except same-drain contention, each logged with the contending human command.
-- [ ] (AC-CNB-11) GIVEN 60 min of simulation, THEN NPCs issue 0 `Attack` commands and participant-bound AI pawns issue 0 commands other than `Move` and `Look`.
-- [ ] (AC-CNB-37) GIVEN a round in which bot players run, hide and tend at 3 x their F2 r_P, WHEN Crowd's effective draw rates are logged every 60 s, THEN they never change during the round, and no Crowd code writes a `Crowd*` tuning value after `OnTuningReady`.
+- [x] (AC-CNB-01) A build-time include check finds no Crowd source including Roster, Objectives-assignment or Policy fact headers (zero Roster call sites; the driver is selected by `DriveBoundPawn` versus `AdoptReleasedPawn`), and an instrumented run of the reference scene records 0 calls to `IsPlayer`, `GetTeam`, `VictimKind` or `FSiteAssignment` from Crowd code.
+- [x] (AC-CNB-02) GIVEN 10 min of the reference scene with movement-component writes instrumented, THEN 100 % of NPC velocity changes come from `Move` entry-point calls, there are 0 direct CMC velocity or `RequestDirectMove` writes from Crowd, 0 StateTree `MoveTo`/`AITask_MoveTo` uses and 0 path-following component ticks, and 0 AI commands are rejected by the IIF except same-drain contention, each logged with the contending human command.
+- [x] (AC-CNB-11) GIVEN 60 min of simulation, THEN NPCs issue 0 `Attack` commands and participant-bound AI pawns issue 0 commands other than `Move` and `Look`.
+- [x] (AC-CNB-37) GIVEN a round in which bot players run, hide and tend at 3 x their F2 r_P, WHEN Crowd's effective draw rates are logged every 60 s, THEN they never change during the round, and no Crowd code writes a `Crowd*` tuning value after `OnTuningReady`.
 
 ---
 
@@ -69,9 +69,12 @@
 ## Files
 
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdIncludeCheckTest.cpp`
-- `Source/StealthTestHarness/Private/CrowdCommandPathTest.cpp`
-- `Source/StealthTestHarness/Private/CrowdRatesConstantTest.cpp`
-- `tools/ci/crowd-include-lint.py` (or the lint rule file named by ADR-0008)
+- `Source/StealthGameplay/Private/Tests/Crowd/CrowdRatesConstantTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/Crowd/CrowdPIETests.cpp`
+- `tools/ci/lint/crowd-lint.sh`
+- `tools/ci/lint/rule-crowd.awk`
+- `Source/StealthGameplay/Public/Server/Core/Round/StealthCrowdControl.h`
+- `Source/StealthGameplay/Private/Tests/Crowd/CrowdTestUtils.h`
 
 ---
 
@@ -108,7 +111,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/CrowdCommandPathTest.cpp` and `CrowdRatesConstantTest.cpp` plus `Source/StealthGameplay/Private/Tests/Crowd/CrowdIncludeCheckTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Identity.IncludeCheck`, `StealthGame.Crowd.Identity.NoStrikeVocabulary`, `StealthGame.Crowd.Identity.RatesConstant`, `StealthGame.Crowd.Identity.NoTuningWriteAfterReady`, `StealthGame.Crowd.PIE.CommandPath.CrowdMotionOnlyThroughTheCommandInterface`; 2026-10-26)
 
 ---
 
@@ -116,3 +119,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-009-follower-shaping-pace-and-stops.md`, `production/epics/crowd-npc-behaviour/story-011-avoidance-and-yield.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`, `production/epics/crowd-npc-behaviour/story-014-pauses-and-stall-cover.md`
 - Unlocks: None
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: RatesConstant runs on the headless scene with scripted players (no bot-player behaviour layer yet), not in the harness. The transitive include walk is one awk pass; the test-side script runner kills and retries a hung bash after 120 s. ITakeoverEligibilitySource::TryReleaseNpc returns false until story 030.
+**Test Evidence**: `StealthGame.Crowd.Identity.IncludeCheck`, `StealthGame.Crowd.Identity.NoStrikeVocabulary`, `StealthGame.Crowd.Identity.RatesConstant`, `StealthGame.Crowd.Identity.NoTuningWriteAfterReady`, `StealthGame.Crowd.PIE.CommandPath.CrowdMotionOnlyThroughTheCommandInterface`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

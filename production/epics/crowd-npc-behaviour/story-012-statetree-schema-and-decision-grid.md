@@ -1,12 +1,12 @@
 # Story 012: StateTree schema, assets, decision grid and the per-frame due-time list
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From ADR-0016 section 3, GDD States and Transitions and AC-CNB-33, scoped to this story:*
 
-- [ ] `ST_CrowdFull` and `ST_CrowdRestricted` use the crowd schema subclass (`ScheduledTickPolicy = Allowed`, `AIControllerClass = AStealthCrowdController`); a boot test fails on a stale compiled asset or `ScheduledTickEnabled` off.
-- [ ] `UCrowdStateTreeComponent` ticks in `TG_PrePhysics` after the Director and before the controller and re-imposes the phase grid after every tree tick and event; the per-frame decision bound of story 004 holds with events injected.
-- [ ] A due-time entry (pause end, glance hold end, red-herring due, reaction start) acts in the controller tick in which it falls due (error at most 1 frame) at `CrowdDecisionPerSec` 4 and 3.
-- [ ] `Crowd.Stimulus.Strike`, `Crowd.Stimulus.Salient`, `Crowd.Path.Blocked`, `Crowd.Path.Failed` and `Crowd.Converse.Faced` interrupt with priority Halted > Reacting > the rest.
+- [x] `ST_CrowdFull` and `ST_CrowdRestricted` use the crowd schema subclass (`ScheduledTickPolicy = Allowed`, `AIControllerClass = AStealthCrowdController`); a boot test fails on a stale compiled asset or `ScheduledTickEnabled` off.
+- [x] `UCrowdStateTreeComponent` ticks in `TG_PrePhysics` after the Director and before the controller and re-imposes the phase grid after every tree tick and event; the per-frame decision bound of story 004 holds with events injected.
+- [x] A due-time entry (pause end, glance hold end, red-herring due, reaction start) acts in the controller tick in which it falls due (error at most 1 frame) at `CrowdDecisionPerSec` 4 and 3.
+- [x] `Crowd.Stimulus.Strike`, `Crowd.Stimulus.Salient`, `Crowd.Path.Blocked`, `Crowd.Path.Failed` and `Crowd.Converse.Faced` interrupt with priority Halted > Reacting > the rest.
 
 ---
 
@@ -69,13 +69,17 @@
 
 ## Files
 
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdStateTreeTypes.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdStateTreeTypes.cpp`
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdStateTreeSchema.h`
-- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdStateTreeComponent.h`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdStateTreeSchema.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdStateTreeComponent.h`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdStateTreeComponent.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdDueTimeList.h`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdDueTimeList.cpp`
-- `Source/StealthGameplay/StealthGameplay.Build.cs` (StateTree module dependencies)
-- `Content/StealthGame/AI/ST_CrowdFull.uasset`, `ST_CrowdRestricted.uasset` (created in-editor)
+- `Source/StealthGameEditor/Private/Crowd/CrowdAssetAuthoring.cpp`
+- `Content/StealthGame/AI/ST_CrowdFull.uasset`
+- `Content/StealthGame/AI/ST_CrowdRestricted.uasset`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdStateTreeTest.cpp`
 
 ---
@@ -113,7 +117,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdStateTreeTest.cpp` (automation plus PIE for tick order) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.StateTree.AssetsBootCheck`, `StealthGame.Crowd.StateTree.GridWithEvents`, `StealthGame.Crowd.StateTree.DueTimeAccuracy`, `StealthGame.Crowd.StateTree.DueTimeList`; 2026-10-26)
 
 ---
 
@@ -121,3 +125,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-001-spike-engine-verifications.md`, `production/epics/crowd-npc-behaviour/story-004-director-core-ledger-and-phase-gating.md`, `production/epics/crowd-npc-behaviour/story-006-crowd-controller-and-look-pitch.md`, `production/epics/crowd-npc-behaviour/story-010-virtual-input-layer.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-013-identity-and-command-path-gate.md`, `production/epics/crowd-npc-behaviour/story-014-pauses-and-stall-cover.md`, `production/epics/crowd-npc-behaviour/story-015-conversation-and-turn-in-place.md`, `production/epics/crowd-npc-behaviour/story-016-gaze-catalogue.md`, `production/epics/crowd-npc-behaviour/story-018-tell-sampler-and-calibration-counters.md`, `production/epics/crowd-npc-behaviour/story-020-decoy-tending-herring.md`, `production/epics/crowd-npc-behaviour/story-021-brace-and-startle-herring.md`, `production/epics/crowd-npc-behaviour/story-024-strike-stimulus-and-reactions.md`, `production/epics/crowd-npc-behaviour/story-028-bound-pawn-restricted-driver.md`, `production/epics/crowd-npc-behaviour/story-030-takeover-eligibility-and-atomic-release.md`, `production/epics/crowd-npc-behaviour/story-031-halt-and-handover-epoch.md`, `production/epics/crowd-npc-behaviour/story-032-spike-60-character-server-cost.md`, `production/epics/crowd-npc-behaviour/story-039-retire-prototype-crowd.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: Trees are authored by Stealth.Crowd.BuildAssets (not by hand in the editor). The component skips off-grid ticks nobody requested and UCrowdDirector::AdmitWakeDecision admits one wake decision a frame so the story 004 bound holds with events (headless max 5, bound 6); events go through UCrowdStateTreeComponent::SendCrowdEvent.
+**Test Evidence**: `StealthGame.Crowd.StateTree.AssetsBootCheck`, `StealthGame.Crowd.StateTree.GridWithEvents`, `StealthGame.Crowd.StateTree.DueTimeAccuracy`, `StealthGame.Crowd.StateTree.DueTimeList`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

@@ -1,0 +1,18 @@
+YIELD player-like partner 72.16 % of 995, NPC partner 72.21 % of 993 (target 70 %), undetected 12, trials deciding differently 0
+CONVERSATIONS 315 formed, lengths 6.00-19.97 s, 315 with a look share, mean partner-look share 0.757, formed without mutual facing 0
+CONVERSE face-toward: player-like 0.5291 (654/1236), NPC 0.5291 (654/1236), diff 0.0000, 90 % CI +-0.0330, paired mismatches 0, reply-branch decisions 0; turn-away after 2.02-5.00 s (764)
+DENSITY ADVISORY (1 miss(es)): type0 mean 44.27 target 45.89 type1 mean 5.73 target 4.11 MISS
+GAZE 3590 G2 glances, 59 G6 holds over 600 NPC-min (expected 60.0, 99 % 40.0-80.0), bad holds 0, concealed targets 0, HeadHold tells accepted 59 performed 59
+SALIENT 544 stimuli with line of sight within 15 m, 285 glances (0.524; 99 % 0.445-0.555), delays 0.305-1.196 s (KS D 0.0544 p 0.3589), 282 performed
+RATES 11 tables over 10 min, 0 changed; table: 0.180349611841,0.052905724965,0.022624633972,0.025682719691,0.005909362113,0.238454701160,0.184634422720,0.124161846584,long 45.000 decide 4.000 steer 30.000 yield 70.000 hash 98da4709dd95443e
+PAUSEMIX 2652 pauses: 1494 short (0.563, 99 % interval 0.525-0.575), 1158 long; out-of-range lengths short 0 long 0; context facing 216 of 216 (0 ended in a G4/G6 glance, 16 became a conversation)
+STALLCOVER 595 of 600 samples with >= 5 NPCs in a 4 s+ stretch (99.17 %), lowest count 3, mean 9.26, highest regulated long share 90 %
+STRETCH longest visible stationary stretch over 60 min x 50 NPCs: 18.850 s (bound 20.0 s), activities mask 0x1c, trace 0.00:2 0.03:3 9.23:4 17.53:2
+COMMANDPATH 45 s, 40 crowd controllers: 216320 Move/Look calls through the sinks, 0 discrete, 0 stale-epoch drops, 0 movement backstop faults, 0 path-following components
+ENGINEVERIFY inventory AI 19, player 19, handed over 19 components
+ENGINEVERIFY 40 crowd controllers, path-following components 0; tree ticks 9989, events 600, off-grid ticks not after an event 0; max decisions in a frame 8 (bound 5); path results 157, latency min 2 frames, p99 2 frames, max path starts in a frame 2
+ENGINEVERIFY 773 wake or event ticks over 58.0 s of world time
+LOOKPITCH server control pitch -15.00, observer view pitch -15.00 (match distance 1.2 cm)
+GRID 4492 tree ticks over 20 s for 50 pawns (4.49 Hz each), 200 events, off-grid ticks not explained by an event 0, max decisions in a frame 5 (bound 6), 0 fallback decisions
+TELLRATES accepted/target over 100000 NPC-min: 0:1.000 1:1.020 2:0.992 3:1.026 4:0.960 5:1.010 6:1.004 7:1.007
+DEVICEMIX 1208 of 2000 keyboard (99 % interval 0.572-0.628)

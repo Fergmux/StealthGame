@@ -1,12 +1,12 @@
 # Story 010: Virtual input layer: device profiles, virtual camera and recordable stream
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From GDD CNB-R3.4 and ADR-0016 section 4 items 3, 5, 6, scoped to this story (the parity gate is story 034):*
 
-- [ ] A per-pawn device profile is drawn once (`ECrowdDecision::DeviceProfile`) from the motion profile's device mix; keyboard and mouse emits 8-way quantised input relative to virtual camera yaw, gamepad emits analog input with the profile's dead zone and response curve.
-- [ ] The virtual camera advances and `Look` is emitted every controller tick (not at `CrowdSteerPerSec`) through `EvaluateViewEnvelope`: with steering at 30 Hz and 60 fps, `Look` values change on consecutive frames during a pan.
-- [ ] A scripted walking glance changes the emitted `Move` direction by the amount the profile's quantisation predicts (the walking glance bends the path as a human's does).
-- [ ] `FCrowdVirtualInputFrame {ServerTime, CameraYaw, CameraPitch, DeviceInput, Gait}` is recorded in non-Shipping builds only (symbol absent from Shipping).
+- [x] A per-pawn device profile is drawn once (`ECrowdDecision::DeviceProfile`) from the motion profile's device mix; keyboard and mouse emits 8-way quantised input relative to virtual camera yaw, gamepad emits analog input with the profile's dead zone and response curve.
+- [x] The virtual camera advances and `Look` is emitted every controller tick (not at `CrowdSteerPerSec`) through `EvaluateViewEnvelope`: with steering at 30 Hz and 60 fps, `Look` values change on consecutive frames during a pan.
+- [x] A scripted walking glance changes the emitted `Move` direction by the amount the profile's quantisation predicts (the walking glance bends the path as a human's does).
+- [x] `FCrowdVirtualInputFrame {ServerTime, CameraYaw, CameraPitch, DeviceInput, Gait}` is recorded in non-Shipping builds only (symbol absent from Shipping).
 
 ---
 
@@ -71,10 +71,10 @@
 ## Files
 
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdVirtualInput.h`
-- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdMotionProfileData.h`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdVirtualInput.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdMotionProfileData.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdMotionProfileData.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdVirtualInputTest.cpp`
-- `Content/StealthGame/AI/DA_CrowdMotionProfile_Default.uasset` (created in-editor by the implementer)
 
 ---
 
@@ -111,7 +111,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdVirtualInputTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.VirtualInput.DeviceProfiles`, `StealthGame.Crowd.VirtualInput.EveryTickLook`, `StealthGame.Crowd.VirtualInput.WalkingGlance`, `StealthGame.Crowd.VirtualInput.Recording`, `StealthGame.Crowd.VirtualInput.ProfileAsset`; 2026-10-26)
 
 ---
 
@@ -119,3 +119,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-003-crowd-tuning-keys-and-profile-data.md`, `production/epics/crowd-npc-behaviour/story-009-follower-shaping-pace-and-stops.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`, `production/epics/crowd-npc-behaviour/story-016-gaze-catalogue.md`, `production/epics/crowd-npc-behaviour/story-032-spike-60-character-server-cost.md`, `production/epics/crowd-npc-behaviour/story-034-pipeline-parity.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: No SCL HeadLook filter yet: the head-rate clause is not asserted (the look reaches the sink every tick).
+**Test Evidence**: `StealthGame.Crowd.VirtualInput.DeviceProfiles`, `StealthGame.Crowd.VirtualInput.EveryTickLook`, `StealthGame.Crowd.VirtualInput.WalkingGlance`, `StealthGame.Crowd.VirtualInput.Recording`, `StealthGame.Crowd.VirtualInput.ProfileAsset`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

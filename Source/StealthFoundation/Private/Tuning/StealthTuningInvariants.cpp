@@ -182,6 +182,64 @@ namespace
 		return L.StopMinSec <= FMath::Min(L.WalkStopSec, L.RunStopSec) ? ETuningCheck::Pass : ETuningCheck::Reject;
 	}
 
+	// ---- Crowd & NPC Behaviour rows (TDC GDD Formulas I-CNB-1 to I-CNB-6, all reject; story cnb-003). The LSC keys
+	// I-CNB-3/4 read are pending owner keys (StealthTuningPendingOwnerKeys) until the Level Socket Contract registers them.
+
+	/** I-CNB-1: CrowdIdleMinSec >= SessionSoftTimeoutSec + 1 (a long pause outlasts a soft stall). */
+	ETuningCheck CheckICNB1(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		return V.Crowd_Server.CrowdIdleMinSec >= StealthTuningPendingOwnerKeys::SessionSoftTimeoutSec + 1.0 ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-CNB-2: CrowdMaxIdleSec >= max(CrowdIdleMaxSec, CrowdConversationMaxSec). */
+	ETuningCheck CheckICNB2(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const FCrowdTuning_Server& C = V.Crowd_Server;
+		return C.CrowdMaxIdleSec >= FMath::Max(C.CrowdIdleMaxSec, C.CrowdConversationMaxSec) ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-CNB-3: (60 / CrowdAmbientCycleIntervalSec) * (1 - EmergenceExitCancelMaxPct / 100) >= AmbientEmergencePerSocketMinPerMin. */
+	ETuningCheck CheckICNB3(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const double PerSocketPerMin = 60.0 / FMath::Max(static_cast<double>(V.Crowd_Server.CrowdAmbientCycleIntervalSec), UE_DOUBLE_SMALL_NUMBER);
+		const double AfterCancels = PerSocketPerMin * (1.0 - StealthTuningPendingOwnerKeys::EmergenceExitCancelMaxPct / 100.0);
+		return AfterCancels >= StealthTuningPendingOwnerKeys::AmbientEmergencePerSocketMinPerMin ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-CNB-4: 2 * 60 / CrowdAmbientCycleIntervalSec <= 60 / EmergenceSocketCooldownSec (exit + entry fit the cooldown). */
+	ETuningCheck CheckICNB4(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const double Events = 2.0 * 60.0 / FMath::Max(static_cast<double>(V.Crowd_Server.CrowdAmbientCycleIntervalSec), UE_DOUBLE_SMALL_NUMBER);
+		return Events <= 60.0 / StealthTuningPendingOwnerKeys::EmergenceSocketCooldownSec ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/**
+	 * I-CNB-5: F2 chain-gap compensation validity, (Lambda - r_N,j) * CrowdTellChainGapSec / 60 <= 0.5 for every tell j of
+	 * T1-T5, T12, T13 (r_N,j = 60 / interval per minute, Lambda their sum).
+	 */
+	ETuningCheck CheckICNB5(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const FCrowdTuning_Server& C = V.Crowd_Server;
+		const float Intervals[] = { C.CrowdRunIntervalSec, C.CrowdVaultIntervalSec, C.CrowdClimbIntervalSec, C.CrowdBraceIntervalSec,
+			C.CrowdDecoyTendIntervalSec, C.CrowdBushIntervalSec, C.CrowdReversalIntervalSec, C.CrowdHeadHoldIntervalSec };
+		double Lambda = 0.0;
+		double MinRate = TNumericLimits<double>::Max();
+		for (const float Interval : Intervals)
+		{
+			const double Rate = 60.0 / FMath::Max(static_cast<double>(Interval), UE_DOUBLE_SMALL_NUMBER);
+			Lambda += Rate;
+			MinRate = FMath::Min(MinRate, Rate);
+		}
+		// The worst tell is the rarest one (largest Lambda - r_N,j).
+		return (Lambda - MinRate) * static_cast<double>(C.CrowdTellChainGapSec) / 60.0 <= 0.5 ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-CNB-6: CrowdDecoyEarlyReleaseMaxSec < ObjectiveInteractSec (an early release never lasts as long as a real tend). */
+	ETuningCheck CheckICNB6(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		return V.Crowd_Server.CrowdDecoyEarlyReleaseMaxSec < V.Objectives_Public.ObjectiveInteractSec ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
 	/** Offline rows never run at preset load (the harness, R3 or the clip authoring check enforces them). */
 	ETuningCheck CheckOffline(const FStealthServerTuning&, const FTuningDerived&, const FTuningCheckContext&)
 	{
@@ -208,6 +266,12 @@ namespace
 		{ "I-SCL-13", "SCL", &CheckISCL13 },
 		{ "I-SCL-15", "SCL", &CheckISCL15 },
 		{ "I-SCL-16", "SCL", &CheckISCL16 },
+		{ "I-CNB-1", "Crowd", &CheckICNB1 },
+		{ "I-CNB-2", "Crowd", &CheckICNB2 },
+		{ "I-CNB-3", "Crowd", &CheckICNB3 },
+		{ "I-CNB-4", "Crowd", &CheckICNB4 },
+		{ "I-CNB-5", "Crowd", &CheckICNB5 },
+		{ "I-CNB-6", "Crowd", &CheckICNB6 },
 	};
 
 	/**

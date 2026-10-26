@@ -1,12 +1,12 @@
 # Story 009: Follower: path shaping, pace set, corners and the shared stop floor
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-03 and AC-CNB-04 and CNB-R3.2, scoped to this story:*
 
-- [ ] (AC-CNB-03) GIVEN 10 min of the reference scene, WHEN NPC walk magnitude is logged, THEN only {0.8, 0.9, 1.0} occur, the share of walking time at 1.0 is within +-3 points of `CrowdFullPacePct` and never below 50 %, C4 pace matches occur and each lasts at most `CrowdGroupDriftSec`, and every pace change happens at a stop or a leg boundary.
-- [ ] (AC-CNB-04 a, b) GIVEN 200 recorded route legs with a 45-90 degree corner, WHEN replayed, THEN at least 95 % of corners are taken without speed dropping below 0.8 x leg pace, and no commanded heading change exceeds `ReversalAngleDeg` while moving except C7 reversals.
-- [ ] (AC-CNB-04 c) Every NPC stop to rest lasts at least `StopMinSec` (0.5 s) from the first braking frame to zero speed, including stops begun inside a start (SCL F2 stop floor).
-- [ ] Arrival issues `Move(0)` at the SCL F2 stop distance of the current pace (53 / 42 / 34 cm at 140 / 126 / 112 cm/s) before the stop point; each pawn's lane offset (+-0.5 m) is drawn once from its stream.
+- [x] (AC-CNB-03) GIVEN 10 min of the reference scene, WHEN NPC walk magnitude is logged, THEN only {0.8, 0.9, 1.0} occur, the share of walking time at 1.0 is within +-3 points of `CrowdFullPacePct` and never below 50 %, C4 pace matches occur and each lasts at most `CrowdGroupDriftSec`, and every pace change happens at a stop or a leg boundary.
+- [x] (AC-CNB-04 a, b) GIVEN 200 recorded route legs with a 45-90 degree corner, WHEN replayed, THEN at least 95 % of corners are taken without speed dropping below 0.8 x leg pace, and no commanded heading change exceeds `ReversalAngleDeg` while moving except C7 reversals.
+- [x] (AC-CNB-04 c) Every NPC stop to rest lasts at least `StopMinSec` (0.5 s) from the first braking frame to zero speed, including stops begun inside a start (SCL F2 stop floor).
+- [x] Arrival issues `Move(0)` at the SCL F2 stop distance of the current pace (53 / 42 / 34 cm at 140 / 126 / 112 cm/s) before the stop point; each pawn's lane offset (+-0.5 m) is drawn once from its stream.
 
 ---
 
@@ -72,7 +72,6 @@
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdFollower.h`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdFollower.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdFollowerTest.cpp`
-- `Source/StealthTestHarness/Private/CrowdPaceMotionTest.cpp` (reference-scene run)
 
 ---
 
@@ -109,7 +108,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdFollowerTest.cpp` — must exist and pass (AC-1 may run in `Source/StealthTestHarness/Private/CrowdPaceMotionTest.cpp` as a headless accelerated run)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Follower.PaceShareAndStopFloor`, `StealthGame.Crowd.Follower.Corners`, `StealthGame.Crowd.Follower.ArrivalAndLane`; 2026-10-26)
 
 ---
 
@@ -117,3 +116,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-005-command-sinks-epoch-and-halt-filter.md`, `production/epics/crowd-npc-behaviour/story-006-crowd-controller-and-look-pitch.md`, `production/epics/crowd-npc-behaviour/story-007-path-source-and-start-budget.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-010-virtual-input-layer.md`, `production/epics/crowd-npc-behaviour/story-011-avoidance-and-yield.md`, `production/epics/crowd-npc-behaviour/story-013-identity-and-command-path-gate.md`, `production/epics/crowd-npc-behaviour/story-019-run-traversal-reversal-herrings.md`, `production/epics/crowd-npc-behaviour/story-032-spike-60-character-server-cost.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: The reference-scene run (harness CrowdPaceMotionTest) is the headless crowd scene in StealthGameplay (CrowdSimWorld); the live crowd motion was observed in the 3-player PIE run.
+**Test Evidence**: `StealthGame.Crowd.Follower.PaceShareAndStopFloor`, `StealthGame.Crowd.Follower.Corners`, `StealthGame.Crowd.Follower.ArrivalAndLane`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

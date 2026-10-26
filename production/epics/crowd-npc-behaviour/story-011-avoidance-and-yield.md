@@ -1,12 +1,12 @@
 # Story 011: Avoidance as Move offsets: yield rate, obstacles and the blocked ladder
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD CNB-R3 item 3 and AC-CNB-32, scoped to this story:*
 
-- [ ] (AC-CNB-32) GIVEN 2,000 scripted predicted approaches under 100 cm between an NPC and a walking pawn (half player-driven, half NPC), WHEN side-steps are counted, THEN the NPC yield share is `CrowdYieldPct` +-3 points for both partner kinds, the decision is taken at first detection, and no pawn is ever pushed.
-- [ ] Avoidance is a lateral `Move` offset of up to 50 cm (side from relative position, keep-right tie-break, a per-pawn coin only on an exact head-on); `bUseRVOAvoidance` is false on the pawn class defaults (audit).
-- [ ] Planted and tending pawns are static 50 cm obstacles plus margin; concealed and bush-transitioning pawns are ignored; blocked for more than 0.5 s widens the offset to 100 cm, blocked for 3 s repaths once, and after two failed repaths the NPC abandons the leg and draws a new destination; the 0.2-0.6 s jitter runs as a due-time entry.
+- [x] (AC-CNB-32) GIVEN 2,000 scripted predicted approaches under 100 cm between an NPC and a walking pawn (half player-driven, half NPC), WHEN side-steps are counted, THEN the NPC yield share is `CrowdYieldPct` +-3 points for both partner kinds, the decision is taken at first detection, and no pawn is ever pushed.
+- [x] Avoidance is a lateral `Move` offset of up to 50 cm (side from relative position, keep-right tie-break, a per-pawn coin only on an exact head-on); `bUseRVOAvoidance` is false on the pawn class defaults (audit).
+- [x] Planted and tending pawns are static 50 cm obstacles plus margin; concealed and bush-transitioning pawns are ignored; blocked for more than 0.5 s widens the offset to 100 cm, blocked for 3 s repaths once, and after two failed repaths the NPC abandons the leg and draws a new destination; the 0.2-0.6 s jitter runs as a due-time entry.
 
 ---
 
@@ -67,8 +67,10 @@
 
 ## Files
 
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdAvoidance.cpp`
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdAvoidance.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdAvoidance.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdFollower.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdFollower.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdYieldTest.cpp`
 
 ---
@@ -101,7 +103,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdYieldTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Avoidance.YieldShare`, `StealthGame.Crowd.Avoidance.OffsetRules`, `StealthGame.Crowd.Avoidance.BlockedLadder`, `StealthGame.Crowd.Avoidance.NoRvo`; 2026-10-26)
 
 ---
 
@@ -109,3 +111,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-008-spatial-hash-and-perception-filter.md`, `production/epics/crowd-npc-behaviour/story-009-follower-shaping-pace-and-stops.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-013-identity-and-command-path-gate.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 3/3 passing
+**Deviations**: None.
+**Test Evidence**: `StealthGame.Crowd.Avoidance.YieldShare`, `StealthGame.Crowd.Avoidance.OffsetRules`, `StealthGame.Crowd.Avoidance.BlockedLadder`, `StealthGame.Crowd.Avoidance.NoRvo`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

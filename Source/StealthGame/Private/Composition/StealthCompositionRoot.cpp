@@ -11,6 +11,8 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Guid.h"
 #include "Server/Core/Round/StealthRoundMatchStore.h"
+#include "Server/CrowdDirector.h"
+#include "Server/StealthCrowdController.h"
 #include "Server/Core/Round/StealthRoundRosterGateway.h"
 #include "Server/Roster/StealthRosterStore.h"
 #include "Server/Session/StealthSessionService.h"
@@ -123,10 +125,10 @@ void UStealthMatchAdapters::Halt()
 {
 	if (UWorld* World = GetGameWorld())
 	{
-		for (TActorIterator<AStealthNpcController> It(World); It; ++It)
+		// The production crowd (ADR-0016 section 7): the Director latches every sink, clears Move and stops the trees.
+		if (UCrowdDirector* Director = UCrowdDirector::Get(World))
 		{
-			It->bHeld = true;
-			It->StopMovement();
+			Director->Halt();
 		}
 	}
 }
@@ -144,6 +146,7 @@ void UStealthMatchAdapters::RequestPawnStop(const FRoundLivePawn& Pawn, double B
 	}
 	// Held in place for the rest of Ended (the prototype has no stop-and-blend path yet; the round resets the pawns).
 	Character->HoldInPlace(FMath::Max(static_cast<float>(BoundSec), 1.f) * 60.f);
+	// The crowd's part of the round end already ran in Halt (every crowd sink latched, held Move cleared).
 }
 
 FPawnHandle UStealthMatchAdapters::GetBoundPawn(FParticipantId Participant) const
@@ -289,9 +292,10 @@ void UStealthMatchAdapters::StartRound()
 {
 	if (UWorld* World = GetGameWorld())
 	{
-		for (TActorIterator<AStealthNpcController> It(World); It; ++It)
+		// Round's Active-entry step (R7, CNB-R12): the Director starts every crowd pawn in this one step.
+		if (UCrowdDirector* Director = UCrowdDirector::Get(World))
 		{
-			It->bHeld = false;
+			Director->StartRound();
 		}
 	}
 }
@@ -359,17 +363,16 @@ AController* UStealthMatchAdapters::CreateAiController(AStealthPawn* Pawn)
 	{
 		return nullptr;
 	}
-	// Prototype crowd controller until the Crowd epic's AStealthCrowdController.
-	AStealthNpcController* Controller = World->SpawnActor<AStealthNpcController>();
-	if (Controller != nullptr)
+	// The production crowd controller (ADR-0016; D53 integration, crowd story cnb-006): one path only. The prototype
+	// AStealthNpcController is no longer created (story cnb-039 deletes it). The controller is created Dormant: the
+	// Director starts it at Round's Active entry (R6, CNB-R12).
+	if (UCrowdDirector* Director = UCrowdDirector::Get(World))
 	{
-		Controller->WanderCenter = CrowdCenter;
-		Controller->WanderRadius = CrowdRadius;
-		// R6: nothing moves in Preparing; the Active-entry Crowd start (StartRound) releases the crowd.
-		const URoundMatchStore* Round = URoundMatchStore::Get(World);
-		Controller->bHeld = Round != nullptr && Round->GetPhase() == ERoundPhase::Preparing;
+		Director->SetCrowdArea(CrowdCenter, CrowdRadius, CrowdMarketRadius);
 	}
-	return Controller;
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	return World->SpawnActor<AStealthCrowdController>(Params);
 }
 
 // -------------------------------------------------------------------------------------------------------------------

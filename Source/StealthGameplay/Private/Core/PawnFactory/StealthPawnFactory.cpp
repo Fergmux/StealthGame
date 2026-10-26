@@ -1,4 +1,5 @@
 #include "Server/Core/StealthPawnFactory.h"
+#include "Server/Core/StealthPawnControlQuery.h"
 
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -81,12 +82,15 @@ FStealthSpawnResult UStealthPawnFactory::SpawnSharedPawn(const FStealthSpawnRequ
 		{
 			if (It->ResolveObjectPtr() == nullptr)
 			{
+				ControlEpochs.Remove(*It);
+				SpawnOrdinals.Remove(*It);
 				It.RemoveCurrent();
 			}
 		}
 	}
 	Pawn->SetInstigator(Pawn);
 	CreationTokens.Add(FObjectKey(Pawn));
+	SpawnOrdinals.Add(FObjectKey(Pawn), NextSpawnOrdinal++);
 	++SpawnCount;
 	if (URosterStore* Roster = URosterStore::Get(World))
 	{
@@ -134,6 +138,8 @@ FStealthSpawnResult UStealthPawnFactory::SpawnSharedPawn(const FStealthSpawnRequ
 		: (ActiveHooks != nullptr ? ActiveHooks->CreateAiController(Pawn) : nullptr);
 	if (Controller != nullptr)
 	{
+		// Every possession bumps the control epoch first, so a sink of a previous driver is dead (ADR-0010 4.4).
+		BumpControlEpoch(Pawn);
 		Controller->Possess(Pawn);
 		if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 		{
@@ -166,4 +172,38 @@ int32 UStealthPawnFactory::CountUntokenedPawns() const
 		}
 	}
 	return Untokened;
+}
+
+uint32 UStealthPawnFactory::GetControlEpoch(const AActor* Pawn) const
+{
+	const uint32* Epoch = Pawn != nullptr ? ControlEpochs.Find(FObjectKey(Pawn)) : nullptr;
+	return Epoch != nullptr ? *Epoch : 0u;
+}
+
+uint32 UStealthPawnFactory::BumpControlEpoch(const AActor* Pawn)
+{
+	if (Pawn == nullptr)
+	{
+		return 0u;
+	}
+	uint32& Epoch = ControlEpochs.FindOrAdd(FObjectKey(Pawn));
+	return ++Epoch;
+}
+
+uint32 UStealthPawnFactory::GetSpawnOrdinal(const AActor* Pawn) const
+{
+	const uint32* Ordinal = Pawn != nullptr ? SpawnOrdinals.Find(FObjectKey(Pawn)) : nullptr;
+	return Ordinal != nullptr ? *Ordinal : NoSpawnOrdinal;
+}
+
+uint32 StealthPawnControl::GetControlEpoch(const AActor* Pawn)
+{
+	const UStealthPawnFactory* Factory = Pawn != nullptr ? UStealthPawnFactory::Get(Pawn->GetWorld()) : nullptr;
+	return Factory != nullptr ? Factory->GetControlEpoch(Pawn) : 0u;
+}
+
+uint32 StealthPawnControl::GetSpawnOrdinal(const AActor* Pawn)
+{
+	const UStealthPawnFactory* Factory = Pawn != nullptr ? UStealthPawnFactory::Get(Pawn->GetWorld()) : nullptr;
+	return Factory != nullptr ? Factory->GetSpawnOrdinal(Pawn) : StealthPawnControl::NoSpawnOrdinal;
 }

@@ -1,12 +1,12 @@
 # Story 002: Crowd draws: counter-based streams, continuous mappings and kill independence
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-29 and AC-CNB-34, plus ADR-0016 section 9, scoped to this story:*
 
-- [ ] GIVEN committed golden-vector fixtures, WHEN `UnitFraction53` and `InvNormalAS241` are evaluated, THEN outputs match bit-for-bit and u is never 0 or 1.
-- [ ] (AC-CNB-29) GIVEN two fixed-timestep runs of one seed differing only by one extra NPC kill at t = 60 s, WHEN every other NPC's draws are compared by (ordinal, decision type, decision index), THEN for every non-involved NPC the k-th draw of each decision type is identical in both runs (decisions may differ in timing; draw values may not).
-- [ ] (AC-CNB-34a) GIVEN two runs with the same seed and fixed timestep, WHEN all draws are logged, THEN they are bit-identical, and a takeover then release of one pawn leaves its later draws unchanged (counters keyed by ordinal in the Director).
-- [ ] (AC-CNB-34b) GIVEN the Crowd source tree, WHEN the build check runs, THEN no `FMath::Rand*` or `FRandomStream` without a CNB key is found, and rejection retries extend the `Retry` field, never the `DecisionIndex`.
+- [x] GIVEN committed golden-vector fixtures, WHEN `UnitFraction53` and `InvNormalAS241` are evaluated, THEN outputs match bit-for-bit and u is never 0 or 1.
+- [x] (AC-CNB-29) GIVEN two fixed-timestep runs of one seed differing only by one extra NPC kill at t = 60 s, WHEN every other NPC's draws are compared by (ordinal, decision type, decision index), THEN for every non-involved NPC the k-th draw of each decision type is identical in both runs (decisions may differ in timing; draw values may not).
+- [x] (AC-CNB-34a) GIVEN two runs with the same seed and fixed timestep, WHEN all draws are logged, THEN they are bit-identical, and a takeover then release of one pawn leaves its later draws unchanged (counters keyed by ordinal in the Director).
+- [x] (AC-CNB-34b) GIVEN the Crowd source tree, WHEN the build check runs, THEN no `FMath::Rand*` or `FRandomStream` without a CNB key is found, and rejection retries extend the `Retry` field, never the `DecisionIndex`.
 
 ---
 
@@ -72,9 +72,7 @@
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdDraws.h`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdDraws.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdDrawsTest.cpp`
-- `Source/StealthGameplay/Private/Tests/Crowd/Fixtures/CrowdGoldenVectors.json`
-
-*Tests live in `Source/StealthGameplay/Private/Tests/Crowd/` once the ADR-0007 module skeleton exists; until then `Source/StealthGame/Private/Tests/Crowd/` (tests/README.md).*
+- `Source/StealthGameplay/Private/Tests/Crowd/Fixtures/CrowdGoldenVectors.h`
 
 ---
 
@@ -111,7 +109,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdDrawsTest.cpp` — must exist and pass (`FCrowdGoldenVectorsTest`, `FCrowdStreamsKillIndependentTest`, `FCrowdStreamDeterminismTest`, `FCrowdNoRawRandomTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.GoldenVectors`, `StealthGame.Crowd.StreamsKillIndependent`, `StealthGame.Crowd.StreamDeterminism`, `StealthGame.Crowd.NoRawRandom`; 2026-10-26)
 
 ---
 
@@ -119,3 +117,11 @@
 
 - Depends on: None
 - Unlocks: `production/epics/crowd-npc-behaviour/story-004-director-core-ledger-and-phase-gating.md`, `production/epics/crowd-npc-behaviour/story-018-tell-sampler-and-calibration-counters.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: The AS241 pinned output bits were recorded from the first Win64 run (the fixture rows had placeholders).
+**Test Evidence**: `StealthGame.Crowd.GoldenVectors`, `StealthGame.Crowd.StreamsKillIndependent`, `StealthGame.Crowd.StreamDeterminism`, `StealthGame.Crowd.NoRawRandom`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

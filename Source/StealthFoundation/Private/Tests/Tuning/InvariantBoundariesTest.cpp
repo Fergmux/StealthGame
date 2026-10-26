@@ -185,8 +185,14 @@ bool FTuningInvariantBoundariesTest::RunTest(const FString& Parameters)
 		TestEqual(FString::Printf(TEXT("%s is owned by TDC"), *FString(Row.Id)), FString(Row.Owner), FString(TEXT("TDC")));
 	}
 	const TArray<FTuningSchemaRow> Schema = FixtureSchema();
-	TestEqual(TEXT("the fixture schema holds exactly one range pair"), FindTuningRangePairs(Schema).Num(), 1);
-	TestEqual(TEXT("the real schema holds no range pair yet"), FindTuningRangePairs(GetTuningSchema()).Num(), 0);
+	TestEqual(TEXT("the fixture schema holds exactly one range pair beyond the real schema's"), FindTuningRangePairs(Schema).Num(), FindTuningRangePairs(GetTuningSchema()).Num() + 1);
+	// The real schema's pairs are the 18 Crowd Min/Max pairs registered by story cnb-003 (none before it).
+	const TArray<FTuningRangePair> RealPairs = FindTuningRangePairs(GetTuningSchema());
+	TestEqual(TEXT("the real schema holds the 18 Crowd range pairs (story cnb-003)"), RealPairs.Num(), 18);
+	for (const FTuningRangePair& Pair : RealPairs)
+	{
+		TestEqual(FString::Printf(TEXT("range pair %s is Crowd-owned"), *FString(Pair.Min->Key)), FString(Pair.Min->Owner), FString(TEXT("Crowd")));
+	}
 
 	// Range-pair recognition: <Prefix>Min<Unit>/<Prefix>Max<Unit>; a one-sided bound or a lone Min is not a pair.
 	{

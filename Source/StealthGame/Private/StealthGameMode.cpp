@@ -6,6 +6,7 @@
 #include "StealthGameState.h"
 #include "StealthHUD.h"
 #include "StealthNpcController.h"
+#include "Server/CrowdDirector.h"
 #include "StealthObjective.h"
 #include "StealthPlayerController.h"
 #include "StealthPlayerState.h"
@@ -676,6 +677,12 @@ void AStealthGameMode::CleanupRoundActors()
 
 // ---- Crowd --------------------------------------------------------------------------------------
 
+namespace
+{
+	/** The graybox plaza the crowd's density model types as Market (AStealthCityGenerator::PlazaRadius default). */
+	constexpr float StealthCrowdMarketRadiusCm = 1300.f;
+}
+
 FVector AStealthGameMode::GetCrowdCenter() const
 {
 	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
@@ -706,19 +713,36 @@ bool AStealthGameMode::FindCrowdPoint(FVector& OutLocation) const
 
 AStealthCharacter* AStealthGameMode::SpawnNpc()
 {
-	FVector Location;
 	UStealthPawnFactory* Factory = UStealthPawnFactory::Get(GetWorld());
-	if (!CharacterClass || !Factory || !FindCrowdPoint(Location))
+	if (!CharacterClass || !Factory)
 	{
 		return nullptr;
 	}
-	const AStealthCharacter* Defaults = CharacterClass->GetDefaultObject<AStealthCharacter>();
-	Location.Z += Defaults->GetDefaultHalfHeight() + 5.f;
+	// Start placement (crowd story cnb-017): the Director's F1 placement on the NpcRoutes stream for the round's start
+	// list; the prototype FindCrowdPoint only for a mid-round prototype replacement (stories cnb-026/027 replace it).
+	FTransform Transform;
+	UCrowdDirector* Director = UCrowdDirector::Get(GetWorld());
+	if (Director != nullptr)
+	{
+		Director->SetCrowdArea(GetCrowdCenter(), UStealthSettings::Get()->CrowdRadius, StealthCrowdMarketRadiusCm);
+	}
+	const bool bRoundStart = !IsRoundInProgress();
+	if (!(bRoundStart && Director != nullptr && Director->RequestStartPlacement(CrowdNpcs.Num(), FMath::Max(UStealthSettings::Get()->NpcCount, 1), Transform)))
+	{
+		FVector Location;
+		if (!FindCrowdPoint(Location))
+		{
+			return nullptr;
+		}
+		const AStealthCharacter* Defaults = CharacterClass->GetDefaultObject<AStealthCharacter>();
+		Location.Z += Defaults->GetDefaultHalfHeight() + 5.f;
+		Transform = FTransform(FRotator(0.f, FMath::FRandRange(-180.f, 180.f), 0.f), Location);
+	}
 
-	// Through the single spawn site; the factory hooks attach the prototype crowd controller.
+	// Through the single spawn site; the factory hooks attach the crowd controller.
 	FStealthSpawnRequest Request;
 	Request.PawnClass = CharacterClass.Get();
-	Request.Transform = FTransform(FRotator(0.f, FMath::FRandRange(-180.f, 180.f), 0.f), Location);
+	Request.Transform = Transform;
 	Request.AppearanceId = DrawAppearance();
 	Request.ControlKind = EStealthPawnControlKind::Ai;
 	AStealthCharacter* Npc = Cast<AStealthCharacter>(Factory->SpawnSharedPawn(Request).Pawn);

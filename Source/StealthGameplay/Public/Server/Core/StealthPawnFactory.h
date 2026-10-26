@@ -102,6 +102,25 @@ public:
 	/** Shared Pawns in the world without a creation token (the debug guard; 0 in a healthy round). */
 	int32 CountUntokenedPawns() const;
 
+	/**
+	 * The pawn's server-only control epoch (ADR-0010 section 4.4; consumed by the Crowd sinks, ADR-0016 section 2, story
+	 * cnb-005): bumped at every possession this factory performs and by BumpControlEpoch (the hand-over commit). 0 for a
+	 * pawn the factory never possessed. Never replicated.
+	 */
+	uint32 GetControlEpoch(const AActor* Pawn) const;
+
+	/** Bumps Pawn's control epoch (the hand-over commit inside the drain, ADR-0010 4.3) and returns the new value. */
+	uint32 BumpControlEpoch(const AActor* Pawn);
+
+	/** No spawn ordinal (a pawn this factory did not spawn). */
+	static constexpr uint32 NoSpawnOrdinal = MAX_uint32;
+
+	/**
+	 * The server-only spawn ordinal (ADR-0010, Crowd CNB-R14): 0, 1, 2 ... in spawn order for every pawn this factory
+	 * spawned, participants included, so counter-based crowd draws key on it. NoSpawnOrdinal for an unknown pawn.
+	 */
+	uint32 GetSpawnOrdinal(const AActor* Pawn) const;
+
 	/** The fault sink the factory reports misuse to. */
 	const FStealthLogFaultSink& GetFaultSink() const { return FaultSink; }
 
@@ -112,6 +131,9 @@ private:
 	TWeakObjectPtr<UObject> HooksOwner;
 	TSubclassOf<AStealthPawn> DefaultPawnClass;
 	TSet<FObjectKey> CreationTokens;
+	TMap<FObjectKey, uint32> ControlEpochs;
+	TMap<FObjectKey, uint32> SpawnOrdinals;
+	uint32 NextSpawnOrdinal = 0;
 	int32 SpawnCount = 0;
 	FStealthLogFaultSink FaultSink;
 };

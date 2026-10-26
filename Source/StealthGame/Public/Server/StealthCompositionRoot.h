@@ -114,6 +114,8 @@ public:
 	/** The crowd area the prototype NPC controller wanders (set by the game mode). */
 	FVector CrowdCenter = FVector::ZeroVector;
 	float CrowdRadius = 3000.f;
+	/** The graybox plaza radius the crowd types as Market (the city generator's PlazaRadius default; crowd story cnb-017). */
+	float CrowdMarketRadius = 1300.f;
 
 private:
 	UWorld* GetGameWorld() const;

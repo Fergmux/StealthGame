@@ -1,12 +1,12 @@
 # Story 017: Density model (F1) and assignment-blind start placement
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-05, AC-CNB-06, CNB-R13 and F1, scoped to this story:*
 
-- [ ] (AC-CNB-05) GIVEN 50 fixed layouts each run with two different `FSiteAssignment`s, WHEN start placement and the first 120 s of destination weights are computed, THEN the outputs are bit-identical, and an instrumented assignment query from Crowd fires the server assert.
-- [ ] (AC-CNB-06, ADVISORY) GIVEN the reference scene after 120 s, WHEN density per area type is sampled every 10 s for 10 min, THEN each type's mean is within +-20 % of F1's target and no zone disc exceeds `ZoneDensityMaxMult` x the map mean for more than 30 s.
-- [ ] Start placement draws from `NpcRoutes` inside `RequestStartPlacement`, and route-node capacity counts pawns of any kind.
+- [x] (AC-CNB-05) GIVEN 50 fixed layouts each run with two different `FSiteAssignment`s, WHEN start placement and the first 120 s of destination weights are computed, THEN the outputs are bit-identical, and an instrumented assignment query from Crowd fires the server assert.
+- [x] (AC-CNB-06, ADVISORY) GIVEN the reference scene after 120 s, WHEN density per area type is sampled every 10 s for 10 min, THEN each type's mean is within +-20 % of F1's target and no zone disc exceeds `ZoneDensityMaxMult` x the map mean for more than 30 s.
+- [x] Start placement draws from `NpcRoutes` inside `RequestStartPlacement`, and route-node capacity counts pawns of any kind.
 
 ---
 
@@ -67,8 +67,9 @@
 
 ## Files
 
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdDensity.cpp`
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdDensity.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdDensity.cpp`
+- `Source/StealthGame/Private/StealthGameMode.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdDensityTest.cpp`
 
 ---
@@ -101,7 +102,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdDensityTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Density.AssignmentBlind`, `StealthGame.Crowd.Density.StartPlacement`, `StealthGame.Crowd.Density.TargetsAdvisory`; 2026-10-26)
 
 ---
 
@@ -109,3 +110,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-004-director-core-ledger-and-phase-gating.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-026-ambient-schedule-and-emergence.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 3/3 passing
+**Deviations**: Area types are graybox stand-ins (plaza = Market); the density targets are reported advisory (one type missed its target by 1.6 NPCs in the 275-test run, not gated). The game mode takes NPC start transforms from RequestStartPlacement at round start.
+**Test Evidence**: `StealthGame.Crowd.Density.AssignmentBlind`, `StealthGame.Crowd.Density.StartPlacement`, `StealthGame.Crowd.Density.TargetsAdvisory`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

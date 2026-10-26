@@ -1,12 +1,12 @@
 # Story 015: Conversation (C3) and turn-in-place (C6), partner-blind
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-17, CNB-R5 (C3, C6) and CNB-R6 (G5), scoped to this story:*
 
-- [ ] (AC-CNB-17a) GIVEN a scripted player pawn standing still within 150 cm of an idle NPC 1,236 times and an NPC in the same spot 1,236 times (80 % power for a 5-point margin at p = 0.5), WHEN the NPC's face-toward rate is counted, THEN the two rates differ by at most 5 percentage points (TOST equivalence at alpha 0.05).
-- [ ] (AC-CNB-17b) A conversation forms only while both pawns face each other within 60 degrees; an unanswered initiator turns away after 2-5 s for either partner kind; NPCs never path toward a stationary pawn to start one.
-- [ ] C6: when idle gaze exceeds 70 degrees for 0.5 s, the body re-centres until head yaw is at most `TurnInPlaceExitFrac` x `LookYawLimitDeg` (the SCL R5.5 exit); a conversation lasts 6-20 s, and across at least 100 conversations the mean partner-look (G5) share lies in [0.60, 0.80].
+- [x] (AC-CNB-17a) GIVEN a scripted player pawn standing still within 150 cm of an idle NPC 1,236 times and an NPC in the same spot 1,236 times (80 % power for a 5-point margin at p = 0.5), WHEN the NPC's face-toward rate is counted, THEN the two rates differ by at most 5 percentage points (TOST equivalence at alpha 0.05).
+- [x] (AC-CNB-17b) A conversation forms only while both pawns face each other within 60 degrees; an unanswered initiator turns away after 2-5 s for either partner kind; NPCs never path toward a stationary pawn to start one.
+- [x] C6: when idle gaze exceeds 70 degrees for 0.5 s, the body re-centres until head yaw is at most `TurnInPlaceExitFrac` x `LookYawLimitDeg` (the SCL R5.5 exit); a conversation lasts 6-20 s, and across at least 100 conversations the mean partner-look (G5) share lies in [0.60, 0.80].
 
 ---
 
@@ -66,9 +66,9 @@
 
 ## Files
 
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdConversationTasks.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdAgent.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdAgent.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdConversationTest.cpp`
-- `Source/StealthTestHarness/Private/CrowdConversationBlindTest.cpp`
 
 ---
 
@@ -100,7 +100,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/CrowdConversationBlindTest.cpp` and `Source/StealthGameplay/Private/Tests/Crowd/CrowdConversationTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Conversation.PartnerBlind`, `StealthGame.Crowd.Conversation.LengthsAndLook`, `StealthGame.Crowd.Conversation.TurnInPlace`; 2026-10-26)
 
 ---
 
@@ -108,3 +108,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-008-spatial-hash-and-perception-filter.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`
 - Unlocks: None
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 3/3 passing
+**Deviations**: G5 look share tracks the drawn share with a 0.6 s hysteresis band (a fixed cycle starting on the partner biased early-ended conversations high: 0.80); mean 0.76. Tests run on the headless scene, not the harness.
+**Test Evidence**: `StealthGame.Crowd.Conversation.PartnerBlind`, `StealthGame.Crowd.Conversation.LengthsAndLook`, `StealthGame.Crowd.Conversation.TurnInPlace`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

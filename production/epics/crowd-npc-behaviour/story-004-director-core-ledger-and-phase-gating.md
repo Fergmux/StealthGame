@@ -1,12 +1,12 @@
 # Story 004: Crowd Director core: server-only subsystem, ledger and phase gating
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-33, CNB-R1 and CNB-R12, scoped to this story:*
 
-- [ ] `UCrowdDirector::ShouldCreateSubsystem` is false on clients; `FCrowdDirectorCore` constructs and runs in a headless spec with no `UWorld`; Director init asserts `StateTree.Component.ScheduledTickEnabled` is on.
-- [ ] (AC-CNB-33a) GIVEN a round start with 50 NPCs, WHEN commands are logged, THEN the command log is empty before `OnRoundActive`; at `OnRoundActive` all 50 NPCs issue their first command in one server step; first pause and leg lengths pooled over at least 20 fixed-seed rounds pass a KS test at p > 0.01 against their distributions (no unison).
-- [ ] (AC-CNB-33b) Decision ticks are spread so no frame holds more than `ceil(N / (FPS / CrowdDecisionPerSec)) + 2` decisions.
-- [ ] The live-count ledger `NpcCount - V - B + Rel` (V = vacancies, B = NPCs taken over by informants, Rel = participant pawns released to the crowd, GDD CNB-R1) holds after a scripted sequence of kills, takeovers and releases and reads only kill times; if the navmesh is not ready the Director asserts `NavNotReady` and keeps pawns Dormant.
+- [x] `UCrowdDirector::ShouldCreateSubsystem` is false on clients; `FCrowdDirectorCore` constructs and runs in a headless spec with no `UWorld`; Director init asserts `StateTree.Component.ScheduledTickEnabled` is on.
+- [x] (AC-CNB-33a) GIVEN a round start with 50 NPCs, WHEN commands are logged, THEN the command log is empty before `OnRoundActive`; at `OnRoundActive` all 50 NPCs issue their first command in one server step; first pause and leg lengths pooled over at least 20 fixed-seed rounds pass a KS test at p > 0.01 against their distributions (no unison).
+- [x] (AC-CNB-33b) Decision ticks are spread so no frame holds more than `ceil(N / (FPS / CrowdDecisionPerSec)) + 2` decisions.
+- [x] The live-count ledger `NpcCount - V - B + Rel` (V = vacancies, B = NPCs taken over by informants, Rel = participant pawns released to the crowd, GDD CNB-R1) holds after a scripted sequence of kills, takeovers and releases and reads only kill times; if the navmesh is not ready the Director asserts `NavNotReady` and keeps pawns Dormant.
 
 ---
 
@@ -70,11 +70,13 @@
 
 ## Files
 
-- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdDirector.h`
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdDirectorCore.h`
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdDirector.cpp`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdDirectorCore.cpp`
-- `Source/StealthGameplay/Public/Server/Core/CrowdControl.h` (consumer-owned `ICrowdControl`, `ITakeoverEligibilitySource`, `FCrowdAdoptParams`)
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdTypes.h`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdDirector.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdDirector.cpp`
+- `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp`
+- `Source/StealthGame/Public/Server/StealthCompositionRoot.h`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdDirectorCoreTest.cpp`
 
 ---
@@ -112,7 +114,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdDirectorCoreTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Director.ServerOnlyHeadless`, `StealthGame.Crowd.Director.PhaseGating`, `StealthGame.Crowd.Director.DecisionSpread`, `StealthGame.Crowd.Director.Ledger`; 2026-10-26)
 
 ---
 
@@ -120,3 +122,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-002-crowd-draws-and-streams.md`, `production/epics/crowd-npc-behaviour/story-003-crowd-tuning-keys-and-profile-data.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-007-path-source-and-start-budget.md`, `production/epics/crowd-npc-behaviour/story-008-spatial-hash-and-perception-filter.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`, `production/epics/crowd-npc-behaviour/story-017-density-and-start-placement.md`, `production/epics/crowd-npc-behaviour/story-026-ambient-schedule-and-emergence.md`, `production/epics/crowd-npc-behaviour/story-032-spike-60-character-server-cost.md`, `production/epics/crowd-npc-behaviour/story-036-no-crowd-ui.md`, `production/epics/crowd-npc-behaviour/story-039-retire-prototype-crowd.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: The composition root forwards Round Halt/StartRound to UCrowdDirector (ICrowdControl).
+**Test Evidence**: `StealthGame.Crowd.Director.ServerOnlyHeadless`, `StealthGame.Crowd.Director.PhaseGating`, `StealthGame.Crowd.Director.DecisionSpread`, `StealthGame.Crowd.Director.Ledger`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

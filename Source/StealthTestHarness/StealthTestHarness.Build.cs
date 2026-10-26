@@ -12,7 +12,7 @@ public class StealthTestHarness : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"Core", "CoreUObject", "Engine", "NetCore", "EnhancedInput", "InputCore", "Json", "OnlineSubsystemUtils", "CommonUI", "CommonInput", "UMG", "Slate", "SlateCore", "AIModule", "StealthFoundation", "StealthGameplay", "StealthPresentation", "StealthGame"
+			"Core", "CoreUObject", "Engine", "NetCore", "EnhancedInput", "InputCore", "Json", "OnlineSubsystemUtils", "CommonUI", "CommonInput", "UMG", "Slate", "SlateCore", "AIModule", "GameplayTasks", "StateTreeModule", "GameplayStateTreeModule", "GameplayTags", "StealthFoundation", "StealthGameplay", "StealthPresentation", "StealthGame"
 		});
 
 		// ADR-0008 section 1, T2: CQTest's in-process PIE network tests exist only in editor builds

@@ -1,12 +1,12 @@
 # Story 008: Spatial hash, ray budget and the concealment-blind perception filter
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From GDD CNB-R2, CNB-R3.3, AC-CNB-36 and ADR-0016 section 5, scoped to this story:*
 
-- [ ] The 2 m spatial hash is built once per frame from public positions and velocities, excludes pawns the filter marks not-an-obstacle, and returns identical results for player-driven and AI-driven pawns.
-- [ ] (AC-CNB-36) GIVEN fixed-seed scenes with a bush holding 0, 1 and 3 concealed pawns (player and NPC), WHEN NPC steering, glance targets, conversation partners and bush choices are recorded, THEN they are identical across the three occupancies and no glance targets a pawn without line of sight.
-- [ ] Line-of-sight rays are capped at 8 per frame, round-robin; a deferred ray keeps its stimulus time so the reaction delay is unaffected.
-- [ ] No `UAIPerceptionComponent` or team affiliation is used; with Concealment absent the filter defaults to everything-perceivable and bush red herrings are disabled.
+- [x] The 2 m spatial hash is built once per frame from public positions and velocities, excludes pawns the filter marks not-an-obstacle, and returns identical results for player-driven and AI-driven pawns.
+- [x] (AC-CNB-36) GIVEN fixed-seed scenes with a bush holding 0, 1 and 3 concealed pawns (player and NPC), WHEN NPC steering, glance targets, conversation partners and bush choices are recorded, THEN they are identical across the three occupancies and no glance targets a pawn without line of sight.
+- [x] Line-of-sight rays are capped at 8 per frame, round-robin; a deferred ray keeps its stimulus time so the reaction delay is unaffected.
+- [x] No `UAIPerceptionComponent` or team affiliation is used; with Concealment absent the filter defaults to everything-perceivable and bush red herrings are disabled.
 
 ---
 
@@ -68,10 +68,9 @@
 
 ## Files
 
-- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdPerceptionFilter.h`
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdSpatialHash.h`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdSpatialHash.cpp`
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdRayBudget.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdPerceptionFilter.h`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdPerceptionTest.cpp`
 
 ---
@@ -109,7 +108,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdPerceptionTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Perception.HashKindBlind`, `StealthGame.Crowd.Perception.ConcealedOccupancy`, `StealthGame.Crowd.Perception.RayBudget`, `StealthGame.Crowd.Perception.NoPerceptionComponent`; 2026-10-26)
 
 ---
 
@@ -117,3 +116,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-004-director-core-ledger-and-phase-gating.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-011-avoidance-and-yield.md`, `production/epics/crowd-npc-behaviour/story-015-conversation-and-turn-in-place.md`, `production/epics/crowd-npc-behaviour/story-022-bush-herring.md`, `production/epics/crowd-npc-behaviour/story-024-strike-stimulus-and-reactions.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: No Concealment filter yet: the perceivable flag is the stand-in seam (ICrowdPerceptionFilter). No crowd sight trace channel: rays use ECC_Visibility.
+**Test Evidence**: `StealthGame.Crowd.Perception.HashKindBlind`, `StealthGame.Crowd.Perception.ConcealedOccupancy`, `StealthGame.Crowd.Perception.RayBudget`, `StealthGame.Crowd.Perception.NoPerceptionComponent`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

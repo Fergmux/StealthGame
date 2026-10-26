@@ -2902,3 +2902,201 @@ stories:
     completed: "2026-10-26"
     sprint: 2
     note: "Added 2026-10-26 (created by the S10 resolution); PASS: production/qa/spikes/2026-10-26_S10-rerun.md; unblocked the S10 gate of 17 stories"
+  - id: "cnb-001"
+    name: "Spike: StateTree, controller and path-latency engine verifications"
+    file: "production/epics/crowd-npc-behaviour/story-001-spike-engine-verifications.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-002"
+    name: "Crowd draws: counter-based streams, continuous mappings and kill independence"
+    file: "production/epics/crowd-npc-behaviour/story-002-crowd-draws-and-streams.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-003"
+    name: "Crowd tuning keys, Baseline and Tell Matrix rates, and asset references as data"
+    file: "production/epics/crowd-npc-behaviour/story-003-crowd-tuning-keys-and-profile-data.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-004"
+    name: "Crowd Director core: server-only subsystem, ledger and phase gating"
+    file: "production/epics/crowd-npc-behaviour/story-004-director-core-ledger-and-phase-gating.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-005"
+    name: "Command sinks: motion/command split, control-epoch check and Halt filter"
+    file: "production/epics/crowd-npc-behaviour/story-005-command-sinks-epoch-and-halt-filter.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-006"
+    name: "AStealthCrowdController: no path following, Look pitch path and tick order"
+    file: "production/epics/crowd-npc-behaviour/story-006-crowd-controller-and-look-pitch.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-007"
+    name: "Path source and start budget: pre-baked edges, async queries and leg ids"
+    file: "production/epics/crowd-npc-behaviour/story-007-path-source-and-start-budget.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-008"
+    name: "Spatial hash, ray budget and the concealment-blind perception filter"
+    file: "production/epics/crowd-npc-behaviour/story-008-spatial-hash-and-perception-filter.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-009"
+    name: "Follower: path shaping, pace set, corners and the shared stop floor"
+    file: "production/epics/crowd-npc-behaviour/story-009-follower-shaping-pace-and-stops.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-010"
+    name: "Virtual input layer: device profiles, virtual camera and recordable stream"
+    file: "production/epics/crowd-npc-behaviour/story-010-virtual-input-layer.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-011"
+    name: "Avoidance as Move offsets: yield rate, obstacles and the blocked ladder"
+    file: "production/epics/crowd-npc-behaviour/story-011-avoidance-and-yield.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-012"
+    name: "StateTree schema, assets, decision grid and the per-frame due-time list"
+    file: "production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-013"
+    name: "Identity blindness and command-path gate: includes, IIF-only motion, no NPC strike, rates fixed"
+    file: "production/epics/crowd-npc-behaviour/story-013-identity-and-command-path-gate.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-014"
+    name: "Pauses, stall-cover regulator and the stationary-stretch bound"
+    file: "production/epics/crowd-npc-behaviour/story-014-pauses-and-stall-cover.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-015"
+    name: "Conversation (C3) and turn-in-place (C6), partner-blind"
+    file: "production/epics/crowd-npc-behaviour/story-015-conversation-and-turn-in-place.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-016"
+    name: "Gaze catalogue (G1-G7): glances, holds, goods and salient motion"
+    file: "production/epics/crowd-npc-behaviour/story-016-gaze-catalogue.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-017"
+    name: "Density model (F1) and assignment-blind start placement"
+    file: "production/epics/crowd-npc-behaviour/story-017-density-and-start-placement.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-018"
+    name: "Tell sampler: compensated clocks, chain-gap guard and calibration counters"
+    file: "production/epics/crowd-npc-behaviour/story-018-tell-sampler-and-calibration-counters.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"

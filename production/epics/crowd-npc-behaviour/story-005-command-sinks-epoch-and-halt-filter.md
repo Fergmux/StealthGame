@@ -1,12 +1,12 @@
 # Story 005: Command sinks: motion/command split, control-epoch check and Halt filter
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From ADR-0016 section 2 and Implementation Guidelines, GDD AC-CNB-11 and AC-CNB-38 (the full-scene gates are stories 013 and 031), scoped to the sink types:*
 
-- [ ] `FCrowdMotionSink` exposes only `Move` and `Look`; `FCrowdCommandSink` adds the discrete commands (`Traverse`, `InteractBegin/End`, `PrepareBegin/End`, `Hide`); neither type has an `Attack` method (compile-time or reflection check).
-- [ ] Every sink call compares the drive token's `ControlEpoch` with `UStealthPawnFactory::GetControlEpoch(Pawn)`; a mismatch (or a stale weak pawn) drops the call and increments `StaleEpochDrop`.
-- [ ] After the Halt latch the sink passes only `Move(0)` and `Look`, including calls from due-time entries and async callbacks in the same frame.
-- [ ] Sinks call only `UPawnCommandComponent` entry points; a forbidden-API grep finds no `MoveTo*`, `AITask_MoveTo`, `RequestDirectMove`, `AddMovementInput`, `SetActorRotation`, `LaunchCharacter` or CMC velocity write in Crowd code.
+- [x] `FCrowdMotionSink` exposes only `Move` and `Look`; `FCrowdCommandSink` adds the discrete commands (`Traverse`, `InteractBegin/End`, `PrepareBegin/End`, `Hide`); neither type has an `Attack` method (compile-time or reflection check).
+- [x] Every sink call compares the drive token's `ControlEpoch` with `UStealthPawnFactory::GetControlEpoch(Pawn)`; a mismatch (or a stale weak pawn) drops the call and increments `StaleEpochDrop`.
+- [x] After the Halt latch the sink passes only `Move(0)` and `Look`, including calls from due-time entries and async callbacks in the same frame.
+- [x] Sinks call only `UPawnCommandComponent` entry points; a forbidden-API grep finds no `MoveTo*`, `AITask_MoveTo`, `RequestDirectMove`, `AddMovementInput`, `SetActorRotation`, `LaunchCharacter` or CMC velocity write in Crowd code.
 
 ---
 
@@ -70,7 +70,14 @@
 
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdSink.h`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdSink.cpp`
+- `Source/StealthGameplay/Public/Server/Core/StealthPawnFactory.h`
+- `Source/StealthGameplay/Private/Core/PawnFactory/StealthPawnFactory.cpp`
+- `Source/StealthGameplay/Public/Server/Core/StealthPawnControlQuery.h`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdSinkTest.cpp`
+- `tools/ci/lint/crowd-lint.sh`
+- `tools/ci/lint/rule-crowd.awk`
+- `tools/ci/lint/selftest/run-crowd-lint-selftest.sh`
+- `tools/ci/lint/selftest/crowd/`
 
 ---
 
@@ -107,7 +114,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdSinkTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Sink.Vocabulary`, `StealthGame.Crowd.Sink.EpochGate`, `StealthGame.Crowd.Sink.HaltFilter`, `StealthGame.Crowd.Sink.ForbiddenApis`; 2026-10-26)
 
 ---
 
@@ -115,3 +122,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-003-crowd-tuning-keys-and-profile-data.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-006-crowd-controller-and-look-pitch.md`, `production/epics/crowd-npc-behaviour/story-009-follower-shaping-pace-and-stops.md`, `production/epics/crowd-npc-behaviour/story-028-bound-pawn-restricted-driver.md`, `production/epics/crowd-npc-behaviour/story-031-halt-and-handover-epoch.md`, `production/epics/crowd-npc-behaviour/story-034-pipeline-parity.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: The control epoch lives on the pawn factory (bumped before Possess; StealthPawnControl::GetControlEpoch / GetSpawnOrdinal).
+**Test Evidence**: `StealthGame.Crowd.Sink.Vocabulary`, `StealthGame.Crowd.Sink.EpochGate`, `StealthGame.Crowd.Sink.HaltFilter`, `StealthGame.Crowd.Sink.ForbiddenApis`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

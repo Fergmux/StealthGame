@@ -1,12 +1,12 @@
 # Story 016: Gaze catalogue (G1-G7): glances, holds, goods and salient motion
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-16 and CNB-R6, scoped to this story:*
 
-- [ ] (AC-CNB-16a) GIVEN 10 min of NPC `Look` streams, WHEN `HeadLook` is logged, THEN head rate never exceeds `LookMaxRateDegPerSec`, every G2 glance holds 0.4-2.5 s unless it is a G6 hold of 2.5-6 s, and no G2 target is concealed or out of line of sight.
-- [ ] (AC-CNB-16b) The G6 rate is within the 99 % Poisson interval of 0.10 per NPC-minute over a 600-minute run (G1 idle-scan sweeps of 3-7 s are context holds, excluded from this limit and from the G6 count, SCL R8.8, D27), and G3 holds reach a pitch of -10 to -20 degrees.
-- [ ] G4: over at least 400 eligible salient stimuli (run, traversal landing or strike within 15 m with line of sight) the glance share lies in the 99 % binomial interval of 0.5, and the reaction delay measured from the stimulus time (not the decision tick) lies in [0.3, 1.2] s and passes a KS test at p > 0.01 against U(0.3, 1.2).
+- [x] (AC-CNB-16a) GIVEN 10 min of NPC `Look` streams, WHEN `HeadLook` is logged, THEN head rate never exceeds `LookMaxRateDegPerSec`, every G2 glance holds 0.4-2.5 s unless it is a G6 hold of 2.5-6 s, and no G2 target is concealed or out of line of sight.
+- [x] (AC-CNB-16b) The G6 rate is within the 99 % Poisson interval of 0.10 per NPC-minute over a 600-minute run (G1 idle-scan sweeps of 3-7 s are context holds, excluded from this limit and from the G6 count, SCL R8.8, D27), and G3 holds reach a pitch of -10 to -20 degrees.
+- [x] G4: over at least 400 eligible salient stimuli (run, traversal landing or strike within 15 m with line of sight) the glance share lies in the 99 % binomial interval of 0.5, and the reaction delay measured from the stimulus time (not the decision tick) lies in [0.3, 1.2] s and passes a KS test at p > 0.01 against U(0.3, 1.2).
 
 ---
 
@@ -69,7 +69,8 @@
 
 ## Files
 
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdGazeTasks.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdAgent.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdAgent.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdGazeTest.cpp`
 
 ---
@@ -102,7 +103,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdGazeTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Gaze.GlanceHoldsAndLongHoldRate`, `StealthGame.Crowd.Gaze.GoodsPitch`, `StealthGame.Crowd.Gaze.SalientGlance`; 2026-10-26)
 
 ---
 
@@ -110,3 +111,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-010-virtual-input-layer.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-023-tell-calibration-gate.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 3/3 passing
+**Deviations**: No Camera EvaluateViewEnvelope yet (a 15 m line-of-sight stand-in for salient eligibility). A G2 glance carried into a context pause ends at the pause start.
+**Test Evidence**: `StealthGame.Crowd.Gaze.GlanceHoldsAndLongHoldRate`, `StealthGame.Crowd.Gaze.GoodsPitch`, `StealthGame.Crowd.Gaze.SalientGlance`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

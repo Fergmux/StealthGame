@@ -1,12 +1,12 @@
 # Story 003: Crowd tuning keys, Baseline and Tell Matrix rates, and asset references as data
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Config/Data
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` Tuning Knobs (CR-15), OQ13 and F2, scoped to this story:*
 
-- [ ] Every `Crowd*` key in the GDD Tuning Knobs table plus the OQ13 unkeyed constants (R8 shares 40/30/12/7 %, glance, pause and panic durations, C1 leg length, C2 short-pause share) is registered in the Crowd ServerOnly sub-struct with default, hard range and latch (Round / Use / Action); the validator rejects an out-of-range value.
-- [ ] The TDC invariants are enforced: `CrowdIdleMinSec <= CrowdIdleMaxSec <= CrowdMaxIdleSec`; `CrowdConversationMaxSec <= CrowdMaxIdleSec`; `CrowdIdleMinSec >= SessionSoftTimeoutSec + 1`.
-- [ ] `CrowdMotionProfileAsset`, `CrowdFullStateTreeAsset` and `CrowdRestrictedStateTreeAsset` resolve to valid assets of the required class; a missing or wrong-class asset fails validation at `OnTuningReady`.
-- [ ] The Baseline and Tell Matrix intervals (F2 defaults) are readable only from the frozen server snapshot after `OnTuningReady`, are part of the per-round tuning hash, and are absent from the client-facing tuning face.
+- [x] Every `Crowd*` key in the GDD Tuning Knobs table plus the OQ13 unkeyed constants (R8 shares 40/30/12/7 %, glance, pause and panic durations, C1 leg length, C2 short-pause share) is registered in the Crowd ServerOnly sub-struct with default, hard range and latch (Round / Use / Action); the validator rejects an out-of-range value.
+- [x] The TDC invariants are enforced: `CrowdIdleMinSec <= CrowdIdleMaxSec <= CrowdMaxIdleSec`; `CrowdConversationMaxSec <= CrowdMaxIdleSec`; `CrowdIdleMinSec >= SessionSoftTimeoutSec + 1`.
+- [x] `CrowdMotionProfileAsset`, `CrowdFullStateTreeAsset` and `CrowdRestrictedStateTreeAsset` resolve to valid assets of the required class; a missing or wrong-class asset fails validation at `OnTuningReady`.
+- [x] The Baseline and Tell Matrix intervals (F2 defaults) are readable only from the frozen server snapshot after `OnTuningReady`, are part of the per-round tuning hash, and are absent from the client-facing tuning face.
 
 ---
 
@@ -69,10 +69,22 @@
 
 ## Files
 
-- `Source/StealthFoundation/Public/Server/Tuning/CrowdTuning.h` (or the Crowd ServerOnly sub-struct file named by the tuning epic)
-- `Source/StealthFoundation/Private/Tuning/CrowdTuningValidation.cpp`
+- `Source/StealthFoundation/Public/Server/StealthTuningSubstructs.h`
+- `Source/StealthFoundation/Public/Server/StealthTuningInvariants.h`
+- `Source/StealthFoundation/Private/Tuning/StealthTuningInvariants.cpp`
+- `Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl`
+- `Source/StealthFoundation/Public/Server/StealthTuningVersion.h`
+- `Source/StealthFoundation/Public/Server/Testing/StealthCrowdTuningKnobs.h`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdAssetKeys.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdAssetKeys.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdMotionProfileData.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdMotionProfileData.cpp`
+- `Source/StealthGameEditor/Private/Crowd/CrowdAssetAuthoring.cpp`
+- `Content/StealthGame/AI/DA_CrowdMotionProfile_Default.uasset`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdTuningSmokeTest.cpp`
-- `production/qa/smoke-<date>-crowd-tuning.md`
+- `Source/StealthFoundation/Private/Tests/Tuning/InvariantBoundariesTest.cpp`
+- `Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp`
+- `production/qa/smoke-2026-10-26-crowd-tuning.md`
 
 ---
 
@@ -105,7 +117,7 @@
 **Required evidence**:
 - Config/Data: smoke check pass in `production/qa/smoke-<date>-crowd-tuning.md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Tuning.KeysRegistered`, `StealthGame.Crowd.Tuning.Invariants`, `StealthGame.Crowd.Tuning.ServerOnlyHashed`, `StealthGame.Crowd.Tuning.AssetKeys`, `StealthGame.Tuning.SchemaVersionBumped`; 2026-10-26)
 
 ---
 
@@ -113,3 +125,11 @@
 
 - Depends on: None (needs the tuning pipeline from `production/epics/tuning-data-config/EPIC.md` to exist when implemented)
 - Unlocks: `production/epics/crowd-npc-behaviour/story-004-director-core-ledger-and-phase-gating.md`, `production/epics/crowd-npc-behaviour/story-005-command-sinks-epoch-and-halt-filter.md`, `production/epics/crowd-npc-behaviour/story-010-virtual-input-layer.md`, `production/epics/crowd-npc-behaviour/story-018-tell-sampler-and-calibration-counters.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: 108 keys (49 GDD + 59 OQ13 constants); TuningSchemaVersion 3. No runtime tuning store yet: the Director freezes schema defaults. Asset soft paths live in FCrowdAssetKeys outside the schema (no soft-path row type); assets are built by the editor command Stealth.Crowd.BuildAssets. Pending Level Socket Contract keys read through StealthTuningPendingOwnerKeys.
+**Test Evidence**: `StealthGame.Crowd.Tuning.KeysRegistered`, `StealthGame.Crowd.Tuning.Invariants`, `StealthGame.Crowd.Tuning.ServerOnlyHashed`, `StealthGame.Crowd.Tuning.AssetKeys`, `StealthGame.Tuning.SchemaVersionBumped`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

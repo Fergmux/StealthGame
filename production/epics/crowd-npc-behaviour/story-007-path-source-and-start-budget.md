@@ -1,12 +1,12 @@
 # Story 007: Path source and start budget: pre-baked edges, async queries and leg ids
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -35,10 +35,10 @@
 
 *From GDD CNB-R3, CNB-R15, ADR-0016 section 4.1 and Risks, scoped to this story:*
 
-- [ ] At most `CrowdPathStartsPerFrameLimit` (default 2) async path starts occur per frame, FIFO with round-robin deferral; a stress of 50 simultaneous requests defers and never drops any.
-- [ ] A path result is accepted only if the controller's control epoch and the request's leg id both match; stale results are discarded; while waiting (at least 2 frames) the follower keeps its current `Move`.
-- [ ] Legs along a `CrowdRoute` edge use the pre-baked edge path with 0 `FindPathAsync` calls; an invalid path is re-queried, holding the last `Move` for at most 0.5 s and then `Move(0)`.
-- [ ] No path query is issued before `OnLayoutReady`, and no runtime navmesh rebuild occurs during a round.
+- [x] At most `CrowdPathStartsPerFrameLimit` (default 2) async path starts occur per frame, FIFO with round-robin deferral; a stress of 50 simultaneous requests defers and never drops any.
+- [x] A path result is accepted only if the controller's control epoch and the request's leg id both match; stale results are discarded; while waiting (at least 2 frames) the follower keeps its current `Move`.
+- [x] Legs along a `CrowdRoute` edge use the pre-baked edge path with 0 `FindPathAsync` calls; an invalid path is re-queried, holding the last `Move` for at most 0.5 s and then `Move(0)`.
+- [x] No path query is issued before `OnLayoutReady`, and no runtime navmesh rebuild occurs during a round.
 
 ---
 
@@ -70,7 +70,8 @@
 
 - `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdPathBudget.h`
 - `Source/StealthGameplay/Features/Crowd/Private/CrowdPathBudget.cpp`
-- `Source/StealthGameplay/Features/Crowd/Private/CrowdPathSource.cpp`
+- `Source/StealthGameplay/Features/Crowd/Public/Server/CrowdDirector.h`
+- `Source/StealthGameplay/Features/Crowd/Private/CrowdDirector.cpp`
 - `Source/StealthGameplay/Private/Tests/Crowd/CrowdPathBudgetTest.cpp`
 
 ---
@@ -108,7 +109,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdPathBudgetTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Path.StartBudget`, `StealthGame.Crowd.Path.AcceptanceGate`, `StealthGame.Crowd.Path.PrebakedEdges`, `StealthGame.Crowd.Path.NoQueryBeforeLayout`; 2026-10-26)
 
 ---
 
@@ -116,3 +117,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-001-spike-engine-verifications.md`, `production/epics/crowd-npc-behaviour/story-004-director-core-ledger-and-phase-gating.md`, `production/epics/crowd-npc-behaviour/story-006-crowd-controller-and-look-pitch.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-009-follower-shaping-pace-and-stops.md`, `production/epics/crowd-npc-behaviour/story-032-spike-60-character-server-cost.md`
+
+## Completion Notes
+**Completed**: 2026-10-26 (Crowd & NPC Behaviour batch, stories cnb-001..018; the production crowd drives L_Prototype, D53)
+**Criteria**: 4/4 passing
+**Deviations**: No Level Socket Contract layout, CrowdRoute or area types exist yet: the pre-baked edges are a graybox grid of route nodes and the plaza stands in for the Market area.
+**Test Evidence**: `StealthGame.Crowd.Path.StartBudget`, `StealthGame.Crowd.Path.AcceptanceGate`, `StealthGame.Crowd.Path.PrebakedEdges`, `StealthGame.Crowd.Path.NoQueryBeforeLayout`; full suite 275/275: `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/full-suite.txt`
+**Run result**: 3-player PIE on L_Prototype with the production crowd (40 NPCs, the NpcCount default): `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`
+**Reviewed by**: self-review against the code-review skill during the batch; findings and fixes in `production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/evidence.md`

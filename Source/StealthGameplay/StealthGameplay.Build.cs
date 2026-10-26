@@ -1,3 +1,4 @@
+using System.IO;
 using UnrealBuildTool;
 
 // ADR-0007 section 1: the Gameplay runtime module (Core/ systems and Features/ that build on them).
@@ -21,5 +22,18 @@ public class StealthGameplay : ModuleRules
 		// forward-declares the Enhanced Input types, so the dependency stays private. CommonUI: the builder subscribes to
 		// the action router's input-mode change (ADR-0011 section 9, ADR-0021 E7; spike V5).
 		PrivateDependencyModuleNames.AddRange(new string[] { "EnhancedInput", "InputCore", "CommonUI", "CommonInput", "UMG", "Slate", "SlateCore", "DeveloperSettings" });
+
+		// ADR-0016 section 1 (Crowd epic, story cnb-002): the Crowd feature folder Features/Crowd/ with its own Public/Server
+		// and Private folders (ADR-0007 module table: Features/ live inside StealthGameplay). Its public headers are on
+		// the module's public include path ("Server/CrowdDirector.h"); the include lint resolves them by header name.
+		PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Crowd", "Public"));
+		PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Crowd", "Private"));
+
+		// ADR-0016 sections 1, 3, 4 (stories cnb-004, cnb-007, cnb-012): the crowd's StateTree (the StateTree and
+		// GameplayStateTree plugins are enabled in the .uproject), its native gameplay-tag events and the async path
+		// queries. The StateTree types sit in public Crowd headers (the schema, the component, the task), so the two
+		// StateTree modules and GameplayTags are public; NavigationSystem stays private.
+		PublicDependencyModuleNames.AddRange(new string[] { "StateTreeModule", "GameplayStateTreeModule", "GameplayTags" });
+		PrivateDependencyModuleNames.Add("NavigationSystem");
 	}
 }
