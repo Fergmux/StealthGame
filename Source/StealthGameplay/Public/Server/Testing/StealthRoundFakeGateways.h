@@ -9,6 +9,7 @@
 #include "Server/Core/Round/StealthCrowdControl.h"
 #include "Server/Core/Round/StealthRoundGateways.h"
 #include "Server/Core/Round/StealthRoundTypes.h"
+#include "Server/StealthClock.h"
 
 /**
  * Recording, strict fakes of Round's six gateways (GDD "Test seams (binding on implementation)" item 3; story
@@ -143,6 +144,16 @@ public:
 		// Recorded without arguments: a sub-seed request names no secret, but its answer is never logged.
 		return static_cast<uint64>(Record(TEXT("GetServerSubSeed"), { static_cast<int64>(Domain) }));
 	}
+	virtual uint32 GetConnectionGeneration(FParticipantId Participant) const override
+	{
+		// State-answered from Generations (0 when unset), recorded (the Preparing batch amendment).
+		Record(TEXT("GetConnectionGeneration"), { Participant.Value }, /*bRecord*/ true, /*bScripted*/ false);
+		const uint32* Known = Generations.Find(Participant.Value);
+		return Known != nullptr ? *Known : 0;
+	}
+
+	/** Per-participant Session ConnectionGeneration answered by GetConnectionGeneration. */
+	TMap<uint32, uint32> Generations;
 };
 
 class FRoundFakeRosterGateway : public FRoundFakeGatewayBase, public IRoundRosterGateway
@@ -231,6 +242,24 @@ public:
 		for (int32 Index = 0; Index < Team1; ++Index) { Members.Add({ FParticipantId(Next++), ERosterTeam::Team1 }); }
 	}
 
+	/** Sets every member's Roster state (the win tests start from all Active). */
+	void SetAllStates(EParticipantState State)
+	{
+		for (FRoundRosterMember& Member : Members)
+		{
+			Member.State = State;
+		}
+	}
+
+	/** Sets one member's Roster state. */
+	void SetState(FParticipantId Participant, EParticipantState State)
+	{
+		if (FRoundRosterMember* Member = Members.FindByPredicate([Participant](const FRoundRosterMember& M) { return M.Participant == Participant; }))
+		{
+			Member->State = State;
+		}
+	}
+
 	/** Members on Team. */
 	int32 CountOn(ERosterTeam Team) const
 	{
@@ -276,6 +305,14 @@ public:
 	{
 		return static_cast<ERoundPlacementResult>(Record(TEXT("RequestStartPlacement"), { Team0.Num(), Team1.Num(), NpcCount }));
 	}
+	virtual void GetPlacementZones(TArray<FRoundPlacementZone>& OutZones) const override
+	{
+		Record(TEXT("GetPlacementZones"), {}, /*bRecord*/ true, /*bScripted*/ false);
+		OutZones = Zones;
+	}
+
+	/** The zones GetPlacementZones answers (placement fixtures). */
+	TArray<FRoundPlacementZone> Zones;
 };
 
 class FRoundFakeCrowdControl : public FRoundFakeGatewayBase, public ICrowdControl
@@ -283,12 +320,72 @@ class FRoundFakeCrowdControl : public FRoundFakeGatewayBase, public ICrowdContro
 public:
 	explicit FRoundFakeCrowdControl(FRoundFakeCallLog& InLog) : FRoundFakeGatewayBase(InLog, ERoundFakeGateway::Crowd) {}
 
+	virtual void StartRound() override { Record(TEXT("StartRound"), {}); }
 	virtual void Halt() override { Record(TEXT("Halt"), {}); }
 	virtual void DriveBoundPawn(AStealthPawn* Pawn) override { Record(TEXT("DriveBoundPawn"), { Pawn != nullptr ? 1 : 0 }); }
 	virtual void ReleaseControl(AStealthPawn* Pawn) override { Record(TEXT("ReleaseControl"), { Pawn != nullptr ? 1 : 0 }); }
 	virtual void AdoptReleasedPawn(AStealthPawn* Pawn, const FCrowdAdoptParams& Params) override
 	{
 		Record(TEXT("AdoptReleasedPawn"), { Pawn != nullptr ? 1 : 0, Params.bExitAtNextScheduledSlot ? 1 : 0 });
+	}
+};
+
+/**
+ * Recording P6 spawner (not strict: every spawn answers Spawned unless the participant is in BindFailParticipants or
+ * FailParticipants). Records the entries in call order, the server tick each was spawned on (from Clock when set),
+ * the gate openings and DestroyRoundPawns; LivePawns counts pawns that exist.
+ */
+class FRoundFakeStartSpawner : public IRoundStartSpawner
+{
+public:
+	struct FSpawn
+	{
+		FRoundSpawnEntry Entry;
+		uint64 Tick = 0;
+		FEpochToken Expected;
+	};
+
+	const IStealthClock* Clock = nullptr;
+	TArray<FSpawn> Spawns;
+	TSet<uint32> BindFailParticipants;
+	TArray<FParticipantId> OpenedGates;
+	int32 CompleteCalls = 0;
+	int32 CompletedPawnCount = 0;
+	int32 DestroyCalls = 0;
+	int32 LivePawns = 0;
+
+	virtual ERoundSpawnResult SpawnStartPawn(const FRoundSpawnEntry& Entry, const FEpochToken& Expected) override
+	{
+		if (Entry.IsPlayer() && BindFailParticipants.Contains(Entry.Participant.Value))
+		{
+			return ERoundSpawnResult::BindFailed; // destroyed before FinishSpawning: no live pawn
+		}
+		Spawns.Add({ Entry, Clock != nullptr ? Clock->GetServerTickIndex() : 0, Expected });
+		++LivePawns;
+		return ERoundSpawnResult::Spawned;
+	}
+	virtual void OnStartSpawnComplete(int32 ExpectedPawnCount) override
+	{
+		++CompleteCalls;
+		CompletedPawnCount = ExpectedPawnCount;
+	}
+	virtual bool OpenSpawnGate(FParticipantId Participant) override
+	{
+		OpenedGates.Add(Participant);
+		return true;
+	}
+	virtual int32 DestroyRoundPawns() override
+	{
+		++DestroyCalls;
+		const int32 Destroyed = LivePawns;
+		LivePawns = 0;
+		return Destroyed;
+	}
+
+	/** The recorded spawn of Participant, or null. */
+	const FSpawn* FindSpawn(FParticipantId Participant) const
+	{
+		return Spawns.FindByPredicate([Participant](const FSpawn& S) { return S.Entry.Participant == Participant; });
 	}
 };
 
@@ -327,6 +424,7 @@ public:
 		Gateways.CharacterPool = &CharacterPool;
 		Gateways.LevelSocket = &LevelSocket;
 		Gateways.Crowd = &Crowd;
+		Gateways.Spawner = &Spawner;
 		return Gateways;
 	}
 
@@ -336,6 +434,8 @@ public:
 	FRoundFakeCharacterPoolGateway CharacterPool;
 	FRoundFakeLevelSocketGateway LevelSocket;
 	FRoundFakeCrowdControl Crowd;
+	/** Not one of the six gateways: the P6 spawn site (not strict). */
+	FRoundFakeStartSpawner Spawner;
 };
 
 #endif // WITH_STEALTH_TEST_SEAMS

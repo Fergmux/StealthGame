@@ -139,8 +139,8 @@ AStealthGameState* AStealthGameMode::GetStealthGameState() const
 
 bool AStealthGameMode::IsRoundInProgress() const
 {
-	const AStealthGameState* GS = GetStealthGameState();
-	return GS && GS->RoundPhase == EStealthRoundPhase::InProgress;
+	const URoundMatchStore* Round = URoundMatchStore::Get(GetWorld());
+	return Round != nullptr && Round->IsRoundLive();
 }
 
 UClass* AStealthGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
@@ -185,19 +185,24 @@ void AStealthGameMode::Logout(AController* Exiting)
 		Root->UnregisterPlayer(Cast<APlayerController>(Exiting));
 	}
 	Super::Logout(Exiting);
-	// A disconnected player no longer counts for either side.
-	if (IsRoundInProgress())
-	{
-		GetWorldTimerManager().SetTimerForNextTick(this, &AStealthGameMode::CheckEliminationVictory);
-	}
+	// Production rules (R17, F2): the disconnect opens the grace record; its expiry is a forfeit or a void.
 }
 
 AActor* AStealthGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
 	const AStealthPlayerState* PS = Player ? Player->GetPlayerState<AStealthPlayerState>() : nullptr;
-	if (PS && PS->Team < STEALTH_NUM_TEAMS)
+	if (AActor* Start = PS ? FindTeamStart(PS->Team) : nullptr)
 	{
-		const FName WantedTag(*FString::Printf(TEXT("Team%d"), PS->Team));
+		return Start;
+	}
+	return Super::ChoosePlayerStart_Implementation(Player);
+}
+
+AActor* AStealthGameMode::FindTeamStart(uint8 Team) const
+{
+	if (Team < STEALTH_NUM_TEAMS)
+	{
+		const FName WantedTag(*FString::Printf(TEXT("Team%d"), Team));
 		TArray<APlayerStart*> Candidates;
 		for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
 		{
@@ -224,7 +229,7 @@ AActor* AStealthGameMode::ChoosePlayerStart_Implementation(AController* Player)
 			return Pool[FMath::RandRange(0, Pool.Num() - 1)];
 		}
 	}
-	return Super::ChoosePlayerStart_Implementation(Player);
+	return nullptr;
 }
 
 int32 AStealthGameMode::DrawAppearance()
@@ -315,6 +320,12 @@ void AStealthGameMode::HandleRoundPhaseChanged(ERoundPhase OldPhase, ERoundPhase
 	case ERoundPhase::Preparing:
 		RunPreparing();
 		break;
+	case ERoundPhase::Active:
+		HandleRoundActive();
+		break;
+	case ERoundPhase::Ended:
+		HandleRoundEnded();
+		break;
 	case ERoundPhase::Reset:
 		if (OldPhase == ERoundPhase::Preparing || OldPhase == ERoundPhase::Active)
 		{
@@ -386,27 +397,18 @@ APawn* AStealthGameMode::SpawnPlayerPawn(APlayerController* Player)
 void AStealthGameMode::RunPreparing()
 {
 	AStealthGameState* GS = GetStealthGameState();
-	URoundMatchStore* Round = URoundMatchStore::Get(GetWorld());
-	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld());
-	if (!GS || !Round)
+	if (!GS)
 	{
 		return;
 	}
 	GetWorldTimerManager().ClearTimer(RoundStartTimer);
 	GetWorldTimerManager().ClearTimer(RoundRestartTimer);
 
-	CleanupRoundActors();
+	// The previous round's actors go (its start pawns too, Ai-driven bodies included); Round's readiness sequence (R6)
+	// then builds the layout and spawns every pawn.
+	DestroyRoundPawns();
 	AppearanceDeck.Reset();
-	// The round seed is Session's draw for this start (USessionService::DrawRoundSeed through the adapter, F5; R5 step 8).
-	const int32 Seed = (Root && Root->GetAdapters()->GetLastRoundSeed() != 0) ? Root->GetAdapters()->GetLastRoundSeed() : FMath::Rand();
-	GS->ResetRoundState(Seed);
-	GS->BuildCityForSeed(); // clients build the same layout when RoundSeed replicates
-
-	for (TActorIterator<AStealthObjective> It(GetWorld()); It; ++It)
-	{
-		It->ResetObjective();
-	}
-
+	URosterStore* Roster = URosterStore::Get(GetWorld());
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		APlayerController* PC = It->Get();
@@ -424,32 +426,44 @@ void AStealthGameMode::RunPreparing()
 		}
 		if (APawn* Pawn = PC->GetPawn())
 		{
+			if (Roster && Roster->IsMatchOpen())
+			{
+				Roster->ClearBinding(Pawn, EEndPlayReason::RemovedFromWorld);
+			}
 			PC->UnPossess();
 			Pawn->Destroy();
 		}
-		SpawnPlayerPawn(PC);
 	}
-
-	GS->RoundPhase = EStealthRoundPhase::InProgress;
+	GS->RoundPhase = EStealthRoundPhase::WaitingToStart;
 	GS->PhaseEndServerTime = 0.0;
-	// Preparing -> Active on the next frame (the Preparing barrier is stories rmf-032..041; every player pawn now exists
-	// and is bound). Deferred so the transition is never written inside the Preparing broadcast and clients get Preparing.
-	TWeakObjectPtr<URoundMatchStore> WeakRound(Round);
-	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [WeakRound]()
-	{
-		if (URoundMatchStore* Store = WeakRound.Get())
-		{
-			Store->EnterActive();
-		}
-	}));
-	MessageAll(LOCTEXT("RoundStart", "The round begins. Complete your team's tasks. Trust no one in the crowd."), false, 6.f);
-	NavWaitStartTime = GetWorld()->GetTimeSeconds();
-	GetWorldTimerManager().SetTimer(CrowdSpawnTimer, this, &AStealthGameMode::SpawnCrowdWhenNavReady, 0.25f, true, 0.25f);
 }
 
-void AStealthGameMode::SpawnCrowdWhenNavReady()
+void AStealthGameMode::BuildRoundLayout(int32 Seed)
 {
-	// The new layout dirties the nav mesh; NPCs need the rebuilt mesh to find streets.
+	AStealthGameState* GS = GetStealthGameState();
+	if (!GS)
+	{
+		if (URoundMatchStore* Round = URoundMatchStore::Get(GetWorld()))
+		{
+			Round->NotifyLayoutAborted();
+		}
+		return;
+	}
+	// The round seed is Session's draw for this start (FRoundParams.Seed, R5 step 8); the layout must report it back (P4).
+	PendingLayoutSeed = Seed;
+	GS->ResetRoundState(Seed);
+	GS->BuildCityForSeed(); // clients build the same layout when RoundSeed replicates
+	for (TActorIterator<AStealthObjective> It(GetWorld()); It; ++It)
+	{
+		It->ResetObjective();
+	}
+	NavWaitStartTime = GetWorld()->GetTimeSeconds();
+	GetWorldTimerManager().SetTimer(CrowdSpawnTimer, this, &AStealthGameMode::PollLayoutNavReady, 0.25f, true, 0.25f);
+}
+
+void AStealthGameMode::PollLayoutNavReady()
+{
+	// The new layout dirties the nav mesh; the start placement needs the rebuilt mesh to find streets.
 	constexpr double MinNavWaitSeconds = 1.5; // the rebuild can start a few frames after the layout changes
 	constexpr double MaxNavWaitSeconds = 15.0;
 	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
@@ -460,13 +474,122 @@ void AStealthGameMode::SpawnCrowdWhenNavReady()
 		return;
 	}
 	GetWorldTimerManager().ClearTimer(CrowdSpawnTimer);
-
 	for (TActorIterator<AStealthCityGenerator> It(GetWorld()); It; ++It)
 	{
 		It->ValidateReachability();
 	}
-	SpawnCrowd();
-	UE_LOG(LogStealth, Log, TEXT("Round started (seed %d, %d NPCs, nav wait %.1fs)."), GetStealthGameState()->RoundSeed, CrowdNpcs.Num(), GetWorld()->GetTimeSeconds() - NavWaitStartTime);
+	UE_LOG(LogStealth, Log, TEXT("Layout ready (seed %d, nav wait %.1fs)."), PendingLayoutSeed, Waited);
+	if (URoundMatchStore* Round = URoundMatchStore::Get(GetWorld()))
+	{
+		Round->NotifyLayoutReady(1, PendingLayoutSeed);
+	}
+}
+
+ERoundSpawnResult AStealthGameMode::SpawnStartPawn(const FRoundSpawnEntry& Entry, const FEpochToken& ExpectedEpoch)
+{
+	if (!Entry.IsPlayer())
+	{
+		return SpawnNpc() != nullptr ? ERoundSpawnResult::Spawned : ERoundSpawnResult::Failed;
+	}
+	UStealthPawnFactory* Factory = UStealthPawnFactory::Get(GetWorld());
+	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld());
+	if (!Factory || !Root || !CharacterClass)
+	{
+		return ERoundSpawnResult::Failed;
+	}
+	APlayerController* PC = Root->GetController(Entry.Participant);
+	const uint8 Team = Entry.Team == ERosterTeam::Team1 ? 1 : 0;
+	const AActor* Start = FindTeamStart(Team);
+	FTransform Transform = Start ? Start->GetActorTransform() : FTransform::Identity;
+	Transform.SetScale3D(FVector::OneVector);
+
+	FStealthSpawnRequest Request;
+	Request.PawnClass = CharacterClass.Get();
+	Request.Transform = Transform;
+	Request.AppearanceId = DrawAppearance();
+	// The spawn gate: a participant not Connected at P6 gets an Ai-driven, unpossessed pawn (never Player).
+	const bool bPlayer = Entry.Control == ERoundSpawnControl::Player && PC != nullptr;
+	Request.ControlKind = bPlayer ? EStealthPawnControlKind::Player : EStealthPawnControlKind::Ai;
+	Request.PlayerController = bPlayer ? PC : nullptr;
+	Request.Participant = Entry.Participant;
+	Request.ExpectedEpoch = FRosterEpochToken{ ExpectedEpoch.MatchId, ExpectedEpoch.RoundEpoch };
+	const FStealthSpawnResult Result = Factory->SpawnSharedPawn(Request);
+	if (!Result.Pawn)
+	{
+		return Result.Bind != ERosterResult::Applied && Result.Bind != ERosterResult::NoOp_NotBound ? ERoundSpawnResult::BindFailed : ERoundSpawnResult::Failed;
+	}
+	RoundPlayerPawns.Add(Entry.Participant.Value, Result.Pawn);
+	return ERoundSpawnResult::Spawned;
+}
+
+bool AStealthGameMode::OpenSpawnGate(FParticipantId Participant)
+{
+	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld());
+	APlayerController* PC = Root ? Root->GetController(Participant) : nullptr;
+	const TWeakObjectPtr<APawn>* Gated = RoundPlayerPawns.Find(Participant.Value);
+	if (!PC || !Gated || !Gated->IsValid())
+	{
+		return false;
+	}
+	// Prototype hand-back until the takeover stories (ADR-0010 RequestHandOver): the Ai body is replaced by a possessed one.
+	APawn* Old = Gated->Get();
+	if (URosterStore* Roster = URosterStore::Get(GetWorld()); Roster && Roster->IsMatchOpen())
+	{
+		Roster->ClearBinding(Old, EEndPlayReason::RemovedFromWorld);
+	}
+	if (AController* Ai = Old->GetController())
+	{
+		Ai->UnPossess();
+		Ai->Destroy();
+	}
+	Old->Destroy();
+	if (APawn* Pawn = SpawnPlayerPawn(PC))
+	{
+		RoundPlayerPawns.Add(Participant.Value, Pawn);
+	}
+	return true;
+}
+
+int32 AStealthGameMode::DestroyRoundPawns()
+{
+	int32 Destroyed = CrowdNpcs.Num();
+	CleanupRoundActors();
+	URosterStore* Roster = URosterStore::Get(GetWorld());
+	for (const TPair<uint32, TWeakObjectPtr<APawn>>& Pair : RoundPlayerPawns)
+	{
+		APawn* Pawn = Pair.Value.Get();
+		if (!Pawn)
+		{
+			continue;
+		}
+		if (Roster && Roster->IsMatchOpen())
+		{
+			Roster->ClearBinding(Pawn, EEndPlayReason::RemovedFromWorld);
+		}
+		if (AController* Controller = Pawn->GetController())
+		{
+			Controller->UnPossess();
+			if (!Controller->IsPlayerController())
+			{
+				Controller->Destroy();
+			}
+		}
+		Pawn->Destroy();
+		++Destroyed;
+	}
+	RoundPlayerPawns.Reset();
+	return Destroyed;
+}
+
+void AStealthGameMode::HandleRoundActive()
+{
+	if (AStealthGameState* GS = GetStealthGameState())
+	{
+		GS->RoundPhase = EStealthRoundPhase::InProgress;
+		GS->PhaseEndServerTime = 0.0;
+	}
+	MessageAll(LOCTEXT("RoundStart", "The round begins. Complete your team's tasks. Trust no one in the crowd."), false, 6.f);
+	UE_LOG(LogStealth, Log, TEXT("Round started (seed %d, %d NPCs)."), GetStealthGameState() ? GetStealthGameState()->RoundSeed : 0, CrowdNpcs.Num());
 }
 
 void AStealthGameMode::HandleRoundCalledOff()
@@ -479,17 +602,22 @@ void AStealthGameMode::HandleRoundCalledOff()
 		GS->RoundPhase = EStealthRoundPhase::WaitingToStart;
 		GS->ResetRoundState(GS->RoundSeed);
 	}
-	MessageAll(LOCTEXT("RoundAborted", "Round ended by command."));
+	MessageAll(LOCTEXT("RoundAborted", "The round was called off."));
 }
 
-void AStealthGameMode::EndRound(uint8 WinningTeam, EStealthWinReason Reason)
+void AStealthGameMode::HandleRoundEnded()
 {
 	AStealthGameState* GS = GetStealthGameState();
-	if (!GS || GS->RoundPhase != EStealthRoundPhase::InProgress)
+	const URoundMatchStore* Round = URoundMatchStore::Get(GetWorld());
+	if (!GS || !Round || !Round->GetMatchCore())
 	{
-		return; // first decisive event wins; later ones in the same frame are ignored
+		return;
 	}
+	// Round's production rules decided the round (R15 latch); this is only the prototype presentation of FRoundResult.
+	const FRoundResult& Result = Round->GetMatchCore()->GetPhaseCore().GetLastResult();
 	const UStealthSettings* Settings = UStealthSettings::Get();
+	const uint8 WinningTeam = Result.WinningTeam;
+	const EStealthWinReason Reason = Result.PublicReason == 1 ? EStealthWinReason::FinalObjective : EStealthWinReason::Elimination;
 	GS->RoundPhase = EStealthRoundPhase::RoundOver;
 	GS->WinningTeam = WinningTeam;
 	GS->WinReason = Reason;
@@ -504,11 +632,6 @@ void AStealthGameMode::EndRound(uint8 WinningTeam, EStealthWinReason Reason)
 		? LOCTEXT("ReasonObjective", "completed the final objective")
 		: LOCTEXT("ReasonElimination", "eliminated every active enemy");
 	MessageAll(FText::Format(LOCTEXT("RoundWon", "{0} win: they {1}."), GetTeamName(WinningTeam), ReasonText), false, Settings->RoundRestartDelay);
-	if (URoundMatchStore* Round = URoundMatchStore::Get(GetWorld()))
-	{
-		// Active -> Ended with the public result (the latch stories rmf-043..053 replace this driver).
-		Round->EndRound(WinningTeam, Reason == EStealthWinReason::FinalObjective ? 1 : 2);
-	}
 	UE_LOG(LogStealth, Log, TEXT("Round over: team %d wins (%s)."), WinningTeam, Reason == EStealthWinReason::FinalObjective ? TEXT("objective") : TEXT("elimination"));
 
 	GetWorldTimerManager().SetTimer(RoundRestartTimer, this, &AStealthGameMode::RequestRoundReset, Settings->RoundRestartDelay, false);
@@ -744,8 +867,7 @@ void AStealthGameMode::HandleAssassinationRequest(AStealthCharacter* Attacker, A
 	default:
 		break;
 	}
-
-	CheckEliminationVictory();
+	// The production rules decide eliminations: the Roster transition's event reaches Round's F2 check inline.
 }
 
 void AStealthGameMode::EliminatePlayer(AStealthCharacter* Victim, ERosterReason Reason)
@@ -814,34 +936,6 @@ void AStealthGameMode::RespawnInformant(TWeakObjectPtr<AController> Controller)
 	}
 	// Prototype respawn through the factory (the production takeover of an unseen crowd pawn is story SCL-028).
 	SpawnPlayerPawn(Cast<APlayerController>(Resolved));
-}
-
-void AStealthGameMode::CheckEliminationVictory()
-{
-	if (!IsRoundInProgress())
-	{
-		return;
-	}
-	int32 Players[STEALTH_NUM_TEAMS] = { 0, 0 };
-	int32 Active[STEALTH_NUM_TEAMS] = { 0, 0 };
-	for (APlayerState* PlayerState : GameState->PlayerArray)
-	{
-		const AStealthPlayerState* PS = Cast<AStealthPlayerState>(PlayerState);
-		if (!PS || PS->Team >= STEALTH_NUM_TEAMS || PS->IsInactive())
-		{
-			continue;
-		}
-		++Players[PS->Team];
-		if (PS->IsActivePlayer())
-		{
-			++Active[PS->Team];
-		}
-	}
-	const uint8 Winner = FStealthRules::EvaluateEliminationWinner(Players, Active);
-	if (Winner != STEALTH_NO_TEAM)
-	{
-		EndRound(Winner, EStealthWinReason::Elimination);
-	}
 }
 
 // ---- Defence & objectives -------------------------------------------------------------------------
@@ -920,7 +1014,27 @@ void AStealthGameMode::OnObjectiveCompleted(AStealthObjective* Objective, ASteal
 
 	if (Objective->Stage == STEALTH_FINAL_STAGE)
 	{
-		EndRound(Team, EStealthWinReason::FinalObjective);
+		// The final completion goes to Round's F2 ObjectiveWin with the re-validated tender (R15): the completer is
+		// Active, Connected and human-controlled, on the team, and the site is live.
+		URoundMatchStore* Round = URoundMatchStore::Get(GetWorld());
+		const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld());
+		const URosterStore* Roster = URosterStore::Get(GetWorld());
+		AController* CompleterController = Completer->GetController();
+		const FParticipantId Participant = Root ? Root->GetParticipant(Cast<APlayerController>(CompleterController)) : FParticipantId();
+		const FParticipantRecord* Record = Roster && Roster->IsStoreInitialized() && Participant.IsValid() ? Roster->FindRecord(Participant) : nullptr;
+		FRoundObjectiveCompletion Completion;
+		Completion.bFinal = true;
+		Completion.Team = Team;
+		Completion.bCompleterActive = Record && Record->State == EParticipantState::Active;
+		Completion.bCompleterConnected = Record && Record->Connection.Projection == ERosterConnection::Connected;
+		Completion.bHumanControlled = CompleterController && CompleterController->IsPlayerController();
+		Completion.bCompleterOnTeam = Record && Record->Team == (Team == 0 ? ERosterTeam::Team0 : ERosterTeam::Team1);
+		Completion.bSiteLive = true;
+		if (!Round || !Round->SubmitObjectiveCompletion(Completion))
+		{
+			UE_LOG(LogStealth, Log, TEXT("Final objective completion not accepted by Round (re-validation or latch)."));
+			Objective->ResetObjective();
+		}
 		return;
 	}
 

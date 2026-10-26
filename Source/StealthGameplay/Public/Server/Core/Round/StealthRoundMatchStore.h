@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "Server/Core/Round/StealthRoundMatchCore.h"
 #include "Server/Core/Round/StealthRoundPublicStateMirror.h"
+#include "Server/EventLog/StealthRoundEventLog.h"
+#include "Server/Queue/StealthResolutionQueueCore.h"
 #include "Server/Roster/StealthRosterDeps.h"
+#include "Server/StealthLogFaultSink.h"
 #include "Server/StealthClock.h"
 #include "Server/Session/StealthSessionCore.h"
 #include "Subsystems/GameInstanceSubsystem.h"
@@ -32,7 +35,24 @@ private:
 	const URoundMatchStore& Store;
 };
 
+/** The round queue's epoch source: the Roster's current (MatchId, RoundEpoch) through Round's Roster gateway. */
+class STEALTHGAMEPLAY_API FRoundStoreEpochSource final : public IQueueEpochSource
+{
+public:
+	IRoundRosterGateway* Roster = nullptr;
+	virtual FEpochToken GetCurrentEpoch() const override { return Roster != nullptr ? Roster->GetEpochToken() : FEpochToken(); }
+};
+
+/** The round queue's connection generations: Session's, through Round's Session gateway. */
+class STEALTHGAMEPLAY_API FRoundStoreGenerationSource final : public IQueueConnectionGenerationSource
+{
+public:
+	IRoundSessionGateway* Session = nullptr;
+	virtual uint32 GetConnectionGeneration(FParticipantId Participant) const override { return Session != nullptr ? Session->GetConnectionGeneration(Participant) : 0; }
+};
+
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnRoundPhaseChanged, ERoundPhase /*Old*/, ERoundPhase /*New*/);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnRoundActive, uint32 /*RoundEpoch*/, double /*ActivePhaseStart*/);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundHostMessage, const FString& /*Message*/);
 
 /**
@@ -53,7 +73,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundHostMessage, const FString& /*Messag
  */
 UCLASS(NotBlueprintType, NotBlueprintable)
 class STEALTHGAMEPLAY_API URoundMatchStore : public UGameInstanceSubsystem, public FTickableGameObject, public IRoundHostSink, public IRosterRoundPhase,
-	public IStealthMatchStore
+	public IStealthMatchStore, public IRoundLogAccessGate
 {
 	GENERATED_BODY()
 
@@ -69,8 +89,14 @@ public:
 
 	// --- Wiring --------------------------------------------------------------------------------------------------
 
-	/** Builds the match core over Gateways (Session and Roster required). Owner is held weakly. */
-	void RegisterGateways(const FRoundGateways& Gateways, UObject* Owner);
+	/**
+	 * Builds the match core over Gateways (Session and Roster required), the round's resolution queue (sub-seeds from
+	 * SubSeeds; null: no queue, debug commands answer Unavailable and decision keys are adapter keys) with the debug and
+	 * grace resolvers, and the Event Log. Owner is held weakly.
+	 */
+	void RegisterGateways(const FRoundGateways& Gateways, UObject* Owner, const IServerSubSeedSource* SubSeeds = nullptr);
+	/** The P6 spawn site (the composition root's adapter over UStealthPawnFactory). */
+	void SetStartSpawner(IRoundStartSpawner* Spawner);
 	/** True once gateways are registered (server only). */
 	bool HasMatchCore() const { return Core.IsValid(); }
 
@@ -87,12 +113,34 @@ public:
 
 	/** Creates the match: Roster BeginMatch(TeamSize), phase Lobby. */
 	ERosterResult OpenMatch();
-	/** Session accepted the round travel (or, without travel, the composition root confirms it): Preparing. */
-	bool NotifyRoundTravelAccepted();
-	/** Preparing -> Active (composition-root driver until the Preparing barrier stories). */
+	/** Session accepted the round travel (or, without travel, the composition root confirms it): Preparing with Seed. */
+	bool NotifyRoundTravelAccepted(int32 Seed = 0);
+	/** The forced Active-entry step (dev and harness; the sequencer enters Active on its own). */
 	bool EnterActive();
-	/** Active -> Ended with the public result. */
+	/** The legacy win driver (harness): TryTerminate(Win) with an adapter key. */
 	bool EndRound(uint8 WinningTeam, uint8 PublicReason);
+
+	// --- Preparing owner events (R6; adapters forward them until Session, TDC and LSC facades exist) ----------------
+
+	void NotifyTuningReady(uint64 TuningHash);
+	void NotifyTuningFailed();
+	void NotifyLayoutReady(uint32 LayoutId, int32 Seed);
+	void NotifyLayoutAborted();
+	bool NotifyParticipantTravelComplete(const FRoundTravelAck& Ack);
+	bool NotifyParticipantWorldReady(const FRoundTravelAck& Ack);
+	/** This Preparing's acknowledgement nonce (Session stamps acknowledgements with it). */
+	FRoundAckEpoch GetPreparingAckEpoch() const;
+
+	// --- Win sources (R15; prototype adapters until Objectives and Assassination route through the queue) -----------
+
+	/** An objective completion with its re-validated tender: F2 ObjectiveWin (a stage completion never ends the round). */
+	bool SubmitObjectiveCompletion(const FRoundObjectiveCompletion& Completion);
+	/** R6: commands are rejected until Active (NotNow); unset when admitted. */
+	TOptional<ECommandRejectCode> AdmitCommand() const;
+	/** True in Active before the latch (the prototype's "round in progress"). */
+	bool IsRoundLive() const;
+	/** The round queue (null before RegisterGateways or without sub-seeds). */
+	FResolutionQueueCore* GetRoundQueue() const { return Queue.Get(); }
 
 	/** The one host-checked entry point (console and host panel). */
 	ERoundCommandResult ExecuteCommand(const FRoundCommandCaller& Caller, ERoundHostCommand Command, const FRoundCommandArgs& Args = FRoundCommandArgs());
@@ -107,6 +155,8 @@ public:
 	const FRoundPublicStateMirror& GetMirror() const { return Mirror; }
 
 	FOnRoundPhaseChanged OnPhaseChanged;
+	/** R7 OnRoundActive(RoundEpoch, ActivePhaseStart): once per round, in the Active-entry step. */
+	FOnRoundActive OnRoundActive;
 	/** Host-only messages (refusals and command results) for the host's HUD and log. */
 	FOnRoundHostMessage OnHostMessage;
 
@@ -128,6 +178,10 @@ public:
 	/** True when no match is open (no core, or a core that has not opened a match). */
 	virtual bool IsMatchStateEmpty() const override;
 
+	// --- IRoundLogAccessGate ---------------------------------------------------------------------------------------
+	/** The log's read and disk paths open only once the round is terminated (Ended or Reset). */
+	virtual bool IsLogReleasable() const override;
+
 	// --- FTickableGameObject -------------------------------------------------------------------------------------------
 	virtual void Tick(float DeltaTime) override;
 	virtual bool IsTickable() const override;
@@ -143,7 +197,15 @@ private:
 	static void UnregisterConsoleCommands();
 	static void HandleConsole(ERoundHostCommand Command, const TArray<FString>& Args, UWorld* World, FOutputDevice& Ar);
 
+	void WriteLogHeader(uint64 TuningHash);
+
 	TUniquePtr<FRoundMatchCore> Core;
+	FStealthLogFaultSink QueueFaults;
+	FRoundStoreEpochSource EpochSource;
+	FRoundStoreGenerationSource GenerationSource;
+	TUniquePtr<FRoundEventLog> EventLog;
+	TUniquePtr<FResolutionQueueCore> Queue;
+	TUniquePtr<FRoundDebugResolver> DebugResolver;
 	TWeakObjectPtr<UObject> GatewayOwner;
 	FRoundRuleParams PendingParams;
 	FRoundPublicStateMirror Mirror;

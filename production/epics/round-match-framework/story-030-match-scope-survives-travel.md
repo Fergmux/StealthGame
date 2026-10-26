@@ -1,12 +1,12 @@
 # Story 030: MatchScore, RoundsPlayedCount, host id, teams and archived slices persist across travel; RoundEpoch increments
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -95,7 +95,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/Round/MatchScopeSurvivesTravelTest.cpp` (CQTest `NETWORK_TEST_CLASS(MatchScopeSurvivesTravel, "StealthGame.Round.PIE")` per the CQTest exemption in `.claude/rules/test-standards.md`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.PIE.MatchScopeSurvivesTravel.TwoRoundsKeepMatchScopeAndResetRoundScope`, 2026-10-26)
 
 ---
 
@@ -104,3 +104,13 @@
 - Depends on: `production/epics/round-match-framework/story-029-public-state-replication.md`
 - Unlocks: `production/epics/round-match-framework/story-084-pie-lifecycle-start.md`
 - Cross-epic: `production/epics/session-travel` (seamless travel and game-instance stores; stories not yet created), `production/epics/participant-state-roster` (teams, `ResetAll`, `RoundEpoch`; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (two production rounds: MatchScore, RoundsPlayedCount, host id, teams and archived slices persist; phase, Seq and Terminated reset; RoundEpoch +1 per ResetAll; Reset never calls ResetAll)
+**Deviations**: No Session travel exists yet: "the travel" is the Reset -> Lobby hand-over plus a GameState recreated in-process (InitGameState re-seed), labelled non-representative per ADR-0005 guideline 10; re-run multi-process when the session-travel epic lands seamless travel. Archived slices are kept by FRoundLogSliceRecorder in the game-instance Round store (server only).
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/PIE/Round/MatchScopeSurvivesTravelTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: OBSERVED: production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

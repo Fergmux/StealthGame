@@ -31,7 +31,8 @@ struct FRosterEvent;
  */
 UCLASS(NotBlueprintType, NotBlueprintable)
 class STEALTHGAME_API UStealthMatchAdapters : public UObject, public IRoundSessionGateway, public IRoundTuningGateway,
-	public IRoundCharacterPoolGateway, public IRoundLevelSocketGateway, public ICrowdControl, public IStealthPawnFactoryHooks
+	public IRoundCharacterPoolGateway, public IRoundLevelSocketGateway, public ICrowdControl, public IStealthPawnFactoryHooks,
+	public IRoundStartSpawner
 {
 	GENERATED_BODY()
 
@@ -45,9 +46,11 @@ public:
 	virtual ERoundConnectionState GetConnectionState(FParticipantId Participant) const override;
 	virtual void KickParticipant(FParticipantId Participant) override;
 	virtual uint64 GetServerSubSeed(ESeedDomain Domain, uint32 Attempt) const override;
+	virtual uint32 GetConnectionGeneration(FParticipantId Participant) const override;
 
 	// IRoundTuningGateway
-	virtual void SignalPreparingEntered() override {}
+	/** No TDC freeze exists yet: tuning is ready on the next tick, and (no travel) every connected player acknowledges then. */
+	virtual void SignalPreparingEntered() override;
 	virtual ERoundPresetPreview PreviewPreset(FName PresetId) const override { return ERoundPresetPreview::Unavailable; }
 
 	// IRoundCharacterPoolGateway
@@ -56,13 +59,25 @@ public:
 	virtual void DiscardDeal() override {}
 
 	// IRoundLevelSocketGateway
-	virtual void RequestLayout(int32 Seed, uint64 TuningHash) override {}
+	/** The prototype city for Seed (AStealthGameMode::BuildRoundLayout), reported ready once the nav mesh has rebuilt. */
+	virtual void RequestLayout(int32 Seed, uint64 TuningHash) override;
 	virtual ERoundPlacementResult RequestStartPlacement(TConstArrayView<FParticipantId> Team0, TConstArrayView<FParticipantId> Team1, int32 NpcCount) override
 	{
 		return ERoundPlacementResult::Ok;
 	}
+	/** The prototype layout has no zones: the share check has nothing to assert. */
+	virtual void GetPlacementZones(TArray<FRoundPlacementZone>& OutZones) const override { OutZones.Reset(); }
+
+	// IRoundStartSpawner (over UStealthPawnFactory through the prototype game mode)
+	virtual ERoundSpawnResult SpawnStartPawn(const FRoundSpawnEntry& Entry, const FEpochToken& ExpectedEpoch) override;
+	/** No client world-ready report exists yet: every connected player reports world-ready on the next tick. */
+	virtual void OnStartSpawnComplete(int32 ExpectedPawnCount) override;
+	virtual bool OpenSpawnGate(FParticipantId Participant) override;
+	virtual int32 DestroyRoundPawns() override;
 
 	// ICrowdControl
+	/** R7: releases every prototype NPC controller held since its spawn in Preparing. */
+	virtual void StartRound() override;
 	virtual void Halt() override {}
 	virtual void DriveBoundPawn(AStealthPawn* Pawn) override {}
 	virtual void ReleaseControl(AStealthPawn* Pawn) override {}
@@ -72,6 +87,9 @@ public:
 	virtual void ApplyAppearance(AStealthPawn* Pawn, int32 AppearanceId) override;
 	virtual ERosterResult BindPawn(FParticipantId Participant, AStealthPawn* Pawn, const TOptional<FRosterEpochToken>& ExpectedEpoch) override;
 	virtual AController* CreateAiController(AStealthPawn* Pawn) override;
+
+	/** Acknowledges for every connected player (travel complete, or the world-ready stage) with this Preparing's nonce. */
+	void AcknowledgeConnectedPlayers(bool bWorldReady);
 
 	/** The seed RequestRoundTravel drew for the round being started (0 before the first start). */
 	int32 GetLastRoundSeed() const { return LastRoundSeed; }
@@ -122,6 +140,8 @@ public:
 	void GetConnectedPlayers(TArray<TPair<FParticipantId, APlayerController*>>& Out) const;
 
 	UStealthMatchAdapters* GetAdapters() const { return Adapters; }
+	/** The current server world's prototype game mode (the adapters' engine side), or null. */
+	AStealthGameMode* GetGameMode() const { return GameMode.Get(); }
 	URosterStore* GetRosterStore() const;
 	URoundMatchStore* GetRoundStore() const;
 

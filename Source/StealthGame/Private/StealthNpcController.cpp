@@ -54,6 +54,11 @@ void AStealthNpcController::WanderToNextPoint()
 	using namespace StealthNpcControllerLocal;
 	APawn* ControlledPawn = GetPawn();
 	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	if (bHeld)
+	{
+		ScheduleNextWander(0.5f);
+		return;
+	}
 	if (!ControlledPawn || !NavSystem)
 	{
 		ScheduleNextWander(1.f);

@@ -1,12 +1,12 @@
 # Story 040: A participant Disconnected at P6 gets a bound, unpossessed, AI-driven pawn and grace measured from ActivePhaseStart
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -101,7 +101,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/DisconnectedAtStartSpawnedTest.cpp` (automation test `StealthGame.Round.DisconnectedAtStartSpawned`, class `FRoundDisconnectedAtStartSpawnedTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.DisconnectedAtStartSpawned`, 2026-10-26)
 
 ---
 
@@ -110,3 +110,13 @@
 - Depends on: `production/epics/round-match-framework/story-001-test-seam-fake-clock.md`, `production/epics/round-match-framework/story-003-test-seam-fake-gateways.md`, `production/epics/round-match-framework/story-039-spawn-one-frame-and-gate.md`
 - Unlocks: None
 - Cross-epic: `production/epics/participant-state-roster` (`Disconnected` record, `ConnectionGeneration`, `BindPawn`, via the fake Roster gateway; stories not yet created), `production/epics/shared-character-locomotion` (`SpawnSharedPawn` and its `ControlKind` forcing; stories not yet created), `production/epics/crowd-npc-behaviour` (AI drive of a bound pawn, via the fake Crowd gateway; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (bound, Ai-driven, gated pawn; GraceExpiry ActivePhaseStart + G_eff and ActivePhaseStart + 10 + G_eff, observed firing on the real queue at that time)
+**Deviations**: Open item resolved: FRoundGraceTable, F4 and a minimal TimerFired(GraceExpiry) resolver are created here; stories rmf-060..071 own the full timeline.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/DisconnectedAtStartSpawnedTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - needs a participant disconnected at P6, which L_Prototype cannot produce without travel
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

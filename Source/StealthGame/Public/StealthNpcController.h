@@ -28,6 +28,9 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	/** R6: held NPCs stand in place (Preparing); Round's Active-entry Crowd start releases them (ICrowdControl::StartRound). */
+	bool bHeld = false;
+
 	/**
 	 * Follows Points (world positions, the first being the next corner) at Pace with Move input only. Public so a test
 	 * can drive the follower on a fixed route without the navigation system.

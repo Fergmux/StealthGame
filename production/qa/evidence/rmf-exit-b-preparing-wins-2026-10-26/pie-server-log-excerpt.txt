@@ -1,0 +1,14 @@
+[2026.10.26-11.07.48:391][328]LogStealthRound: Round phase Active -> Ended (change 4, round 1)
+[2026.10.26-11.07.48:391][328]LogStealthRound: Round 1 decided by the production rules: team 0 wins (public reason 2).
+[2026.10.26-11.07.48:391][328]LogStealth: Round over: team 0 wins (elimination).
+[2026.10.26-11.08.00:416][365]LogStealthRound: Round phase Ended -> Reset (change 5, round 1)
+[2026.10.26-11.08.00:498][365]LogStealthRound: Round phase Reset -> Lobby (change 6, round 1)
+[2026.10.26-11.08.05:739][381]LogStealthRound: Round phase Lobby -> Preparing (change 7, round 2)
+[2026.10.26-11.08.07:738][387]LogStealth: Layout ready (seed 1109947514, nav wait 1.7s).
+[2026.10.26-11.08.08:453][389]LogStealthRound: Round phase Preparing -> Active (change 8, round 2)
+[2026.10.26-11.08.08:453][389]LogStealth: Round started (seed 1109947514, 40 NPCs).
+[2026.10.26-11.08.30:071][454]LogStealthRound: Round phase Active -> Ended (change 9, round 2)
+[2026.10.26-11.08.30:071][454]LogStealthRound: Round 2 decided by the production rules: team 1 wins (public reason 1).
+[2026.10.26-11.08.30:071][454]LogStealth: Round over: team 1 wins (objective).
+[2026.10.26-11.08.42:080][490]LogStealthRound: Round phase Ended -> Reset (change 10, round 2)
+[2026.10.26-11.08.42:161][490]LogStealthRound: Round phase Reset -> Lobby (change 11, round 2)

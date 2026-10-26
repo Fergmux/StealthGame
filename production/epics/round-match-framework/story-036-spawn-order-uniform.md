@@ -1,12 +1,12 @@
 # Story 036: Per-slot spawn rank is uniform over 1..D across 1,000 fixed-secret round starts
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -92,7 +92,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/SpawnOrderUniformTest.cpp` (automation test `StealthGame.Round.SpawnOrderUniform`, class `FRoundSpawnOrderUniformTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.SpawnOrderUniform`, 2026-10-26)
 
 ---
 
@@ -101,3 +101,13 @@
 - Depends on: `production/epics/round-match-framework/story-002-test-seam-fixed-server-secret.md`, `production/epics/round-match-framework/story-005-test-fixture-constants.md`
 - Unlocks: `production/epics/round-match-framework/story-037-spawn-order-ignores-playerness.md`, `production/epics/round-match-framework/story-038-placement-invariant.md`, `production/epics/round-match-framework/story-039-spawn-one-frame-and-gate.md`
 - Cross-epic: `production/epics/session-travel` (`GetServerSubSeed`, `ServerSecret`, `ESeedDomain` registry; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (chi-square per slot below 27.88 for D = 10 over 1,000 starts on fixture secret S1)
+**Deviations**: Open items resolved: starts differ by RoundIndex (folded into every sub-seed by ADR-0006 section 3); the stream tag is StealthRandom::Tag("RND_SPWN") (ADR-0006 section 5 amendment, decision log).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/SpawnOrderUniformTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - a statistical property of the server spawn order (no visible difference by design)
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

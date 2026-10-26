@@ -1,12 +1,12 @@
 # Story 046: Two last-Active strikes in one tick are won by the lower-key attacker in both permutations
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -91,7 +91,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/MutualLastStrikeTest.cpp` (automation test `StealthGame.Round.MutualLastStrike`, class `FRoundMutualLastStrikeTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.MutualLastStrike`, 2026-10-26)
 
 ---
 
@@ -100,3 +100,13 @@
 - Depends on: `production/epics/round-match-framework/story-045-same-tick-final-vs-elimination.md`
 - Unlocks: None
 - Cross-epic: `production/epics/participant-state-roster` (the strike's transition events, via the fake Roster gateway; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (both permutations: the lower-key attacker's team wins, the other strike Rejected_Latched, one WinLatched)
+**Deviations**: None
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/MutualLastStrikeTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - a same-tick ordering that play cannot stage deterministically; covered on the real queue headless
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

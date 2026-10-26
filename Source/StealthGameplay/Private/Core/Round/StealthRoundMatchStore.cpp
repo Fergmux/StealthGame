@@ -8,6 +8,7 @@
 #include "HAL/IConsoleManager.h"
 #include "Misc/OutputDevice.h"
 #include "Server/Roster/StealthRosterStore.h"
+#include "View/CommandReplyTypes.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogStealthRound, Log, All);
 
@@ -90,7 +91,10 @@ void URoundMatchStore::Initialize(FSubsystemCollectionBase& Collection)
 
 void URoundMatchStore::EndMatch(ESessionEndReason Reason)
 {
+	Queue.Reset();
+	DebugResolver.Reset();
 	Core.Reset();
+	EventLog.Reset();
 	Mirror = FRoundPublicStateMirror();
 	GatewayOwner.Reset();
 	HostParticipant = FParticipantId();
@@ -112,7 +116,10 @@ void URoundMatchStore::Deinitialize()
 		Roster->OnRosterEvent.Remove(RosterEventHandle);
 		Roster->UnregisterRoundPhase(this);
 	}
+	Queue.Reset();
+	DebugResolver.Reset();
 	Core.Reset();
+	EventLog.Reset();
 	UnregisterConsoleCommands();
 	Super::Deinitialize();
 }
@@ -125,16 +132,90 @@ URoundMatchStore* URoundMatchStore::Get(const UWorld* World)
 
 // --- Wiring ------------------------------------------------------------------------------------------------------
 
-void URoundMatchStore::RegisterGateways(const FRoundGateways& Gateways, UObject* Owner)
+void URoundMatchStore::RegisterGateways(const FRoundGateways& Gateways, UObject* Owner, const IServerSubSeedSource* SubSeeds)
 {
 	if (Gateways.Session == nullptr || Gateways.Roster == nullptr)
 	{
 		return;
 	}
 	GatewayOwner = Owner;
-	Core = MakeUnique<FRoundMatchCore>(Gateways, this, nullptr, &Clock);
+	Queue.Reset();
+	DebugResolver.Reset();
+	Core.Reset();
+	EventLog = MakeUnique<FRoundEventLog>(*this, Clock, QueueFaults);
+	Core = MakeUnique<FRoundMatchCore>(Gateways, this, EventLog.Get(), &Clock);
 	Core->SetParams(PendingParams);
 	Core->GetPhaseCore().SetOnPhaseChanged([this](ERoundPhase Old, ERoundPhase New) { HandlePhaseChanged(Old, New); });
+	Core->OnRoundActive = [this](uint32 Epoch, double ActivePhaseStart) { OnRoundActive.Broadcast(Epoch, ActivePhaseStart); };
+	Core->OnWatchdogWarning = [](const StealthRoundFormulas::FWatchdogBound& Bound)
+	{
+		UE_LOGF(LogStealthRound, Warning, "F6: T_needed %.2f s exceeds PreparingWatchdogSec; the effective Preparing watchdog is %.2f s.", Bound.NeededSec, Bound.EffectiveSec);
+	};
+	Core->OnWriteLogHeader = [this](uint64 TuningHash) { WriteLogHeader(TuningHash); };
+	Core->SetDumpLogHandler([this]()
+	{
+		TArray<FRoundLogEntry> Entries;
+		const int32 Count = EventLog.IsValid() && EventLog->ReadEntries(Entries) == ERoundLogReadResult::Ok ? Entries.Num() : 0;
+		const int32 Archived = Core.IsValid() ? Core->GetLogArchive().GetArchive().Num() : 0;
+		UE_LOGF(LogStealthRound, Log, "Round log: %d entries this round, %d archived round slices.", Count, Archived);
+	});
+
+	// The round's resolution queue (ADR-0002): opened at Active entry, drained once per server frame while Active.
+	if (SubSeeds != nullptr)
+	{
+		EpochSource.Roster = Gateways.Roster;
+		GenerationSource.Session = Gateways.Session;
+		FResolutionQueueDeps Deps;
+		Deps.Clock = &Clock;
+		Deps.SubSeeds = SubSeeds;
+		Deps.Epoch = &EpochSource;
+		Deps.Generations = &GenerationSource;
+		Deps.Log = Core->GetRoundLogWriter();
+		Deps.FaultSink = &QueueFaults;
+		Queue = MakeUnique<FResolutionQueueCore>(Deps);
+		DebugResolver = MakeUnique<FRoundDebugResolver>(*Core->GetRoundLogWriter(), Clock);
+		DebugResolver->OnDebug = [this](const FDebugPayload& Payload, FQueueKey Key)
+		{
+			if (Core)
+			{
+				Core->ApplyDebugItem(Payload, Key);
+			}
+		};
+		Queue->RegisterResolver(EQueueItemType::DebugItem, DebugResolver.Get());
+		Queue->RegisterTimerResolver(ETimerKind::GraceExpiry, Core->GetGraceResolver());
+		Core->SetRoundQueue(Queue.Get());
+		Core->SetDebugQueue(Queue.Get());
+	}
+}
+
+void URoundMatchStore::SetStartSpawner(IRoundStartSpawner* Spawner)
+{
+	if (Core)
+	{
+		Core->SetStartSpawner(Spawner);
+	}
+}
+
+void URoundMatchStore::WriteLogHeader(uint64 TuningHash)
+{
+	if (!EventLog || !Core)
+	{
+		return;
+	}
+	// R19 header at P3: the public Seed and hashes only (never a sub-seed, the secret or entropy).
+	FRoundLogHeader Header;
+	Header.RoundIndex = Core->GetPhaseCore().GetCurrentRoundIndex();
+	Header.Seed = Core->GetPreparing().GetSeed();
+	Header.PresetId = Core->GetParams().PresetId;
+	Header.TuningHash = TuningHash;
+	Header.HostParticipantId = HostParticipant.Value;
+	EventLog->WriteHeader(Header);
+}
+
+bool URoundMatchStore::IsLogReleasable() const
+{
+	const ERoundPhase Phase = GetPhase();
+	return Phase == ERoundPhase::Ended || Phase == ERoundPhase::Reset;
 }
 
 void URoundMatchStore::SetRuleParams(const FRoundRuleParams& Params)
@@ -177,7 +258,29 @@ ERosterResult URoundMatchStore::OpenMatch()
 	return Result;
 }
 
-bool URoundMatchStore::NotifyRoundTravelAccepted() { return Core && Core->NotifyRoundTravelAccepted(); }
+bool URoundMatchStore::NotifyRoundTravelAccepted(int32 Seed) { return Core && Core->NotifyRoundTravelAccepted(Seed); }
+void URoundMatchStore::NotifyTuningReady(uint64 TuningHash) { if (Core) { Core->NotifyTuningReady(TuningHash); } }
+void URoundMatchStore::NotifyTuningFailed() { if (Core) { Core->NotifyTuningFailed(); } }
+void URoundMatchStore::NotifyLayoutReady(uint32 LayoutId, int32 Seed) { if (Core) { Core->NotifyLayoutReady(LayoutId, Seed); } }
+void URoundMatchStore::NotifyLayoutAborted() { if (Core) { Core->NotifyLayoutAborted(); } }
+bool URoundMatchStore::NotifyParticipantTravelComplete(const FRoundTravelAck& Ack) { return Core && Core->NotifyParticipantTravelComplete(Ack); }
+bool URoundMatchStore::NotifyParticipantWorldReady(const FRoundTravelAck& Ack) { return Core && Core->NotifyParticipantWorldReady(Ack); }
+FRoundAckEpoch URoundMatchStore::GetPreparingAckEpoch() const { return Core ? Core->GetPreparing().GetAckEpoch() : FRoundAckEpoch(); }
+
+bool URoundMatchStore::SubmitObjectiveCompletion(const FRoundObjectiveCompletion& Completion)
+{
+	return Core && Core->SubmitObjectiveCompletion(Completion);
+}
+
+TOptional<ECommandRejectCode> URoundMatchStore::AdmitCommand() const
+{
+	return Core ? Core->AdmitCommand() : TOptional<ECommandRejectCode>(ECommandRejectCode::NotNow);
+}
+
+bool URoundMatchStore::IsRoundLive() const
+{
+	return Core && Core->GetPhase() == ERoundPhase::Active && !Core->IsTerminated();
+}
 bool URoundMatchStore::EnterActive() { return Core && Core->EnterActive(); }
 
 bool URoundMatchStore::EndRound(uint8 WinningTeam, uint8 PublicReason)
@@ -194,6 +297,17 @@ void URoundMatchStore::HandlePhaseChanged(ERoundPhase Old, ERoundPhase New)
 {
 	UE_LOGF(LogStealthRound, Log, "Round phase %ls -> %ls (change %u, round %u)", LexRoundPhase(Old), LexRoundPhase(New),
 		Core ? Core->GetPhaseCore().GetPhaseChangeCount() : 0u, Core ? Core->GetPhaseCore().GetCurrentRoundIndex() : 0u);
+	if (New == ERoundPhase::Preparing && EventLog)
+	{
+		// The round's log starts with Preparing (the header follows at P3).
+		EventLog->BeginRound(FRoundEventLog::MaxEntriesDefault);
+	}
+	if (New == ERoundPhase::Ended && Core)
+	{
+		const FRoundTerminalOutcome& Outcome = Core->GetLatch().GetOutcome();
+		UE_LOGF(LogStealthRound, Log, "Round %u decided by the production rules: team %d wins (public reason %d).", Core->GetPhaseCore().GetCurrentRoundIndex(),
+			static_cast<int32>(Outcome.WinningTeam), static_cast<int32>(Outcome.GetPublicReason()));
+	}
 	PublishPublicState();
 	OnPhaseChanged.Broadcast(Old, New);
 }
@@ -212,7 +326,30 @@ void URoundMatchStore::HandleRosterEvent(const FRosterEvent& Event)
 	case ERosterEventType::ParticipantReclaimed:
 		Core->OnParticipantReclaimed(Event.Id);
 		break;
+	case ERosterEventType::ParticipantStateChanged:
+	{
+		// F2: every applied single-participant transition, in EventSeq order, inside the causing slot's Roster flush.
+		FRoundTransitionEvent Transition;
+		Transition.Participant = Event.Id;
+		Transition.Team = Event.Team;
+		Transition.Old = Event.Old;
+		Transition.New = Event.New;
+		Transition.Reason = Event.Reason;
+		Transition.ActiveCountAfter[0] = Event.ActiveCountAfter[0];
+		Transition.ActiveCountAfter[1] = Event.ActiveCountAfter[1];
+		Core->OnRosterTransition(Transition);
+		break;
+	}
+	case ERosterEventType::ConnectionChanged:
+	{
+		const ERoundConnectionState State = Event.Connection == ERosterConnection::Connected ? ERoundConnectionState::Connected
+			: Event.Connection == ERosterConnection::Dormant ? ERoundConnectionState::Dormant
+			: ERoundConnectionState::Disconnected;
+		Core->OnParticipantConnectionChanged(Event.Id, State, Event.bKicked, Clock.GetServerTimeSeconds());
+		break;
+	}
 	default:
+		// The batch events (RosterRoundEnded, RosterReset) are never evaluated as eliminations (F2 proof item 5).
 		break;
 	}
 }
@@ -363,6 +500,12 @@ void URoundMatchStore::Tick(float DeltaTime)
 	if (Core)
 	{
 		Core->Tick();
+		// One drain per server frame while Active, and in Ended so items that arrived around an out-of-slot latch still
+		// resolve Rejected_Latched (logged); the queue is reset at Reset and is closed in the other phases.
+		if (Queue && (Core->GetPhase() == ERoundPhase::Active || Core->GetPhase() == ERoundPhase::Ended))
+		{
+			Queue->Drain();
+		}
 		PublishPublicState();
 	}
 }

@@ -1,12 +1,12 @@
 # Story 043: At most one terminal outcome per round and equal to the F2 reference over 100,000 interleavings; the enums have no draw
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -101,7 +101,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/NoDrawPropertyTest.cpp` (automation test `StealthGame.Round.NoDrawProperty`, class `FRoundNoDrawPropertyTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.NoDrawProperty`, 2026-10-26)
 
 ---
 
@@ -110,3 +110,13 @@
 - Depends on: `production/epics/round-match-framework/story-001-test-seam-fake-clock.md`, `production/epics/round-match-framework/story-002-test-seam-fixed-server-secret.md`, `production/epics/round-match-framework/story-008-resolver-contract.md`
 - Unlocks: `production/epics/round-match-framework/story-044-elimination-truth-table.md`, `production/epics/round-match-framework/story-045-same-tick-final-vs-elimination.md`, `production/epics/round-match-framework/story-052-ended-latch-effects.md`
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (100,000 fixed-seed interleavings: at most one terminal outcome, outcome and winner equal an independent F2 reference; reviewed enumerator lists have no draw value)
+**Deviations**: The enums are plain C++ (no StaticEnum): the static check is static_assert on the reviewed counts plus a reviewed runtime list. PawnLost voids on the third loss in the test world (R17.9 detection is story rmf-075).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/NoDrawPropertyTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - a property test of the latch
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

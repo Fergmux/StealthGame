@@ -1,12 +1,12 @@
 # Story 042: Active entry stamps state, increments RoundsPlayedCount, fires OnRoundActive once and rejects Preparing commands with NotNow
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -97,7 +97,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/ActiveGateTest.cpp` (automation test `StealthGame.Round.ActiveGate`, class `FRoundActiveGateTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.ActiveGate`, 2026-10-26)
 
 ---
 
@@ -106,3 +106,13 @@
 - Depends on: `production/epics/round-match-framework/story-041-active-entry-unbound-aborts.md`
 - Unlocks: `production/epics/round-match-framework/story-051-no-timer-ends-active-round.md`, `production/epics/round-match-framework/story-052-ended-latch-effects.md`, `production/epics/round-match-framework/story-057-host-abort.md`, `production/epics/round-match-framework/story-058-reset-clears.md`, `production/epics/round-match-framework/story-060-grace-timeline.md`, `production/epics/round-match-framework/story-067-bound-ai-move-look-only.md`, `production/epics/round-match-framework/story-075-active-pawn-lost-recovery.md`, `production/epics/round-match-framework/story-080-no-leak-before-ended.md`, `production/epics/round-match-framework/story-083-no-clock-no-count.md`, `production/epics/round-match-framework/story-084-pie-lifecycle-start.md`
 - Cross-epic: `production/epics/crowd-npc-behaviour` (the Crowd start call, via the fake Crowd gateway; stories not yet created), `production/epics/input-interaction-framework` (the `NotNow` reply for a command in Preparing; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (same drain: ActiveAtServerTime 0, ActivePhaseStart stamped, RoundsPlayedCount +1, OnRoundActive once, one Crowd start, queue Seq restarts at 1; Preparing commands NotNow; nothing re-fires)
+**Deviations**: ICrowdControl::StartRound added by amendment (ADR-0016 named no start call). The NotNow gate is FRoundMatchCore::AdmitCommand; in L_Prototype the prototype command adapter consults Round's live phase (IsRoundLive) instead of sending a NotNow reply, until the IIF stage-2 resolver lands.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/ActiveGateTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: OBSERVED: production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

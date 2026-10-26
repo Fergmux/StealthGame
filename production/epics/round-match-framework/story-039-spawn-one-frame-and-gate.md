@@ -1,12 +1,12 @@
 # Story 039: All D pawns spawn in one server frame in sigma order and a Connecting participant's pawn is gated
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -97,7 +97,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/Round/SpawnOneFrameAndGateTest.cpp` (CQTest `NETWORK_TEST_CLASS(SpawnOneFrameAndGate, "StealthGame.Round.PIE")` per the CQTest exemption in `.claude/rules/test-standards.md`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.SpawnOneFrameAndGate`, 2026-10-26)
 
 ---
 
@@ -106,3 +106,13 @@
 - Depends on: `production/epics/round-match-framework/story-036-spawn-order-uniform.md`, `production/epics/round-match-framework/story-038-placement-invariant.md`
 - Unlocks: `production/epics/round-match-framework/story-040-disconnected-at-start-spawned.md`, `production/epics/round-match-framework/story-041-active-entry-unbound-aborts.md`
 - Cross-epic: `production/epics/shared-character-locomotion` (`UStealthPawnFactory::SpawnSharedPawn`, possession parity; stories not yet created), `production/epics/crowd-npc-behaviour` (NPC spawn entries and AI control; stories not yet created), `production/epics/participant-state-roster` (`BindPawn`, `Connected` state, `AssignedAppearanceId`; stories not yet created), `production/epics/level-socket-contract` (`RequestStartPlacement`; stories not yet created), `production/epics/session-travel` (`GetServerSubSeed`, `Connected` transition; stories not yet created), `production/epics/character-pool-appearance` (`ParticipantToAppearance`; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (D pawns in one server frame in sigma order; a Connecting participant's pawn is Ai-driven behind a closed gate until Connected; Connected-from-start participants are not gated)
+**Deviations**: The two-client PIE half is deferred to the session-travel epic: Session's Connecting state at P6 does not exist without travel. The per-connection relevancy override (ADR-0003 Policy) is not built; the gate is the spawner contract (closed-gate entry, OpenSpawnGate on Connected), which the L_Prototype adapter implements by replacing the Ai body with a possessed one.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/SpawnOneFrameAndGateTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: OBSERVED: production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/ (all start pawns spawned in one frame; log line "Round started")
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

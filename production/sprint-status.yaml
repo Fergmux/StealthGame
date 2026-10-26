@@ -1845,102 +1845,190 @@ stories:
     name: "MatchScore, RoundsPlayedCount, host id, teams and archived slices persist across travel; RoundEpoch increments"
     file: "production/epics/round-match-framework/story-030-match-scope-survives-travel.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-031"
     name: "AllocateAppearances is called 0 times with tuning withheld and exactly once after OnTuningReady"
     file: "production/epics/round-match-framework/story-031-allocate-once.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-032"
     name: "Layout, a client acknowledgement or world-ready each alone hold Preparing; releasing reaches Active"
     file: "production/epics/round-match-framework/story-032-preparing-barrier.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-033"
     name: "An acknowledgement with an old nonce or replaced controller is dropped and does not satisfy the barrier"
     file: "production/epics/round-match-framework/story-033-stale-ack-dropped.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-034"
     name: "Each of the 13 abort codes returns to Lobby with no result, no pawns, PreparingFailed archived and nothing released"
     file: "production/epics/round-match-framework/story-034-preparing-aborts.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-035"
     name: "F6 T_needed is computed at freeze with the specified values and warning boundaries"
     file: "production/epics/round-match-framework/story-035-watchdog-bound.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-036"
     name: "Per-slot spawn rank is uniform over 1..D across 1,000 fixed-secret round starts"
     file: "production/epics/round-match-framework/story-036-spawn-order-uniform.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-037"
     name: "Spawn order sigma is identical when player flags are flipped and differs with a different secret"
     file: "production/epics/round-match-framework/story-037-spawn-order-ignores-playerness.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-038"
     name: "The placement share invariant passes at 5 players/5 NPCs and aborts PlacementInvariant at 5/4; GlobalShare matches F5"
     file: "production/epics/round-match-framework/story-038-placement-invariant.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-039"
     name: "All D pawns spawn in one server frame in sigma order and a Connecting participant's pawn is gated"
     file: "production/epics/round-match-framework/story-039-spawn-one-frame-and-gate.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
+  - id: "rmf-040"
+    name: "A participant Disconnected at P6 gets a bound, unpossessed, AI-driven pawn and grace measured from ActivePhaseStart"
+    file: "production/epics/round-match-framework/story-040-disconnected-at-start-spawned.md"
+    priority: nice-to-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF Exit B batch (production win rules drive L_Prototype)"
+  - id: "rmf-041"
+    name: "A non-empty GetUnboundActiveParticipants() at Active entry aborts BindFailed and never enters Active"
+    file: "production/epics/round-match-framework/story-041-active-entry-unbound-aborts.md"
+    priority: nice-to-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF Exit B batch (production win rules drive L_Prototype)"
+  - id: "rmf-042"
+    name: "Active entry stamps state, increments RoundsPlayedCount, fires OnRoundActive once and rejects Preparing commands with NotNow"
+    file: "production/epics/round-match-framework/story-042-active-gate.md"
+    priority: nice-to-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF Exit B batch (production win rules drive L_Prototype)"
+  - id: "rmf-043"
+    name: "At most one terminal outcome per round and equal to the F2 reference over 100,000 interleavings; the enums have no draw"
+    file: "production/epics/round-match-framework/story-043-no-draw-property.md"
+    priority: nice-to-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF Exit B batch (production win rules drive L_Prototype)"
+  - id: "rmf-044"
+    name: "The F2 zeroing event yields an outcome only when all clauses hold; flipping any one yields none"
+    file: "production/epics/round-match-framework/story-044-elimination-truth-table.md"
+    priority: nice-to-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF Exit B batch (production win rules drive L_Prototype)"
+  - id: "rmf-045"
+    name: "A final completion and a last-Active elimination in one tick resolve by key order with one WinLatched"
+    file: "production/epics/round-match-framework/story-045-same-tick-final-vs-elimination.md"
+    priority: nice-to-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF Exit B batch (production win rules drive L_Prototype)"
+  - id: "rmf-046"
+    name: "Two last-Active strikes in one tick are won by the lower-key attacker in both permutations"
+    file: "production/epics/round-match-framework/story-046-mutual-last-strike.md"
+    priority: nice-to-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF Exit B batch (production win rules drive L_Prototype)"
+  - id: "rmf-047"
+    name: "A 1v0 solo player never triggers an elimination or timer end; the final objective gives ObjectiveWin"
+    file: "production/epics/round-match-framework/story-047-empty-team-no-elimination.md"
+    priority: nice-to-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF Exit B batch (production win rules drive L_Prototype)"
   - id: "iif-001"
     name: "Command and reply types match the ADR key interfaces"
     file: "production/epics/input-interaction-framework/story-001-command-reply-types.md"

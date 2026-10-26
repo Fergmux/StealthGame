@@ -1,12 +1,12 @@
 # Story 044: The F2 zeroing event yields an outcome only when all clauses hold; flipping any one yields none
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -100,7 +100,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/EliminationTruthTableTest.cpp` (automation test `StealthGame.Round.EliminationTruthTable`, class `FRoundEliminationTruthTableTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.EliminationTruthTable`, 2026-10-26)
 
 ---
 
@@ -109,3 +109,13 @@
 - Depends on: `production/epics/round-match-framework/story-043-no-draw-property.md`
 - Unlocks: `production/epics/round-match-framework/story-047-empty-team-no-elimination.md`, `production/epics/round-match-framework/story-048-informants-do-not-count.md`, `production/epics/round-match-framework/story-049-completion-needs-human.md`, `production/epics/round-match-framework/story-050-brace-expiry-ordered.md`, `production/epics/round-match-framework/story-064-last-disconnect-forfeits.md`, `production/epics/round-match-framework/story-086-pie-lifecycle-elimination.md`
 - Cross-epic: `production/epics/participant-state-roster` (the transition event payload with `ActiveCountAfter` and `RosterCount`, via the fake Roster gateway; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (all clauses: EliminationWin(1); each of the 8 listed flips: no outcome; a stage completion never ends the round)
+**Deviations**: None
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/EliminationTruthTableTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: OBSERVED: production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/ (elimination win in PIE through the production predicate)
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

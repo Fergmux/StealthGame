@@ -1,12 +1,12 @@
 # Story 035: F6 T_needed is computed at freeze with the specified values and warning boundaries
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -94,7 +94,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/WatchdogBoundTest.cpp` (automation test `StealthGame.Round.WatchdogBound`, class `FRoundWatchdogBoundTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.WatchdogBound`, 2026-10-26)
 
 ---
 
@@ -103,3 +103,13 @@
 - Depends on: `production/epics/round-match-framework/story-028-phase-admission-and-illegal-transitions.md`
 - Unlocks: None
 - Cross-epic: `production/epics/tuning-data-config` (F6 tuning keys `PreparingWatchdogSec`, `WorldReadyTimeoutSec`, `StartLeadSec`; module skeleton and StealthTestHarness bootstrap; stories not yet created), `production/epics/session-travel` (`TravelLoadTimeoutSec`, `TravelAckGraceSec` from Session F7; stories not yet created), `production/epics/level-socket-contract` (`LayoutTotalBudgetSec`; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (T_needed 122.25 at defaults, effective 150, no warning; 161.25 with TravelLoadTimeoutSec 120, warning; tie no warning, -0.01 one warning; F6 evaluated once at freeze)
+**Deviations**: The F6 inputs not yet in the TDC schema live in FRoundRuleParams::Preparing with the GDD defaults (filled by the composition root), pinned by the test against the frozen fixture.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/WatchdogBoundTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - a formula with no on-screen effect
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

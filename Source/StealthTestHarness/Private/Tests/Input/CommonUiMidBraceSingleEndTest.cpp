@@ -24,8 +24,20 @@
 #include "InputKeyEventArgs.h"
 #include "StealthGameMode.h"
 #include "StealthPlayerController.h"
+#include "StealthGameState.h"
 #include "View/Core/StealthPawn.h"
 #include "View/Input/PawnCommandClient.h"
+
+
+namespace MidBraceRoundGate
+{
+	/** The client's replicated Round phase is Active (R6: pawns exist in Preparing, but commands are NotNow until Active). */
+	inline bool IsClientRoundActive(const APlayerController* PC)
+	{
+		const AStealthGameState* GS = PC && PC->GetWorld() ? PC->GetWorld()->GetGameState<AStealthGameState>() : nullptr;
+		return GS != nullptr && GS->GetRoundPublicState().Phase == ERoundPhase::Active;
+	}
+}
 
 namespace CommonUiMidBraceSingleEndTestData
 {
@@ -118,7 +130,7 @@ NETWORK_TEST_CLASS(CommonUiMidBraceSingleEnd, "StealthGame.Input.PIE")
 	{
 		using namespace CommonUiMidBraceSingleEndTestData;
 		Network
-			.Until(TEXT("the client possesses its pawn"), []() { return Owner() && Cast<AStealthPawn>(Owner()->GetPawn()) != nullptr && Router() != nullptr; })
+			.Until(TEXT("the client possesses its pawn in an Active round"), []() { return Owner() && Cast<AStealthPawn>(Owner()->GetPawn()) != nullptr && Router() != nullptr && MidBraceRoundGate::IsClientRoundActive(Owner()); })
 			.Then(TEXT("observe the Ends and the callback"), [this]()
 			{
 				Log = MakeUnique<FStealthCommandLog>();

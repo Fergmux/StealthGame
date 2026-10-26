@@ -1,12 +1,12 @@
 # Story 033: An acknowledgement with an old nonce or replaced controller is dropped and does not satisfy the barrier
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -91,7 +91,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/StaleAckDroppedTest.cpp` (automation test `StealthGame.Round.StaleAckDropped`, class `FRoundStaleAckDroppedTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.StaleAckDropped`, 2026-10-26)
 
 ---
 
@@ -100,3 +100,13 @@
 - Depends on: `production/epics/round-match-framework/story-032-preparing-barrier.md`
 - Unlocks: None
 - Cross-epic: `production/epics/session-travel` (acknowledgement payload, `FAckEpoch`, controller replacement; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (old nonce and replaced-controller acknowledgements dropped; no deadline moved; nothing logged; a valid acknowledgement afterwards satisfies the barrier)
+**Deviations**: Open point resolved: nothing is logged for a dropped acknowledgement (GDD R6 P5 / ADR-0002 8.6 name no entry).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/StaleAckDroppedTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - stale acknowledgements cannot be produced in L_Prototype (no travel, no replaced controllers before the session-travel epic); covered headless
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

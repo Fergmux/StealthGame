@@ -42,6 +42,12 @@ class STEALTHGAMEPLAY_API ICrowdControl
 	GENERATED_BODY()
 
 public:
+	/**
+	 * Round, in the Active-entry step (R7): start every NPC and every AI-driven pawn (nothing moves in Preparing).
+	 * Amendment of the RMF Exit B Preparing batch (story rmf-042): ADR-0016 named no start call.
+	 */
+	virtual void StartRound() = 0;
+
 	/** Round, inside the round-end step: halt latch on every sink, clear held Move, stop trees and the schedule. */
 	virtual void Halt() = 0;
 

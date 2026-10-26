@@ -23,9 +23,21 @@
 #include "InputMappingContext.h"
 #include "StealthGameMode.h"
 #include "StealthPlayerController.h"
+#include "StealthGameState.h"
 #include "View/Core/StealthPawn.h"
 #include "View/Input/PawnCommandClient.h"
 #include "View/StealthRosterTeamView.h"
+
+
+namespace ContextSwapRoundGate
+{
+	/** The client's replicated Round phase is Active (R6: pawns exist in Preparing, but commands are NotNow until Active). */
+	inline bool IsClientRoundActive(const APlayerController* PC)
+	{
+		const AStealthGameState* GS = PC && PC->GetWorld() ? PC->GetWorld()->GetGameState<AStealthGameState>() : nullptr;
+		return GS != nullptr && GS->GetRoundPublicState().Phase == ERoundPhase::Active;
+	}
+}
 
 namespace ContextSwapTestData
 {
@@ -147,7 +159,7 @@ NETWORK_TEST_CLASS(ContextSwapOnStateAndPossession, "StealthGame.Input.PIE")
 			.Until(TEXT("the client is an Active player with a pawn"), []()
 			{
 				const AStealthPlayerController* PC = Owner();
-				return PC && Cast<AStealthPawn>(PC->GetPawn()) && PC->GetTeamView() && PC->GetTeamView()->GetView().Owner.State == static_cast<uint8>(EParticipantState::Active)
+				return PC && Cast<AStealthPawn>(PC->GetPawn()) && ContextSwapRoundGate::IsClientRoundActive(PC) && PC->GetTeamView() && PC->GetTeamView()->GetView().Owner.State == static_cast<uint8>(EParticipantState::Active)
 					&& HasContext(TEXT("IMC_Active"));
 			})
 			.Then(TEXT("observe the owner"), [this]()

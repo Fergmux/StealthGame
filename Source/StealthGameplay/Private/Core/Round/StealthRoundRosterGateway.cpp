@@ -113,7 +113,7 @@ void URoundRosterStoreGateway::GetRosteredParticipants(TArray<FRoundRosterMember
 	{
 		if (const FParticipantRecord* Record = Store->FindRecord(Id))
 		{
-			OutMembers.Add({ Id, Record->Team });
+			OutMembers.Add({ Id, Record->Team, Record->State });
 		}
 	}
 }

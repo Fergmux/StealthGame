@@ -34,11 +34,13 @@ struct FRoundExitBRig
 		Params.MinPlayersPerTeamCount = 1;
 		Params.MaxTeamImbalanceCount = 1;
 		Params.EndedMinDwellSec = RoundTestFixtures::EndedMinDwellSec;
+		Params.NpcCount = RoundTestFixtures::PreparingRigNpcCount;
 		return Params;
 	}
 
 	explicit FRoundExitBRig(const FRoundRuleParams& Params = DefaultParams())
 	{
+		Fakes.Spawner.Clock = &Clock;
 		Core = MakeUnique<FRoundMatchCore>(Fakes.AsGateways(), &Host, &EventLog, &Clock);
 		Core->SetParams(Params);
 	}
@@ -72,6 +74,16 @@ struct FRoundExitBRig
 		Fakes.Roster.Script(TEXT("SetTeamsLocked"), static_cast<int64>(ERosterResult::Applied), 2);
 		Fakes.Roster.Script(TEXT("ResetAll"), static_cast<int64>(ERosterResult::Applied));
 		Fakes.Session.Script(TEXT("RequestRoundTravel"), static_cast<int64>(Travel));
+		// R6 P2 at Preparing entry (the Preparing batch): "Preparing entered" reaches TDC.
+		Fakes.Tuning.Script(TEXT("SignalPreparingEntered"));
+	}
+
+	/** Scripts the forced Active-entry step (EnterActive): an empty unbound set and the one Crowd start. */
+	void ScriptActiveEntry()
+	{
+		Fakes.Session.Script(TEXT("SetAdmissionMode"));
+		Fakes.Roster.Script(TEXT("GetUnboundActiveParticipants"), 0);
+		Fakes.Crowd.Script(TEXT("StartRound"));
 	}
 
 	/** Drives a valid 2v2 match from Lobby to Phase (Lobby, Preparing, Active, Ended or Reset). */
@@ -89,7 +101,7 @@ struct FRoundExitBRig
 		{
 			return;
 		}
-		Fakes.Session.Script(TEXT("SetAdmissionMode"));
+		ScriptActiveEntry();
 		Core->EnterActive();
 		if (Phase == ERoundPhase::Active)
 		{
@@ -106,6 +118,83 @@ struct FRoundExitBRig
 		Core->ExecuteHostCommand(HostCaller(), ERoundHostCommand::Reset);
 	}
 
+	// --- The Preparing sequence (stories rmf-031..042) -------------------------------------------------------------
+
+	/** Start accepted and travel accepted with Seed: Preparing, "Preparing entered" signalled. */
+	void EnterPreparing(int32 Seed = RoundTestFixtures::PreparingRigSeed)
+	{
+		ScriptStartToTravel();
+		Core->Start(HostCaller());
+		Fakes.Session.Script(TEXT("SetAdmissionMode"));
+		Core->NotifyRoundTravelAccepted(Seed);
+	}
+
+	/** Scripts the strict calls of P3 (layout request, the deal) and P6 (placement, appearances, sub-seed, epoch). */
+	void ScriptPreparingSequence()
+	{
+		const int32 Players = Fakes.Roster.Members.Num();
+		Fakes.LevelSocket.Script(TEXT("RequestLayout"));
+		Fakes.CharacterPool.Script(TEXT("AllocateAppearances"), static_cast<int64>(ERoundAllocateResult::Ok));
+		Fakes.LevelSocket.Script(TEXT("RequestStartPlacement"), static_cast<int64>(ERoundPlacementResult::Ok));
+		Fakes.CharacterPool.Script(TEXT("GetAssignedAppearance"), 0, Players);
+		Fakes.Roster.Script(TEXT("RecordAppearance"), static_cast<int64>(ERosterResult::Applied), Players);
+		Fakes.Session.Script(TEXT("GetServerSubSeed"), static_cast<int64>(RoundTestFixtures::PreparingRigSpawnSubSeed));
+		Fakes.Roster.Script(TEXT("GetEpochToken"), RoundTestFixtures::FixtureRoundEpoch);
+	}
+
+	/** An acknowledgement from Participant under this Preparing's nonce and its current generation. */
+	FRoundTravelAck MakeAck(FParticipantId Participant) const
+	{
+		FRoundTravelAck Ack;
+		Ack.Participant = Participant;
+		Ack.Epoch = Core->GetPreparing().GetAckEpoch();
+		const uint32* Generation = Fakes.Session.Generations.Find(Participant.Value);
+		Ack.ConnectionGeneration = Generation != nullptr ? *Generation : 0;
+		return Ack;
+	}
+
+	/** Every Connected member acknowledges (travel complete, or the world-ready stage); Except is skipped. */
+	void AckAll(bool bWorldReady, FParticipantId Except = FParticipantId())
+	{
+		for (const FRoundRosterMember& Member : Fakes.Roster.Members)
+		{
+			const ERoundConnectionState* State = Fakes.Session.ConnectionStates.Find(Member.Participant.Value);
+			if (Member.Participant == Except || State == nullptr || *State != ERoundConnectionState::Connected)
+			{
+				continue;
+			}
+			if (bWorldReady)
+			{
+				Core->NotifyParticipantWorldReady(MakeAck(Member.Participant));
+			}
+			else
+			{
+				Core->NotifyParticipantTravelComplete(MakeAck(Member.Participant));
+			}
+		}
+	}
+
+	/** One server frame: the clock advances (time and tick), then the Round tick. */
+	void Frame(double Seconds = RoundTestFixtures::RigFrameSec)
+	{
+		Clock.Advance(Seconds, 1);
+		Core->Tick();
+	}
+
+	/** From Preparing (EnterPreparing done): tuning, layout, acks, P6 in one frame, world-ready, P7 and Active entry. */
+	void RunPreparingToActive()
+	{
+		ScriptPreparingSequence();
+		Core->NotifyTuningReady(RoundTestFixtures::PreparingRigTuningHash);
+		Core->NotifyLayoutReady(1, Core->GetPreparing().GetSeed());
+		AckAll(/*bWorldReady*/ false);
+		Frame(); // P5 satisfied: P6 spawns every pawn
+		AckAll(/*bWorldReady*/ true);
+		Frame(); // P7: ActiveAtServerTime = Now + StartLeadSec
+		ScriptActiveEntry();
+		Frame(Core->GetParams().Preparing.StartLeadSec); // the first tick at or after ActiveAtServerTime
+	}
+
 	/** The current call count (a mark for CallsSince). */
 	int32 Mark() const { return Log.Calls.Num(); }
 
@@ -113,7 +202,8 @@ struct FRoundExitBRig
 	static bool IsQuery(FName Call)
 	{
 		static const FName Queries[] = { TEXT("CanRequestRoundTravel"), TEXT("GetConnectionState"), TEXT("GetRosteredParticipants"),
-			TEXT("PreviewPreset"), TEXT("GetEpochToken"), TEXT("GetServerSubSeed"), TEXT("GetUnboundActiveParticipants"), TEXT("GetAssignedAppearance") };
+			TEXT("PreviewPreset"), TEXT("GetEpochToken"), TEXT("GetServerSubSeed"), TEXT("GetUnboundActiveParticipants"), TEXT("GetAssignedAppearance"),
+			TEXT("GetConnectionGeneration"), TEXT("GetPlacementZones") };
 		for (const FName& Query : Queries)
 		{
 			if (Call == Query)

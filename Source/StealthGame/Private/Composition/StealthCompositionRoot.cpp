@@ -20,6 +20,7 @@
 #include "StealthNpcController.h"
 #include "StealthPlayerState.h"
 #include "StealthSettings.h"
+#include "EngineUtils.h"
 #include "TimerManager.h"
 #include "View/StealthRosterTeamView.h"
 #include "View/StealthTuningPublicSubstructs.h"
@@ -86,14 +87,130 @@ ERoundTravelRequestResult UStealthMatchAdapters::RequestRoundTravel(FName MapId,
 	// world hosts every round, so the travel is confirmed on the next tick (the deferred acceptance of R5 step 9).
 	LastRoundSeed = Session->DrawRoundSeed(RoundIndex);
 	TWeakObjectPtr<UWorld> WeakWorld(World);
-	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [WeakWorld]()
+	const int32 Seed = LastRoundSeed;
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [WeakWorld, Seed]()
 	{
 		if (URoundMatchStore* Round = URoundMatchStore::Get(WeakWorld.Get()))
 		{
-			Round->NotifyRoundTravelAccepted();
+			// P1: FRoundParams.Seed arrives with the accepted travel.
+			Round->NotifyRoundTravelAccepted(Seed);
 		}
 	}));
 	return ERoundTravelRequestResult::Accepted;
+}
+
+uint32 UStealthMatchAdapters::GetConnectionGeneration(FParticipantId Participant) const
+{
+	const URosterStore* Roster = URosterStore::Get(GetGameWorld());
+	const FParticipantRecord* Record = Roster != nullptr && Roster->IsStoreInitialized() ? Roster->FindRecord(Participant) : nullptr;
+	return Record != nullptr ? Record->Connection.ConnectionGeneration : 0;
+}
+
+void UStealthMatchAdapters::AcknowledgeConnectedPlayers(bool bWorldReady)
+{
+	UWorld* World = GetGameWorld();
+	URoundMatchStore* Round = URoundMatchStore::Get(World);
+	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(World);
+	if (Round == nullptr || Root == nullptr)
+	{
+		return;
+	}
+	TArray<TPair<FParticipantId, APlayerController*>> Players;
+	Root->GetConnectedPlayers(Players);
+	for (const TPair<FParticipantId, APlayerController*>& Pair : Players)
+	{
+		FRoundTravelAck Ack;
+		Ack.Participant = Pair.Key;
+		Ack.Epoch = Round->GetPreparingAckEpoch();
+		Ack.ConnectionGeneration = GetConnectionGeneration(Pair.Key);
+		if (bWorldReady)
+		{
+			Round->NotifyParticipantWorldReady(Ack);
+		}
+		else
+		{
+			Round->NotifyParticipantTravelComplete(Ack);
+		}
+	}
+}
+
+void UStealthMatchAdapters::SignalPreparingEntered()
+{
+	UWorld* World = GetGameWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+	TWeakObjectPtr<UWorld> WeakWorld(World);
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, WeakWorld]()
+	{
+		URoundMatchStore* Round = URoundMatchStore::Get(WeakWorld.Get());
+		if (Round == nullptr || Round->GetPhase() != ERoundPhase::Preparing)
+		{
+			return;
+		}
+		// The same world hosts every round: each connected player's "travel" is complete now (Session rule 11 stand-in).
+		AcknowledgeConnectedPlayers(/*bWorldReady*/ false);
+		Round->NotifyTuningReady(0);
+	}));
+}
+
+void UStealthMatchAdapters::RequestLayout(int32 Seed, uint64 TuningHash)
+{
+	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetGameWorld());
+	if (AStealthGameMode* Mode = Root != nullptr ? Root->GetGameMode() : nullptr)
+	{
+		Mode->BuildRoundLayout(Seed);
+	}
+	else if (URoundMatchStore* Round = URoundMatchStore::Get(GetGameWorld()))
+	{
+		Round->NotifyLayoutAborted();
+	}
+}
+
+ERoundSpawnResult UStealthMatchAdapters::SpawnStartPawn(const FRoundSpawnEntry& Entry, const FEpochToken& ExpectedEpoch)
+{
+	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetGameWorld());
+	AStealthGameMode* Mode = Root != nullptr ? Root->GetGameMode() : nullptr;
+	return Mode != nullptr ? Mode->SpawnStartPawn(Entry, ExpectedEpoch) : ERoundSpawnResult::Failed;
+}
+
+void UStealthMatchAdapters::OnStartSpawnComplete(int32 ExpectedPawnCount)
+{
+	UWorld* World = GetGameWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		AcknowledgeConnectedPlayers(/*bWorldReady*/ true);
+	}));
+}
+
+bool UStealthMatchAdapters::OpenSpawnGate(FParticipantId Participant)
+{
+	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetGameWorld());
+	AStealthGameMode* Mode = Root != nullptr ? Root->GetGameMode() : nullptr;
+	return Mode != nullptr && Mode->OpenSpawnGate(Participant);
+}
+
+void UStealthMatchAdapters::StartRound()
+{
+	if (UWorld* World = GetGameWorld())
+	{
+		for (TActorIterator<AStealthNpcController> It(World); It; ++It)
+		{
+			It->bHeld = false;
+		}
+	}
+}
+
+int32 UStealthMatchAdapters::DestroyRoundPawns()
+{
+	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetGameWorld());
+	AStealthGameMode* Mode = Root != nullptr ? Root->GetGameMode() : nullptr;
+	return Mode != nullptr ? Mode->DestroyRoundPawns() : 0;
 }
 
 ERoundConnectionState UStealthMatchAdapters::GetConnectionState(FParticipantId Participant) const
@@ -158,6 +275,9 @@ AController* UStealthMatchAdapters::CreateAiController(AStealthPawn* Pawn)
 	{
 		Controller->WanderCenter = CrowdCenter;
 		Controller->WanderRadius = CrowdRadius;
+		// R6: nothing moves in Preparing; the Active-entry Crowd start (StartRound) releases the crowd.
+		const URoundMatchStore* Round = URoundMatchStore::Get(World);
+		Controller->bHeld = Round != nullptr && Round->GetPhase() == ERoundPhase::Preparing;
 	}
 	return Controller;
 }
@@ -240,6 +360,8 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 	Params.bHostMayAbortActive = true;
 #endif
 	Params.EndedMinDwellSec = 3.0;
+	// The prototype crowd size (UStealthSettings) stands in for TDC's NpcCount until the crowd epic reads the key.
+	Params.NpcCount = FMath::Max(UStealthSettings::Get()->NpcCount, 0);
 	Params.MapId = FName(*UWorld::RemovePIEPrefix(InGameMode->GetWorld()->GetOutermost()->GetName()));
 	Round->SetRuleParams(Params);
 
@@ -267,7 +389,9 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 		Gateways.CharacterPool = Adapters;
 		Gateways.LevelSocket = Adapters;
 		Gateways.Crowd = Adapters;
-		Round->RegisterGateways(Gateways, this);
+		Gateways.Spawner = Adapters;
+		USessionService* Session = USessionService::Get(InGameMode->GetWorld());
+		Round->RegisterGateways(Gateways, this, Session != nullptr ? &Session->GetSubSeedSource() : nullptr);
 	}
 	if (!Roster->IsMatchOpen())
 	{
@@ -401,6 +525,15 @@ void UStealthCompositionRoot::HandleRosterEvent(const FRosterEvent& Event)
 			ParticipantByController.Remove(Player);
 			Adapters->KickParticipant(Event.Id);
 			Player->ClientReturnToMainMenuWithTextReason(NSLOCTEXT("Stealth", "Removed", "Removed by the host."));
+		}
+	}
+	if (Event.Type == ERosterEventType::ConnectionChanged && Event.Connection == ERosterConnection::Connected)
+	{
+		// A (re)connection during Preparing re-enters the P5 wait set under a new generation: acknowledge again.
+		const URoundMatchStore* Round = GetRoundStore();
+		if (Round != nullptr && Round->GetPhase() == ERoundPhase::Preparing && Adapters != nullptr)
+		{
+			Adapters->AcknowledgeConnectedPlayers(/*bWorldReady*/ false);
 		}
 	}
 	if (Event.Type == ERosterEventType::TeamsChanged || Event.Type == ERosterEventType::ParticipantRemoved)

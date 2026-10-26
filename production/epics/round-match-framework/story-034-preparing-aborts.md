@@ -1,12 +1,12 @@
 # Story 034: Each of the 13 abort codes returns to Lobby with no result, no pawns, PreparingFailed archived and nothing released
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -103,7 +103,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/PreparingAbortsTest.cpp` (automation test `StealthGame.Round.PreparingAborts`, class `FRoundPreparingAbortsTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.PreparingAborts`, 2026-10-26)
 
 ---
 
@@ -112,3 +112,13 @@
 - Depends on: `production/epics/round-match-framework/story-028-phase-admission-and-illegal-transitions.md`, `production/epics/round-match-framework/story-031-allocate-once.md`, `production/epics/round-match-framework/story-032-preparing-barrier.md`
 - Unlocks: `production/epics/round-match-framework/story-027-reset-command-matrix.md`
 - Cross-epic: `production/epics/session-travel` (`RequestLobbyTravel`, `OnTravelFailed`, `ParamsMismatch`; stories not yet created), `production/epics/tuning-data-config` (TDC `Failed`, `TuningSnapshotFault`, module skeleton and StealthTestHarness bootstrap; stories not yet created), `production/epics/character-pool-appearance` (`DeckInvalid`, `Error_DeckTooSmall`, `Error_AlreadyDealt`; stories not yet created), `production/epics/level-socket-contract` (`OnLayoutAborted`, `PlacementInfeasible`, `NpcCountTooLow`; stories not yet created), `production/epics/participant-state-roster` (`BindPawn` rejection, `TeamAbsent` counts; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (14 table rows: the 13 ADR-0002 8.6 codes, Error_DeckTooSmall as a second DeckInvalid injection, and the host abort; Lobby after lobby travel, counts and score unchanged, no FRoundResult, 0 pawns, PreparingFailed(code) archived, bCalledOff only for the host abort, nothing released; client hash mismatches never abort)
+**Deviations**: Decision D48: the closed ADR set is used (it adds PlacementInfeasible and NpcCountTooLow to the AC list; the AC's "TDC Failed" is TuningLoadFailed). The host abort archives EndReason Aborted (it has no abort code in the closed set). Lobby travel completes on the next Round tick (no Session travel yet).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/PreparingAbortsTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - aborts need failure injection; the production abort path is exercised headless with every code
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

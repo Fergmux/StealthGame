@@ -1,12 +1,12 @@
 # Story 045: A final completion and a last-Active elimination in one tick resolve by key order with one WinLatched
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -96,7 +96,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/SameTickFinalVsEliminationTest.cpp` (automation test `StealthGame.Round.SameTickFinalVsElimination`, class `FRoundSameTickFinalVsEliminationTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.SameTickFinalVsElimination`, 2026-10-26)
 
 ---
 
@@ -105,3 +105,13 @@
 - Depends on: `production/epics/round-match-framework/story-043-no-draw-property.md`, `production/epics/round-match-framework/story-008-resolver-contract.md`
 - Unlocks: `production/epics/round-match-framework/story-046-mutual-last-strike.md`
 - Cross-epic: `production/epics/participant-state-roster` (the strike's transition event, via the fake Roster gateway; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (completion first: ObjectiveWin(0), strike Rejected_Latched; swapped: EliminationWin(1), completion Rejected_Latched; one WinLatched each)
+**Deviations**: None
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/SameTickFinalVsEliminationTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - a same-tick ordering that play cannot stage deterministically; covered on the real queue headless
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

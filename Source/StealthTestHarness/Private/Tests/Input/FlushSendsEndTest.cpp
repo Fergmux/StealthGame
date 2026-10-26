@@ -27,8 +27,20 @@
 #include "Server/Core/StealthPawnCommandComponent.h"
 #include "StealthGameMode.h"
 #include "StealthPlayerController.h"
+#include "StealthGameState.h"
 #include "View/Core/StealthPawn.h"
 #include "View/Input/PawnCommandClient.h"
+
+
+namespace FlushSendsEndRoundGate
+{
+	/** The client's replicated Round phase is Active (R6: pawns exist in Preparing, but commands are NotNow until Active). */
+	inline bool IsClientRoundActive(const APlayerController* PC)
+	{
+		const AStealthGameState* GS = PC && PC->GetWorld() ? PC->GetWorld()->GetGameState<AStealthGameState>() : nullptr;
+		return GS != nullptr && GS->GetRoundPublicState().Phase == ERoundPhase::Active;
+	}
+}
 
 namespace FlushSendsEndTestData
 {
@@ -320,7 +332,7 @@ NETWORK_TEST_CLASS(FlushSendsEnd, "StealthGame.Input.PIE")
 	{
 		using namespace FlushSendsEndTestData;
 		Network
-			.Until(TEXT("client 1 possesses its pawn"), []() { return Owner() && Cast<AStealthPawn>(Owner()->GetPawn()) != nullptr && Router() != nullptr; })
+			.Until(TEXT("client 1 possesses its pawn in an Active round"), []() { return Owner() && Cast<AStealthPawn>(Owner()->GetPawn()) != nullptr && Router() != nullptr && FlushSendsEndRoundGate::IsClientRoundActive(Owner()); })
 			.Then(TEXT("record every command the owner sends"), [this]()
 			{
 				Owner()->GetCommandClient()->OnOwnerCommandPredicted.AddLambda([this](ECommandKind Kind, FClientCommandSeq) { Sent.Add({ Kind, GFrameCounter }); });

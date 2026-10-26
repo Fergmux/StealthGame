@@ -1,12 +1,12 @@
 # Story 047: A 1v0 solo player never triggers an elimination or timer end; the final objective gives ObjectiveWin
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -96,7 +96,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/EmptyTeamNoEliminationTest.cpp` (automation test `StealthGame.Round.EmptyTeamNoElimination`, class `FRoundEmptyTeamNoEliminationTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.EmptyTeamNoElimination`, 2026-10-26)
 
 ---
 
@@ -105,3 +105,13 @@
 - Depends on: `production/epics/round-match-framework/story-044-elimination-truth-table.md`
 - Unlocks: None
 - Cross-epic: `production/epics/participant-state-roster` (the solo player's transition event and `RosterCount`, via the fake Roster gateway; stories not yet created), `production/epics/tuning-data-config` (`TargetRoundMinutes`, `bAllowEmptyTeamDev` and the StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (1v0: informant + 10 x TargetRoundMinutes jump: no outcome, Active, empty queue; final objective: ObjectiveWin)
+**Deviations**: None
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/EmptyTeamNoEliminationTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - covered headless; the objective win itself is observed in PIE (production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/)
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

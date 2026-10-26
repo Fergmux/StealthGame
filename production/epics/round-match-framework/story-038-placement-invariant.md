@@ -1,12 +1,12 @@
 # Story 038: The placement share invariant passes at 5 players/5 NPCs and aborts PlacementInvariant at 5/4; GlobalShare matches F5
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -96,7 +96,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/PlacementInvariantTest.cpp` (automation test `StealthGame.Round.PlacementInvariant`, class `FRoundPlacementInvariantTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.PlacementInvariant`, 2026-10-26)
 
 ---
 
@@ -105,3 +105,13 @@
 - Depends on: `production/epics/round-match-framework/story-003-test-seam-fake-gateways.md`, `production/epics/round-match-framework/story-036-spawn-order-uniform.md`
 - Unlocks: `production/epics/round-match-framework/story-039-spawn-one-frame-and-gate.md`
 - Cross-epic: `production/epics/level-socket-contract` (`RequestStartPlacement`, zone results, `PlacementInfeasible`, `NpcCountTooLow`; stories not yet created), `production/epics/tuning-data-config` (`NpcCount`, module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (5/5 passes, 5/4 aborts PlacementInvariant before any spawn and before Active, empty zone has no share, GlobalShare 0.167 and 0.074)
+**Deviations**: The Level Socket Contract is not built: the prototype layout reports no zones (GetPlacementZones empty), so the invariant has nothing to assert in L_Prototype yet.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/PlacementInvariantTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - the prototype provider reports no zones
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

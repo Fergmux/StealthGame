@@ -1,12 +1,12 @@
 # Story 032: Layout, a client acknowledgement or world-ready each alone hold Preparing; releasing reaches Active
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -97,7 +97,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/PreparingBarrierTest.cpp` (automation test `StealthGame.Round.PreparingBarrier`, class `FRoundPreparingBarrierTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.PreparingBarrier`, 2026-10-26)
 
 ---
 
@@ -106,3 +106,13 @@
 - Depends on: `production/epics/round-match-framework/story-031-allocate-once.md`
 - Unlocks: `production/epics/round-match-framework/story-033-stale-ack-dropped.md`, `production/epics/round-match-framework/story-034-preparing-aborts.md`, `production/epics/round-match-framework/story-041-active-entry-unbound-aborts.md`
 - Cross-epic: `production/epics/session-travel` (round acknowledgement, `OnParticipantTravelComplete`, `OnParticipantWorldReady`, F7 `Deadline`; stories not yet created), `production/epics/level-socket-contract` (`OnLayoutReady`, `OnLayoutAborted`, layout service; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (layout, one acknowledgement and world-ready each hold Preparing alone; release reaches Active; a client that misses Session's deadline leaves the wait set; one acknowledgement per client; world-ready timeout proceeds without disconnecting)
+**Deviations**: Session's acknowledgement RPCs do not exist yet; in L_Prototype the composition-root adapter acknowledges every connected player (no travel) and reports world-ready on the tick after P6.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/PreparingBarrierTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: OBSERVED: production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

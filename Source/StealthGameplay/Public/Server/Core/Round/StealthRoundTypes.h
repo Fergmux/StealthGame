@@ -96,6 +96,34 @@ enum class ERoundCommandResult : uint8
 };
 
 /**
+ * GDD F6 inputs (Preparing watchdog bound) and the P7 timings (R6). Defaults are the GDD F6 variable-table values; the
+ * measured bounds (server load, tuning freeze, spawn) are the F6 "used as the bound" figures. Keys not yet registered
+ * in the TDC schema are filled by the composition root (Session's TravelLoadTimeoutSec and TravelAckGraceSec, Level
+ * Socket Contract's LayoutTotalBudgetSec, Round's WorldReadyTimeoutSec, StartLeadSec and PreparingWatchdogSec).
+ */
+struct FRoundPreparingTimings
+{
+	/** Session F7: load-and-acknowledge deadline from travel start. */
+	double TravelLoadTimeoutSec = 60.0;
+	/** Session F7: minimum ack time after the server's readiness data is published. */
+	double TravelAckGraceSec = 15.0;
+	/** F6 T_srvload: server map load (20 s is the bound). */
+	double ServerLoadBoundSec = 20.0;
+	/** Level Socket Contract: worst-case layout time including reseeds. */
+	double LayoutTotalBudgetSec = 45.0;
+	/** F6 T_tuning: tuning freeze (1 s is the bound). */
+	double TuningFreezeBoundSec = 1.0;
+	/** F6 T_spawn: P6 (1 s is the bound). */
+	double SpawnBoundSec = 1.0;
+	/** R6 P7: wait for every Connected client's world-ready report at most this long. */
+	double WorldReadyTimeoutSec = 10.0;
+	/** R6 P7: ActiveAtServerTime = ServerTime + StartLeadSec. */
+	double StartLeadSec = 0.25;
+	/** R6: the configured Preparing watchdog (the effective one is F6's max with T_needed). */
+	double PreparingWatchdogSec = 150.0;
+};
+
+/**
  * Round rule inputs (values from tuning through the TDC gateway, never literals in the cores). The defaults are the
  * GDD canonical defaults; keys not yet registered in the TDC schema are filled by the composition root.
  */
@@ -116,6 +144,14 @@ struct FRoundRuleParams
 	/** R5 step 8 travel arguments. */
 	FName MapId;
 	FName PresetId;
+	/** R6 P3/P6: NPC count of the round (Crowd/TDC NpcCount, ServerOnly, default 50). */
+	int32 NpcCount = 50;
+	/** R6 / F6 Preparing timings. */
+	FRoundPreparingTimings Preparing;
+	/** F4 G: DisconnectGraceSec (Round, default 30). */
+	double DisconnectGraceSec = 30.0;
+	/** F4: Session's RejoinWindowSec (default 120). */
+	double RejoinWindowSec = 120.0;
 };
 
 /** Who issued a host command (R22: net mode listen server or standalone, a local controller, ParticipantId == HostId). */

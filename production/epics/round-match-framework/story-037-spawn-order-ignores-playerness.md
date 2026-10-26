@@ -1,12 +1,12 @@
 # Story 037: Spawn order sigma is identical when player flags are flipped and differs with a different secret
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -90,7 +90,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/SpawnOrderIgnoresPlayernessTest.cpp` (automation test `StealthGame.Round.SpawnOrderIgnoresPlayerness`, class `FRoundSpawnOrderIgnoresPlayernessTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.SpawnOrderIgnoresPlayerness`, 2026-10-26)
 
 ---
 
@@ -99,3 +99,13 @@
 - Depends on: `production/epics/round-match-framework/story-036-spawn-order-uniform.md`
 - Unlocks: None
 - Cross-epic: `production/epics/session-travel` (`GetServerSubSeed` and `ServerSecret`; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (P6 through the real core with every player flag of the NPC slots flipped gives the same sigma; S1 vs S2 with the same seed differ)
+**Deviations**: None
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/SpawnOrderIgnoresPlayernessTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - a server ordering property (no visible difference by design)
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

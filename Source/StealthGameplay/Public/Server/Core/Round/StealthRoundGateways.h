@@ -92,6 +92,13 @@ public:
 
 	/** ADR-0006: a server sub-seed (SpawnOrder at P6; the queue's SeqOrder/TieRank use the same source). */
 	virtual uint64 GetServerSubSeed(ESeedDomain Domain, uint32 Attempt) const = 0;
+
+	/**
+	 * R6 P5 / R17: the participant's current Session ConnectionGeneration (bumped by every rejoin and supersede). A
+	 * round acknowledgement delivered under an older generation came from a replaced controller and is dropped
+	 * (story rmf-033). Amendment of the RMF Exit B Preparing batch (stories rmf-030..047).
+	 */
+	virtual uint32 GetConnectionGeneration(FParticipantId Participant) const = 0;
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -110,6 +117,8 @@ struct FRoundRosterMember
 {
 	FParticipantId Participant;
 	ERosterTeam Team = ERosterTeam::None;
+	/** The Roster state (F2 ConnectedActiveCount and the objective Valid(i) check read it). Amendment, stories rmf-043..047. */
+	EParticipantState State = EParticipantState::RoundEnded;
 };
 
 UINTERFACE(MinimalAPI, meta = (CannotImplementInterfaceInBlueprint))
@@ -227,6 +236,13 @@ public:
 // Level Socket Contract
 // ---------------------------------------------------------------------------------------------------------
 
+/** One zone of the start placement (GDD F5 ZoneShare_z): players and NPCs placed within the zone radius. */
+struct FRoundPlacementZone
+{
+	int32 Players = 0;
+	int32 Npcs = 0;
+};
+
 /** RequestStartPlacement results Round acts on (R6 P6). */
 enum class ERoundPlacementResult : uint8
 {
@@ -252,6 +268,78 @@ public:
 
 	/** R6 P6, once: the start placement for both teams and the NPC count. */
 	virtual ERoundPlacementResult RequestStartPlacement(TConstArrayView<FParticipantId> Team0, TConstArrayView<FParticipantId> Team1, int32 NpcCount) = 0;
+
+	/**
+	 * R6 P6 / F5: the zones of the last accepted placement (P_z, N_z per zone), which Round checks against the share
+	 * invariant before any pawn spawns (story rmf-038). Empty when the provider reports no zones. Amendment of the RMF
+	 * Exit B Preparing batch.
+	 */
+	virtual void GetPlacementZones(TArray<FRoundPlacementZone>& OutZones) const = 0;
+};
+
+// ---------------------------------------------------------------------------------------------------------
+// Shared Character & Locomotion: the P6 start spawn (Round decides order and control; the factory spawns)
+// ---------------------------------------------------------------------------------------------------------
+
+/** Who drives a start pawn (R6 P6 and the spawn gate): a participant not Connected at P6 gets Ai (never Player). */
+enum class ERoundSpawnControl : uint8
+{
+	Player,
+	Ai,
+};
+
+/** One entry of the P6 spawn list (F5): a canonical slot, the participant (invalid for an NPC) and its control. */
+struct FRoundSpawnEntry
+{
+	/** The canonical slot: players first in ParticipantId order, then NPCs (independent of who is a player, R23 (a)). */
+	int32 Slot = 0;
+	/** Invalid for an NPC entry. */
+	FParticipantId Participant;
+	ERosterTeam Team = ERosterTeam::None;
+	ERoundSpawnControl Control = ERoundSpawnControl::Ai;
+	/** The allocator's card for a participant (0 = none; NPC cards are Crowd's). */
+	uint16 AppearanceId = 0;
+	/** Spawn gate (Level Socket Contract R4.8): closed until Session has the participant Connected for this round. */
+	bool bGateClosed = false;
+
+	bool IsPlayer() const { return Participant.IsValid(); }
+};
+
+/** What one start spawn produced. */
+enum class ERoundSpawnResult : uint8
+{
+	Spawned,
+	/** BindPawn was rejected: the factory destroyed the pawn before FinishSpawning (R6 P6: abort BindFailed). */
+	BindFailed,
+	/** No pawn (no free spot, no class); an NPC entry only costs the crowd one member, a player entry aborts. */
+	Failed,
+};
+
+/**
+ * Round -> the one spawn site (UStealthPawnFactory through the composition root; ADR-0010 section 3.1). Round calls
+ * SpawnStartPawn once per entry, in sigma order, in one server frame (R6 P6); it never calls Possess, RestartPlayer
+ * or SpawnDefaultPawnFor itself. Plain interface (the factory is a world subsystem; the composition root adapts it).
+ * Declared by the RMF Exit B Preparing batch (stories rmf-039, rmf-040).
+ */
+class IRoundStartSpawner
+{
+public:
+	virtual ~IRoundStartSpawner() = default;
+
+	/** Deferred spawn, appearance, BindPawn (participant), FinishSpawning, possess (Player only). */
+	virtual ERoundSpawnResult SpawnStartPawn(const FRoundSpawnEntry& Entry, const FEpochToken& ExpectedEpoch) = 0;
+
+	/** Every start pawn exists (P7 begins); D is the pawn count the round expects. */
+	virtual void OnStartSpawnComplete(int32 ExpectedPawnCount) {}
+
+	/**
+	 * The participant became Connected: its gated pawn becomes relevant to its connection and is possessed. False when
+	 * it could not open yet (no controller mapped): Round keeps the gate and retries at the next Connected fact.
+	 */
+	virtual bool OpenSpawnGate(FParticipantId Participant) = 0;
+
+	/** R10 (4): destroy every player pawn of the round (an abort leaves 0 pawns); returns how many were destroyed. */
+	virtual int32 DestroyRoundPawns() = 0;
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -267,8 +355,10 @@ struct FRoundGateways
 	IRoundCharacterPoolGateway* CharacterPool = nullptr;
 	IRoundLevelSocketGateway* LevelSocket = nullptr;
 	ICrowdControl* Crowd = nullptr;
+	/** The P6 spawn site (optional until Preparing runs; a null spawner skips P6 spawning). */
+	IRoundStartSpawner* Spawner = nullptr;
 
-	/** True when all six gateways are present. */
+	/** True when all six gateways are present (the spawner is not one of them). */
 	bool IsComplete() const
 	{
 		return Session != nullptr && Roster != nullptr && Tuning != nullptr && CharacterPool != nullptr && LevelSocket != nullptr && Crowd != nullptr;

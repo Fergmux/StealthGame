@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "StealthTypes.h"
+#include "Server/Core/Round/StealthRoundGateways.h"
 #include "Server/Roster/StealthRosterCallTypes.h"
 #include "View/StealthRoundPublicState.h"
 #include "StealthGameMode.generated.h"
@@ -66,7 +67,22 @@ public:
 	/** Called by an objective when Completer finished interacting with it. */
 	void OnObjectiveCompleted(AStealthObjective* Objective, AStealthCharacter* Completer);
 
+	/** True while Round's phase is Active and the round is not latched (the production rules decide the round). */
 	bool IsRoundInProgress() const;
+
+	// ---- Round adapters (the composition root's engine side until the LSC, Crowd and Session facades exist) ----
+
+	/** Round's RequestLayout (R6 P3/P4): builds the prototype city for Seed; NotifyLayoutReady once the nav mesh rebuilt. */
+	void BuildRoundLayout(int32 Seed);
+
+	/** Round's P6 spawner: one start pawn through UStealthPawnFactory (an NPC, or a participant's bound pawn). */
+	ERoundSpawnResult SpawnStartPawn(const FRoundSpawnEntry& Entry, const FEpochToken& ExpectedEpoch);
+
+	/** The participant became Connected: its Ai-driven start pawn is replaced by a player-possessed one. */
+	bool OpenSpawnGate(FParticipantId Participant);
+
+	/** R10 (4) after a Preparing abort: every pawn of the round destroyed (players and crowd). */
+	int32 DestroyRoundPawns();
 
 	/** Development test driver behind AStealthPlayerController::StealthBot (no-op in Shipping). */
 	void DebugBotAction(int32 PlayerIndex, const FString& Action);
@@ -75,12 +91,17 @@ protected:
 	AStealthGameState* GetStealthGameState() const;
 
 	void TryScheduleRoundStart();
-	void EndRound(uint8 WinningTeam, EStealthWinReason Reason);
+
+	/** Ended entered: the prototype end-of-round presentation from Round's FRoundResult (the production rules decided it). */
+	void HandleRoundEnded();
+
+	/** Active entered (R7): the prototype HUD state and the start message. */
+	void HandleRoundActive();
 
 	/** Round's phase listener: Preparing runs the round setup, Reset cleans up, Lobby schedules the next start. */
 	void HandleRoundPhaseChanged(ERoundPhase OldPhase, ERoundPhase NewPhase);
 
-	/** Preparing (adapter until the Preparing barrier stories): city, objectives, player pawns through the factory, then Active. */
+	/** Preparing entered: clears the previous round's actors; Round's sequence then drives layout and spawn (R6). */
 	void RunPreparing();
 
 	/** Reset entered from Preparing or Active (an abort): clean up and tell everyone. */
@@ -91,8 +112,11 @@ protected:
 	void CleanupRoundActors();
 	void SpawnCrowd();
 
-	/** Polls until the nav mesh has rebuilt for the new layout, then validates it and spawns the crowd. */
-	void SpawnCrowdWhenNavReady();
+	/** Polls until the nav mesh has rebuilt for the new layout, then validates it and reports the layout ready to Round. */
+	void PollLayoutNavReady();
+
+	/** A team start for Team (free starts first). */
+	AActor* FindTeamStart(uint8 Team) const;
 
 	/**
 	 * Next appearance from a shuffled deck holding every pool entry equally often, shared by players
@@ -118,7 +142,6 @@ protected:
 	void ExilePlayer(AStealthCharacter* Offender);
 
 	void RespawnInformant(TWeakObjectPtr<AController> Controller);
-	void CheckEliminationVictory();
 
 	void MessagePlayer(const AStealthCharacter* Character, const FText& Text, bool bDanger = false, float Duration = 4.f) const;
 	void MessageController(AController* Controller, const FText& Text, bool bDanger = false, float Duration = 4.f) const;
@@ -137,5 +160,9 @@ protected:
 	FTimerHandle RoundRestartTimer;
 	FTimerHandle CrowdSpawnTimer;
 	double NavWaitStartTime = 0.0;
+	/** The seed of the layout being built (reported with NotifyLayoutReady). */
+	int32 PendingLayoutSeed = 0;
+	/** The start pawns of the round's participants (P6). */
+	TMap<uint32, TWeakObjectPtr<APawn>> RoundPlayerPawns;
 	TArray<FTimerHandle> PendingTimers;
 };

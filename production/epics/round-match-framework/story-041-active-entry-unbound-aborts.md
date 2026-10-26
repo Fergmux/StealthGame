@@ -1,12 +1,12 @@
 # Story 041: A non-empty GetUnboundActiveParticipants() at Active entry aborts BindFailed and never enters Active
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -94,7 +94,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/ActiveEntryUnboundAbortsTest.cpp` (automation test `StealthGame.Round.ActiveEntryUnboundAborts`, class `FRoundActiveEntryUnboundAbortsTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.ActiveEntryUnboundAborts`, 2026-10-26)
 
 ---
 
@@ -103,3 +103,13 @@
 - Depends on: `production/epics/round-match-framework/story-032-preparing-barrier.md`, `production/epics/round-match-framework/story-039-spawn-one-frame-and-gate.md`
 - Unlocks: `production/epics/round-match-framework/story-042-active-gate.md`
 - Cross-epic: `production/epics/participant-state-roster` (`GetUnboundActiveParticipants()`, invariant I4, via the fake Roster gateway; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (non-empty unbound set aborts BindFailed, Active never entered, no OnRoundActive, no Crowd start; empty set enters Active)
+**Deviations**: Open item resolved: stories 034 and 041 share FRoundMatchCore::AbortPreparing. The defect is logged through the Event Log (PreparingFailed(BindFailed)); no fault-sink report (the Round core holds no fault sink yet).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/ActiveEntryUnboundAbortsTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: N/A - a defect path (Roster I4 broken) not reachable in play
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

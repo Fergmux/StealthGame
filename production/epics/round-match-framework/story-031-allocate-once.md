@@ -1,12 +1,12 @@
 # Story 031: AllocateAppearances is called 0 times with tuning withheld and exactly once after OnTuningReady
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -92,7 +92,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/AllocateOnceTest.cpp` (automation test `StealthGame.Round.AllocateOnce`, class `FRoundAllocateOnceTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.AllocateOnce`, 2026-10-26)
 
 ---
 
@@ -101,3 +101,13 @@
 - Depends on: `production/epics/round-match-framework/story-003-test-seam-fake-gateways.md`, `production/epics/round-match-framework/story-024-start-ordering.md`
 - Unlocks: `production/epics/round-match-framework/story-032-preparing-barrier.md`, `production/epics/round-match-framework/story-034-preparing-aborts.md`
 - Cross-epic: `production/epics/tuning-data-config` (`OnTuningReady`, module skeleton and StealthTestHarness bootstrap; stories not yet created), `production/epics/character-pool-appearance` (`AllocateAppearances` allocator interface, via the fake gateway; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF Exit B batch: stories 030-047, Preparing, spawn order and win rules)
+**Criteria**: 1/1 passing (0 deals while tuning is withheld; exactly one after OnTuningReady with every rostered id and NpcCount; duplicate OnTuningReady and later drains deal nothing)
+**Deviations**: None
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/AllocateOnceTest.cpp`; full suite: `production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/full-suite.txt` (189/189 Success)
+**Run result**: OBSERVED: production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/
+**Reviewed by**: lead-programmer focused review (sonnet, 15 findings, fixes in production/qa/evidence/rmf-exit-b-preparing-wins-2026-10-26/evidence.md) + self-review, RMF Exit B batch

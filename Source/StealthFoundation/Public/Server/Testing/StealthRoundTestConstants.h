@@ -204,6 +204,67 @@ namespace RoundTestFixtures
 	inline constexpr uint16 FinalCourtSocketId = 9;
 	inline constexpr uint32 FinalCompleterA = 3;
 	inline constexpr uint32 FinalCompleterB = 7;
+
+	// --- Exit B Preparing, spawn and win fixtures (rmf-030 .. rmf-047) -------------------------------------------------
+
+	/** The NPC count of the Preparing rig rounds (small, so a spawn list stays readable). */
+	inline constexpr int32 PreparingRigNpcCount = 4;
+	/** The public round seed of the Preparing rig, and a different one (LayoutSeedMismatch). */
+	inline constexpr int32 PreparingRigSeed = 424242;
+	inline constexpr int32 PreparingRigOtherSeed = 424243;
+	/** The tuning hash TDC reports at freeze in the rig. */
+	inline constexpr uint64 PreparingRigTuningHash = 0x00000000000F1CE5ull;
+	/** The scripted SpawnOrder sub-seed the fake Session answers (a fixture value, never a real secret). */
+	inline constexpr uint64 PreparingRigSpawnSubSeed = 0x0000000000005EEDull;
+	/** One server frame of the rig clock. */
+	inline constexpr double RigFrameSec = 1.0 / 60.0;
+
+	/** rmf-035: GDD F6 fixture inputs (the F6 variable table) and the expected values. */
+	inline constexpr double F6TravelLoadTimeoutSec = 60.0;
+	inline constexpr double F6TravelLoadTimeoutLongSec = 120.0;
+	inline constexpr double F6TravelAckGraceSec = 15.0;
+	inline constexpr double F6ServerLoadBoundSec = 20.0;
+	inline constexpr double F6LayoutTotalBudgetSec = 45.0;
+	inline constexpr double F6TuningFreezeBoundSec = 1.0;
+	inline constexpr double F6SpawnBoundSec = 1.0;
+	inline constexpr double F6WorldReadyTimeoutSec = 10.0;
+	inline constexpr double F6StartLeadSec = 0.25;
+	inline constexpr double F6PreparingWatchdogSec = 150.0;
+	inline constexpr double F6ExpectedNeededDefaultSec = 122.25;
+	inline constexpr double F6ExpectedNeededLongSec = 161.25;
+	inline constexpr double F6BoundaryOffsetSec = 0.01;
+	/** Half the last printed digit of the 0.01 boundary. */
+	inline constexpr double F6Tolerance = 0.005;
+
+	/** rmf-036: D = 10 (5v5, no NPCs), 1,000 starts, chi-square critical value for 9 dof at alpha 0.001. */
+	inline constexpr int32 SpawnOrderD = 10;
+	inline constexpr int32 SpawnOrderStarts = 1000;
+	inline constexpr double SpawnOrderChiSquareCritical = 27.88;
+
+	/** rmf-038: placement fixtures and the expected F5 values (tolerance half the last printed digit). */
+	inline constexpr int32 PlacementPlayers = 5;
+	inline constexpr int32 PlacementNpcsPass = 5;
+	inline constexpr int32 PlacementNpcsFail = 4;
+	inline constexpr int32 GlobalShareNpcCount = 50;
+	inline constexpr double GlobalShare5v5 = 0.167;
+	inline constexpr double GlobalShare2v2 = 0.074;
+	inline constexpr double GlobalShareTolerance = 0.0005;
+
+	/** rmf-040: F4 inputs (DisconnectGraceSec 30, RejoinWindowSec 120: G_eff 30) and the post-start disconnect offset. */
+	inline constexpr double GraceDisconnectSec = 30.0;
+	inline constexpr double GraceRejoinWindowSec = 120.0;
+	inline constexpr double GraceExpectedEffectiveSec = 30.0;
+	inline constexpr double GraceDisconnectedBeforeStartSec = 5.0;
+	inline constexpr double GraceDisconnectAfterStartSec = 10.0;
+
+	/** rmf-043: the interleaving property fixture (seed of the test-local PCG32 stream, counts). */
+	inline constexpr uint64 InterleavingStreamSeed = 0x00000000DEC1DE43ull;
+	inline constexpr int32 InterleavingRuns = 100000;
+	inline constexpr int32 InterleavingLength = 12;
+	inline constexpr int32 InterleavingTeamSize = 2;
+
+	/** rmf-047: the clock jump of the 1v0 round, in multiples of TargetRoundMinutes. */
+	inline constexpr int32 EmptyTeamClockJumpMultiple = 10;
 }
 
 #endif // WITH_STEALTH_TEST_SEAMS

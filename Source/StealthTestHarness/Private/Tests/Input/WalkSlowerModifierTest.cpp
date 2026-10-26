@@ -29,6 +29,7 @@
 #include "InputKeyEventArgs.h"
 #include "StealthGameMode.h"
 #include "StealthPlayerController.h"
+#include "StealthGameState.h"
 #include "StealthPlayerState.h"
 #include "StealthSettings.h"
 #include "View/Input/PawnCommandClient.h"
@@ -220,7 +221,10 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 				{
 					Server = Context.WorldType == EWorldType::PIE && Context.World() && Context.World()->GetNetMode() == NM_ListenServer ? Context.World() : Server;
 				}
-				return Server && WalkerController() && Cast<AStealthPawn>(WalkerController()->GetPawn()) && ServerWalker(Server);
+				// R6: pawns exist in Preparing but commands are NotNow until Active (the real readiness sequence).
+				const AStealthGameState* ClientState = WalkerController() && WalkerController()->GetWorld() ? WalkerController()->GetWorld()->GetGameState<AStealthGameState>() : nullptr;
+				return Server && WalkerController() && Cast<AStealthPawn>(WalkerController()->GetPawn()) && ServerWalker(Server)
+					&& ClientState != nullptr && ClientState->GetRoundPublicState().Phase == ERoundPhase::Active;
 			})
 			.Then(TEXT("attach the RPC spy"), [this]()
 			{
