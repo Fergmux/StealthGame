@@ -1,12 +1,12 @@
 # Story 024: A culled concealed player pawn has no actor on any non-ally client and stays relevant to its owner and allies (provisional on S9)
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spike story-005 (S10 re-open and NetGUID) has not reported. S9 (story-004) reported PASS 2026-10-25 (production/qa/spikes/2026-10-25_S9.md): the cull tick and explicit per-connection close are specified from it Update 2026-10-25 (S10 resolution): the S10 FAIL is resolved by ADR-0003 amendment "S10 resolution 2026-10-25" (re-open guard with bounded timeout and fresh channel, lost-pawn repair, warm-up, ADR-0002 clock budget); the S10 gate is now **Blocked: story-056 (S10 fix + re-run)** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); other gates unchanged.
+> **Status**: Ready — Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25). Other dependencies are ordinary story order (see Dependencies).
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 

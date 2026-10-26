@@ -1,0 +1,688 @@
+{
+ "run": "s10r-l1-warmoff",
+ "config": {
+  "t": 16820832.431273,
+  "type": "s10rConfig",
+  "guard": 1,
+  "repair": 1,
+  "probe": 1,
+  "warmup": 0,
+  "reopenAckTimeoutMs": 350,
+  "warmupMaxFrames": 3,
+  "repairMaxPerSec": 4,
+  "injectCloseDrops": 0,
+  "aiSubjects": 2,
+  "playerSubjects": 2
+ },
+ "cycles": 360,
+ "cyclesByKind": {
+  "ai": 180,
+  "player": 180
+ },
+ "cyclesByCase": {
+  "A": 180,
+  "B": 16,
+  "C": 164
+ },
+ "closeLateBy_ms": {
+  "n": 361,
+  "min": 3.904,
+  "p10": 8.148000000000001,
+  "median": 11.716000000000001,
+  "p90": 12.207,
+  "p99": 12.557,
+  "max": 12.573
+ },
+ "clients": {
+  "client1": {
+   "census": 362,
+   "censusMissing": 0,
+   "reopens": 359,
+   "faultsLast": {
+    "t": 16821092.450094,
+    "type": "faults",
+    "ensures": 0,
+    "failedToFindCreateActor": 0,
+    "errors": {
+     "LogPython": 58,
+     "LogBlueprint": 22,
+     "LoadErrors": 1
+    },
+    "warnings": {
+     "LogEditorDataStorageUI": 21,
+     "LogBlueprint": 30,
+     "LogConsoleManager": 6
+    },
+    "reopenAckTimeout": 0,
+    "closeNotSent": 0,
+    "failureReports": 0,
+    "repairs": 0,
+    "repairDeferrals": 0,
+    "unexpectedChannelFailure": 0,
+    "injectedDrops": 0,
+    "observationCeilings": 0,
+    "warmupTimeout": 0,
+    "clockGatedWaits": 34,
+    "lostProbeQueued": 0,
+    "lostProbeReported": 0,
+    "lostProbeNotReported": 0
+   },
+   "failedToFindCreateActorLines": 0,
+   "failedToFindCreateActorRepairedSameChannel": 0,
+   "lostProbe": {
+    "reported": 0,
+    "slotEmpty": 0,
+    "closing": 0,
+    "otherGuid": 0,
+    "connectionNotOpen": 0
+   }
+  },
+  "client2": {
+   "census": 362,
+   "censusMissing": 0,
+   "reopens": 359,
+   "faultsLast": {
+    "t": 16821092.45881,
+    "type": "faults",
+    "ensures": 0,
+    "failedToFindCreateActor": 0,
+    "errors": {
+     "LogPython": 58,
+     "LogBlueprint": 22,
+     "LoadErrors": 1
+    },
+    "warnings": {
+     "LogEditorDataStorageUI": 21,
+     "LogBlueprint": 30,
+     "LogConsoleManager": 6
+    },
+    "reopenAckTimeout": 0,
+    "closeNotSent": 0,
+    "failureReports": 0,
+    "repairs": 0,
+    "repairDeferrals": 0,
+    "unexpectedChannelFailure": 0,
+    "injectedDrops": 0,
+    "observationCeilings": 0,
+    "warmupTimeout": 0,
+    "clockGatedWaits": 34,
+    "lostProbeQueued": 0,
+    "lostProbeReported": 0,
+    "lostProbeNotReported": 0
+   },
+   "failedToFindCreateActorLines": 0,
+   "failedToFindCreateActorRepairedSameChannel": 0,
+   "lostProbe": {
+    "reported": 0,
+    "slotEmpty": 0,
+    "closing": 0,
+    "otherGuid": 0,
+    "connectionNotOpen": 0
+   }
+  },
+  "client3": {
+   "census": 362,
+   "censusMissing": 0,
+   "reopens": 359,
+   "faultsLast": {
+    "t": 16821092.452926,
+    "type": "faults",
+    "ensures": 0,
+    "failedToFindCreateActor": 0,
+    "errors": {
+     "LogPython": 58,
+     "LogBlueprint": 22,
+     "LoadErrors": 1
+    },
+    "warnings": {
+     "LogEditorDataStorageUI": 21,
+     "LogBlueprint": 30,
+     "LogMaterial": 2,
+     "LogConsoleManager": 6
+    },
+    "reopenAckTimeout": 0,
+    "closeNotSent": 0,
+    "failureReports": 0,
+    "repairs": 0,
+    "repairDeferrals": 0,
+    "unexpectedChannelFailure": 0,
+    "injectedDrops": 0,
+    "observationCeilings": 0,
+    "warmupTimeout": 0,
+    "clockGatedWaits": 34,
+    "lostProbeQueued": 0,
+    "lostProbeReported": 0,
+    "lostProbeNotReported": 0
+   },
+   "failedToFindCreateActorLines": 0,
+   "failedToFindCreateActorRepairedSameChannel": 0,
+   "lostProbe": {
+    "reported": 0,
+    "slotEmpty": 0,
+    "closing": 0,
+    "otherGuid": 0,
+    "connectionNotOpen": 0
+   }
+  }
+ },
+ "G": {
+  "freeFirstSend_ms": {
+   "n": 579,
+   "min": 126.42199918627739,
+   "p10": 134.23800095915794,
+   "median": 151.2010022997856,
+   "p90": 168.03400218486786,
+   "p99": 175.5799986422062,
+   "max": 177.411999553442
+  },
+  "freeAll_ms": {
+   "n": 588,
+   "min": 126.42199918627739,
+   "p10": 135.09199768304825,
+   "median": 151.9009992480278,
+   "p90": 169.0250001847744,
+   "p99": 413.13600167632103,
+   "max": 456.56299963593483
+  },
+  "freeResendFraction": 0.015306122448979591,
+  "heldFirstSend_ms": {
+   "n": 485,
+   "min": 310.273002833128,
+   "p10": 332.6379992067814,
+   "median": 360.2680005133152,
+   "p90": 377.4250000715256,
+   "p99": 392.2719992697239,
+   "max": 504.28399816155434
+  },
+  "heldAll_ms": {
+   "n": 489,
+   "min": 310.273002833128,
+   "p10": 332.7089995145798,
+   "median": 360.5240024626255,
+   "p90": 379.04199957847595,
+   "p99": 471.54799848794937,
+   "max": 673.3059994876385
+  },
+  "atMostOneResendPerHop_ms": {
+   "n": 1076,
+   "min": 126.42199918627739,
+   "p10": 140.84099978208542,
+   "median": 170.16549967229366,
+   "p90": 373.03199991583824,
+   "p99": 422.07399755716324,
+   "max": 667.3969998955727
+  },
+  "burstLossCycles_ms": {
+   "n": 1,
+   "min": 673.3059994876385,
+   "p10": 673.3059994876385,
+   "median": 673.3059994876385,
+   "p90": 673.3059994876385,
+   "p99": 673.3059994876385,
+   "max": 673.3059994876385
+  },
+  "repaired_ms": null,
+  "byCase": {
+   "A": {
+    "n": 540,
+    "min": 126.42199918627739,
+    "p10": 136.59299910068512,
+    "median": 152.77650021016598,
+    "p90": 169.8400005698204,
+    "p99": 415.30900076031685,
+    "max": 456.56299963593483
+   },
+   "B": {
+    "n": 48,
+    "min": 129.6829991042614,
+    "p10": 132.4170008301735,
+    "median": 146.07900008559227,
+    "p90": 154.3869972229004,
+    "p99": 156.53400123119354,
+    "max": 156.53400123119354
+   },
+   "C": {
+    "n": 489,
+    "min": 310.273002833128,
+    "p10": 332.7089995145798,
+    "median": 360.5240024626255,
+    "p90": 379.04199957847595,
+    "p99": 471.54799848794937,
+    "max": 673.3059994876385
+   }
+  },
+  "byKind": {
+   "ai": {
+    "n": 537,
+    "min": 127.12200358510017,
+    "p10": 143.58900114893913,
+    "median": 170.60699686408043,
+    "p90": 371.88299745321274,
+    "p99": 413.13600167632103,
+    "max": 623.6100010573864
+   },
+   "player": {
+    "n": 540,
+    "min": 126.42199918627739,
+    "p10": 139.19200003147125,
+    "median": 169.33999955654144,
+    "p90": 373.74699860811234,
+    "p99": 456.56299963593483,
+    "max": 673.3059994876385
+   }
+  }
+ },
+ "hold": {
+  "heldReopens": 489,
+  "hold_ms": {
+   "n": 489,
+   "min": 183.03599953651428,
+   "p10": 200.2820000052452,
+   "median": 217.19799935817719,
+   "p90": 233.81900042295456,
+   "p99": 234.91999879479408,
+   "max": 316.5449984371662
+  },
+  "holdBound_ms": 366.6666666666667,
+  "holdOverBound": 0,
+  "timeouts": 4,
+  "timeoutRate": 0.0081799591002045,
+  "closeSentToAck_ms": {
+   "n": 489,
+   "min": 216.463,
+   "p10": 233.821,
+   "median": 250.532,
+   "p90": 266.965,
+   "p99": 267.867,
+   "max": 550.306
+  },
+  "ackToOpen_ms": {
+   "n": 489,
+   "min": -183.7959997355938,
+   "p10": 16.015000641345978,
+   "median": 16.933999955654144,
+   "p90": 33.47700089216232,
+   "p99": 33.973000943660736,
+   "max": 34.244999289512634
+  },
+  "keepProcessingCycles": 0,
+  "allCloseSentToAck_ms": {
+   "n": 1080,
+   "min": 216.463,
+   "p10": 233.73,
+   "median": 250.532,
+   "p90": 266.978,
+   "p99": 500.43,
+   "max": 550.306
+  },
+  "allCloseSends": {
+   "1": 1067,
+   "2": 13
+  }
+ },
+ "T_reopen_ms": {
+  "n": 1077,
+  "min": 6.721999496221542,
+  "p10": 8.247997611761093,
+  "median": 9.94500145316124,
+  "p90": 11.622000485658646,
+  "p99": 13.561997562646866,
+  "max": 23.64400029182434
+ },
+ "clock": {
+  "poseEvalError_ms": {
+   "n": 1077,
+   "min": -10.398998408817306,
+   "p10": -3.5800021777134816,
+   "median": 0.21699966310961827,
+   "p90": 7.794998116480656,
+   "p99": 11.725998593817621,
+   "max": 11.727002089997995
+  },
+  "poseEvalAbsError_p95_ms": 11.271002262105867,
+  "poseEvalAbsError_p99_ms": 11.726000056512476,
+  "estimatorError_ms": {
+   "n": 1513,
+   "min": -10.403000735777823,
+   "p10": -3.586001296994823,
+   "median": 0.21200016379907538,
+   "p90": 5.911997463940111,
+   "p99": 11.412002941369792,
+   "max": 11.72199970960719
+  },
+  "estimatorAbsError_p95_ms": 11.26499804807679,
+  "estimatorAbsError_p99_ms": 11.412002941369792
+ },
+ "lost": {
+  "censusMissing": 0,
+  "lostDestroys": 0,
+  "lostDestroysRepaired": 0,
+  "lostDestroysNeverVisibleAgain": 0,
+  "L_gap_ms": null,
+  "samples": [],
+  "notReopened": 3,
+  "failedToFindCreateActor": {
+   "C1": 0,
+   "C2": 0,
+   "C3": 0
+  }
+ },
+ "serverCounters": {
+  "t": 16821092.444596,
+  "type": "faults",
+  "ensures": 0,
+  "failedToFindCreateActor": 0,
+  "errors": {
+   "LogBlueprint": 22,
+   "LoadErrors": 1,
+   "LogPython": 58
+  },
+  "warnings": {
+   "LogEditorDataStorageUI": 21,
+   "LogBlueprint": 30,
+   "LogConsoleManager": 6
+  },
+  "reopenAckTimeout": 14,
+  "closeNotSent": 0,
+  "failureReports": 0,
+  "repairs": 0,
+  "repairDeferrals": 0,
+  "unexpectedChannelFailure": 0,
+  "injectedDrops": 0,
+  "observationCeilings": 0,
+  "warmupTimeout": 0,
+  "clockGatedWaits": 0,
+  "lostProbeQueued": 0,
+  "lostProbeReported": 0,
+  "lostProbeNotReported": 0
+ },
+ "serverRecords": {
+  "failureReport": 0,
+  "repair": 0,
+  "repairDeferred": 0,
+  "unexpectedChannelFailure": 0,
+  "inject": 0,
+  "reopenTimeout": 14,
+  "closeNotSent": 0,
+  "observationCeiling": 0,
+  "repairDuplicate": 0
+ },
+ "probe": [
+  {
+   "client": "C1",
+   "firstVisible": 393,
+   "unposed": 0,
+   "unposedSamples": [],
+   "refHeadHeight_cm": null,
+   "refDeadHeadRoot_cm": null,
+   "warmupTimeouts": 0,
+   "warmed": 0
+  },
+  {
+   "client": "C2",
+   "firstVisible": 393,
+   "unposed": 0,
+   "unposedSamples": [],
+   "refHeadHeight_cm": null,
+   "refDeadHeadRoot_cm": null,
+   "warmupTimeouts": 0,
+   "warmed": 0
+  },
+  {
+   "client": "C3",
+   "firstVisible": 393,
+   "unposed": 393,
+   "unposedSamples": [
+    {
+     "name": "BP_CrowdCharacter_C_0",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013581420616596496,
+     "warm": 0
+    },
+    {
+     "name": "BP_CrowdCharacter_C_1",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013581420616596496,
+     "warm": 0
+    },
+    {
+     "name": "BP_CrowdCharacter_C_2",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013581420616596496,
+     "warm": 0
+    },
+    {
+     "name": "BP_CrowdCharacter_C_3",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013581420616596496,
+     "warm": 0
+    },
+    {
+     "name": "BP_CrowdCharacter_C_4",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013513513513513514,
+     "warm": 0
+    },
+    {
+     "name": "BP_CrowdCharacter_C_5",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013513513513513514,
+     "warm": 0
+    },
+    {
+     "name": "BP_CrowdCharacter_C_6",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013513513513513514,
+     "warm": 0
+    },
+    {
+     "name": "BP_CrowdCharacter_C_7",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013513513513513514,
+     "warm": 0
+    },
+    {
+     "name": "BP_CrowdCharacter_C_8",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013513513513513514,
+     "warm": 0
+    },
+    {
+     "name": "BP_CrowdCharacter_C_9",
+     "subject": 0,
+     "dying": 0,
+     "ratio": -0.013513513513513514,
+     "warm": 0
+    }
+   ],
+   "refHeadHeight_cm": 147.26,
+   "refDeadHeadRoot_cm": 150.31,
+   "warmupTimeouts": 0,
+   "warmed": 0
+  }
+ ],
+ "reopenedWithoutFirstVisible": {},
+ "netGuid": {
+  "reopensSameGuid": 1077,
+  "reopens": 1077,
+  "serverPawnGuidAllocations": 35,
+  "serverPawnSpawns": 35
+ },
+ "parity": {
+  "features": [
+   "hold_ms",
+   "timeout",
+   "repair",
+   "G_ms",
+   "warmupFrames"
+  ],
+  "AUC_hat": 0.446582522932616,
+  "SE_boot": 0.025403615495390466,
+  "upper": 0.4883714704225333,
+  "SE_hanleyMcNeil": 0.017600894291830035,
+  "nPlayer": 540,
+  "nAi": 537,
+  "blocks": 8
+ },
+ "paritySanityShift40ms": {
+  "features": [
+   "hold_ms",
+   "timeout",
+   "repair",
+   "G_ms",
+   "warmupFrames"
+  ],
+  "AUC_hat": 0.9812780191737361,
+  "SE_boot": 0.00625281127737483,
+  "upper": 0.9915638937250177,
+  "SE_hanleyMcNeil": 0.017600894291830035,
+  "nPlayer": 540,
+  "nAi": 537,
+  "blocks": 8
+ },
+ "ksDescriptive": {
+  "hold_ms": {
+   "D": 0.06331471135940414,
+   "p": 0.22303882665722996,
+   "nPlayer": 540,
+   "nAi": 537
+  },
+  "timeout": {
+   "D": 0.003786468032278112,
+   "p": 1.0,
+   "nPlayer": 540,
+   "nAi": 537
+  },
+  "repair": {
+   "D": 0.0,
+   "p": 0.0,
+   "nPlayer": 540,
+   "nAi": 537
+  },
+  "G_ms": {
+   "D": 0.053320918684047175,
+   "p": 0.41850613153537874,
+   "nPlayer": 540,
+   "nAi": 537
+  },
+  "warmupFrames": {
+   "D": 0.0,
+   "p": 0.0,
+   "nPlayer": 540,
+   "nAi": 537
+  }
+ },
+ "frameProbe": [
+  {
+   "client": "client3",
+   "instance": "BP_CrowdCharacter_C_37",
+   "guid": "210",
+   "silhouette_px": {
+    "f00": 73.0,
+    "f01": 73.0,
+    "f05": 73.0,
+    "f10": 73.0
+   },
+   "ref_px": 73.0,
+   "projected_px": 48.19999999999999,
+   "assessable": false,
+   "f00_ratio": 1.0,
+   "goneAgeMs": 416.95399954915047
+  },
+  {
+   "client": "client3",
+   "instance": "BP_CrowdCharacter_C_39",
+   "guid": "60",
+   "silhouette_px": {
+    "f00": 0.0,
+    "f01": 0.0,
+    "f05": 1.0,
+    "f10": 0.0
+   },
+   "ref_px": 0.0,
+   "projected_px": 49.099999999999994,
+   "assessable": false,
+   "f00_ratio": null,
+   "goneAgeMs": 287.9039980471134
+  },
+  {
+   "client": "client3",
+   "instance": "BP_CrowdCharacter_C_40",
+   "guid": "108",
+   "silhouette_px": {
+    "f00": 0.0,
+    "f01": 0.0,
+    "f05": 0.0,
+    "f10": 0.0
+   },
+   "ref_px": 0.0,
+   "projected_px": 51.80000000000001,
+   "assessable": false,
+   "f00_ratio": null,
+   "goneAgeMs": 287.11799904704094
+  },
+  {
+   "client": "client3",
+   "instance": "BP_CrowdCharacter_C_41",
+   "guid": "126",
+   "silhouette_px": {
+    "f00": null,
+    "f01": null,
+    "f05": null,
+    "f10": null
+   },
+   "ref_px": 0.0,
+   "projected_px": 482.1,
+   "assessable": false,
+   "f00_ratio": null,
+   "goneAgeMs": 269.7579972445965
+  },
+  {
+   "client": "client3",
+   "instance": "BP_CrowdCharacter_C_44",
+   "guid": "108",
+   "silhouette_px": {
+    "f00": 0.0,
+    "f01": 0.0,
+    "f05": 0.0,
+    "f10": 0.0
+   },
+   "ref_px": 0.0,
+   "projected_px": 51.80000000000001,
+   "assessable": false,
+   "f00_ratio": null,
+   "goneAgeMs": 1237.3519986867905
+  },
+  {
+   "client": "client3",
+   "instance": "BP_CrowdCharacter_C_47",
+   "guid": "60",
+   "silhouette_px": {
+    "f00": 0.0,
+    "f01": 0.0,
+    "f05": 0.0,
+    "f10": 0.0
+   },
+   "ref_px": 0.0,
+   "projected_px": 49.099999999999994,
+   "assessable": false,
+   "f00_ratio": null,
+   "goneAgeMs": 271.87199890613556
+  }
+ ],
+ "frameProbeSummary": {
+  "captured": 6,
+  "assessable": 0,
+  "f00RatioBelow0_8": 0,
+  "f00Ratio": null
+ }
+}

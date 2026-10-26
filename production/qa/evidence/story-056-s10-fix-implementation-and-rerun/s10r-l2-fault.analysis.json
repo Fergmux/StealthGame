@@ -1,0 +1,704 @@
+{
+ "run": "s10r-l2-fault",
+ "config": {
+  "t": 16820074.861667,
+  "type": "s10rConfig",
+  "guard": 1,
+  "repair": 1,
+  "probe": 1,
+  "warmup": 1,
+  "reopenAckTimeoutMs": 200,
+  "warmupMaxFrames": 3,
+  "repairMaxPerSec": 4,
+  "injectCloseDrops": 1,
+  "aiSubjects": 2,
+  "playerSubjects": 2
+ },
+ "cycles": 600,
+ "cyclesByKind": {
+  "ai": 300,
+  "player": 300
+ },
+ "cyclesByCase": {
+  "A": 300,
+  "B": 30,
+  "C": 270
+ },
+ "closeLateBy_ms": {
+  "n": 600,
+  "min": 2.4299999999999997,
+  "p10": 2.912,
+  "median": 8.384,
+  "p90": 14.134,
+  "p99": 14.422,
+  "max": 14.456
+ },
+ "clients": {
+  "client1": {
+   "census": 600,
+   "censusMissing": 0,
+   "reopens": 600,
+   "faultsLast": {
+    "t": 16820794.883362,
+    "type": "faults",
+    "ensures": 0,
+    "failedToFindCreateActor": 264,
+    "errors": {
+     "LogPython": 58,
+     "LogBlueprint": 22,
+     "LoadErrors": 1,
+     "LogNetTraffic": 2
+    },
+    "warnings": {
+     "LogEditorDataStorageUI": 21,
+     "LogBlueprint": 30,
+     "LogConsoleManager": 6,
+     "LogNet": 264
+    },
+    "reopenAckTimeout": 0,
+    "closeNotSent": 0,
+    "failureReports": 0,
+    "repairs": 0,
+    "repairDeferrals": 0,
+    "unexpectedChannelFailure": 0,
+    "injectedDrops": 0,
+    "observationCeilings": 0,
+    "warmupTimeout": 0,
+    "clockGatedWaits": 34,
+    "lostProbeQueued": 268,
+    "lostProbeReported": 268,
+    "lostProbeNotReported": 0
+   },
+   "failedToFindCreateActorLines": 264,
+   "failedToFindCreateActorRepairedSameChannel": 264,
+   "lostProbe": {
+    "reported": 268,
+    "slotEmpty": 0,
+    "closing": 0,
+    "otherGuid": 0,
+    "connectionNotOpen": 0
+   }
+  },
+  "client2": {
+   "census": 600,
+   "censusMissing": 0,
+   "reopens": 600,
+   "faultsLast": {
+    "t": 16820794.880363,
+    "type": "faults",
+    "ensures": 0,
+    "failedToFindCreateActor": 260,
+    "errors": {
+     "LogPython": 58,
+     "LogBlueprint": 22,
+     "LoadErrors": 1
+    },
+    "warnings": {
+     "LogEditorDataStorageUI": 21,
+     "LogBlueprint": 30,
+     "LogConsoleManager": 6,
+     "LogNet": 267
+    },
+    "reopenAckTimeout": 0,
+    "closeNotSent": 0,
+    "failureReports": 0,
+    "repairs": 0,
+    "repairDeferrals": 0,
+    "unexpectedChannelFailure": 0,
+    "injectedDrops": 0,
+    "observationCeilings": 0,
+    "warmupTimeout": 0,
+    "clockGatedWaits": 34,
+    "lostProbeQueued": 266,
+    "lostProbeReported": 266,
+    "lostProbeNotReported": 0
+   },
+   "failedToFindCreateActorLines": 260,
+   "failedToFindCreateActorRepairedSameChannel": 260,
+   "lostProbe": {
+    "reported": 266,
+    "slotEmpty": 0,
+    "closing": 0,
+    "otherGuid": 0,
+    "connectionNotOpen": 0
+   }
+  },
+  "client3": {
+   "census": 600,
+   "censusMissing": 0,
+   "reopens": 600,
+   "faultsLast": {
+    "t": 16820794.886512,
+    "type": "faults",
+    "ensures": 0,
+    "failedToFindCreateActor": 21,
+    "errors": {
+     "LogPython": 58,
+     "LogBlueprint": 22,
+     "LoadErrors": 1,
+     "LogNetTraffic": 2,
+     "LogNet": 1
+    },
+    "warnings": {
+     "LogEditorDataStorageUI": 21,
+     "LogBlueprint": 30,
+     "LogConsoleManager": 6,
+     "LogNet": 25
+    },
+    "reopenAckTimeout": 0,
+    "closeNotSent": 0,
+    "failureReports": 0,
+    "repairs": 0,
+    "repairDeferrals": 0,
+    "unexpectedChannelFailure": 0,
+    "injectedDrops": 0,
+    "observationCeilings": 0,
+    "warmupTimeout": 0,
+    "clockGatedWaits": 34,
+    "lostProbeQueued": 266,
+    "lostProbeReported": 266,
+    "lostProbeNotReported": 0
+   },
+   "failedToFindCreateActorLines": 21,
+   "failedToFindCreateActorRepairedSameChannel": 21,
+   "lostProbe": {
+    "reported": 266,
+    "slotEmpty": 0,
+    "closing": 0,
+    "otherGuid": 0,
+    "connectionNotOpen": 0
+   }
+  }
+ },
+ "G": {
+  "freeFirstSend_ms": {
+   "n": 973,
+   "min": 123.73799830675125,
+   "p10": 131.91600143909454,
+   "median": 150.7209986448288,
+   "p90": 167.92500019073486,
+   "p99": 173.65700006484985,
+   "max": 181.0080036520958
+  },
+  "freeAll_ms": {
+   "n": 990,
+   "min": 123.73799830675125,
+   "p10": 132.00699910521507,
+   "median": 150.9194988757372,
+   "p90": 168.62399876117706,
+   "p99": 413.07199746370316,
+   "max": 646.5060003101826
+  },
+  "freeResendFraction": 0.01717171717171717,
+  "heldFirstSend_ms": {
+   "n": 778,
+   "min": 745.2519983053207,
+   "p10": 783.5409976541996,
+   "median": 819.7824992239475,
+   "p90": 858.6560003459454,
+   "p99": 1102.1599993109703,
+   "max": 1345.1679982244968
+  },
+  "heldAll_ms": {
+   "n": 810,
+   "min": 529.0930010378361,
+   "p10": 782.2280004620552,
+   "median": 820.2374987304211,
+   "p90": 868.2929985225201,
+   "p99": 1123.189002275467,
+   "max": 1345.1679982244968
+  },
+  "atMostOneResendPerHop_ms": {
+   "n": 1781,
+   "min": 123.73799830675125,
+   "p10": 140.0420032441616,
+   "median": 168.62399876117706,
+   "p90": 842.8829982876778,
+   "p99": 1080.4629996418953,
+   "max": 1159.3380011618137
+  },
+  "burstLossCycles_ms": {
+   "n": 19,
+   "min": 408.8979996740818,
+   "p10": 564.3059983849525,
+   "median": 1085.7319980859756,
+   "p90": 1138.764001429081,
+   "p99": 1345.1679982244968,
+   "max": 1345.1679982244968
+  },
+  "repaired_ms": {
+   "n": 800,
+   "min": 745.2519983053207,
+   "p10": 783.6670018732548,
+   "median": 820.898000150919,
+   "p90": 868.427999317646,
+   "p99": 1123.189002275467,
+   "max": 1345.1679982244968
+  },
+  "byCase": {
+   "A": {
+    "n": 900,
+    "min": 123.73799830675125,
+    "p10": 132.15100020170212,
+    "median": 151.3574980199337,
+    "p90": 168.92800107598305,
+    "p99": 413.51599991321564,
+    "max": 646.5060003101826
+   },
+   "B": {
+    "n": 90,
+    "min": 128.04000079631805,
+    "p10": 131.436999887228,
+    "median": 147.41049893200397,
+    "p90": 154.1309989988804,
+    "p99": 157.77499973773956,
+    "max": 408.8979996740818
+   },
+   "C": {
+    "n": 810,
+    "min": 529.0930010378361,
+    "p10": 782.2280004620552,
+    "median": 820.2374987304211,
+    "p90": 868.2929985225201,
+    "p99": 1123.189002275467,
+    "max": 1345.1679982244968
+   }
+  },
+  "byKind": {
+   "ai": {
+    "n": 900,
+    "min": 124.25899878144264,
+    "p10": 138.53999972343445,
+    "median": 169.26449909806252,
+    "p90": 843.8280001282692,
+    "p99": 1085.7319980859756,
+    "max": 1138.764001429081
+   },
+   "player": {
+    "n": 900,
+    "min": 123.73799830675125,
+    "p10": 141.03100076317787,
+    "median": 168.77949982881546,
+    "p90": 849.2420017719269,
+    "p99": 1113.4040020406246,
+    "max": 1345.1679982244968
+   }
+  }
+ },
+ "hold": {
+  "heldReopens": 810,
+  "hold_ms": {
+   "n": 810,
+   "min": 161.76999732851982,
+   "p10": 166.07800126075745,
+   "median": 166.69250093400478,
+   "p90": 167.19399765133858,
+   "p99": 168.1540012359619,
+   "max": 168.42500120401382
+  },
+  "holdBound_ms": 216.66666666666666,
+  "holdOverBound": 0,
+  "timeouts": 810,
+  "timeoutRate": 1.0,
+  "closeSentToAck_ms": {
+   "n": 810,
+   "min": 450.635,
+   "p10": 484.404,
+   "median": 517.131,
+   "p90": 550.222,
+   "p99": 783.602,
+   "max": 1033.608
+  },
+  "ackToOpen_ms": {
+   "n": 810,
+   "min": -816.5800012648106,
+   "p10": -333.2750014960766,
+   "median": -300.076000392437,
+   "p90": -266.7960003018379,
+   "p99": -249.59900230169296,
+   "max": -233.08699950575829
+  },
+  "keepProcessingCycles": 0,
+  "allCloseSentToAck_ms": {
+   "n": 2600,
+   "min": 215.544,
+   "p10": 233.64,
+   "median": 266.031,
+   "p90": 533.478,
+   "p99": 559.556,
+   "max": 1033.608
+  },
+  "allCloseSends": {
+   "1": 1753,
+   "2": 831,
+   "3": 14,
+   "4": 2
+  }
+ },
+ "T_reopen_ms": {
+  "n": 1800,
+  "min": 4.444003105163574,
+  "p10": 5.757000297307968,
+  "median": 8.143499493598938,
+  "p90": 10.523997247219086,
+  "p99": 11.686000972986221,
+  "max": 14.580998569726944
+ },
+ "clock": {
+  "poseEvalError_ms": {
+   "n": 1800,
+   "min": -12.386002689595443,
+   "p10": -3.692997943858245,
+   "median": 0.20600281749239002,
+   "p90": 5.71600146602691,
+   "p99": 8.452002687931781,
+   "max": 12.587002350812782
+  },
+  "poseEvalAbsError_p95_ms": 8.45099987316189,
+  "poseEvalAbsError_p99_ms": 10.43299867535552,
+  "estimatorError_ms": {
+   "n": 4224,
+   "min": -12.84599759583216,
+   "p10": -4.592998481768973,
+   "median": 0.20100114943488734,
+   "p90": 5.860999976903258,
+   "p99": 14.60499942675142,
+   "max": 14.787000953106144
+  },
+  "estimatorAbsError_p95_ms": 11.567996416317783,
+  "estimatorAbsError_p99_ms": 14.60499942675142
+ },
+ "lost": {
+  "censusMissing": 0,
+  "lostDestroys": 800,
+  "lostDestroysRepaired": 800,
+  "lostDestroysNeverVisibleAgain": 0,
+  "L_gap_ms": {
+   "n": 800,
+   "min": 422.3399981856346,
+   "p10": 444.4659985601902,
+   "median": 472.0040000975132,
+   "p90": 491.9839985668659,
+   "p99": 743.0979982018471,
+   "max": 776.0910019278526
+  },
+  "samples": [
+   {
+    "client": "C1",
+    "guid": "90",
+    "kind": "ai",
+    "t": 16820114.777945,
+    "L_gap_ms": 477.09500044584274,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "210",
+    "kind": "player",
+    "t": 16820115.577949,
+    "L_gap_ms": 461.0680006444454,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "102",
+    "kind": "player",
+    "t": 16820116.411292,
+    "L_gap_ms": 742.8259998559952,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "138",
+    "kind": "ai",
+    "t": 16820117.211301,
+    "L_gap_ms": 460.24100109934807,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "90",
+    "kind": "ai",
+    "t": 16820119.561472,
+    "L_gap_ms": 460.4570008814335,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "210",
+    "kind": "player",
+    "t": 16820120.411328,
+    "L_gap_ms": 477.45100036263466,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "102",
+    "kind": "player",
+    "t": 16820121.178016,
+    "L_gap_ms": 459.82300117611885,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "138",
+    "kind": "ai",
+    "t": 16820121.994664,
+    "L_gap_ms": 726.6380004584789,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "90",
+    "kind": "ai",
+    "t": 16820124.394665,
+    "L_gap_ms": 479.1650027036667,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "210",
+    "kind": "player",
+    "t": 16820125.178058,
+    "L_gap_ms": 477.5330014526844,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "102",
+    "kind": "player",
+    "t": 16820125.978198,
+    "L_gap_ms": 460.94200015068054,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "138",
+    "kind": "ai",
+    "t": 16820126.778032,
+    "L_gap_ms": 460.7829973101616,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "90",
+    "kind": "ai",
+    "t": 16820129.161395,
+    "L_gap_ms": 460.0980021059513,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "210",
+    "kind": "player",
+    "t": 16820129.961397,
+    "L_gap_ms": 460.17299965023994,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "102",
+    "kind": "player",
+    "t": 16820130.794703,
+    "L_gap_ms": 443.73200088739395,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "138",
+    "kind": "ai",
+    "t": 16820131.578066,
+    "L_gap_ms": 460.7500024139881,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "90",
+    "kind": "ai",
+    "t": 16820133.996357,
+    "L_gap_ms": 494.20199915766716,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "210",
+    "kind": "player",
+    "t": 16820134.796394,
+    "L_gap_ms": 493.8549995422363,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "102",
+    "kind": "player",
+    "t": 16820135.596357,
+    "L_gap_ms": 476.757999509573,
+    "repaired": true
+   },
+   {
+    "client": "C1",
+    "guid": "138",
+    "kind": "ai",
+    "t": 16820136.396392,
+    "L_gap_ms": 460.0200019776821,
+    "repaired": true
+   }
+  ],
+  "notReopened": 0,
+  "failedToFindCreateActor": {
+   "C1": 264,
+   "C2": 260,
+   "C3": 21
+  }
+ },
+ "serverCounters": {
+  "t": 16820794.871762,
+  "type": "faults",
+  "ensures": 0,
+  "failedToFindCreateActor": 0,
+  "errors": {
+   "LogBlueprint": 22,
+   "LoadErrors": 1,
+   "LogPython": 58
+  },
+  "warnings": {
+   "LogEditorDataStorageUI": 21,
+   "LogBlueprint": 30,
+   "LogConsoleManager": 6
+  },
+  "reopenAckTimeout": 2600,
+  "closeNotSent": 0,
+  "failureReports": 800,
+  "repairs": 800,
+  "repairDeferrals": 0,
+  "unexpectedChannelFailure": 0,
+  "injectedDrops": 810,
+  "observationCeilings": 0,
+  "warmupTimeout": 0,
+  "clockGatedWaits": 0,
+  "lostProbeQueued": 0,
+  "lostProbeReported": 0,
+  "lostProbeNotReported": 0
+ },
+ "serverRecords": {
+  "failureReport": 800,
+  "repair": 800,
+  "repairDeferred": 0,
+  "unexpectedChannelFailure": 0,
+  "inject": 810,
+  "reopenTimeout": 2600,
+  "closeNotSent": 0,
+  "observationCeiling": 0,
+  "repairDuplicate": 0
+ },
+ "probe": [
+  {
+   "client": "C1",
+   "firstVisible": 634,
+   "unposed": 0,
+   "unposedSamples": [],
+   "refHeadHeight_cm": 147.76,
+   "refDeadHeadRoot_cm": 150.09,
+   "warmupTimeouts": 0,
+   "warmed": 634
+  },
+  {
+   "client": "C2",
+   "firstVisible": 634,
+   "unposed": 0,
+   "unposedSamples": [],
+   "refHeadHeight_cm": 147.76,
+   "refDeadHeadRoot_cm": 150.09,
+   "warmupTimeouts": 0,
+   "warmed": 634
+  },
+  {
+   "client": "C3",
+   "firstVisible": 634,
+   "unposed": 0,
+   "unposedSamples": [],
+   "refHeadHeight_cm": 147.76,
+   "refDeadHeadRoot_cm": 149.96,
+   "warmupTimeouts": 0,
+   "warmed": 634
+  }
+ ],
+ "reopenedWithoutFirstVisible": {},
+ "netGuid": {
+  "reopensSameGuid": 1800,
+  "reopens": 1800,
+  "serverPawnGuidAllocations": 35,
+  "serverPawnSpawns": 35
+ },
+ "parity": {
+  "features": [
+   "hold_ms",
+   "timeout",
+   "repair",
+   "G_ms",
+   "warmupFrames"
+  ],
+  "AUC_hat": 0.4897746913580247,
+  "SE_boot": 0.012386207964786601,
+  "upper": 0.5101500034600986,
+  "SE_hanleyMcNeil": 0.013612055900694111,
+  "nPlayer": 900,
+  "nAi": 900,
+  "blocks": 14
+ },
+ "paritySanityShift40ms": {
+  "features": [
+   "hold_ms",
+   "timeout",
+   "repair",
+   "G_ms",
+   "warmupFrames"
+  ],
+  "AUC_hat": 0.8787592592592592,
+  "SE_boot": 0.012892508267190562,
+  "upper": 0.8999674353587878,
+  "SE_hanleyMcNeil": 0.013612055900694111,
+  "nPlayer": 900,
+  "nAi": 900,
+  "blocks": 14
+ },
+ "ksDescriptive": {
+  "hold_ms": {
+   "D": 0.0788888888888889,
+   "p": 0.006913586871346128,
+   "nPlayer": 900,
+   "nAi": 900
+  },
+  "timeout": {
+   "D": 0.0011111111111110628,
+   "p": 0.9999883643982809,
+   "nPlayer": 900,
+   "nAi": 900
+  },
+  "repair": {
+   "D": 0.004444444444444473,
+   "p": 0.9999999999999999,
+   "nPlayer": 900,
+   "nAi": 900
+  },
+  "G_ms": {
+   "D": 0.033333333333333326,
+   "p": 0.6923852087518206,
+   "nPlayer": 900,
+   "nAi": 900
+  },
+  "warmupFrames": {
+   "D": 0.0,
+   "p": 0.0,
+   "nPlayer": 900,
+   "nAi": 900
+  }
+ },
+ "frameProbe": [],
+ "frameProbeSummary": {
+  "captured": 0,
+  "assessable": 0,
+  "f00RatioBelow0_8": 0,
+  "f00Ratio": null
+ }
+}

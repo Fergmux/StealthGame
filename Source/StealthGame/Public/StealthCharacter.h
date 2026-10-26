@@ -42,6 +42,10 @@ public:
 	virtual bool CanJumpInternal_Implementation() const override;
 	/** APawn's relevancy, unless a non-Shipping spike hook replaces it (THROWAWAY, IVP spike S9). */
 	virtual bool IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const override;
+	/** Super, then a non-Shipping spike hook (THROWAWAY, IVP S10 re-run story-056: lost-pawn probe, ADR-0003 S10-R4). */
+	virtual void OnActorChannelOpen(class FInBunch& InBunch, class UNetConnection* Connection) override;
+	/** Super, then a non-Shipping spike hook (THROWAWAY, IVP S10 re-run story-056: pose warm-up, ADR-0003 S10-R5). */
+	virtual void PostNetInit() override;
 
 	// ---- Queries -------------------------------------------------------------------------
 

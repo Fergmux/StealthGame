@@ -1,12 +1,12 @@
 # Story 044: Raw-bunch schema parity holds, structural leak count S = 0
 
 > **Epic**: Information Visibility Policy
-> **Status**: Blocked — BLOCKED: spike story-005 (S10) has not reported; needs AStealthPawn. S1 reported PASS 2026-10-25 with the capture mechanism chosen (production/qa/spikes/2026-10-25_S1-multiprocess.md; ADR-0008 amendment) and S9 reported PASS (production/qa/spikes/2026-10-25_S9.md) Update 2026-10-25 (S10 resolution): the S10 FAIL is resolved by ADR-0003 amendment "S10 resolution 2026-10-25" (re-open guard with bounded timeout and fresh channel, lost-pawn repair, warm-up, ADR-0002 clock budget); the S10 gate is now **Blocked: story-056 (S10 fix + re-run)** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); other gates unchanged.
+> **Status**: Ready — Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25). Other dependencies are ordinary story order (see Dependencies).
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 

@@ -51,6 +51,15 @@ public:
 	/** Client: how many re-opens per process may still capture a frame sequence. */
 	static int32& CaptureBudget();
 
+	/**
+	 * S10 re-run (story-056): when true, the component does nothing on its own; the scenario's warm-up applies the
+	 * presentation with ApplyPresentation(EstimatedServerNow()) from the ADR-0002 section 9 harness estimator.
+	 */
+	static bool& ExternalApply();
+
+	/** Client: the S10 re-run presentation apply ("present" record: the estimator time used by the evaluation). */
+	void ApplyPresentation(double EstimatedServerNow);
+
 private:
 	/** Client: the idempotent presentation refresh from replicated state (stub: computes the pose and death times). */
 	void RefreshPresentation(double EstimatedServerNow, const TCHAR* Phase);

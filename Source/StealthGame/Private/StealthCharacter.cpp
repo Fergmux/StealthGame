@@ -15,6 +15,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerController.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Net/DataBunch.h"
 #include "Net/UnrealNetwork.h"
 #include "Server/Roster/StealthRosterStore.h"
 
@@ -138,6 +139,30 @@ bool AStealthCharacter::IsNetRelevantFor(const AActor* RealViewer, const AActor*
 	}
 #endif
 	return Super::IsNetRelevantFor(RealViewer, ViewTarget, SrcLocation);
+}
+
+void AStealthCharacter::OnActorChannelOpen(FInBunch& InBunch, UNetConnection* Connection)
+{
+	Super::OnActorChannelOpen(InBunch, Connection);
+#if !UE_BUILD_SHIPPING
+	// SPIKE (IVP S10 re-run): no-op unless the harness installs it.
+	if (const StealthSpikeHooks::FChannelOpenHook& Hook = StealthSpikeHooks::GetChannelOpenHook())
+	{
+		Hook(this, InBunch.ChIndex, InBunch.PacketId, Connection);
+	}
+#endif
+}
+
+void AStealthCharacter::PostNetInit()
+{
+	Super::PostNetInit();
+#if !UE_BUILD_SHIPPING
+	// SPIKE (IVP S10 re-run): no-op unless the harness installs it.
+	if (const StealthSpikeHooks::FPostNetInitHook& Hook = StealthSpikeHooks::GetPostNetInitHook())
+	{
+		Hook(this);
+	}
+#endif
 }
 
 bool AStealthCharacter::CanJumpInternal_Implementation() const

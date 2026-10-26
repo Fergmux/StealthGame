@@ -39,9 +39,25 @@ int32& UStealthSpikeActionStateComponent::CaptureBudget()
 	return Budget;
 }
 
+bool& UStealthSpikeActionStateComponent::ExternalApply()
+{
+	static bool bExternal = false;
+	return bExternal;
+}
+
+void UStealthSpikeActionStateComponent::ApplyPresentation(double EstimatedServerNow)
+{
+	RefreshPresentation(EstimatedServerNow, TEXT("apply"));
+}
+
 void UStealthSpikeActionStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	if (GetNetMode() == NM_Client && ExternalApply())
+	{
+		SetComponentTickEnabled(false);
+		return;
+	}
 	if (GetNetMode() == NM_Client)
 	{
 		const AGameStateBase* GameState = GetWorld()->GetGameState();
@@ -59,7 +75,7 @@ void UStealthSpikeActionStateComponent::EndPlay(const EEndPlayReason::Type EndPl
 {
 	// Client: the relevancy destroy of a culled subject. The render client captures the frame without it, so the
 	// retained sequence shows culled -> re-opened (f00, f01, f02, f05).
-	if (GetNetMode() == NM_Client && EndPlayReason == EEndPlayReason::Destroyed && CaptureBudget() > 0 && CaptureFrames().Num() > 0)
+	if (GetNetMode() == NM_Client && !ExternalApply() && EndPlayReason == EEndPlayReason::Destroyed && CaptureBudget() > 0 && CaptureFrames().Num() > 0)
 	{
 		const FString File = FPaths::Combine(StealthHarness::FRun::StringParam(TEXT("Out"), FPaths::ProjectSavedDir()), TEXT("frames"),
 			FString::Printf(TEXT("reopen_%s_%lld_gone.png"), *StealthHarness::FRun::Guid(GetWorld(), GetOwner()), (long long)GFrameCounter));

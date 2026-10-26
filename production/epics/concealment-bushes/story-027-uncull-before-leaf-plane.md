@@ -1,12 +1,12 @@
 # Story 027: On exit and bush-emerge the body is never drawn before the leaf crossing and the actor exists by then
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: spikes S9 and S10 (`production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md`, `story-005-spike-s10-reopen-behaviour-and-netguid.md`) and S12 (`story-006-spike-s12-cull-delay-vs-measured-l99.md`) have not reported; T_uncull and T_reopen are measured by them Update 2026-10-25: S12 reported (production/qa/spikes/2026-10-25_S12.md, 250/250 confirmed, measured L99 133.4 ms, T_reopen p99 ~20 ms); S10 (resolution 2026-10-25): the FAIL is resolved by ADR-0003 amendment "S10 resolution 2026-10-25" (re-open guard with bounded timeout and fresh channel, lost-pawn repair, warm-up, ADR-0002 clock budget); the S10 gate is now **Blocked: story-056 (S10 fix + re-run)** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); other gates unchanged.
+> **Status**: Ready — Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25). Other dependencies are ordinary story order (see Dependencies).
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 

@@ -1,12 +1,12 @@
 # Story 030: Informant return timing
 
 > **Epic**: Teammate Markers
-> **Status**: Blocked — BLOCKED: ADR-0003 spikes S9 and S10 have not reported (the marker leaves on the retiring C-TeamView update and the takeover pawn arrives through a re-opened channel), and ADR-0019's amendment requests to owning ADRs are outstanding (conditional acceptance); the npc-kill-penalty-informants epic has no stories yet. Update 2026-10-25 (S10 resolution): the S10 FAIL is resolved by ADR-0003 amendment "S10 resolution 2026-10-25" (re-open guard with bounded timeout and fresh channel, lost-pawn repair, warm-up, ADR-0002 clock budget); the S10 gate is now **Blocked: story-056 (S10 fix + re-run)** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); other gates unchanged.
+> **Status**: Blocked — BLOCKED: ADR-0019's amendment requests to owning ADRs are outstanding (conditional acceptance) and the npc-kill-penalty-informants epic has no stories yet. Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25).
 > **Layer**: Presentation
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 

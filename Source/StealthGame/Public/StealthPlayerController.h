@@ -145,6 +145,8 @@ public:
 	virtual void OnRep_Pawn() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	/** Server: forwards to a non-Shipping spike hook (THROWAWAY, IVP S10 re-run story-056, ADR-0003 S10-R4); otherwise the engine default (nothing). */
+	virtual void NotifyActorChannelFailure(UActorChannel* ActorChan) override;
 
 	/** Server -> owning client: show a HUD message. */
 	UFUNCTION(Client, Reliable)

@@ -18,6 +18,7 @@
 #include "Server/ActionHub.h"
 #include "Server/Core/CommandIngress.h"
 #include "StealthCharacter.h"
+#include "Server/Spikes/StealthSpikeHooks.h" // THROWAWAY SPIKE hook (IVP S10 re-run, story-056)
 #include "View/Input/PawnCommandClient.h"
 
 namespace
@@ -403,5 +404,17 @@ void AStealthPlayerController::StealthDebugCam(int32 Mode)
 		}
 	}
 	SetViewTarget(DebugCamera);
+#endif
+}
+
+void AStealthPlayerController::NotifyActorChannelFailure(UActorChannel* ActorChan)
+{
+	Super::NotifyActorChannelFailure(ActorChan);
+#if !UE_BUILD_SHIPPING
+	// SPIKE (IVP S10 re-run): queue-only hook, no-op unless the harness installs it.
+	if (const StealthSpikeHooks::FChannelFailureHook& Hook = StealthSpikeHooks::GetChannelFailureHook())
+	{
+		Hook(this, ActorChan);
+	}
 #endif
 }

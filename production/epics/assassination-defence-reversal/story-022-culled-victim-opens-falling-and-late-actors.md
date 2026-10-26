@@ -1,12 +1,12 @@
 # Story 022: A culled victim re-opens already falling, and late actors seek and never snap
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Blocked — BLOCKED: spike S10 (re-open creates a new client actor; NetGUID reuse and AnimBP initialisation from replicated state) has not reported. S10 is the Visibility Policy epic's `production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md` (needs S9, story 004, first); this epic's Build Order and Gates names S10 as conditioning ADR-0018. Unblock when that story reports, then re-run `/story-readiness`. Update 2026-10-25 (S10 resolution): the S10 FAIL is resolved by ADR-0003 amendment "S10 resolution 2026-10-25" (re-open guard with bounded timeout and fresh channel, lost-pawn repair, warm-up, ADR-0002 clock budget); the S10 gate is now **Blocked: story-056 (S10 fix + re-run)** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); other gates unchanged.
+> **Status**: Ready — Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25). Other dependencies are ordinary story order (see Dependencies).
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 

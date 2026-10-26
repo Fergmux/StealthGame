@@ -1,12 +1,12 @@
 # Story 033: Blind strikes at any bush look identical to the attacker and a killed-concealed body is never drawn on a non-owner client
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: spikes S9 (`production/epics/information-visibility-policy/story-004-spike-s9-cull-latency-and-explicit-channel-close.md`) and S10 (`production/epics/information-visibility-policy/story-005-spike-s10-reopen-behaviour-and-netguid.md`) have not reported; also needs the assassination-defence-reversal strike resolver (stories not yet written) Update 2026-10-25 (S10 resolution): the S10 FAIL is resolved by ADR-0003 amendment "S10 resolution 2026-10-25" (re-open guard with bounded timeout and fresh channel, lost-pawn repair, warm-up, ADR-0002 clock budget); the S10 gate is now **Blocked: story-056 (S10 fix + re-run)** (`production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md`); other gates unchanged.
+> **Status**: Blocked — BLOCKED: needs the assassination-defence-reversal strike resolver. Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25).
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 

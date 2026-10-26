@@ -2338,91 +2338,91 @@ stories:
     name: "SipHash-2-4 passes the published reference vectors"
     file: "production/epics/session-travel/story-005-siphash24-reference-vectors.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "network-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-006"
     name: "PCG32 integer stream reproduces the reference outputs"
     file: "production/epics/session-travel/story-006-pcg32-int-stream-reference-vectors.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "network-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-007"
     name: "UniformBelow, UniformInRange, WeightedPick and Fisher-Yates are unbiased and edge-safe"
     file: "production/epics/session-travel/story-007-ranged-draw-helpers-unbiased.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "network-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-008"
     name: "FSecretStream counter draws are independent of interleaved draws"
     file: "production/epics/session-travel/story-008-secret-stream-counter-independence.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "network-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-009"
     name: "OpenSession draws ServerSecret and MatchNonce from OS entropy and fails closed"
     file: "production/epics/session-travel/story-009-os-entropy-and-session-secret.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "network-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-010"
     name: "Round seed and sub-seed derivation match the F5 golden vectors"
     file: "production/epics/session-travel/story-010-seed-derivation-golden-vectors.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "network-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-011"
     name: "GetServerSubSeed is unreachable from clients and from generator scope"
     file: "production/epics/session-travel/story-011-server-sub-seed-server-only.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "network-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-012"
     name: "CI grep bans engine RNG APIs and the CityGenerator include rule is enforced"
     file: "production/epics/session-travel/story-012-forbidden-rng-ci-grep-and-include-lint.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "devops-engineer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-014"
     name: "Session lifecycle: OpenSession seeds the host, EndSession clears every store on every exit path"
     file: "production/epics/session-travel/story-014-session-service-lifecycle-and-empty-stores.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "network-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-015"
     name: "Illegal ConnectionState transitions assert and leave the state unchanged"
@@ -2488,11 +2488,11 @@ stories:
     name: "AStealthGameMode derives AGameModeBase with seamless travel and Session hook overrides"
     file: "production/epics/session-travel/story-023-game-mode-skeleton-agamemodebase.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "network-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-028"
     name: "The first failing admission gate decides the reason code"
@@ -2565,3 +2565,14 @@ stories:
     blocker: "UE half (route-A clips, UE import, same-scene comparison, AC-3 decision) deferred: engine in use by a parallel run"
     completed: ""
     sprint: 2
+  - id: "ivp-056"
+    name: "S10 fix, re-open guard, lost-pawn repair and warm-up implemented in the cull rig and S10 re-run to PASS"
+    file: "production/epics/information-visibility-policy/story-056-s10-fix-implementation-and-rerun.md"
+    priority: must-have
+    status: done
+    owner: "network-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "Added 2026-10-26 (created by the S10 resolution); PASS: production/qa/spikes/2026-10-26_S10-rerun.md; unblocked the S10 gate of 17 stories"
