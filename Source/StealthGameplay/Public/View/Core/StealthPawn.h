@@ -6,6 +6,7 @@
 #include "StealthPawn.generated.h"
 
 class UGameplayTasksComponent;
+class UPawnCommandComponent;
 class UStealthMotionWarpingComponent;
 class UStealthMovementComponent;
 
@@ -47,6 +48,12 @@ public:
 	static const FName MotionWarpingComponentName;
 
 	/**
+	 * The pawn command interface boundary (ADR-0011 section 1): exactly one non-replicated UPawnCommandComponent per
+	 * pawn, created here. Forward-declared only: this View header never includes the Server component header.
+	 */
+	UPawnCommandComponent* GetPawnCommand() const;
+
+	/**
 	 * Recalculates the base eye height only (ADR-0010 E2). Deliberately skips ACharacter::Restart and
 	 * APawn::Restart, which stop movement, consume pending input and reset the movement mode: a
 	 * possession change must not be visible in the body's motion.
@@ -75,6 +82,10 @@ public:
 	UStealthMotionWarpingComponent* GetMotionWarping() const { return SharedMotionWarping; }
 
 private:
+	/** Default subobject "PawnCommand" (ADR-0011): non-replicated, the same on every pawn. */
+	UPROPERTY(VisibleAnywhere, Category = "Stealth|Pawn")
+	TObjectPtr<UPawnCommandComponent> PawnCommand;
+
 	/** Default subobject: AAIController adopts it on possession instead of adding one (ADR-0010). */
 	UPROPERTY(VisibleAnywhere, Category = "Stealth|Pawn")
 	TObjectPtr<UGameplayTasksComponent> GameplayTasks;
@@ -87,4 +98,7 @@ private:
 	 */
 	UPROPERTY(VisibleAnywhere, Category = "Stealth|Pawn")
 	TObjectPtr<UStealthMotionWarpingComponent> SharedMotionWarping;
+
+	/** Restart has given this body its first movement mode (see Restart). */
+	bool bMovementModeInitialised = false;
 };

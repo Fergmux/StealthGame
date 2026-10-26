@@ -1,12 +1,12 @@
 # Story 006: AC 2 NoCallerIdentityParameter
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -69,13 +69,11 @@ Prototype: new code, no prototype counterpart (the prototype's `ServerAssassinat
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGameplay/Private/Tests/Input/NoCallerIdentityParameterTest.cpp` (class `FInputNoCallerIdentityParameterTest`, name `StealthGame.Input.NoCallerIdentityParameter`)
-- `Source/StealthGameplay/Private/Tests/Input/IdentityNameChecker.h` (shared reflection/name checker, shared with story 001)
-- `tools/ci/check-no-caller-identity.sh` (CI grep over `Public/Server/Core` and `Private/Core`)
+- `Source/StealthGameplay/Private/Tests/Input/NoCallerIdentityParameterTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Input/IdentityNameChecker.h`
+- `tools/ci/check-no-caller-identity.sh`
 
 ---
 
@@ -100,7 +98,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Input/NoCallerIdentityParameterTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.NoCallerIdentityParameter`, 2026-10-26)
 
 ---
 
@@ -108,3 +106,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-003-action-hub-and-predicate-registry.md`, `production/epics/input-interaction-framework/story-005-entry-point-set.md`
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (reflection of every entry-point parameter and payload struct finds no Controller/PlayerState/Team/IsAI/IsPlayer name or type; the CI grep through tools/ci/lint/gate.sh returns 0 hits over the command source; seeded negatives fail)
+**Deviations**: Pinned: case-insensitive substring match on names and types plus any AController/APlayerState-derived object class; comments are stripped by the grep (a doc comment is not a hit), generated headers excluded; scope = top-level files of StealthGameplay Public/Server/Core and Private/Core plus Public/Server/ActionHub.h, excluding StealthPawnFactory.h (ADR-0010 factory, binds through the Roster by design); the grep is extended with IsBotControlled and Roster binding queries (FRosterCore, URosterStore, Server/Roster/ includes). FCommandPayload is not reflected: its fields are mirrored and a size check (80 bytes) is the tripwire. Native hub delegates are checked by static_assert.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Input/NoCallerIdentityParameterTest.cpp`, `tools/ci/check-no-caller-identity.sh`; full suite in `production/qa/evidence/iif-command-path-2026-10-26/full-suite.txt`
+Run result: N/A — a static/reflection check
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

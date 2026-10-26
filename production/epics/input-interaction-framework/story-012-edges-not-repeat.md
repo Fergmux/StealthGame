@@ -1,12 +1,12 @@
 # Story 012: AC 4 EdgesNotRepeat
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -68,13 +68,11 @@ The `UPawnCommandClient` shell and the transport arrive via story 094. GDD rules
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGame/Public/PawnCommandClient.h`
-- `Source/StealthGame/Private/PawnCommandClient.cpp` (edge handling: Started to Begin, Completed/Canceled to End)
-- `Source/StealthGameplay/Private/Tests/Input/EdgesNotRepeatTest.cpp` (class `FInputEdgesNotRepeatTest`, name `StealthGame.Input.EdgesNotRepeat`)
+- `Source/StealthGameplay/Public/View/Input/PawnCommandClient.h`
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthGameplay/Private/Tests/Input/EdgesNotRepeatTest.cpp`
 
 ---
 
@@ -99,7 +97,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Input/EdgesNotRepeatTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.EdgesNotRepeat`, 2026-10-26)
 
 ---
 
@@ -107,3 +105,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md`, `production/epics/input-interaction-framework/story-094-controller-transport-skeleton.md`
 - Unlocks: `production/epics/input-interaction-framework/story-013-flush-sends-end.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (held actions bind exactly Started/Completed/Canceled and instant ones exactly Started on a real UEnhancedInputComponent; a key held 2 s at 30, 60 and 144 Hz with OS repeats sends one Begin and one End (held) or one command (instant); Seq strictly increasing; a terminal edge after an End is swallowed)
+**Deviations**: None beyond the pinned qa-lead rewrite (kinds, rates, release behaviour).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Input/EdgesNotRepeatTest.cpp`
+Run result: N/A — edge counting on the command stream; observed in play through story iif-094 (one seq per press)
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

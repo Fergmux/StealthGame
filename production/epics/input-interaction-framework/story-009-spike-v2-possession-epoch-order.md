@@ -1,12 +1,12 @@
 # Story 009: Spike V2 reports ClientSetPossessionEpoch always precedes ClientRestart
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -66,12 +66,12 @@ Prototype: new code, no prototype counterpart (the prototype `StealthPlayerContr
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `production/qa/spikes/V2-possession-epoch-order-report.md` (the report; final dated name chosen at write time)
-- `Source/StealthTestHarness/Private/SpikeV2PossessionEpochOrderTest.cpp` (throwaway probe harness; not a gate test)
+- `production/qa/spikes/2026-10-26_V2-possession-epoch-order-report.md`
+- `Source/StealthTestHarness/Private/Tests/Spikes/SpikeV2PossessionEpochOrderTest.cpp`
+- `Source/StealthGame/Public/StealthPlayerController.h`
+- `Source/StealthGame/Private/StealthPlayerController.cpp`
 
 ---
 
@@ -97,7 +97,7 @@ checks scope against it.*
 **Required evidence**:
 - Integration: the spike report `production/qa/spikes/V2-possession-epoch-order-report.md` (a documented result, retained) OR the probe harness test `Source/StealthTestHarness/Private/SpikeV2PossessionEpochOrderTest.cpp`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Spike report written (`production/qa/spikes/2026-10-26_V2-possession-epoch-order-report.md`; harness `StealthSpike.Input.PIE.SpikeV2PossessionEpochOrder`, not a gate test)
 
 ---
 
@@ -105,3 +105,13 @@ checks scope against it.*
 
 - Depends on: None (cross-epic: shared-character-locomotion and round-match-framework for the factory, controller and possession path, stories not yet written; tuning-data-config StealthTestHarness module)
 - Unlocks: `production/epics/input-interaction-framework/story-071-context-swap-on-state-and-possession.md`, `production/epics/input-interaction-framework/story-091-hand-over-window-test.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 — the report records per path the owner-side order of ClientSetPossessionEpoch(N) receipt and ClientRestart, OwnerPossessionEpoch at ClientRestart and the server epoch at OnPossess, without and with PktLag 50 ms per direction + 1 % loss, and states PASS per path and overall: takeover, same-pawn re-possession after an Unresponsive hand-over, ClientRetryClientRestart and takeover of a culled pawn 20/20 each in both profiles, first possession of a fresh controller 1/1; no inversion in 161 runs
+**Deviations**: ADVISORY — direct UnPossess/Possess calls stand in for Round R17.1 and the ADR-0010 hand-over pass (the story allows it; FScopedPossessionParity does not exist). ADVISORY — the mid-round rejoin path was NOT EXERCISED (the rejoined controller gets no pawn until Round R17/Session rejoin adoption exist) and the engine's null-pawn branch was NOT PROVOKED in single-process PIE (ClientRestart resolved the culled pawn in every run); both are open items for the multi-process harness, recorded in the report. The harness adds a development-only possession trace to AStealthPlayerController (bounded at 4,096 entries).
+**Test Evidence**: `production/qa/spikes/2026-10-26_V2-possession-epoch-order-report.md`; `production/qa/evidence/story-009-spike-v2-possession-epoch-order/` (v2-results.json, run-log-excerpt.txt)
+Run result: N/A — a measurement of RPC ordering; the counts in the report are the observation, nothing is drawn
+**Reviewed by**: self, no independent review (unattended run; harness code covered by the batch's lead-programmer review)

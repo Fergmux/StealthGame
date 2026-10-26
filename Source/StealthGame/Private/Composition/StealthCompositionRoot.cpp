@@ -1,5 +1,8 @@
 #include "Server/StealthCompositionRoot.h"
 
+#include "Server/ActionHub.h"
+#include "StealthPrototypeCommandQueue.h"
+
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
@@ -209,6 +212,8 @@ void UStealthCompositionRoot::Initialize(FSubsystemCollectionBase& Collection)
 
 void UStealthCompositionRoot::Deinitialize()
 {
+	CommandQueue.Reset();
+	CommandClock.Reset();
 	if (URosterStore* Roster = GetRosterStore())
 	{
 		Roster->OnRosterEvent.Remove(RosterEventHandle);
@@ -277,6 +282,21 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 	if (UStealthPawnFactory* Factory = UStealthPawnFactory::Get(InGameMode->GetWorld()))
 	{
 		Factory->SetHooks(Adapters, this);
+	}
+
+	// The pawn command interface (ADR-0011; D53): every pawn's FPawnCommandCore binds these seams at BeginPlay. The
+	// queue is the prototype adapter until ADR-0002's queue facade lands (StealthPrototypeCommandQueue.h).
+	if (UActionHub* Hub = UActionHub::Get(InGameMode->GetWorld()))
+	{
+		CommandClock = MakeShared<FStealthWorldCommandClock>(InGameMode->GetWorld());
+		CommandQueue = MakeShared<FStealthPrototypeCommandQueue>(InGameMode);
+		// Deps.Epoch stays null until the Round queue facade supplies its IQueueEpochSource (the prototype queue resolves
+		// immediately and never compares epochs); the real queue wiring must set it.
+		FPawnCommandCoreDeps Deps;
+		Deps.Clock = CommandClock.Get();
+		Deps.Queue = CommandQueue.Get();
+		Deps.FaultSink = &CommandFaults;
+		Hub->SetCommandWiring(Deps);
 	}
 }
 

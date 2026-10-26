@@ -1,12 +1,12 @@
 # Story 014: AC 29 CameraToggleLocal
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -69,12 +69,12 @@ Prototype: the prototype's `V` camera toggle (first-playable controls) lives in 
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGame/Private/PawnCommandClient.cpp` (camera toggle forwarded locally only; bound via `AStealthPlayerController`)
-- `Source/StealthGameplay/Private/Tests/Input/CameraToggleLocalTest.cpp` (class `FInputCameraToggleLocalTest`, name `StealthGame.Input.CameraToggleLocal`)
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthGame/Public/StealthSettings.h`
+- `Source/StealthGame/Private/StealthPlayerController.cpp`
+- `Source/StealthGameplay/Private/Tests/Input/CameraToggleLocalTest.cpp`
 
 ---
 
@@ -99,7 +99,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Input/CameraToggleLocalTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.CameraToggleLocal`, 2026-10-26)
 
 ---
 
@@ -107,3 +107,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md`; cross-epic: camera-system (stories not yet written; toggle and lockout owner, stub used until it lands)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (with a hold active, V toggles without any command and the hold continues; 1.0 accepted, 1.299 ignored, 1.30 accepted; ignored presses do not extend the lockout; a 0.60 lockout behaves the same; the hold still ends once)
+**Deviations**: CameraToggleLockoutSec is read from UStealthSettings (DefaultGame.ini, 0.30) until the IIF tuning keys are registered with the TDC schema. The accepted toggle drives the prototype first/third-person switch through an adapter (Camera epic owns the effect). A toggle while a menu is open is the Camera epic's decision.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Input/CameraToggleLocalTest.cpp`; PIE: `StealthGame.Input.PIE.DefaultBindings` (V and Y toggle locally with 0 server commands)
+Run result: N/A — the toggle's local effect is the prototype camera (unchanged); 0 commands are asserted in DefaultBindings
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

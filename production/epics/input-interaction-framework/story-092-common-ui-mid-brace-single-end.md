@@ -1,12 +1,12 @@
 # Story 092: Common UI mid-brace single End
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Blocked — BLOCKED: spike V5 (story 011) has not reported
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -71,8 +71,10 @@ ADR-derived story (no numbered GDD acceptance criterion): the criterion is the A
 
 ## Files
 
-- `Source/StealthGame/` (root module) — `UPawnCommandClient` router subscription and idempotent End bookkeeping (planned; the shell is story 094)
-- `Source/StealthTestHarness/Private/CommonUiMidBraceSingleEndTest.cpp` — CQTest `NETWORK_TEST_CLASS(CommonUiMidBraceSingleEnd, "StealthGame.Input.PIE")`, full name `StealthGame.Input.PIE.CommonUiMidBraceSingleEnd.<Method>` (proposed name; planned)
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
+
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthTestHarness/Private/Tests/Input/CommonUiMidBraceSingleEndTest.cpp`
 
 ---
 
@@ -98,7 +100,7 @@ ADR-derived story (no numbered GDD acceptance criterion): the criterion is the A
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/CommonUiMidBraceSingleEndTest.cpp` (CQTest `StealthGame.Input.PIE.CommonUiMidBraceSingleEnd`) must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.PIE.CommonUiMidBraceSingleEnd.MenuOpenSendsExactlyOneSynchronousEnd`, 2026-10-26)
 
 ---
 
@@ -106,3 +108,13 @@ ADR-derived story (no numbered GDD acceptance criterion): the criterion is the A
 
 - Depends on: `production/epics/input-interaction-framework/story-013-flush-sends-end.md`, `production/epics/input-interaction-framework/story-011-spike-v5-commonui-menu-end.md`; cross-epic: hud (stories not yet written; `UStealthMenuStack`, menu root, `IMC_Menu`)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (5 runs: brace reached the server; the menu's mode change sends exactly one End inside the SetActiveUIInputConfig call, in the callback frame, before the router's next-tick FlushPressedKeys; the server sees exactly one PrepareEnd; the later release sends no second End)
+**Deviations**: The menu push is the router's SetActiveUIInputConfig (spike V5); ADR-0021's UStealthMenuStack (first line, EndAllOutstanding before the push) belongs to the HUD epic. Was Blocked on V5: reported PASS.
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/Input/CommonUiMidBraceSingleEndTest.cpp`
+Run result: N/A — call-stack and frame ordering; no menu UI exists yet to show
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

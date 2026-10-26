@@ -1,12 +1,12 @@
 # Story 003: UActionHub registers predicates weakly and fires native events only
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -71,14 +71,13 @@ GDD rules: R11 (generic action events, line 167), R9 (slot and priority, line 15
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGameplay/Public/Server/Core/CommandPredicate.h` (`ICommandPredicate`, `FPredicateResult`, `EPredicateVerdict`)
+- `Source/StealthGameplay/Public/Server/Core/CommandPredicate.h`
 - `Source/StealthGameplay/Public/Server/ActionHub.h`
 - `Source/StealthGameplay/Private/Core/ActionHub.cpp`
-- `Source/StealthGameplay/Private/Tests/Input/ActionHubPredicateRegistryTest.cpp` (class `FInputActionHubPredicateRegistryTest`, name `StealthGame.Input.ActionHubPredicateRegistry`)
+- `Source/StealthTestHarness/Private/Input/StubDoubles.h`
+- `Source/StealthTestHarness/Private/Tests/Input/ActionHubPredicateRegistryTest.cpp`
 
 ---
 
@@ -109,7 +108,7 @@ checks scope against it.*
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Input/ActionHubPredicateRegistryTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.ActionHubPredicateRegistry`, 2026-10-26)
 
 ---
 
@@ -117,3 +116,13 @@ checks scope against it.*
 
 - Depends on: `production/epics/input-interaction-framework/story-001-command-reply-types.md`; cross-epic: tuning-data-config (stories not yet written; module skeleton); cross-epic: assassination, objectives, concealment predicate owners (stories not yet written; stub predicates only here)
 - Unlocks: `production/epics/input-interaction-framework/story-006-no-caller-identity-parameter.md`, `production/epics/input-interaction-framework/story-027-stage-two-at-resolution.md`, `production/epics/input-interaction-framework/story-039-interact-cancel-matrix.md`, `production/epics/input-interaction-framework/story-054-concealment-hears-attack.md`, `production/epics/input-interaction-framework/story-065-no-look-event.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (each registered verdict returned; missing and stale predicates resolve Reject(NotNow) with one CommandNoPredicate fault and no crash; NotBlueprintType/NotBlueprintable, zero reflected delegate or BlueprintAssignable properties; the three native event signatures are static_asserts)
+**Deviations**: The test lives in the harness (Source/StealthTestHarness/Private/Tests/Input/) instead of StealthGameplay/Private/Tests: the stub predicate must be a UObject for the weak registration to go stale, and test UObjects belong to the Shipping-excluded harness. Pinned: re-registering replaces; registering null is refused with a fault and keeps the current registration. The hub also carries the composition root's command wiring (FPawnCommandCoreDeps) and the reply-sink table (stories iif-004/094).
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/Input/ActionHubPredicateRegistryTest.cpp`; full suite in `production/qa/evidence/iif-command-path-2026-10-26/full-suite.txt`
+Run result: N/A — server-only registry with no feature predicate registered yet (assassination, objectives and concealment epics own them); nothing observable
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

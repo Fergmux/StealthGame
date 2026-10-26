@@ -1,12 +1,12 @@
 # Story 016: AC 31 (MVP clause only; the VS deferred gate ToggleStreamParity is out of scope)
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -67,11 +67,9 @@ The prototype has no toggle setting. Tuning keys: none (hold/toggle preference i
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGameplay/Private/Tests/Input/NoToggleSettingMvpTest.cpp` (class `FInputNoToggleSettingMvpTest`, name `StealthGame.Input.NoToggleSettingMvp`)
+- `Source/StealthGameplay/Private/Tests/Input/NoToggleSettingMvpTest.cpp`
 
 ---
 
@@ -96,7 +94,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Input/NoToggleSettingMvpTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.NoToggleSettingMvp`, 2026-10-26)
 
 ---
 
@@ -104,3 +102,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md`
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (no project UDeveloperSettings/UGameUserSettings property, UEnhancedInputUserSettings property, builder property or Stealth* console variable names a hold/toggle term with Prepare, Interact or Run; seeded names fail; a second press while held is not an End)
+**Deviations**: None beyond the pinned search surface.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Input/NoToggleSettingMvpTest.cpp`
+Run result: N/A — an absence check
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

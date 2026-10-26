@@ -1,12 +1,12 @@
 # Story 010: Spike V3 reports server NetGUID resolution of a culled pawn
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -68,12 +68,11 @@ Prototype: new code, no prototype counterpart (the prototype's `ServerAssassinat
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `production/qa/spikes/V3-netguid-server-resolution-report.md` (the report; final dated name chosen at write time)
-- `Source/StealthTestHarness/Private/SpikeV3NetGuidServerResolutionTest.cpp` (throwaway probe harness; not a gate test)
+- `production/qa/spikes/2026-10-26_V3-netguid-server-resolution-report.md`
+- `Source/StealthTestHarness/Private/Tests/Spikes/SpikeV3NetGuidServerResolutionTest.cpp`
+- `Source/StealthGameplay/Private/Core/CommandIngress.cpp`
 
 ---
 
@@ -99,7 +98,7 @@ checks scope against it.*
 **Required evidence**:
 - Integration: the spike report `production/qa/spikes/V3-netguid-server-resolution-report.md` (a documented result, retained) OR the probe harness test `Source/StealthTestHarness/Private/SpikeV3NetGuidServerResolutionTest.cpp`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Spike report written (`production/qa/spikes/2026-10-26_V3-netguid-server-resolution-report.md`; harness `StealthSpike.Input.PIE.SpikeV3NetGuidServerResolution`, not a gate test)
 
 ---
 
@@ -107,3 +106,13 @@ checks scope against it.*
 
 - Depends on: None (cross-epic: shared-character-locomotion pawn and information-visibility-policy cull mechanism, stories not yet written; tuning-data-config StealthTestHarness module)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 — the report records the resolved object or null for cases (a) to (e): raw engine call FAIL on (d) (a destroyed actor still resolves until GC) and (e1) (the default GUID makes the engine ensure); the ingress resolver ResolvePawnRefGuid, with the two guards this spike added, matches all five (a, b pawn; c, d, e null; no log above Warning): PASS
+**Deviations**: Design change found by the spike (both in ResolvePawnRefGuid): the default GUID is refused before the cache is asked, and an invalid or being-destroyed actor resolves as absent. Culling used the IVP S9 relevancy hook (ADR-0003's cull does not exist yet); the harness waits for the actor channel to close.
+**Test Evidence**: `production/qa/spikes/2026-10-26_V3-netguid-server-resolution-report.md`; `production/qa/evidence/story-010-spike-v3-netguid-server-resolution/` (v3-results.json, run-log-excerpt.txt)
+Run result: N/A — server-side GUID resolution; nothing is drawn
+**Reviewed by**: self, no independent review (unattended run)

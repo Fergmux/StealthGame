@@ -1,12 +1,12 @@
 # Story 019: D37: the sample's Ctrl jog toggle is removed; Ctrl only drives walk-slower
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -70,13 +70,11 @@ Prototype: the prototype note "Shift (Ctrl toggles jog)" is the sample control, 
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGame/Private/StealthPlayerController.cpp` (do not add the sample's conflicting mapping context; `IMC_Common` is the only owner of LeftControl)
-- `Source/StealthTestHarness/Private/NoSampleCtrlToggleTest.cpp` (CQTest `NETWORK_TEST_CLASS(NoSampleCtrlToggle, "StealthGame.Input.PIE")`, full name `StealthGame.Input.PIE.NoSampleCtrlToggle.<Method>`)
-- No sample `.uasset` is edited or resaved by this story.
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthGameEditor/Private/Input/InputAssetSpec.h`
+- `Source/StealthTestHarness/Private/Tests/Input/NoSampleCtrlToggleTest.cpp`
 
 ---
 
@@ -101,7 +99,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/NoSampleCtrlToggleTest.cpp` — PIE test, or a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.PIE.NoSampleCtrlToggle.CtrlTapLeavesGaitAndSpeedAndCtrlHoldGivesTheSlowPace`, 2026-10-26)
 
 ---
 
@@ -109,3 +107,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-017-walk-slower-scaling.md`; cross-epic: shared-character-locomotion (stories not yet written; reparented character and ADR-0010 migration)
 - Unlocks: `production/epics/input-interaction-framework/story-093-static-scan-and-prototype-retirement.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (W held, Left Ctrl tapped: the sample's Gait property and the speed are unchanged (200.0 before and after); Ctrl held with W gives the 0.8 pace (160.0 / 200.0); the applied mappings give LeftControl to IA_WalkSlower and not to the sample's IA_Walk, which keeps only Gamepad_RightShoulder)
+**Deviations**: Mechanism: IMC_Common sits above the sample's IMC_Sandbox and IA_WalkSlower consumes LeftControl, so the jog toggle never receives it; no sample asset is edited or resaved. The sample's gait variable is 'Gait' (E_Gait) on CBP_SandboxCharacter (read-only inspection of the asset's name table). The 112 cm/s value needs SCL's 140 cm/s walk speed (SCL-010); the 0.8 pace is asserted as the ratio.
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/Input/NoSampleCtrlToggleTest.cpp`; in play `production/qa/evidence/story-094-controller-transport-skeleton/02-client1-walking-ctrl-walk-slower.png`
+Run result: OBSERVED — client 1 walks at pace 0.80 with Ctrl held, no jog toggle (production/qa/evidence/story-094-controller-transport-skeleton/02)
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/input-interaction-framework.md
 > **Architecture Module**: Pawn Command Interface (IIF) in `StealthGameplay/Core` (`UPawnCommandComponent`, action hub, Enhanced Input contexts)
 > **Status**: Ready
-> **Stories**: 95 stories written (91 Ready, 4 Blocked), see the Stories table below
+> **Stories**: 95 stories written; 23 Complete (007, 008 and the 21 of batch 13 on 2026-10-26), 1 Blocked (091), the rest Ready; see the Stories table below
 > **Engine Risk**: HIGH (highest among governing ADRs; engine 5.8, installed 5.8.4)
 > **Control Manifest**: 2026-10-25e
 > **Build Order**: 5 of 19 (layer order; the risk-first sequence is in the Build Order and Gates section)
@@ -65,25 +65,25 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | Command and reply types match the ADR key interfaces | Logic | Ready | ADR-0011 |
-| 002 | FPawnCommandCore runs headless with an injected clock and stub queue | Logic | Ready | ADR-0011 |
-| 003 | UActionHub registers predicates weakly and fires native events only | Logic | Ready | ADR-0011 |
-| 004 | One batched ClientCommandReplies per connection per drain, null sink discards | Integration | Ready | ADR-0011 |
-| 005 | AC 1 EntryPointSet | Logic | Ready | ADR-0011 |
-| 006 | AC 2 NoCallerIdentityParameter | Logic | Ready | ADR-0011 |
-| 007 | IA_* actions and IMC contexts exist and the trigger lint passes | Config/Data | Ready | ADR-0011 |
-| 008 | Spike V1 reports Enhanced Input edge behaviour on this project's contexts | Integration | Ready | ADR-0011 |
-| 009 | Spike V2 reports ClientSetPossessionEpoch always precedes ClientRestart | Integration | Ready | ADR-0011 |
-| 010 | Spike V3 reports server NetGUID resolution of a culled pawn | Integration | Ready | ADR-0011 |
-| 011 | Spike V5 reports Common UI Menu-mode switch yields a synchronous End | Integration | Ready | ADR-0011 |
-| 012 | AC 4 EdgesNotRepeat | Logic | Ready | ADR-0011 |
-| 013 | AC 5 FlushSendsEnd | Integration | Blocked | ADR-0011 |
-| 014 | AC 29 CameraToggleLocal | Logic | Ready | ADR-0011 |
-| 015 | AC 30 DefaultBindings | Integration | Ready | ADR-0011 |
-| 016 | AC 31 (MVP clause only; the VS deferred gate ToggleStreamParity is out of scope) | Logic | Ready | ADR-0011 |
-| 017 | AC 76, client scaling clause: IA_WalkSlower scales keyboard Move to 0.8 / 0.9 / 0.8 / 1.0 | Logic | Ready | ADR-0011 |
-| 018 | AC 76 WalkSlowerModifier, server-side clause: received magnitude, SCL pace, accel/brake, only ServerMove | Integration | Ready | ADR-0011 |
-| 019 | D37: the sample's Ctrl jog toggle is removed; Ctrl only drives walk-slower | Integration | Ready | ADR-0011 |
+| 001 | Command and reply types match the ADR key interfaces | Logic | Complete | ADR-0011 |
+| 002 | FPawnCommandCore runs headless with an injected clock and stub queue | Logic | Complete | ADR-0011 |
+| 003 | UActionHub registers predicates weakly and fires native events only | Logic | Complete | ADR-0011 |
+| 004 | One batched ClientCommandReplies per connection per drain, null sink discards | Integration | Complete | ADR-0011 |
+| 005 | AC 1 EntryPointSet | Logic | Complete | ADR-0011 |
+| 006 | AC 2 NoCallerIdentityParameter | Logic | Complete | ADR-0011 |
+| 007 | IA_* actions and IMC contexts exist and the trigger lint passes | Config/Data | Complete | ADR-0011 |
+| 008 | Spike V1 reports Enhanced Input edge behaviour on this project's contexts | Integration | Complete | ADR-0011 |
+| 009 | Spike V2 reports ClientSetPossessionEpoch always precedes ClientRestart | Integration | Complete | ADR-0011 |
+| 010 | Spike V3 reports server NetGUID resolution of a culled pawn | Integration | Complete | ADR-0011 |
+| 011 | Spike V5 reports Common UI Menu-mode switch yields a synchronous End | Integration | Complete | ADR-0011 |
+| 012 | AC 4 EdgesNotRepeat | Logic | Complete | ADR-0011 |
+| 013 | AC 5 FlushSendsEnd | Integration | Complete | ADR-0011 |
+| 014 | AC 29 CameraToggleLocal | Logic | Complete | ADR-0011 |
+| 015 | AC 30 DefaultBindings | Integration | Complete | ADR-0011 |
+| 016 | AC 31 (MVP clause only; the VS deferred gate ToggleStreamParity is out of scope) | Logic | Complete | ADR-0011 |
+| 017 | AC 76, client scaling clause: IA_WalkSlower scales keyboard Move to 0.8 / 0.9 / 0.8 / 1.0 | Logic | Complete | ADR-0011 |
+| 018 | AC 76 WalkSlowerModifier, server-side clause: received magnitude, SCL pace, accel/brake, only ServerMove | Integration | Complete | ADR-0011 |
+| 019 | D37: the sample's Ctrl jog toggle is removed; Ctrl only drives walk-slower | Integration | Complete | ADR-0011 |
 | 020 | AC 6 IngressClampAndDrop | Logic | Ready | ADR-0011 |
 | 021 | AC 7 IngressNeverDropsMatchedEnd | Logic | Ready | ADR-0011 |
 | 022 | AC 59 TransportBucketAndAbuseLog | Logic | Ready | ADR-0011 |
@@ -135,7 +135,7 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 | 068 | AC 27 NoOwnerDataOnPawn | Logic | Ready | ADR-0003 |
 | 069 | AC 56 ForceNetUpdateOnWrite | Logic | Ready | ADR-0003 |
 | 070 | AC 24 ReleaseBaselineStop | Integration | Ready | ADR-0010 |
-| 071 | AC 55 ContextSwapOnStateAndPossession | Integration | Blocked | ADR-0011 |
+| 071 | AC 55 ContextSwapOnStateAndPossession | Integration | Complete | ADR-0011 |
 | 072 | AC 28 InformantPlate | UI | Ready | ADR-0011 |
 | 073 | AC 49 StrikeHintParity | UI | Ready | ADR-0021 |
 | 074 | AC 65 BraceProtectedOnlyOnConfirm | UI | Ready | ADR-0021 |
@@ -156,10 +156,10 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 | 089 | AC 75 KnobRegistryConformance | Logic | Ready | ADR-0011 |
 | 090 | AC 50 TellMatrixRows | Integration | Ready | ADR-0011 |
 | 091 | Hand-over window test | Integration | Blocked | ADR-0011 |
-| 092 | Common UI mid-brace single End | Integration | Blocked | ADR-0011 |
+| 092 | Common UI mid-brace single End | Integration | Complete | ADR-0011 |
 | 093 | Static scan and prototype retirement | Logic | Ready | ADR-0011 |
-| 094 | AStealthPlayerController carries the command transport and the client builder shell | Integration | Ready | ADR-0011 |
-| 095 | Server command log, outgoing-RPC spy and shared stub doubles exist in the test harness | Integration | Ready | ADR-0011 |
+| 094 | AStealthPlayerController carries the command transport and the client builder shell | Integration | Complete | ADR-0011 |
+| 095 | Server command log, outgoing-RPC spy and shared stub doubles exist in the test harness | Integration | Complete | ADR-0011 |
 
 ## Definition of Done
 

@@ -204,6 +204,14 @@ bool FLocomotionPawnClassDefaultsTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("PawnClientRestart keeps Velocity"), Movement->Velocity, RestartVelocity);
 	TestTrue(TEXT("PawnClientRestart keeps MOVE_Walking"), Movement->MovementMode == MOVE_Walking);
 
+	// Restart gives a body its default mode only the first time (a fresh, never-moved body; covered in play by the
+	// StealthGame.Input.PIE walk tests): a body disabled after that (MOVE_None on death) stays disabled on re-possession.
+	Movement->SetMovementMode(MOVE_None);
+	PlayerBody->Restart();
+	TestTrue(TEXT("Restart does not re-enable a body disabled after its first possession"), Movement->MovementMode == MOVE_None);
+	Movement->SetMovementMode(MOVE_Walking);
+	Movement->Velocity = RestartVelocity;
+
 	// Control: the engine path this override replaces does zero the velocity.
 	Movement->StopMovementImmediately();
 	TestEqual(TEXT("Control: StopMovementImmediately (what ACharacter::PawnClientRestart calls) zeroes velocity"), Movement->Velocity, FVector::ZeroVector);
@@ -224,7 +232,13 @@ bool FLocomotionPawnClassDefaultsTest::RunTest(const FString& Parameters)
 		}
 		TestFalse(TEXT("No Super::Restart call"), Source.Contains(TEXT("Super::Restart")));
 		TestFalse(TEXT("No ACharacter::Restart / ACharacter::PawnClientRestart call"), Source.Contains(TEXT("ACharacter::Restart")) || Source.Contains(TEXT("ACharacter::PawnClientRestart")));
-		TestFalse(TEXT("No SetDefaultMovementMode call"), Source.Contains(TEXT("SetDefaultMovementMode(")));
+		// D53 integration fix (story iif-094): one SetDefaultMovementMode, only for a body that has no movement mode yet.
+		int32 DefaultModeCalls = 0;
+		for (int32 At = Source.Find(TEXT("SetDefaultMovementMode(")); At != INDEX_NONE; At = Source.Find(TEXT("SetDefaultMovementMode("), ESearchCase::CaseSensitive, ESearchDir::FromStart, At + 1))
+		{
+			++DefaultModeCalls;
+		}
+		TestTrue(TEXT("SetDefaultMovementMode is called once, behind the MOVE_None first-possession guard"), DefaultModeCalls == 1 && Source.Contains(TEXT("MovementMode == MOVE_None")) && Source.Contains(TEXT("bMovementModeInitialised")));
 		TestFalse(TEXT("DispatchRestart/NotifyRestarted are not overridden (ReceiveRestarted still fires)"), Source.Contains(TEXT("::NotifyRestarted")) || Source.Contains(TEXT("::DispatchRestart")));
 	}
 

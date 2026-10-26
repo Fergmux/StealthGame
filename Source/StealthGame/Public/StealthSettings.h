@@ -160,5 +160,12 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Communication", meta = (ClampMin = "0"))
 	float PingCooldown = 1.5f;
 
+	/**
+	 * Client-local camera toggle lockout, seconds (IIF CameraToggleLockoutSec, default 0.30, hard 0-1, safe 0.25-0.5;
+	 * story iif-014). Read here until the IIF tuning keys are registered with the TDC schema.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Input", meta = (ClampMin = "0", ClampMax = "1"))
+	float CameraToggleLockoutSec = 0.30f;
+
 	virtual FName GetCategoryName() const override { return TEXT("Game"); }
 };

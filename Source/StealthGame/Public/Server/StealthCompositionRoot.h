@@ -3,6 +3,7 @@
 #include "StealthServerOnlyGuard.h"
 
 #include "CoreMinimal.h"
+#include "Server/StealthLogFaultSink.h"
 #include "Server/Core/Round/StealthCrowdControl.h"
 #include "Server/Core/Round/StealthRoundGateways.h"
 #include "Server/Core/StealthPawnFactory.h"
@@ -142,6 +143,11 @@ private:
 
 	TWeakObjectPtr<AStealthGameMode> GameMode;
 	TMap<TWeakObjectPtr<APlayerController>, FParticipantId> ParticipantByController;
+
+	/** D53 command-path adapters for the current server world (StealthPrototypeCommandQueue.h). */
+	TSharedPtr<class FStealthWorldCommandClock> CommandClock;
+	TSharedPtr<class FStealthPrototypeCommandQueue> CommandQueue;
+	FStealthLogFaultSink CommandFaults;
 	FDelegateHandle RosterEventHandle;
 	bool bGatewaysRegistered = false;
 };

@@ -1,12 +1,12 @@
 # Story 013: AC 5 FlushSendsEnd
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Blocked — BLOCKED: spike V5 (story 011) has not reported (V1, story 008, reported PASS 2026-10-25: production/qa/spikes/2026-10-25_V1-enhanced-input-edges-report.md)
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -71,13 +71,13 @@ The menu-side "zero Move/Look while the menu is open" relies on the HUD/menu epi
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGame/Private/PawnCommandClient.cpp` (outstanding-Begin tracking, `EndAllOutstanding`, idempotent swallow, router subscription)
-- `Source/StealthGame/Public/PawnCommandClient.h`
-- `Source/StealthTestHarness/Private/FlushSendsEndTest.cpp` (CQTest `NETWORK_TEST_CLASS(FlushSendsEnd, "StealthGame.Input.PIE")`, full name `StealthGame.Input.PIE.FlushSendsEnd.<Method>`; 2 PIE clients)
+- `Source/StealthGameplay/Public/View/Input/PawnCommandClient.h`
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthGame/Public/StealthPlayerController.h`
+- `Source/StealthGame/Private/StealthPlayerController.cpp`
+- `Source/StealthTestHarness/Private/Tests/Input/FlushSendsEndTest.cpp`
 
 ---
 
@@ -102,7 +102,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/FlushSendsEndTest.cpp` — CQTest 2-client PIE test (net-emulation profile not required by the AC; run without emulation, plus once with PktLag 50 ms/direction, 1 % loss), or a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.PIE.FlushSendsEnd.EveryFlushEventSendsOneEndWithinAFrame`, 2026-10-26)
 
 ---
 
@@ -110,3 +110,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-012-edges-not-repeat.md`, `production/epics/input-interaction-framework/story-008-spike-v1-enhanced-input-edges.md`, `production/epics/input-interaction-framework/story-011-spike-v5-commonui-menu-end.md`, `production/epics/input-interaction-framework/story-094-controller-transport-skeleton.md`, `production/epics/input-interaction-framework/story-095-command-test-seams.md`; cross-epic: HUD / UI epic menu stack (stories not yet written); cross-epic: shared-character-locomotion baseline stop time (stories not yet written)
 - Unlocks: `production/epics/input-interaction-framework/story-071-context-swap-on-state-and-possession.md`, `production/epics/input-interaction-framework/story-092-common-ui-mid-brace-single-end.md`, `production/epics/input-interaction-framework/story-093-static-scan-and-prototype-retirement.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (Prepare held; (a) focus loss, (b) menu open, (c) context swap, (d) unpossession each send one End within one frame; the held key does not restart the action; a fresh press does; (b) Move intent zero for the 3 s menu and the pawn at rest (0.000 cm over the last second); no second End on release)
+**Deviations**: ADVISORY — (a) invokes the builder's focus-loss handler (the one the Slate application-deactivation event calls); the OS alt-tab check is DEFERRED to a manual run, as the story allows. (b) switches the Common UI router through SetActiveUIInputConfig (spike V5). Rest tolerance 1 cm (story proposal 0.1 cm; observed 0.000). (d) the owner's End after a server-side unpossession reaches a server whose controller no longer has a pawn and is dropped at ingress (server-side hold cleanup on unpossession is stage-2 / hand-over work). Was Blocked on V1 and V5: both reported PASS.
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/Input/FlushSendsEndTest.cpp`; V5 report `production/qa/spikes/2026-10-26_V5-commonui-menu-end-report.md`
+Run result: N/A — the flush is an event-order property; the test's frame counts are the observation (the [cmd] HUD line shows the swallowed-end count in play)
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

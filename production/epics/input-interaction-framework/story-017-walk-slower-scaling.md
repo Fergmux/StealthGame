@@ -1,12 +1,12 @@
 # Story 017: AC 76, client scaling clause: IA_WalkSlower scales keyboard Move to 0.8 / 0.9 / 0.8 / 1.0
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -74,14 +74,12 @@ Prototype replaced: prototype Shift-run and Ctrl-jog-toggle controls (`StealthCh
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGameplay/Public/View/Core/WalkSlowerScale.h` (pure scaling function)
+- `Source/StealthGameplay/Public/View/Core/WalkSlowerScale.h`
 - `Source/StealthGameplay/Private/View/Core/WalkSlowerScale.cpp`
-- `Source/StealthGame/Private/PawnCommandClient.cpp` (applies the scaling to the keyboard Move vector before `ServerMove`)
-- `Source/StealthGameplay/Private/Tests/Input/WalkSlowerScalingTest.cpp` (class `FInputWalkSlowerScalingTest`, name `StealthGame.Input.WalkSlowerScaling`)
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthGameplay/Private/Tests/Input/WalkSlowerScalingTest.cpp`
 
 ---
 
@@ -109,7 +107,7 @@ checks scope against it.*
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Input/WalkSlowerScalingTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.WalkSlowerScaling`, 2026-10-26)
 
 ---
 
@@ -117,3 +115,13 @@ checks scope against it.*
 
 - Depends on: `production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md`; cross-epic: shared-character-locomotion (stories not yet written; SCL R5.1 pace-set constants)
 - Unlocks: `production/epics/input-interaction-framework/story-018-walk-slower-two-client.md`, `production/epics/input-interaction-framework/story-019-remove-sample-ctrl-jog-toggle.md`, `production/epics/input-interaction-framework/story-070-release-baseline-stop.md`, `production/epics/input-interaction-framework/story-081-look-latency.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (W with Ctrl, Alt, both, neither: 0.8, 0.9, 0.8, 1.0; Run + Ctrl unscaled; gamepad unchanged; diagonal clamped to 0.8; both = explicit minimum; the IA_WalkSlower reduction value maps to the same paces)
+**Deviations**: The pace set {0.8, 0.9, 1.0} is the named constant StealthPaceSet (SCL R5.1, held by no key) for SCL's quantiser to share. The client reads IA_WalkSlower's reduction value (Ctrl 0.2, Alt 0.1, highest-absolute accumulation), which yields the same minimum. MVP item 11, client half.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Input/WalkSlowerScalingTest.cpp`; in play `production/qa/evidence/story-094-controller-transport-skeleton/02-client1-walking-ctrl-walk-slower.png` (0.80), `04-host-walking-alt-walk-slower.png` (0.90)
+Run result: OBSERVED — client 1 W + Ctrl move/pace 0.80, host W + Alt 0.90 (production/qa/evidence/story-094-controller-transport-skeleton/02, 04)
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

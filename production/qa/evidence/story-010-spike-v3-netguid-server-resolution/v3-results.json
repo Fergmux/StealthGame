@@ -1,0 +1,16 @@
+{
+  "engine": "5.8.4-58902052+++UE5+Release-5.8",
+  "function": "FNetGUIDCache::GetObjectFromNetGUID(Guid, bIgnoreMustBeMapped=false)",
+  "culling": "IsNetRelevantFor false via StealthSpikeHooks (IVP S9 hook)",
+  "culledChannelClosed": true,
+  "errorLinesAboveWarning": 0,
+  "cases": [
+    {"case": "a relevant pawn", "guid": 96, "raw": "BP_CrowdCharacter_C_5", "resolved": "BP_CrowdCharacter_C_5", "expect": "pawn", "pass": true},
+    {"case": "b culled pawn (channel closed)", "guid": 108, "raw": "BP_CrowdCharacter_C_6", "resolved": "BP_CrowdCharacter_C_6", "expect": "pawn", "pass": true},
+    {"case": "c never-assigned GUID", "guid": 4294967264, "raw": "null", "resolved": "null", "expect": "null", "pass": true},
+    {"case": "d stale GUID of a destroyed pawn", "guid": 78, "raw": "BP_CrowdCharacter_C_7 (being destroyed)", "resolved": "null", "expect": "null", "pass": true},
+    {"case": "e1 default GUID (ObjectId 1)", "guid": 1, "raw": "ensure + null (first run)", "resolved": "null", "expect": "null", "pass": true},
+    {"case": "e2 unassigned static GUID", "guid": 4294967267, "raw": "null", "resolved": "null", "expect": "null", "pass": true}
+  ],
+  "overall": "PASS"
+}

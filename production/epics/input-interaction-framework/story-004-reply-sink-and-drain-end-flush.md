@@ -1,12 +1,12 @@
 # Story 004: One batched ClientCommandReplies per connection per drain, null sink discards
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -74,13 +74,12 @@ Prototype: new code, no prototype counterpart (the prototype's `StealthPlayerCon
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGameplay/Public/Server/Core/ReplySink.h` (`FReplySinkId`, sink table, per-pass buffer, `IReplyTransport` spy seam)
+- `Source/StealthGameplay/Public/Server/Core/ReplySink.h`
 - `Source/StealthGameplay/Private/Core/ReplySinkTable.cpp`
-- `Source/StealthTestHarness/Private/ReplySinkDrainFlushTest.cpp` (class `FInputReplySinkDrainFlushTest`, name `StealthGame.Input.ReplySinkDrainFlush`; stub queue and transport spy, no PIE)
+- `Source/StealthTestHarness/Private/Input/RpcSpy.h`
+- `Source/StealthTestHarness/Private/Tests/Input/ReplySinkDrainFlushTest.cpp`
 
 ---
 
@@ -105,7 +104,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/ReplySinkDrainFlushTest.cpp` — must exist and pass (stub queue plus transport spy)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.ReplySinkDrainFlush`, 2026-10-26)
 
 ---
 
@@ -113,3 +112,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-001-command-reply-types.md`, `production/epics/input-interaction-framework/story-002-pawn-command-core-skeleton.md`; cross-epic: round-match-framework (stories not yet written; real queue drain and staging pass); cross-epic: tuning-data-config (stories not yet written; StealthTestHarness module)
 - Unlocks: `production/epics/input-interaction-framework/story-020-ingress-clamp-and-drop.md`, `production/epics/input-interaction-framework/story-026-bound-unbound-same-events.md`, `production/epics/input-interaction-framework/story-029-rejection-code-set.md`, `production/epics/input-interaction-framework/story-068-no-owner-data-on-pawn.md`, `production/epics/input-interaction-framework/story-074-brace-protected-only-on-confirm.md`, `production/epics/input-interaction-framework/story-076-rejection-plate.md`, `production/epics/input-interaction-framework/story-077-latency-icon.md`, `production/epics/input-interaction-framework/story-078-ring-monotonic-clamp.md`, `production/epics/input-interaction-framework/story-080-latency-budget.md`, `production/epics/input-interaction-framework/story-088-owner-status-bandwidth.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (A: one call ordered 2, 5, 9; B: one call by key; null sink 0 calls and 0 buffered; empty sink no call; no send inside a slot; plus 1,000 mixed voids through the real FResolutionQueueCore with 0 sends in the drain, two consecutive drains each with only their entries, a sink released mid-drain discards without a send)
+**Deviations**: The test file is under Private/Tests/Input/ (harness convention) rather than Private/. No production drain calls FlushPass yet: the Round queue facade and the stage-2 resolver (story iif-027) own the flush point; controllers already allocate and release their sink (story iif-094).
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/Input/ReplySinkDrainFlushTest.cpp`; full suite in `production/qa/evidence/iif-command-path-2026-10-26/full-suite.txt`
+Run result: N/A — no production code path produces a reply until stage 2 lands; the batching is server-internal
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

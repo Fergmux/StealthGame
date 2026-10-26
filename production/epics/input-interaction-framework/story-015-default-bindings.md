@@ -1,12 +1,12 @@
 # Story 015: AC 30 DefaultBindings
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -73,13 +73,10 @@ Prototype: the prototype's default bindings (WASD, Shift run, Ctrl jog toggle, L
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGame/Private/StealthPlayerController.cpp` (`SetupInputComponent` binding of all `IA_*` actions)
-- `Content/StealthGame/Input/IMC_Common`, `IMC_Active` (default key data; authored in story 007, adjusted here only if the table mismatches)
-- `Source/StealthTestHarness/Private/DefaultBindingsTest.cpp` (CQTest `NETWORK_TEST_CLASS(DefaultBindings, "StealthGame.Input.PIE")`, full name `StealthGame.Input.PIE.DefaultBindings.<Method>`; 2 PIE clients)
+- `Source/StealthTestHarness/Private/Tests/Input/DefaultBindingsTest.cpp`
+- `Source/StealthGame/Private/StealthHUD.cpp`
 
 ---
 
@@ -104,7 +101,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/DefaultBindingsTest.cpp` — CQTest 2-client PIE test, or a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.PIE.DefaultBindings.EveryDefaultBindingReachesItsTarget`, 2026-10-26)
 
 ---
 
@@ -112,3 +109,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md`, `production/epics/input-interaction-framework/story-094-controller-transport-skeleton.md`, `production/epics/input-interaction-framework/story-095-command-test-seams.md`; cross-epic: camera-system, shared-character-locomotion, concealment (stories not yet written; bush, Gait and camera handlers)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (25 rows on keyboard/mouse and gamepad: Traverse, Interact Begin/End, Prepare Begin/End, Attack, Hide reach the server command log; Move and Look reach the command component / control rotation; Run sets the Run gait; camera toggle, shoulder swap and walk-slower send 0 commands with their local effect; Ping sends ServerTeamPing; RMB is not bound to Prepare)
+**Deviations**: Per-row rewrite pinned (QL). 'Fresh settings': the project registers no UEnhancedInputUserSettings profile (rebinding is not in the MVP). Hide always sends HideEnter (the owner has no hidden state until the Concealment epic). The HUD's controls line now shows the R15 bindings.
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/Input/DefaultBindingsTest.cpp`
+Run result: OBSERVED — the bindings in play: production/qa/evidence/story-094-controller-transport-skeleton/02 and 03 (W + Ctrl walk, Q Prepare) and the HUD controls line
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

@@ -446,11 +446,11 @@ stories:
     name: "Spike V2 reports ClientSetPossessionEpoch always precedes ClientRestart"
     file: "production/epics/input-interaction-framework/story-009-spike-v2-possession-epoch-order.md"
     priority: nice-to-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     carryover_to_sprint: 2
     sprint2_priority: must-have
     sprint2_estimate_days: 1.5
@@ -459,11 +459,11 @@ stories:
     name: "Spike V3 reports server NetGUID resolution of a culled pawn"
     file: "production/epics/input-interaction-framework/story-010-spike-v3-netguid-server-resolution.md"
     priority: nice-to-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     carryover_to_sprint: 2
     sprint2_priority: must-have
     carryover_note: "Unblocked at Sprint 2 planning: the story now uses a throwaway probe or direct calls and states that in its report"
@@ -471,11 +471,11 @@ stories:
     name: "Spike V5 reports Common UI Menu-mode switch yields a synchronous End"
     file: "production/epics/input-interaction-framework/story-011-spike-v5-commonui-menu-end.md"
     priority: nice-to-have
-    status: ready-for-dev
+    status: done
     owner: "ue-umg-specialist"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     carryover_to_sprint: 2
     sprint2_priority: must-have
     sprint2_estimate_days: 1.5
@@ -1945,131 +1945,131 @@ stories:
     name: "Command and reply types match the ADR key interfaces"
     file: "production/epics/input-interaction-framework/story-001-command-reply-types.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-002"
     name: "FPawnCommandCore runs headless with an injected clock and stub queue"
     file: "production/epics/input-interaction-framework/story-002-pawn-command-core-skeleton.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-003"
     name: "UActionHub registers predicates weakly and fires native events only"
     file: "production/epics/input-interaction-framework/story-003-action-hub-and-predicate-registry.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-004"
     name: "One batched ClientCommandReplies per connection per drain, null sink discards"
     file: "production/epics/input-interaction-framework/story-004-reply-sink-and-drain-end-flush.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-005"
     name: "AC 1 EntryPointSet"
     file: "production/epics/input-interaction-framework/story-005-entry-point-set.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-006"
     name: "AC 2 NoCallerIdentityParameter"
     file: "production/epics/input-interaction-framework/story-006-no-caller-identity-parameter.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-012"
     name: "AC 4 EdgesNotRepeat"
     file: "production/epics/input-interaction-framework/story-012-edges-not-repeat.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-014"
     name: "AC 29 CameraToggleLocal"
     file: "production/epics/input-interaction-framework/story-014-camera-toggle-local.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-015"
     name: "AC 30 DefaultBindings"
     file: "production/epics/input-interaction-framework/story-015-default-bindings.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-016"
     name: "AC 31 (MVP clause only; the VS deferred gate ToggleStreamParity is out of scope)"
     file: "production/epics/input-interaction-framework/story-016-no-toggle-setting-mvp.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-017"
     name: "AC 76, client scaling clause: IA_WalkSlower scales keyboard Move to 0.8 / 0.9 / 0.8 / 1.0"
     file: "production/epics/input-interaction-framework/story-017-walk-slower-scaling.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-018"
     name: "AC 76 WalkSlowerModifier, server-side clause: received magnitude, SCL pace, accel/brake, only ServerMove"
     file: "production/epics/input-interaction-framework/story-018-walk-slower-two-client.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-019"
     name: "D37: the sample's Ctrl jog toggle is removed; Ctrl only drives walk-slower"
     file: "production/epics/input-interaction-framework/story-019-remove-sample-ctrl-jog-toggle.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-020"
     name: "AC 6 IngressClampAndDrop"
@@ -2161,25 +2161,58 @@ stories:
     blocker: ""
     completed: ""
     sprint: 2
+  - id: "iif-013"
+    name: "AC 5 FlushSendsEnd"
+    file: "production/epics/input-interaction-framework/story-013-flush-sends-end.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    pulled_forward_note: "Unblocked by spike V5 (2026-10-26); built with the IIF batch 13 integration"
+  - id: "iif-092"
+    name: "Common UI mid-brace single End"
+    file: "production/epics/input-interaction-framework/story-092-common-ui-mid-brace-single-end.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.25
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    pulled_forward_note: "Unblocked by spike V5 (2026-10-26); built with the IIF batch 13 integration"
+  - id: "iif-071"
+    name: "AC 55 ContextSwapOnStateAndPossession"
+    file: "production/epics/input-interaction-framework/story-071-context-swap-on-state-and-possession.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    pulled_forward_note: "Unblocked by spike V2 (2026-10-26); built with the IIF batch 13 integration"
   - id: "iif-094"
     name: "AStealthPlayerController carries the command transport and the client builder shell"
     file: "production/epics/input-interaction-framework/story-094-controller-transport-skeleton.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "iif-095"
     name: "Server command log, outgoing-RPC spy and shared stub doubles exist in the test harness"
     file: "production/epics/input-interaction-framework/story-095-command-test-seams.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-002"
     name: "Body constants published: step height, floor angle, capsule, kerb and block heights"

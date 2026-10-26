@@ -1,4 +1,5 @@
 #include "StealthHUD.h"
+#include "View/Input/PawnCommandClient.h"
 #include "StealthCharacter.h"
 #include "StealthGameState.h"
 #include "StealthObjective.h"
@@ -82,6 +83,16 @@ void AStealthHUD::DrawProductionLine(AStealthPlayerController* PC, const AStealt
 	if (!Line.IsEmpty())
 	{
 		DrawShadowedText(Line, 24.f, Canvas->ClipY - 64.f, FLinearColor(1.f, 0.85f, 0.25f), 0.9f);
+	}
+	// The production command path (story iif-094, D53): what the owner's builder sends this frame.
+	if (const UPawnCommandClient* Client = PC ? PC->GetCommandClient() : nullptr)
+	{
+		const FPawnCommandClientCore& Core = Client->GetCore();
+		const FString Cmd = FString::Printf(TEXT("[cmd] move %.2f %s  pace %.2f  | epoch %u  last seq %u  | ctx %s%s | swallowed ends %d"),
+			Client->GetLastSentMove().Size(), Client->GetGait() == EGait::Run ? TEXT("Run") : TEXT("Walk"), Client->GetWalkSlowerPace(),
+			Core.GetOwnerPossessionEpoch(), Core.GetLastSeq(), Client->IsInformantContext() ? TEXT("Informant") : TEXT("Active"),
+			Client->IsMenuMode() ? TEXT(" (menu)") : TEXT(""), Core.GetSwallowedCount());
+		DrawShadowedText(Cmd, 24.f, Canvas->ClipY - 92.f, FLinearColor(0.55f, 0.9f, 1.f), 0.9f);
 	}
 #endif
 }
@@ -307,6 +318,7 @@ void AStealthHUD::DrawInteractBar(const AStealthCharacter* Pawn)
 
 void AStealthHUD::DrawControls()
 {
-	DrawShadowedText(TEXT("WASD move (walk)  Shift run  Space climb  LMB/F assassinate  hold Q defend  hold E task  T ping  V camera  C crouch"),
+	// The IIF R15 default bindings (IMC_Common / IMC_Active, story iif-015).
+	DrawShadowedText(TEXT("WASD move (walk)  Ctrl/Alt walk slower  Shift run  Space climb  LMB assassinate  hold Q defend  hold E task  F hide  G ping  V camera  X shoulder  C crouch"),
 		24.f, Canvas->ClipY - 34.f, Muted, 0.8f);
 }

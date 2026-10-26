@@ -1,12 +1,12 @@
 # Story 095: Server command log, outgoing-RPC spy and shared stub doubles exist in the test harness
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -73,14 +73,15 @@ Prototype: new code, no prototype counterpart (the prototype's `StealthRulesTest
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthTestHarness/Public/Input/CommandLog.h`
-- `Source/StealthTestHarness/Public/Input/RpcSpy.h`
-- `Source/StealthTestHarness/Public/Input/StubDoubles.h` (`FStubResolutionQueue`, `FStubRosterLegality`, `FStubSharedPawnStateView`, `FStubCamera`, `FStubInteractTargetOwner`, `FStubCommandPredicate`)
-- `Source/StealthTestHarness/Private/CommandTestSeamsSelfTest.cpp` (name `StealthGame.Input.CommandTestSeams`; harness self-test)
+- `Source/StealthTestHarness/Private/Input/CommandLog.h`
+- `Source/StealthTestHarness/Private/Input/RpcSpy.h`
+- `Source/StealthTestHarness/Private/Input/StubDoubles.h`
+- `Source/StealthGameplay/Public/Server/Testing/StealthCommandSeams.h`
+- `Source/StealthGameplay/Private/Core/StealthCommandSeams.cpp`
+- `Source/StealthGameplay/Private/Core/PawnCommandCore.cpp`
+- `Source/StealthTestHarness/Private/Tests/Input/CommandTestSeamsSelfTest.cpp`
 
 ---
 
@@ -102,7 +103,7 @@ QL-STORY-READY: NOT ASSESSED — story added after the review
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/CommandTestSeamsSelfTest.cpp` — the harness self-test must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.CommandTestSeams`, `StealthGame.Input.PIE.CommandTestSeams.ScriptedSequenceIsLoggedAndSpied`, 2026-10-26)
 
 ---
 
@@ -110,3 +111,13 @@ QL-STORY-READY: NOT ASSESSED — story added after the review
 
 - Depends on: `production/epics/input-interaction-framework/story-002-pawn-command-core-skeleton.md`, `production/epics/input-interaction-framework/story-094-controller-transport-skeleton.md`; cross-epic: tuning-data-config (stories not yet written; StealthTestHarness module, ADR-0008)
 - Unlocks: `production/epics/input-interaction-framework/story-013-flush-sends-end.md`, `production/epics/input-interaction-framework/story-015-default-bindings.md`, `production/epics/input-interaction-framework/story-018-walk-slower-two-client.md`, `production/epics/input-interaction-framework/story-067-no-event-relay.md`, `production/epics/input-interaction-framework/story-083-rejection-timing-identity-blind.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (through the controller transport the server log records kind, seq, epoch, sink, mailbox and arrival tick in order at ingress output and at the queue submit; the outgoing-RPC hook records each ServerPawnCommand and reports zero beyond the engine move/camera background for a sequence that sends none; each stub double records its calls; an AI command is logged at the submit point with the server-local mailbox and the null sink)
+**Deviations**: The harness headers are in Source/StealthTestHarness/Private/Input/ (not Public/Input/, which ADR-0007 rule (a) would reject); the seam itself (StealthCommandSeams) is in StealthGameplay under WITH_STEALTH_TEST_SEAMS. The RPC spy uses UNetDriver::SendRPCDel (non-Shipping); 'sends none' excludes the engine's ServerMove family and ServerUpdateCamera (ADR-0015 disables client camera updates later). FStubCamera and FStubInteractTargetOwner are plain recorders (the Camera and Objectives interfaces do not exist yet).
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/Input/CommandTestSeamsSelfTest.cpp`; full suite `production/qa/evidence/iif-command-path-2026-10-26/full-suite.txt`
+Run result: N/A — test infrastructure; nothing is drawn
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

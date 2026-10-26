@@ -1,12 +1,12 @@
 # Story 091: Hand-over window test
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Blocked — BLOCKED: spike V2 (story 009) has not reported
+> **Status**: Blocked — BLOCKED: story iif-025 (the PossessionEpoch ingress gate, not built) and ADR-0010's hand-over pass with its possession-step hold seam (shared-character-locomotion, not built). Spike V2 (story 009) reported PASS 2026-10-26: production/qa/spikes/2026-10-26_V2-possession-epoch-order-report.md
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 

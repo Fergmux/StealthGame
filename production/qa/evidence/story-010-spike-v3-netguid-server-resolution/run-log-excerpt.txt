@@ -1,0 +1,7 @@
+V3RESULT a relevant pawn | guid 96 | raw BP_CrowdCharacter_C_5 | resolved BP_CrowdCharacter_C_5 | PASS
+V3RESULT b culled pawn (channel closed) | guid 108 | raw BP_CrowdCharacter_C_6 | resolved BP_CrowdCharacter_C_6 | PASS
+V3RESULT c never-assigned GUID | guid 4294967264 | raw null | resolved null | PASS
+V3RESULT d stale GUID of a destroyed pawn | guid 78 | raw BP_CrowdCharacter_C_7 (being destroyed) | resolved null | PASS
+V3RESULT e1 default GUID (ObjectId 1) | guid 1 | raw ensure + null (first run) | resolved null | PASS
+V3RESULT e2 unassigned static GUID | guid 4294967267 | raw null | resolved null | PASS
+V3 overall PASS (culled channel closed: 1, error lines: 0)

@@ -12,10 +12,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "EngineUtils.h"
-#include "EnhancedInputComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerController.h"
-#include "InputAction.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Net/UnrealNetwork.h"
 #include "Server/Roster/StealthRosterStore.h"
@@ -58,7 +56,6 @@ AStealthCharacter::AStealthCharacter(const FObjectInitializer& ObjectInitializer
 	FirstPersonCamera->bUsePawnControlRotation = true;
 	FirstPersonCamera->bAutoActivate = false;
 
-	InteractAction = TSoftObjectPtr<UInputAction>(FSoftObjectPath(TEXT("/Game/Input/IA_Interact.IA_Interact")));
 }
 
 void AStealthCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -118,29 +115,13 @@ void AStealthCharacter::Tick(float DeltaSeconds)
 
 void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+	// ADR-0011 section 9 (story iif-094): gameplay input lives on AStealthPlayerController, whose IMC_Common/IMC_Active
+	// contexts (priority above the sample's IMC_Sandbox) consume Move, Look, Ctrl/Alt, E, Q, LMB, F, G and V. The
+	// prototype's legacy key binds (LMB/F attack, hold Q, V camera, T ping, the sample's IA_Interact on E) are retired.
+	// Super still binds the reparented sample Blueprint's own input events, which keep the sample-only actions
+	// (crouch, strafe, aim, and sprint and jump/traversal through the pass-through IA_Run / IA_Traverse) until the
+	// SCL speed-tier and traversal stories replace them.
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	PlayerInputComponent->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &AStealthCharacter::OnAssassinatePressed);
-	PlayerInputComponent->BindKey(EKeys::F, IE_Pressed, this, &AStealthCharacter::OnAssassinatePressed);
-	PlayerInputComponent->BindKey(EKeys::Q, IE_Pressed, this, &AStealthCharacter::OnDefencePressed);
-	PlayerInputComponent->BindKey(EKeys::Q, IE_Released, this, &AStealthCharacter::OnDefenceReleased);
-	PlayerInputComponent->BindKey(EKeys::V, IE_Pressed, this, &AStealthCharacter::ToggleCameraMode);
-	PlayerInputComponent->BindKey(EKeys::T, IE_Pressed, this, &AStealthCharacter::OnPingPressed);
-
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		if (UInputAction* Interact = InteractAction.LoadSynchronous())
-		{
-			EnhancedInput->BindAction(Interact, ETriggerEvent::Started, this, &AStealthCharacter::OnInteractPressed);
-			EnhancedInput->BindAction(Interact, ETriggerEvent::Completed, this, &AStealthCharacter::OnInteractReleased);
-		}
-		else
-		{
-			UE_LOG(LogStealth, Warning, TEXT("Interact input action not found; objective interaction falls back to key G."));
-			PlayerInputComponent->BindKey(EKeys::G, IE_Pressed, this, &AStealthCharacter::OnInteractPressed);
-			PlayerInputComponent->BindKey(EKeys::G, IE_Released, this, &AStealthCharacter::OnInteractReleased);
-		}
-	}
 }
 
 bool AStealthCharacter::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const
@@ -574,134 +555,54 @@ AStealthCharacter* AStealthCharacter::FindAssassinationTarget() const
 	return Best;
 }
 
-void AStealthCharacter::OnAssassinatePressed()
+void AStealthCharacter::HandleOwnerCommandPredicted(ECommandKind Kind)
 {
-	if (!IsActiveAgent() || IsHeldInPlace() || bPreparingDefence)
+	// Presentation-only owner prediction (D53 adapter): the server decides; OnRep_PreparingDefence and the confirmation
+	// timeout undo a wrong guess, as before.
+	switch (Kind)
 	{
-		return;
-	}
-	const UStealthSettings* Settings = UStealthSettings::Get();
-	const FVector ViewDir = FRotator(0.f, GetControlRotation().Yaw, 0.f).Vector();
-	const FVector StrikePoint = GetActorLocation() + ViewDir * (Settings->AssassinationRange * 0.6f);
-	// A null target is a blind strike at StrikePoint (the only way to hit someone hidden in a bush).
-	ServerAssassinate(FindAssassinationTarget(), StrikePoint);
-}
-
-void AStealthCharacter::OnDefencePressed()
-{
-	const AStealthPlayerState* PS = GetStealthPlayerState();
-	if (!PS || !IsActiveAgent())
+	case ECommandKind::PrepareBegin:
 	{
-		return;
-	}
-	const UStealthSettings* Settings = UStealthSettings::Get();
-	const double Now = StealthServerNow(GetWorld());
-	if (!FStealthRules::CanStartDefence(true, IsRunning(), IsInTraversal(), Now, PS->LastDefenceActivationTime, Settings->DefenceCooldown))
-	{
-		return;
-	}
-	SetDefenceStance(true); // predicted; undone by OnRep_PreparingDefence or the confirmation timeout
-	ServerSetDefence(true);
-
-	TWeakObjectPtr<AStealthCharacter> WeakThis(this);
-	FTimerHandle Handle;
-	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakThis]()
-	{
-		if (AStealthCharacter* Self = WeakThis.Get())
+		const AStealthPlayerState* PS = GetStealthPlayerState();
+		const UStealthSettings* Settings = UStealthSettings::Get();
+		const double Now = StealthServerNow(GetWorld());
+		if (!PS || !IsActiveAgent()
+			|| !FStealthRules::CanStartDefence(true, IsRunning(), IsInTraversal(), Now, PS->LastDefenceActivationTime, Settings->DefenceCooldown))
 		{
-			if (!Self->bPreparingDefence)
-			{
-				Self->SetDefenceStance(false);
-			}
+			return;
 		}
-	}), DefenceConfirmTimeout, false);
-}
-
-void AStealthCharacter::OnDefenceReleased()
-{
-	if (bPreparingDefence || bIsCrouched)
-	{
-		SetDefenceStance(false);
+		SetDefenceStance(true);
+		TWeakObjectPtr<AStealthCharacter> WeakThis(this);
+		FTimerHandle Handle;
+		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakThis]()
+		{
+			if (AStealthCharacter* Self = WeakThis.Get())
+			{
+				if (!Self->bPreparingDefence)
+				{
+					Self->SetDefenceStance(false);
+				}
+			}
+		}), DefenceConfirmTimeout, false);
+		break;
 	}
-	ServerSetDefence(false);
-}
-
-void AStealthCharacter::OnInteractPressed()
-{
-	if (!IsActiveAgent())
-	{
-		return;
-	}
-	bLocalInteracting = true;
-	LocalInteractStartTime = GetWorld()->GetTimeSeconds();
-	ServerSetInteracting(true);
-}
-
-void AStealthCharacter::OnInteractReleased()
-{
-	bLocalInteracting = false;
-	ServerSetInteracting(false);
-}
-
-void AStealthCharacter::OnPingPressed()
-{
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (!PC || bDying)
-	{
-		return;
-	}
-	const double Now = GetWorld()->GetTimeSeconds();
-	if (Now - LastLocalPingTime < UStealthSettings::Get()->PingCooldown)
-	{
-		return;
-	}
-	LastLocalPingTime = Now;
-
-	FVector ViewLocation;
-	FRotator ViewRotation;
-	PC->GetPlayerViewPoint(ViewLocation, ViewRotation);
-	const FVector End = ViewLocation + ViewRotation.Vector() * 8000.f;
-	FHitResult Hit;
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(StealthPing), false, this);
-	const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, ViewLocation, End, ECC_Visibility, Params);
-	ServerPing(bHit ? Hit.ImpactPoint : End);
-}
-
-// ---- RPCs -------------------------------------------------------------------------------------
-
-void AStealthCharacter::ServerAssassinate_Implementation(AStealthCharacter* Target, FVector_NetQuantize StrikePoint)
-{
-	if (AStealthGameMode* GameMode = GetWorld()->GetAuthGameMode<AStealthGameMode>())
-	{
-		GameMode->HandleAssassinationRequest(this, Target, StrikePoint);
-	}
-}
-
-void AStealthCharacter::ServerSetDefence_Implementation(bool bWantsDefence)
-{
-	if (!bWantsDefence)
-	{
-		StopDefence();
-		return;
-	}
-	if (AStealthGameMode* GameMode = GetWorld()->GetAuthGameMode<AStealthGameMode>())
-	{
-		GameMode->HandleDefenceRequest(this);
-	}
-}
-
-void AStealthCharacter::ServerSetInteracting_Implementation(bool bWantsInteract)
-{
-	if (AStealthGameMode* GameMode = GetWorld()->GetAuthGameMode<AStealthGameMode>())
-	{
-		GameMode->HandleInteractRequest(this, bWantsInteract);
-	}
-}
-
-void AStealthCharacter::ServerPing_Implementation(FVector_NetQuantize Location)
-{
-	if (AStealthGameMode* GameMode = GetWorld()->GetAuthGameMode<AStealthGameMode>())
-	{
-		GameMode->HandlePing(this, Location);
+	case ECommandKind::PrepareEnd:
+		if (bPreparingDefence || bIsCrouched)
+		{
+			SetDefenceStance(false);
+		}
+		break;
+	case ECommandKind::InteractBegin:
+		if (IsActiveAgent())
+		{
+			bLocalInteracting = true;
+			LocalInteractStartTime = GetWorld()->GetTimeSeconds();
+		}
+		break;
+	case ECommandKind::InteractEnd:
+		bLocalInteracting = false;
+		break;
+	default:
+		break;
 	}
 }

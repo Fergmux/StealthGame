@@ -1,12 +1,12 @@
 # Story 071: AC 55 ContextSwapOnStateAndPossession
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Blocked — BLOCKED: spike V2 (story 009) has not reported (V1, story 008, reported PASS 2026-10-25: production/qa/spikes/2026-10-25_V1-enhanced-input-edges-report.md)
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -75,12 +75,16 @@ It sits near the end of the chain because it depends on story 013 (the flush sen
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthGameplay/Public/View/Core/OwnerContextGate.h` (pure `UseInformantContext`, may be authored with the HUD epic; consumed here)
-- `Source/StealthGame/Public/PawnCommandClient.h` and `Source/StealthGame/Private/PawnCommandClient.cpp` (context swap, outstanding-Begin flush, `IOwnerCommandClientView`)
-- `Source/StealthGame/Public/StealthPlayerController.h` and `Source/StealthGame/Private/StealthPlayerController.cpp` (possession-change hooks)
-- `Source/StealthTestHarness/Private/ContextSwapOnStateAndPossessionPieTest.cpp` (CQTest `NETWORK_TEST_CLASS(ContextSwapOnStateAndPossession, "StealthGame.Input.PIE")`, full name `StealthGame.Input.PIE.ContextSwapOnStateAndPossession.<Method>`)
+- `Source/StealthGameplay/Public/View/Core/OwnerContextGate.h`
+- `Source/StealthGameplay/Private/View/Core/OwnerContextGate.cpp`
+- `Source/StealthGameplay/Public/View/Input/PawnCommandClient.h`
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthGame/Private/StealthPlayerController.cpp`
+- `Source/StealthFoundation/Private/Roster/StealthRosterTeamView.cpp`
+- `Source/StealthGameplay/Private/Tests/Input/OwnerContextGateTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/Input/ContextSwapOnStateAndPossessionPieTest.cpp`
 
 ---
 
@@ -108,7 +112,7 @@ QA-lead test sketch (unconfirmed): `StealthGame.Input.PIE.ContextSwapOnStateAndP
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/ContextSwapOnStateAndPossessionPieTest.cpp` (CQTest `StealthGame.Input.PIE.ContextSwapOnStateAndPossession`) OR a playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.OwnerContextGate`, `StealthGame.Input.PIE.ContextSwapOnStateAndPossession.StateChangeAndRepossessionSwapContextAndFlush`, 2026-10-26)
 
 ---
 
@@ -116,3 +120,13 @@ QA-lead test sketch (unconfirmed): `StealthGame.Input.PIE.ContextSwapOnStateAndP
 
 - Depends on: `production/epics/input-interaction-framework/story-013-flush-sends-end.md`, `production/epics/input-interaction-framework/story-008-spike-v1-enhanced-input-edges.md`, `production/epics/input-interaction-framework/story-009-spike-v2-possession-epoch-order.md`; cross-epic: participant-state-roster (stories not yet written; Owner-audience `State`), cross-epic: hud (stories not yet written; `SetPresentedOwnRole` and the presenter), cross-epic: assassination-defence-reversal (stories not yet written; `OnRoleChangePresented`)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (re-possession while Active: the held Interact ended in the ClientRestart frame and IMC_Active stays; the Roster's Active -> Informant reaching the owner's C-TeamView swaps to IMC_Informant in the same frame (view frame 1225, swap frame 1225) and ends the held Interact once; afterwards IMC_Common + IMC_Informant, no IMC_Active, no second End)
+**Deviations**: No HUD presenter is bound in the MVP, so the raw state decides at once; the pure gate (presenter, cap) is in place for the HUD epic (SetPresentedOwnRole, PresentedRoleCapSec placeholder 3 s until the HUD keys exist). The listen host's own C-TeamView now raises OnViewUpdated on the server (it never replicates to itself). The state change is produced by the development bot strike through the D53 adapters. Was Blocked on V2: reported PASS.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Input/OwnerContextGateTest.cpp`, `Source/StealthTestHarness/Private/Tests/Input/ContextSwapOnStateAndPossessionPieTest.cpp`
+Run result: N/A — a context swap shows nothing on screen (IMC_Informant maps no gameplay key); the [cmd] HUD line names the context (ctx Active/Informant) and the PIE test's frame counts are the observation
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

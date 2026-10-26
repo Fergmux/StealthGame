@@ -1,12 +1,12 @@
 # Story 094: AStealthPlayerController carries the command transport and the client builder shell
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -76,15 +76,34 @@ Prototype replaced: `StealthPlayerController.*` (input mode, controller RPCs) an
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
 - `Source/StealthGame/Public/StealthPlayerController.h`
-- `Source/StealthGame/Private/StealthPlayerController.cpp` (rewritten: `SetupInputComponent`, RPC declarations, epoch fields)
-- `Source/StealthGame/Public/PawnCommandClient.h`
-- `Source/StealthGame/Private/PawnCommandClient.cpp` (client-only; outstanding-Begin table shell)
-- `Source/StealthTestHarness/Private/ControllerTransportSkeletonTest.cpp` (name `StealthGame.Input.ControllerTransportSkeleton`; reflection plus 1-client PIE bind check)
+- `Source/StealthGame/Private/StealthPlayerController.cpp`
+- `Source/StealthGameplay/Public/View/Input/PawnCommandClient.h`
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthGameplay/Public/Server/Core/CommandIngress.h`
+- `Source/StealthGameplay/Private/Core/CommandIngress.cpp`
+- `Source/StealthGame/Public/StealthCharacter.h`
+- `Source/StealthGame/Private/StealthCharacter.cpp`
+- `Source/StealthGame/Public/StealthSettings.h`
+- `Source/StealthGame/Private/StealthHUD.cpp`
+- `Source/StealthGame/Private/Composition/StealthPrototypeCommandQueue.h`
+- `Source/StealthGame/Private/Composition/StealthPrototypeCommandQueue.cpp`
+- `Source/StealthGame/Public/Server/StealthCompositionRoot.h`
+- `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawn.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawn.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/PawnClassDefaultsTest.cpp`
+- `Source/StealthGameEditor/Private/Input/InputAssetSpec.h`
+- `Source/StealthGameEditor/Private/Input/InputAssetAuthoring.cpp`
+- `Source/StealthGameEditor/Private/Input/InputAssetLint.cpp`
+- `Content/StealthGame/Input/IA_Run.uasset`
+- `Content/StealthGame/Input/IA_Traverse.uasset`
+- `Content/StealthGame/Input/IMC_Common.uasset`
+- `Source/StealthGameplay/StealthGameplay.Build.cs`
+- `Source/StealthTestHarness/StealthTestHarness.Build.cs`
+- `Source/StealthTestHarness/Private/Tests/Input/ControllerTransportSkeletonTest.cpp`
 
 ---
 
@@ -106,7 +125,7 @@ QL-STORY-READY: NOT ASSESSED — story added after the review
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/ControllerTransportSkeletonTest.cpp` — must exist and pass (reflection check on the RPC flags and component, plus a PIE check that `SetupInputComponent` binds the actions), or a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.ControllerTransportSkeleton`, `StealthGame.Input.PIE.ControllerTransportSkeleton.ClientBindsTheGameplayActionsOnTheController`, 2026-10-26)
 
 ---
 
@@ -114,3 +133,13 @@ QL-STORY-READY: NOT ASSESSED — story added after the review
 
 - Depends on: `production/epics/input-interaction-framework/story-001-command-reply-types.md`, `production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md`; cross-epic: tuning-data-config (stories not yet written; module skeleton and StealthTestHarness); cross-epic: camera-system (stories not yet written; controller camera flags, ADR-0015)
 - Unlocks: `production/epics/input-interaction-framework/story-012-edges-not-repeat.md`, `production/epics/input-interaction-framework/story-013-flush-sends-end.md`, `production/epics/input-interaction-framework/story-015-default-bindings.md`, `production/epics/input-interaction-framework/story-018-walk-slower-two-client.md`, `production/epics/input-interaction-framework/story-020-ingress-clamp-and-drop.md`, `production/epics/input-interaction-framework/story-023-impossible-payload-disconnects.md`, `production/epics/input-interaction-framework/story-025-possession-epoch-gate.md`, `production/epics/input-interaction-framework/story-095-command-test-seams.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (SetupInputComponent binds the twelve IA_* actions through UEnhancedInputComponent; ServerPawnCommand is reliable + WithValidation; ClientCommandReplies and ClientSetPossessionEpoch are reliable Client RPCs; UPawnCommandClient is a non-replicated controller subobject with the outstanding-Begin table; no RPC declared on AStealthPawn or its project components; in PIE the epoch is delivered and every connection has a reply sink)
+**Deviations**: UPawnCommandClient lives in StealthGameplay Public/View/Input (not StealthGame/Public as planned): ADR-0007 rule (a) forbids loose Public headers in the root, the Gameplay unit tests need it, and View/Core is the class-parity scan root. IngestCommand is a stage-1 skeleton (own-pawn resolution, PawnRef GUID resolution with the V3 guards, command-log seam, FScopedCommandOrigin); its context also carries the recorded control epoch and the host's weak PawnRef. PossessedControlEpoch records 0 until ADR-0010 4.4. D53 integration: the prototype pawn's legacy key binds and its four Server RPCs are retired; the composition root wires an immediate prototype queue adapter (until ADR-0002's facade); IA_Run/IA_Traverse are pass-through (bConsumeInput false) so the reparented sample keeps sprint and traversal; the contexts sit above IMC_Sandbox; AStealthPawn::Restart now gives a never-moved body its default movement mode (D53 regression: factory pawns were MOVE_None); ServerTeamPing replaces the pawn ping RPC; a [cmd] dev HUD line and the StealthInputKey dev exec. Known limit: keyboard vs stick is told by WASD key state until rebinding lands.
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/Input/ControllerTransportSkeletonTest.cpp`; `production/qa/evidence/story-094-controller-transport-skeleton/` (evidence.md, 4 screenshots); full suite `production/qa/evidence/iif-command-path-2026-10-26/full-suite.txt`
+Run result: OBSERVED — 3-player PIE: client 1 walks with W + Ctrl at move/pace 0.80, Q sends one ServerPawnCommand and the server's defence rule runs, the host walks with W + Alt at 0.90 (production/qa/evidence/story-094-controller-transport-skeleton/01..04)
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

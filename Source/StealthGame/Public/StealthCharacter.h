@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "View/Core/StealthPawn.h"
 #include "StealthTypes.h"
+#include "View/NetPawnCommand.h"
 #include "StealthCharacter.generated.h"
 
 class UCameraComponent;
@@ -36,6 +37,7 @@ public:
 	/** Roster R9 EndPlay hook: ends this pawn's binding or tombstone (server). */
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
+	/** Binds nothing gameplay-relevant (ADR-0011 section 9: gameplay input lives on AStealthPlayerController). */
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual bool CanJumpInternal_Implementation() const override;
 	/** APawn's relevancy, unless a non-Shipping spike hook replaces it (THROWAWAY, IVP spike S9). */
@@ -120,15 +122,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stealth")
 	void ToggleCameraMode();
 
-protected:
-	// Input handlers (local player only).
-	void OnAssassinatePressed();
-	void OnDefencePressed();
-	void OnDefenceReleased();
-	void OnInteractPressed();
-	void OnInteractReleased();
-	void OnPingPressed();
+	/**
+	 * Owner prediction adapter (D53; ADR-0011 section 9 OnOwnerCommandPredicted): the owning client sent Kind, so the
+	 * prototype's presentation-only predictions run (the predicted defence stance, the local interact progress). Nothing
+	 * here sends anything: the command already went through the controller transport.
+	 */
+	void HandleOwnerCommandPredicted(ECommandKind Kind);
 
+protected:
 	/** Best visible target in front of this character within range, or null. */
 	AStealthCharacter* FindAssassinationTarget() const;
 
@@ -142,18 +143,6 @@ protected:
 	void ApplyDeathPresentation();
 	void SetDefenceStance(bool bPrepared);
 
-	UFUNCTION(Server, Reliable)
-	void ServerAssassinate(AStealthCharacter* Target, FVector_NetQuantize StrikePoint);
-
-	UFUNCTION(Server, Reliable)
-	void ServerSetDefence(bool bWantsDefence);
-
-	UFUNCTION(Server, Reliable)
-	void ServerSetInteracting(bool bWantsInteract);
-
-	UFUNCTION(Server, Reliable)
-	void ServerPing(FVector_NetQuantize Location);
-
 	UFUNCTION()
 	void OnRep_AppearanceIndex();
 
@@ -166,10 +155,6 @@ protected:
 	/** Head-mounted camera for first-person mode. Inactive in third person. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stealth")
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
-
-	/** Enhanced Input action reused for objective interaction (the sample's IA_Interact, bound to E). */
-	UPROPERTY(EditDefaultsOnly, Category = "Stealth|Input")
-	TSoftObjectPtr<UInputAction> InteractAction;
 
 	/** Socket/bone the first-person camera follows. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stealth|Camera")
@@ -203,6 +188,5 @@ protected:
 	bool bFirstPerson = false;
 	bool bLocalInteracting = false;
 	double LocalInteractStartTime = 0.0;
-	double LastLocalPingTime = -1000.0;
 	bool bHiddenForLocalViewer = false;
 };

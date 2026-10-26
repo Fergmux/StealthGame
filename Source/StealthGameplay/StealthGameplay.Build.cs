@@ -16,5 +16,10 @@ public class StealthGameplay : ModuleRules
 		// tests, the crowd controller later) stay private.
 		PublicDependencyModuleNames.Add("MotionWarping");
 		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayTasks", "AIModule" });
+
+		// ADR-0011 section 9 (story iif-094): the client command builder binds Enhanced Input; its public header only
+		// forward-declares the Enhanced Input types, so the dependency stays private. CommonUI: the builder subscribes to
+		// the action router's input-mode change (ADR-0011 section 9, ADR-0021 E7; spike V5).
+		PrivateDependencyModuleNames.AddRange(new string[] { "EnhancedInput", "InputCore", "CommonUI", "CommonInput", "UMG", "Slate", "SlateCore", "DeveloperSettings" });
 	}
 }

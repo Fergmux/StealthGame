@@ -73,6 +73,7 @@ namespace StealthInputAuthoring
 		{
 			UInputAction* Action = LoadOrCreate<UInputAction>(Spec.Name, Packages);
 			Action->ValueType = Spec.ValueType;
+			Action->bConsumeInput = Spec.bConsumeInput;
 			Action->Triggers.Empty();
 			Action->Modifiers.Empty();
 			ActionsByName.Add(Spec.Name, Action);

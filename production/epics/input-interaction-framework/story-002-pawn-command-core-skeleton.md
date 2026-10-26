@@ -1,12 +1,12 @@
 # Story 002: FPawnCommandCore runs headless with an injected clock and stub queue
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -73,14 +73,16 @@ Prototype: new code, no prototype counterpart (the prototype's logic sits in `St
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
 - `Source/StealthGameplay/Public/Server/Core/PawnCommandCore.h`
 - `Source/StealthGameplay/Private/Core/PawnCommandCore.cpp`
-- `Source/StealthGameplay/Public/Server/Core/StealthPawnCommandComponent.h` (thin component shell; behaviour added by later stories)
-- `Source/StealthGameplay/Private/Tests/Input/PawnCommandCoreHeadlessTest.cpp` (class `FInputPawnCommandCoreHeadlessTest`, name `StealthGame.Input.PawnCommandCoreHeadless`)
+- `Source/StealthGameplay/Public/Server/Core/StealthPawnCommandComponent.h`
+- `Source/StealthGameplay/Private/Core/StealthPawnCommandComponent.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawn.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawn.cpp`
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h`
+- `Source/StealthGameplay/Private/Tests/Input/PawnCommandCoreHeadlessTest.cpp`
 
 ---
 
@@ -105,7 +107,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Input/PawnCommandCoreHeadlessTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.PawnCommandCoreHeadless`, 2026-10-26)
 
 ---
 
@@ -113,3 +115,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-001-command-reply-types.md`; cross-epic: round-match-framework (stories not yet written; the real resolution queue, until then only the stub queue is used); cross-epic: tuning-data-config (stories not yet written; module skeleton)
 - Unlocks: `production/epics/input-interaction-framework/story-004-reply-sink-and-drain-end-flush.md`, `production/epics/input-interaction-framework/story-005-entry-point-set.md`, `production/epics/input-interaction-framework/story-095-command-test-seams.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (InteractBegin, +0.5 s, InteractEnd: exactly two items Begin then End with the payload; one clock read per submit, all injected; include/token scan of the core files clean, a seeded negative fixture fails it)
+**Deviations**: Pinned QL gaps: a backwards clock is reported (CommandMisuse/ClockRegressed) and clamped, never back-dated; a null queue or clock is a construction error (CommandMisuse/MissingSeam, every submit refused, no crash). The injected clock is the existing Foundation IStealthClock. Seam interfaces declared here: IPawnCommandQueue, IRosterLegalityQuery (ECommandLegalityClass), ISharedPawnStateView, FCommandOrigin. Two fault categories appended to EStealthFault (CommandNoPredicate 16, CommandMisuse 17).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Input/PawnCommandCoreHeadlessTest.cpp`; full suite in `production/qa/evidence/iif-command-path-2026-10-26/full-suite.txt`
+Run result: N/A — a headless plain-C++ core; its effect in play is observed through story iif-094's run
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

@@ -1,6 +1,7 @@
 #include "View/StealthRosterTeamView.h"
 
 #include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 #include "Net/Core/PushModel/PushModel.h"
 #include "Net/UnrealNetwork.h"
 
@@ -31,6 +32,12 @@ void URosterTeamViewComponent::ApplyView(const FTeamView& NewView)
 	if (AActor* Owner = GetOwner())
 	{
 		Owner->ForceNetUpdate();
+	}
+	// The listen host's own view never replicates to it (no OnRep on the server): raise the owner event here, so the
+	// host's HUD and command builder see their own view like a remote owner does (story iif-071).
+	if (const APlayerController* Controller = Cast<APlayerController>(GetOwner()); Controller && Controller->IsLocalController())
+	{
+		OnViewUpdated.Broadcast(View);
 	}
 }
 

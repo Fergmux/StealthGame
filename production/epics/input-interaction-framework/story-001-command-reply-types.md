@@ -1,12 +1,12 @@
 # Story 001: Command and reply types match the ADR key interfaces
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -74,14 +74,15 @@ Prototype: new code, no prototype counterpart (the prototype names a victim obje
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthFoundation/Public/View/CommandReplyTypes.h` (reply enums and structs)
-- `Source/StealthFoundation/Public/Server/NetPawnCommand.h` (`ECommandKind`, `FNetCommandArgs`, `FNetPawnCommand`; location to confirm)
-- `Source/StealthGameplay/Public/Server/Core/CancelReason.h` (`ECancelReason`)
-- `Source/StealthGameplay/Private/Tests/Input/CommandReplyTypesTest.cpp` (class `FInputCommandReplyTypesTest`, name `StealthGame.Input.CommandReplyTypes`)
+- `Source/StealthFoundation/Public/View/CommandReplyTypes.h`
+- `Source/StealthFoundation/Public/View/NetPawnCommand.h`
+- `Source/StealthFoundation/Public/View/CourtFixtureId.h`
+- `Source/StealthFoundation/Public/View/StealthQueueTypes.h`
+- `Source/StealthGameplay/Public/Server/Core/CancelReason.h`
+- `Source/StealthGameplay/Private/Tests/Input/CommandReplyTypesTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Input/IdentityNameChecker.h`
 
 ---
 
@@ -106,7 +107,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Input/CommandReplyTypesTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.CommandReplyTypes`, 2026-10-26)
 
 ---
 
@@ -114,3 +115,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: None (cross-epic: tuning-data-config module skeleton, stories not yet written; ADR-0007 modules StealthFoundation and StealthGameplay must exist)
 - Unlocks: `production/epics/input-interaction-framework/story-002-pawn-command-core-skeleton.md`, `production/epics/input-interaction-framework/story-003-action-hub-and-predicate-registry.md`, `production/epics/input-interaction-framework/story-004-reply-sink-and-drain-end-flush.md`, `production/epics/input-interaction-framework/story-094-controller-transport-skeleton.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (enum names, contiguous values and counts; struct field names and types; no UObject-pointer, ECancelReason or identity field; value round trips incl. Seq 0, uint16/uint32 maxima and an invalid PawnRefGuid)
+**Deviations**: Confirmed sets recorded in the header: ECommandKind = {Traverse, InteractBegin, InteractEnd, PrepareBegin, PrepareEnd, Attack, HideEnter, HideExit}; FCommandReply.Kind is the uint8 enum ECommandReplyKind {Rejected, HoldStatus, StrikeResult, DefenceResult} (ADR sketch: raw uint8). FNetPawnCommand lives in Foundation Public/View (the client builds it), not Public/Server. FCourtFixtureId is declared in Foundation View as a uint16 id (ADR-0014 owns its meaning). PawnRefGuid travels as uint64 PawnRefGuidValue (FNetworkGUID is not a reflected type) with Get/SetPawnRefGuid accessors. FClientCommandSeq moved from View/StealthQueueTypes.h into CommandReplyTypes.h as a USTRUCT (StealthQueueTypes.h includes it). The round trip uses UScriptStruct::SerializeBin (no custom NetSerialize exists).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Input/CommandReplyTypesTest.cpp`; full suite: `production/qa/evidence/iif-command-path-2026-10-26/full-suite.txt`
+Run result: N/A — value types only; nothing is drawn or simulated (the types are observed in play through stories iif-094/015)
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

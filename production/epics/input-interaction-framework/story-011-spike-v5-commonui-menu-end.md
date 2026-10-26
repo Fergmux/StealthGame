@@ -1,12 +1,12 @@
 # Story 011: Spike V5 reports Common UI Menu-mode switch yields a synchronous End
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -68,12 +68,13 @@ Prototype: new code, no prototype counterpart. Tuning keys: none.
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `production/qa/spikes/V5-commonui-menu-end-report.md` (the report; final dated name chosen at write time)
-- `Source/StealthTestHarness/Private/SpikeV5CommonUiMenuEndTest.cpp` (throwaway probe harness; not a gate test)
+- `production/qa/spikes/2026-10-26_V5-commonui-menu-end-report.md`
+- `Source/StealthTestHarness/Private/Tests/Spikes/SpikeV5CommonUiMenuEndTest.cpp`
+- `Source/StealthTestHarness/Private/Spikes/Input/StealthSpikeMenuWidget.h`
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthGame/Private/StealthPlayerController.cpp`
 
 ---
 
@@ -99,7 +100,7 @@ checks scope against it.*
 **Required evidence**:
 - Integration: the spike report `production/qa/spikes/V5-commonui-menu-end-report.md` (a documented result, retained) OR the probe harness test `Source/StealthTestHarness/Private/SpikeV5CommonUiMenuEndTest.cpp`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Spike report written (`production/qa/spikes/2026-10-26_V5-commonui-menu-end-report.md`; harness `StealthSpike.Input.V5CommonUiMenuEnd`, not a gate test)
 
 ---
 
@@ -107,3 +108,13 @@ checks scope against it.*
 
 - Depends on: `production/epics/input-interaction-framework/story-007-input-assets-and-trigger-lint.md`; cross-epic: tuning-data-config (stories not yet written; StealthTestHarness module); cross-epic: HUD / UI epic (stories not yet written; menu root and `UCommonGameViewportClient` configuration, ADR-0021 §7)
 - Unlocks: `production/epics/input-interaction-framework/story-013-flush-sends-end.md`, `production/epics/input-interaction-framework/story-092-common-ui-mid-brace-single-end.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 — 80/80 runs (keyboard Q and gamepad LT, 20 each, held-then-menu and same-frame variants): End in the router callback's frame, strictly before the router's next-tick FlushPressedKeys, exactly one End, the later release swallowed; same-frame variant: no hold starts under the menu. PASS
+**Deviations**: First-run finding fixed in the builder: a press processed the frame after a menu push started a hold under the menu (End only via the flush); UPawnCommandClient now starts no command while the router is in Menu mode (bMenuMode, read at BeginPlay and on every mode change). A bare UCommonActivatableWidget activation did not switch the router in the headless PIE, so the spike applies the Menu config through UCommonUIActionRouterBase::SetActiveUIInputConfig (the path an activation ends in); the real menu widget path is to be re-checked windowed with the first real menu (Presentation epic).
+**Test Evidence**: `production/qa/spikes/2026-10-26_V5-commonui-menu-end-report.md`; `production/qa/evidence/story-011-spike-v5-commonui-menu-end/` (v5-results.json, run-log-excerpt.txt)
+Run result: N/A — frame-order measurement of input events; nothing is drawn
+**Reviewed by**: self, no independent review (unattended run)

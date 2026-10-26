@@ -1,12 +1,12 @@
 # Story 018: AC 76 WalkSlowerModifier, server-side clause: received magnitude, SCL pace, accel/brake, only ServerMove
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -74,12 +74,9 @@ Prototype replaced: new code, no prototype counterpart (the prototype's Ctrl-jog
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
-- `Source/StealthTestHarness/Private/WalkSlowerModifierTest.cpp` (CQTest `NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")`, full name `StealthGame.Input.PIE.WalkSlowerModifier.<Method>`; 2 PIE clients, no net emulation required by the AC)
-- `Source/StealthGame/Private/PawnCommandClient.cpp` (only if the integration exposes a defect in story 017's wiring)
+- `Source/StealthTestHarness/Private/Tests/Input/WalkSlowerModifierTest.cpp`
 
 ---
 
@@ -106,7 +103,7 @@ checks scope against it.*
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/WalkSlowerModifierTest.cpp` — CQTest 2-client PIE test (P form), or a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.PIE.WalkSlowerModifier.KeyboardModifiersScaleTheServerReceivedMove`, 2026-10-26)
 
 ---
 
@@ -114,3 +111,13 @@ checks scope against it.*
 
 - Depends on: `production/epics/input-interaction-framework/story-017-walk-slower-scaling.md`, `production/epics/input-interaction-framework/story-094-controller-transport-skeleton.md`, `production/epics/input-interaction-framework/story-095-command-test-seams.md`; cross-epic: shared-character-locomotion R5.1 pace quantisation (stories not yet written; does not block)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (2 PIE clients; Ctrl, Alt, both, neither for 3 s each: server-received Move magnitude 0.800 / 0.900 / 0.800 / 1.000; pace 0.800 / 0.900 / 0.800 / 1.000 of the walk speed (160 / 180 / 160 / 200 cm/s); no step above the movement component's acceleration/braking on any owner frame; no client-to-server RPC beyond the ServerMove family in the walk phases; Run + Ctrl gives run speed; an informant (stub state) gets the same paces)
+**Deviations**: ADVISORY — absolute paces are those of the reparented sample's 200 cm/s walk; the AC's 112 / 126 / 112 / 140 cm/s need SCL's WalkSpeedCmPerSec (140) and its quantiser (SCL-010, not built); the pace is asserted as the ratio, which is what the quantiser keeps. 'Baseline acceleration/braking' is the CMC's own model until SCL's shaping. The Run phase reaches the sample's sprint through the pass-through IA_Run and the sample Blueprint then sends its own UpdateInputState_Server pawn RPC: a prototype adapter, recorded for retirement with SCL-010 / story 093 (walk-slower itself sends nothing). Informant: the prototype owner state plus IMC_Informant on the owner (the Roster transition in play is story 071). ServerUpdateCamera is the engine's client camera update (ADR-0015 disables it later). Alt focus side effects: none observed in PIE with simulated keys; a physical Alt press in a PIE window can still focus the editor menu bar (manual check).
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/Input/WalkSlowerModifierTest.cpp`
+Run result: OBSERVED — in-play walk-slower paces (production/qa/evidence/story-094-controller-transport-skeleton/02, 04); server numbers from the PIE test
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

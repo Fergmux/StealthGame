@@ -117,6 +117,11 @@ namespace StealthInputLint
 			{
 				Findings.Add(FString::Printf(TEXT("%s: value type %s, expected %s"), Spec.Name, *ValueTypeName((*Found)->ValueType), *ValueTypeName(Spec.ValueType)));
 			}
+			if ((*Found)->bConsumeInput != Spec.bConsumeInput)
+			{
+				Findings.Add(FString::Printf(TEXT("%s: bConsumeInput %s, expected %s (InputAssetSpec.h)"), Spec.Name, (*Found)->bConsumeInput ? TEXT("true") : TEXT("false"),
+					Spec.bConsumeInput ? TEXT("true") : TEXT("false")));
+			}
 			LintTriggers((*Found)->Triggers, Spec.Name, Findings);
 		}
 		for (const TPair<FString, const UInputAction*>& Pair : ActionsByName)

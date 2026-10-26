@@ -1,12 +1,12 @@
 # Story 005: AC 1 EntryPointSet
 
 > **Epic**: Input & Interaction Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -69,13 +69,13 @@ Prototype replaced: `StealthCharacter.cpp` `SetupPlayerInputComponent`, `OnAssas
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the
-planned ones; `/dev-story` replaces the list with the files it changed; `/story-done`
-checks scope against it.*
+*The code and test files this story changed (written by /dev-story; /story-done checks scope against it).*
 
 - `Source/StealthGameplay/Public/Server/Core/StealthPawnCommandComponent.h`
 - `Source/StealthGameplay/Private/Core/StealthPawnCommandComponent.cpp`
-- `Source/StealthGameplay/Private/Tests/Input/EntryPointSetTest.cpp` (class `FInputEntryPointSetTest`, name `StealthGame.Input.EntryPointSet`)
+- `Source/StealthGameplay/Public/Server/Core/PawnCommandTypes.h`
+- `Source/StealthGameplay/Public/View/Core/StealthGait.h`
+- `Source/StealthGameplay/Private/Tests/Input/EntryPointSetTest.cpp`
 
 ---
 
@@ -100,7 +100,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Input/EntryPointSetTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Input.EntryPointSet`, 2026-10-26)
 
 ---
 
@@ -108,3 +108,13 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/input-interaction-framework/story-002-pawn-command-core-skeleton.md`; cross-epic: shared-character-locomotion (stories not yet written; `AStealthPawn` carrying the component)
 - Unlocks: `production/epics/input-interaction-framework/story-006-no-caller-identity-parameter.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (IIF batch 13: command/reply types, core, hub, reply step, transport, seams, spikes V2/V3/V5, input ACs; D53 integration of the production input path)
+**Criteria**: 1/1 passing (reflected entry points exactly Move, Look, Traverse, InteractBegin, InteractEnd, PrepareBegin, PrepareEnd, Attack, Hide; none an RPC; one non-replicated component per pawn; each discrete entry point submits its kind, Move and Look submit nothing)
+**Deviations**: Decision (logged): every entry point is a UFUNCTION() with no specifiers (the QL-proposed resolution of the 'listed by reflection' defect); Hide is one UFUNCTION with FHideCommand covering HideEnter/HideExit. WriteActionState and QueryCanBegin are not declared yet (FActionState and the dry run arrive with stories iif-069 and iif-027+). Human commands reach the same entry points through FScopedCommandOrigin opened by ingress (opaque mailbox/sink/epoch; no identity). The Move intent is re-applied by the component every tick (tick enabled only while an intent is held).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Input/EntryPointSetTest.cpp`; full suite in `production/qa/evidence/iif-command-path-2026-10-26/full-suite.txt`
+Run result: N/A — reflection set; the entry points in play are observed through story iif-094's run
+**Reviewed by**: lead-programmer focused review (sonnet; 3 medium + 6 low findings, all fixed except the documented limits) + self-review, IIF batch 13

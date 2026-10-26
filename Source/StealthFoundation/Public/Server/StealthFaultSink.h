@@ -40,6 +40,10 @@ enum class EStealthFault : uint8
 	QueueMisuse = 14,
 	/** A Round Event Log call refused as misuse, e.g. a second header write (Detail: EStealthRoundLogMisuse). */
 	RoundLogMisuse = 15,
+	/** A command reached a slot or dry run whose EActionType has no live predicate (ADR-0011 section 6; Detail: EActionType). */
+	CommandNoPredicate = 16,
+	/** A pawn command seam was missing or misused, e.g. a core built without a queue (ADR-0011; Detail: EPawnCommandMisuse). */
+	CommandMisuse = 17,
 };
 
 /**

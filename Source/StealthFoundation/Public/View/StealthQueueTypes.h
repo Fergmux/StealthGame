@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "View/CommandReplyTypes.h"
 #include "View/StealthRosterTypes.h"
 
 /**
@@ -86,15 +87,5 @@ struct FEpochToken
 	constexpr bool operator!=(const FEpochToken& Other) const { return !(*this == Other); }
 };
 
-/**
- * The client command sequence (ADR-0011: `(PossessionEpoch, Seq)`; ADR-0011 owns its meaning). Declared here
- * because FCommandPayload (ADR-0002 section 2a) names it and the IIF ingress is built later.
- */
-struct FClientCommandSeq
-{
-	uint16 PossessionEpoch = 0;
-	uint32 Seq = 0;
-
-	constexpr bool operator==(const FClientCommandSeq& Other) const { return PossessionEpoch == Other.PossessionEpoch && Seq == Other.Seq; }
-	constexpr bool operator!=(const FClientCommandSeq& Other) const { return !(*this == Other); }
-};
+// FClientCommandSeq (ADR-0011) moved to View/CommandReplyTypes.h as a USTRUCT (story iif-001): it travels in
+// ServerPawnCommand and the reply batch. FCommandPayload (ADR-0002 section 2a) still names it through the include above.
