@@ -1,12 +1,12 @@
 # Story 013: IsRunning with hysteresis
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -60,9 +60,15 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp` (`IsRunning`)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (`IsRunning()` accessor)
-- `Source/StealthGameplay/Private/Tests/Locomotion/IsRunningHysteresisTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGame/Private/StealthCharacter.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/IsRunningHysteresisTest.cpp`
 
 ---
 
@@ -84,7 +90,7 @@ Test: IsRunning hysteresis (AC-SCL-08)
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Locomotion/IsRunningHysteresisTest.cpp`, test name `StealthGame.Locomotion.IsRunningHysteresis` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.IsRunningHysteresis`, 2026-10-26)
 
 ---
 
@@ -92,3 +98,13 @@ Test: IsRunning hysteresis (AC-SCL-08)
 
 - Depends on: `production/epics/shared-character-locomotion/story-010-speed-tiers.md`
 - Unlocks: `production/epics/shared-character-locomotion/story-028-informant-respawn-takes-over-unseen-crowd-pawn.md` (eligibility reads `IsRunning`), `production/epics/input-interaction-framework/EPIC.md` (legality)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: true above 300, true down to 275, false below; no toggle in the +-10 dither from either state; falls 0.300 s after Run released at 450 (0.29 +- 1 frame); false under a Strike pose and in the traversal mode above 300
+**Deviations**: The traversal is the MOVE_Flying stub and the strike a stubbed pose (stories 047/048 and the IIF action state re-assert them). ISharedPawnStateView's server adapter over the movement component is the IIF epic's; the prototype AStealthCharacter::IsRunning now reads the production value.
+**Test Evidence**: `StealthGame.Locomotion.IsRunningHysteresis`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: N/A - IsRunning is unreplicated server state with no presentation
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

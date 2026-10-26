@@ -1,12 +1,12 @@
 # Story 018: AI path following enters only through Move
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -59,8 +59,17 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (`RequestDirectMove`, `RequestPathMove` overrides)
-- `Source/StealthGameplay/Private/Tests/Locomotion/AiPathFollowRoutesThroughMoveTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGame/Private/StealthNpcController.cpp`
+- `Source/StealthGame/Public/StealthNpcController.h`
+- `Source/StealthGame/Private/Tests/Locomotion/NpcControllerMoveOnlyTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/AiPathFollowRoutesThroughMoveTest.cpp`
 
 ---
 
@@ -82,7 +91,7 @@ Test: AI path following routes through Move (AC-SCL-40)
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Locomotion/AiPathFollowRoutesThroughMoveTest.cpp`, test name `StealthGame.Locomotion.AiPathFollowRoutesThroughMove` — must exist and pass; retained screenshot of an NPC walking its path in `production/qa/evidence/` (player-observable)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.AiPathFollowRoutesThroughMove`, `StealthGame.Locomotion.NpcControllerMoveOnly` (the production crowd controller: route done 0.5 cm from the goal, 0 backstop hits, watchdog drops a blocked route), 2026-10-26)
 
 ---
 
@@ -90,3 +99,13 @@ Test: AI path following routes through Move (AC-SCL-40)
 
 - Depends on: `production/epics/shared-character-locomotion/story-011-release-baseline-stop.md`, `story-012-turn-shaping.md`; `production/epics/input-interaction-framework/EPIC.md` (`Move`), `production/epics/crowd-npc-behaviour/EPIC.md` (follower)
 - Unlocks: `production/epics/shared-character-locomotion/story-019-npc-pace-distribution.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: ~60 s cornered route, 0 backstop hits, |Direction| only {0.8, 0.9, 1.0}, no jump over speed x dt, release at 140 stops in 0.75 s over 52.5 cm; negative control: RequestDirectMove/RequestPathMove counted twice, moved nothing
+**Deviations**: A minimal test follower drives the NPC (the Crowd follower does not exist; it must re-run this test). The prototype AStealthNpcController was rewritten as a Move-only follower so the live crowd keeps walking. SetActorLocation/LaunchCharacter spies are replaced by a per-frame displacement bound (non-virtual engine calls).
+**Test Evidence**: `StealthGame.Locomotion.AiPathFollowRoutesThroughMove`, `StealthGame.Locomotion.NpcControllerMoveOnly` (the production crowd controller: route done 0.5 cm from the goal, 0 backstop hits, watchdog drops a blocked route); full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: OBSERVED - production/qa/evidence/story-010-speed-tiers/ (crowd walking)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

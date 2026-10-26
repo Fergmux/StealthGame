@@ -64,9 +64,10 @@ namespace StealthInputSpec
 
 	/**
 	 * One gameplay action: its asset name, value type, owning context, default keys and whether it consumes its keys.
-	 * bConsumeInput false (D53 integration, story iif-094): IA_Run and IA_Traverse let LeftShift and SpaceBar also reach
-	 * the reparented sample Blueprint's IA_Sprint and IA_Jump (its gait speeds and traversal), because the SCL speed-tier
-	 * and traversal stories that replace those have not landed. Every other action consumes its keys, so the sample's
+	 * bConsumeInput false (D53 integration, story iif-094): IA_Traverse lets SpaceBar also reach the reparented sample
+	 * Blueprint's IA_Jump (its traversal), because the SCL traversal stories that replace it have not landed. IA_Run
+	 * consumes LeftShift since story SCL-010 (the production speed tiers replaced the sample sprint shim and its
+	 * UpdateInputState_Server RPC). Every other action consumes its keys, so the sample's
 	 * IMC_Sandbox (lower priority) never sees Move, Look, LeftControl (the sample's jog toggle, D37) or the command keys.
 	 */
 	struct FActionSpec
@@ -93,7 +94,7 @@ namespace StealthInputSpec
 				{ { EKeys::LeftControl, EKeyShape::Scalar, 0.2f }, { EKeys::LeftAlt, EKeyShape::Scalar, 0.1f } } },
 			{ TEXT("IA_Ping"), EInputActionValueType::Boolean, CommonContext, { { EKeys::G }, { EKeys::Gamepad_DPad_Up } } },
 			{ TEXT("IA_Menu"), EInputActionValueType::Boolean, CommonContext, { { EKeys::Escape }, { EKeys::Gamepad_Special_Right } } },
-			{ TEXT("IA_Run"), EInputActionValueType::Boolean, ActiveContext, { { EKeys::LeftShift }, { EKeys::Gamepad_LeftThumbstick } }, false },
+			{ TEXT("IA_Run"), EInputActionValueType::Boolean, ActiveContext, { { EKeys::LeftShift }, { EKeys::Gamepad_LeftThumbstick } }, true },
 			{ TEXT("IA_Traverse"), EInputActionValueType::Boolean, ActiveContext, { { EKeys::SpaceBar }, { EKeys::Gamepad_FaceButton_Bottom } }, false },
 			{ TEXT("IA_Interact"), EInputActionValueType::Boolean, ActiveContext, { { EKeys::E }, { EKeys::Gamepad_FaceButton_Left } } },
 			{ TEXT("IA_Prepare"), EInputActionValueType::Boolean, ActiveContext, { { EKeys::Q }, { EKeys::Gamepad_LeftTrigger } } },

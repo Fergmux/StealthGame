@@ -1,46 +1,28 @@
 #include "StealthMovementComponent.h"
 #include "StealthCharacter.h"
-#include "StealthSettings.h"
 
-UStealthPrototypeMovementComponent::UStealthPrototypeMovementComponent()
+EStealthGaitLegality UStealthPrototypeMovementComponent::GetGaitLegality() const
 {
-	// NPCs follow paths through the same acceleration model players use, so motion matching
-	// produces the same kind of starts, stops and turns for both (Pillar 1, TD-FEASIBILITY risk 1).
-	NavMovementProperties.bUseAccelerationForPaths = true;
+	// Prototype legality source (the replicated owner-visible LifeState) until the Roster adapter is injected (iif-071).
+	const AStealthCharacter* Character = Cast<AStealthCharacter>(CharacterOwner);
+	if (Character != nullptr && Character->IsInformant())
+	{
+		return EStealthGaitLegality::Informant;
+	}
+	return Super::GetGaitLegality();
 }
 
-float UStealthPrototypeMovementComponent::GetMaxSpeed() const
+bool UStealthPrototypeMovementComponent::IsCommandedMotionDisabled() const
 {
-	float Speed = Super::GetMaxSpeed();
-
-	if (const AStealthCharacter* Character = Cast<AStealthCharacter>(CharacterOwner))
-	{
-		if (Character->IsHeldInPlace())
-		{
-			return 0.f;
-		}
-		if (Character->IsInformant())
-		{
-			Speed = FMath::Min(Speed, UStealthSettings::Get()->InformantMaxSpeed);
-		}
-	}
-	return Speed;
+	const AStealthCharacter* Character = Cast<AStealthCharacter>(CharacterOwner);
+	return Character != nullptr && Character->IsHeldInPlace();
 }
 
-void UStealthPrototypeMovementComponent::SetMovementMode(EMovementMode NewMovementMode, uint8 NewCustomMode)
+void UStealthPrototypeMovementComponent::OnTraversalModeRefused()
 {
-	// The Game Animation Sample switches to MOVE_Flying for the duration of a traversal montage.
-	// Informants may not use parkour: refuse the switch and cancel the traversal.
-	if (NewMovementMode == MOVE_Flying)
+	// The Game Animation Sample switches to MOVE_Flying for a traversal montage: cancel the montage the refusal stranded.
+	if (AStealthCharacter* Character = Cast<AStealthCharacter>(CharacterOwner))
 	{
-		if (AStealthCharacter* Character = Cast<AStealthCharacter>(CharacterOwner))
-		{
-			if (Character->IsInformant())
-			{
-				Character->CancelTraversal();
-				return;
-			}
-		}
+		Character->CancelTraversal();
 	}
-	Super::SetMovementMode(NewMovementMode, NewCustomMode);
 }

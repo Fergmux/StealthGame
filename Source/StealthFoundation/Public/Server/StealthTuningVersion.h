@@ -19,7 +19,7 @@
  * increase TuningSchemaVersion by one and APPEND {new version, new fingerprint} below. Never edit or
  * remove an old entry (append-only; removal is not detected by the test, a known limit).
  */
-inline constexpr int32 TuningSchemaVersion = 1;
+inline constexpr int32 TuningSchemaVersion = 2;
 
 /** One bumped schema version and the fingerprint it was bumped for. */
 struct FTuningSchemaHistoryEntry
@@ -31,4 +31,5 @@ struct FTuningSchemaHistoryEntry
 /** Append-only history of {Version, Fingerprint}, one entry per bumped version, oldest first. */
 inline constexpr FTuningSchemaHistoryEntry TuningSchemaHistory[] = {
 	{ 1, 0x4250230bdd621e89ull }, // 2026-10-25, story tdc-043: the eight canonical keys of story tdc-040
+	{ 2, 0xc0f6026e36e2ff58ull }, // 2026-10-26, story SCL-003: the 55 Shared Character & Locomotion keys
 };

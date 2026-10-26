@@ -3,6 +3,8 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Server/ActionHub.h"
+#include "View/Core/StealthPawn.h"
+#include "View/Core/StealthPawnMovementComponent.h"
 
 const FName UPawnCommandComponent::ComponentName(TEXT("PawnCommand"));
 
@@ -65,8 +67,17 @@ FVector UPawnCommandComponent::GetWorldMoveInput() const
 
 void UPawnCommandComponent::Move(FVector2D Direction, EGait Gait)
 {
-	MoveIntent = Direction;
+	// R5.1: Direction is clamped to length 1 for every source; the server applies no dead zone.
+	MoveIntent = Direction.Size() > 1.0 ? Direction.GetSafeNormal() : Direction;
 	GaitIntent = Gait;
+	// The requested gait reaches the movement model (and ServerMove's FLAG_Custom_0 on an owning client).
+	if (const AStealthPawn* Pawn = GetOwner<AStealthPawn>())
+	{
+		if (UStealthMovementComponent* Movement = Pawn->GetStealthMovement())
+		{
+			Movement->SetRequestedGait(Gait);
+		}
+	}
 	const bool bHeld = !MoveIntent.IsNearlyZero();
 	if (bHeld != IsComponentTickEnabled())
 	{

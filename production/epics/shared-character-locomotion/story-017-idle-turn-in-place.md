@@ -1,12 +1,12 @@
 # Story 017: Idle turn-in-place after a held look beyond the yaw limit
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -60,9 +60,14 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp` (idle turn-to-look)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (`PhysicsRotation`)
-- `Source/StealthGameplay/Private/Tests/Locomotion/IdleTurnInPlaceTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/IdleTurnInPlaceTest.cpp`
 
 ---
 
@@ -84,7 +89,7 @@ Test: idle turn-in-place (AC-SCL-45)
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Locomotion/IdleTurnInPlaceTest.cpp`, test name `StealthGame.Locomotion.IdleTurnInPlace` — must exist and pass; retained screenshot of the idle body turning toward a held look in `production/qa/evidence/` (player-observable)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.IdleTurnInPlace`, 2026-10-26)
 
 ---
 
@@ -92,3 +97,13 @@ Test: idle turn-in-place (AC-SCL-45)
 
 - Depends on: `production/epics/shared-character-locomotion/story-012-turn-shaping.md`, `story-021-look-envelope-700-deg-spin.md`
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: first body turn at frame 30 (0.500 s), 120 deg/s, stops at 34 deg head yaw; human (control rotation written as ServerMove does) and AI (Look) traces identical
+**Deviations**: Story 021 (the F6 filter) is not built: the unclamped target is the control rotation, which is the F6 input. The prototype crowd AI keeps its control rotation on its pawn orientation, so it never turns to look.
+**Test Evidence**: `StealthGame.Locomotion.IdleTurnInPlace`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: OBSERVED - inconclusive stills (production/qa/evidence/story-010-speed-tiers/09, 10: the sample close camera clips into the body); the AC is carried by the headless test
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

@@ -1,12 +1,12 @@
 # Story 046: Kit coping heights match the pawn's traversal capability heights
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -59,8 +59,13 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/TraversalHeightValidation.cpp` (planned)
-- `Source/StealthGameplay/Private/Tests/Locomotion/TraversalHeightsMatchKitTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/TraversalHeightsMatchKitTest.cpp`
 
 ---
 
@@ -82,7 +87,7 @@ Test: traversal heights match the kit (AC-SCL-34)
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Locomotion/TraversalHeightsMatchKitTest.cpp`, test name `StealthGame.Locomotion.TraversalHeightsMatchKit` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.TraversalHeightsMatchKit`, 2026-10-26)
 
 ---
 
@@ -90,3 +95,13 @@ Test: traversal heights match the kit (AC-SCL-34)
 
 - Depends on: `production/epics/shared-character-locomotion/story-002-body-constants-published.md`, `story-003-tuning-keys-registered.md`; `production/epics/level-socket-contract/EPIC.md` (coping manifest, `OnLayoutReady`)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: kit copings at 80/120/160 (+- tolerance) validate; out-of-tolerance copings fail with id and height; bands follow the snapshot
+**Deviations**: The LSC coping manifest and its OnLayoutReady call are the LSC epic's (not built): StealthLocomotion::ValidateKitCopingHeights is the SCL side it calls.
+**Test Evidence**: `StealthGame.Locomotion.TraversalHeightsMatchKit`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: N/A - layout validation has no presentation
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

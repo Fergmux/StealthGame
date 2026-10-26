@@ -1,12 +1,12 @@
 # Story 016: Commanded displacement is separate from external displacement
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -59,8 +59,14 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (displacement accumulator)
-- `Source/StealthGameplay/Private/Tests/Locomotion/CommandedVsExternalDisplacementTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/CommandedVsExternalDisplacementTest.cpp`
 
 ---
 
@@ -82,7 +88,7 @@ Test: commanded versus external displacement (AC-SCL-15)
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Locomotion/CommandedVsExternalDisplacementTest.cpp`, test name `StealthGame.Locomotion.CommandedVsExternalDisplacement` — must exist and pass (not directly player-observable, no screenshot)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.CommandedVsExternalDisplacement`, 2026-10-26)
 
 ---
 
@@ -90,3 +96,13 @@ Test: commanded versus external displacement (AC-SCL-15)
 
 - Depends on: `production/epics/shared-character-locomotion/story-010-speed-tiers.md`
 - Unlocks: `production/epics/input-interaction-framework/EPIC.md` (interaction move-cancel)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: 20 brushes move the tending pawn 0.000 cm, commanded 0 after the brushes and a 10 cm push (the push lands in the external bucket), a nudge moved 19.4 cm and reads 19.4 (20 +- 1)
+**Deviations**: Commanded includes the release stop that ends commanded motion; any capsule move between two moves is external (decision log). Read cumulatively since the test start.
+**Test Evidence**: `StealthGame.Locomotion.CommandedVsExternalDisplacement`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: N/A - CommandedDisplacementCm is server state with no presentation
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

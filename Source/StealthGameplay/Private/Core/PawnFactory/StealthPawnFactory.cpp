@@ -104,6 +104,20 @@ FStealthSpawnResult UStealthPawnFactory::SpawnSharedPawn(const FStealthSpawnRequ
 	if (Request.Participant.IsValid() && ActiveHooks != nullptr)
 	{
 		Result.Bind = ActiveHooks->BindPawn(Request.Participant, Pawn, Request.ExpectedEpoch);
+		if (IsRosterRejection(Result.Bind))
+		{
+			// ADR-0010 3.1 (story SCL-007): a rejected bind destroys the pawn before FinishSpawning, so it never begins
+			// play and no client ever receives it; the code goes back to the caller (Round maps it to BindFailed).
+			CreationTokens.Remove(FObjectKey(Pawn));
+			--SpawnCount;
+			if (URosterStore* Roster = URosterStore::Get(World))
+			{
+				// The pawn never begins play, so its EndPlay never drops the handle bookkeeping NotifyPawnSpawned added.
+				Roster->ClearBinding(Pawn, EEndPlayReason::Destroyed);
+			}
+			Pawn->Destroy();
+			return Result;
+		}
 	}
 	// 4. Finish spawning.
 	Pawn->FinishSpawning(Request.Transform);

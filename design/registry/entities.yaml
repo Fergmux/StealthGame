@@ -7506,3 +7506,22 @@ constants:
     note: "mirrored from design/gdd/shared-character-locomotion.md:575 (CR-15.7, TD-REG-1, story tdc-030)"
     added: 2026-10-25
     revised: ""
+
+  # ─── Owner-table mirror (CR-15.7, TD-REG-1, story tdc-030) ───
+  # Appended by tools/ci/lint/registry_mirror.py: every owner Tuning Knobs key that had no constant above,
+  # with the owner table's default, ranges, audience and latch. This supersedes the 2026-10-24 scope note
+  # in the constants header (single-GDD keys are now mirrored); the owner table stays authoritative.
+  - name: TraversalHurdleHeightCm
+    status: active
+    source: design/gdd/shared-character-locomotion.md
+    referenced_by:
+      - design/gdd/shared-character-locomotion.md
+    value: 120
+    unit: cm
+    hard_range: 100-140
+    safe_range: 115-125
+    audience: Client
+    latch: Round
+    note: "mirrored from design/gdd/shared-character-locomotion.md:547 (CR-15.7, TD-REG-1, story tdc-030)"
+    added: 2026-10-26
+    revised: ""

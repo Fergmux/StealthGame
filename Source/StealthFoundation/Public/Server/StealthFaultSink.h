@@ -50,6 +50,11 @@ enum class EStealthFault : uint8
 	 * Never carries a secret, a sub-seed or a key.
 	 */
 	SeedMisuse = 18,
+	/**
+	 * A Shared Pawn movement backstop fired (ADR-0010 section 6; story SCL-014/018): a direct or path move request, or the
+	 * traversal movement mode asked for a pawn that may not traverse (Detail: EStealthMovementMisuse).
+	 */
+	MovementMisuse = 19,
 };
 
 /**

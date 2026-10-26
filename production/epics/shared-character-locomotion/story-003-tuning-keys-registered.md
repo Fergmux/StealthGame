@@ -1,12 +1,12 @@
 # Story 003: Every SCL tuning key registered with its audience and latch, invariants enforced
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -61,10 +61,22 @@
 
 ## Files
 
-- `Source/StealthFoundation/Private/Tuning/` schema rows for the SCL owner (planned; location follows the TDC epic's generator layout)
-- `Config/DefaultGame.ini` (verify only; the pinned values already exist)
-- `Source/StealthGameplay/Private/Tests/Locomotion/KeysRegisteredTest.cpp` (planned)
-- `Source/StealthGameplay/Private/Tests/Locomotion/GameNetworkManagerPinTest.cpp` (I-SCL-15 boot test, planned)
+- `Source/StealthFoundation/Public/View/StealthTuningPublicSubstructs.h`
+- `Source/StealthFoundation/Public/Server/StealthTuningSubstructs.h`
+- `Source/StealthFoundation/Public/Server/StealthServerTuning.h`
+- `Source/StealthFoundation/Public/View/StealthClientTuning.h`
+- `Source/StealthFoundation/Public/Server/StealthTuningData.h`
+- `Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl`
+- `Source/StealthFoundation/Public/Server/StealthTuningVersion.h`
+- `Source/StealthFoundation/Private/Tuning/StealthTuningInvariants.cpp`
+- `Source/StealthFoundation/Public/Server/StealthTuningInvariants.h`
+- `Source/StealthFoundation/Public/Server/Testing/StealthSclTuningKnobs.h`
+- `Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp`
+- `Source/StealthGame/Public/StealthSettings.h`
+- `design/gdd/shared-character-locomotion.md`
+- `design/registry/entities.yaml`
+- `Source/StealthGameplay/Private/Tests/Locomotion/KeysRegisteredTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/GameNetworkManagerPinTest.cpp`
 
 ---
 
@@ -86,7 +98,7 @@ Test: SCL tuning keys registered, invariants enforced (AC-SCL-35)
 **Required evidence**:
 - Logic (BLOCKING): `Source/StealthGameplay/Private/Tests/Locomotion/KeysRegisteredTest.cpp`, test name `StealthGame.Locomotion.KeysRegistered` (CR-15 lint) — must exist and pass; plus the I-SCL-15 boot test `GameNetworkManagerPinTest.cpp`; a smoke check line in `production/qa/smoke-*.md` for the shipped data asset
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.KeysRegistered`, `StealthGame.Locomotion.GameNetworkManagerPin`; `StealthGame.Tuning.SchemaComplete` (now pins the 55 SCL defaults) and `StealthGame.Tuning.SchemaVersionBumped` (TuningSchemaVersion 2), 2026-10-26)
 
 ---
 
@@ -94,3 +106,13 @@ Test: SCL tuning keys registered, invariants enforced (AC-SCL-35)
 
 - Depends on: TDC Exit B pipeline (`production/epics/tuning-data-config/EPIC.md`; stories not yet written, path TBD)
 - Unlocks: every other story in this epic that reads a key, starting with `story-002-body-constants-published.md`, `story-009-stop-floor.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: 55 SCL keys registered (47 Client, 8 ServerOnly) with type, default, hard/safe range, audience, latch, owner SCL and unit; retired InformantMaxSpeedCmPerSec and FootstepStrideWalkCm absent; I-SCL-1..9, 12, 13, 15, 16 each pass the defaults and reject a violating case; I-SCL-10/11/14 registered offline; I-SCL-15 boot check against the AGameNetworkManager CDO; negative controls (unregistered key, flipped audience) fail the lint
+**Deviations**: TraversalHurdleHeightCm (1.2 m, spike SCL-045 final) registered with this story and added to the GDD Tuning Knobs table, I-SCL-2 and entities.yaml (decision log). Three Unit cells map to the CR-15.2 suffix the key ends with (PerSec, Hz, Frac). Every SCL row rejects (decision log). I-SCL-12 reads SessionSoftTimeoutSec 3 as a pending owner constant until Session registers it. UStealthSettings RunSpeedThreshold / InformantMaxSpeed removed (CR-13). The smoke-check line for the shipped data asset is not applicable yet: no Default preset asset exists (tdc-056). Carried AC-SCL-01 key clause from SCL-004: SchemaComplete asserts one key per name (no per-kind variant).
+**Test Evidence**: `StealthGame.Locomotion.KeysRegistered`, `StealthGame.Locomotion.GameNetworkManagerPin`; `StealthGame.Tuning.SchemaComplete` (now pins the 55 SCL defaults) and `StealthGame.Tuning.SchemaVersionBumped` (TuningSchemaVersion 2); full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: N/A - tuning schema rows and validator invariants; nothing renders
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

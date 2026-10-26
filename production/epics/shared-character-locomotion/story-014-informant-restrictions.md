@@ -1,12 +1,12 @@
 # Story 014: Informants walk only, cannot traverse, and SCL refuses the traversal mode
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -60,8 +60,16 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (`SetMovementMode` backstop)
-- `Source/StealthGameplay/Private/Tests/Locomotion/InformantRestrictionsTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGame/Private/StealthMovementComponent.cpp`
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/InformantRestrictionsTest.cpp`
 
 ---
 
@@ -83,7 +91,7 @@ Test: informant restrictions (AC-SCL-10)
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Locomotion/InformantRestrictionsTest.cpp`, test name `StealthGame.Locomotion.InformantRestrictions` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.InformantRestrictions`, 2026-10-26)
 
 ---
 
@@ -91,3 +99,13 @@ Test: informant restrictions (AC-SCL-10)
 
 - Depends on: `production/epics/shared-character-locomotion/story-010-speed-tiers.md`; `production/epics/input-interaction-framework/EPIC.md` (`Traverse` entry, `NotNow` reply)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1 (SCL half): informant Run peaks at 140, effective gait Walk; MOVE_Flying refused for an informant and a braced pawn (MovementMisuse/RefusedTraversalMode to the fault sink); an Active pawn may enter it. The IIF NotNow reply to Traverse is DEFERRED to the IIF epic (no Traverse legality predicate exists yet), as the story allows
+**Deviations**: EStealthFault::MovementMisuse = 19 added.
+**Test Evidence**: `StealthGame.Locomotion.InformantRestrictions`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: OBSERVED - production/qa/evidence/story-010-speed-tiers/ (WalkSlower informant phases: no Run above walk)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

@@ -47,4 +47,10 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Objectives")
 	FObjectivesTuning_Public Objectives_Public;
+
+	UPROPERTY(EditAnywhere, Category = "Locomotion")
+	FLocomotionTuning_Public Locomotion_Public;
+
+	UPROPERTY(EditAnywhere, Category = "Locomotion")
+	FLocomotionTuning_Server Locomotion_Server;
 };

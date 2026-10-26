@@ -1,12 +1,12 @@
 # Story 012: Turn shaping, latched reversal and pivot
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -59,9 +59,14 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp` (turn, reversal, pivot)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (`PhysicsRotation`, `ComputeOrientToMovementRotation`)
-- `Source/StealthGameplay/Private/Tests/Locomotion/TurnShapingTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/TurnShapingTest.cpp`
 
 ---
 
@@ -83,7 +88,7 @@ Test: turn shaping (AC-SCL-07)
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Locomotion/TurnShapingTest.cpp`, test name `StealthGame.Locomotion.TurnShaping` — must exist and pass; a retained screenshot of a walking arc and a pivot in `production/qa/evidence/` (player-observable)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.TurnShaping`, 2026-10-26)
 
 ---
 
@@ -91,3 +96,13 @@ Test: turn shaping (AC-SCL-07)
 
 - Depends on: `production/epics/shared-character-locomotion/story-010-speed-tiers.md`, `story-011-release-baseline-stop.md`
 - Unlocks: `production/epics/shared-character-locomotion/story-017-idle-turn-in-place.md`, `story-018-ai-path-follow-routes-through-move.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: walk 60 deg/s r 133.7 cm (107.0 at 112), run 180 deg/s r 143.3 cm; 119 deg arcs, 121 and 150 deg stop-pivot (120 deg/s)-restart with <= 60 deg per 0.5 s; 115-125 deg at 10 Hz enters the pivot once
+**Deviations**: Post-pivot-exit hysteresis added (idle pivot needs PivotExitAngleDeg + ReversalHysteresisDeg until the pawn passes PivotSpeedCmPerSec; decision log). 'Changes between arc and pivot at most once' is measured as stop-pivot entries.
+**Test Evidence**: `StealthGame.Locomotion.TurnShaping`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: OBSERVED - production/qa/evidence/story-010-speed-tiers/
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

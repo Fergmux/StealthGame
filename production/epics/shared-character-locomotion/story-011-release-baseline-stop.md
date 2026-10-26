@@ -1,12 +1,12 @@
 # Story 011: Release-to-stop baseline, identical for AI and for owner prediction
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -61,8 +61,15 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (`FSavedMove_Stealth`, `PrepMoveFor`, `SetMoveFor`)
-- `Source/StealthGameplay/Private/Tests/Locomotion/ReleaseBaselineStopTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/ReleaseBaselineStopTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Locomotion/LocomotionPieTest.cpp`
 
 ---
 
@@ -84,7 +91,7 @@ Test: release-to-stop baseline and owner prediction (AC-SCL-06, spike P1)
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Locomotion/ReleaseBaselineStopTest.cpp`, test name `StealthGame.Locomotion.ReleaseBaselineStop` — must exist and pass; the P1 owner-vs-server divergence figure recorded in `production/qa/spikes/`; a retained screenshot of the stop in `production/qa/evidence/` (player-observable)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.ReleaseBaselineStop`; `StealthGame.Locomotion.PIE.LocomotionPie.ReleaseBaselineStopUnderLag`, 2026-10-26)
 
 ---
 
@@ -92,3 +99,13 @@ Test: release-to-stop baseline and owner prediction (AC-SCL-06, spike P1)
 
 - Depends on: `production/epics/shared-character-locomotion/story-009-stop-floor.md`, `story-010-speed-tiers.md`; `production/epics/input-interaction-framework/EPIC.md` (IIF AC 24 owner-predicted path)
 - Unlocks: `production/epics/shared-character-locomotion/story-012-turn-shaping.md`, `story-027-handover-blend.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: 140 -> 0 in 0.75 s over 52.5 cm, 112 -> 0 in 0.60 s over 33.6 cm, peak deceleration 186.7 cm/s^2, AI and owner paths identical; at PktLag 100 ms the owner stops in 0.746 s over 50.2 cm and the server in 0.751 s over 51.7 cm, rest positions 0.13 cm apart
+**Deviations**: PktLag 100 ms is applied to every driver (stricter than client-only). FSavedMove_Stealth carries Run (FLAG_Custom_0) and restores the pace, stop latch, reversal and pivot latches on replay; no custom move-data container was needed (P1).
+**Test Evidence**: `StealthGame.Locomotion.ReleaseBaselineStop`; `StealthGame.Locomotion.PIE.LocomotionPie.ReleaseBaselineStopUnderLag`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: OBSERVED - production/qa/evidence/story-010-speed-tiers/ (stop stills)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

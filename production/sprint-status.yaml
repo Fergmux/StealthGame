@@ -2228,11 +2228,11 @@ stories:
     name: "Every SCL tuning key registered with its audience and latch, invariants enforced"
     file: "production/epics/shared-character-locomotion/story-003-tuning-keys-registered.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-006"
     name: "Every Shared Pawn comes from one spawn site"
@@ -2248,91 +2248,131 @@ stories:
     name: "A rejected bind destroys the pawn before FinishSpawning"
     file: "production/epics/shared-character-locomotion/story-007-factory-bind-fail-destroys.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-009"
     name: "Stop floor: every stop to rest lasts at least StopMinSec"
     file: "production/epics/shared-character-locomotion/story-009-stop-floor.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-010"
     name: "Speed tiers, pace quantisation and effective-gait clamps"
     file: "production/epics/shared-character-locomotion/story-010-speed-tiers.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-011"
     name: "Release-to-stop baseline, identical for AI and for owner prediction"
     file: "production/epics/shared-character-locomotion/story-011-release-baseline-stop.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-012"
     name: "Turn shaping, latched reversal and pivot"
     file: "production/epics/shared-character-locomotion/story-012-turn-shaping.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-013"
     name: "IsRunning with hysteresis"
     file: "production/epics/shared-character-locomotion/story-013-isrunning-hysteresis.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-014"
     name: "Informants walk only, cannot traverse, and SCL refuses the traversal mode"
     file: "production/epics/shared-character-locomotion/story-014-informant-restrictions.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-015"
     name: "Planted brace: step-into-stance entry, then no translation and no yaw"
     file: "production/epics/shared-character-locomotion/story-015-brace-planted.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-016"
     name: "Commanded displacement is separate from external displacement"
     file: "production/epics/shared-character-locomotion/story-016-commanded-vs-external-displacement.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
+    sprint: 2
+  - id: "scl-017"
+    name: "Idle turn-in-place after a held look beyond the yaw limit"
+    file: "production/epics/shared-character-locomotion/story-017-idle-turn-in-place.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+  - id: "scl-018"
+    name: "AI path following enters only through Move"
+    file: "production/epics/shared-character-locomotion/story-018-ai-path-follow-routes-through-move.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+  - id: "scl-046"
+    name: "Kit coping heights match the pawn's traversal capability heights"
+    file: "production/epics/shared-character-locomotion/story-046-traversal-heights-match-kit.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+  - id: "scl-047"
+    name: "Traversal eligibility matrix (F5) from body facing"
+    file: "production/epics/shared-character-locomotion/story-047-traversal-eligibility-matrix.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "st-005"
     name: "SipHash-2-4 passes the published reference vectors"

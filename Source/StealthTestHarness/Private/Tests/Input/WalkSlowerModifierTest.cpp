@@ -8,10 +8,10 @@
 // controller (simulated key events through Enhanced Input, as spike V1).
 // What the server measures: the received acceleration magnitude of client 1's pawn over the CMC's max acceleration
 // (ServerMove carries the acceleration; the CMC clamps it to 1), and the steady-state 2D speed. Recorded deviations (see
-// the story's Completion Notes): the absolute paces 112 / 126 / 140 cm/s need SCL's WalkSpeedCmPerSec (140) and its
-// pace quantiser (SCL-010, not built), so the pace is asserted as a ratio of the neither-held walk speed; "baseline
-// acceleration" is the movement component's own acceleration and braking model (max acceleration; braking deceleration
-// plus braking friction) on the owner's per-frame simulation until SCL's shaping lands; the informant
+// the story's Completion Notes): since SCL-010 the absolute paces 112 / 126 / 140 cm/s are asserted (WalkSpeedCmPerSec
+// 140 and the pace quantiser), the run phase at RunSpeedCmPerSec 450 and with no RPC beyond the move family (the sample
+// sprint shim and its UpdateInputState_Server are gone); "baseline acceleration" is the movement model's acceleration
+// and braking bound (max acceleration plus max braking deceleration) on the owner's per-frame simulation; the informant
 // clause uses stub state (the prototype owner state Informant plus IMC_Informant on the owner; the Roster-driven swap is
 // story iif-071) and repeats the four modifier phases; "only ServerMove" allows the engine's
 // ServerUpdateCamera background (ADR-0015 disables client camera updates later).
@@ -30,6 +30,7 @@
 #include "StealthGameMode.h"
 #include "StealthPlayerController.h"
 #include "StealthPlayerState.h"
+#include "StealthSettings.h"
 #include "View/Input/PawnCommandClient.h"
 #include "View/Core/StealthPawn.h"
 #include "View/Core/WalkSlowerScale.h"
@@ -44,6 +45,8 @@ namespace WalkSlowerModifierTestData
 	constexpr uint64 SampleFrames = 60;
 	constexpr double MagnitudeTolerance = 0.03;
 	constexpr double PaceRatioTolerance = 0.05;
+	/** Steady-state speed tolerance of the absolute paces (the walker turns a slow circle). */
+	constexpr double AbsolutePaceToleranceCm = 3.0;
 
 	struct FPhase
 	{
@@ -76,6 +79,8 @@ namespace WalkSlowerModifierTestData
 
 	/** Yaw added to the walker's control rotation per frame, so it walks a circle (~3 m radius) instead of into a wall. */
 	constexpr double CircleYawPerFrameDeg = 0.6;
+	/** The run phase turns this much faster (90 deg/s, inside RunTurnRateDegPerSec 180): a ~2.9 m circle at 450 cm/s. */
+	constexpr double RunCircleYawFactor = 2.5;
 	/** The no-step clause is checked in the transition window after each modifier change. */
 	constexpr uint64 TransitionFrames = 40;
 
@@ -98,6 +103,7 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 	TArray<FString> Labels;
 	const TCHAR* L(FString Label) { return *Labels.Add_GetRef(MoveTemp(Label)); }
 	inline static FString PreviousNetworkTimeout;
+	inline static int32 PreviousNpcCount = -1;
 
 	TUniquePtr<FOutgoingRpcSpy> Spy;
 	TArray<WalkSlowerModifierTestData::FSample> Samples;
@@ -115,6 +121,11 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 			PreviousNetworkTimeout = Timeout->GetString();
 			Timeout->Set(WalkSlowerModifierTestData::NetworkTimeoutCeilingSeconds, ECVF_SetByCode);
 		}
+		// No crowd: since SCL-018 the crowd walks through Move like a player, and a crowd pawn crossing the walker's circle
+		// blocked it (a flaky 'both' phase, 2026-10-26); the measured paces need an open street (spike SCL-045 pattern).
+		UStealthSettings* Settings = GetMutableDefault<UStealthSettings>();
+		PreviousNpcCount = Settings->NpcCount;
+		Settings->NpcCount = 0;
 	}
 
 	AFTER_ALL()
@@ -125,6 +136,10 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 			{
 				Timeout->Set(*PreviousNetworkTimeout, ECVF_SetByCode);
 			}
+		}
+		if (PreviousNpcCount >= 0)
+		{
+			GetMutableDefault<UStealthSettings>()->NpcCount = PreviousNpcCount;
 		}
 	}
 
@@ -256,7 +271,7 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 					LastSpeed = -1.0;
 					Spy->Records.Reset();
 				});
-			Network.UntilServer(L(FString::Printf(TEXT("phase %s: 3 s, sampled at the end"), Phase.Name)), [this](FBasePIENetworkComponentState& Server)
+			Network.UntilServer(L(FString::Printf(TEXT("phase %s: 3 s, sampled at the end"), Phase.Name)), [this, Phase](FBasePIENetworkComponentState& Server)
 				{
 					ACharacter* Walker = ServerWalker(Server.World);
 					if (Walker && GFrameCounter > PhaseStart + PhaseFrames - SampleFrames)
@@ -265,8 +280,8 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 						FSample& S = Samples.Last();
 						S.MagnitudeSum += Move->GetCurrentAcceleration().Size() / FMath::Max(Move->GetMaxAcceleration(), 1.f);
 						S.SpeedSum += Walker->GetVelocity().Size2D();
-						// The pace the movement component targets: its max speed times the analog input modifier.
-						S.TargetSum += Move->GetMaxSpeed() * Move->GetAnalogInputModifier();
+						// The pace the movement model targets (SCL F1: its max speed already applies the quantised pace).
+						S.TargetSum += Move->GetMaxSpeed();
 						++S.Count;
 					}
 					// No step above the movement component's own acceleration / braking model on any frame of the owner's
@@ -275,7 +290,8 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 					const ACharacter* Owner = WalkerPC ? Cast<ACharacter>(WalkerPC->GetPawn()) : nullptr;
 					if (WalkerPC)
 					{
-						WalkerPC->SetControlRotation(WalkerPC->GetControlRotation() + FRotator(0.0, CircleYawPerFrameDeg, 0.0));
+						// Running turns faster so the run circle stays as tight as the walk circle (radius = speed / yaw rate).
+						WalkerPC->SetControlRotation(WalkerPC->GetControlRotation() + FRotator(0.0, CircleYawPerFrameDeg * (Phase.bRun ? RunCircleYawFactor : 1.0), 0.0));
 					}
 					if (Owner && GFrameCounter <= PhaseStart + TransitionFrames)
 					{
@@ -324,17 +340,22 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 				TestRunner->AddInfo(FString::Printf(TEXT("WALKSLOWER %s: server-received magnitude %.3f (expected %.2f), target pace %.1f cm/s (ratio %.3f), measured speed %.1f cm/s, max step over limit %.2f"),
 					Phase.Name, Magnitude, Phase.ExpectedMagnitude, Target, ReferenceTarget > 0.0 ? Target / ReferenceTarget : 0.0, Speed, S.MaxStepOver));
 				ASSERT_THAT(IsNear(Phase.ExpectedMagnitude, Magnitude, MagnitudeTolerance, L(FString::Printf(TEXT("%s: server-received Move magnitude"), Phase.Name))));
-				if (!Phase.bRun)
+				if (Phase.bSkipStepCheck)
+				{
+					// The settle phase only absorbs the stop after the run and the informant swap.
+				}
+				else if (!Phase.bRun)
 				{
 					ASSERT_THAT(IsNear(Phase.ExpectedMagnitude, Target / ReferenceTarget, PaceRatioTolerance, L(FString::Printf(TEXT("%s: pace as a ratio of the walk speed"), Phase.Name))));
+					// SCL-010: the absolute pace the server's movement model targets, WalkSpeedCmPerSec x the quantised pace
+					// (112 / 126 / 140 cm/s). The measured speed is logged only: the drifting circle can graze level geometry.
+					ASSERT_THAT(IsNear(140.0 * Phase.ExpectedMagnitude, Target, AbsolutePaceToleranceCm, L(FString::Printf(TEXT("%s: absolute pace %.1f cm/s"), Phase.Name, Target))));
 				}
 				else
 				{
-					ASSERT_THAT(IsTrue(Target > ReferenceTarget * 1.2, L(FString::Printf(TEXT("%s: run speed, not a scaled walk (%.1f vs walk %.1f)"), Phase.Name, Target, ReferenceTarget))));
+					ASSERT_THAT(IsNear(450.0, Target, AbsolutePaceToleranceCm, L(FString::Printf(TEXT("%s: the run tier at 450 cm/s (%.1f)"), Phase.Name, Target))));
 				}
-				// The Run tier is still the reparented sample's sprint (SCL-010 owns the run speed and its shaping), so the
-				// no-step clause is asserted for the walk-slower paces only.
-				if (!Phase.bRun && !Phase.bSkipStepCheck)
+				if (!Phase.bSkipStepCheck)
 				{
 					ASSERT_THAT(IsTrue(S.MaxStepOver <= 0.0, L(FString::Printf(TEXT("%s: no speed step above the acceleration/braking limit"), Phase.Name))));
 				}
@@ -342,10 +363,9 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 			for (int32 Index = 0; Index < Samples.Num(); ++Index)
 			{
 				TestRunner->AddInfo(FString::Printf(TEXT("WALKSLOWER %s: other client-to-server RPCs [%s]"), Phases[Index].Name, *Samples[Index].OtherRpcs));
-				// The Run phase reaches the reparented sample's sprint through the pass-through IA_Run, and the sample Blueprint
-				// sends its own UpdateInputState_Server pawn RPC for it (a prototype adapter, retired with SCL-010 / story 093);
-				// the walk-slower phases must send nothing but the move family.
-				if (!Phases[Index].bRun && !Phases[Index].bSkipStepCheck)
+				// Since SCL-010 IA_Run consumes LeftShift and the gait rides ServerMove (FLAG_Custom_0): every phase, Run
+				// included, sends nothing but the move family.
+				if (!Phases[Index].bSkipStepCheck)
 				{
 					ASSERT_THAT(IsTrue(Samples[Index].OtherRpcs.IsEmpty(), L(FString::Printf(TEXT("%s: no client-to-server RPC beyond ServerMove: [%s]"), Phases[Index].Name, *Samples[Index].OtherRpcs))));
 				}

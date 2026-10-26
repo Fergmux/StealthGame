@@ -20,6 +20,7 @@
 #include "StealthCharacter.h"
 #include "Server/Spikes/StealthSpikeHooks.h" // THROWAWAY SPIKE hook (IVP S10 re-run, story-056)
 #include "View/Input/PawnCommandClient.h"
+#include "Server/Core/StealthPawnCommandComponent.h"
 
 namespace
 {
@@ -348,6 +349,25 @@ FString AStealthPlayerController::ConsoleCommand(const FString& Command, bool bW
 void AStealthPlayerController::StealthBot(int32 PlayerIndex, const FString& Action)
 {
 #if !UE_BUILD_SHIPPING
+	// Owner-side drive (dev only, run-and-observe for the SCL movement stories): "drive <forward 0..1> <run 0|1> [<yaw>]"
+	// holds a Move intent on this controller's own pawn exactly as a held stick does (owner prediction + ServerMove);
+	// "drive 0" releases it. PlayerIndex is ignored (the local pawn).
+	if (Action.StartsWith(TEXT("drive"), ESearchCase::IgnoreCase))
+	{
+		TArray<FString> Parts;
+		Action.ParseIntoArrayWS(Parts);
+		const float Forward = Parts.Num() > 1 ? FCString::Atof(*Parts[1]) : 0.0f;
+		const bool bRun = Parts.Num() > 2 && FCString::Atoi(*Parts[2]) != 0;
+		if (Parts.Num() > 3)
+		{
+			SetControlRotation(FRotator(GetControlRotation().Pitch, FCString::Atof(*Parts[3]), 0.0));
+		}
+		if (AStealthPawn* Body = Cast<AStealthPawn>(GetPawn()))
+		{
+			Body->GetPawnCommand()->Move(FVector2D(0.0, Forward), bRun ? EGait::Run : EGait::Walk);
+		}
+		return;
+	}
 	ServerStealthBot(PlayerIndex, Action);
 #endif
 }

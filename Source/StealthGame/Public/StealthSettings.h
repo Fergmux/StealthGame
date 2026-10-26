@@ -91,13 +91,8 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "NPC Penalty", meta = (ClampMin = "1"))
 	int32 NpcKillLimit = 3;
 
-	/** Horizontal speed above which a character counts as running, cm/s (walk is 200). */
-	UPROPERTY(Config, EditAnywhere, Category = "Movement", meta = (ClampMin = "0"))
-	float RunSpeedThreshold = 300.f;
-
-	/** Speed cap for informants (they may only walk), cm/s. */
-	UPROPERTY(Config, EditAnywhere, Category = "Movement", meta = (ClampMin = "50"))
-	float InformantMaxSpeed = 200.f;
+	// RunSpeedThreshold and InformantMaxSpeed were removed by story SCL-003 (TDC CR-13: no config back door): IsRunning
+	// is the SCL tuning key RunSpeedThresholdCmPerSec with hysteresis, and informants are clamped to the Walk gait.
 
 	/** Seconds of held interaction needed to complete an objective. */
 	UPROPERTY(Config, EditAnywhere, Category = "Objectives", meta = (ClampMin = "0.5"))

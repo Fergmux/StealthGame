@@ -1,0 +1,67 @@
+AIPATH 64.6 s route, 3833 frames with Move input, |Direction| seen {0.80 0.90 1.00 }, max jump over speed x dt 0.0000 cm, backstop hits 0; release at 140.0 cm/s: stop 0.750 s over 51.33 cm
+BRACE entry from 140 cm/s: 51.33 cm, then speed 0.00
+BRACE hold under Move: max displacement 0.000 cm, max yaw change 0.000 deg
+DISPLACEMENT 20 brushes: tending pawn moved max 0.000 cm, commanded 0.000 cm
+DISPLACEMENT nudge: moved 19.44 cm, commanded reading 19.44 cm
+DISPLACEMENT push: moved 10.00 cm, commanded 0.000, external delta 10.000
+INFORMANT Run: peak 140.00 cm/s, effective gait Walk
+ISRUNNING falls 0.300 s after Run is released at 450 (frame 18; speed now 270.0)
+LOCOPIE bind-fail spawn: pawn null, bind code 9
+LOCOPIE bind-fail: new client pawns at the rejected spawn point over 60 frames: 0
+LOCOPIE lag 100 ms: owner stop 0.758 s over 53.08 cm; server stop 0.750 s over 53.08 cm; rest positions 0.00 cm apart
+LOCOPIE owner speed at release 140.00 cm/s
+MIDBRACE run 0: ends 1 (inside the mode-change call 1), callback 2096 end 2096 flush 2097, server PrepareEnd 1
+MIDBRACE run 1: ends 1 (inside the mode-change call 1), callback 2138 end 2138 flush 2139, server PrepareEnd 1
+MIDBRACE run 2: ends 1 (inside the mode-change call 1), callback 2181 end 2181 flush 2182, server PrepareEnd 1
+MIDBRACE run 3: ends 1 (inside the mode-change call 1), callback 2223 end 2223 flush 2224, server PrepareEnd 1
+MIDBRACE run 4: ends 1 (inside the mode-change call 1), callback 2266 end 2266 flush 2267, server PrepareEnd 1
+NPCCONTROLLER route done in 18.3 s, 0.5 cm from the goal, backstop hits 0, off-pace frames 0
+RELEASESTOP 112 cm/s AI Move path: 0.600 s (36 frames) over 32.67 cm, peak decel 186.67 cm/s^2
+RELEASESTOP 112 cm/s owner path: 0.600 s (36 frames) over 32.67 cm, peak decel 186.67 cm/s^2
+RELEASESTOP 140 cm/s AI Move path: 0.750 s (45 frames) over 51.33 cm, peak decel 186.67 cm/s^2
+RELEASESTOP 140 cm/s owner path: 0.750 s (45 frames) over 51.33 cm, peak decel 186.67 cm/s^2
+SPEEDTIERS (0, Run): steady 0.00 cm/s (peak 0.00), effective gait Run, pace 0.00
+SPEEDTIERS (0.5, Walk): steady 112.00 cm/s (peak 112.00), effective gait Walk, pace 0.80
+SPEEDTIERS (0.9, Walk): steady 126.00 cm/s (peak 126.00), effective gait Walk, pace 0.90
+SPEEDTIERS (1, Run) informant: steady 140.00 cm/s (peak 140.00), effective gait Walk, pace 1.00
+SPEEDTIERS (1, Run): steady 450.00 cm/s (peak 450.00), effective gait Run, pace 0.00
+SPEEDTIERS (1, Walk) braced: steady 0.00 cm/s (peak 0.00), effective gait Walk, pace 0.00
+SPEEDTIERS (1, Walk): steady 140.00 cm/s (peak 140.00), effective gait Walk, pace 1.00
+STOPFLOOR parity: max per-frame speed difference 0.0000 cm/s; first rest frame player 164, NPC 164
+STOPFLOOR v0 112 walk: 0.600 s (36 frames), latched d_eff 186.67 cm/s^2
+STOPFLOOR v0 140 walk: 0.750 s (45 frames), latched d_eff 186.67 cm/s^2
+STOPFLOOR v0 20 walk: 0.517 s (31 frames), latched d_eff 40.00 cm/s^2
+STOPFLOOR v0 200 run: 0.500 s (30 frames), latched d_eff 400.00 cm/s^2
+STOPFLOOR v0 37 walk: 0.500 s (30 frames), latched d_eff 74.00 cm/s^2
+STOPFLOOR v0 450 run: 0.750 s (45 frames), latched d_eff 600.00 cm/s^2
+STOPFLOOR v0 60 walk: 0.500 s (30 frames), latched d_eff 120.00 cm/s^2
+STOPFLOOR v0 93 walk: 0.517 s (31 frames), latched d_eff 186.00 cm/s^2
+TURNINPLACE AI focus: first turned frame 30 (0.500 s), max rate 120.0 deg/s, final body yaw 66.00, head yaw 34.00
+TURNINPLACE human look: first turned frame 30 (0.500 s), max rate 120.0 deg/s, final body yaw 66.00, head yaw 34.00
+TURNSHAPING oscillation 115-125 at 10 Hz: 1 stop-pivot entries
+TURNSHAPING reversal 119: pivot 0, min speed 140.0, max rate 60.0 deg/s, max 0.5 s change 30.0 deg, final speed 140.0, final yaw 119.0
+TURNSHAPING reversal 121: pivot 1, min speed 0.0, max rate 120.0 deg/s, max 0.5 s change 60.0 deg, final speed 140.0, final yaw 121.0
+TURNSHAPING reversal 150: pivot 1, min speed 0.0, max rate 120.0 deg/s, max 0.5 s change 60.0 deg, final speed 140.0, final yaw 150.0
+TURNSHAPING run 450: max heading rate 180.00 deg/s, circle fit r 143.3 cm, speed 450.0, pivot 0
+TURNSHAPING walk 112: max heading rate 60.00 deg/s, circle fit r 107.0 cm, speed 112.0, pivot 0
+TURNSHAPING walk 140: max heading rate 60.00 deg/s, circle fit r 133.7 cm, speed 140.0, pivot 0
+WALKSLOWER Left Alt: other client-to-server RPCs []
+WALKSLOWER Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s, max step over limit 0.00
+WALKSLOWER Left Ctrl: other client-to-server RPCs []
+WALKSLOWER Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s, max step over limit 0.00
+WALKSLOWER Run + Left Ctrl: other client-to-server RPCs []
+WALKSLOWER Run + Left Ctrl: server-received magnitude 1.000 (expected 1.00), target pace 450.0 cm/s (ratio 3.214), measured speed 450.0 cm/s, max step over limit 0.00
+WALKSLOWER both: other client-to-server RPCs []
+WALKSLOWER both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s, max step over limit 0.00
+WALKSLOWER informant: Left Alt: other client-to-server RPCs []
+WALKSLOWER informant: Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 0.0 cm/s, max step over limit 0.00
+WALKSLOWER informant: Left Ctrl: other client-to-server RPCs []
+WALKSLOWER informant: Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 88.4 cm/s, max step over limit 0.00
+WALKSLOWER informant: both: other client-to-server RPCs []
+WALKSLOWER informant: both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 0.0 cm/s, max step over limit 0.00
+WALKSLOWER informant: neither (settle): other client-to-server RPCs []
+WALKSLOWER informant: neither (settle): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s, max step over limit 0.00
+WALKSLOWER neither (reference): other client-to-server RPCs []
+WALKSLOWER neither (reference): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s, max step over limit 0.00
+WALKSLOWER neither: other client-to-server RPCs []
+WALKSLOWER neither: server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s, max step over limit 0.00

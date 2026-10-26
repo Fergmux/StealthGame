@@ -9,6 +9,7 @@
 #include "Server/StealthTuningConstants.h"
 #include "Server/StealthTuningDerived.h"
 #include "Misc/StringBuilder.h"
+#include "GameFramework/GameNetworkManager.h"
 
 namespace
 {
@@ -66,6 +67,127 @@ namespace
 		return ETuningCheck::Pass;
 	}
 
+
+	// ---- Shared Character & Locomotion rows (GDD shared-character-locomotion.md, Invariants sent to TDC, CR-15.6;
+	// story SCL-003). Every SCL row rejects: each is a hard cross-field constraint a pawn rule relies on (decision logged
+	// 2026-10-26: the GDD names I-SCL-4/5/16 reject and states the others as "must"). One value set for every pawn.
+
+	/** T_stop,max = max(WalkStopSec / WalkSpeedScaleMinMult, RunStopSec): the longest stop to rest (I-SCL-12/15/16). */
+	double LongestStopSec(const FLocomotionTuning_Public& L)
+	{
+		return FMath::Max(static_cast<double>(L.WalkStopSec) / FMath::Max(static_cast<double>(L.WalkSpeedScaleMinMult), UE_DOUBLE_SMALL_NUMBER), static_cast<double>(L.RunStopSec));
+	}
+
+	/** I-SCL-1: WalkSpeed < RunThreshold - RunExitHysteresis and RunThreshold < RunSpeed. */
+	ETuningCheck CheckISCL1(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const FLocomotionTuning_Public& L = V.Locomotion_Public;
+		const FLocomotionTuning_Server& S = V.Locomotion_Server;
+		return L.WalkSpeedCmPerSec < S.RunSpeedThresholdCmPerSec - S.RunExitHysteresisCmPerSec && S.RunSpeedThresholdCmPerSec < L.RunSpeedCmPerSec
+			? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/**
+	 * I-SCL-2: Min < Vault - Tol, and the vault, hurdle and climb bands never touch: Vault + Tol < Hurdle - Tol and
+	 * Hurdle + Tol < Climb - Tol (the hurdle band was added with the 1.2 m height, spike SCL-045).
+	 */
+	ETuningCheck CheckISCL2(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const FLocomotionTuning_Public& L = V.Locomotion_Public;
+		const float Tol = L.TraversalHeightToleranceCm;
+		return L.TraversalMinHeightCm < L.TraversalVaultHeightCm - Tol
+			&& L.TraversalVaultHeightCm + Tol < L.TraversalHurdleHeightCm - Tol
+			&& L.TraversalHurdleHeightCm + Tol < L.TraversalClimbHeightCm - Tol
+			? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-3: T_B(1+eta) < T_A(1-eta) and T_C(1+eta) < T_B(1-eta), eta = AnimTierHysteresisPct / 100. */
+	ETuningCheck CheckISCL3(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const FLocomotionTuning_Public& L = V.Locomotion_Public;
+		const double Eta = L.AnimTierHysteresisPct / 100.0;
+		return L.AnimTierBMinScreenPct * (1.0 + Eta) < L.AnimTierAMinScreenPct * (1.0 - Eta) && L.AnimTierCMinScreenPct * (1.0 + Eta) < L.AnimTierBMinScreenPct * (1.0 - Eta)
+			? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-4: WalkStopSec >= 0.5 (no sudden stop from a steady walk). */
+	ETuningCheck CheckISCL4(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		return V.Locomotion_Public.WalkStopSec >= 0.5f ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-5: WalkSpeedScaleMinMult <= 0.8, the minimum of the fixed pace set {0.8, 0.9, 1.0}. */
+	ETuningCheck CheckISCL5(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		return V.Locomotion_Public.WalkSpeedScaleMinMult <= 0.8f ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-6: WalkTurnRate <= 0.573 * WalkSpeed * WalkSpeedScaleMinMult (turn radius >= 100 cm at the slowest pace). */
+	ETuningCheck CheckISCL6(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const FLocomotionTuning_Public& L = V.Locomotion_Public;
+		return L.WalkTurnRateDegPerSec <= 0.573 * L.WalkSpeedCmPerSec * L.WalkSpeedScaleMinMult ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-7: StarvationCatchUpMaxMult * WalkSpeed < RunThreshold - RunExitHysteresis (a catching-up walker never runs). */
+	ETuningCheck CheckISCL7(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const FLocomotionTuning_Server& S = V.Locomotion_Server;
+		return S.StarvationCatchUpMaxMult * V.Locomotion_Public.WalkSpeedCmPerSec < S.RunSpeedThresholdCmPerSec - S.RunExitHysteresisCmPerSec
+			? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-8: PawnSmoothSnapThresholdCm >= 3 * RunSpeed / PawnNetUpdateHz. */
+	ETuningCheck CheckISCL8(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const double Hz = FMath::Max(static_cast<double>(V.Locomotion_Server.PawnNetUpdateHz), UE_DOUBLE_SMALL_NUMBER);
+		return V.Locomotion_Public.PawnSmoothSnapThresholdCm >= 3.0 * V.Locomotion_Public.RunSpeedCmPerSec / Hz ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-9: PawnSmoothLocationSec >= 1 / PawnNetUpdateHz. */
+	ETuningCheck CheckISCL9(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const double Hz = FMath::Max(static_cast<double>(V.Locomotion_Server.PawnNetUpdateHz), UE_DOUBLE_SMALL_NUMBER);
+		return V.Locomotion_Public.PawnSmoothLocationSec >= 1.0 / Hz ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-12: InputStarvationSec >= 0.25 and InputStarvationSec + 0.05 + T_stop,max < SessionSoftTimeoutSec. */
+	ETuningCheck CheckISCL12(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const double Starvation = V.Locomotion_Server.InputStarvationSec;
+		return Starvation >= 0.25 && Starvation + 0.05 + LongestStopSec(V.Locomotion_Public) < StealthTuningPendingOwnerKeys::SessionSoftTimeoutSec
+			? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-13: FootstepCadenceFullPerSec >= FootstepCadenceSlowPerSec. */
+	ETuningCheck CheckISCL13(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		return V.Locomotion_Public.FootstepCadenceFullPerSec >= V.Locomotion_Public.FootstepCadenceSlowPerSec ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/**
+	 * I-SCL-15 (ADR-0010 section 6, the boot check): the engine movement-network values the AGameNetworkManager class default
+	 * object read from Config/DefaultGame.ini must equal / satisfy the keys (StealthTuningEngineNetPins::Check). Evaluated at
+	 * preset load (server boot), so a mismatch rejects the preset and fails boot.
+	 */
+	ETuningCheck CheckISCL15(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		return StealthTuningEngineNetPins::Check(StealthTuningEngineNetPins::Read(*GetDefault<AGameNetworkManager>()), V) ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** I-SCL-16: StopMinSec <= min(WalkStopSec, RunStopSec) (the floor never lengthens a stop from a steady pace). */
+	ETuningCheck CheckISCL16(const FStealthServerTuning& V, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		const FLocomotionTuning_Public& L = V.Locomotion_Public;
+		return L.StopMinSec <= FMath::Min(L.WalkStopSec, L.RunStopSec) ? ETuningCheck::Pass : ETuningCheck::Reject;
+	}
+
+	/** Offline rows never run at preset load (the harness, R3 or the clip authoring check enforces them). */
+	ETuningCheck CheckOffline(const FStealthServerTuning&, const FTuningDerived&, const FTuningCheckContext&)
+	{
+		return ETuningCheck::Pass;
+	}
+
 	/** The preset-load rows (none offline), TDC rows first. Owner epics append their rows here. */
 	const FTuningInvariant LoadRows[] = {
 		{ "I-1", "TDC", &CheckI1 },
@@ -73,6 +195,30 @@ namespace
 		{ "I-3", "TDC", &CheckI3 },
 		{ "I-4", "TDC", &CheckI4 },
 		{ "I-5", "TDC", &CheckI5 },
+		{ "I-SCL-1", "SCL", &CheckISCL1 },
+		{ "I-SCL-2", "SCL", &CheckISCL2 },
+		{ "I-SCL-3", "SCL", &CheckISCL3 },
+		{ "I-SCL-4", "SCL", &CheckISCL4 },
+		{ "I-SCL-5", "SCL", &CheckISCL5 },
+		{ "I-SCL-6", "SCL", &CheckISCL6 },
+		{ "I-SCL-7", "SCL", &CheckISCL7 },
+		{ "I-SCL-8", "SCL", &CheckISCL8 },
+		{ "I-SCL-9", "SCL", &CheckISCL9 },
+		{ "I-SCL-12", "SCL", &CheckISCL12 },
+		{ "I-SCL-13", "SCL", &CheckISCL13 },
+		{ "I-SCL-15", "SCL", &CheckISCL15 },
+		{ "I-SCL-16", "SCL", &CheckISCL16 },
+	};
+
+	/**
+	 * Offline rows (listed so the registration is visible; never evaluated at preset load): I-SCL-10 the listen host's p99
+	 * frame time (harness frame-time capture), I-SCL-11 the F8 animation budget with the measured per-tier cost (spike R3),
+	 * I-SCL-14 TraversalReachCm <= 1.1 x the authored clip approach length (traversal clip authoring check).
+	 */
+	const FTuningInvariant OfflineRows[] = {
+		{ "I-SCL-10", "SCL", &CheckOffline, nullptr, nullptr, true },
+		{ "I-SCL-11", "SCL", &CheckOffline, nullptr, nullptr, true },
+		{ "I-SCL-14", "SCL", &CheckOffline, nullptr, nullptr, true },
 	};
 
 	/** True when Key ends with Tail (byte-wise). */
@@ -89,9 +235,9 @@ TConstArrayView<FTuningInvariant> GetTuningInvariants()
 
 TConstArrayView<FTuningInvariant> GetTuningOfflineInvariants()
 {
-	// No offline row is registered yet (O-CNB-6, O-CNB-7, I-SCL-10/11/14 and the LSC layout predicate
-	// arrive with their owner epics and are enforced by those owners' CI or load-time checks).
-	return TConstArrayView<FTuningInvariant>();
+	// The SCL offline rows (story SCL-003); O-CNB-6, O-CNB-7 and the LSC layout predicate arrive with their owner epics
+	// and are enforced by those owners' CI or load-time checks.
+	return MakeArrayView(OfflineRows);
 }
 
 TArray<FTuningRangePair> FindTuningRangePairs(TConstArrayView<FTuningSchemaRow> Schema)
@@ -123,4 +269,28 @@ TArray<FTuningRangePair> FindTuningRangePairs(TConstArrayView<FTuningSchemaRow> 
 		}
 	}
 	return Pairs;
+}
+
+StealthTuningEngineNetPins::FValues StealthTuningEngineNetPins::Read(const AGameNetworkManager& Manager)
+{
+	FValues Out;
+	Out.MaxClientUpdateInterval = Manager.MAXCLIENTUPDATEINTERVAL;
+	Out.MaxClientForcedUpdateDuration = Manager.MaxClientForcedUpdateDuration;
+	Out.MaxMoveDeltaTime = Manager.MaxMoveDeltaTime;
+	Out.bMovementTimeDiscrepancyDetection = Manager.bMovementTimeDiscrepancyDetection;
+	Out.bMovementTimeDiscrepancyResolution = Manager.bMovementTimeDiscrepancyResolution;
+	return Out;
+}
+
+bool StealthTuningEngineNetPins::Check(const FValues& Engine, const FStealthServerTuning& Values)
+{
+	const double Starvation = Values.Locomotion_Server.InputStarvationSec;
+	const double MaxInterval = Engine.MaxClientUpdateInterval;
+	const double LongestStop = FMath::Max(static_cast<double>(Values.Locomotion_Public.WalkStopSec) / FMath::Max(static_cast<double>(Values.Locomotion_Public.WalkSpeedScaleMinMult), UE_DOUBLE_SMALL_NUMBER),
+		static_cast<double>(Values.Locomotion_Public.RunStopSec));
+	return FMath::IsNearlyEqual(MaxInterval, Starvation, 1e-4)
+		&& Engine.MaxMoveDeltaTime <= MaxInterval + 1e-4
+		&& Engine.MaxClientForcedUpdateDuration + 1e-4 >= Starvation + LongestStop + 0.25
+		&& Engine.bMovementTimeDiscrepancyDetection
+		&& Engine.bMovementTimeDiscrepancyResolution;
 }

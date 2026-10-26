@@ -27,6 +27,7 @@
 #include "Server/StealthTuningData.h"
 #include "Server/StealthTuningSchema.h"
 #include "Server/Testing/StealthNegativeControl.h"
+#include "Server/Testing/StealthSclTuningKnobs.h"
 #include "Tuning/StealthTuningSchemaGen.h"
 #include "UObject/UnrealType.h"
 #include "View/StealthClientTuning.h"
@@ -253,8 +254,14 @@ bool FTuningSchemaCompleteTest::RunTest(const FString& Parameters)
 	// preset class default object, each against the committed GDD Default column; every schema key is pinned.
 	const FStealthServerTuning Initialisers;
 	const UStealthTuningData* PresetCdo = GetDefault<UStealthTuningData>();
-	TestEqual(TEXT("every schema key has a GDD pin and every pin a schema key"), static_cast<int32>(UE_ARRAY_COUNT(GddDefaults)), Compiled.Num());
-	for (const FPin& Pin : GddDefaults)
+	// The pins: the TDC Canonical Tunables plus every owner table registered so far (SCL Tuning Knobs, story SCL-003).
+	TArray<FPin> Pins(GddDefaults, UE_ARRAY_COUNT(GddDefaults));
+	for (const StealthSclTuningKnobs::FKnob& Knob : StealthSclTuningKnobs::Knobs)
+	{
+		Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
+	}
+	TestEqual(TEXT("every schema key has a GDD pin and every pin a schema key"), Pins.Num(), Compiled.Num());
+	for (const FPin& Pin : Pins)
 	{
 		const FString Key(Pin.Key);
 		const FTuningSchemaRow* Row = Compiled.FindByPredicate([&Pin](const FTuningSchemaRow& R) { return FCStringAnsi::Strcmp(R.Key, Pin.Key) == 0; });

@@ -7,6 +7,7 @@
 
 struct FStealthServerTuning;
 struct FTuningDerived;
+class AGameNetworkManager;
 
 /**
  * The cross-field tuning invariants (GDD Formulas "Invariants", CR-6 c; ADR-0004 section 3; stories
@@ -92,6 +93,38 @@ namespace StealthTuningPendingOwnerKeys
 {
 	inline constexpr int32 DeckCopiesFloorCount = 4;
 	inline constexpr int32 DeckActiveAppearancesMinCount = 6;
+	/**
+	 * Session's SessionSoftTimeoutSec (Session & Travel owner key, default 3), read by I-SCL-12 until the Session epic
+	 * registers it as a schema row (story SCL-003; the TD-TDC-I3 pattern).
+	 */
+	inline constexpr double SessionSoftTimeoutSec = 3.0;
+}
+
+/**
+ * I-SCL-15 (ADR-0010 section 6; story SCL-003): the engine's movement-network values are read from the
+ * AGameNetworkManager class default object (GlobalConfig, Config/DefaultGame.ini), process-wide and before any tuning
+ * applies, so they are pinned in config and checked against the SCL keys. True when MAXCLIENTUPDATEINTERVAL equals
+ * InputStarvationSec, MaxMoveDeltaTime <= MAXCLIENTUPDATEINTERVAL, MaxClientForcedUpdateDuration >=
+ * InputStarvationSec + T_stop,max + 0.25 s (T_stop,max = max(WalkStopSec / WalkSpeedScaleMinMult, RunStopSec)) and both
+ * movement-time discrepancy flags are on. The I-SCL-15 invariant row calls it on the CDO at preset load (boot).
+ */
+namespace StealthTuningEngineNetPins
+{
+	/** The AGameNetworkManager values I-SCL-15 compares (plain data, so a test can drift one without an actor). */
+	struct FValues
+	{
+		float MaxClientUpdateInterval = 0.0f;
+		float MaxClientForcedUpdateDuration = 0.0f;
+		float MaxMoveDeltaTime = 0.0f;
+		bool bMovementTimeDiscrepancyDetection = false;
+		bool bMovementTimeDiscrepancyResolution = false;
+	};
+
+	/** Reads the compared values from a manager (normally the class default object). */
+	STEALTHFOUNDATION_API FValues Read(const AGameNetworkManager& Manager);
+
+	/** The I-SCL-15 predicate over Engine and the tuning value set. */
+	STEALTHFOUNDATION_API bool Check(const FValues& Engine, const FStealthServerTuning& Values);
 }
 
 /**

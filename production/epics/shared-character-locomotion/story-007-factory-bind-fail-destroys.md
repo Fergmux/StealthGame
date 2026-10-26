@@ -1,12 +1,12 @@
 # Story 007: A rejected bind destroys the pawn before FinishSpawning
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -59,8 +59,10 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnFactory.cpp` (bind-failure branch)
-- `Source/StealthGameplay/Private/Tests/Locomotion/FactoryBindFailDestroysTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/PawnFactory/StealthPawnFactory.cpp`
+- `Source/StealthGameplay/Public/Server/Core/StealthPawnFactory.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/FactoryBindFailDestroysTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Locomotion/LocomotionPieTest.cpp`
 
 ---
 
@@ -82,7 +84,7 @@ Test: rejected bind destroys the pawn before `FinishSpawning` (AC-SCL-03)
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Locomotion/FactoryBindFailDestroysTest.cpp`, test name `StealthGame.Locomotion.FactoryBindFailDestroys` — must exist and pass (not player-observable, so no screenshot)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.FactoryBindFailDestroys` (call order, destroy before FinishSpawning, code returned); `StealthGame.Locomotion.PIE.LocomotionPie.FactoryBindFailNeverReplicates` (listen server + client: the real Roster rejects an unknown participant, 0 client pawns appear at the spawn point over 60 frames), 2026-10-26)
 
 ---
 
@@ -90,3 +92,13 @@ Test: rejected bind destroys the pawn before `FinishSpawning` (AC-SCL-03)
 
 - Depends on: `production/epics/shared-character-locomotion/story-006-single-spawn-site.md`; `production/epics/participant-state-roster/EPIC.md` (stubbed until built)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1
+**Deviations**: The client clause measures arrivals at the rejected spawn point on the client (not raw channel opens; the harness raw-bunch capture is not needed for a pawn that never finishes spawning).
+**Test Evidence**: `StealthGame.Locomotion.FactoryBindFailDestroys` (call order, destroy before FinishSpawning, code returned); `StealthGame.Locomotion.PIE.LocomotionPie.FactoryBindFailNeverReplicates` (listen server + client: the real Roster rejects an unknown participant, 0 client pawns appear at the spawn point over 60 frames); full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: N/A - a refused spawn shows nothing by design; the PIE test is the observation
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

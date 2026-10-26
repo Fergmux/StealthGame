@@ -89,7 +89,10 @@ public:
 	/** The class used when a request names none. */
 	void SetDefaultPawnClass(TSubclassOf<AStealthPawn> InClass) { DefaultPawnClass = InClass; }
 
-	/** ADR-0010 3.1 steps 1-5. Null Pawn on refusal (no authority, wrong thread, no class, spawn collision). */
+	/**
+	 * ADR-0010 3.1 steps 1-5. Null Pawn on refusal (no authority, wrong thread, no class, spawn collision) and on a rejected
+	 * BindPawn: the pawn is then destroyed before FinishSpawning and Result.Bind carries the rejection code (story SCL-007).
+	 */
 	FStealthSpawnResult SpawnSharedPawn(const FStealthSpawnRequest& Request);
 
 	/** True for a pawn this factory created (the server-only creation token). */

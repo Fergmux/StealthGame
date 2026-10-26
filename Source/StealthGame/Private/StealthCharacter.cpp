@@ -1,4 +1,6 @@
 #include "StealthCharacter.h"
+#include "Server/StealthTuningSubstructs.h"
+#include "View/Core/StealthPawnMovementComponent.h"
 #include "StealthBush.h"
 #include "StealthGame.h"
 #include "StealthGameMode.h"
@@ -206,7 +208,15 @@ bool AStealthCharacter::IsActiveAgent() const
 
 bool AStealthCharacter::IsRunning() const
 {
-	return FStealthRules::IsRunningSpeed(GetVelocity().Size2D(), UStealthSettings::Get()->RunSpeedThreshold);
+	// SCL R19 (story SCL-013): the movement component's IsRunning with hysteresis where moves are simulated (server, owner);
+	// a simulated proxy (presentation only) reads the same enter threshold from its replicated velocity.
+	if (GetLocalRole() != ROLE_SimulatedProxy)
+	{
+		const UStealthMovementComponent* Movement = GetStealthMovement();
+		return Movement != nullptr && Movement->IsRunning();
+	}
+	static const float ProxyThreshold = FLocomotionTuning_Server().RunSpeedThresholdCmPerSec;
+	return FStealthRules::IsRunningSpeed(GetVelocity().Size2D(), ProxyThreshold);
 }
 
 bool AStealthCharacter::IsInTraversal() const

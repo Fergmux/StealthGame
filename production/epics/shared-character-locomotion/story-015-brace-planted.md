@@ -1,12 +1,12 @@
 # Story 015: Planted brace: step-into-stance entry, then no translation and no yaw
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -61,10 +61,14 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp` (planted rule)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp`
-- `Source/StealthGameplay/Private/Tests/Locomotion/BracePlantedTest.cpp` (planned)
-- Content: brace entry pose database and chooser rows (by explicit path via MCP; never mass-save)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/BracePlantedTest.cpp`
 
 ---
 
@@ -86,7 +90,7 @@ Test: planted brace (AC-SCL-11)
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Locomotion/BracePlantedTest.cpp`, test name `StealthGame.Locomotion.BracePlanted` — must exist and pass; retained screenshot of the planted wide stance after entry in `production/qa/evidence/` (player-observable)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.BracePlanted`, 2026-10-26)
 
 ---
 
@@ -94,3 +98,13 @@ Test: planted brace (AC-SCL-11)
 
 - Depends on: `production/epics/shared-character-locomotion/story-010-speed-tiers.md`, `story-009-stop-floor.md`; `production/epics/input-interaction-framework/EPIC.md` (`FActionState`)
 - Unlocks: `production/epics/assassination-defence-reversal/EPIC.md` (consumes the planted brace)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1 (movement half): entry from 140 travels 52.5 cm (53 +- 10 %) then holds; 8 directions x Walk/Run for 2 s: 0 cm, 0 deg, brace kept, Run clamped. Head-look clause asserted by story 021 (not built); the step-into-stance clip is animation content (visible half DEFERRED)
+**Deviations**: Pose written by a stub (IIF FActionState writer not built).
+**Test Evidence**: `StealthGame.Locomotion.BracePlanted`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: N/A - no gameplay path writes ActionPose Brace yet (the prototype defence does not use the production pose), so it cannot be reached in play
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

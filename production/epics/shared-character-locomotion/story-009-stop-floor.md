@@ -1,12 +1,12 @@
 # Story 009: Stop floor: every stop to rest lasts at least StopMinSec
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -62,9 +62,14 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp` (planned; plain C++)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (`GetMaxBrakingDeceleration`)
-- `Source/StealthGameplay/Private/Tests/Locomotion/StopFloorTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/StopFloorTest.cpp`
 
 ---
 
@@ -86,7 +91,7 @@ Test: stop floor (AC-SCL-50, F2, D2)
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Locomotion/StopFloorTest.cpp`, test name `StealthGame.Locomotion.StopFloor` — must exist and pass (BLOCKING)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.StopFloor`, 2026-10-26)
 
 ---
 
@@ -94,3 +99,13 @@ Test: stop floor (AC-SCL-50, F2, D2)
 
 - Depends on: `production/epics/shared-character-locomotion/story-001-pawn-class-default-subobjects.md`, `story-003-tuning-keys-registered.md`
 - Unlocks: `production/epics/shared-character-locomotion/story-010-speed-tiers.md`, `story-011-release-baseline-stop.md`, `story-012-turn-shaping.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: 20/37/60/93 cm/s walk and 200 run stop in 0.50 s, 112 in 0.60, 140 and 450 in 0.75 (+- 1 frame), deceleration constant (latched), owner path and Move path traces equal frame by frame
+**Deviations**: None.
+**Test Evidence**: `StealthGame.Locomotion.StopFloor`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: OBSERVED - see production/qa/evidence/story-010-speed-tiers/ (walk/run/stop stills, shared batch capture)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

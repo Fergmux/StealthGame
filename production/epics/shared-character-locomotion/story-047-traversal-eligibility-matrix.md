@@ -1,12 +1,12 @@
 # Story 047: Traversal eligibility matrix (F5) from body facing
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready — unblocked 2026-10-25: the net-emulation / traversal spike (story 045) reported (production/qa/spikes/2026-10-25_SCL045-net-emulation-traversal.md); the kit heights vault 0.8 m, climb 1.6 m and the optional 1.2 m hurdle are final (sample actions Hurdle, Mantle, Hurdle).
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -32,7 +32,7 @@
 
 *From GDD `design/gdd/shared-character-locomotion.md`, scoped to this story:*
 
-- [ ] **AC-SCL-12** [U] `TraversalEligibilityMatrix` [SPIKE]: GIVEN coping at 45, 75, 83, 100, 120, 155, 165 and 175 cm, WHEN an idle Active pawn presses Traverse at 70 cm and 20° off facing, THEN results are none, vault, vault, none, none, climb, climb, none; AND with the camera turned 180° but the body unchanged the results are identical; AND with a pawn on the landing cell, rejected.
+- [ ] **AC-SCL-12** [U] `TraversalEligibilityMatrix` [SPIKE]: GIVEN coping at 45, 75, 83, 100, 120, 155, 165 and 175 cm, WHEN an idle Active pawn presses Traverse at 70 cm and 20° off facing, THEN results are none, vault, vault, none, hurdle, climb, climb, none (row 120 updated 2026-10-26: the 1.2 m hurdle band made final by spike SCL-045; it read none before the spike); AND with the camera turned 180° but the body unchanged the results are identical; AND with a pawn on the landing cell, rejected.
 
 *QA clarification (create-stories 2026-10-25, not a GDD change):* the landing-cell rejection is tested at the 80 cm coping with reply code `NotNow`; confirm `NotNow` is the IIF's intended code for an SCL-side rejection (AC-10 uses it for informants).
 
@@ -58,8 +58,13 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/TraversalEligibility.cpp` (plain C++, planned)
-- `Source/StealthGameplay/Private/Tests/Locomotion/TraversalEligibilityMatrixTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/TraversalEligibilityMatrixTest.cpp`
 
 ---
 
@@ -81,7 +86,7 @@ Test: traversal eligibility matrix (AC-SCL-12)
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Locomotion/TraversalEligibilityMatrixTest.cpp`, test name `StealthGame.Locomotion.TraversalEligibilityMatrix` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.TraversalEligibilityMatrix`, 2026-10-26)
 
 ---
 
@@ -89,3 +94,13 @@ Test: traversal eligibility matrix (AC-SCL-12)
 
 - Depends on: `production/epics/shared-character-locomotion/story-045-net-emulation-traversal-spike.md`, `story-002-body-constants-published.md`, `story-014-informant-restrictions.md`; `production/epics/input-interaction-framework/EPIC.md` (`Traverse`), `production/epics/level-socket-contract/EPIC.md` (coping records)
 - Unlocks: `production/epics/shared-character-locomotion/story-048-traversal-start-parity.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: 45 none, 75 vault, 83 vault, 100 none, 120 hurdle, 155 climb, 165 climb, 175 none; camera not an input; landing cell occupied -> refused (NotNow at the IIF); legality, slot, grounded, reach, cone, clearance and the selection order
+**Deviations**: AC row 120 reads hurdle (the 1.2 m band made final by spike SCL-045, decision log); before the spike the AC read none. TraversalLandingClearCm (LSC, 100) is a pending owner constant. The F5 function is not yet called from a Traverse resolver (story 048).
+**Test Evidence**: `StealthGame.Locomotion.TraversalEligibilityMatrix`; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: N/A - eligibility function; the traversal start is story 048
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

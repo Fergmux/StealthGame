@@ -1,12 +1,12 @@
 # Story 010: Speed tiers, pace quantisation and effective-gait clamps
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -63,9 +63,22 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp` (pace quantiser, gait clamp)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthMovementComponent.cpp` (`ScaleInputAcceleration`, `MoveAutonomous`, `GetMaxSpeed`)
-- `Source/StealthGameplay/Private/Tests/Locomotion/SpeedTiersTest.cpp` (planned)
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.h`
+- `Source/StealthGameplay/Private/Core/Movement/StealthSavedMove.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp`
+- `Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h`
+- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnMovementComponent.cpp`
+- `Source/StealthGameplay/Private/Core/StealthPawnCommandComponent.cpp`
+- `Source/StealthGameplay/Private/View/Input/PawnCommandClient.cpp`
+- `Source/StealthGame/Private/StealthMovementComponent.cpp`
+- `Source/StealthGame/Public/StealthMovementComponent.h`
+- `Source/StealthGameEditor/Private/Input/InputAssetSpec.h`
+- `Content/StealthGame/Input/IA_Run.uasset`
+- `Source/StealthTestHarness/Private/Tests/Input/WalkSlowerModifierTest.cpp`
+- `Source/StealthGame/Private/StealthPlayerController.cpp`
+- `Source/StealthGameplay/Private/Tests/Locomotion/LocomotionTestWorld.h`
+- `Source/StealthGameplay/Private/Tests/Locomotion/SpeedTiersTest.cpp`
 
 ---
 
@@ -87,7 +100,7 @@ Test: speed tiers (AC-SCL-05)
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Locomotion/SpeedTiersTest.cpp`, test name `StealthGame.Locomotion.SpeedTiers` (PIE minimal test world) — must exist and pass; plus a retained screenshot of a walking and a running pawn in `production/qa/evidence/` (player-observable)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.SpeedTiers`; `StealthGame.Input.PIE.WalkSlowerModifier` now asserts the absolute paces 140/126/112 and Run 450 with no RPC beyond the move family, 2026-10-26)
 
 ---
 
@@ -95,3 +108,13 @@ Test: speed tiers (AC-SCL-05)
 
 - Depends on: `production/epics/shared-character-locomotion/story-009-stop-floor.md`; `production/epics/input-interaction-framework/EPIC.md` (`UPawnCommandComponent::Move`, `IA_WalkSlower`)
 - Unlocks: `production/epics/shared-character-locomotion/story-011-release-baseline-stop.md`, `story-014-informant-restrictions.md`, `story-015-brace-planted.md`, `story-019-npc-pace-distribution.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (SCL batch: 003, 007, 009-018, 046, 047)
+**Criteria**: 1/1: steady 140, 126, 112, 450, informant 140, (0, Run) 0, braced 0 (+- 1); 0.19 stick sent as 0, 0.25 non-zero
+**Deviations**: The sample sprint shim is gone: IA_Run consumes LeftShift (asset re-authored by Stealth.Input.CreateAssets), Run rides ServerMove as FLAG_Custom_0, and the sample UpdateInputState_Server RPC no longer fires (WalkSlower run phase: no other RPC). The informant legality on L_Prototype comes from the prototype adapter (UStealthPrototypeMovementComponent reads the prototype LifeState) until the Roster legality adapter is injected (iif-071). The brace pose writer is a stub (IIF FActionState not built).
+**Test Evidence**: `StealthGame.Locomotion.SpeedTiers`; `StealthGame.Input.PIE.WalkSlowerModifier` now asserts the absolute paces 140/126/112 and Run 450 with no RPC beyond the move family; full suite 171/171 StealthGame.* Success (`production/qa/evidence/story-010-speed-tiers/full-suite.txt`)
+**Run result**: OBSERVED - production/qa/evidence/story-010-speed-tiers/01-05 (walk 140, run 450 with the run-only HUD rule, stop, idle; no sample sprint)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review

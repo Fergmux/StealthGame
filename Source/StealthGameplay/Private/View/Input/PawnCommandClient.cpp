@@ -1,5 +1,7 @@
 #include "View/Input/PawnCommandClient.h"
 
+#include "View/Core/StealthLocomotionModel.h"
+
 #include "CollisionQueryParams.h"
 #include "CommonUITypes.h"
 #include "Input/CommonUIActionRouterBase.h"
@@ -413,6 +415,11 @@ void UPawnCommandClient::SendMoveTo(UPawnCommandComponent* Command, const FVecto
 	const bool bKeyboard = Controller
 		&& (Controller->IsInputKeyDown(EKeys::W) || Controller->IsInputKeyDown(EKeys::A) || Controller->IsInputKeyDown(EKeys::S) || Controller->IsInputKeyDown(EKeys::D));
 	LastSentMove = StealthWalkSlower::ScaleMove(Raw, bKeyboard ? EMoveInputDevice::Keyboard : EMoveInputDevice::Gamepad, GetWalkSlowerPace(), bRunHeld);
+	if (!bKeyboard)
+	{
+		// SCL R5.1: the owning client applies the 0.2 stick dead zone before sending (a 0.19 reading is sent as 0).
+		LastSentMove = StealthLocomotion::ApplyStickDeadZone(LastSentMove);
+	}
 	Command->Move(LastSentMove, GetGait());
 }
 
