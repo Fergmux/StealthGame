@@ -727,7 +727,10 @@ AStealthCharacter* AStealthGameMode::SpawnNpc()
 		Director->SetCrowdArea(GetCrowdCenter(), UStealthSettings::Get()->CrowdRadius, StealthCrowdMarketRadiusCm);
 	}
 	const bool bRoundStart = !IsRoundInProgress();
-	if (!(bRoundStart && Director != nullptr && Director->RequestStartPlacement(CrowdNpcs.Num(), FMath::Max(UStealthSettings::Get()->NpcCount, 1), Transform)))
+	// The list holds half again as many placements as NPCs: a placement whose spawn collides is skipped (the cursor moves
+	// on), so a blocked node never stalls the rest of the crowd.
+	const int32 Wanted = FMath::Max(UStealthSettings::Get()->NpcCount, 1);
+	if (!(bRoundStart && Director != nullptr && Director->RequestStartPlacement(StartPlacementCursor++, Wanted + Wanted / 2, Transform)))
 	{
 		FVector Location;
 		if (!FindCrowdPoint(Location))
@@ -756,6 +759,10 @@ AStealthCharacter* AStealthGameMode::SpawnNpc()
 void AStealthGameMode::SpawnCrowd()
 {
 	const int32 Wanted = UStealthSettings::Get()->NpcCount;
+	if (CrowdNpcs.Num() == 0)
+	{
+		StartPlacementCursor = 0;
+	}
 	int32 Attempts = 0;
 	while (CrowdNpcs.Num() < Wanted && Attempts < Wanted * 4)
 	{

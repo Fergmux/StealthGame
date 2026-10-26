@@ -12,7 +12,8 @@ class USkeletalMesh;
  * All prototype tuning values, data-driven through Config/DefaultGame.ini
  * ([/Script/StealthGame.StealthSettings]) and editable in Project Settings > Game > Stealth Game.
  * Defaults are the "Suggested first-draft defaults" of GAME_BUILD_HANDOFF.md plus the user's
- * 2026-10-24 answers (no match timer, ~40 NPCs, ~2 m range, ~3 s interactions).
+ * 2026-10-24 answers (no match timer, ~2 m range, ~3 s interactions); NpcCount 50 (user decision 2026-10-25,
+ * the TDC NpcCount default).
  */
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Stealth Game"))
 class STEALTHGAME_API UStealthSettings : public UDeveloperSettings
@@ -102,9 +103,9 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Objectives", meta = (ClampMin = "50"))
 	float ObjectiveInteractRange = 250.f;
 
-	/** Number of wandering NPCs per round (tune after the crowd performance spike). */
+	/** Crowd NPCs per round; 50 matches the TDC key NpcCount (user decision 2026-10-25). */
 	UPROPERTY(Config, EditAnywhere, Category = "Crowd", meta = (ClampMin = "0", ClampMax = "200"))
-	int32 NpcCount = 40;
+	int32 NpcCount = 50;
 
 	/** Radius around the crowd centre used for NPC spawn and wander points, cm. */
 	UPROPERTY(Config, EditAnywhere, Category = "Crowd", meta = (ClampMin = "100"))

@@ -152,6 +152,9 @@ protected:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<AStealthCharacter>> CrowdNpcs;
 
+	/** The next start placement of the round's spawn list (a placement whose spawn collides is skipped, never retried). */
+	int32 StartPlacementCursor = 0;
+
 	UPROPERTY(Transient)
 	TSubclassOf<AStealthCharacter> CharacterClass;
 
