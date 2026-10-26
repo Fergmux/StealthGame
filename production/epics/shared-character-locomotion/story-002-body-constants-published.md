@@ -1,12 +1,12 @@
 # Story 002: Body constants published: step height, floor angle, capsule, kerb and block heights
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -62,9 +62,12 @@
 
 ## Files
 
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawn.cpp` (body defaults)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthLocomotionModel.cpp` (`ClassifyCopingHeight`, plain C++)
-- `Source/StealthGameplay/Private/Tests/Locomotion/BodyConstantsPublishedTest.cpp` (planned)
+
+- Source/StealthGameplay/Public/View/Core/StealthLocomotionModel.h, Private/Core/SharedPawn/StealthLocomotionModel.cpp (new: FStealthTraversalHeights, ClassifyCopingHeight, FStealthBodyConstants)
+- Source/StealthGameplay/Public/View/Core/StealthPawn.h, Private/Core/SharedPawn/StealthPawn.cpp (capsule 30/86 recorded from CBP_SandboxCharacter; GetPublishedBodyConstants; MotionWarping member renamed SharedMotionWarping, subobject optional)
+- Source/StealthGameplay/Public/View/Core/StealthPawnMovementComponent.h, Private/Core/SharedPawn/StealthPawnMovementComponent.cpp (MaxStepHeight = TraversalMinHeightCm via ApplyTraversalHeights)
+- Source/StealthGame/Public/StealthCharacter.h, Private/StealthCharacter.cpp, Public/StealthMovementComponent.h (prototype adapter re-based onto AStealthPawn / UStealthMovementComponent)
+- Source/StealthGameplay/Private/Tests/Locomotion/BodyConstantsPublishedTest.cpp (new)
 
 ---
 
@@ -86,7 +89,7 @@ Test: body constants published (AC-SCL-48)
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Locomotion/BodyConstantsPublishedTest.cpp`, test name `StealthGame.Locomotion.BodyConstantsPublished` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.BodyConstantsPublished`, 2026-10-26)
 
 ---
 
@@ -94,3 +97,13 @@ Test: body constants published (AC-SCL-48)
 
 - Depends on: `production/epics/shared-character-locomotion/story-001-pawn-class-default-subobjects.md`; `production/epics/shared-character-locomotion/story-003-tuning-keys-registered.md` (registers `TraversalMinHeightCm`); TDC pipeline (`production/epics/tuning-data-config/EPIC.md`, Exit B)
 - Unlocks: `production/epics/shared-character-locomotion/story-047-traversal-eligibility-matrix.md`, `production/epics/level-socket-contract/EPIC.md` (consumes the published constants)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing. Verified R17.1 numbers: CBP_SandboxCharacter capsule radius 30.0 cm, half-height 86.0 cm (UE 5.8.4 project); MaxStepHeight 45; walkable floor angle 44.765
+**Deviations**: Depends on SCL-003 (Ready): TraversalMinHeightCm and the vault/climb/tolerance keys are not in the TDC schema yet; FStealthTraversalHeights carries the GDD canonical defaults and ApplyTraversalHeights is the hook the frozen snapshot will call. 'Reparent CBP_SandboxCharacter onto AStealthPawn' was realised by re-basing the prototype AStealthCharacter (the CBP's parent) onto AStealthPawn: no .uasset edit, no redirect needed (decision logged). The sample Blueprint keeps its own MotionWarping component until ADR-0010's Blueprint cleanup.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Locomotion/BodyConstantsPublishedTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: N/A for the constants; the pawns in integration-spine-2026-10-26 screenshots are the re-based Shared Pawns
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

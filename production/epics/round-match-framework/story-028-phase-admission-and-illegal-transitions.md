@@ -1,12 +1,12 @@
 # Story 028: Each phase pushes the specified admission mode and every illegal transition is refused
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -67,10 +67,9 @@
 
 *Planned files only. Tests live under the engine test roots (`tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthGameplay/Public/Round/Phase/RoundPhaseCore.h`
-- `Source/StealthGameplay/Private/Round/Phase/RoundPhaseCore.cpp`
-- `Source/StealthGameplay/Private/Tests/Round/PhaseAdmissionAndIllegalTransitionsTest.cpp` (class `FRoundPhaseAdmissionAndIllegalTransitionsTest`, test name `StealthGame.Round.PhaseAdmissionAndIllegalTransitions`)
-- `Source/StealthGame/Private/StealthGameMode.cpp`, `Source/StealthGame/Public/StealthGameMode.h` (prototype round state: retired/replaced by this story)
+- Source/StealthGameplay/Public/Server/Core/Round/StealthRoundPhaseCore.h, Private/Core/Round/StealthRoundPhaseCore.cpp (new: FRoundPhaseCore)
+- Source/StealthGame/Private/StealthGameMode.cpp (prototype round state now follows Round's phase listener)
+- Source/StealthGameplay/Private/Tests/Round/PhaseAdmissionAndIllegalTransitionsTest.cpp (new)
 
 ---
 
@@ -95,7 +94,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/PhaseAdmissionAndIllegalTransitionsTest.cpp` (automation test `StealthGame.Round.PhaseAdmissionAndIllegalTransitions`, class `FRoundPhaseAdmissionAndIllegalTransitionsTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.PhaseAdmissionAndIllegalTransitions`, 2026-10-26)
 
 ---
 
@@ -104,3 +103,13 @@
 - Depends on: `production/epics/round-match-framework/story-024-start-ordering.md`
 - Unlocks: `production/epics/round-match-framework/story-029-public-state-replication.md`, `production/epics/round-match-framework/story-034-preparing-aborts.md`, `production/epics/round-match-framework/story-035-watchdog-bound.md`, `production/epics/round-match-framework/story-057-host-abort.md`, `production/epics/round-match-framework/story-073-should-admit-expired-table.md`
 - Cross-epic: `production/epics/session-travel` (`SetAdmissionMode`, `EAdmissionMode`, via the fake Session gateway; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing
+**Deviations**: 'two latches' / 'queue item outside Active' stay with stories 043/008; 'phase change by a client' is covered by 026 (a client holds no Round core).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/PhaseAdmissionAndIllegalTransitionsTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: OBSERVED: full phase cycle in PIE (Unknown->Lobby->Preparing->Active->Ended->Reset->Lobby->Preparing->Active)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

@@ -30,7 +30,7 @@
 | Crouch | C |
 
 **Console (dev):**
-- Round control: `StealthStartRound`, `StealthEndRound`, `StealthSwitchTeam`.
+- Round control (host only, production Round since 2026-10-26, D53): `stealth.round.start`, `stealth.round.abort` / `stealth.round.reset`, `stealth.round.swapteam <participant> [<participant>]`, `stealth.round.remove <participant>`. The old `StealthStartRound`, `StealthEndRound`, `StealthSwitchTeam` are retired. `StealthDumpProd` logs the production Round phase and Roster counts; a yellow `[prod]` line at the bottom of the HUD shows them in development builds.
 - Bot driver (server rule paths): `StealthBot <player#> <strike_npc|strike_enemy|strike_informant|blindstrike|defend|interact|hide|watchN|ping|report>`.
 - Camera: `StealthDebugCam <0|1|2>`.
 

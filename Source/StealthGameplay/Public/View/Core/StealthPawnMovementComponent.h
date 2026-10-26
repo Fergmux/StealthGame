@@ -19,6 +19,9 @@ class STEALTHGAMEPLAY_API UStealthMovementComponent : public UCharacterMovementC
 	GENERATED_BODY()
 
 public:
-	/** Kind-blind defaults: orient to movement, no RVO avoidance. */
+	/** Kind-blind defaults: orient to movement, no RVO avoidance, MaxStepHeight = TraversalMinHeightCm. */
 	UStealthMovementComponent();
+
+	/** Applies the traversal heights of the frozen tuning snapshot (MaxStepHeight = MinHeightCm). Same for every pawn. */
+	void ApplyTraversalHeights(const struct FStealthTraversalHeights& Heights);
 };

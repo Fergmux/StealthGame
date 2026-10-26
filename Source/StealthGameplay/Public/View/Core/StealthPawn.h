@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "View/Core/StealthLocomotionModel.h"
 #include "StealthPawn.generated.h"
 
 class UGameplayTasksComponent;
@@ -26,6 +27,18 @@ class STEALTHGAMEPLAY_API AStealthPawn : public ACharacter
 public:
 	/** Sets UStealthMovementComponent as the movement subobject and builds the fixed subobject set. */
 	AStealthPawn(const FObjectInitializer& ObjectInitializer);
+
+	/**
+	 * The body constants of every pawn, read from the class default object (R17.1): capsule radius and half-height
+	 * (the reparented sample character's values, recorded in these class defaults), MaxStepHeight and the walkable
+	 * floor angle. The Level Socket Contract and the Generator consume this (CR-4).
+	 */
+	static FStealthBodyConstants GetPublishedBodyConstants();
+
+	/** Capsule radius recorded from the Game Animation Sample character (R17.1, measured in the 5.8.4 project). */
+	static constexpr float SampleCapsuleRadiusCm = 30.0f;
+	/** Capsule half-height recorded from the Game Animation Sample character (R17.1, measured in the 5.8.4 project). */
+	static constexpr float SampleCapsuleHalfHeightCm = 86.0f;
 
 	/** Name of the non-replicated gameplay tasks subobject (also found by AAIController on possession). */
 	static const FName GameplayTasksComponentName;
@@ -55,15 +68,23 @@ public:
 	/** The non-replicated gameplay tasks component every pawn carries. */
 	UGameplayTasksComponent* GetGameplayTasks() const { return GameplayTasks; }
 
-	/** The motion-warping component every pawn carries (WarpTargets never replicate). */
-	UStealthMotionWarpingComponent* GetMotionWarping() const { return MotionWarping; }
+	/**
+	 * The motion-warping component (WarpTargets never replicate). Null on the D53 prototype adapter pawns, which use the
+	 * sample Blueprint's own component until ADR-0010's Blueprint cleanup: callers must null-check.
+	 */
+	UStealthMotionWarpingComponent* GetMotionWarping() const { return SharedMotionWarping; }
 
 private:
 	/** Default subobject: AAIController adopts it on possession instead of adding one (ADR-0010). */
 	UPROPERTY(VisibleAnywhere, Category = "Stealth|Pawn")
 	TObjectPtr<UGameplayTasksComponent> GameplayTasks;
 
-	/** Default subobject: motion warping with WarpTargets replication disabled (ADR-0018 section 7.2). */
+	/**
+	 * Default subobject "MotionWarping": motion warping with WarpTargets replication disabled (ADR-0018 section 7.2).
+	 * The C++ member is not named MotionWarping, and the subobject is optional, so the reparented sample Blueprint
+	 * (which still carries its own SCS component and variable of that name until ADR-0010's Blueprint cleanup) compiles
+	 * against this class: the D53 prototype adapter AStealthCharacter opts out of it (DoNotCreateDefaultSubobject).
+	 */
 	UPROPERTY(VisibleAnywhere, Category = "Stealth|Pawn")
-	TObjectPtr<UStealthMotionWarpingComponent> MotionWarping;
+	TObjectPtr<UStealthMotionWarpingComponent> SharedMotionWarping;
 };

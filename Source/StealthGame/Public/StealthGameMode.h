@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "StealthTypes.h"
+#include "Server/Roster/StealthRosterCallTypes.h"
+#include "View/StealthRoundPublicState.h"
 #include "StealthGameMode.generated.h"
 
 class AStealthCharacter;
@@ -28,7 +30,12 @@ public:
 	AStealthGameMode();
 
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	/** Registers the new GameState with Round's public-state mirror (re-seeded before its first net update, R20). */
+	virtual void InitGameState() override;
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	/** No-op (ADR-0005 / ADR-0010): pawns come only from UStealthPawnFactory at round start. */
+	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
@@ -36,16 +43,16 @@ public:
 	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
 	virtual void SetPlayerDefaults(APawn* PlayerPawn) override;
 
-	// ---- Round lifecycle ---------------------------------------------------------------
+	// ---- Round lifecycle (driven by the production URoundMatchStore, decision D53) -------------
 
-	/** Starts (or restarts) a round now: resets state, respawns players, spawns the crowd. */
-	void StartRound();
+	/** Asks Round to start (stealth.round.start as the host). Refusals reach the host's HUD. */
+	void RequestRoundStart();
 
-	/** Ends the current round without a winner and returns to waiting. */
-	void AbortRound();
+	/** Harness/dev entry kept for the spike scenarios: the same as RequestRoundStart. */
+	void StartRound() { RequestRoundStart(); }
 
-	/** Moves a player to the other team and respawns them. */
-	void SwitchTeam(AStealthPlayerController* Player);
+	/** Asks Round to reset after the end-of-round hold (stealth.round.reset as the host). */
+	void RequestRoundReset();
 
 	// ---- Requests from characters (already on the server) -------------------------------
 
@@ -67,6 +74,18 @@ protected:
 
 	void TryScheduleRoundStart();
 	void EndRound(uint8 WinningTeam, EStealthWinReason Reason);
+
+	/** Round's phase listener: Preparing runs the round setup, Reset cleans up, Lobby schedules the next start. */
+	void HandleRoundPhaseChanged(ERoundPhase OldPhase, ERoundPhase NewPhase);
+
+	/** Preparing (adapter until the Preparing barrier stories): city, objectives, player pawns through the factory, then Active. */
+	void RunPreparing();
+
+	/** Reset entered from Preparing or Active (an abort): clean up and tell everyone. */
+	void HandleRoundCalledOff();
+
+	/** Spawns Player's pawn at its team start through UStealthPawnFactory (bound to its participant). */
+	APawn* SpawnPlayerPawn(APlayerController* Player);
 	void CleanupRoundActors();
 	void SpawnCrowd();
 
@@ -87,8 +106,11 @@ protected:
 	bool FindCrowdPoint(FVector& OutLocation) const;
 	FVector GetCrowdCenter() const;
 
-	/** Kills the player's pawn and makes them an informant who respawns at the team spawn. */
-	void EliminatePlayer(AStealthCharacter* Victim);
+	/**
+	 * Kills the player's pawn and makes them an informant who respawns at the team spawn. Reason is the Roster
+	 * transition (Assassinated, ReversedAgainst); None for an informant killed again (not a transition, D10).
+	 */
+	void EliminatePlayer(AStealthCharacter* Victim, ERosterReason Reason);
 
 	/** Removes a player from active play without killing their pawn (NPC-kill penalty). */
 	void ExilePlayer(AStealthCharacter* Offender);
@@ -109,6 +131,7 @@ protected:
 	TSubclassOf<AStealthCharacter> CharacterClass;
 
 	FTimerHandle RoundStartTimer;
+	FDelegateHandle RoundPhaseHandle;
 	FTimerHandle RoundRestartTimer;
 	FTimerHandle CrowdSpawnTimer;
 	double NavWaitStartTime = 0.0;

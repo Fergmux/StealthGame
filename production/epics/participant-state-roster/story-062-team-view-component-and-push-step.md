@@ -1,12 +1,12 @@
 # Story 062: URosterTeamViewComponent and the Roster push step write C-TeamView change-only, once per frame
 
 > **Epic**: Participant State & Roster
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25g
-> **Last Updated**: 2026-10-25 (created for decision D43)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -55,9 +55,12 @@
 
 ## Files
 
-- `Source/StealthFoundation/Public/View/StealthRosterTeamView.h` (new or extended from story 037: `URosterTeamViewComponent`)
-- `Source/StealthFoundation/Private/Roster/StealthRosterPushStep.h/.cpp` (new)
-- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterPushStepTest.cpp` (new)
+
+- Source/StealthFoundation/Public/View/StealthRosterTeamView.h (new: EReconnectEndCause, FTeamViewOwnerPart, FTeamViewTeammateEntry, FTeamView, UTeamViewComponentBase, URosterTeamViewComponent)
+- Source/StealthFoundation/Private/Roster/StealthRosterTeamView.cpp (new: COND_OwnerOnly push-model replication)
+- Source/StealthFoundation/Private/Roster/StealthRosterPushStep.h/.cpp (new: the only writer; dirty set per team; D23 reconnect flag)
+- Source/StealthGame/Public/StealthPlayerController.h, Private/StealthPlayerController.cpp (TeamView default subobject, registered subobject list)
+- Source/StealthFoundation/Private/Tests/Roster/StealthRosterPushStepTest.cpp (new, 2 tests)
 
 ---
 
@@ -73,7 +76,7 @@
 **Required evidence**:
 - Integration: `Source/StealthFoundation/Private/Tests/Roster/StealthRosterPushStepTest.cpp` — must exist and pass (`qa.level` is full).
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Roster.TeamViewPushStep`, `StealthGame.Roster.TeamViewReconnectFlag`, 2026-10-26)
 
 ---
 
@@ -81,3 +84,13 @@
 
 - Depends on: `production/epics/participant-state-roster/story-037-team-view-serialized-size.md`, `production/epics/participant-state-roster/story-061-roster-store-facade-and-match-lifetime.md`
 - Unlocks: `production/epics/participant-state-roster/story-041-team-view-repush-on-controller-swap.md`, `production/epics/participant-state-roster/story-051-pie-teammate-reconnecting-flag.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 2/2 passing (62a TeamViewPushStep, 62b TeamViewReconnectFlag)
+**Deviations**: Depends on psr-037 (Ready): the wire types follow 037's notes but use the default property serializer; 037 still owns the fixed-width NetSerialize and the <= 96 B budget. The round-end clear is exercised by delivering RosterRoundEnded to the push step directly (EndRoundAll is psr-023). bIsConcealed stays false until Concealment writes it; WrongTargetTally/LastResultSeq/T_due stay 0 until psr-038.
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Roster/StealthRosterPushStepTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: OBSERVED: production/qa/evidence/integration-spine-2026-10-26/02-client1-active.png (client dev line: own team view team 1, 0 teammates)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

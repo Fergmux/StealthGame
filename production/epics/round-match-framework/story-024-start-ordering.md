@@ -1,12 +1,12 @@
 # Story 024: An accepted Start calls Session and Roster in the specified order and enters Preparing only after travel acceptance
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -66,10 +66,9 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthGameplay/Private/Tests/Round/StartOrderingTest.cpp` (class `FRoundStartOrderingTest`, test name `StealthGame.Round.StartOrdering`)
-- `Source/StealthGameplay/Public/Round/` Start-orchestration header (new; Open: name set when implemented)
-- `Source/StealthGameplay/Private/Round/Start/` Start-orchestration implementation (new)
-- `Source/StealthGame/Private/StealthGameMode.cpp` and `Source/StealthGame/Public/StealthGameMode.h` (`StartRound`, `TryScheduleRoundStart`; retired/replaced by this story)
+- Source/StealthGameplay/Public/Server/Core/Round/StealthRoundMatchCore.h, Private/Core/Round/StealthRoundMatchCore.cpp (new: Start orchestration, NotifyRoundTravelAccepted)
+- Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp (Session adapter: seed draw, deferred acceptance)
+- Source/StealthGameplay/Private/Tests/Round/StartOrderingTest.cpp (new)
 
 ---
 
@@ -92,7 +91,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/StartOrderingTest.cpp` — must exist and pass (automation test `StealthGame.Round.StartOrdering`, class `FRoundStartOrderingTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.StartOrdering`, 2026-10-26)
 
 ---
 
@@ -102,3 +101,13 @@
 - Unlocks: `production/epics/round-match-framework/story-025-start-rollback.md`, `production/epics/round-match-framework/story-026-host-only-commands.md`, `production/epics/round-match-framework/story-027-reset-command-matrix.md`, `production/epics/round-match-framework/story-028-phase-admission-and-illegal-transitions.md`, `production/epics/round-match-framework/story-031-allocate-once.md`, `production/epics/round-match-framework/story-059-session-end-and-abort-during-travel.md`
 
 Cross-epic: `production/epics/session-travel` (`SetAdmissionMode`, `CanRequestRoundTravel`, `RequestRoundTravel`; stories not yet created); `production/epics/participant-state-roster` (`SetTeamsLocked`, `ResetAll`; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing
+**Deviations**: Spy rule (open point): mutating calls only; queries are recorded and excluded.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/StartOrderingTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: OBSERVED: Saved log 'Round phase Lobby -> Preparing (change 2, round 1)' then Active; integration-spine-2026-10-26/01-host-active.png
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

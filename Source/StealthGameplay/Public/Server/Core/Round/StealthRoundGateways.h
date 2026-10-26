@@ -105,6 +105,13 @@ struct FRoundTeamAssignment
 	ERosterTeam Team = ERosterTeam::None;
 };
 
+/** One rostered participant as Round reads it (Round R3 counts, R5 checks 3-4): id and team, Dormant included. */
+struct FRoundRosterMember
+{
+	FParticipantId Participant;
+	ERosterTeam Team = ERosterTeam::None;
+};
+
 UINTERFACE(MinimalAPI, meta = (CannotImplementInterfaceInBlueprint))
 class URoundRosterGateway : public UInterface
 {
@@ -140,6 +147,13 @@ public:
 
 	/** The current epoch token (MatchId, RoundEpoch). */
 	virtual FEpochToken GetEpochToken() const = 0;
+
+	/**
+	 * Every rostered participant with its team, Dormant records included (a Dormant slot is freed only by remove, R3),
+	 * in ParticipantId order. Round's team counts (R3) and Start checks (R5) read it. Amendment of the D53 integration
+	 * batch (stories rmf-018..022): the RMF-003 interface named no count query.
+	 */
+	virtual void GetRosteredParticipants(TArray<FRoundRosterMember>& OutMembers) const = 0;
 };
 
 // ---------------------------------------------------------------------------------------------------------

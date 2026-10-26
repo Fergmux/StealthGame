@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "View/Core/StealthPawnMovementComponent.h"
 #include "StealthMovementComponent.generated.h"
 
 /**
@@ -14,7 +14,7 @@
  * the [CoreRedirects] entry for Blueprints saved against the old name.
  */
 UCLASS()
-class STEALTHGAME_API UStealthPrototypeMovementComponent : public UCharacterMovementComponent
+class STEALTHGAME_API UStealthPrototypeMovementComponent : public UStealthMovementComponent
 {
 	GENERATED_BODY()
 

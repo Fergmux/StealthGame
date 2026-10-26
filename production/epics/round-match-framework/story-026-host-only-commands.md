@@ -1,12 +1,12 @@
 # Story 026: A non-host client cannot run any of the eight stealth.round commands by console or ServerExecRPC
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -65,10 +65,9 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthTestHarness/Private/Round/HostOnlyCommandsTest.cpp` (CQTest `NETWORK_TEST_CLASS(HostOnlyCommands, "StealthGame.Round.PIE")`)
-- `Source/StealthGameplay/Public/Round/` host-command registration header (new; Open: name set when implemented)
-- `Source/StealthGameplay/Private/Round/Commands/` host-command registration and the net-mode/host check (new)
-- `Source/StealthGame/Private/StealthPlayerController.cpp` and `Source/StealthGame/Public/StealthPlayerController.h` (`StealthStartRound`, `StealthEndRound`, `StealthSwitchTeam` and their `Server*` RPCs; retired/replaced by this story)
+- Source/StealthGameplay/Public/Server/Core/Round/StealthRoundMatchStore.h, Private/Core/Round/StealthRoundMatchStore.cpp (new: URoundMatchStore, console registration, host check, FRoundRemoteExecScope)
+- Source/StealthGame/Public/StealthPlayerController.h, Private/StealthPlayerController.cpp (StealthStartRound/StealthEndRound/StealthSwitchTeam and Server RPCs retired; ConsoleCommand marks remote ServerExec)
+- Source/StealthTestHarness/Private/Tests/PIE/Round/HostOnlyCommandsTest.cpp (new, CQTest PIE)
 
 ---
 
@@ -91,7 +90,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/Round/HostOnlyCommandsTest.cpp` — must exist and pass (CQTest network test `StealthGame.Round.PIE.HostOnlyCommands.<Method>`; GDD scenario name `StealthGame.Round.HostOnlyCommands`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.PIE.HostOnlyCommands.NonHostCommandsAreNotHostInLobbyAndActive`, 2026-10-26)
 
 ---
 
@@ -101,3 +100,13 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/session-travel` (host identity, game-instance stores; stories not yet created); `production/epics/participant-state-roster` (participant ids and teams in the state hash; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing (Lobby and Active)
+**Deviations**: The nine-name list (dumplog included) is frozen in RoundHostCommandNames. Hash fields: the composition root has no Event Log or queue yet, so 'log entry count' and 'Seq' are the Roster EventSeq and the Round host-message count. Preparing and Ended are not dwelt in by the PIE run (Core stories 031-055).
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/PIE/Round/HostOnlyCommandsTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: N/A: refusals are invisible by design; the PIE test is the observation
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

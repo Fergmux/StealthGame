@@ -1,12 +1,12 @@
 # Story 022: Start refuses each invalid team layout with the specified code in check order and stays in Lobby
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -68,10 +68,9 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthGameplay/Private/Tests/Round/StartValidityTest.cpp` (class `FRoundStartValidityTest`, test name `StealthGame.Round.StartValidity`)
-- `Source/StealthGameplay/Public/Round/` Start-refusal types header (new; `FStartRefusal`, codes; Open: name set when implemented)
-- `Source/StealthGameplay/Private/Round/Start/` Start-validation implementation (new)
-- `Source/StealthGame/Private/StealthGameMode.cpp` (`TryScheduleRoundStart`, `StartRound` gating; retired/replaced by this story, removal lands with story 024)
+- Source/StealthGameplay/Public/Server/Core/Round/StealthRoundStart.h, Private/Core/Round/StealthRoundStart.cpp (new: FRoundStartValidator, F3)
+- Source/StealthFoundation/Public/Server/Testing/StealthRoundTestConstants.h (Exit B layouts and sizes)
+- Source/StealthGameplay/Private/Tests/Round/StartValidityTest.cpp (new)
 
 ---
 
@@ -99,7 +98,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/StartValidityTest.cpp` — must exist and pass (automation test `StealthGame.Round.StartValidity`, class `FRoundStartValidityTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.StartValidity`, 2026-10-26)
 
 ---
 
@@ -109,3 +108,13 @@
 - Unlocks: `production/epics/round-match-framework/story-023-start-refuses-not-connected.md`, `production/epics/round-match-framework/story-024-start-ordering.md`, `production/epics/round-match-framework/story-026-host-only-commands.md`
 
 Cross-epic: `production/epics/participant-state-roster` (`RosterCount`, participant states; stories not yet created); `production/epics/session-travel` (connection states `Unresponsive`, `Connecting`, `Dormant`; stories not yet created); `production/epics/tuning-data-config` (`TeamSize`, `MinPlayersPerTeamCount`, `MaxTeamImbalanceCount`, `bAllowEmptyTeamDev`; module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing
+**Deviations**: F3 sub-code order inside check 4 is Oversize, TooSmall, Imbalance (the fixtures are unambiguous either way). DeckInfeasible has no gateway yet (skipped like an Unavailable dry run).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/StartValidityTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: N/A: refusal path is host-log only; the accepted path is observed in integration-spine-2026-10-26
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

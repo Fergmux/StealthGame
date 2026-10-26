@@ -1,12 +1,12 @@
 # Story 027: stealth.round.reset/abort and the other host commands behave per phase and exist only on the game instance
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -71,10 +71,9 @@
 
 *Planned files only. Tests live under the engine test roots (`tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthGameplay/Public/Round/Commands/RoundHostCommands.h`
-- `Source/StealthGameplay/Private/Round/Commands/RoundHostCommands.cpp`
-- `Source/StealthGameplay/Private/Tests/Round/ResetCommandMatrixTest.cpp` (class `FRoundResetCommandMatrixTest`, test name `StealthGame.Round.ResetCommandMatrix`)
-- `Source/StealthGame/Private/StealthPlayerController.cpp` and `Source/StealthGame/Public/StealthPlayerController.h` (prototype `StealthStartRound`, `StealthEndRound`, `StealthSwitchTeam`: retired/replaced by this story)
+- Source/StealthGameplay/Private/Core/Round/StealthRoundMatchCore.cpp (ExecuteHostCommand phase matrix, held reset, FRoundDebugResolver)
+- Source/StealthGameplay/Private/Core/Round/StealthRoundMatchStore.cpp (registration on the game instance only)
+- Source/StealthGameplay/Private/Tests/Round/ResetCommandMatrixTest.cpp (new)
 
 ---
 
@@ -103,7 +102,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/ResetCommandMatrixTest.cpp` (automation test `StealthGame.Round.ResetCommandMatrix`, class `FRoundResetCommandMatrixTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.ResetCommandMatrix`, 2026-10-26)
 
 ---
 
@@ -112,3 +111,13 @@
 - Depends on: `production/epics/round-match-framework/story-024-start-ordering.md`, `production/epics/round-match-framework/story-034-preparing-aborts.md`
 - Unlocks: None
 - Cross-epic: `production/epics/session-travel` (`RequestLobbyTravel`, admission and travel cancel via the fake Session gateway; stories not yet created), `production/epics/participant-state-roster` (`SwapTeam`, `RemoveParticipant` via the fake Roster gateway; stories not yet created), `production/epics/tuning-data-config` (module skeleton, StealthTestHarness bootstrap and `stealth.tuning.preset`; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing
+**Deviations**: Depends on rmf-034 (Ready): the Preparing abort here requests Reset; the abort cleanup is rmf-034/057/058. dumplog refusal code = WrongPhase (GDD names none). Debug commands need a resolution queue: production answers Unavailable until the queue is wired into the composition root; the test runs them through the real FResolutionQueueCore.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/ResetCommandMatrixTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: OBSERVED: the end-of-round reset in PIE (log: Ended -> Reset -> Lobby, then round 2 started)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

@@ -1,12 +1,12 @@
 # Story 018: A new key joins the smaller team; ties go to team RoundsPlayedCount parity
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -67,10 +67,14 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthGameplay/Private/Tests/Round/TeamAssignmentTest.cpp` (class `FRoundTeamAssignmentTest`, test name `StealthGame.Round.TeamAssignment`)
-- `Source/StealthGameplay/Public/Round/` team-assignment header (new; Open: name set when implemented)
-- `Source/StealthGameplay/Private/Round/Teams/` team-assignment implementation (new)
-- `Source/StealthGame/Private/StealthGameMode.cpp` (`PostLogin` team choice; retired/replaced by this story's rule, removal lands with the Round composition-root story)
+- Source/StealthGameplay/Public/Server/Core/Round/StealthRoundTeamRules.h, Private/Core/Round/StealthRoundTeamRules.cpp (new: ChooseTeamForNewKey, OnParticipantRegistered)
+- Source/StealthGameplay/Public/Server/Core/Round/StealthRoundTypes.h (new)
+- Source/StealthGameplay/Public/Server/Core/Round/StealthRoundGateways.h (amendment: FRoundRosterMember, GetRosteredParticipants)
+- Source/StealthGameplay/Public/Server/Testing/StealthRoundFakeGateways.h (layout-answered queries, host-sink spy)
+- Source/StealthGameplay/Private/Core/Round/StealthRoundMatchStore.cpp (OnParticipantRegistered from URosterStore events)
+- Source/StealthGame/Private/StealthGameMode.cpp (prototype PostLogin team choice retired: the Roster registration + Round rule replace it)
+- Source/StealthGameplay/Private/Tests/Round/TeamAssignmentTest.cpp (new)
+- Source/StealthGameplay/Private/Tests/Round/StealthRoundExitBTestRig.h (new shared rig)
 
 ---
 
@@ -93,7 +97,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/TeamAssignmentTest.cpp` — must exist and pass (automation test `StealthGame.Round.TeamAssignment`, class `FRoundTeamAssignmentTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.TeamAssignment`, 2026-10-26)
 
 ---
 
@@ -103,3 +107,13 @@
 - Unlocks: `production/epics/round-match-framework/story-019-team-reclaim-keeps-team.md`, `production/epics/round-match-framework/story-020-swap-team-rules.md`, `production/epics/round-match-framework/story-021-team-size-injection.md`, `production/epics/round-match-framework/story-022-start-validity.md`
 
 Cross-epic: `production/epics/participant-state-roster` (`AssignTeams`, `OnParticipantRegistered`, `RosterCount`; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing
+**Deviations**: Headers in Public/Server/Core/Round (include lint (a)), not Public/Round. FStealthRules::ChooseTeamForNewPlayer and its prototype test are left as reference (not deleted).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/TeamAssignmentTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: OBSERVED: integration-spine-2026-10-26/01-host-active.png (3 players assigned 2/1 by Round through the Roster)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

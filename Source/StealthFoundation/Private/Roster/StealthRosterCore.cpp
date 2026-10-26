@@ -1,4 +1,4 @@
-#include "Roster/StealthRosterCore.h"
+#include "Server/Roster/StealthRosterCore.h"
 
 // FRosterCore (GDD design/gdd/participant-state-roster.md R3-R12; ADR-0005 section 2 and the Technical Setup
 // 2026-10-25b amendments). Stories psr-001..014. See StealthRosterCore.h for the contract of every call.
@@ -103,6 +103,34 @@ FParticipantRecord* FRosterCore::FindRecordMutable(FParticipantId Id)
 const FRosterBindingEntry* FRosterCore::FindBinding(const FRosterPawnHandle& Pawn) const
 {
 	return Pawn.IsSet() ? PawnTable.Find(Pawn) : nullptr;
+}
+
+void FRosterCore::GetParticipantIds(TArray<FParticipantId>& OutIds) const
+{
+	OutIds.Reset();
+	for (const TOptional<FParticipantRecord>& Slot : Records)
+	{
+		if (Slot.IsSet())
+		{
+			OutIds.Add(Slot->ParticipantId);
+		}
+	}
+}
+
+bool FRosterCore::FindLatestRetiredPawn(FParticipantId Id, FRosterPawnHandle& OutPawn, int64& OutRetireAtServerTimeMs) const
+{
+	bool bFound = false;
+	for (const TPair<FRosterPawnHandle, FRosterBindingEntry>& Row : PawnTable)
+	{
+		if (Row.Value.Status == ERosterBindingStatus::Retired && Row.Value.Participant == Id
+			&& (!bFound || Row.Value.RetireAtServerTimeMs > OutRetireAtServerTimeMs))
+		{
+			OutPawn = Row.Key;
+			OutRetireAtServerTimeMs = Row.Value.RetireAtServerTimeMs;
+			bFound = true;
+		}
+	}
+	return bFound;
 }
 
 FParticipantId FRosterCore::FindIdByKey(const FIdentityKey& Key) const
@@ -224,8 +252,11 @@ void FRosterCore::ClearState()
 	RoundEpoch = 0;
 	EventSeq = 0;
 	bTeamsLocked = false;
+	LastResetRoundIndex = 0;
+	bRoundScopeReset = false;
 	NextParticipantId = 0;
-	HandleDrawCounter = 0;
+	// HandleDrawCounter is NOT reset: the session secret is opened once per store, so restarting the counter would
+	// hand the same PublicHandles out in every match and let players be correlated across matches.
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -589,8 +620,8 @@ ERosterResult FRosterCore::NotifyConnectionChanged(FParticipantId Id, ERosterCon
 	{
 		return ERosterResult::Rejected_UnknownParticipant;
 	}
-	// bKicked only selects the teammates' bReconnecting clear cause in the C-TeamView push step (R6, ruling D23).
-	(void)bKicked;
+	// bKicked changes nothing in the core: it only rides on the event, where it selects the teammates'
+	// bReconnecting clear cause in the C-TeamView push step (R6, ruling D23).
 	FRosterConnection& Connection = Record->Connection;
 	if (Connection.Projection == Projection)
 	{
@@ -610,6 +641,7 @@ ERosterResult FRosterCore::NotifyConnectionChanged(FParticipantId Id, ERosterCon
 	Event.Type = ERosterEventType::ConnectionChanged;
 	Event.Id = Id;
 	Event.Connection = Projection;
+	Event.bKicked = bKicked;
 	EmitEvent(Event);
 	return ERosterResult::Applied;
 }
@@ -772,6 +804,46 @@ ERosterResult FRosterCore::InvalidateAllBindings()
 // ---------------------------------------------------------------------------------------------------------
 // Transitions
 // ---------------------------------------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------------------------------
+// Round scope (R7)
+// ---------------------------------------------------------------------------------------------------------
+
+ERosterResult FRosterCore::ResetAll(uint32 RoundIndex)
+{
+	const ERosterResult Pre = CheckCallPreconditions(ERosterCall::ResetAll);
+	if (Pre != ERosterResult::Applied)
+	{
+		return Pre;
+	}
+	FCallScope Scope(*this);
+	if (!bTeamsLocked)
+	{
+		return ERosterResult::Rejected_TeamsUnlocked;
+	}
+	for (TOptional<FParticipantRecord>& Slot : Records)
+	{
+		if (!Slot.IsSet())
+		{
+			continue;
+		}
+		const bool bDormant = Slot->Connection.Projection == ERosterConnection::Dormant;
+		Slot->State = bDormant ? EParticipantState::RoundEnded : EParticipantState::Active;
+		Slot->bInRound = !bDormant;
+		Slot->LastTransitionReason = ERosterReason::None;
+		Slot->AssignedAppearanceId = INDEX_NONE;
+		Slot->PawnBinding = FRosterPawnHandle();
+	}
+	PawnTable.Reset();
+	++RoundEpoch;
+	LastResetRoundIndex = RoundIndex;
+	bRoundScopeReset = true;
+
+	FRosterEvent Event;
+	Event.Type = ERosterEventType::RosterReset;
+	EmitEvent(Event);
+	return ERosterResult::Applied;
+}
 
 bool FRosterCore::IsEnteringReason(EParticipantState NewState, ERosterReason Reason)
 {

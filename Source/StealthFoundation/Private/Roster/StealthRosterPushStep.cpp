@@ -1,0 +1,213 @@
+#include "Roster/StealthRosterPushStep.h"
+
+#include "GameFramework/Pawn.h"
+
+FRosterPushStep::FRosterPushStep(const FRosterCore& InCore, const IRosterRoundPhase& InRoundPhase, FPawnResolver InResolver)
+	: Core(InCore)
+	, RoundPhase(InRoundPhase)
+	, Resolver(MoveTemp(InResolver))
+{
+}
+
+void FRosterPushStep::RegisterView(FParticipantId Id, URosterTeamViewComponent* View)
+{
+	Views.Add(Id, View);
+	bAllDirty = true;
+}
+
+void FRosterPushStep::UnregisterView(FParticipantId Id)
+{
+	Views.Remove(Id);
+}
+
+void FRosterPushStep::Reset()
+{
+	Views.Reset();
+	Reconnect.Reset();
+	RetiringThisFrame.Reset();
+	RetiringClearNextFrame.Reset();
+	bDirty[0] = bDirty[1] = false;
+	bAllDirty = false;
+}
+
+void FRosterPushStep::MarkTeamDirty(ERosterTeam Team)
+{
+	if (Team == ERosterTeam::Team0 || Team == ERosterTeam::Team1)
+	{
+		bDirty[static_cast<int32>(Team)] = true;
+	}
+}
+
+void FRosterPushStep::ClearReconnect(FParticipantId Id, EReconnectEndCause Cause)
+{
+	FReconnectState* State = Reconnect.Find(Id);
+	if (State != nullptr && State->bReconnecting)
+	{
+		State->bReconnecting = false;
+		State->Cause = Cause;
+	}
+}
+
+void FRosterPushStep::OnRosterEvent(const FRosterEvent& Event)
+{
+	const FParticipantRecord* Record = Event.Id.IsValid() ? Core.FindRecord(Event.Id) : nullptr;
+	const ERosterTeam Team = Record != nullptr ? Record->Team : ERosterTeam::None;
+
+	switch (Event.Type)
+	{
+	case ERosterEventType::ConnectionChanged:
+		if (Event.bKicked)
+		{
+			ClearReconnect(Event.Id, EReconnectEndCause::Cleared);
+		}
+		else if (Event.Connection == ERosterConnection::Disconnected)
+		{
+			// D23: only during Round phase Active; outside it the flag stays false.
+			if (RoundPhase.IsRoundPhaseActive())
+			{
+				FReconnectState& State = Reconnect.FindOrAdd(Event.Id);
+				State.bReconnecting = true;
+				State.Cause = EReconnectEndCause::None;
+			}
+		}
+		else if (Event.Connection == ERosterConnection::Connected)
+		{
+			ClearReconnect(Event.Id, EReconnectEndCause::Rejoined);
+		}
+		MarkTeamDirty(Team);
+		break;
+
+	case ERosterEventType::ParticipantStateChanged:
+		ClearReconnect(Event.Id, Event.Reason == ERosterReason::Disconnect ? EReconnectEndCause::GraceExpired : EReconnectEndCause::Cleared);
+		if (Event.Old == EParticipantState::Active && Event.New == EParticipantState::Informant)
+		{
+			RetiringThisFrame.Add(Event.Id);
+		}
+		MarkTeamDirty(Event.Team != ERosterTeam::None ? Event.Team : Team);
+		break;
+
+	case ERosterEventType::ParticipantRemoved:
+		ClearReconnect(Event.Id, EReconnectEndCause::Cleared);
+		bAllDirty = true;
+		break;
+
+	case ERosterEventType::RosterRoundEnded:
+	case ERosterEventType::RosterReset:
+		for (TPair<FParticipantId, FReconnectState>& Pair : Reconnect)
+		{
+			ClearReconnect(Pair.Key, EReconnectEndCause::Cleared);
+		}
+		bAllDirty = true;
+		break;
+
+	case ERosterEventType::BindingLost:
+		MarkTeamDirty(Team);
+		break;
+
+	default:
+		// Registration, reclaim and team changes can move anyone between teams.
+		bAllDirty = true;
+		break;
+	}
+}
+
+FTeamView FRosterPushStep::BuildView(const FParticipantRecord& Owner) const
+{
+	FTeamView View;
+	View.Owner.Handle = Owner.PublicHandle;
+	View.Owner.Team = static_cast<uint8>(Owner.Team);
+	View.Owner.State = static_cast<uint8>(Owner.State);
+	View.Owner.RoundEpoch = Core.GetRoundEpoch();
+	if (Owner.Team == ERosterTeam::None)
+	{
+		return View;
+	}
+
+	TArray<FParticipantId> Ids;
+	Core.GetParticipantIds(Ids);
+	for (const FParticipantId& Id : Ids)
+	{
+		const FParticipantRecord* Mate = Core.FindRecord(Id);
+		if (Mate == nullptr || Id == Owner.ParticipantId || Mate->Team != Owner.Team)
+		{
+			continue;
+		}
+		FTeamViewTeammateEntry& Entry = View.Teammates.AddDefaulted_GetRef();
+		Entry.Handle = Mate->PublicHandle;
+		Entry.State = static_cast<uint8>(Mate->State);
+		FRosterPawnHandle Pawn = Mate->PawnBinding;
+		if (RetiringThisFrame.Contains(Id))
+		{
+			int64 RetireAtMs = 0;
+			if (Core.FindLatestRetiredPawn(Id, Pawn, RetireAtMs))
+			{
+				Entry.RetireAtServerTime = static_cast<double>(RetireAtMs) / 1000.0;
+			}
+		}
+		Entry.PawnRef = (Pawn.IsSet() && Resolver) ? Resolver(Pawn) : nullptr;
+		if (const FReconnectState* State = Reconnect.Find(Id))
+		{
+			Entry.bReconnecting = State->bReconnecting;
+			Entry.ReconnectEndCause = State->Cause;
+		}
+	}
+	return View;
+}
+
+int32 FRosterPushStep::Flush()
+{
+	// A retiring update is followed by one more flush of the same team that clears RetireAtServerTime.
+	for (const FParticipantId& Id : RetiringClearNextFrame)
+	{
+		if (const FParticipantRecord* Record = Core.FindRecord(Id))
+		{
+			MarkTeamDirty(Record->Team);
+		}
+	}
+	RetiringClearNextFrame.Reset();
+
+	if (!bAllDirty && !bDirty[0] && !bDirty[1])
+	{
+		return 0;
+	}
+
+	int32 Written = 0;
+	for (TPair<FParticipantId, TWeakObjectPtr<URosterTeamViewComponent>>& Pair : Views)
+	{
+		URosterTeamViewComponent* Component = Pair.Value.Get();
+		const FParticipantRecord* Owner = Core.FindRecord(Pair.Key);
+		if (Component == nullptr || Owner == nullptr)
+		{
+			continue;
+		}
+		const bool bOwnerDirty = bAllDirty || (Owner->Team != ERosterTeam::None && bDirty[static_cast<int32>(Owner->Team)]);
+		if (!bOwnerDirty)
+		{
+			continue;
+		}
+		const FTeamView View = BuildView(*Owner);
+		if (View != Component->GetView())
+		{
+			Component->ApplyView(View);
+			++Written;
+		}
+	}
+
+	RetiringClearNextFrame = MoveTemp(RetiringThisFrame);
+	RetiringThisFrame.Reset();
+	bDirty[0] = bDirty[1] = false;
+	bAllDirty = false;
+	return Written;
+}
+
+bool FRosterPushStep::IsReconnecting(FParticipantId Id) const
+{
+	const FReconnectState* State = Reconnect.Find(Id);
+	return State != nullptr && State->bReconnecting;
+}
+
+EReconnectEndCause FRosterPushStep::GetReconnectEndCause(FParticipantId Id) const
+{
+	const FReconnectState* State = Reconnect.Find(Id);
+	return State != nullptr ? State->Cause : EReconnectEndCause::None;
+}

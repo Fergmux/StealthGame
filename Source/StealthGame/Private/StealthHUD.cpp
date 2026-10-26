@@ -6,6 +6,9 @@
 #include "StealthPlayerState.h"
 #include "StealthRules.h"
 #include "StealthSettings.h"
+#include "Server/StealthCompositionRoot.h"
+#include "View/StealthRosterTeamView.h"
+#include "View/StealthRoundPublicState.h"
 
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
@@ -53,6 +56,34 @@ void AStealthHUD::DrawHUD()
 	DrawMessages(PC);
 	DrawInteractBar(Pawn);
 	DrawControls();
+	DrawProductionLine(PC, GS);
+}
+
+void AStealthHUD::DrawProductionLine(AStealthPlayerController* PC, const AStealthGameState* GS)
+{
+#if !UE_BUILD_SHIPPING
+	FString Line;
+	if (GetWorld()->GetNetMode() != NM_Client)
+	{
+		if (const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld()))
+		{
+			Line = Root->DescribeProductionState(GetWorld());
+		}
+	}
+	else
+	{
+		const FRoundPublicState& State = GS->GetRoundPublicState();
+		const URosterTeamViewComponent* View = PC->GetTeamView();
+		const int32 Mates = View ? View->GetView().Teammates.Num() : 0;
+		const int32 Team = View ? View->GetView().Owner.Team : 255;
+		Line = FString::Printf(TEXT("[prod] Round %s  idx %u  changes %u (replicated) | own team view: team %d, %d teammate(s)"),
+			LexRoundPhase(State.Phase), State.RoundIndex, State.PhaseChangeCount, Team == 255 ? -1 : Team, Mates);
+	}
+	if (!Line.IsEmpty())
+	{
+		DrawShadowedText(Line, 24.f, Canvas->ClipY - 64.f, FLinearColor(1.f, 0.85f, 0.25f), 0.9f);
+	}
+#endif
 }
 
 bool AStealthHUD::ProjectToScreen(const FVector& World, FVector2D& OutScreen) const

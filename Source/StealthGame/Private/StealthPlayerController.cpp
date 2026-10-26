@@ -4,6 +4,10 @@
 #include "StealthSettings.h"
 
 #include "StealthBush.h"
+#include "StealthGameState.h"
+#include "Server/Core/Round/StealthRoundMatchStore.h"
+#include "Server/StealthCompositionRoot.h"
+#include "View/StealthRosterTeamView.h"
 
 #include "Camera/CameraActor.h"
 #include "EngineUtils.h"
@@ -13,6 +17,13 @@ namespace
 	constexpr int32 MaxHudMessages = 5;
 	/** Short confirmations were missed in playtests; keep every message up at least this long. */
 	constexpr float MinHudMessageSeconds = 6.f;
+}
+
+AStealthPlayerController::AStealthPlayerController()
+{
+	// ADR-0020 E2: replicated components travel only through the registered subobject list.
+	bReplicateUsingRegisteredSubObjectList = true;
+	TeamView = CreateDefaultSubobject<URosterTeamViewComponent>(TEXT("TeamView"));
 }
 
 void AStealthPlayerController::ClientStealthMessage_Implementation(const FText& Text, bool bDanger, float Duration)
@@ -42,43 +53,39 @@ void AStealthPlayerController::PruneExpired(double Now)
 	Pings.RemoveAll([Now](const FStealthPing& P) { return P.ExpireTime <= Now; });
 }
 
-void AStealthPlayerController::StealthStartRound()
+void AStealthPlayerController::StealthDumpProd()
 {
-	ServerStartRound();
-}
-
-void AStealthPlayerController::StealthEndRound()
-{
-	ServerEndRound();
-}
-
-void AStealthPlayerController::StealthSwitchTeam()
-{
-	ServerSwitchTeam();
-}
-
-void AStealthPlayerController::ServerStartRound_Implementation()
-{
-	if (AStealthGameMode* GameMode = GetWorld()->GetAuthGameMode<AStealthGameMode>())
+#if !UE_BUILD_SHIPPING
+	if (HasAuthority())
 	{
-		GameMode->StartRound();
+		if (const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld()))
+		{
+			UE_LOGF(LogStealth, Log, "%ls", *Root->DescribeProductionState(GetWorld()));
+		}
 	}
+	if (const AStealthGameState* GS = GetWorld()->GetGameState<AStealthGameState>())
+	{
+		const FRoundPublicState& State = GS->GetRoundPublicState();
+		UE_LOGF(LogStealth, Log, "[prod] %ls public: phase %ls idx %u changes %u handler %d", *GetName(), LexRoundPhase(State.Phase), State.RoundIndex,
+			State.PhaseChangeCount, GS->GetRoundPublicStateHandlerCalls());
+	}
+	if (TeamView)
+	{
+		const FTeamView& View = TeamView->GetView();
+		UE_LOGF(LogStealth, Log, "[prod] %ls team view: team %d state %d mates %d", *GetName(), View.Owner.Team, View.Owner.State, View.Teammates.Num());
+	}
+#endif
 }
 
-void AStealthPlayerController::ServerEndRound_Implementation()
+FString AStealthPlayerController::ConsoleCommand(const FString& Command, bool bWriteToLog)
 {
-	if (AStealthGameMode* GameMode = GetWorld()->GetAuthGameMode<AStealthGameMode>())
+	if (!IsLocalController())
 	{
-		GameMode->AbortRound();
+		// A remote client's ServerExec: Round's host check sees no local controller (NotHost).
+		FRoundRemoteExecScope RemoteScope;
+		return Super::ConsoleCommand(Command, bWriteToLog);
 	}
-}
-
-void AStealthPlayerController::ServerSwitchTeam_Implementation()
-{
-	if (AStealthGameMode* GameMode = GetWorld()->GetAuthGameMode<AStealthGameMode>())
-	{
-		GameMode->SwitchTeam(this);
-	}
+	return Super::ConsoleCommand(Command, bWriteToLog);
 }
 
 void AStealthPlayerController::StealthBot(int32 PlayerIndex, const FString& Action)

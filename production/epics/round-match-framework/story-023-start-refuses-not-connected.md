@@ -1,12 +1,12 @@
 # Story 023: Start refuses with ParticipantNotConnected naming exactly the Dormant, Unresponsive or Connecting set
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -65,8 +65,8 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthGameplay/Private/Tests/Round/StartRefusesNotConnectedTest.cpp` (class `FRoundStartRefusesNotConnectedTest`, test name `StealthGame.Round.StartRefusesNotConnected`)
-- `Source/StealthGameplay/Private/Round/Start/` Start-validation implementation from story 022 (check-3 branch; no new header expected)
+- Source/StealthGameplay/Private/Core/Round/StealthRoundStart.cpp (check 3)
+- Source/StealthGameplay/Private/Tests/Round/StartRefusesNotConnectedTest.cpp (new)
 
 ---
 
@@ -89,7 +89,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/StartRefusesNotConnectedTest.cpp` — must exist and pass (automation test `StealthGame.Round.StartRefusesNotConnected`, class `FRoundStartRefusesNotConnectedTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.StartRefusesNotConnected`, 2026-10-26)
 
 ---
 
@@ -99,3 +99,13 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/session-travel` (`EConnectionState`, `GetConnectionState`; stories not yet created); `production/epics/participant-state-roster` (rostered participants, Dormant records; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing
+**Deviations**: Traveling/Disconnected/Rejoining/Expired are not refused at Start (story open point left as the R5 list).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/StartRefusesNotConnectedTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: N/A: host-only refusal, no visible change
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

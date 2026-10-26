@@ -8,7 +8,7 @@
 
 #if WITH_STEALTH_TEST_SEAMS
 
-#include "Roster/StealthRosterCore.h"
+#include "Server/Roster/StealthRosterCore.h"
 #include "Server/Testing/StealthFakeClock.h"
 #include "Server/Testing/StealthFaultSinkTestSupport.h"
 

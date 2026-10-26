@@ -1,12 +1,12 @@
 # Story 006: Every Shared Pawn comes from one spawn site
 
 > **Epic**: Shared Character & Locomotion
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -63,9 +63,11 @@
 
 ## Files
 
-- `Source/StealthGameplay/Public/Server/Core/StealthPawnFactory.h` (planned)
-- `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawnFactory.cpp` (planned)
-- `Source/StealthGameplay/Private/Tests/Locomotion/SingleSpawnSiteTest.cpp` (planned)
+
+- Source/StealthGameplay/Public/Server/Core/StealthPawnFactory.h, Private/Core/PawnFactory/StealthPawnFactory.cpp (new: UStealthPawnFactory, IStealthPawnFactoryHooks, creation token, untokened guard)
+- Source/StealthGame/Private/StealthGameMode.cpp (RestartPlayer / default pawn paths removed; players, informant respawns and NPCs through the factory; HandleStartingNewPlayer no-op)
+- Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp (factory hooks: appearance, BindPawn, prototype NPC controller)
+- Source/StealthGameplay/Private/Tests/Locomotion/SingleSpawnSiteTest.cpp (new)
 
 ---
 
@@ -87,7 +89,7 @@ Test: single spawn site (AC-SCL-02)
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Locomotion/SingleSpawnSiteTest.cpp`, test name `StealthGame.Locomotion.SingleSpawnSite` (PIE, trace of pawn creation) — must exist and pass; plus a retained screenshot of a started round with every pawn present in `production/qa/evidence/` per `.claude/docs/run-and-observe.md` (player-observable change)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Locomotion.SingleSpawnSite`, 2026-10-26); retained screenshot `production/qa/evidence/integration-spine-2026-10-26/01-host-active.png`
 
 ---
 
@@ -95,3 +97,13 @@ Test: single spawn site (AC-SCL-02)
 
 - Depends on: `production/epics/shared-character-locomotion/story-001-pawn-class-default-subobjects.md`; `production/epics/participant-state-roster/EPIC.md` (`BindPawn`), `production/epics/character-pool-appearance/EPIC.md` (`ApplyAppearance`), `production/epics/round-match-framework/EPIC.md` (round-start caller), `production/epics/crowd-npc-behaviour/EPIC.md` (`AStealthCrowdController`, replacement caller); stories not yet written, paths TBD
 - Unlocks: `production/epics/shared-character-locomotion/story-007-factory-bind-fail-destroys.md`, `story-008-spawn-bunch-parity.md`, `story-026-disconnect-keeps-pawn-under-crowd-ai.md`, `story-027-handover-blend.md`, `story-028-informant-respawn-takes-over-unseen-crowd-pawn.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing (round start 2 x TeamSize + NpcCount, replacement 1, stubbed takeover 0, tokens, Instigator == self, static scan of the composition root)
+**Deviations**: Factory lives in Private/Core/PawnFactory (the class-parity scan forbids controller/Roster symbols in Core/SharedPawn). FScopedPossessionParity does not exist yet (SCL-026/027): Possess is called directly. The trace test runs in a T1 test world, not PIE; the live round start is observed in PIE (43 factory pawns, 0 untokened). The prototype informant respawn still creates a new pawn through the factory (the takeover is SCL-028).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Locomotion/SingleSpawnSiteTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: OBSERVED: integration-spine-2026-10-26/01-host-active.png (dev line: factory pawns 43, untokened 0)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

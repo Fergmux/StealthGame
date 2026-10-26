@@ -15,7 +15,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Roster/StealthRosterCore.h"
+#include "Server/Roster/StealthRosterCore.h"
 #include "Server/Testing/StealthRoundTestConstants.h"
 
 #include <type_traits>

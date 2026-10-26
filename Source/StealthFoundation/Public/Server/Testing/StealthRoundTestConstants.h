@@ -100,6 +100,37 @@ namespace RoundTestFixtures
 	inline constexpr FRoundTeamLayout Layout4v4 = { 4, 4 };
 	inline constexpr FRoundTeamLayout Layout2v2 = { 2, 2 };
 
+	// --- Exit B team and Start fixtures (rmf-018 .. rmf-028, D53 integration batch) ---------------------------------
+
+	/** rmf-018: a new key joins the team of 1; 2/2 ties alternate by RoundsPlayedCount. */
+	inline constexpr FRoundTeamLayout Layout2v1 = { 2, 1 };
+	/** rmf-019: a Dormant key on the larger (3) side is reclaimed. */
+	inline constexpr FRoundTeamLayout Layout3v2 = { 3, 2 };
+	/** rmf-020: a swap into a full team (5) is refused; into 4 it succeeds. */
+	inline constexpr FRoundTeamLayout Layout4v5 = { 4, 5 };
+	inline constexpr FRoundTeamLayout Layout5v4 = { 5, 4 };
+	inline constexpr FRoundTeamLayout Layout5v3 = { 5, 3 };
+	inline constexpr FRoundTeamLayout Layout1v0 = { 1, 0 };
+	/** rmf-022 Oversize: a fake Roster reports 3 on one team with TeamSize 2. */
+	inline constexpr FRoundTeamLayout Layout3v2Oversize = { 3, 2 };
+
+	/** TeamSize values of the fixtures (a real match is 5; 2 for the small and Oversize cases). */
+	inline constexpr int32 FixtureTeamSize = 5;
+	inline constexpr int32 SmallTeamSize = 2;
+	/** rmf-021: the requested preset's TeamSize (differs from FixtureTeamSize). */
+	inline constexpr int32 PresetTeamSize = 4;
+	/** rmf-022: MinPlayersPerTeamCount 2 makes 2v1 TooSmall. */
+	inline constexpr int32 MinPlayersTwo = 2;
+	/** rmf-027: the Ended dwell before a held reset executes (GDD EndedMinDwellSec default). */
+	inline constexpr double EndedMinDwellSec = 3.0;
+
+	/** rmf-026 / rmf-027: the frozen R22 host command list (AC 59 names nine, dumplog included, host-gated alike). */
+	inline const TCHAR* const RoundHostCommandNames[] = {
+		TEXT("stealth.round.start"), TEXT("stealth.round.reset"), TEXT("stealth.round.abort"), TEXT("stealth.round.swapteam"),
+		TEXT("stealth.round.remove"), TEXT("stealth.round.preset"), TEXT("stealth.round.debugwin"), TEXT("stealth.round.debugeliminate"),
+		TEXT("stealth.round.dumplog"),
+	};
+
 	// --- Queue fixtures (rmf-006 .. rmf-010) ------------------------------------------------------------------------
 
 	/** rmf-006: ticks per statistical run and the fixed acceptance bounds for S1 (GDD AC 14). */

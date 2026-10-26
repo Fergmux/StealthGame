@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "View/Core/StealthPawn.h"
 #include "StealthTypes.h"
 #include "StealthCharacter.generated.h"
 
@@ -11,6 +11,12 @@ class AStealthPlayerState;
 class UInputAction;
 
 /**
+ * Prototype adapter over the production Shared Pawn (decision D53): AStealthCharacter now derives from
+ * AStealthPawn (ADR-0010), so every body in L_Prototype is an AStealthPawn with UStealthMovementComponent, created by
+ * UStealthPawnFactory. It keeps the prototype gameplay that has no production replacement yet (concealment,
+ * defence, death presentation, appearance, the prototype input) until those systems' stories land; nothing new is
+ * added here.
+ *
  * The one pawn class used for BOTH players and NPCs (ADR-001 candidate: crowd identity parity).
  * The Game Animation Sample character Blueprint (CBP_SandboxCharacter; BP_CrowdCharacter is its child)
  * is reparented onto this class, so motion matching, traversal and cameras come from the sample while
@@ -18,7 +24,7 @@ class UInputAction;
  * controller, which other clients cannot see except through the PlayerState link (see AStealthPlayerState).
  */
 UCLASS()
-class STEALTHGAME_API AStealthCharacter : public ACharacter
+class STEALTHGAME_API AStealthCharacter : public AStealthPawn
 {
 	GENERATED_BODY()
 
@@ -27,6 +33,8 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
+	/** Roster R9 EndPlay hook: ends this pawn's binding or tombstone (server). */
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual bool CanJumpInternal_Implementation() const override;

@@ -33,6 +33,13 @@ protected:
 	void DrawInteractBar(const AStealthCharacter* Pawn);
 	void DrawControls();
 
+	/**
+	 * Development only (decision D53): one line showing the production Round phase and Roster counts so the
+	 * integration is visible. Host: the server stores (full counts, a development view); client: the replicated
+	 * FRoundPublicState and this player's own C-TeamView only (no opponent count reaches a client).
+	 */
+	void DrawProductionLine(AStealthPlayerController* PC, const AStealthGameState* GS);
+
 	/** Projects a world location to the screen; false if behind the camera. */
 	bool ProjectToScreen(const FVector& World, FVector2D& OutScreen) const;
 

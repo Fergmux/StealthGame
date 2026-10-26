@@ -19,6 +19,41 @@ void AStealthGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AStealthGameState, WinReason);
 	DOREPLIFETIME(AStealthGameState, PhaseEndServerTime);
 	DOREPLIFETIME(AStealthGameState, RoundSeed);
+	// R20: unconditional (no owner or team condition): every viewer receives identical bytes.
+	DOREPLIFETIME(AStealthGameState, RoundPublicState);
+}
+
+void AStealthGameState::BeginPlay()
+{
+	Super::BeginPlay();
+	// Clients also read the struct at begin-play (it may have arrived with the initial bunch).
+	if (!HasAuthority() && RoundPublicState.Phase != ERoundPhase::Unknown && RoundPublicStateHandlerCalls == 0)
+	{
+		HandleRoundPublicState();
+	}
+}
+
+void AStealthGameState::WriteRoundPublicState(const FRoundPublicState& State)
+{
+	RoundPublicState = State;
+	// Every Round mutation forces a net update (the GameState otherwise sends at its own rate, up to 100 ms late).
+	ForceNetUpdate();
+	HandleRoundPublicState();
+}
+
+void AStealthGameState::OnRep_RoundPublicState()
+{
+	HandleRoundPublicState();
+}
+
+void AStealthGameState::HandleRoundPublicState()
+{
+	++RoundPublicStateHandlerCalls;
+	// One RepNotify can carry a phase and a score change; PhaseChangeCount detects a skipped phase.
+	bHandlerSawPhaseSkip = PreviousRoundPublicState.Phase != ERoundPhase::Unknown
+		&& RoundPublicState.PhaseChangeCount > PreviousRoundPublicState.PhaseChangeCount + 1;
+	PreviousRoundPublicState = RoundPublicState;
+	OnRoundPublicStateChanged.Broadcast(RoundPublicState);
 }
 
 void AStealthGameState::ResetRoundState(int32 NewSeed)

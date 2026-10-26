@@ -1,12 +1,12 @@
 # Story 029: FRoundPublicState replicates with Unknown = 0, survives seamless travel and LastResult survives into Lobby
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -70,11 +70,11 @@
 
 *Planned files only. Tests live under the engine test roots (`tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthFoundation/Public/View/RoundPublicState.h` (client-safe wire type, ADR-0007 section 2)
-- `Source/StealthGameplay/Public/Round/Phase/RoundPublicStateMirror.h`
-- `Source/StealthGameplay/Private/Round/Phase/RoundPublicStateMirror.cpp`
-- `Source/StealthTestHarness/Private/Round/PublicStateReplicationTest.cpp` (CQTest `NETWORK_TEST_CLASS(PublicStateReplication, "StealthGame.Round.PIE")`, full name `StealthGame.Round.PIE.PublicStateReplication.<Method>`; the GDD scenario name is `StealthGame.Round.PublicStateReplication`)
-- `Source/StealthGame/Public/StealthGameState.h`, `Source/StealthGame/Private/StealthGameState.cpp` (prototype round fields: retired/replaced by this story)
+- Source/StealthFoundation/Public/View/StealthRoundPublicState.h, Private/Round/StealthRoundPublicState.cpp (new: ERoundPhase with Unknown = 0, FRoundResult, FRoundPublicState)
+- Source/StealthGameplay/Public/Server/Core/Round/StealthRoundPublicStateMirror.h, Private/Core/Round/StealthRoundPublicStateMirror.cpp (new: IRoundPublicStateSink, mirror)
+- Source/StealthGame/Public/StealthGameState.h, Private/StealthGameState.cpp (RoundPublicState, RepNotify handler, explicit host call)
+- Source/StealthGame/Private/StealthGameMode.cpp (InitGameState re-seed)
+- Source/StealthTestHarness/Private/Tests/PIE/Round/PublicStateReplicationTest.cpp (new, CQTest PIE)
 
 ---
 
@@ -102,7 +102,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/Round/PublicStateReplicationTest.cpp` (CQTest `NETWORK_TEST_CLASS(PublicStateReplication, "StealthGame.Round.PIE")` per the CQTest exemption in `.claude/rules/test-standards.md`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.PIE.PublicStateReplication.PhaseReplicatesReseedsAndKeepsLastResult`, 2026-10-26)
 
 ---
 
@@ -111,3 +111,13 @@
 - Depends on: `production/epics/round-match-framework/story-028-phase-admission-and-illegal-transitions.md`
 - Unlocks: `production/epics/round-match-framework/story-030-match-scope-survives-travel.md`, `production/epics/round-match-framework/story-080-no-leak-before-ended.md`, `production/epics/round-match-framework/story-081-late-loader-reveal-bound.md`, `production/epics/round-match-framework/story-082-host-parity-includes.md`
 - Cross-epic: `production/epics/session-travel` (seamless travel, game-instance stores and `FRoundParams`; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing (late joiner Unknown->Lobby handler; host explicit handler; re-seed reads the store phase and Preparing; PhaseChangeCount strictly increases; LastResult kept into Lobby)
+**Deviations**: No Session travel exists: the after-travel clause is proven by the InitGameState re-seed of a recreated GameState in-process (ADR-0005 guideline 10: not representative of a multi-process seamless travel; rerun when Session travel lands). Prototype GameState round fields are kept for the prototype HUD.
+**Test Evidence**: `Source/StealthTestHarness/Private/Tests/PIE/Round/PublicStateReplicationTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: OBSERVED: integration-spine-2026-10-26/02-client1-active.png (client reads replicated phase Active, changes 3)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

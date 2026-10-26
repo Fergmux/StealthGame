@@ -3,7 +3,7 @@
 #include "StealthServerOnlyGuard.h"
 
 #include "CoreMinimal.h"
-#include "Roster/StealthRosterDeps.h"
+#include "Server/Roster/StealthRosterDeps.h"
 #include "Server/Roster/StealthRosterCallTypes.h"
 #include "View/StealthRosterTypes.h"
 
@@ -58,6 +58,8 @@ enum class ERosterCall : uint8
 	GetPawn,
 	GetParticipant,
 	GetUnboundActiveParticipants,
+	/** Appended for ResetAll (story psr-022 function, landed early for the D53 integration batch). */
+	ResetAll,
 };
 
 /** Status of a row of the pawn-binding table; a pawn with no row is Unbound (an NPC, R9). */
@@ -276,6 +278,8 @@ struct FRosterEvent
 	int32 InformantCountAfter[2] = { 0, 0 };
 	/** ConnectionChanged: the new projection. */
 	ERosterConnection Connection = ERosterConnection::Connected;
+	/** ConnectionChanged: Session flagged the change as a host kick (selects the C-TeamView clear cause, ruling D23). */
+	bool bKicked = false;
 	/** BindingLost: the cause. */
 	ERosterBindingLostCause Cause = ERosterBindingLostCause::PawnDestroyed;
 };
@@ -432,6 +436,21 @@ public:
 	/** Session's OnTravelStarting (R9): clears every live binding and tombstone, no lifecycle state, no event. */
 	ERosterResult InvalidateAllBindings();
 
+	// --- Round scope (R7) ------------------------------------------------------------------------------------
+
+	/**
+	 * The once-per-round batch reset (R7; story psr-022 function, landed early for the D53 integration batch so
+	 * Round's Start ordering can call the real Roster). Teams must be locked (else Rejected_TeamsUnlocked). Every
+	 * non-Dormant record becomes Active with InRound true; every Dormant record RoundEnded with InRound false;
+	 * bindings, tombstones, LastTransitionReason and AssignedAppearanceId clear; Team and Connection are kept;
+	 * RoundEpoch +1 and RoundIndex is recorded. Emits exactly one OnRosterReset and no per-participant event.
+	 * A repeat with the same RoundIndex (after an aborted start) applies in full again.
+	 */
+	ERosterResult ResetAll(uint32 RoundIndex);
+
+	/** True when ResetAll(RoundIndex) is the last round-scope reset of the match (R7). */
+	bool IsRoundScopeReset(uint32 RoundIndex) const { return bRoundScopeReset && LastResetRoundIndex == RoundIndex; }
+
 	// --- Transitions (R8) -------------------------------------------------------------------------------------------
 
 	/**
@@ -484,6 +503,15 @@ public:
 	const FParticipantRecord* FindRecord(FParticipantId Id) const;
 	/** Binding row of Pawn, or nullptr when Unbound. */
 	const FRosterBindingEntry* FindBinding(const FRosterPawnHandle& Pawn) const;
+
+	/** Every live (not removed) participant id, ascending (cold path: dumps, the C-TeamView push step). */
+	void GetParticipantIds(TArray<FParticipantId>& OutIds) const;
+
+	/**
+	 * The Retired row of Id with the latest RetireAtServerTime (the C-TeamView retiring update, story psr-062).
+	 * Cold path: scans the binding table. False when Id has no Retired row.
+	 */
+	bool FindLatestRetiredPawn(FParticipantId Id, FRosterPawnHandle& OutPawn, int64& OutRetireAtServerTimeMs) const;
 
 	uint64 GetMatchId() const { return MatchId; }
 	uint32 GetRoundEpoch() const { return RoundEpoch; }
@@ -582,6 +610,9 @@ private:
 	uint64 EventSeq = 0;
 	int32 TeamSize = 0;
 	bool bTeamsLocked = false;
+	/** R7: the RoundIndex of the last ResetAll of the match (valid when bRoundScopeReset). */
+	uint32 LastResetRoundIndex = 0;
+	bool bRoundScopeReset = false;
 	uint32 NextParticipantId = 0;
 	uint64 HandleDrawCounter = 0;
 	/** Lifetime counter of MatchId draws: survives BeginMatch so two matches never share an attempt. */

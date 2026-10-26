@@ -1,12 +1,12 @@
 # Story 061: URosterStore wraps FRosterCore and BeginMatch/EndMatch run on every session exit path
 
 > **Epic**: Participant State & Roster
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25g
-> **Last Updated**: 2026-10-25 (created for decision D43)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -60,9 +60,14 @@
 
 ## Files
 
-- `Source/StealthFoundation/Public/Server/StealthRosterStore.h` (new: `URosterStore`)
-- `Source/StealthFoundation/Private/Roster/StealthRosterStore.cpp` (new)
-- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterStoreTest.cpp` (new)
+
+- Source/StealthFoundation/Public/Server/Roster/StealthRosterStore.h (new: URosterStore)
+- Source/StealthFoundation/Private/Roster/StealthRosterStore.cpp (new: engine adapters, exit paths, tick)
+- Source/StealthFoundation/Public/Server/StealthLogFaultSink.h, Private/Faults/StealthLogFaultSink.cpp (new: production fault sink)
+- Source/StealthFoundation/Public/Server/Roster/StealthRosterCore.h, StealthRosterDeps.h (moved from Private/Roster so cross-module adapters can name the core vocabulary)
+- Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp (ResetAll/IsRoundScopeReset (psr-022 function, early), GetParticipantIds, FindLatestRetiredPawn, bKicked on ConnectionChanged)
+- Source/StealthFoundation/Private/Tests/Roster/StealthRosterStoreTest.cpp (new, 3 tests)
+- Source/StealthFoundation/Private/Tests/Roster/StealthClientCallsRejectedTest.cpp (ResetAll client row)
 
 ---
 
@@ -78,7 +83,7 @@
 **Required evidence**:
 - Integration: `Source/StealthFoundation/Private/Tests/Roster/StealthRosterStoreTest.cpp` — must exist and pass (`qa.level` is full).
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Roster.StoreFacadeAdapters`, `StoreMatchLifetime`, `StoreClientEmpty`, 2026-10-26)
 
 ---
 
@@ -86,3 +91,13 @@
 
 - Depends on: `production/epics/participant-state-roster/story-014-transition-active-to-informant.md` (core complete through the transition); cross-epic: ADR-0006 `GetServerSubSeed` implementation (session-travel epic seeds story)
 - Unlocks: `production/epics/participant-state-roster/story-043-player-pawn-bound-before-visible.md`, `production/epics/participant-state-roster/story-058-mp-travel-persistence.md`, `production/epics/participant-state-roster/story-060-mp-host-loss.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 3/3 passing (61a StoreFacadeAdapters, 61b StoreMatchLifetime, 61c StoreClientEmpty)
+**Deviations**: Golden vectors for domains 15/17 are asserted as equality with FStealthServerSeeds::GetServerSubSeed on the RoundTestSeeds S1 secret (the existing SipHash reference-vector test covers the primitive). The client-process authority branch is driven through FRosterStoreInitOverrides.bAuthority; the default (no world) branch is asserted. OnSessionEnding has a NotifySessionEnding entry point; Session (session-travel epic) must call it, and SetTravelInProgress, when it lands (hand-off). Session secret entropy is a FGuid development source until story st-009. FRosterCore::ResetAll implemented here for the Round Start ordering; psr-022 keeps its own AC test.
+**Test Evidence**: `Source/StealthFoundation/Private/Tests/Roster/StealthRosterStoreTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: OBSERVED: production/qa/evidence/integration-spine-2026-10-26/01-host-active.png (host dev line: Roster 3, T0 2 / T1 1, epoch 1)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

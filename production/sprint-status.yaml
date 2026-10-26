@@ -1531,6 +1531,26 @@ stories:
     blocker: ""
     completed: ""
     sprint: 2
+  - id: "psr-061"
+    name: "URosterStore wraps FRosterCore and BeginMatch/EndMatch run on every session exit path"
+    file: "production/epics/participant-state-roster/story-061-roster-store-facade-and-match-lifetime.md"
+    priority: must-have
+    status: done
+    owner: "engine-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+  - id: "psr-062"
+    name: "URosterTeamViewComponent and the Roster push step write C-TeamView change-only, once per frame"
+    file: "production/epics/participant-state-roster/story-062-team-view-component-and-push-step.md"
+    priority: must-have
+    status: done
+    owner: "engine-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
   - id: "rmf-001"
     name: "Tests inject a fake IClock supplying server time and ServerTickIndex"
     file: "production/epics/round-match-framework/story-001-test-seam-fake-clock.md"
@@ -1705,121 +1725,121 @@ stories:
     name: "A new key joins the smaller team; ties go to team RoundsPlayedCount parity"
     file: "production/epics/round-match-framework/story-018-team-assignment.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-019"
     name: "A reclaimed Dormant key keeps its team and triggers no AssignTeams call"
     file: "production/epics/round-match-framework/story-019-team-reclaim-keeps-team.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-020"
     name: "SwapTeam is refused only when the target team is full; pair exchange is atomic; swaps outside Lobby return WrongPhase"
     file: "production/epics/round-match-framework/story-020-swap-team-rules.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-021"
     name: "A preset with a different TeamSize calls SetTeamSize once; refusals keep the previous preset; locked teams never call it"
     file: "production/epics/round-match-framework/story-021-team-size-injection.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-022"
     name: "Start refuses each invalid team layout with the specified code in check order and stays in Lobby"
     file: "production/epics/round-match-framework/story-022-start-validity.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-023"
     name: "Start refuses with ParticipantNotConnected naming exactly the Dormant, Unresponsive or Connecting set"
     file: "production/epics/round-match-framework/story-023-start-refuses-not-connected.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-024"
     name: "An accepted Start calls Session and Roster in the specified order and enters Preparing only after travel acceptance"
     file: "production/epics/round-match-framework/story-024-start-ordering.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-025"
     name: "A Session refusal at RequestRoundTravel rolls admission, teams and phase back and logs StartRolledBack"
     file: "production/epics/round-match-framework/story-025-start-rollback.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-026"
     name: "A non-host client cannot run any of the eight stealth.round commands by console or ServerExecRPC"
     file: "production/epics/round-match-framework/story-026-host-only-commands.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-027"
     name: "stealth.round.reset/abort and the other host commands behave per phase and exist only on the game instance"
     file: "production/epics/round-match-framework/story-027-reset-command-matrix.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-028"
     name: "Each phase pushes the specified admission mode and every illegal transition is refused"
     file: "production/epics/round-match-framework/story-028-phase-admission-and-illegal-transitions.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-029"
     name: "FRoundPublicState replicates with Unknown = 0, survives seamless travel and LastResult survives into Lobby"
     file: "production/epics/round-match-framework/story-029-public-state-replication.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-030"
     name: "MatchScore, RoundsPlayedCount, host id, teams and archived slices persist across travel; RoundEpoch increments"
@@ -2165,11 +2185,11 @@ stories:
     name: "Body constants published: step height, floor angle, capsule, kerb and block heights"
     file: "production/epics/shared-character-locomotion/story-002-body-constants-published.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-003"
     name: "Every SCL tuning key registered with its audience and latch, invariants enforced"
@@ -2185,11 +2205,11 @@ stories:
     name: "Every Shared Pawn comes from one spawn site"
     file: "production/epics/shared-character-locomotion/story-006-single-spawn-site.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "scl-007"
     name: "A rejected bind destroys the pawn before FinishSpawning"

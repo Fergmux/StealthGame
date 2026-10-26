@@ -4,7 +4,7 @@
 
 namespace
 {
-	int64 ToMilliseconds(double Seconds) { return FMath::RoundToInt64(Seconds * 1000.0); }
+	int64 PacingToMilliseconds(double Seconds) { return FMath::RoundToInt64(Seconds * 1000.0); }
 
 	bool IsWin(ERoundEndReason Reason)
 	{
@@ -46,7 +46,7 @@ FRoundPacingResult StealthRoundPacing::ComputeRound(const FRoundPacingInput& Inp
 {
 	FRoundPacingResult Result;
 	Result.PacingRatio = Tuning.TargetRoundMinutes > 0 ? Input.DurationSec / (60.0 * Tuning.TargetRoundMinutes) : 0.0;
-	const int64 DurationMs = ToMilliseconds(Input.DurationSec);
+	const int64 DurationMs = PacingToMilliseconds(Input.DurationSec);
 	Result.bStallFlag = DurationMs > static_cast<int64>(Tuning.StallFlagMinutes) * 60000;
 	Result.bAbortFlagged = Input.EndReason == ERoundEndReason::Aborted && DurationMs > static_cast<int64>(Tuning.StallFlagMinutes) * 30000;
 	Result.Bucket = FMath::Min(Input.TeamSize[0], Input.TeamSize[1]);

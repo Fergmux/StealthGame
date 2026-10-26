@@ -1,12 +1,12 @@
 # Story 019: A reclaimed Dormant key keeps its team and triggers no AssignTeams call
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -64,8 +64,8 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthGameplay/Private/Tests/Round/TeamReclaimKeepsTeamTest.cpp` (class `FRoundTeamReclaimKeepsTeamTest`, test name `StealthGame.Round.TeamReclaimKeepsTeam`)
-- `Source/StealthGameplay/Private/Round/Teams/` team-assignment implementation from story 018 (reclaim handler; no new header expected)
+- Source/StealthGameplay/Public/Server/Core/Round/StealthRoundTeamRules.h (OnParticipantReclaimed: no Roster call)
+- Source/StealthGameplay/Private/Tests/Round/TeamReclaimKeepsTeamTest.cpp (new)
 
 ---
 
@@ -88,7 +88,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/TeamReclaimKeepsTeamTest.cpp` — must exist and pass (automation test `StealthGame.Round.TeamReclaimKeepsTeam`, class `FRoundTeamReclaimKeepsTeamTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.TeamReclaimKeepsTeam`, 2026-10-26)
 
 ---
 
@@ -98,3 +98,13 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/participant-state-roster` (`OnParticipantReclaimed`, Dormant records; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing
+**Deviations**: None
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/TeamReclaimKeepsTeamTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: N/A: a reclaim is a server rule with no visible change in L_Prototype (no Session rejoin yet)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch

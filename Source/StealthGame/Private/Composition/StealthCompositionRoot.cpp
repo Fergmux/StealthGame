@@ -1,0 +1,433 @@
+#include "Server/StealthCompositionRoot.h"
+
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
+#include "Hash/CityHash.h"
+#include "Misc/Guid.h"
+#include "Server/Core/Round/StealthRoundMatchStore.h"
+#include "Server/Core/Round/StealthRoundRosterGateway.h"
+#include "Server/Roster/StealthRosterStore.h"
+#include "StealthCharacter.h"
+#include "StealthGame.h"
+#include "StealthGameMode.h"
+#include "StealthNpcController.h"
+#include "StealthPlayerState.h"
+#include "StealthSettings.h"
+#include "TimerManager.h"
+#include "View/StealthRosterTeamView.h"
+#include "View/StealthTuningPublicSubstructs.h"
+
+// The D53 integration composition root (ADR-0007 section 4): production stores drive L_Prototype; prototype gameplay
+// keeps running through the thin adapters below.
+
+namespace StealthCompositionLocal
+{
+	/** Development entropy (FGuid) for the Session adapter's secret until story st-009's OS CSPRNG source. */
+	class FGuidEntropy final : public IEntropySource
+	{
+	public:
+		virtual bool Fill(TArrayView<uint8> Out) override
+		{
+			int32 Written = 0;
+			while (Written < Out.Num())
+			{
+				const FGuid Guid = FGuid::NewGuid();
+				const uint32 Words[4] = { Guid.A, Guid.B, Guid.C, Guid.D };
+				const uint8* Bytes = reinterpret_cast<const uint8*>(Words);
+				for (int32 Index = 0; Index < 16 && Written < Out.Num(); ++Index)
+				{
+					Out[Written++] = Bytes[Index];
+				}
+			}
+			return true;
+		}
+	};
+
+	/** The MVP identity key (unauthenticated, Session rule 6): a 128-bit hash of the player's unique net id. */
+	FIdentityKey MakeIdentityKey(const APlayerController* Player)
+	{
+		FString Source;
+		if (const APlayerState* State = Player->GetPlayerState<APlayerState>())
+		{
+			const FUniqueNetIdPtr NetId = State->GetUniqueId().IsValid() ? State->GetUniqueId().GetUniqueNetId() : nullptr;
+			if (NetId.IsValid())
+			{
+				Source = NetId->ToString();
+			}
+		}
+		if (Source.IsEmpty())
+		{
+			// No online identity (some PIE setups): a fresh key per login, so a reconnect is a new participant.
+			Source = FGuid::NewGuid().ToString();
+		}
+		const FTCHARToUTF8 Utf8(*Source);
+		const uint64 Hi = CityHash64(reinterpret_cast<const char*>(Utf8.Get()), Utf8.Length());
+		const uint64 Lo = CityHash64WithSeed(reinterpret_cast<const char*>(Utf8.Get()), Utf8.Length(), 0x5EA1C0DE5EA1C0DEull);
+		return FIdentityKey(Hi, Lo);
+	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+// UStealthMatchAdapters
+// -------------------------------------------------------------------------------------------------------------------
+
+void UStealthMatchAdapters::InitializeAdapters()
+{
+	StealthCompositionLocal::FGuidEntropy Entropy;
+	SessionSeeds.Open(Entropy);
+	SeedDrawer = MakeUnique<FStealthRoundSeedDrawer>(SessionSeeds);
+}
+
+UWorld* UStealthMatchAdapters::GetGameWorld() const
+{
+	const UGameInstance* GameInstance = Cast<UGameInstance>(GetOuter()->GetOuter());
+	return GameInstance != nullptr ? GameInstance->GetWorld() : nullptr;
+}
+
+bool UStealthMatchAdapters::CanRequestRoundTravel() const
+{
+	return GetGameWorld() != nullptr;
+}
+
+ERoundTravelRequestResult UStealthMatchAdapters::RequestRoundTravel(FName MapId, FName PresetId, uint32 RoundIndex)
+{
+	UWorld* World = GetGameWorld();
+	if (World == nullptr || !SeedDrawer)
+	{
+		return ERoundTravelRequestResult::Refused;
+	}
+	// Session draws a fresh seed for every start (R5 step 8). No map travel yet: the same world hosts every round, so
+	// the travel is confirmed on the next tick (the deferred acceptance of R5 step 9).
+	SessionSeeds.SetRoundIndex(RoundIndex);
+	LastRoundSeed = SeedDrawer->DrawRoundSeed(RoundIndex);
+	TWeakObjectPtr<UWorld> WeakWorld(World);
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [WeakWorld]()
+	{
+		if (URoundMatchStore* Round = URoundMatchStore::Get(WeakWorld.Get()))
+		{
+			Round->NotifyRoundTravelAccepted();
+		}
+	}));
+	return ERoundTravelRequestResult::Accepted;
+}
+
+ERoundConnectionState UStealthMatchAdapters::GetConnectionState(FParticipantId Participant) const
+{
+	const UWorld* World = GetGameWorld();
+	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(World);
+	if (Root != nullptr && Root->GetController(Participant) != nullptr)
+	{
+		return ERoundConnectionState::Connected;
+	}
+	const URosterStore* Roster = URosterStore::Get(World);
+	const FParticipantRecord* Record = Roster != nullptr && Roster->IsStoreInitialized() ? Roster->FindRecord(Participant) : nullptr;
+	if (Record != nullptr && Record->Connection.Projection == ERosterConnection::Dormant)
+	{
+		return ERoundConnectionState::Dormant;
+	}
+	return ERoundConnectionState::Disconnected;
+}
+
+void UStealthMatchAdapters::KickParticipant(FParticipantId Participant)
+{
+	if (const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetGameWorld()))
+	{
+		if (APlayerController* Player = Root->GetController(Participant))
+		{
+			Player->ClientReturnToMainMenuWithTextReason(NSLOCTEXT("Stealth", "Kicked", "Removed by the host."));
+		}
+	}
+}
+
+uint64 UStealthMatchAdapters::GetServerSubSeed(ESeedDomain Domain, uint32 Attempt) const
+{
+	return SessionSeeds.GetServerSubSeed(Domain, Attempt);
+}
+
+void UStealthMatchAdapters::ApplyAppearance(AStealthPawn* Pawn, int32 AppearanceId)
+{
+	// Prototype appearance (the shared balanced deck) until Character Pool & Appearance's ApplyAppearance lands.
+	if (AStealthCharacter* Character = Cast<AStealthCharacter>(Pawn))
+	{
+		Character->SetAppearanceIndex(AppearanceId);
+	}
+}
+
+ERosterResult UStealthMatchAdapters::BindPawn(FParticipantId Participant, AStealthPawn* Pawn, const TOptional<FRosterEpochToken>& ExpectedEpoch)
+{
+	URosterStore* Roster = URosterStore::Get(GetGameWorld());
+	return Roster != nullptr ? Roster->BindPawn(Participant, Pawn, ExpectedEpoch) : ERosterResult::Rejected_NotAuthority;
+}
+
+AController* UStealthMatchAdapters::CreateAiController(AStealthPawn* Pawn)
+{
+	UWorld* World = Pawn != nullptr ? Pawn->GetWorld() : nullptr;
+	if (World == nullptr)
+	{
+		return nullptr;
+	}
+	// Prototype crowd controller until the Crowd epic's AStealthCrowdController.
+	AStealthNpcController* Controller = World->SpawnActor<AStealthNpcController>();
+	if (Controller != nullptr)
+	{
+		Controller->WanderCenter = CrowdCenter;
+		Controller->WanderRadius = CrowdRadius;
+	}
+	return Controller;
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+// UStealthCompositionRoot
+// -------------------------------------------------------------------------------------------------------------------
+
+void UStealthCompositionRoot::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	URosterStore* Roster = Collection.InitializeDependency<URosterStore>();
+	URoundMatchStore* Round = Collection.InitializeDependency<URoundMatchStore>();
+
+	Adapters = NewObject<UStealthMatchAdapters>(this);
+	Adapters->InitializeAdapters();
+	RosterGateway = NewObject<URoundRosterStoreGateway>(this);
+	RosterGateway->Bind(Roster);
+
+	if (Roster != nullptr)
+	{
+		RosterEventHandle = Roster->OnRosterEvent.AddUObject(this, &UStealthCompositionRoot::HandleRosterEvent);
+	}
+	if (Round != nullptr)
+	{
+		Round->SetLocalParticipantResolver([this](const UWorld* World) -> FParticipantId
+		{
+			const APlayerController* Local = World != nullptr ? World->GetFirstPlayerController() : nullptr;
+			return GetParticipant(Local);
+		});
+	}
+}
+
+void UStealthCompositionRoot::Deinitialize()
+{
+	if (URosterStore* Roster = GetRosterStore())
+	{
+		Roster->OnRosterEvent.Remove(RosterEventHandle);
+	}
+	ParticipantByController.Reset();
+	Super::Deinitialize();
+}
+
+UStealthCompositionRoot* UStealthCompositionRoot::Get(const UWorld* World)
+{
+	const UGameInstance* GameInstance = World != nullptr ? World->GetGameInstance() : nullptr;
+	return GameInstance != nullptr ? GameInstance->GetSubsystem<UStealthCompositionRoot>() : nullptr;
+}
+
+URosterStore* UStealthCompositionRoot::GetRosterStore() const
+{
+	return GetGameInstance() != nullptr ? GetGameInstance()->GetSubsystem<URosterStore>() : nullptr;
+}
+
+URoundMatchStore* UStealthCompositionRoot::GetRoundStore() const
+{
+	return GetGameInstance() != nullptr ? GetGameInstance()->GetSubsystem<URoundMatchStore>() : nullptr;
+}
+
+void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode)
+{
+	GameMode = InGameMode;
+	URoundMatchStore* Round = GetRoundStore();
+	URosterStore* Roster = GetRosterStore();
+	if (Round == nullptr || Roster == nullptr)
+	{
+		return;
+	}
+
+	// Round rule inputs: TeamSize is the TDC Round key's default capped by the prototype's per-team limit (3v3 / 5v5
+	// configs); the keys not yet in the TDC schema use their GDD defaults, with the development allowances on.
+	FRoundRuleParams Params;
+	Params.TeamSize = FMath::Clamp(FMath::Min(FRoundTuning_Public().TeamSize, UStealthSettings::Get()->MaxPlayersPerTeam), 1, 5);
+	Params.MinPlayersPerTeamCount = 1;
+	Params.MaxTeamImbalanceCount = 1;
+#if !UE_BUILD_SHIPPING
+	Params.bAllowEmptyTeamDev = true;
+	Params.bHostMayAbortActive = true;
+#endif
+	Params.EndedMinDwellSec = 3.0;
+	Params.MapId = FName(*UWorld::RemovePIEPrefix(InGameMode->GetWorld()->GetOutermost()->GetName()));
+	Round->SetRuleParams(Params);
+
+	if (!bGatewaysRegistered)
+	{
+		FRoundGateways Gateways;
+		Gateways.Session = Adapters;
+		Gateways.Roster = RosterGateway;
+		Gateways.Tuning = Adapters;
+		Gateways.CharacterPool = Adapters;
+		Gateways.LevelSocket = Adapters;
+		Gateways.Crowd = Adapters;
+		Round->RegisterGateways(Gateways, this);
+		bGatewaysRegistered = true;
+	}
+	if (!Roster->IsMatchOpen())
+	{
+		Round->OpenMatch();
+	}
+
+	if (UStealthPawnFactory* Factory = UStealthPawnFactory::Get(InGameMode->GetWorld()))
+	{
+		Factory->SetHooks(Adapters, this);
+	}
+}
+
+FParticipantId UStealthCompositionRoot::RegisterPlayer(APlayerController* Player)
+{
+	URosterStore* Roster = GetRosterStore();
+	URoundMatchStore* Round = GetRoundStore();
+	if (Player == nullptr || Roster == nullptr || !Roster->IsMatchOpen())
+	{
+		return FParticipantId();
+	}
+	const APlayerState* State = Player->GetPlayerState<APlayerState>();
+	const FRosterRegisterResult Result = Roster->RegisterParticipant(StealthCompositionLocal::MakeIdentityKey(Player), State != nullptr ? State->GetPlayerName() : Player->GetName());
+	if (!Result.Id.IsValid())
+	{
+		UE_LOGF(LogStealth, Warning, "Roster refused %ls (result %d).", *Player->GetName(), static_cast<int32>(Result.Result));
+		return FParticipantId();
+	}
+	ParticipantByController.Add(Player, Result.Id);
+	if (Result.Result == ERosterResult::Reclaimed)
+	{
+		Roster->NotifyConnectionChanged(Result.Id, ERosterConnection::Connected);
+	}
+	if (Round != nullptr && Player->IsLocalController() && !Round->GetHostParticipant().IsValid())
+	{
+		Round->SetHostParticipant(Result.Id);
+	}
+	if (URosterTeamViewComponent* View = Player->FindComponentByClass<URosterTeamViewComponent>())
+	{
+		Roster->RegisterTeamView(Result.Id, View);
+	}
+	MirrorTeamsToPrototype();
+	return Result.Id;
+}
+
+void UStealthCompositionRoot::UnregisterPlayer(APlayerController* Player)
+{
+	URosterStore* Roster = GetRosterStore();
+	const FParticipantId Id = GetParticipant(Player);
+	ParticipantByController.Remove(Player);
+	if (Roster == nullptr || !Id.IsValid() || !Roster->IsMatchOpen() || GetController(Id) != nullptr)
+	{
+		// Unknown, no match, or a newer controller already holds this participant (a superseding rejoin).
+		return;
+	}
+	Roster->UnregisterTeamView(Id);
+	const URoundMatchStore* Round = GetRoundStore();
+	if (Round != nullptr && Round->GetPhase() == ERoundPhase::Lobby && !Roster->GetCore().AreTeamsLocked())
+	{
+		// A Lobby leaver frees the slot (R3: teams change only in Lobby).
+		Roster->RemoveParticipant(Id);
+	}
+	else
+	{
+		Roster->NotifyConnectionChanged(Id, ERosterConnection::Disconnected);
+		// The engine destroys the leaver's pawn next (PawnLeavingGame): release it first so the EndPlay clear is not a
+		// live-binding loss (no fault, no BindingLost for a player who left).
+		if (Player != nullptr && Player->GetPawn() != nullptr)
+		{
+			Roster->ReleaseToCrowd(Player->GetPawn());
+		}
+	}
+}
+
+FParticipantId UStealthCompositionRoot::GetParticipant(const APlayerController* Player) const
+{
+	if (Player == nullptr)
+	{
+		return FParticipantId();
+	}
+	const FParticipantId* Found = ParticipantByController.Find(const_cast<APlayerController*>(Player));
+	return Found != nullptr ? *Found : FParticipantId();
+}
+
+APlayerController* UStealthCompositionRoot::GetController(FParticipantId Participant) const
+{
+	for (const TPair<TWeakObjectPtr<APlayerController>, FParticipantId>& Pair : ParticipantByController)
+	{
+		if (Pair.Value == Participant && Pair.Key.IsValid())
+		{
+			return Pair.Key.Get();
+		}
+	}
+	return nullptr;
+}
+
+void UStealthCompositionRoot::GetConnectedPlayers(TArray<TPair<FParticipantId, APlayerController*>>& Out) const
+{
+	Out.Reset();
+	for (const TPair<TWeakObjectPtr<APlayerController>, FParticipantId>& Pair : ParticipantByController)
+	{
+		if (Pair.Key.IsValid())
+		{
+			Out.Add({ Pair.Value, Pair.Key.Get() });
+		}
+	}
+	Out.Sort([](const TPair<FParticipantId, APlayerController*>& A, const TPair<FParticipantId, APlayerController*>& B) { return A.Key.Value < B.Key.Value; });
+}
+
+void UStealthCompositionRoot::HandleRosterEvent(const FRosterEvent& Event)
+{
+	if (Event.Type == ERosterEventType::ParticipantRemoved)
+	{
+		// A host remove (stealth.round.remove) of a connected player: drop the mapping and send them away.
+		if (APlayerController* Player = GetController(Event.Id))
+		{
+			ParticipantByController.Remove(Player);
+			Adapters->KickParticipant(Event.Id);
+			Player->ClientReturnToMainMenuWithTextReason(NSLOCTEXT("Stealth", "Removed", "Removed by the host."));
+		}
+	}
+	if (Event.Type == ERosterEventType::TeamsChanged || Event.Type == ERosterEventType::ParticipantRemoved)
+	{
+		MirrorTeamsToPrototype();
+	}
+}
+
+void UStealthCompositionRoot::MirrorTeamsToPrototype()
+{
+	// Thin adapter: the prototype gameplay (HUD, objectives, assassination) reads AStealthPlayerState::Team. The Roster
+	// is the source; this one-way mirror goes away with the prototype (ADR-0001 forbids team data on a PlayerState).
+	const URosterStore* Roster = GetRosterStore();
+	if (Roster == nullptr || !Roster->IsStoreInitialized())
+	{
+		return;
+	}
+	for (const TPair<TWeakObjectPtr<APlayerController>, FParticipantId>& Pair : ParticipantByController)
+	{
+		AStealthPlayerState* State = Pair.Key.IsValid() ? Pair.Key->GetPlayerState<AStealthPlayerState>() : nullptr;
+		const FParticipantRecord* Record = Roster->FindRecord(Pair.Value);
+		if (State != nullptr && Record != nullptr)
+		{
+			State->Team = Record->Team == ERosterTeam::None ? STEALTH_NO_TEAM : static_cast<uint8>(Record->Team);
+		}
+	}
+}
+
+FString UStealthCompositionRoot::DescribeProductionState(const UWorld* World) const
+{
+	const URosterStore* Roster = GetRosterStore();
+	const URoundMatchStore* Round = GetRoundStore();
+	if (Roster == nullptr || Round == nullptr || !Roster->IsMatchOpen() || Round->GetMatchCore() == nullptr)
+	{
+		return FString();
+	}
+	const FRoundPhaseCore& Phase = Round->GetMatchCore()->GetPhaseCore();
+	TArray<FParticipantId> Ids;
+	Roster->GetParticipantIds(Ids);
+	const UStealthPawnFactory* Factory = UStealthPawnFactory::Get(World);
+	return FString::Printf(TEXT("[prod] Round %s  idx %u  changes %u  played %u | Roster %d (T0 %d act %d inf %d / T1 %d act %d inf %d) epoch %u | factory pawns %d, untokened %d"),
+		LexRoundPhase(Phase.GetPhase()), Phase.GetCurrentRoundIndex(), Phase.GetPhaseChangeCount(), Phase.GetRoundsPlayedCount(), Ids.Num(),
+		Roster->CountRoster(0), Roster->CountActive(0), Roster->CountInformant(0), Roster->CountRoster(1), Roster->CountActive(1), Roster->CountInformant(1),
+		Roster->GetEpochToken().RoundEpoch, Factory != nullptr ? Factory->GetSpawnCount() : 0, Factory != nullptr ? Factory->CountUntokenedPawns() : 0);
+}

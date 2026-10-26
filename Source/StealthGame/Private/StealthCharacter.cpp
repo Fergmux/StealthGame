@@ -18,6 +18,7 @@
 #include "InputAction.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Net/UnrealNetwork.h"
+#include "Server/Roster/StealthRosterStore.h"
 
 #if !UE_BUILD_SHIPPING
 #include "Spikes/StealthIdentitySpike.h" // THROWAWAY SPIKE hook (ADR-0001 S1/S2/S14, 2026-10-25)
@@ -45,7 +46,9 @@ namespace
 }
 
 AStealthCharacter::AStealthCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UStealthPrototypeMovementComponent>(ACharacter::CharacterMovementComponentName))
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UStealthPrototypeMovementComponent>(ACharacter::CharacterMovementComponentName)
+		// D53 adapter: the sample Blueprint still owns an SCS component named MotionWarping (ADR-0010 Blueprint cleanup pending).
+		.DoNotCreateDefaultSubobject(AStealthPawn::MotionWarpingComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
@@ -78,6 +81,18 @@ void AStealthCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	ApplyAppearance();
+}
+
+void AStealthCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (HasAuthority())
+	{
+		if (URosterStore* Roster = URosterStore::Get(GetWorld()); Roster && Roster->IsMatchOpen())
+		{
+			Roster->ClearBinding(this, EndPlayReason);
+		}
+	}
+	Super::EndPlay(EndPlayReason);
 }
 
 void AStealthCharacter::Tick(float DeltaSeconds)

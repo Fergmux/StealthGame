@@ -1,5 +1,6 @@
 #include "View/Core/StealthPawn.h"
 
+#include "Components/CapsuleComponent.h"
 #include "GameplayTasksComponent.h"
 #include "View/Core/StealthMotionWarpingComponent.h"
 #include "View/Core/StealthPawnMovementComponent.h"
@@ -26,7 +27,22 @@ AStealthPawn::AStealthPawn(const FObjectInitializer& ObjectInitializer)
 	GameplayTasks = CreateDefaultSubobject<UGameplayTasksComponent>(GameplayTasksComponentName);
 	GameplayTasks->SetIsReplicated(false);
 
-	MotionWarping = CreateDefaultSubobject<UStealthMotionWarpingComponent>(MotionWarpingComponentName);
+	SharedMotionWarping = CreateOptionalDefaultSubobject<UStealthMotionWarpingComponent>(MotionWarpingComponentName);
+
+	// R17.1 Body: one capsule size for every pawn, the sample character's values recorded here.
+	GetCapsuleComponent()->InitCapsuleSize(SampleCapsuleRadiusCm, SampleCapsuleHalfHeightCm);
+}
+
+FStealthBodyConstants AStealthPawn::GetPublishedBodyConstants()
+{
+	const AStealthPawn* Defaults = GetDefault<AStealthPawn>();
+	FStealthBodyConstants Out;
+	Out.CapsuleRadiusCm = Defaults->GetCapsuleComponent()->GetUnscaledCapsuleRadius();
+	Out.CapsuleHalfHeightCm = Defaults->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	const UCharacterMovementComponent* Movement = Defaults->GetCharacterMovement();
+	Out.MaxStepHeightCm = Movement->MaxStepHeight;
+	Out.WalkableFloorAngleDeg = Movement->GetWalkableFloorAngle();
+	return Out;
 }
 
 void AStealthPawn::Restart()

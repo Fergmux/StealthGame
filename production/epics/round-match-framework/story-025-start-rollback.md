@@ -1,12 +1,12 @@
 # Story 025: A Session refusal at RequestRoundTravel rolls admission, teams and phase back and logs StartRolledBack
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -68,8 +68,9 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthGameplay/Private/Tests/Round/StartRollbackTest.cpp` (class `FRoundStartRollbackTest`, test name `StealthGame.Round.StartRollback`)
-- `Source/StealthGameplay/Private/Round/Start/` Start-orchestration implementation from story 024 (rollback branch; no new header expected)
+- Source/StealthGameplay/Private/Core/Round/StealthRoundMatchCore.cpp (rollback, StartRolledBack log entry)
+- Source/StealthFoundation/Public/Server/Random/StealthRoundSeedDrawer.h, Private/Random/StealthRoundSeedDrawer.cpp (new: Session's per-start seed draw)
+- Source/StealthGameplay/Private/Tests/Round/StartRollbackTest.cpp (new)
 
 ---
 
@@ -95,7 +96,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/StartRollbackTest.cpp` — must exist and pass (automation test `StealthGame.Round.StartRollback`, class `FRoundStartRollbackTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.StartRollback`, 2026-10-26)
 
 ---
 
@@ -105,3 +106,13 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/session-travel` (`ETravelRefusal`, `DrawRoundSeed`, `CanRequestRoundTravel`; stories not yet created); `production/epics/participant-state-roster` (`SetTeamsLocked`, `ResetAll`; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (D53 integration batch: PSR 061-062, RMF 018-029, SCL 002/006)
+**Criteria**: 1/1 passing
+**Deviations**: Open point: the Lobby-time StartRolledBack entry goes to the IRoundLogWriter the match core holds (null in production until the Event Log is wired into the composition root).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/StartRollbackTest.cpp`; full suite: `production/qa/evidence/integration-spine-2026-10-26/full-suite.txt` (120/120 Success)
+**Run result**: N/A: rollback needs a Session refusal, which the dev adapter never produces
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, D53 batch
