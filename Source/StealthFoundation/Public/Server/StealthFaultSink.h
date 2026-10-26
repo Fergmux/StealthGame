@@ -26,6 +26,20 @@ enum class EStealthFault : uint8
 	RosterLiveBindingCleared = 7,
 	/** A Roster query met a record state it does not recognise and answered not-targetable (R10; Detail: ERosterCall). */
 	RosterUnrecognisedState = 8,
+	/** The entropy source failed while opening the session secret (ADR-0006 section 2; Detail 0). */
+	EntropyFailed = 9,
+	/** A drained queue item had no registered resolver (ADR-0002 section 5; Detail: EQueueItemType, or 0x100 + ETimerKind). */
+	QueueNoResolver = 10,
+	/** A second resolver or applier was registered for a type that already has one (ADR-0002 section 5; Detail: as QueueNoResolver). */
+	QueueDuplicateRegistration = 11,
+	/** An inline follow-on cascade exceeded QueueCascadeDepthMax (ADR-0002 section 5; Detail: the slot's Seq). */
+	QueueCascadeOverflow = 12,
+	/** IEventFlushBarrier still held events after FlushPending (ADR-0002 section 5; Detail: the slot's Seq). */
+	QueueFlushIncomplete = 13,
+	/** A queue call made outside its legal context, e.g. a follow-on outside a slot (Detail: EStealthQueueMisuse). */
+	QueueMisuse = 14,
+	/** A Round Event Log call refused as misuse, e.g. a second header write (Detail: EStealthRoundLogMisuse). */
+	RoundLogMisuse = 15,
 };
 
 /**

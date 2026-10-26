@@ -1,0 +1,6 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h 4ff4baf4c848b8ba5d499b9a5143f6fa305a1e53
+Reviewed-Content-Hash: Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp f5db8fbfcee1b555a11e7f15e966ea35d9bd0cc0
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/Testing/StealthRoundLogTestSupport.h 29782107f48cf635bd992e7b2e114502a6d556b5
+Reviewed-Content-Hash: tools/ci/lint/log-forbidden-identifiers.txt 09b261d53a4594549b9e4c1a5d29861547df4a30
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Round/EventLogContentTest.cpp 1644bc5af57f91ffc559fde7d5433bdc1a955038
+Story: production/epics/round-match-framework/story-011-event-log-content.md

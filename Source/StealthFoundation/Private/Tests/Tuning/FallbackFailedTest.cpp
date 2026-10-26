@@ -17,6 +17,7 @@
 #include "Server/StealthValidatedTuning.h"
 #include "Server/Testing/StealthLogCapture.h"
 #include "Server/Testing/StealthNegativeControl.h"
+#include "Server/Testing/StealthRoundTestConstants.h"
 #include "Server/Testing/StealthStubRound.h"
 #include "Tests/Tuning/StealthTuningFakePresetSource.h"
 
@@ -110,7 +111,7 @@ bool FTuningFallbackFailedTest::RunTest(const FString& Parameters)
 		TestFalse(TEXT("no OnTuningReady was delivered"), Calls.ContainsByPredicate([](const FStealthStubRoundCall& C) { return C.Kind == EStealthStubRoundCall::OnTuningReady; }));
 		TestEqual(TEXT("the stub round returned to Lobby"), static_cast<int32>(Round.GetPhase()), static_cast<int32>(EStealthStubRoundPhase::Lobby));
 
-		const int32 LoadFailedLines = Capture.GetWarnings().FilterByPredicate([](const FString& Line) { return FStealthLogCapture::ContainsToken(Line, TEXT("TuningLoadFailed")); }).Num();
+		const int32 LoadFailedLines = Capture.GetWarnings().FilterByPredicate([](const FString& Line) { return FStealthLogCapture::ContainsToken(Line, RoundTestFixtures::AbortCodeTuningLoadFailed); }).Num();
 		TestTrue(FString::Printf(TEXT("TuningLoadFailed is logged (observed %d time(s))"), LoadFailedLines), LoadFailedLines >= 1);
 		AddInfo(FString::Printf(TEXT("TuningLoadFailed observed %d time(s) for one failed resolve"), LoadFailedLines));
 	}

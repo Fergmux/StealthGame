@@ -25,7 +25,7 @@ goal: "Production Foundation + Core spine: TDC Exit B pipeline, Participant Stat
 start: "2026-11-09"
 end: "2026-11-20"
 generated: "2026-10-25"
-updated: "2026-10-25"
+updated: "2026-10-26"
 
 stories:
   - id: "tdc-001"
@@ -1535,171 +1535,171 @@ stories:
     name: "Tests inject a fake IClock supplying server time and ServerTickIndex"
     file: "production/epics/round-match-framework/story-001-test-seam-fake-clock.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-002"
     name: "Tests inject a fixed ServerSecret and therefore fixed sub-seeds"
     file: "production/epics/round-match-framework/story-002-test-seam-fixed-server-secret.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-003"
     name: "Tests inject fake Session, Roster, TDC, Character Pool, Level Socket and Crowd gateways"
     file: "production/epics/round-match-framework/story-003-test-seam-fake-gateways.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-004"
     name: "Tests register stub resolvers per queue item type"
     file: "production/epics/round-match-framework/story-004-test-seam-stub-resolvers.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-005"
     name: "Fixture constants live in test constant files, not inline"
     file: "production/epics/round-match-framework/story-005-test-fixture-constants.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-006"
     name: "Intake permutation is fair per source, deterministic per (secret, tick, mailbox set), keys strictly increasing"
     file: "production/epics/round-match-framework/story-006-intake-fairness.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-007"
     name: "Per-source order, DueEpsilonMs stamping, TieRank ties, stale-connection and per-drain cap rules hold"
     file: "production/epics/round-match-framework/story-007-intake-ordering-rules.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-008"
     name: "Resolvers return Voided/in-slot/deferred outcomes with the specified keys and Seq consumption"
     file: "production/epics/round-match-framework/story-008-resolver-contract.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-009"
     name: "Follow-on transitions and subscribers run depth-first in the item's slot; cascade depth 9 logs CascadeOverflow"
     file: "production/epics/round-match-framework/story-009-follow-ons-inline.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-010"
     name: "An item stamped with the previous RoundEpoch is Rejected_StaleEpoch when drained"
     file: "production/epics/round-match-framework/story-010-stale-epoch-item.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-011"
     name: "Event Log header and WinLatched hold the specified fields for every terminal outcome and are unreadable before Ended"
     file: "production/epics/round-match-framework/story-011-event-log-content.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-012"
     name: "The 4096-entry ring evicts oldest ordinary entries first, protects header and WinLatched, and counts TruncatedCount"
     file: "production/epics/round-match-framework/story-012-log-truncation.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-013"
     name: "Mean entry size is reported against F8 and the ring never exceeds 16,384 entries"
     file: "production/epics/round-match-framework/story-013-log-size-bound.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-014"
     name: "No log device, ClientMessage or trace channel carries a sentinel; dumplog is refused before Ended"
     file: "production/epics/round-match-framework/story-014-log-never-leaks.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-015"
     name: "At most one Voided entry per second per source and the kill timeline stays intact"
     file: "production/epics/round-match-framework/story-015-voided-rate-limit.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-016"
     name: "PacingRatio, ObjectiveEndShare, AbortedActiveShare and stall/abort flags compute per F7 from fixture logs"
     file: "production/epics/round-match-framework/story-016-pacing-metrics.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-017"
     name: "A second final Complete after the latch returns Rejected_Latched and is logged TendCompleted with Latched = true"
     file: "production/epics/round-match-framework/story-017-latched-final-complete-logged.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-26"
     sprint: 2
   - id: "rmf-018"
     name: "A new key joins the smaller team; ties go to team RoundsPlayedCount parity"

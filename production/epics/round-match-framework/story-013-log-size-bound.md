@@ -1,12 +1,12 @@
 # Story 013: Mean entry size is reported against F8 and the ring never exceeds 16,384 entries
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -27,6 +27,7 @@
 - Required: Event Log types are plain C++ (no `USTRUCT`/`UCLASS`/`UPROPERTY`) with no text conversion besides the `Ended`/`Reset` disk writer (ADR-0007)
 - Forbidden: Never add telemetry entries to the R19 ring; never pass telemetry or Event Log content to `UE_LOG`/`UE_LOGF`, `ensureMsgf`/`checkf`, `ClientMessage`, `TRACE_*`, `CSV_*` or a stat/scope name (ADR-0023, ADR-0007)
 - Guardrail: Event Log ring about 20-30 KB for a typical round of about 300 entries, at most about 400 KB at the 4096 default and about 1.6 MB at the 16,384 hard maximum (F8); the budget guards server memory since nothing is sent before `Ended`
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: F8 estimates an entry at 64 to 96 bytes. That number sizes the ring (about 400 KB at 4096) and ADR-0023's budget, but it is an estimate that "is to be measured" (F8). This story measures it on a scripted 300-entry round and reports it, without asserting on the size (advisory), so the estimate can be corrected with data. It also enforces the hard bound that a mis-set `RoundLogMaxEntriesCount` can never exceed 16,384 entries, so no setting can exhaust server memory. Depends on story 011's store. Exit A.
 
@@ -38,7 +39,7 @@
 
 *From the AC overrides file (AC 34b, revised), one criterion, `story_granularity: fine`:*
 
-- [ ] A scripted 300-entry round reports mean entry size against F8's 64-96 B estimate (advisory, no assertion on the size); AND with RoundLogMaxEntriesCount set above its clamp and 20,000 entries logged, the ring size is never above 16,384 (the setting is clamped to 16,384). `StealthGame.Round.LogSizeBound` [U]
+- [x] A scripted 300-entry round reports mean entry size against F8's 64-96 B estimate (advisory, no assertion on the size); AND with RoundLogMaxEntriesCount set above its clamp and 20,000 entries logged, the ring size is never above 16,384 (the setting is clamped to 16,384). `StealthGame.Round.LogSizeBound` [U]
 
 ---
 
@@ -71,10 +72,10 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h` and `Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp` (extended from stories 011 and 012; capacity clamp, size accessor)
-- `Source/StealthFoundation/Private/Tests/EventLog/LogSizeBoundTest.cpp` (new; class `FRoundLogSizeBoundTest`)
-- `Source/StealthFoundation/Private/Tests/Fixtures/StealthRoundTestConstants.h` (extended; the above-clamp fixture value, story 005's constant file)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h` (`ClampMaxEntries` [512, 16384], `GetEntryBytes`, `GetSlotBytes`)
+- `Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp`
+- `Source/StealthFoundation/Public/Server/Testing/StealthRoundTestConstants.h` (above-clamp fixture)
+- `Source/StealthFoundation/Private/Tests/Round/LogSizeBoundTest.cpp` (test `StealthGame.Round.LogSizeBound`)
 
 ---
 
@@ -100,9 +101,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/EventLog/LogSizeBoundTest.cpp` — automation test `StealthGame.Round.LogSizeBound` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundLogSizeBoundTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/LogSizeBoundTest.cpp` — automation test `StealthGame.Round.LogSizeBound` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundLogSizeBoundTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.LogSizeBound`, 2026-10-26)
 
 ---
 
@@ -111,3 +112,11 @@
 - Depends on: `production/epics/round-match-framework/story-011-event-log-content.md`
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.LogSizeBound`)
+**Notes**: Advisory report (automation info line): entries are fixed-size, mean entry size 72 B, within F8's 64-96 B; ring slot 88 B (entry plus bookkeeping), about 352 KB at 4,096 and 1.4 MB at 16,384. A configured 50,000 clamps to 16,384 and 20,000 appends never exceed it (3,616 evicted). The reporting channel and the size definition were the story's Open items (decision log).
+**Build/test**: see `production/qa/evidence/story-013-log-size-bound/full-suite.txt`

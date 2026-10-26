@@ -1,0 +1,6 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h e8a2446f4ba3dffad270f9a25b5eb873665decd4
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp 82efafef2aee6a2202727774ba9f46d0308afb61
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/EventLog/StealthRoundLogTypes.h 53cd9f616abe4d262230a67dcda4dbb125b0e2c4
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/EventLog/StealthRoundLogWriter.h c1730adf057038909198e23f3bb624e496f79c27
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Round/ResolverContractTest.cpp e40d458004aede763373b14866a94485517af389
+Story: production/epics/round-match-framework/story-008-resolver-contract.md

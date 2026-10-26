@@ -1,12 +1,12 @@
 # Story 011: Event Log header and WinLatched hold the specified fields for every terminal outcome and are unreadable before Ended
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -27,6 +27,7 @@
 - Required: Event Log types are plain C++ (no `USTRUCT`/`UCLASS`/`UPROPERTY`) with no text conversion besides the `Ended`/`Reset` disk writer (ADR-0007)
 - Forbidden: Never pass Event Log content, `DealDigest`, server sub-seeds, bindings or mailbox order to `UE_LOG`/`UE_LOGF`/`ensureMsgf`/`checkf`/`ClientMessage`/`TRACE_*`/`CSV_*`/`SCOPE_CYCLE_COUNTER` names (ADR-0007)
 - Guardrail: Event Log at most about 400 KB at the 4096 default and about 1.6 MB at the 16384 hard maximum (F8, ADR-0002 section 8.9); the drain stays inside 0.5 ms (ADR-0002) so `Append` is O(1) amortised
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: The Event Log is the only record of why a round ended and the raw material for playtest analysis (Pillar 4). Before it can be trusted, three things must hold for every way a round can terminate: the header carries the full field list written at P3, `WinLatched` carries the `EndReason` and the key, and nothing can read the log until the round is Ended (so the host cannot peek mid-round). This story builds the store and proves those three. Story 012 (truncation), 013 (size), 014 (leak checks), 015 (Voided rate limit), 016 (pacing), 017 (latched completion) and 054 (TeamSummary) all build on it. Exit A.
 
@@ -38,7 +39,7 @@
 
 *From the AC overrides file (AC 32 scoped; the `dumplog` phase matrix moved to story 027), one criterion, `story_granularity: fine`:*
 
-- [ ] For each terminal outcome (ObjectiveWin, Elimination, ForfeitElimination, Void Abandoned, Void KickedLastActive, Void PawnLost, Aborted) the header holds every field of the RoundLogHeaderFields fixture, the WinLatched entry holds the EndReason and the key, and the client/dump log read API refuses every read before Ended (the server-internal accessor Round itself uses to compute TeamSummary in story 054 is a separate path). `StealthGame.Round.EventLogContent` [U]
+- [x] For each terminal outcome (ObjectiveWin, Elimination, ForfeitElimination, Void Abandoned, Void KickedLastActive, Void PawnLost, Aborted) the header holds every field of the RoundLogHeaderFields fixture, the WinLatched entry holds the EndReason and the key, and the client/dump log read API refuses every read before Ended (the server-internal accessor Round itself uses to compute TeamSummary in story 054 is a separate path). `StealthGame.Round.EventLogContent` [U]
 
 ---
 
@@ -75,10 +76,11 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h` and `Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp` (new; `FRoundEventLog`, `FRoundLogHeader`, `FRoundLogEntry`, `ERoundLogType`, `EEndReason`)
-- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundLogWriter.h` (extended from story 008; `IRoundLogWriter`)
-- `Source/StealthFoundation/Private/Tests/EventLog/EventLogContentTest.cpp` (new; class `FRoundEventLogContentTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h` (`FRoundEventLog`, `FRoundLogHeader` (X-macro field list), read gate, server-internal accessor, `TallyTeamSummaryInputsServerInternal`, disk writer)
+- `Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp`
+- `Source/StealthFoundation/Public/Server/Testing/StealthRoundLogTestSupport.h` (fake gate, spy file sink, `FStealthRoundLogRig`, fixture builders)
+- `tools/ci/lint/log-forbidden-identifiers.txt` (lint (i) gains `FRoundLogEntry`, `FRoundLogHeader`, `IRoundLogWriter`)
+- `Source/StealthFoundation/Private/Tests/Round/EventLogContentTest.cpp` (test `StealthGame.Round.EventLogContent`)
 
 ---
 
@@ -105,9 +107,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/EventLog/EventLogContentTest.cpp` — automation test `StealthGame.Round.EventLogContent` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundEventLogContentTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/EventLogContentTest.cpp` — automation test `StealthGame.Round.EventLogContent` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundEventLogContentTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.EventLogContent`, 2026-10-26)
 
 ---
 
@@ -116,3 +118,11 @@
 - Depends on: `production/epics/round-match-framework/story-001-test-seam-fake-clock.md`, `production/epics/round-match-framework/story-005-test-fixture-constants.md`, `production/epics/round-match-framework/story-008-resolver-contract.md`
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: `production/epics/round-match-framework/story-012-log-truncation.md`, `production/epics/round-match-framework/story-013-log-size-bound.md`, `production/epics/round-match-framework/story-014-log-never-leaks.md`, `production/epics/round-match-framework/story-015-voided-rate-limit.md`, `production/epics/round-match-framework/story-016-pacing-metrics.md`, `production/epics/round-match-framework/story-017-latched-final-complete-logged.md`, `production/epics/round-match-framework/story-054-team-summary-at-ended.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.EventLogContent`)
+**Notes**: For all seven outcomes: the header holds every `RoundLogHeaderFields` field (names and values), `WinLatched` holds the `EndReason`, the key and the winner (none for an abort or void; written for every terminal outcome, the story's Open item), and the client/dump API (header, entries, counters, disk) refuses in Lobby, Preparing, Active and the latch step, then answers at Ended (wins) or Reset (abort, void). D48: Round's server-internal accessor is a separate path and computes the TeamSummary inputs (steps, eliminations, wrong-target kills per team) before Ended, the data half of MVP item 9 that rmf-054 publishes.
+**Build/test**: see `production/qa/evidence/story-011-event-log-content/full-suite.txt`

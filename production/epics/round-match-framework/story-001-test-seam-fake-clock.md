@@ -1,12 +1,12 @@
 # Story 001: Tests inject a fake IClock supplying server time and ServerTickIndex
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Queue, Roster, tuning validator, seed mixer and appearance deck are plain C++ cores (`F...Core`) with no `UWorld` dependency, behind a subsystem facade (ADR-0007)
 - Forbidden: Never use wall-clock time as a test pass/fail predicate (only as a failure ceiling); never use wall-clock waits, unseeded randomness or shared mutable state in tests (ADR-0008)
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms listen-host game thread (ADR-0002); the seam adds one virtual call per read and no allocation
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: Every [U] test in this epic needs to say "it is now tick N at server time T" without sleeping. The GDD makes the fake clock the first of four binding test seams. This story builds that seam before any queue code so the queue core is written against an injected clock from its first line. Exit A (Foundation) is built first and unblocks every queue consumer; this is the first Exit A story.
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/round-match-framework.md`, "Test seams (binding on implementation)" item 1, scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN a [U] test, WHEN it needs server time or ServerTickIndex, THEN a fake IClock supplies both and only the test advances them (no wall-clock read). `StealthGame.Round.FakeClockSeam` [U]
+- [x] GIVEN a [U] test, WHEN it needs server time or ServerTickIndex, THEN a fake IClock supplies both and only the test advances them (no wall-clock read). `StealthGame.Round.FakeClockSeam` [U]
 
 ---
 
@@ -66,10 +67,10 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/Clock/StealthClock.h` (new; `IClock`)
-- `Source/StealthFoundation/Private/Tests/Clock/StealthFakeClock.h` (new; test-only fake with `Advance`)
-- `Source/StealthFoundation/Private/Tests/Clock/FakeClockSeamTest.cpp` (new; class `FRoundFakeClockSeamTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `Source/StealthFoundation` does not exist yet: the tuning-data-config epic creates the module skeleton; until it lands, write under `Source/StealthGame/` and move when the skeleton arrives. Module placement follows ADR-0007 section 2.
+- `Source/StealthFoundation/Public/Server/StealthClock.h` (reused unchanged: `IStealthClock` (tdc-007) is the GDD's `IClock`)
+- `Source/StealthFoundation/Public/Server/Testing/StealthFakeClock.h` (reused unchanged: `FFakeStealthClock` with `Advance`, `AdvanceSeconds`, `AdvanceTicks`)
+- `Source/StealthFoundation/Public/Server/Testing/StealthQueueTestRig.h` (`FStealthQueueTestRig`: the fake clock injected into `FResolutionQueueCore` by constructor)
+- `Source/StealthFoundation/Private/Tests/Round/FakeClockSeamTest.cpp` (test `StealthGame.Round.FakeClockSeam`)
 
 ---
 
@@ -93,9 +94,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Clock/FakeClockSeamTest.cpp` — automation test `StealthGame.Round.FakeClockSeam` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFakeClockSeamTest` (one class per `IMPLEMENT_SIMPLE_AUTOMATION_TEST`), T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/FakeClockSeamTest.cpp` — automation test `StealthGame.Round.FakeClockSeam` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFakeClockSeamTest` (one class per `IMPLEMENT_SIMPLE_AUTOMATION_TEST`), T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.FakeClockSeam`, 2026-10-26)
 
 ---
 
@@ -104,3 +105,11 @@
 - Depends on: None (within this epic)
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: `production/epics/round-match-framework/story-004-test-seam-stub-resolvers.md`, `production/epics/round-match-framework/story-006-intake-fairness.md`, `production/epics/round-match-framework/story-007-intake-ordering-rules.md`, `production/epics/round-match-framework/story-008-resolver-contract.md`, `production/epics/round-match-framework/story-011-event-log-content.md`, `production/epics/round-match-framework/story-040-disconnected-at-start-spawned.md`, `production/epics/round-match-framework/story-043-no-draw-property.md`, `production/epics/round-match-framework/story-060-grace-timeline.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.FakeClockSeam`)
+**Notes**: The GDD's `IClock` is the existing `IStealthClock`/`FFakeStealthClock` (decision log: no second clock interface). The queue core reads `ServerTickIndex` and the drain-start time only through it; the test shows two reads with real time passing are identical, a tick-only advance leaves a timer pending, a time-only advance fires it on the unchanged tick, and `Advance(dt, ticks)` moves both exactly.
+**Build/test**: see `production/qa/evidence/story-001-test-seam-fake-clock/full-suite.txt`

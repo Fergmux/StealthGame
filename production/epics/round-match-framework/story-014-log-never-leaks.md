@@ -1,12 +1,12 @@
 # Story 014: No log device, ClientMessage or trace channel carries a sentinel; dumplog is refused before Ended
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Event Log types are plain C++ (no `USTRUCT`/`UCLASS`/`UPROPERTY`) with no text conversion besides the `Ended`/`Reset` disk writer (ADR-0007).
 - Forbidden: Never pass Event Log content, `DealDigest`, server sub-seeds, bindings or mailbox order to `UE_LOG`/`UE_LOGF`/`ensureMsgf`/`checkf`/`ClientMessage`/`TRACE_*`/`CSV_*`/`SCOPE_CYCLE_COUNTER` names (ADR-0007).
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms on the listen-host game thread (ADR-0002); log appends happen inside drain slots, so this story adds no per-entry text work.
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Prototype disposition**: none (new Foundation code). The prototype logs round facts with `UE_LOG(LogStealth, ...)` in `StealthGameMode.cpp` (for example in `EndRound`); that pattern is the one this story's test proves the new code does not use. It is not promoted.
 
@@ -34,7 +35,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 60 (Foundation half; the `dumplog` phase rule moves to story 027), scoped to this story:*
 
-- [ ] GIVEN a full fixture round of sentinel ids and hashes, WHEN every log device, `ClientMessage` and trace channel is captured, THEN none contains a sentinel; no log file is written before `Ended` or `Reset`; and no sub-seed derived from the fixture secret appears in any log entry, header or file.
+- [x] GIVEN a full fixture round of sentinel ids and hashes, WHEN every log device, `ClientMessage` and trace channel is captured, THEN none contains a sentinel; no log file is written before `Ended` or `Reset`; and no sub-seed derived from the fixture secret appears in any log entry, header or file.
 
 ---
 
@@ -67,9 +68,9 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthFoundation/Private/Tests/EventLog/LogNeverLeaksTest.cpp` (class `FRoundLogNeverLeaksTest`, test name `StealthGame.Round.LogNeverLeaks`)
-- `Source/StealthFoundation/Private/Tests/EventLog/` capture helpers (output-device capture, `ClientMessage` spy, planted-leak control), test module only
-- Production code is story 011's Event Log store under `Source/StealthFoundation/Public/Server/` and `Source/StealthFoundation/Private/EventLog/`; this story changes it only if the test finds a leak (Open: file names are set by story 011)
+- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h` (the single disk writer, refused unless Ended/Reset)
+- `Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp`
+- `Source/StealthFoundation/Private/Tests/Round/LogNeverLeaksTest.cpp` (test `StealthGame.Round.LogNeverLeaks`)
 
 ---
 
@@ -91,9 +92,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/EventLog/LogNeverLeaksTest.cpp` — must exist and pass (automation test `StealthGame.Round.LogNeverLeaks`, class `FRoundLogNeverLeaksTest`)
+- Logic: `Source/StealthFoundation/Private/Tests/Round/LogNeverLeaksTest.cpp` — must exist and pass (automation test `StealthGame.Round.LogNeverLeaks`, class `FRoundLogNeverLeaksTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.LogNeverLeaks`, 2026-10-26)
 
 ---
 
@@ -103,3 +104,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.LogNeverLeaks`)
+**Notes**: A fixture round (queue with secret S3 writing into the real store, sentinel ids and hashes) runs Lobby to Reset with every GLog line captured: no line carries a sentinel or any sub-seed rendering; the disk writer is refused in Lobby, Preparing, Active and the latch step and writes only at Ended and Reset; no file or header holds a sub-seed. ClientMessage and trace channels: the Queue and Event Log sources call no `UE_LOG`/`UE_LOGF`, `ClientMessage`, `TRACE_`, `CSV_`, `SCOPE_CYCLE_COUNTER`, `ensureMsgf` or `checkf` (static scan; the include lint (i) is the CI half) - the story's Open item on the capture mechanism (decision log). A planted leaking sink is detected (negative control).
+**Build/test**: see `production/qa/evidence/story-014-log-never-leaks/full-suite.txt`

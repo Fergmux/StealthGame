@@ -1,12 +1,12 @@
 # Story 003: Tests inject fake Session, Roster, TDC, Character Pool, Level Socket and Crowd gateways
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Queue, Roster, tuning validator, seed mixer and appearance deck are plain C++ cores (`F...Core`) with no `UWorld` dependency, behind a subsystem facade; interface implementations are registered only by the composition root, weakly, and cleared in `Deinitialize`/`EndPlay` (ADR-0007)
 - Forbidden: Never compile negative-control types or test seams into Shipping (`StealthTestHarness` or `WITH_STEALTH_TEST_SEAMS` only) (ADR-0008)
 - Guardrail: Tests: per-commit pipeline at most 10 min (ADR-0008); the fakes are in-memory and allocation-light
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: Round decides, and six other systems act: Session (travel, admission, connection facts), Roster (teams, states, transitions), Tuning/TDC (the frozen snapshot), Character Pool (appearance allocation), Level Socket (placement sockets) and Crowd (`ICrowdControl`). Every Core test (stories 018 onward) needs to drive Round against fakes and read back what Round called, in order. This story builds the six recording fakes and the shared call-order log once. It is the largest seam story (M) because six interfaces are involved. Exit A seam story; the Core stories consume it.
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/round-match-framework.md`, "Test seams (binding on implementation)" item 3, scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN a [U] test, THEN fake Session, Roster, TDC, Character Pool, Level Socket and Crowd gateways are supplied by dependency injection (no singleton access) and record their calls in order. `StealthGame.Round.FakeGatewaysSeam` [U]
+- [x] GIVEN a [U] test, THEN fake Session, Roster, TDC, Character Pool, Level Socket and Crowd gateways are supplied by dependency injection (no singleton access) and record their calls in order. `StealthGame.Round.FakeGatewaysSeam` [U]
 
 ---
 
@@ -67,9 +68,13 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Private/Tests/Fakes/StealthFakeGateways.h` (new; six recording fakes and the shared call-order log; placement subject to the Open item above)
-- `Source/StealthFoundation/Private/Tests/Fakes/FakeGatewaysSeamTest.cpp` (new; class `FRoundFakeGatewaysSeamTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthGameplay/Public/Server/Core/Round/StealthRoundGateways.h` (`IRoundSessionGateway`, `IRoundRosterGateway`, `IRoundTuningGateway`, `IRoundCharacterPoolGateway`, `IRoundLevelSocketGateway` (UINTERFACEs), `FRoundGateways`)
+- `Source/StealthGameplay/Public/Server/Core/Round/StealthCrowdControl.h` (`ICrowdControl`, `FCrowdAdoptParams` as ADR-0016 states them)
+- `Source/StealthGameplay/Public/Server/Testing/StealthRoundFakeGateways.h` (six strict recording fakes on one shared call-order log)
+- `Source/StealthFoundation/Public/Server/Roster/StealthRosterCallTypes.h` (`ERosterConnection`, `ERosterReason`, `ERosterResult` moved out of the Roster core's private header)
+- `Source/StealthFoundation/Private/Roster/StealthRosterCore.h` (includes the moved enums)
+- `Source/StealthGameplay/Private/Tests/Round/FakeGatewaysSeamTest.cpp` (test `StealthGame.Round.FakeGatewaysSeam`)
+- `docs/architecture/adr-0002-resolution-queue-round-end-staging.md` (Amendments: "RMF Exit A build 2026-10-25" (the RMF-003 ruling))
 
 ---
 
@@ -94,9 +99,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Fakes/FakeGatewaysSeamTest.cpp` — automation test `StealthGame.Round.FakeGatewaysSeam` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFakeGatewaysSeamTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthGameplay/Private/Tests/Round/FakeGatewaysSeamTest.cpp` — automation test `StealthGame.Round.FakeGatewaysSeam` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFakeGatewaysSeamTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.FakeGatewaysSeam`, 2026-10-26)
 
 ---
 
@@ -106,3 +111,11 @@
 - Cross-epic (interface contracts only, the real implementations are not needed to build the fakes): `production/epics/participant-state-roster`, `production/epics/session-travel`, `production/epics/character-pool-appearance`, `production/epics/level-socket-contract`, `production/epics/crowd-npc-behaviour` (`ICrowdControl`; mutual peer), `production/epics/tuning-data-config`
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: `production/epics/round-match-framework/story-018-team-assignment.md`, `production/epics/round-match-framework/story-022-start-validity.md`, `production/epics/round-match-framework/story-024-start-ordering.md`, `production/epics/round-match-framework/story-031-allocate-once.md`, `production/epics/round-match-framework/story-038-placement-invariant.md`, `production/epics/round-match-framework/story-040-disconnected-at-start-spawned.md`, `production/epics/round-match-framework/story-060-grace-timeline.md`, `production/epics/round-match-framework/story-067-bound-ai-move-look-only.md`, `production/epics/round-match-framework/story-075-active-pawn-lost-recovery.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.FakeGatewaysSeam`)
+**Notes**: RMF-003 ruling (the sprint-02 open decision, delegated to this build): Round owns its gateways as consumer interfaces in StealthGameplay Core (ADR-0007; Foundation cannot include StealthGameplay), UINTERFACEs because the composition root registers the producers' adapters weakly, bundled as raw pointers in `FRoundGateways` for Round's plain cores. Recorded in ADR-0002 Amendments and the decision log; this unblocks RMF-018..025 and RMF-031. The layer of the story stays Foundation (it is an Exit A seam) but its files live in StealthGameplay by the ruling. The fakes are strict (an unscripted call is recorded as unexpected; a negative control proves it is caught) and record ids, enums and counts only.
+**Build/test**: see `production/qa/evidence/story-003-test-seam-fake-gateways/full-suite.txt`

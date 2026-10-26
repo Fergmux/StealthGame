@@ -1,0 +1,4 @@
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h e8a2446f4ba3dffad270f9a25b5eb873665decd4
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp 82efafef2aee6a2202727774ba9f46d0308afb61
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Tests/Round/IntakeOrderingRulesTest.cpp 2b3027a71b2b466ebd7bc8a3ad1580ac2f97527b
+Story: production/epics/round-match-framework/story-007-intake-ordering-rules.md

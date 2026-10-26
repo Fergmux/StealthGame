@@ -1,12 +1,12 @@
 # Story 017: A second final Complete after the latch returns Rejected_Latched and is logged TendCompleted with Latched = true
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Only Round's `TryTerminate` calls `Latch`; after the latch the queue rejects every item with `Rejected_Latched` except parked `HostCommand`s, the post-latch lane and the `ConcealmentTransition` exemption (ADR-0002).
 - Forbidden: Never re-submit or re-stamp an outcome (ADR-0002).
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms on the listen-host game thread (ADR-0002).
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Prototype disposition**: none (new Foundation code). In Exit A the latch in this test is produced by a stub resolver; the real latch (Round's `TryTerminate` and `FRoundPhaseCore`) is Core story 052 and replaces the prototype's first-come `EndRound` in `StealthGameMode.cpp` there, not here.
 
@@ -34,7 +35,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 63, scoped to this story:*
 
-- [ ] GIVEN a final `HoldTimer(Complete)` that latches the round and a second final `Complete` in the same drain, THEN the second returns `Rejected_Latched` and the Event Log holds `TendCompleted(ParticipantId, court, NoEffect)` with `Latched = true` for it, so the objective-win share counts both attempts.
+- [x] GIVEN a final `HoldTimer(Complete)` that latches the round and a second final `Complete` in the same drain, THEN the second returns `Rejected_Latched` and the Event Log holds `TendCompleted(ParticipantId, court, NoEffect)` with `Latched = true` for it, so the objective-win share counts both attempts.
 
 ---
 
@@ -65,8 +66,10 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthFoundation/Private/Tests/Queue/LatchedFinalCompleteLoggedTest.cpp` (class `FRoundLatchedFinalCompleteLoggedTest`, test name `StealthGame.Round.LatchedFinalCompleteLogged`)
-- Production change in the Event Log and queue cores built by stories 008 and 011 under `Source/StealthFoundation/Private/Queue/` and `Source/StealthFoundation/Private/EventLog/` (the `Latched` flag on `TendCompleted`; Open: file names are set by those stories)
+- `Source/StealthFoundation/Public/Server/Queue/StealthQueueResolver.h` (`IQueueResolver::OnRejectedLatched`)
+- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` (latch rejection calls the owner inside the slot and logs `Rejected_Latched`)
+- `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp`
+- `Source/StealthFoundation/Private/Tests/Round/LatchedFinalCompleteLoggedTest.cpp` (test `StealthGame.Round.LatchedFinalCompleteLogged`)
 
 ---
 
@@ -88,9 +91,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Queue/LatchedFinalCompleteLoggedTest.cpp` — must exist and pass (automation test `StealthGame.Round.LatchedFinalCompleteLogged`, class `FRoundLatchedFinalCompleteLoggedTest`)
+- Logic: `Source/StealthFoundation/Private/Tests/Round/LatchedFinalCompleteLoggedTest.cpp` — must exist and pass (automation test `StealthGame.Round.LatchedFinalCompleteLogged`, class `FRoundLatchedFinalCompleteLoggedTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.LatchedFinalCompleteLogged`, 2026-10-26)
 
 ---
 
@@ -100,3 +103,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.LatchedFinalCompleteLogged`)
+**Notes**: Two final `HoldTimer(Complete)` items in one drain: the first executes and latches (stub stand-in for `TryTerminate`), the second is `Rejected_Latched` keeping its key; the real Event Log holds `TendCompleted(A, court 9, Counted)` with `Latched = false` and `TendCompleted(B, court 9, NoEffect)` with `Latched = true`, plus one `Rejected_Latched` and one `WinLatched`; both attempts count. Open item: the owning resolver writes the latched entry, through the new `OnRejectedLatched` hook the queue exposes (recorded in ADR-0002 Amendments).
+**Build/test**: see `production/qa/evidence/story-017-latched-final-complete-logged/full-suite.txt`

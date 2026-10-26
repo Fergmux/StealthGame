@@ -16,6 +16,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Roster/StealthRosterCore.h"
+#include "Server/Testing/StealthRoundTestConstants.h"
 
 #include <type_traits>
 
@@ -53,7 +54,7 @@ namespace RecordSchemaTestData
 	/** R1 deny-list fragments (case-insensitive) plus the roster-wide counters that must not sit on a record. */
 	const TCHAR* const DenyFragments[] = {
 		TEXT("strike"), TEXT("defence"), TEXT("defense"), TEXT("conceal"), TEXT("objective"),
-		TEXT("MatchId"), TEXT("RoundEpoch"), TEXT("Tally"), TEXT("RespawnDue"),
+		TEXT("MatchId"), RoundTestFixtures::HeaderFieldRoundEpoch, TEXT("Tally"), TEXT("RespawnDue"),
 	};
 }
 

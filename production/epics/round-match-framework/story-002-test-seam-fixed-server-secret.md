@@ -1,12 +1,12 @@
 # Story 002: Tests inject a fixed ServerSecret and therefore fixed sub-seeds
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Tests inject entropy through `IEntropySource` (ADR-0006)
 - Forbidden: Never log, trace, replicate, put in a URL or expose to Blueprint `ServerSecret`, `MatchNonce`, server sub-seeds or stream keys (only digests and `(Domain, Attempt, StreamTag, counter)` tuples) (ADR-0006)
 - Guardrail: Random streams: hidden draws well under 0.05 ms/frame (ADR-0006); the seam adds no per-draw cost
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: Round's order-sensitive logic (the per-tick intake permutation, the `TieRank` shuffle, spawn order) is drawn from server-secret streams, and the GDD wants statistical tests that are deterministic (fixed fixture secrets in `RoundTestSeeds`, fixed bounds, no flake rate). This story proves the injection point exists and that the same secret always gives the same sub-seeds while another secret gives different ones. Exit A seam story; stories 006, 036 and 043 consume it.
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/round-match-framework.md`, "Test seams (binding on implementation)" item 2, scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN a [U] test with a fixed ServerSecret, THEN the sub-seeds derived from it are identical across runs and a different secret gives different sub-seeds. `StealthGame.Round.FixedSecretSeam` [U]
+- [x] GIVEN a [U] test with a fixed ServerSecret, THEN the sub-seeds derived from it are identical across runs and a different secret gives different sub-seeds. `StealthGame.Round.FixedSecretSeam` [U]
 
 ---
 
@@ -65,10 +66,18 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Private/Tests/Fixtures/StealthRoundTestConstants.h` (new or extended; holds the `RoundTestSeeds` fixture secrets, shared with story 005)
-- `Source/StealthFoundation/Private/Tests/Fixtures/StealthFakeEntropySource.h` (new; test-only `IEntropySource` returning a fixture secret)
-- `Source/StealthFoundation/Private/Tests/Queue/FixedSecretSeamTest.cpp` (new; class `FRoundFixedSecretSeamTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands. Open: confirm against ADR-0008 where constant files shared by StealthFoundation and StealthGameplay tests live (a `Private/` header is not visible across modules).
+- `Source/StealthFoundation/Public/Server/Random/StealthServerSeeds.h` (`ESeedDomain` (ADR-0006 registry 1-17), `IEntropySource`, `IServerSubSeedSource`, `FStealthServerSeeds` (F5 sub-seed derivation core))
+- `Source/StealthFoundation/Private/Random/StealthServerSeeds.cpp`
+- `Source/StealthFoundation/Public/Server/Random/StealthSipHash.h` (`StealthRandom::SipHash24`)
+- `Source/StealthFoundation/Private/Random/StealthSipHash.cpp`
+- `Source/StealthFoundation/Public/Server/Random/StealthSecretStream.h` (`FSecretStream` (SipHash counter mode, `KStreamConst`))
+- `Source/StealthFoundation/Private/Random/StealthSecretStream.cpp`
+- `Source/StealthFoundation/Public/View/Random/StealthRandomTag.h` (`StealthRandom::Tag`)
+- `Source/StealthFoundation/Public/View/Random/StealthRangedDraw.h` (`UniformBelow`, `UniformInRange`, `FisherYates`)
+- `Source/StealthFoundation/Public/Server/StealthFaultSink.h` (appended `EntropyFailed`=9 and the queue/log faults 10-15)
+- `Source/StealthFoundation/Public/Server/Testing/StealthQueueTestRig.h` (`FStealthFakeEntropySource`)
+- `Source/StealthFoundation/Public/Server/Testing/StealthRoundTestConstants.h` (`RoundTestSeeds` S1, S2, S3)
+- `Source/StealthFoundation/Private/Tests/Round/FixedSecretSeamTest.cpp` (test `StealthGame.Round.FixedSecretSeam`)
 
 ---
 
@@ -93,9 +102,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Queue/FixedSecretSeamTest.cpp` — automation test `StealthGame.Round.FixedSecretSeam` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFixedSecretSeamTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/FixedSecretSeamTest.cpp` — automation test `StealthGame.Round.FixedSecretSeam` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFixedSecretSeamTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.FixedSecretSeam`, 2026-10-26)
 
 ---
 
@@ -105,3 +114,11 @@
 - Cross-epic: `production/epics/session-travel` (the seed primitives this seam injects into: `story-008-secret-stream-counter-independence.md`, `story-009-os-entropy-and-session-secret.md`, `story-010-seed-derivation-golden-vectors.md`, `story-011-server-sub-seed-server-only.md`; if those are not Done, the test may use the plain derivation core as soon as it exists)
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: `production/epics/round-match-framework/story-006-intake-fairness.md`, `production/epics/round-match-framework/story-036-spawn-order-uniform.md`, `production/epics/round-match-framework/story-043-no-draw-property.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.FixedSecretSeam`)
+**Notes**: The session-travel seed primitives (st-005..011) were not built yet, so the ADR-0006 primitives were implemented minimally in their ADR-named headers and checked against two SipHash-2-4 reference vectors; their golden-vector suites, the OS entropy source and the authority/thread/`FPublicOnlyScope` misuse checks stay with session-travel (decision log). `FStealthServerSeeds` is the plain core `FSessionCore` will own, so the test exercises the real derivation. Every domain 1-17 at four attempts: S1 identical across derivations, S2 different; values are compared in the test and never printed.
+**Build/test**: see `production/qa/evidence/story-002-test-seam-fixed-server-secret/full-suite.txt`

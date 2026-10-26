@@ -1,12 +1,12 @@
 # Story 012: The 4096-entry ring evicts oldest ordinary entries first, protects header and WinLatched, and counts TruncatedCount
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -27,6 +27,7 @@
 - Required: Event Log types are plain C++ (no `USTRUCT`/`UCLASS`/`UPROPERTY`) with no text conversion besides the `Ended`/`Reset` disk writer (ADR-0007)
 - Forbidden: Never add telemetry entries to the R19 ring, and never write telemetry through a log category, file logger, engine analytics provider or Insights channel (ADR-0023)
 - Guardrail: Event Log ring at most about 400 KB at 4096 entries (F8, ADR-0023 section 5); telemetry at most 0.15 ms mean listen-host game thread (ADR-0023); eviction must be O(1) amortised so a flood cannot spike the drain
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: A 10-source invalid-command flood over a whole round can write about 7,200 `Voided` entries (ADR-0023 section 5), more than the 4096-slot ring. Without protection the flood would evict the kill timeline, the one record of why the round ended. R19 therefore protects the timeline and the header and evicts only ordinary entries oldest-first, counting what it dropped. This story proves the eviction rule with the AC's exact arithmetic. It depends on story 011's store. Exit A.
 
@@ -38,7 +39,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` Acceptance Criteria no. 33, scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN 4,999 ordinary entries plus `WinLatched` with the 4096 cap (the header outside the ring, `WinLatched` inside it and protected), THEN the header and `WinLatched` survive, the oldest entries were dropped first and `TruncatedCount` = 904. `StealthGame.Round.LogTruncation` [U]
+- [x] GIVEN 4,999 ordinary entries plus `WinLatched` with the 4096 cap (the header outside the ring, `WinLatched` inside it and protected), THEN the header and `WinLatched` survive, the oldest entries were dropped first and `TruncatedCount` = 904. `StealthGame.Round.LogTruncation` [U]
 
 ---
 
@@ -71,9 +72,9 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h` and `Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp` (extended from story 011; ring capacity, protected set, eviction, `TruncatedCount`)
-- `Source/StealthFoundation/Private/Tests/EventLog/LogTruncationTest.cpp` (new; class `FRoundLogTruncationTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h` (ring at the clamped capacity, protected set, O(1) oldest-ordinary eviction, per-type `TruncatedCount`)
+- `Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp`
+- `Source/StealthFoundation/Private/Tests/Round/LogTruncationTest.cpp` (test `StealthGame.Round.LogTruncation`)
 
 ---
 
@@ -99,9 +100,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/EventLog/LogTruncationTest.cpp` — automation test `StealthGame.Round.LogTruncation` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundLogTruncationTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/LogTruncationTest.cpp` — automation test `StealthGame.Round.LogTruncation` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundLogTruncationTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.LogTruncation`, 2026-10-26)
 
 ---
 
@@ -110,3 +111,11 @@
 - Depends on: `production/epics/round-match-framework/story-011-event-log-content.md`
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.LogTruncation`)
+**Notes**: With `WinLatched` last and mid-stream: 4,096 entries kept, header and `WinLatched` present, the earliest surviving ordinary entry is the 905th, survivors contiguous, `TruncatedCount` 904 (type and total), no protected type truncated. Eviction never allocates once the ring is full.
+**Build/test**: see `production/qa/evidence/story-012-log-truncation/full-suite.txt`

@@ -71,23 +71,23 @@ The code in `Source/StealthGame` is marked PROTOTYPE (`production/first-playable
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | [Tests inject a fake IClock supplying server time and ServerTickIndex](story-001-test-seam-fake-clock.md) | Logic | Ready | ADR-0002 |
-| 002 | [Tests inject a fixed ServerSecret and therefore fixed sub-seeds](story-002-test-seam-fixed-server-secret.md) | Logic | Ready | ADR-0006 |
-| 003 | [Tests inject fake Session, Roster, TDC, Character Pool, Level Socket and Crowd gateways](story-003-test-seam-fake-gateways.md) | Logic | Ready | ADR-0007 |
-| 004 | [Tests register stub resolvers per queue item type](story-004-test-seam-stub-resolvers.md) | Logic | Ready | ADR-0002 |
-| 005 | [Fixture constants live in test constant files, not inline](story-005-test-fixture-constants.md) | Logic | Ready | ADR-0007 |
-| 006 | [Intake permutation is fair per source, deterministic per (secret, tick, mailbox set), keys strictly increasing](story-006-intake-fairness.md) | Logic | Ready | ADR-0002 |
-| 007 | [Per-source order, DueEpsilonMs stamping, TieRank ties, stale-connection and per-drain cap rules hold](story-007-intake-ordering-rules.md) | Logic | Ready | ADR-0002 |
-| 008 | [Resolvers return Voided/in-slot/deferred outcomes with the specified keys and Seq consumption](story-008-resolver-contract.md) | Logic | Ready | ADR-0002 |
-| 009 | [Follow-on transitions and subscribers run depth-first in the item's slot; cascade depth 9 logs CascadeOverflow](story-009-follow-ons-inline.md) | Logic | Ready | ADR-0002 |
-| 010 | [An item stamped with the previous RoundEpoch is Rejected_StaleEpoch when drained](story-010-stale-epoch-item.md) | Logic | Ready | ADR-0002 |
-| 011 | [Event Log header and WinLatched hold the specified fields for every terminal outcome and are unreadable before Ended](story-011-event-log-content.md) | Logic | Ready | ADR-0007 |
-| 012 | [The 4096-entry ring evicts oldest ordinary entries first, protects header and WinLatched, and counts TruncatedCount](story-012-log-truncation.md) | Logic | Ready | ADR-0023 |
-| 013 | [Mean entry size is reported against F8 and the ring never exceeds 16,384 entries](story-013-log-size-bound.md) | Logic | Ready | ADR-0023 |
-| 014 | [No log device, ClientMessage or trace channel carries a sentinel; dumplog is refused before Ended](story-014-log-never-leaks.md) | Logic | Ready | ADR-0007 |
-| 015 | [At most one Voided entry per second per source and the kill timeline stays intact](story-015-voided-rate-limit.md) | Logic | Ready | ADR-0007 |
-| 016 | [PacingRatio, ObjectiveEndShare, AbortedActiveShare and stall/abort flags compute per F7 from fixture logs](story-016-pacing-metrics.md) | Logic | Ready | ADR-0023 |
-| 017 | [A second final Complete after the latch returns Rejected_Latched and is logged TendCompleted with Latched = true](story-017-latched-final-complete-logged.md) | Logic | Ready | ADR-0002 |
+| 001 | [Tests inject a fake IClock supplying server time and ServerTickIndex](story-001-test-seam-fake-clock.md) | Logic | Complete | ADR-0002 |
+| 002 | [Tests inject a fixed ServerSecret and therefore fixed sub-seeds](story-002-test-seam-fixed-server-secret.md) | Logic | Complete | ADR-0006 |
+| 003 | [Tests inject fake Session, Roster, TDC, Character Pool, Level Socket and Crowd gateways](story-003-test-seam-fake-gateways.md) | Logic | Complete | ADR-0007 |
+| 004 | [Tests register stub resolvers per queue item type](story-004-test-seam-stub-resolvers.md) | Logic | Complete | ADR-0002 |
+| 005 | [Fixture constants live in test constant files, not inline](story-005-test-fixture-constants.md) | Logic | Complete | ADR-0007 |
+| 006 | [Intake permutation is fair per source, deterministic per (secret, tick, mailbox set), keys strictly increasing](story-006-intake-fairness.md) | Logic | Complete | ADR-0002 |
+| 007 | [Per-source order, DueEpsilonMs stamping, TieRank ties, stale-connection and per-drain cap rules hold](story-007-intake-ordering-rules.md) | Logic | Complete | ADR-0002 |
+| 008 | [Resolvers return Voided/in-slot/deferred outcomes with the specified keys and Seq consumption](story-008-resolver-contract.md) | Logic | Complete | ADR-0002 |
+| 009 | [Follow-on transitions and subscribers run depth-first in the item's slot; cascade depth 9 logs CascadeOverflow](story-009-follow-ons-inline.md) | Logic | Complete | ADR-0002 |
+| 010 | [An item stamped with the previous RoundEpoch is Rejected_StaleEpoch when drained](story-010-stale-epoch-item.md) | Logic | Complete | ADR-0002 |
+| 011 | [Event Log header and WinLatched hold the specified fields for every terminal outcome and are unreadable before Ended](story-011-event-log-content.md) | Logic | Complete | ADR-0007 |
+| 012 | [The 4096-entry ring evicts oldest ordinary entries first, protects header and WinLatched, and counts TruncatedCount](story-012-log-truncation.md) | Logic | Complete | ADR-0023 |
+| 013 | [Mean entry size is reported against F8 and the ring never exceeds 16,384 entries](story-013-log-size-bound.md) | Logic | Complete | ADR-0023 |
+| 014 | [No log device, ClientMessage or trace channel carries a sentinel; dumplog is refused before Ended](story-014-log-never-leaks.md) | Logic | Complete | ADR-0007 |
+| 015 | [At most one Voided entry per second per source and the kill timeline stays intact](story-015-voided-rate-limit.md) | Logic | Complete | ADR-0007 |
+| 016 | [PacingRatio, ObjectiveEndShare, AbortedActiveShare and stall/abort flags compute per F7 from fixture logs](story-016-pacing-metrics.md) | Logic | Complete | ADR-0023 |
+| 017 | [A second final Complete after the latch returns Rejected_Latched and is logged TendCompleted with Latched = true](story-017-latched-final-complete-logged.md) | Logic | Complete | ADR-0002 |
 | 018 | [A new key joins the smaller team; ties go to team RoundsPlayedCount parity](story-018-team-assignment.md) | Logic | Ready | ADR-0005 |
 | 019 | [A reclaimed Dormant key keeps its team and triggers no AssignTeams call](story-019-team-reclaim-keeps-team.md) | Logic | Ready | ADR-0005 |
 | 020 | [SwapTeam is refused only when the target team is full; pair exchange is atomic; swaps outside Lobby return WrongPhase](story-020-swap-team-rules.md) | Logic | Ready | ADR-0005 |

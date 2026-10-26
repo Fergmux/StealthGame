@@ -1,12 +1,12 @@
 # Story 016: PacingRatio, ObjectiveEndShare, AbortedActiveShare and stall/abort flags compute per F7 from fixture logs
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Every gameplay number is a field of a `_Public` or `_Server` tuning sub-struct; a hardcoded gameplay literal is a defect (ADR-0004). `StallFlagMinutes` (default 18) and `TargetRoundMinutes` (default 12) are inputs, never literals in the metric code.
 - Forbidden: Never let gameplay, AI, HUD or presentation code read the telemetry section; never change tuning at runtime from it (ADR-0023).
 - Guardrail: Telemetry export snapshot at most 0.2 ms game thread once per round and about 1.6 MB per round (120 subject keys at 60 characters; corrected from 1.1 MB in manifest 2026-10-25f) (ADR-0023); the F7 computation runs once per round at `Ended`.
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Prototype disposition**: none (new Foundation code). The prototype keeps no round log and computes no pacing metric.
 
@@ -34,7 +35,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 35, scoped to this story:*
 
-- [ ] GIVEN fixture logs, THEN `PacingRatio` = 1.3 for 936 s; `ObjectiveEndShare` = 0.7 for 7 objective and 3 elimination wins; `AbortedActiveShare` = 2/12 with 2 aborts; forfeits are excluded from `ObjectiveEndShare`; `DurationSec` 1080.0 is not a stall and 1080.001 is at the default `StallFlagMinutes` 18; an Active abort at 540.0 is not flagged and at 540.001 is; `ObjectiveEndShare` is computed per team-size bucket (a 2v2 round is in its own bucket and does not count for the Pillar 4 gate of at least 0.70 over at least 20 rounds in buckets of 4v4 and larger); `DebugForced` rounds are excluded; an empty set reports "n/a".
+- [x] GIVEN fixture logs, THEN `PacingRatio` = 1.3 for 936 s; `ObjectiveEndShare` = 0.7 for 7 objective and 3 elimination wins; `AbortedActiveShare` = 2/12 with 2 aborts; forfeits are excluded from `ObjectiveEndShare`; `DurationSec` 1080.0 is not a stall and 1080.001 is at the default `StallFlagMinutes` 18; an Active abort at 540.0 is not flagged and at 540.001 is; `ObjectiveEndShare` is computed per team-size bucket (a 2v2 round is in its own bucket and does not count for the Pillar 4 gate of at least 0.70 over at least 20 rounds in buckets of 4v4 and larger); `DebugForced` rounds are excluded; an empty set reports "n/a".
 
 ---
 
@@ -68,9 +69,10 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthFoundation/Private/Tests/EventLog/PacingMetricsTest.cpp` (class `FRoundPacingMetricsTest`, test name `StealthGame.Round.PacingMetrics`)
-- `Source/StealthFoundation/Public/Server/` pacing-metrics header (new, server-only guard first, Stealth-prefixed unique name; Open: name set when implemented)
-- `Source/StealthFoundation/Private/EventLog/` pacing-metrics implementation (new)
+- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundPacingMetrics.h` (`StealthRoundPacing::ComputeRound`, `MakeInputFromLog`, `Aggregate`, Pillar 4 gate)
+- `Source/StealthFoundation/Private/EventLog/StealthRoundPacingMetrics.cpp`
+- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h` (the store keeps the Active-entry time (survives eviction))
+- `Source/StealthFoundation/Private/Tests/Round/PacingMetricsTest.cpp` (test `StealthGame.Round.PacingMetrics`)
 
 ---
 
@@ -96,9 +98,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/EventLog/PacingMetricsTest.cpp` — must exist and pass (automation test `StealthGame.Round.PacingMetrics`, class `FRoundPacingMetricsTest`)
+- Logic: `Source/StealthFoundation/Private/Tests/Round/PacingMetricsTest.cpp` — must exist and pass (automation test `StealthGame.Round.PacingMetrics`, class `FRoundPacingMetricsTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.PacingMetrics`, 2026-10-26)
 
 ---
 
@@ -108,3 +110,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; `TargetRoundMinutes` and `StallFlagMinutes` keys; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.PacingMetrics`)
+**Notes**: From fixture logs: 1.3 for 936 s; 0.7 for 7/3; 2/12 with 2 aborts; forfeits excluded from the share but in the abort denominator; 1080.000 s no stall, 1080.001 s stall; abort 540.000 s not flagged, 540.001 s flagged (integer ms); per-bucket shares with 2v2 in its own bucket and no effect on the gate; DebugForced and Debug-flagged rounds, PreparingFailed and SessionEnded excluded; an empty set is n/a. Code-review fix with regression case: the store records the Active-entry time, so a long round that evicts the unprotected `PhaseChanged` row keeps its `DurationSec`.
+**Build/test**: see `production/qa/evidence/story-016-pacing-metrics/full-suite.txt`

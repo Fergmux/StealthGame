@@ -1,12 +1,12 @@
 # Story 008: Resolvers return Voided/in-slot/deferred outcomes with the specified keys and Seq consumption
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Resolvers re-validate against live state at the slot, run follow-ons inline, and never re-submit or re-stamp an outcome; a deferred outcome is a new item with its own key and a logged `CauseKey` (ADR-0002)
 - Forbidden: Never order events with a feature-local clock, timestamp, tick-function order or `FTimerManager`; systems order events only with `Compare`/`GetKey`/`CurrentKey` (ADR-0002)
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms listen-host game thread (ADR-0002)
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: Assassination, Objectives, IIF, Penalty and Crowd all plug into the queue by implementing a resolver, and the order of "Prepare versus Attack in one tick" is decided by comparing keys (R14). If the contract is loose (an outcome that re-stamps itself, a `Voided` item that still changes state, a key that moves), same-tick races stop being decidable. This story fixes the contract with stubs before any real resolver exists. It depends on stories 001 and 004. Exit A.
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` Acceptance Criteria no. 46, scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN a resolver returning `Voided`, THEN no state changes, nothing is emitted and one `Voided` entry is logged; an in-slot outcome consumes no `Seq` and carries the resolving key; a deferred outcome has a later key and `CauseKey`; `GetKey`, `Compare` and `CurrentKey` return the expected keys for a fixture sequence. `StealthGame.Round.ResolverContract` [U]
+- [x] GIVEN a resolver returning `Voided`, THEN no state changes, nothing is emitted and one `Voided` entry is logged; an in-slot outcome consumes no `Seq` and carries the resolving key; a deferred outcome has a later key and `CauseKey`; `GetKey`, `Compare` and `CurrentKey` return the expected keys for a fixture sequence. `StealthGame.Round.ResolverContract` [U]
 
 ---
 
@@ -71,11 +72,11 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/StealthQueuePayloads.h` (extended; `EResolveResult`, `EVoidReason`)
-- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` and `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp` (extended; `Compare`, `GetKey`, `CurrentKey`, outcome handling)
-- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundLogWriter.h` (new; minimal `IRoundLogWriter`, extended by story 011)
-- `Source/StealthFoundation/Private/Tests/Queue/ResolverContractTest.cpp` (new; class `FRoundResolverContractTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` (`Compare`, `GetKey`, `CurrentKey`, `CurrentCauseKey`, `SetVoidCode`, `ExecuteFollowOn` (in-slot outcomes))
+- `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp`
+- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundLogTypes.h` (`ERoundLogType` (closed R19 list + `CascadeOverflow`), `FRoundLogEntry` (72 B), end reasons, flags)
+- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundLogWriter.h` (`IRoundLogWriter`)
+- `Source/StealthFoundation/Private/Tests/Round/ResolverContractTest.cpp` (test `StealthGame.Round.ResolverContract`)
 
 ---
 
@@ -102,9 +103,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Queue/ResolverContractTest.cpp` — automation test `StealthGame.Round.ResolverContract` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundResolverContractTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/ResolverContractTest.cpp` — automation test `StealthGame.Round.ResolverContract` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundResolverContractTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.ResolverContract`, 2026-10-26)
 
 ---
 
@@ -113,3 +114,11 @@
 - Depends on: `production/epics/round-match-framework/story-001-test-seam-fake-clock.md`, `production/epics/round-match-framework/story-004-test-seam-stub-resolvers.md`
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: `production/epics/round-match-framework/story-009-follow-ons-inline.md`, `production/epics/round-match-framework/story-010-stale-epoch-item.md`, `production/epics/round-match-framework/story-011-event-log-content.md`, `production/epics/round-match-framework/story-017-latched-final-complete-logged.md`, `production/epics/round-match-framework/story-043-no-draw-property.md`, `production/epics/round-match-framework/story-045-same-tick-final-vs-elimination.md`, `production/epics/round-match-framework/story-050-brace-expiry-ordered.md`, `production/epics/round-match-framework/story-051-no-timer-ends-active-round.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.ResolverContract`)
+**Notes**: Voided: one `Voided(type, Revalidation)` entry with the owner code, no follow-on, no item, no timer, no extra `Seq`. In-slot outcome: the resolving key, no `Seq`. Deferred outcome (MVP: the generic `Submit` from inside a slot, ADR-0002 section 1): a later key with its `CauseKey` recorded. The key fixture (100,1), (100,2), (101,3) matches `GetKey` and `CurrentKey`; `Compare` is lexicographic. `IRoundLogWriter` is declared here and `FRoundEventLog` (rmf-011) implements it. `GetKey` answers from a fixed 4,096-entry ring (code-review fix: no per-item allocation).
+**Build/test**: see `production/qa/evidence/story-008-resolver-contract/full-suite.txt`

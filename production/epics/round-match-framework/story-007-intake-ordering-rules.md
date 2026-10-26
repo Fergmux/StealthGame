@@ -1,12 +1,12 @@
 # Story 007: Per-source order, DueEpsilonMs stamping, TieRank ties, stale-connection and per-drain cap rules hold
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: L
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Gameplay timers are `ScheduleAt` items in the due-time heap; mailbox and tie permutations come from `GetServerSubSeed(SeqOrder | TieRank, ServerTickIndex)` (ADR-0002)
 - Forbidden: Never order events with a feature-local clock, timestamp, tick-function order or `FTimerManager` (cross-actor tick order is unspecified and join-order biased) (ADR-0002)
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms listen-host game thread (ADR-0002); at most 32 discrete items per mailbox per drain bounds the intake work
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: Fairness (story 006) says who is first among simultaneous commands. This story pins the rest of the ordering contract that every timed gameplay item relies on: a source's own commands never swap, a timer that was already due is stamped before the frame's commands so a brace that expired before the frame is not extended by a frame, the one 1 ms tolerance (`DueEpsilonMs`) absorbs floating-point drift (a 3.0 s hold begun on tick 0 at 60 Hz is due on tick 180, never tick 181), exact ties are broken per tick from the secret, a replaced controller keeps its mailbox but a superseded connection's stale items are dropped, and a flood is capped. The IIF and Assassination cite this tolerance instead of their own. It is the largest queue story (L). Exit A.
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` Acceptance Criteria no. 45, scoped to this story (one criterion, `story_granularity: fine`; a multi-clause criterion kept as one):*
 
-- [ ] GIVEN source A submits A1 then A2 in one frame over 10,000 ticks, THEN A1 always precedes A2; GIVEN `DueEpsilonMs` = 1 (R12, ruling D22): an item with `DueTime <= DrainStartTime` is stamped before that frame's intake, an item due 0.5 ms after the drain start fires in that drain (stamped before intake), one due exactly 1 ms after it also does (inclusive), and one due 2 ms after it does not (it waits for the next drain); a 3.0 s hold begun on tick 0 at 60 Hz is stamped on tick 180 and never on tick 181 over 10,000 accumulated-time fixtures; GIVEN two items with equal `DueTime`, THEN they order by that tick's `TieRank`; a mailbox survives a controller replacement and an item with an old `ConnectionGeneration` is `Dropped(StaleConnection)`; a 33rd item in one drain is dropped and counted. `StealthGame.Round.IntakeOrderingRules` [U]
+- [x] GIVEN source A submits A1 then A2 in one frame over 10,000 ticks, THEN A1 always precedes A2; GIVEN `DueEpsilonMs` = 1 (R12, ruling D22): an item with `DueTime <= DrainStartTime` is stamped before that frame's intake, an item due 0.5 ms after the drain start fires in that drain (stamped before intake), one due exactly 1 ms after it also does (inclusive), and one due 2 ms after it does not (it waits for the next drain); a 3.0 s hold begun on tick 0 at 60 Hz is stamped on tick 180 and never on tick 181 over 10,000 accumulated-time fixtures; GIVEN two items with equal `DueTime`, THEN they order by that tick's `TieRank`; a mailbox survives a controller replacement and an item with an old `ConnectionGeneration` is `Dropped(StaleConnection)`; a 33rd item in one drain is dropped and counted. `StealthGame.Round.IntakeOrderingRules` [U]
 
 ---
 
@@ -70,10 +71,9 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` and `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp` (extended; due-time heap, due rule, `TieRank`, cap, generation check)
-- `Source/StealthFoundation/Public/Server/Queue/StealthDueTimeHeap.h` and `Source/StealthFoundation/Private/Queue/StealthDueTimeHeap.cpp` (new; the due-time heap, if separated from the core)
-- `Source/StealthFoundation/Private/Tests/Queue/IntakeOrderingRulesTest.cpp` (new; class `FRoundIntakeOrderingRulesTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` (due-time heap, `DueEpsilonMs` = 1 rule (integer microseconds), `TieRank`, 32-item cap, connection-generation check)
+- `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp`
+- `Source/StealthFoundation/Private/Tests/Round/IntakeOrderingRulesTest.cpp` (test `StealthGame.Round.IntakeOrderingRules`)
 
 ---
 
@@ -103,9 +103,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Queue/IntakeOrderingRulesTest.cpp` — automation test `StealthGame.Round.IntakeOrderingRules` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundIntakeOrderingRulesTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/IntakeOrderingRulesTest.cpp` — automation test `StealthGame.Round.IntakeOrderingRules` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundIntakeOrderingRulesTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.IntakeOrderingRules`, 2026-10-26)
 
 ---
 
@@ -115,3 +115,11 @@
 - Cross-epic: `production/epics/session-travel` (`ConnectionGeneration` is Session's counter and `GetServerSubSeed` supplies `TieRank`; the test injects both, so Session need not be Done first)
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.IntakeOrderingRules`)
+**Notes**: All clauses: A1 before A2 in 10,000 of 10,000 ticks; already-due, +0.5 ms and exactly +1 ms items fire before intake, +2 ms waits a drain, inline-due items stamp after intake; the 3.0 s hold lands on tick 180 in all 10,000 jittered accumulated-time fixtures; equal `DueTime` follows that tick's `TieRank` (recomputed independently; it varies per tick); a controller replacement keeps the mailbox and an old generation is `Dropped(StaleConnection)` and logged; the 33rd item is dropped, counted and logged `MailboxOverflow`. Code-review fixes with regression cases: the due rule compares integer microseconds (a ulp cannot move the inclusive bound), the comparator is a strict weak order (holds first by Begin key at equal `DueTime`), and inline-due passes are bounded (`MaxInlineDuePasses` 16, fault).
+**Build/test**: see `production/qa/evidence/story-007-intake-ordering-rules/full-suite.txt`

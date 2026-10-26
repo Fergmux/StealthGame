@@ -1,0 +1,8 @@
+Reviewed-Content-Hash: Source/StealthGameplay/Public/Server/Core/Round/StealthRoundGateways.h 7a4e036bfc676a98d25d95254b3997686a1e1499
+Reviewed-Content-Hash: Source/StealthGameplay/Public/Server/Core/Round/StealthCrowdControl.h f1aec1474d1190978fe4754f70bc1727c2a5931f
+Reviewed-Content-Hash: Source/StealthGameplay/Public/Server/Testing/StealthRoundFakeGateways.h ef5e94ec220a21a79f095e798ffd293ad3c7ca7e
+Reviewed-Content-Hash: Source/StealthFoundation/Public/Server/Roster/StealthRosterCallTypes.h 82670bf495207677855a3603ae2a0448d713bac9
+Reviewed-Content-Hash: Source/StealthFoundation/Private/Roster/StealthRosterCore.h bc117d0a40205ef4e2027e7a162448f9884a9e95
+Reviewed-Content-Hash: Source/StealthGameplay/Private/Tests/Round/FakeGatewaysSeamTest.cpp bd6be2fca48e60c6dc7f43e960c1f8e454bd4c5b
+Reviewed-Content-Hash: docs/architecture/adr-0002-resolution-queue-round-end-staging.md 8d8866bec438bd7df9dc6511ebb33c4f63f3bd15
+Story: production/epics/round-match-framework/story-003-test-seam-fake-gateways.md

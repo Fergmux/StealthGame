@@ -1,12 +1,12 @@
 # Story 010: An item stamped with the previous RoundEpoch is Rejected_StaleEpoch when drained
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Every timed item carries an `FEpochToken` (and a hold's `ActionEpoch`); a stale token resolves `Rejected_StaleEpoch` and changes nothing (ADR-0002)
 - Forbidden: Never let a resolver re-submit or re-stamp an outcome; a stale item must never reach its resolver (ADR-0002)
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms listen-host game thread (ADR-0002); the epoch check is one integer compare per item
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: Between rounds, timers and queued commands from the previous round are still in mailboxes or the heap. After `Reset` and the next `ResetAll`, they must not act on the new round (a grace timer from round 1 converting a participant in round 2). The epoch stamp is the single guard. This is the Foundation half of the Reset guarantee; story 058 asserts the full Reset effect in Core. It depends on stories 004 and 008. Exit A.
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` Acceptance Criteria no. 13b, scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN an item stamped with the previous `RoundEpoch` that was already submitted (in a mailbox) before `ResetAll`, WHEN it is drained, THEN `Rejected_StaleEpoch`. `StealthGame.Round.StaleEpochItem` [U]
+- [x] GIVEN an item stamped with the previous `RoundEpoch` that was already submitted (in a mailbox) before `ResetAll`, WHEN it is drained, THEN `Rejected_StaleEpoch`. `StealthGame.Round.StaleEpochItem` [U]
 
 ---
 
@@ -67,10 +68,9 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` and `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp` (extended; epoch comparison)
-- `Source/StealthFoundation/Public/Server/StealthQueuePayloads.h` (extended if `FEpochToken` is not yet declared there or in `Public/View/`)
-- `Source/StealthFoundation/Private/Tests/Queue/StaleEpochItemTest.cpp` (new; class `FRoundStaleEpochItemTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` (epoch check at the slot, before the connection-generation and latch checks)
+- `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp`
+- `Source/StealthFoundation/Private/Tests/Round/StaleEpochItemTest.cpp` (test `StealthGame.Round.StaleEpochItem`)
 
 ---
 
@@ -94,9 +94,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Queue/StaleEpochItemTest.cpp` — automation test `StealthGame.Round.StaleEpochItem` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundStaleEpochItemTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/StaleEpochItemTest.cpp` — automation test `StealthGame.Round.StaleEpochItem` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundStaleEpochItemTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.StaleEpochItem`, 2026-10-26)
 
 ---
 
@@ -106,3 +106,11 @@
 - Cross-epic: `production/epics/participant-state-roster` (contract only: `RoundEpoch` and `ResetAll`; the test injects the epoch, so the Roster stories are not a build prerequisite)
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: `production/epics/round-match-framework/story-058-reset-clears.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.StaleEpochItem`)
+**Notes**: Items and a grace timer submitted under epoch N then drained after the epoch advances are `Rejected_StaleEpoch`: no resolver call, a `Voided(Rejected_StaleEpoch)` entry each; a stale-epoch item from a stale connection reports StaleEpoch (epoch first); the current-epoch item executes. The current epoch comes from the injected `IQueueEpochSource` (production: the Roster `RoundEpoch` after `ResetAll`).
+**Build/test**: see `production/qa/evidence/story-010-stale-epoch-item/full-suite.txt`

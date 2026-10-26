@@ -1,12 +1,12 @@
 # Story 004: Tests register stub resolvers per queue item type
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Every interacting state change resolves as an item (or an inline follow-on in an item's slot) of the round's single queue; nothing outside the drain mutates gameplay state (ADR-0002)
 - Forbidden: Never declare a type that `FQueueItem` or `FStagedWrite` names in a feature module; every queue item payload lives in `StealthFoundation/Public/Server/` (ADR-0002, ADR-0007)
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms listen-host game thread (ADR-0002); a stub resolver adds one virtual call and one vector append per item
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: The queue is Round's heart, but Round does not know what a command means (R13): each owning system registers a resolver. Before those systems exist, every queue and Round test needs a stub that can be registered for any item type, resolve with a scripted result, and record which keys it saw. This story builds the stub and the registration seam against the real item-type enum, so the queue stories (006-010) and the Core stories reuse one stub. Exit A seam story; it consumes story 001's fake clock.
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/round-match-framework.md`, "Test seams (binding on implementation)" item 4, scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN a [U] test, THEN stub resolvers can be registered for any queue item type and record the keys they resolve. `StealthGame.Round.StubResolversSeam` [U]
+- [x] GIVEN a [U] test, THEN stub resolvers can be registered for any queue item type and record the keys they resolve. `StealthGame.Round.StubResolversSeam` [U]
 
 ---
 
@@ -68,12 +69,14 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/StealthQueuePayloads.h` (new or extended; `EQueueItemType`, `ETimerKind`, `FQueueKey`, `FQueueItem`, `EResolveResult`)
-- `Source/StealthFoundation/Public/Server/Queue/StealthQueueResolver.h` (new; `IQueueResolver`)
-- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` and `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp` (new or extended; registration and the minimal drain)
-- `Source/StealthFoundation/Private/Tests/Queue/StealthStubResolver.h` (new; test-only recording stub)
-- `Source/StealthFoundation/Private/Tests/Queue/StubResolversSeamTest.cpp` (new; class `FRoundStubResolversSeamTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthFoundation/Public/View/StealthQueueTypes.h` (`FQueueKey`, `FMailboxId`, `FEpochToken`, `FClientCommandSeq` (ADR-0002 section 2))
+- `Source/StealthFoundation/Public/Server/StealthQueuePayloads.h` (every section 2a type: item and timer enums, `FPawnHandle`, `FSubjectRef`, `FReplySinkId`, the seven payloads, `FQueueItem`, staged-write types)
+- `Source/StealthFoundation/Public/Server/Queue/StealthQueueResolver.h` (`IQueueResolver` (UINTERFACE))
+- `Source/StealthFoundation/Public/Server/Queue/StealthStagedWriteApplier.h` (`IStagedWriteApplier`, `ITerminalDecision` (UINTERFACEs; the staging pass is a later story))
+- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` (`FResolutionQueueCore`: registration, intake, drain)
+- `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp`
+- `Source/StealthFoundation/Public/Server/Testing/StealthQueueTestRig.h` (`FStealthStubResolver`, recording log writer, fake epoch and generation sources)
+- `Source/StealthFoundation/Private/Tests/Round/StubResolversSeamTest.cpp` (test `StealthGame.Round.StubResolversSeam`)
 
 ---
 
@@ -97,9 +100,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Queue/StubResolversSeamTest.cpp` — automation test `StealthGame.Round.StubResolversSeam` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundStubResolversSeamTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/StubResolversSeamTest.cpp` — automation test `StealthGame.Round.StubResolversSeam` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundStubResolversSeamTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.StubResolversSeam`, 2026-10-26)
 
 ---
 
@@ -108,3 +111,11 @@
 - Depends on: `production/epics/round-match-framework/story-001-test-seam-fake-clock.md`
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: `production/epics/round-match-framework/story-006-intake-fairness.md`, `production/epics/round-match-framework/story-007-intake-ordering-rules.md`, `production/epics/round-match-framework/story-008-resolver-contract.md`, `production/epics/round-match-framework/story-009-follow-ons-inline.md`, `production/epics/round-match-framework/story-010-stale-epoch-item.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.StubResolversSeam`)
+**Notes**: A stub registers for all six non-timer item types and all eleven `TimerFired` kinds and records exactly the keys of its own type in resolve order. A second registration for a type is rejected with a fault ("one resolver per type"; replace = unregister then register); an unregistered type is a `NoResolver` slot outcome plus a fault, never a silent drop; an unset mailbox is refused (code-review fix). The interfaces are UINTERFACEs per ADR-0002 E7; plain C++ stubs implement them because UHT gives the I-class a non-pure `_getUObject` (checked in the 5.8.4 generated headers).
+**Build/test**: see `production/qa/evidence/story-004-test-seam-stub-resolvers/full-suite.txt`

@@ -1,12 +1,12 @@
 # Story 006: Intake permutation is fair per source, deterministic per (secret, tick, mailbox set), keys strictly increasing
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Mailbox and tie permutations come from `GetServerSubSeed(SeqOrder | TieRank, ServerTickIndex)` (ADR-0002, ADR-0006); every draw comes from `FSecretStream` (hidden decisions) or `FIntStream` (public geometry only); shuffles are Fisher-Yates over canonically sorted arrays
 - Forbidden: Never use the public seed, join order or a rotating index for the mailbox permutation (a rotating start index was rejected: it favours adjacent pairs by (M-1)/M to 1/M, GDD R12); never log, trace or expose server sub-seeds or mailbox order (ADR-0006, ADR-0007)
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms listen-host game thread (ADR-0002); one permutation of at most 11 mailboxes per tick
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: Two commands from different players landing in the same frame must be ordered with probability exactly one half each way, reproducibly from the log, and unpredictably to any client (R12 effect (a)). This is Round's fairness promise for the final-site race and the mutual last strike, and a biased intake would favour the host or the earliest joiner every round. The story builds the stamping order and proves it statistically with fixed fixture secrets so the test is deterministic (no flake rate). Exit A.
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` Acceptance Criteria no. 14, scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN fixture secret S1 and 10,000 ticks with one item from each of 2 mailboxes, THEN source A is first in [4835, 5165] ticks; with 11 mailboxes, each source is first in [814, 1004] ticks; the same (secret, tick, mailbox set) gives the same permutation; keys are strictly increasing with no duplicate. `StealthGame.Round.IntakeFairness` [U]
+- [x] GIVEN fixture secret S1 and 10,000 ticks with one item from each of 2 mailboxes, THEN source A is first in [4835, 5165] ticks; with 11 mailboxes, each source is first in [814, 1004] ticks; the same (secret, tick, mailbox set) gives the same permutation; keys are strictly increasing with no duplicate. `StealthGame.Round.IntakeFairness` [U]
 
 ---
 
@@ -68,10 +69,9 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` and `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp` (new or extended; mailboxes, canonical order, per-tick permutation, `Seq` stamping)
-- `Source/StealthFoundation/Public/Server/StealthQueuePayloads.h` (extended if story 004 has not already declared `FQueueKey`, `FMailboxId`)
-- `Source/StealthFoundation/Private/Tests/Queue/IntakeFairnessTest.cpp` (new; class `FRoundIntakeFairnessTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` (mailboxes in canonical order, per-tick Fisher-Yates from `GetServerSubSeed(SeqOrder, tick)`, `Seq` stamping)
+- `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp`
+- `Source/StealthFoundation/Private/Tests/Round/IntakeFairnessTest.cpp` (test `StealthGame.Round.IntakeFairness`)
 
 ---
 
@@ -98,9 +98,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Queue/IntakeFairnessTest.cpp` — automation test `StealthGame.Round.IntakeFairness` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundIntakeFairnessTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/IntakeFairnessTest.cpp` — automation test `StealthGame.Round.IntakeFairness` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundIntakeFairnessTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.IntakeFairness`, 2026-10-26)
 
 ---
 
@@ -110,3 +110,11 @@
 - Cross-epic: `production/epics/session-travel` (`FSecretStream`, SipHash-2-4 and `GetServerSubSeed`: `story-008-secret-stream-counter-independence.md`, `story-010-seed-derivation-golden-vectors.md`, `story-011-server-sub-seed-server-only.md`)
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: `production/epics/round-match-framework/story-007-intake-ordering-rules.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.IntakeFairness`)
+**Notes**: With S1 over 10,000 ticks: 2 mailboxes, source A first within [4835, 5165]; 11 mailboxes, every source first within [814, 1004]; a re-run gives identical permutations; dropping the server-local mailbox changes the permutation; keys strictly increasing across the run. Deterministic (fixed S1, no flake rate); the permutation and sub-seeds are never printed.
+**Build/test**: see `production/qa/evidence/story-006-intake-fairness/full-suite.txt`

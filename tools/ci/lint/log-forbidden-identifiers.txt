@@ -8,6 +8,10 @@
 # to make a finding go away.
 FEventLog*
 FRoundEventLog*
+# Round Event Log types (ADR-0002 section 8.9 / manifest Technical Setup 2026-10-25b; story rmf-011)
+FRoundLogEntry
+FRoundLogHeader
+IRoundLogWriter
 DealDigest
 ServerSubSeed
 FSecretStream

@@ -1,12 +1,12 @@
 # Story 009: Follow-on transitions and subscribers run depth-first in the item's slot; cascade depth 9 logs CascadeOverflow
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Every interacting state change resolves as an item (or an inline follow-on in an item's slot) of the round's single queue; resolvers run follow-ons inline and never re-submit or re-stamp an outcome (ADR-0002)
 - Forbidden: Never order events with a feature-local clock, timestamp, tick-function order or `FTimerManager` (ADR-0002); never route queue Event Log entries through `UE_LOG`/`UE_LOGF`, the output log or trace channels
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms listen-host game thread (ADR-0002)
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: When a strike kills a participant, a Roster transition, `OnPawnKilled`, its subscribers and Round's elimination check must all happen in the same slot, so no other player's action can interleave between a cause and its consequence. If they were separate items, a second strike could land between "the last Active member was struck" and "the round ends". The bound `QueueCascadeDepthMax` is a safety net: a runaway cascade is a defect that must be logged and must not reorder anything. This story builds the inline execution and flush barrier with spies, before Roster or Assassination exist. Exit A.
 
@@ -36,7 +37,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` Acceptance Criteria no. 44, scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN an item whose resolver triggers a transition, `OnPawnKilled` and two subscribers, THEN all run depth-first inside its slot and every Roster event is dispatched before the next item is dequeued; a cascade of depth 9 logs `CascadeOverflow` and submits the rest in raised order. `StealthGame.Round.FollowOnsInline` [U]
+- [x] GIVEN an item whose resolver triggers a transition, `OnPawnKilled` and two subscribers, THEN all run depth-first inside its slot and every Roster event is dispatched before the next item is dequeued; a cascade of depth 9 logs `CascadeOverflow` and submits the rest in raised order. `StealthGame.Round.FollowOnsInline` [U]
 
 ---
 
@@ -67,10 +68,10 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` and `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp` (extended; inline execution, depth bound, flush barrier call, `RootCauseKey`)
-- `Source/StealthFoundation/Public/Server/Queue/StealthEventFlushBarrier.h` (new if not yet declared; `IEventFlushBarrier`)
-- `Source/StealthFoundation/Private/Tests/Queue/FollowOnsInlineTest.cpp` (new; class `FRoundFollowOnsInlineTest`)
-- Tests live under the engine test roots (`tests/README.md`), never under `tests/`. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton); write under `Source/StealthGame/` until it lands.
+- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h` (inline depth-first follow-ons, depth bound 8, `CascadeOverflow`, `RootCauseKey`, flush barrier after every slot)
+- `Source/StealthFoundation/Private/Queue/StealthResolutionQueueCore.cpp`
+- `Source/StealthFoundation/Public/Server/Queue/StealthEventFlushBarrier.h` (`IEventFlushBarrier` with `HasPending()`)
+- `Source/StealthFoundation/Private/Tests/Round/FollowOnsInlineTest.cpp` (test `StealthGame.Round.FollowOnsInline`)
 
 ---
 
@@ -96,9 +97,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Queue/FollowOnsInlineTest.cpp` — automation test `StealthGame.Round.FollowOnsInline` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFollowOnsInlineTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/FollowOnsInlineTest.cpp` — automation test `StealthGame.Round.FollowOnsInline` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFollowOnsInlineTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.FollowOnsInline`, 2026-10-26)
 
 ---
 
@@ -108,3 +109,11 @@
 - Cross-epic: `production/epics/participant-state-roster` (contract only: the Roster implements `IEventFlushBarrier` and the FIFO event dispatch; this test uses a spy, so the Roster stories are not a build prerequisite)
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.FollowOnsInline`)
+**Notes**: The trace is Resolve, Transition, OnPawnKilled (depth 1), Subscriber1, Subscriber2 (depth 2, registration order), the Roster event at slot end, then the next item, all under the first key. Depth 8 runs inline; depth 9 logs one `CascadeOverflow`, faults, and moves the two leaves out in raised order with the originating `RootCauseKey`, after the already-stamped next item. Depth = nested `ExecuteFollowOn` calls with the item's resolver at depth 0 (the story's Open item).
+**Build/test**: see `production/qa/evidence/story-009-follow-ons-inline/full-suite.txt`

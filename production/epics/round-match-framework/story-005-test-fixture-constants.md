@@ -1,12 +1,12 @@
 # Story 005: Fixture constants live in test constant files, not inline
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Every leak, parity, statistical and lint gate includes a negative control the suite detects (ADR-0008)
 - Forbidden: Never disable, skip or reseed a failing test to pass a gate; never mark a gate Done that was never watched to fail (ADR-0008)
 - Guardrail: Tests: per-commit pipeline at most 10 min (ADR-0008); the scan reads a few dozen small files
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Why this story**: The GDD says fixture constants (team layouts, the header field list, codes) live in test constant files and no [U] test inlines them. Statistical tests also use fixed fixture secrets in `RoundTestSeeds`. If those literals drift into test bodies, two tests can silently disagree about the same header or secret. A static scan makes the rule enforceable instead of a convention. Exit A seam story; stories 002, 006, 011, 018, 022 and 036 consume the constant files.
 
@@ -36,7 +37,7 @@
 
 *From the AC overrides file (replaces the GDD's fixture sentence), scoped to this story (one criterion, `story_granularity: fine`):*
 
-- [ ] GIVEN a [STATIC] scan of Source/*/Private/Tests/Round/*.cpp and Source/StealthFoundation/Private/Tests/*.cpp, THEN no literal from the RoundLogHeaderFields names, the RoundTestSeeds secrets or the fixture code strings appears outside the test constant files (BLOCKING in the test run). Keep one planted-violation fixture directory (outside the scanned globs) to prove the scan can fail; the scan fails if a glob matches zero files. `StealthGame.Round.FixtureConstants` [STATIC]
+- [x] GIVEN a [STATIC] scan of Source/*/Private/Tests/Round/*.cpp and Source/StealthFoundation/Private/Tests/**/*.cpp (recursive, decision D48), THEN no literal from the RoundLogHeaderFields names, the RoundTestSeeds secrets or the fixture code strings appears outside the test constant files (BLOCKING in the test run). Keep one planted-violation fixture directory (outside the scanned globs) to prove the scan can fail; the scan fails if a glob matches zero files. `StealthGame.Round.FixtureConstants` [STATIC]
 
 ---
 
@@ -67,10 +68,11 @@
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthFoundation/Private/Tests/Fixtures/StealthRoundTestConstants.h` (new; `RoundLogHeaderFields`, `RoundTestSeeds`, fixture code strings, team layouts)
-- `Source/StealthFoundation/Private/Tests/Fixtures/FixtureConstantsTest.cpp` (new; the [STATIC] scan; class `FRoundFixtureConstantsTest`)
-- `tests/static-fixtures/fixture-constants-violation/` (new; planted-violation data directory, not compiled, outside both scanned globs)
-- Tests live under the engine test roots (`tests/README.md`); the planted-violation directory is data and is the one exception. `/dev-story` replaces this planned list with the real one. `Source/StealthFoundation` does not exist yet (tuning-data-config epic creates the skeleton). Open: confirm where a constants header shared by StealthFoundation and StealthGameplay tests lives, since a `Private/` header is not visible across modules (ADR-0008).
+- `Source/StealthFoundation/Public/Server/Testing/StealthRoundTestConstants.h` (the constant file: `RoundLogHeaderFields`, `RoundTestSeeds`, fixture code strings, team layouts and the queue/log fixtures)
+- `Source/StealthFoundation/Private/Tests/Round/FixtureConstantsTest.cpp` (test `StealthGame.Round.FixtureConstants` ([STATIC] scan + negative control))
+- `tests/static-fixtures/fixture-constants-violation/PlantedViolation.cpp` (planted-violation data (never compiled, outside both globs))
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRecordSchemaWhitelistTest.cpp` (uses the shared `HeaderFieldRoundEpoch` constant)
+- `Source/StealthFoundation/Private/Tests/Tuning/FallbackFailedTest.cpp` (uses the shared `AbortCodeTuningLoadFailed` constant)
 
 ---
 
@@ -95,9 +97,9 @@
 
 **Story Type**: Logic (the AC is tagged [STATIC] and is BLOCKING in the test run)
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/Fixtures/FixtureConstantsTest.cpp` — automation test `StealthGame.Round.FixtureConstants` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFixtureConstantsTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`. The gate must also be watched to fail once against the planted-violation directory before it is trusted.
+- Logic: `Source/StealthFoundation/Private/Tests/Round/FixtureConstantsTest.cpp` — automation test `StealthGame.Round.FixtureConstants` must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). Class `FRoundFixtureConstantsTest`, T1 per ADR-0008 and `.claude/rules/test-standards.md`; wrap in `#if WITH_DEV_AUTOMATION_TESTS`. The gate must also be watched to fail once against the planted-violation directory before it is trusted.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.FixtureConstants`, 2026-10-26)
 
 ---
 
@@ -106,3 +108,11 @@
 - Depends on: None (within this epic)
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
 - Unlocks: `production/epics/round-match-framework/story-006-intake-fairness.md`, `production/epics/round-match-framework/story-011-event-log-content.md`, `production/epics/round-match-framework/story-018-team-assignment.md`, `production/epics/round-match-framework/story-022-start-validity.md`, `production/epics/round-match-framework/story-036-spawn-order-uniform.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.FixtureConstants`)
+**Notes**: D48: the Foundation glob is recursive (`Source/StealthFoundation/Private/Tests/**/*.cpp`); the AC text is updated to say so. The scan reads raw text, comments included: header-field names and code strings count as whole quoted literals, secret words as their 16 hex digits in any case. It scanned 71+ test sources with 0 findings; the negative control over the planted directory is detected for all three categories, so the gate has been watched failing. Two existing tests that inlined a banned literal (Roster `"RoundEpoch"`, Tuning `"TuningLoadFailed"`) now use the shared constants. The constant file lives in `Public/Server/Testing/` so StealthGameplay Round tests can include it (the story's Open item).
+**Build/test**: see `production/qa/evidence/story-005-test-fixture-constants/full-suite.txt`

@@ -1,12 +1,12 @@
 # Story 015: At most one Voided entry per second per source and the kill timeline stays intact
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: S
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Manifest Version**: 2026-10-25g
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -25,6 +25,7 @@
 - Required: Event Log types are plain C++ (no `USTRUCT`/`UCLASS`/`UPROPERTY`) with no text conversion besides the `Ended`/`Reset` disk writer (ADR-0007).
 - Forbidden: Never route queue Event Log entries through `UE_LOG`/`UE_LOGF`, the output log or trace channels (ADR-0002); suppressed `Voided` entries are counted in memory, never printed.
 - Guardrail: Queue drain + staging + teardown + Roster flush at most 0.5 ms on the listen-host game thread (ADR-0002); the rate-limit check is O(1) per `Voided` append.
+- Manifest 2026-10-25g re-read at implementation: it changes no Foundation queue or Event Log rule (its changes are the S10 replication rules)
 
 **Prototype disposition**: none (new Foundation code). The prototype has no Event Log and no per-source rate limit.
 
@@ -34,7 +35,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 61, scoped to this story:*
 
-- [ ] GIVEN one source submitting 100 invalid commands per second, THEN at most one `Voided` entry per second is written for it and the kill timeline of the round is intact.
+- [x] GIVEN one source submitting 100 invalid commands per second, THEN at most one `Voided` entry per second is written for it and the kill timeline of the round is intact.
 
 ---
 
@@ -65,8 +66,9 @@
 
 *Planned files. Tests live under the engine test roots (`Source/<Module>/Private/Tests/`, see `tests/README.md`), not under `tests/`. `/dev-story` replaces this list with the files it actually changed.*
 
-- `Source/StealthFoundation/Private/Tests/EventLog/VoidedRateLimitTest.cpp` (class `FRoundVoidedRateLimitTest`, test name `StealthGame.Round.VoidedRateLimit`)
-- Production change in the story 011 Event Log core under `Source/StealthFoundation/Private/EventLog/` (rate limiter in the append path; Open: file names are set by story 011)
+- `Source/StealthFoundation/Public/Server/EventLog/StealthRoundEventLog.h` (per-source `Voided` budget on the injected clock, suppressed counts)
+- `Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp`
+- `Source/StealthFoundation/Private/Tests/Round/VoidedRateLimitTest.cpp` (test `StealthGame.Round.VoidedRateLimit`)
 
 ---
 
@@ -87,9 +89,9 @@
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `Source/StealthFoundation/Private/Tests/EventLog/VoidedRateLimitTest.cpp` — must exist and pass (automation test `StealthGame.Round.VoidedRateLimit`, class `FRoundVoidedRateLimitTest`)
+- Logic: `Source/StealthFoundation/Private/Tests/Round/VoidedRateLimitTest.cpp` — must exist and pass (automation test `StealthGame.Round.VoidedRateLimit`, class `FRoundVoidedRateLimitTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.VoidedRateLimit`, 2026-10-26)
 
 ---
 
@@ -99,3 +101,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26 (round-match-framework Exit A batch 001-017)
+**Criteria**: 1/1 passing (`StealthGame.Round.VoidedRateLimit`)
+**Notes**: 1,000 invalid commands over 10 s from one source write about one `Voided` entry per second with no two inside 1 s; the rest are counted per source; a second source keeps its own budget; every kill-timeline entry is present in order and nothing is evicted. Window rule (Open item): written when at least 1.000 s, in whole milliseconds, after that source's last written one; the budget is spent only when the entry is stored (code-review fix).
+**Build/test**: see `production/qa/evidence/story-015-voided-rate-limit/full-suite.txt`
