@@ -15,6 +15,11 @@
 // clause uses stub state (the prototype owner state Informant plus IMC_Informant on the owner; the Roster-driven swap is
 // story iif-071) and repeats the four modifier phases; "only ServerMove" allows the engine's
 // ServerUpdateCamera background (ADR-0015 disables client camera updates later).
+// Determinism (fix 2026-10-26): the round seed and the spawn slot come from the session's OS entropy, so every run walks a
+// different city from a different spawn; the old open-loop circle (a fixed yaw per frame) also drifted with the frame
+// time and, two runs in three, walked into a wall (speed 0, then a collision step over the limit). The walker now starts
+// on a clear circle the test finds on the server (a box overlap over its whole radius, floor traces round its rim) and is
+// steered closed-loop round that circle's centre, so no layout, spawn slot or frame time reaches the measurement.
 
 #include "CoreMinimal.h"
 #include "Tests/PIE/StealthPIENetworkComponent.h"
@@ -22,6 +27,10 @@
 #if WITH_DEV_AUTOMATION_TESTS && defined(ENABLE_PIE_NETWORK_TEST) && ENABLE_PIE_NETWORK_TEST
 
 #include "CQTest.h"
+#include "CollisionQueryParams.h"
+#include "Components/CapsuleComponent.h"
+#include "Engine/World.h"
+#include "WorldCollision.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "HAL/IConsoleManager.h"
@@ -78,10 +87,39 @@ namespace WalkSlowerModifierTestData
 		{ TEXT("informant: both"), true, true, false, StealthPaceSet::Slow, true },
 	};
 
-	/** Yaw added to the walker's control rotation per frame, so it walks a circle (~3 m radius) instead of into a wall. */
-	constexpr double CircleYawPerFrameDeg = 0.6;
-	/** The run phase turns this much faster (90 deg/s, inside RunTurnRateDegPerSec 180): a ~2.9 m circle at 450 cm/s. */
-	constexpr double RunCircleYawFactor = 2.5;
+	/**
+	 * The walker orbits a fixed centre at this radius: 27 deg/s at the 140 cm/s walk (inside WalkTurnRateDegPerSec 60)
+	 * and 86 deg/s at the 450 cm/s run (inside RunTurnRateDegPerSec 180).
+	 */
+	constexpr double CircleRadiusCm = 300.0;
+	/** Clearance beyond the circle (capsule radius plus the overshoot of a pace change). */
+	constexpr double CircleMarginCm = 120.0;
+	/** The radial error (cm) at which the steering points straight back at the circle. */
+	constexpr double CircleCorrectionCm = 100.0;
+	/** The open-circle search: rings of candidate centres round the spawn, this far apart, out to this distance. */
+	constexpr double SearchStepCm = 200.0;
+	constexpr double SearchRadiusCm = 6000.0;
+	/** The clear box starts this far above the floor (kerb-free ground) and is this tall (a standing pawn). */
+	constexpr double BoxFloorGapCm = 5.0;
+	constexpr double BoxHeightCm = 190.0;
+	/** Rim floor traces must land within this of the centre's floor (a flat disc, no ledge or step). */
+	constexpr double FloorFlatnessCm = 4.0;
+	constexpr int32 RimTraces = 12;
+	/** The owner has arrived at the start point when it is this close and this slow. */
+	constexpr double ArriveDistanceCm = 30.0;
+	constexpr double ArriveSpeedCm = 5.0;
+	/** Frames the walker stands on the circle before the first phase (any correction lands inside them). */
+	constexpr uint64 SettleFrames = 60;
+	/** The unchecked warm-up walk after the teleport (frames). */
+	constexpr uint64 WarmUpWalkFrames = 90;
+	/** Owner and server copies agree within this before the first phase (cm; below the CMC's correction threshold). */
+	constexpr double AgreeDistanceCm = 10.0;
+	/** The largest control-yaw step per frame of the orbit steering (36 deg/s at 60 Hz, inside WalkTurnRateDegPerSec 60). */
+	constexpr double MaxYawStepDeg = 0.6;
+	/** Both copies at rest below this speed (cm/s) end the warm-up. */
+	constexpr double RestSpeedCm = 0.1;
+	/** The agreement wait gives up after this many frames (it then logs the distance and goes on). */
+	constexpr uint64 AgreeMaxFrames = 600;
 	/** The no-step clause is checked in the transition window after each modifier change. */
 	constexpr uint64 TransitionFrames = 40;
 
@@ -94,6 +132,10 @@ namespace WalkSlowerModifierTestData
 		double SpeedSum = 0.0;
 		int32 Count = 0;
 		double MaxStepOver = 0.0;
+	/** Where the largest step happened (frame after the phase start) and its speeds, for the log. */
+	uint64 StepFrame = 0;
+	double StepFrom = 0.0;
+	double StepTo = 0.0;
 	};
 }
 
@@ -114,6 +156,11 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 	int32 ClientIndexSeen = 0;
 	bool bInformantSet = false;
 	uint64 Mark = 0;
+	/** Consecutive frames both copies were at rest and in agreement (the warm-up end). */
+	uint64 RestFrames = 0;
+	/** The orbit centre (world space; the same layout on every PIE world, RoundSeed replicates). */
+	FVector CircleCentre = FVector::ZeroVector;
+	FVector CircleStart = FVector::ZeroVector;
 
 	BEFORE_ALL()
 	{
@@ -202,6 +249,109 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 		return nullptr;
 	}
 
+	/** Floor height under (X, Y) between Z + 150 and Z - 400, or unset (no floor: water, a hole or outside the map). */
+	static TOptional<double> FloorAt(UWorld* World, double X, double Y, double Z)
+	{
+		FHitResult Hit;
+		FCollisionQueryParams Params(SCENE_QUERY_STAT(WalkSlowerFloor), false);
+		if (World->LineTraceSingleByChannel(Hit, FVector(X, Y, Z + 150.0), FVector(X, Y, Z - 400.0), ECC_Visibility, Params) && Hit.ImpactNormal.Z > 0.99)
+		{
+			return Hit.ImpactPoint.Z;
+		}
+		return TOptional<double>();
+	}
+
+	/**
+	 * A centre near Origin whose whole circle (radius + margin) is flat floor with nothing standing on it (no wall, prop or
+	 * pawn): a box overlap over the disc and floor traces round its rim. Rings outwards, so the nearest clear one wins.
+	 */
+	static TOptional<FVector> FindOpenCircle(UWorld* World, const FVector& Origin, const AActor* Ignore)
+	{
+		using namespace WalkSlowerModifierTestData;
+		const double Extent = CircleRadiusCm + CircleMarginCm;
+		FCollisionObjectQueryParams Objects;
+		Objects.AddObjectTypesToQuery(ECC_WorldStatic);
+		Objects.AddObjectTypesToQuery(ECC_WorldDynamic);
+		Objects.AddObjectTypesToQuery(ECC_Pawn);
+		Objects.AddObjectTypesToQuery(ECC_PhysicsBody);
+		FCollisionQueryParams Params(SCENE_QUERY_STAT(WalkSlowerOpenCircle), false, Ignore);
+		const FCollisionShape Box = FCollisionShape::MakeBox(FVector(Extent, Extent, BoxHeightCm * 0.5));
+		for (double Ring = 0.0; Ring <= SearchRadiusCm; Ring += SearchStepCm)
+		{
+			const int32 Count = Ring > 0.0 ? FMath::Max(6, FMath::CeilToInt32(2.0 * UE_DOUBLE_PI * Ring / SearchStepCm)) : 1;
+			for (int32 Index = 0; Index < Count; ++Index)
+			{
+				const double Angle = 2.0 * UE_DOUBLE_PI * Index / Count;
+				const double X = Origin.X + Ring * FMath::Cos(Angle);
+				const double Y = Origin.Y + Ring * FMath::Sin(Angle);
+				const TOptional<double> Floor = FloorAt(World, X, Y, Origin.Z);
+				if (!Floor.IsSet())
+				{
+					continue;
+				}
+				bool bFlat = true;
+				for (int32 Rim = 0; Rim < RimTraces && bFlat; ++Rim)
+				{
+					const double RimAngle = 2.0 * UE_DOUBLE_PI * Rim / RimTraces;
+					const TOptional<double> RimFloor = FloorAt(World, X + Extent * FMath::Cos(RimAngle), Y + Extent * FMath::Sin(RimAngle), Floor.GetValue());
+					bFlat = RimFloor.IsSet() && FMath::Abs(RimFloor.GetValue() - Floor.GetValue()) <= FloorFlatnessCm;
+				}
+				if (!bFlat)
+				{
+					continue;
+				}
+				const FVector BoxCentre(X, Y, Floor.GetValue() + BoxFloorGapCm + BoxHeightCm * 0.5);
+				if (!World->OverlapAnyTestByObjectType(BoxCentre, FQuat::Identity, Objects, Box, Params))
+				{
+					return FVector(X, Y, Floor.GetValue());
+				}
+			}
+		}
+		return TOptional<FVector>();
+	}
+
+	/**
+	 * The control yaw moves toward the orbit heading by at most MaxYawStepDeg per frame (a mouse-like turn inside the walk
+	 * turn rate), so the commanded direction never jumps away from the body facing (no idle pivot at a phase start).
+	 */
+	static double SteerToward(double CurrentYaw, double TargetYaw)
+	{
+		using namespace WalkSlowerModifierTestData;
+		const double Delta = FRotator::NormalizeAxis(TargetYaw - CurrentYaw);
+		return CurrentYaw + FMath::Clamp(Delta, -MaxYawStepDeg, MaxYawStepDeg);
+	}
+
+	/** Closed-loop orbit: the tangent of the circle round Centre, bent back towards the circle by the radial error. */
+	static double OrbitYawDeg(const FVector& Location, const FVector& Centre)
+	{
+		using namespace WalkSlowerModifierTestData;
+		FVector Radial = Location - Centre;
+		Radial.Z = 0.0;
+		const double Distance = Radial.Size();
+		if (Distance < 1.0)
+		{
+			return 0.0;
+		}
+		Radial /= Distance;
+		const FVector Tangent(-Radial.Y, Radial.X, 0.0);
+		const FVector Heading = Tangent + Radial * FMath::Clamp((CircleRadiusCm - Distance) / CircleCorrectionCm, -1.0, 1.0);
+		return FMath::RadiansToDegrees(FMath::Atan2(Heading.Y, Heading.X));
+	}
+
+	/** Points the walker's control yaw along its body facing (a start straight ahead: no idle pivot). */
+	static void AlignControlToFacing()
+	{
+		if (APlayerController* PC = WalkerController())
+		{
+			if (const APawn* Owner = PC->GetPawn())
+			{
+				FRotator Control = PC->GetControlRotation();
+				Control.Yaw = Owner->GetActorRotation().Yaw;
+				PC->SetControlRotation(Control);
+			}
+		}
+	}
+
 	static void Key(const FKey& InKey, bool bDown)
 	{
 		if (APlayerController* PC = WalkerController())
@@ -230,6 +380,94 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 			{
 				Spy = MakeUnique<FOutgoingRpcSpy>(FirstClientWorld());
 				ASSERT_THAT(IsTrue(Spy->IsAttached(), TEXT("RPC spy attached to the walker's NetDriver")));
+			})
+			.Then(TEXT("move the walker onto an open circle"), [this]()
+			{
+				using namespace WalkSlowerModifierTestData;
+				UWorld* Server = ServerWorldOf();
+				ACharacter* Walker = Server ? ServerWalker(Server) : nullptr;
+				ASSERT_THAT(IsTrue(Walker != nullptr, TEXT("the server's walker")));
+				const float HalfHeight = Walker->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+				const TOptional<FVector> Centre = FindOpenCircle(Server, Walker->GetActorLocation() - FVector(0.0, 0.0, HalfHeight), Walker);
+				ASSERT_THAT(IsTrue(Centre.IsSet(), TEXT("an open, flat circle near the walker's spawn")));
+				CircleCentre = Centre.GetValue();
+				// Start on the circle's +X point facing the anticlockwise tangent (+Y).
+				CircleStart = CircleCentre + FVector(CircleRadiusCm, 0.0, 0.0);
+				const FRotator Facing(0.0, 90.0, 0.0);
+				Walker->GetCharacterMovement()->StopMovementImmediately();
+				Walker->TeleportTo(CircleStart + FVector(0.0, 0.0, HalfHeight + 2.0), Facing, false, true);
+				if (APlayerController* ServerPC = Cast<APlayerController>(Walker->GetController()))
+				{
+					ServerPC->SetControlRotation(Facing);
+					ServerPC->ClientSetRotation(Facing, true);
+				}
+				// The owner is moved in the same frame (both worlds run in this process), so no correction is pending
+				// when the first phase starts.
+				if (APlayerController* OwnerPC = WalkerController())
+				{
+					if (ACharacter* Owner = Cast<ACharacter>(OwnerPC->GetPawn()))
+					{
+						Owner->GetCharacterMovement()->StopMovementImmediately();
+						Owner->TeleportTo(CircleStart + FVector(0.0, 0.0, HalfHeight + 2.0), Facing, false, true);
+					}
+					OwnerPC->SetControlRotation(Facing);
+				}
+				TestRunner->AddInfo(FString::Printf(TEXT("WALKSLOWER open circle centre %s"), *CircleCentre.ToCompactString()));
+			})
+			.Until(TEXT("the owner arrives at the circle"), [this]()
+			{
+				using namespace WalkSlowerModifierTestData;
+				const APlayerController* PC = WalkerController();
+				const ACharacter* Owner = PC ? Cast<ACharacter>(PC->GetPawn()) : nullptr;
+				Mark = Mark ? Mark : GFrameCounter;
+				const bool bArrived = Owner && FVector::Dist2D(Owner->GetActorLocation(), CircleStart) < ArriveDistanceCm && Owner->GetVelocity().Size() < ArriveSpeedCm && GFrameCounter >= Mark + SettleFrames;
+				if (bArrived)
+				{
+					Mark = 0;
+				}
+				return bArrived;
+			})
+			// Warm-up (unchecked): a short walk round the circle and a stop, so a correction left over from the teleport (the
+			// server replays the owner's first moves after it) lands here, never in the reference phase's step check.
+			.Then(TEXT("warm up: walk"), [this]() { AlignControlToFacing(); Key(EKeys::W, true); Mark = GFrameCounter; })
+			.Until(TEXT("warm up: walk the circle"), [this]()
+			{
+				using namespace WalkSlowerModifierTestData;
+				APlayerController* PC = WalkerController();
+				const ACharacter* Owner = PC ? Cast<ACharacter>(PC->GetPawn()) : nullptr;
+				if (PC && Owner)
+				{
+					FRotator Control = PC->GetControlRotation();
+					Control.Yaw = SteerToward(Control.Yaw, OrbitYawDeg(Owner->GetActorLocation(), CircleCentre));
+					PC->SetControlRotation(Control);
+				}
+				return GFrameCounter >= Mark + WarmUpWalkFrames;
+			})
+			.Then(TEXT("warm up: stop"), [this]() { Key(EKeys::W, false); Mark = GFrameCounter; RestFrames = 0; })
+			.Until(TEXT("warm up: at rest and in agreement with the server"), [this]()
+			{
+				using namespace WalkSlowerModifierTestData;
+				const APlayerController* PC = WalkerController();
+				const ACharacter* Owner = PC ? Cast<ACharacter>(PC->GetPawn()) : nullptr;
+				UWorld* Server = ServerWorldOf();
+				const ACharacter* OnServer = Server ? ServerWalker(Server) : nullptr;
+				// Fully at rest on both copies (a stop still braking on one of them ends differently on the other, and the
+				// server then corrects the owner inside the next phase), then SettleFrames more.
+				const bool bAgree = Owner && OnServer && FVector::Dist2D(Owner->GetActorLocation(), OnServer->GetActorLocation()) < AgreeDistanceCm
+					&& Owner->GetVelocity().Size() < RestSpeedCm && OnServer->GetVelocity().Size() < RestSpeedCm;
+				RestFrames = bAgree ? RestFrames + 1 : 0;
+				const bool bGaveUp = GFrameCounter >= Mark + AgreeMaxFrames;
+				const bool bDone = (bAgree && RestFrames >= SettleFrames) || bGaveUp;
+				if (bDone)
+				{
+					if (Owner && OnServer)
+					{
+						TestRunner->AddInfo(FString::Printf(TEXT("WALKSLOWER warm-up done: owner/server distance %.2f cm, owner speed %.2f, server speed %.2f%s"),
+							FVector::Dist2D(Owner->GetActorLocation(), OnServer->GetActorLocation()), Owner->GetVelocity().Size(), OnServer->GetVelocity().Size(), bGaveUp ? TEXT(" (gave up waiting)") : TEXT("")));
+					}
+					Mark = 0;
+				}
+				return bDone;
 			});
 
 		for (int32 Index = 0; Index < UE_ARRAY_COUNT(Phases); ++Index)
@@ -266,6 +504,7 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 			Network
 				.Then(L(FString::Printf(TEXT("phase %s: set the modifiers"), Phase.Name)), [this, Phase, Index]()
 				{
+					AlignControlToFacing();
 					Key(EKeys::W, true);
 					Key(EKeys::LeftControl, Phase.bCtrl);
 					Key(EKeys::LeftAlt, Phase.bAlt);
@@ -292,10 +531,12 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 					// simulation (the server applies moves in packed batches, so per-server-tick deltas are not per-move).
 					APlayerController* WalkerPC = WalkerController();
 					const ACharacter* Owner = WalkerPC ? Cast<ACharacter>(WalkerPC->GetPawn()) : nullptr;
-					if (WalkerPC)
+					if (WalkerPC && Owner)
 					{
-						// Running turns faster so the run circle stays as tight as the walk circle (radius = speed / yaw rate).
-						WalkerPC->SetControlRotation(WalkerPC->GetControlRotation() + FRotator(0.0, CircleYawPerFrameDeg * (Phase.bRun ? RunCircleYawFactor : 1.0), 0.0));
+						// Closed loop round the fixed centre: the same circle at every pace and every frame time.
+						FRotator Control = WalkerPC->GetControlRotation();
+						Control.Yaw = SteerToward(Control.Yaw, OrbitYawDeg(Owner->GetActorLocation(), CircleCentre));
+						WalkerPC->SetControlRotation(Control);
 					}
 					if (Owner && GFrameCounter <= PhaseStart + TransitionFrames)
 					{
@@ -309,7 +550,14 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 							// A reversal (W to S) combines acceleration with braking friction, so the bound is their sum: still the
 							// movement component's own rates, never a snap.
 							const double Limit = (Move->GetMaxAcceleration() + Move->GetMaxBrakingDeceleration() + Friction * FMath::Max(Speed, LastSpeed)) * Dt + 1.0;
-							Samples.Last().MaxStepOver = FMath::Max(Samples.Last().MaxStepOver, FMath::Abs(Speed - LastSpeed) - Limit);
+							const double Over = FMath::Abs(Speed - LastSpeed) - Limit;
+							if (Over > Samples.Last().MaxStepOver)
+							{
+								Samples.Last().MaxStepOver = Over;
+								Samples.Last().StepFrame = GFrameCounter - PhaseStart;
+								Samples.Last().StepFrom = LastSpeed;
+								Samples.Last().StepTo = Speed;
+							}
 						}
 						LastSpeed = Speed;
 						LastTime = Now;
@@ -341,8 +589,8 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 				const double Magnitude = S.Count ? S.MagnitudeSum / S.Count : 0.0;
 				const double Speed = S.Count ? S.SpeedSum / S.Count : 0.0;
 				const double Target = S.Count ? S.TargetSum / S.Count : 0.0;
-				TestRunner->AddInfo(FString::Printf(TEXT("WALKSLOWER %s: server-received magnitude %.3f (expected %.2f), target pace %.1f cm/s (ratio %.3f), measured speed %.1f cm/s, max step over limit %.2f"),
-					Phase.Name, Magnitude, Phase.ExpectedMagnitude, Target, ReferenceTarget > 0.0 ? Target / ReferenceTarget : 0.0, Speed, S.MaxStepOver));
+				TestRunner->AddInfo(FString::Printf(TEXT("WALKSLOWER %s: server-received magnitude %.3f (expected %.2f), target pace %.1f cm/s (ratio %.3f), measured speed %.1f cm/s, max step over limit %.2f (frame %llu, %.1f -> %.1f cm/s)"),
+					Phase.Name, Magnitude, Phase.ExpectedMagnitude, Target, ReferenceTarget > 0.0 ? Target / ReferenceTarget : 0.0, Speed, S.MaxStepOver, S.StepFrame, S.StepFrom, S.StepTo));
 				ASSERT_THAT(IsNear(Phase.ExpectedMagnitude, Magnitude, MagnitudeTolerance, L(FString::Printf(TEXT("%s: server-received Move magnitude"), Phase.Name))));
 				if (Phase.bSkipStepCheck)
 				{
@@ -352,12 +600,18 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 				{
 					ASSERT_THAT(IsNear(Phase.ExpectedMagnitude, Target / ReferenceTarget, PaceRatioTolerance, L(FString::Printf(TEXT("%s: pace as a ratio of the walk speed"), Phase.Name))));
 					// SCL-010: the absolute pace the server's movement model targets, WalkSpeedCmPerSec x the quantised pace
-					// (112 / 126 / 140 cm/s). The measured speed is logged only: the drifting circle can graze level geometry.
+					// (112 / 126 / 140 cm/s).
 					ASSERT_THAT(IsNear(140.0 * Phase.ExpectedMagnitude, Target, AbsolutePaceToleranceCm, L(FString::Printf(TEXT("%s: absolute pace %.1f cm/s"), Phase.Name, Target))));
 				}
 				else
 				{
 					ASSERT_THAT(IsNear(450.0, Target, AbsolutePaceToleranceCm, L(FString::Printf(TEXT("%s: the run tier at 450 cm/s (%.1f)"), Phase.Name, Target))));
+				}
+				if (!Phase.bSkipStepCheck)
+				{
+					// The open circle keeps the walker clear of everything, so the server's measured speed is the target pace
+					// (a wall or pawn on the circle would show here first: the regression guard of the 2026-10-26 flake).
+					ASSERT_THAT(IsNear(Target, Speed, AbsolutePaceToleranceCm, L(FString::Printf(TEXT("%s: measured speed %.1f cm/s at the target pace %.1f"), Phase.Name, Speed, Target))));
 				}
 				if (!Phase.bSkipStepCheck)
 				{
