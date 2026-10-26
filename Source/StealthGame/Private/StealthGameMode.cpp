@@ -18,6 +18,7 @@
 
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
+#include "Server/StealthGameSession.h"
 #include "NavigationSystem.h"
 #include "TimerManager.h"
 
@@ -31,7 +32,17 @@ AStealthGameMode::AStealthGameMode()
 	HUDClass = AStealthHUD::StaticClass();
 	// ADR-0010: no engine default pawn path; every pawn comes from UStealthPawnFactory.
 	DefaultPawnClass = nullptr;
-	bUseSeamlessTravel = false;
+	// ADR-0005 section 1 (story st-023): seamless round travel; players never start as spectators; the engine's session
+	// approval never refuses (admission is Session's PreLogin gates).
+	bUseSeamlessTravel = true;
+	bStartPlayersAsSpectators = false;
+	GameSessionClass = AStealthGameSession::StaticClass();
+}
+
+bool AStealthGameMode::PlayerCanRestart_Implementation(APlayerController* Player)
+{
+	// ADR-0005 / ADR-0010: no engine restart path; pawns come only from UStealthPawnFactory.
+	return false;
 }
 
 void AStealthGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
@@ -386,7 +397,7 @@ void AStealthGameMode::RunPreparing()
 
 	CleanupRoundActors();
 	AppearanceDeck.Reset();
-	// The round seed is Session's draw for this start (the adapter's FStealthRoundSeedDrawer, R5 step 8).
+	// The round seed is Session's draw for this start (USessionService::DrawRoundSeed through the adapter, F5; R5 step 8).
 	const int32 Seed = (Root && Root->GetAdapters()->GetLastRoundSeed() != 0) ? Root->GetAdapters()->GetLastRoundSeed() : FMath::Rand();
 	GS->ResetRoundState(Seed);
 	GS->BuildCityForSeed(); // clients build the same layout when RoundSeed replicates

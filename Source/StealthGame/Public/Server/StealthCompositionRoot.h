@@ -7,7 +7,6 @@
 #include "Server/Core/Round/StealthCrowdControl.h"
 #include "Server/Core/Round/StealthRoundGateways.h"
 #include "Server/Core/StealthPawnFactory.h"
-#include "Server/Random/StealthRoundSeedDrawer.h"
 #include "Server/Random/StealthServerSeeds.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 
@@ -25,8 +24,8 @@ struct FRosterEvent;
  * exist yet (Session & Travel, Tuning dry run, Character Pool, Level Socket Contract, Crowd), and the pawn factory's
  * hooks over the prototype (appearance on AStealthCharacter, the prototype NPC controller) and the real Roster.
  *
- * Session adapter: no travel happens yet, so RequestRoundTravel draws the round seed (FStealthRoundSeedDrawer over a
- * development session secret) and confirms the travel on the next tick; the connection state is Connected for a
+ * Session adapter: no travel happens yet, so RequestRoundTravel draws the round seed from USessionService (F5, over the
+ * OS-CSPRNG session secret, stories st-009/010/014) and confirms the travel on the next tick; the connection state is Connected for a
  * participant with a live controller, else the Roster projection. Each adapter is replaced by its system's facade
  * when that epic lands.
  */
@@ -37,8 +36,6 @@ class STEALTHGAME_API UStealthMatchAdapters : public UObject, public IRoundSessi
 	GENERATED_BODY()
 
 public:
-	/** Opens the development session secret (the seed source until Session's OS CSPRNG, story st-009). */
-	void InitializeAdapters();
 
 	// IRoundSessionGateway
 	virtual bool CanRequestRoundTravel() const override;
@@ -87,8 +84,8 @@ public:
 private:
 	UWorld* GetGameWorld() const;
 
-	FStealthServerSeeds SessionSeeds;
-	TUniquePtr<FStealthRoundSeedDrawer> SeedDrawer;
+	/** Session's service (seeds and the round seed draw, stories st-009..014). */
+	class USessionService* GetSession() const;
 	int32 LastRoundSeed = 0;
 	ERoundAdmissionMode AdmissionMode = ERoundAdmissionMode::Open;
 };
@@ -149,5 +146,4 @@ private:
 	TSharedPtr<class FStealthPrototypeCommandQueue> CommandQueue;
 	FStealthLogFaultSink CommandFaults;
 	FDelegateHandle RosterEventHandle;
-	bool bGatewaysRegistered = false;
 };

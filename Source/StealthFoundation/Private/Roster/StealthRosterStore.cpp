@@ -32,29 +32,6 @@ namespace RosterStoreLocal
 		return (static_cast<uint64>(static_cast<uint32>(Serial)) << 32) | static_cast<uint64>(static_cast<uint32>(Index));
 	}
 
-	/**
-	 * Development entropy for the session secret until Session's OS-CSPRNG source lands (session-travel story st-009):
-	 * FGuid::NewGuid draws from the platform's GUID generator. Not a production source.
-	 */
-	class FGuidEntropySource final : public IEntropySource
-	{
-	public:
-		virtual bool Fill(TArrayView<uint8> Out) override
-		{
-			int32 Written = 0;
-			while (Written < Out.Num())
-			{
-				const FGuid Guid = FGuid::NewGuid();
-				const uint32 Words[4] = { Guid.A, Guid.B, Guid.C, Guid.D };
-				const uint8* Bytes = reinterpret_cast<const uint8*>(Words);
-				for (int32 Index = 0; Index < 16 && Written < Out.Num(); ++Index)
-				{
-					Out[Written++] = Bytes[Index];
-				}
-			}
-			return true;
-		}
-	};
 }
 
 /** The engine adapters of one store. Members outlive the core (the store destroys the core first). */
@@ -215,7 +192,7 @@ void URosterStore::InitializeStore(const FRosterStoreInitOverrides& Overrides)
 	Adapters->AuthorityOverride = Overrides.bAuthority;
 	Adapters->FaultSinkOverride = Overrides.FaultSink;
 	Adapters->ClockOverride = Overrides.Clock;
-	RosterStoreLocal::FGuidEntropySource OsEntropy;
+	FOsEntropySource OsEntropy; // ADR-0006 section 2 (story st-009): the OS CSPRNG, never a GUID
 	Adapters->Seeds.Open(Overrides.Entropy != nullptr ? *Overrides.Entropy : static_cast<IEntropySource&>(OsEntropy), &Adapters->GetFaultSink());
 
 	FRosterCoreDeps Deps;

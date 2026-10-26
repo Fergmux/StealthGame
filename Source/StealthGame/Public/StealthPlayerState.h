@@ -23,6 +23,8 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void Reset() override;
+	/** False in every phase (ADR-0005 Guideline 4a; Session rule 25c): no engine entered/left/renamed message. */
+	virtual bool ShouldBroadCastWelcomeMessage(bool bExiting = false) override { return false; }
 
 	/** Team index (0 or 1), or STEALTH_NO_TEAM before assignment. */
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Stealth")

@@ -1,0 +1,2 @@
+# fixture allowlist
+Source/StealthGameplay/Private/StealthCosmeticSparkle.cpp   # cosmetic only (fixture)

@@ -6,8 +6,8 @@
  * Ranged-draw helpers (ADR-0006 section 6, Key Interfaces), templated on the stream type so they serve both
  * FIntStream (public) and FSecretStream (server-only). A stream needs `uint32 NextU32()`.
  *
- * Built for the Round & Match Framework intake permutation (story rmf-006, which needed them before the
- * session-travel epic's story 007 adds its exhaustive and chi-square checks). No `%` on a result, no floats.
+ * Built for the Round & Match Framework intake permutation (story rmf-006); the exhaustive and chi-square checks are
+ * the session-travel epic's story 007 (StealthGame.Random.UniformBelowUnbiased). No `%` on a result, no floats.
  */
 namespace StealthRandom
 {
@@ -56,6 +56,46 @@ namespace StealthRandom
 			return static_cast<int32>(Stream.NextU32());
 		}
 		return static_cast<int32>(static_cast<uint32>(Lo) + UniformBelow(Stream, Span));
+	}
+
+	/**
+	 * Integer cumulative-weight pick (ADR-0006 section 6, CP-8): CumulativeWeights[i] is the running total of the
+	 * weights 0..i (non-decreasing); the result is the first index whose cumulative weight exceeds
+	 * UniformBelow(total). A zero weight (equal neighbours) is never picked. An empty array, a zero total or a
+	 * decreasing entry is refused: INDEX_NONE, and no draw is consumed.
+	 */
+	template <class TStream>
+	int32 WeightedPick(TStream& Stream, TConstArrayView<uint32> CumulativeWeights)
+	{
+		const int32 Count = CumulativeWeights.Num();
+		if (Count == 0 || CumulativeWeights[Count - 1] == 0)
+		{
+			return INDEX_NONE;
+		}
+		for (int32 Index = 1; Index < Count; ++Index)
+		{
+			if (CumulativeWeights[Index] < CumulativeWeights[Index - 1])
+			{
+				return INDEX_NONE;
+			}
+		}
+		const uint32 Roll = UniformBelow(Stream, CumulativeWeights[Count - 1]);
+		// Binary search for the first cumulative weight > Roll (integers only, no float).
+		int32 Low = 0;
+		int32 High = Count - 1;
+		while (Low < High)
+		{
+			const int32 Mid = Low + (High - Low) / 2;
+			if (CumulativeWeights[Mid] > Roll)
+			{
+				High = Mid;
+			}
+			else
+			{
+				Low = Mid + 1;
+			}
+		}
+		return Low;
 	}
 
 	/**

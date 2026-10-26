@@ -8,10 +8,12 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Hash/CityHash.h"
+#include "Misc/CommandLine.h"
 #include "Misc/Guid.h"
 #include "Server/Core/Round/StealthRoundMatchStore.h"
 #include "Server/Core/Round/StealthRoundRosterGateway.h"
 #include "Server/Roster/StealthRosterStore.h"
+#include "Server/Session/StealthSessionService.h"
 #include "StealthCharacter.h"
 #include "StealthGame.h"
 #include "StealthGameMode.h"
@@ -27,27 +29,6 @@
 
 namespace StealthCompositionLocal
 {
-	/** Development entropy (FGuid) for the Session adapter's secret until story st-009's OS CSPRNG source. */
-	class FGuidEntropy final : public IEntropySource
-	{
-	public:
-		virtual bool Fill(TArrayView<uint8> Out) override
-		{
-			int32 Written = 0;
-			while (Written < Out.Num())
-			{
-				const FGuid Guid = FGuid::NewGuid();
-				const uint32 Words[4] = { Guid.A, Guid.B, Guid.C, Guid.D };
-				const uint8* Bytes = reinterpret_cast<const uint8*>(Words);
-				for (int32 Index = 0; Index < 16 && Written < Out.Num(); ++Index)
-				{
-					Out[Written++] = Bytes[Index];
-				}
-			}
-			return true;
-		}
-	};
-
 	/** The MVP identity key (unauthenticated, Session rule 6): a 128-bit hash of the player's unique net id. */
 	FIdentityKey MakeIdentityKey(const APlayerController* Player)
 	{
@@ -76,11 +57,10 @@ namespace StealthCompositionLocal
 // UStealthMatchAdapters
 // -------------------------------------------------------------------------------------------------------------------
 
-void UStealthMatchAdapters::InitializeAdapters()
+USessionService* UStealthMatchAdapters::GetSession() const
 {
-	StealthCompositionLocal::FGuidEntropy Entropy;
-	SessionSeeds.Open(Entropy);
-	SeedDrawer = MakeUnique<FStealthRoundSeedDrawer>(SessionSeeds);
+	const UGameInstance* GameInstance = Cast<UGameInstance>(GetOuter()->GetOuter());
+	return GameInstance != nullptr ? GameInstance->GetSubsystem<USessionService>() : nullptr;
 }
 
 UWorld* UStealthMatchAdapters::GetGameWorld() const
@@ -97,14 +77,14 @@ bool UStealthMatchAdapters::CanRequestRoundTravel() const
 ERoundTravelRequestResult UStealthMatchAdapters::RequestRoundTravel(FName MapId, FName PresetId, uint32 RoundIndex)
 {
 	UWorld* World = GetGameWorld();
-	if (World == nullptr || !SeedDrawer)
+	USessionService* Session = GetSession();
+	if (World == nullptr || Session == nullptr || !Session->IsSessionOpen())
 	{
 		return ERoundTravelRequestResult::Refused;
 	}
-	// Session draws a fresh seed for every start (R5 step 8). No map travel yet: the same world hosts every round, so
-	// the travel is confirmed on the next tick (the deferred acceptance of R5 step 9).
-	SessionSeeds.SetRoundIndex(RoundIndex);
-	LastRoundSeed = SeedDrawer->DrawRoundSeed(RoundIndex);
+	// Session draws a fresh seed for every start (R5 step 8; F5 with UsedSeeds, st-010). No map travel yet: the same
+	// world hosts every round, so the travel is confirmed on the next tick (the deferred acceptance of R5 step 9).
+	LastRoundSeed = Session->DrawRoundSeed(RoundIndex);
 	TWeakObjectPtr<UWorld> WeakWorld(World);
 	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [WeakWorld]()
 	{
@@ -146,7 +126,8 @@ void UStealthMatchAdapters::KickParticipant(FParticipantId Participant)
 
 uint64 UStealthMatchAdapters::GetServerSubSeed(ESeedDomain Domain, uint32 Attempt) const
 {
-	return SessionSeeds.GetServerSubSeed(Domain, Attempt);
+	const USessionService* Session = GetSession();
+	return Session != nullptr ? Session->GetServerSubSeed(Domain, Attempt) : 0;
 }
 
 void UStealthMatchAdapters::ApplyAppearance(AStealthPawn* Pawn, int32 AppearanceId)
@@ -188,11 +169,11 @@ AController* UStealthMatchAdapters::CreateAiController(AStealthPawn* Pawn)
 void UStealthCompositionRoot::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	Collection.InitializeDependency<USessionService>();
 	URosterStore* Roster = Collection.InitializeDependency<URosterStore>();
 	URoundMatchStore* Round = Collection.InitializeDependency<URoundMatchStore>();
 
 	Adapters = NewObject<UStealthMatchAdapters>(this);
-	Adapters->InitializeAdapters();
 	RosterGateway = NewObject<URoundRosterStoreGateway>(this);
 	RosterGateway->Bind(Roster);
 
@@ -262,7 +243,22 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 	Params.MapId = FName(*UWorld::RemovePIEPrefix(InGameMode->GetWorld()->GetOutermost()->GetName()));
 	Round->SetRuleParams(Params);
 
-	if (!bGatewaysRegistered)
+	// Session.OpenSession (story st-014): the session secret from the OS CSPRNG and the empty-store check. The Roster
+	// match is begun by Round's OpenMatch below (Round latches TeamSize). A failure is "could not host".
+	if (USessionService* Session = USessionService::Get(InGameMode->GetWorld()); Session != nullptr && !Session->IsSessionOpen())
+	{
+		FSessionOpenParams OpenParams;
+		OpenParams.TeamSize = Params.TeamSize;
+		OpenParams.bBeginRosterMatch = false;
+		if (Session->OpenSession(OpenParams) != EStealthSessionOpenResult::Opened)
+		{
+			UE_LOGF(LogStealth, Error, "%ls", *FStealthServerSeeds::GetCouldNotHostText().ToString());
+			return; // no weaker source: no round can start
+		}
+	}
+
+	// The match core is released by Session's EndMatch fan-out on every exit path; register again on the next start.
+	if (!Round->HasMatchCore())
 	{
 		FRoundGateways Gateways;
 		Gateways.Session = Adapters;
@@ -272,7 +268,6 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 		Gateways.LevelSocket = Adapters;
 		Gateways.Crowd = Adapters;
 		Round->RegisterGateways(Gateways, this);
-		bGatewaysRegistered = true;
 	}
 	if (!Roster->IsMatchOpen())
 	{

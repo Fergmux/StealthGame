@@ -1,12 +1,12 @@
 # Story 014: Session lifecycle: OpenSession seeds the host, EndSession clears every store on every exit path
 
 > **Epic**: Session & Travel
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -98,7 +98,7 @@
 **Required evidence**:
 - Integration: `Source/StealthFoundation/Private/Tests/Session/StoresEmptyAtSecondOpenTest.cpp` — `StealthGame.Session.StoresEmptyAtSecondOpen` (automation test), OR a documented playtest in `production/qa/evidence/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-26): `Source/StealthGameplay/Private/Tests/Session/StoresEmptyAtSecondOpenTest.cpp` (StealthGame.Session.StoresEmptyAtSecondOpen)
 
 Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation name `StealthGame.Session.StoresEmptyAtSecondOpen`, T1 unit test, class `FSessionStoresEmptyAtSecondOpenTest` (one class per `IMPLEMENT_SIMPLE_AUTOMATION_TEST`), flags `EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter`; wrap the file in `#if WITH_DEV_AUTOMATION_TESTS`; tests use an injected clock and entropy, no wall-clock time as a pass predicate, no shared mutable state, and assert zero unexpected faults at teardown.
 
@@ -111,3 +111,13 @@ Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation n
 - Cross-epic: Epic `participant-state-roster` (`production/epics/participant-state-roster/EPIC.md`): the registration API (RegisterParticipant, RebindView, NotifyConnectionChanged, IsRoundScopeReset, InvalidateAllBindings) is a peer epic built in the same window; use a fake Roster behind the interface for Logic tests.
 - Cross-epic: Epic `tuning-data-config` (`production/epics/tuning-data-config/EPIC.md`): knob registry (sub-struct `Session`), `TuningSchemaVersion` and `ClientHash`.
 - Unlocks: `production/epics/session-travel/story-009-os-entropy-and-session-secret.md`, `production/epics/session-travel/story-015-connection-state-machine-illegal-transitions.md`, `production/epics/session-travel/story-016-host-record-seeded-without-handshake.md`, `production/epics/session-travel/story-021-engine-timeout-config-validated.md`, `production/epics/session-travel/story-023-game-mode-skeleton-agamemodebase.md`, `production/epics/session-travel/story-026-identity-key-persistent-and-private.md`, `production/epics/session-travel/story-032-display-name-sanitise-and-dedupe.md`, `production/epics/session-travel/story-056-roster-rebind-both-paths.md`, `production/epics/session-travel/story-086-menu-host-navigation.md`
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 1/1 passing for Session, Roster and Round; the Tuning clause is met through the seam only (below)
+**Deviations**: USessionService (Foundation `Public/Server/Session/StealthSessionService.h`) over FSessionCore (`StealthSessionCore.h`): OpenSession draws the secret from FOsEntropySource (or `-StealthServerSecret`), checks every store empty (a leak is an InvariantViolation fault and is cleared), begins the Roster match (the D53 composition root passes bBeginRosterMatch=false and lets Round's OpenMatch begin it); EndSession fans EndMatch out to Session, Roster (its own exit-path calls) and every IStealthMatchStore registered (URoundMatchStore registers itself and releases its match core; the composition root re-registers the gateways at the next world start). Exit paths: NotifyHostQuit / NotifyReturnToMainMenu / NotifySessionEnding / Deinitialize (UGameInstance::Shutdown) / OnWorldCleanup of this game instance's networked game world (not while travelling). **Tuning clause NOT ASSESSED against the real store**: UStealthTuningStore (ADR-0004) does not exist yet; a stand-in proves the fan-out reaches a registered Tuning store; carried to the tuning-data-config story that creates the store (it must register through IStealthMatchStore). The test lives in StealthGameplay (the story names Foundation) because it builds the real Round store, which Foundation cannot include (ADR-0007). The composition root's seed adapter now reads USessionService (the D53 adapter's own secret is gone).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Session/StoresEmptyAtSecondOpenTest.cpp` (StealthGame.Session.StoresEmptyAtSecondOpen)
+**Files**: `Source/StealthFoundation/Public/Server/Session/StealthSessionCore.h`, `Source/StealthFoundation/Private/Session/StealthSessionCore.cpp`, `Source/StealthFoundation/Public/Server/Session/StealthSessionService.h`, `Source/StealthFoundation/Private/Session/StealthSessionService.cpp`, `Source/StealthGameplay/Public/Server/Core/Round/StealthRoundMatchStore.h`, `Source/StealthGameplay/Private/Core/Round/StealthRoundMatchStore.cpp`, `Source/StealthGame/Public/Server/StealthCompositionRoot.h`, `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp`, `Source/StealthGameplay/Private/Tests/Session/StoresEmptyAtSecondOpenTest.cpp`
+**Run result**: OBSERVED — the multi-process S10R runs of story-056 (7 listen-host sessions of 720 s, 3 clients each) started rounds through USessionService.OpenSession and drew every round seed from it; no player-visible change (the HUD and play are unchanged)
+**Build + tests**: cycle.ps1 -Tests -NoLaunch: Result: Succeeded; 153/153 StealthGame.* automation tests passed (tests exit=0), 2026-10-26
+**Reviewed by**: focused self code review (dev-story Phase 5), unattended run 2026-10-26

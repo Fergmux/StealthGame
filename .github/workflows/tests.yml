@@ -28,7 +28,7 @@ jobs:
 
       # ONE step runs the per-commit gate (ADR-0008 section 8, story tdc-021), the same script a developer runs, so
       # CI and the dev machine cannot drift. The gate runs, in this order and stopping at the first failure:
-      #   1. T0 lint   tools/ci/lint/gate.sh (include lint rules a-j and the VCS conformance check); a finding
+      #   1. T0 lint   tools/ci/lint/gate.sh (include lint rules a-j, the forbidden-RNG grep and the VCS conformance check); a finding
       #                fails the job BEFORE the build starts
       #   2. Build     StealthGameEditor Win64 Development (Binaries/ is gitignored, so a fresh checkout has no
       #                compiled game module; without this the editor stops before running any test)

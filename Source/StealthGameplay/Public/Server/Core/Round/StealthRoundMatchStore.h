@@ -7,6 +7,7 @@
 #include "Server/Core/Round/StealthRoundPublicStateMirror.h"
 #include "Server/Roster/StealthRosterDeps.h"
 #include "Server/StealthClock.h"
+#include "Server/Session/StealthSessionCore.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Templates/Function.h"
 #include "Tickable.h"
@@ -51,7 +52,8 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundHostMessage, const FString& /*Messag
  * runs inside FRoundRemoteExecScope and is NotHost.
  */
 UCLASS(NotBlueprintType, NotBlueprintable)
-class STEALTHGAMEPLAY_API URoundMatchStore : public UGameInstanceSubsystem, public FTickableGameObject, public IRoundHostSink, public IRosterRoundPhase
+class STEALTHGAMEPLAY_API URoundMatchStore : public UGameInstanceSubsystem, public FTickableGameObject, public IRoundHostSink, public IRosterRoundPhase,
+	public IStealthMatchStore
 {
 	GENERATED_BODY()
 
@@ -118,6 +120,13 @@ public:
 
 	// --- IRosterRoundPhase (decision D43) --------------------------------------------------------------------------
 	virtual bool IsRoundPhaseActive() const override;
+
+	// --- IStealthMatchStore (session-travel st-014: Session's EndMatch fan-out) ------------------------------------
+	virtual FName GetMatchStoreName() const override { return TEXT("Round"); }
+	/** Releases the match core (phase, score, Event Log) and the public mirror; the next world start re-registers. */
+	virtual void EndMatch(ESessionEndReason Reason) override;
+	/** True when no match is open (no core, or a core that has not opened a match). */
+	virtual bool IsMatchStateEmpty() const override;
 
 	// --- FTickableGameObject -------------------------------------------------------------------------------------------
 	virtual void Tick(float DeltaTime) override;

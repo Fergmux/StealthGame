@@ -1,12 +1,12 @@
 # Story 007: UniformBelow, UniformInRange, WeightedPick and Fisher-Yates are unbiased and edge-safe
 
 > **Epic**: Session & Travel
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -86,7 +86,7 @@ QL-STORY-READY: GAPS — 'Unbiased' has no numeric pass threshold (chi-square cr
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Random/UniformBelowUnbiasedTest.cpp` — automation test `StealthGame.Random.UniformBelowUnbiased` must exist and pass (`/story-done` checks it exists; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-26): Source/StealthFoundation/Private/Tests/Random/UniformBelowUnbiasedTest.cpp (StealthGame.Random.UniformBelowUnbiased)
 
 Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation name `StealthGame.Random.UniformBelowUnbiased`, T1 unit test, class `FRandomUniformBelowUnbiasedTest` (one class per `IMPLEMENT_SIMPLE_AUTOMATION_TEST`), flags `EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter`; wrap the file in `#if WITH_DEV_AUTOMATION_TESTS`; tests use an injected clock and entropy, no wall-clock time as a pass predicate, no shared mutable state, and assert zero unexpected faults at teardown.
 
@@ -97,3 +97,12 @@ Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation n
 - Depends on: `production/epics/session-travel/story-006-pcg32-int-stream-reference-vectors.md`
 - Cross-epic: Epic `tuning-data-config` (`production/epics/tuning-data-config/EPIC.md`): the ADR-0007 module skeleton (StealthFoundation, StealthGameplay, StealthPresentation, StealthTestHarness), test harness and CI must exist before the files below can be created at those paths. Until it lands, write the code and tests under `Source/StealthGame/` (Private/Tests/) and move them when the skeleton arrives.
 - Unlocks: `production/epics/session-travel/story-074-spawn-order-uncorrelated-with-player-ness.md`
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 1/1 passing
+**Deviations**: Exhaustive window read as: a sweep stream whose 2^16 outputs span the 32-bit range evenly, bucket counts within 1 for every n <= 64 (decision logged). Chi-square at fixed seeds for n in {3, 24, 1000, 2^31-1 (64 bins)} below p=0.001 critical values (values precomputed: 0.11, 18.9, 989, 77.9). WeightedPick added to StealthRangedDraw.h (integer cumulative weights, binary search, refuses empty/zero/decreasing input).
+**Test Evidence**: Source/StealthFoundation/Private/Tests/Random/UniformBelowUnbiasedTest.cpp (StealthGame.Random.UniformBelowUnbiased)
+**Run result**: N/A — a pure server-side primitive/CI check with nothing on screen (no player-visible behaviour changes).
+**Build + tests**: cycle.ps1 -Tests -NoLaunch: Result: Succeeded; 153/153 StealthGame.* automation tests passed (tests exit=0), 2026-10-26
+**Reviewed by**: focused self code review (dev-story Phase 5), unattended run 2026-10-26

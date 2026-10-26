@@ -44,6 +44,12 @@ enum class EStealthFault : uint8
 	CommandNoPredicate = 16,
 	/** A pawn command seam was missing or misused, e.g. a core built without a queue (ADR-0011; Detail: EPawnCommandMisuse). */
 	CommandMisuse = 17,
+	/**
+	 * A seed API was misused (ADR-0006 section 3): GetServerSubSeed without authority, off the game thread or inside
+	 * FPublicOnlyScope, or PublicSubSeed for a domain other than Layout (Detail: (EStealthSeedMisuse << 32) | domain).
+	 * Never carries a secret, a sub-seed or a key.
+	 */
+	SeedMisuse = 18,
 };
 
 /**

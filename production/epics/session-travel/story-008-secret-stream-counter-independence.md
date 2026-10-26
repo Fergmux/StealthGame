@@ -1,12 +1,12 @@
 # Story 008: FSecretStream counter draws are independent of interleaved draws
 
 > **Epic**: Session & Travel
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -94,7 +94,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Random/SecretStreamIndependenceTest.cpp` — automation test `StealthGame.Random.SecretStreamIndependence` must exist and pass (`/story-done` checks it exists; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-26): Source/StealthFoundation/Private/Tests/Random/SecretStreamIndependenceTest.cpp (StealthGame.Random.SecretStreamIndependence)
 
 Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation name `StealthGame.Random.SecretStreamIndependence`, T1 unit test, class `FRandomSecretStreamIndependenceTest` (one class per `IMPLEMENT_SIMPLE_AUTOMATION_TEST`), flags `EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter`; wrap the file in `#if WITH_DEV_AUTOMATION_TESTS`; tests use an injected clock and entropy, no wall-clock time as a pass predicate, no shared mutable state, and assert zero unexpected faults at teardown.
 
@@ -105,3 +105,12 @@ Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation n
 - Depends on: `production/epics/session-travel/story-005-siphash24-reference-vectors.md`
 - Cross-epic: Epic `tuning-data-config` (`production/epics/tuning-data-config/EPIC.md`): the ADR-0007 module skeleton (StealthFoundation, StealthGameplay, StealthPresentation, StealthTestHarness), test harness and CI must exist before the files below can be created at those paths. Until it lands, write the code and tests under `Source/StealthGame/` (Private/Tests/) and move them when the skeleton arrives.
 - Unlocks: `production/epics/session-travel/story-074-spawn-order-uncorrelated-with-player-ness.md`
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 1/1 passing
+**Deviations**: FSecretStream (RMF Exit A) unchanged; the test proves independence, mode separation (2,000 counters, no collision) and the message/key layout by recomputation.
+**Test Evidence**: Source/StealthFoundation/Private/Tests/Random/SecretStreamIndependenceTest.cpp (StealthGame.Random.SecretStreamIndependence)
+**Run result**: N/A — a pure server-side primitive/CI check with nothing on screen (no player-visible behaviour changes).
+**Build + tests**: cycle.ps1 -Tests -NoLaunch: Result: Succeeded; 153/153 StealthGame.* automation tests passed (tests exit=0), 2026-10-26
+**Reviewed by**: focused self code review (dev-story Phase 5), unattended run 2026-10-26

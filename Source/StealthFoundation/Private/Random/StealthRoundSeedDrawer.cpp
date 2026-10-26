@@ -2,24 +2,25 @@
 
 int32 FStealthRoundSeedDrawer::DrawRoundSeed(uint32 RoundIndex)
 {
-	// The round index is folded into the attempt's high bits so two rounds never share an attempt value even if the
-	// source's own round index is not advanced by the caller; the low bits are the match-wide attempt counter.
-	for (int32 Guard = 0; Guard < 1024; ++Guard)
+	// F5: Draw counts up from 0 for this round index until the seed is neither used this match nor golden. Over a
+	// 99-round match a raw collision has probability ~2.3e-6, so the bound is never approached with a held secret.
+	for (uint32 Draw = 0; Draw < 4096; ++Draw)
 	{
-		const uint32 Attempt = (RoundIndex << 20) ^ NextAttempt++;
-		const int32 Candidate = static_cast<int32>(Source.GetServerSubSeed(ESeedDomain::Layout, Attempt) & 0x7FFFFFFFull);
-		if (Candidate != 0 && !Drawn.Contains(Candidate))
+		const int32 Candidate = Source.GetRoundSeedCandidate(RoundIndex, Draw);
+		if (Candidate == 0)
+		{
+			return 0; // no secret held (or a refused call): never invent a seed
+		}
+		if (!Drawn.Contains(Candidate) && !GoldenSeeds.Contains(Candidate))
 		{
 			Drawn.Add(Candidate);
 			return Candidate;
 		}
 	}
-	// Unreachable with a held secret (2^31 values); a source without a secret answers 0 every time.
 	return 0;
 }
 
 void FStealthRoundSeedDrawer::Reset()
 {
 	Drawn.Reset();
-	NextAttempt = 0;
 }

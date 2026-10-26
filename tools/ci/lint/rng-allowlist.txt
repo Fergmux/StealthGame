@@ -1,0 +1,3 @@
+# Forbidden-RNG allowlist (ADR-0006 Implementation Guideline 1; story st-012; read by forbidden-rng.sh).
+# One repo-relative source path per line. Only engine-facing cosmetic code that cannot affect simulation or
+# presentation parity may be listed, each with a reason comment. Empty in the MVP.

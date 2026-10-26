@@ -1,12 +1,12 @@
 # Story 012: CI grep bans engine RNG APIs and the CityGenerator include rule is enforced
 
 > **Epic**: Session & Travel
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -89,7 +89,7 @@
 **Required evidence**:
 - Config/Data: smoke check pass recorded in `production/qa/smoke-*.md` (the planted-violation failing run is recorded too)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-26): production/qa/smoke-2026-10-26-st012-forbidden-rng.md; Source/StealthFoundation/Private/Tests/Build/ForbiddenRngLintTest.cpp (StealthGame.Build.ForbiddenRngLint)
 
 ---
 
@@ -97,3 +97,12 @@
 
 - Depends on: None within this epic
 - Unlocks: None
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 1/1 passing
+**Deviations**: tools/ci/lint/forbidden-rng.sh (+ rule-rng.awk, rng-allowlist.txt empty) scoped to StealthFoundation and StealthGameplay (the prototype module is outside scope by construction); wired into tools/ci/gate-per-commit.ps1 and the pre-commit hook (their rule lists must match: StealthGame.Build.PreCommitHook). Rule (j) already existed (tdc-015, include-lint-ij.sh) and is re-proven by StealthGame.Build.IncludeLintIj. Watched failing: the selftest's rng-seeded case (12 findings, GATE: FAIL) before the real-tree pass.
+**Test Evidence**: production/qa/smoke-2026-10-26-st012-forbidden-rng.md; Source/StealthFoundation/Private/Tests/Build/ForbiddenRngLintTest.cpp (StealthGame.Build.ForbiddenRngLint)
+**Run result**: N/A — a pure server-side primitive/CI check with nothing on screen (no player-visible behaviour changes).
+**Build + tests**: cycle.ps1 -Tests -NoLaunch: Result: Succeeded; 153/153 StealthGame.* automation tests passed (tests exit=0), 2026-10-26
+**Reviewed by**: focused self code review (dev-story Phase 5), unattended run 2026-10-26

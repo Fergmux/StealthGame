@@ -1,5 +1,7 @@
 #include "Server/Core/Round/StealthRoundMatchStore.h"
 
+#include "Server/Session/StealthSessionService.h"
+
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
@@ -79,10 +81,32 @@ void URoundMatchStore::Initialize(FSubsystemCollectionBase& Collection)
 		Roster->RegisterRoundPhase(this, this);
 	}
 	RegisterConsoleCommands();
+	// Session's EndMatch fan-out (ADR-0005 section 2): every session exit path clears this store.
+	if (USessionService* Session = Collection.InitializeDependency<USessionService>())
+	{
+		Session->RegisterMatchStore(this, this);
+	}
+}
+
+void URoundMatchStore::EndMatch(ESessionEndReason Reason)
+{
+	Core.Reset();
+	Mirror = FRoundPublicStateMirror();
+	GatewayOwner.Reset();
+	HostParticipant = FParticipantId();
+}
+
+bool URoundMatchStore::IsMatchStateEmpty() const
+{
+	return !Core.IsValid() || Core->GetPhase() == ERoundPhase::Unknown;
 }
 
 void URoundMatchStore::Deinitialize()
 {
+	if (USessionService* Session = GetGameInstance() != nullptr ? GetGameInstance()->GetSubsystem<USessionService>() : nullptr)
+	{
+		Session->UnregisterMatchStore(this);
+	}
 	if (URosterStore* Roster = RosterStore.Get())
 	{
 		Roster->OnRosterEvent.Remove(RosterEventHandle);

@@ -1,12 +1,12 @@
 # Story 023: AStealthGameMode derives AGameModeBase with seamless travel and Session hook overrides
 
 > **Epic**: Session & Travel
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -100,7 +100,7 @@
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Session/GameModeSkeletonTest.cpp` — automation test `StealthGame.Session.GameModeSkeleton` must exist and pass (`/story-done` checks it exists; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-26): `Source/StealthGame/Private/Tests/Session/GameModeSkeletonTest.cpp` (StealthGame.Session.GameModeSkeleton)
 
 Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation name `StealthGame.Session.GameModeSkeleton`, T1 unit test, class `FSessionGameModeSkeletonTest` (one class per `IMPLEMENT_SIMPLE_AUTOMATION_TEST`), flags `EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter`; wrap the file in `#if WITH_DEV_AUTOMATION_TESTS`; tests use an injected clock and entropy, no wall-clock time as a pass predicate, no shared mutable state, and assert zero unexpected faults at teardown.
 
@@ -110,3 +110,13 @@ Test naming follows `.claude/rules/test-standards.md` and ADR-0008: automation n
 
 - Depends on: `production/epics/session-travel/story-014-session-service-lifecycle-and-empty-stores.md`
 - Unlocks: `production/epics/session-travel/story-024-no-default-pawn-spawn-on-login.md`, `production/epics/session-travel/story-025-engine-welcome-messages-suppressed.md`, `production/epics/session-travel/story-028-admission-gate-order.md`, `production/epics/session-travel/story-031-join-options-stripped.md`, `production/epics/session-travel/story-040-seed-url-parse-rejects-bad-params.md`, `production/epics/session-travel/story-041-round-params-replicated-atomically.md`
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 1/1 passing
+**Deviations**: AStealthGameMode: bUseSeamlessTravel true, bStartPlayersAsSpectators false, GameSessionClass AStealthGameSession, PlayerCanRestart_Implementation false, HandleStartingNewPlayer no-op (kept), DispatchPostLogin not overridden; AStealthGameSession::ApproveLogin always success; AStealthPlayerState::ShouldBroadCastWelcomeMessage false. The session header sits in `Public/Server/StealthGameSession.h` (include lint rule (a): no headers in Public/ root; the story listed `Public/StealthGameSession.h`), and the test in the StealthGame module (the story names a Foundation path that cannot include these classes). The other hook overrides of the ADR-0005 section 1 table (PreLogin, Login stash, InitNewPlayer without Super, InitGame/InitGameState round params) are their own stories (028-057), as the story says.
+**Test Evidence**: `Source/StealthGame/Private/Tests/Session/GameModeSkeletonTest.cpp` (StealthGame.Session.GameModeSkeleton)
+**Files**: `Source/StealthGame/Public/StealthGameMode.h`, `Source/StealthGame/Private/StealthGameMode.cpp`, `Source/StealthGame/Public/StealthPlayerState.h`, `Source/StealthGame/Public/Server/StealthGameSession.h`, `Source/StealthGame/Private/StealthGameSession.cpp`, `Source/StealthGame/Private/Tests/Session/GameModeSkeletonTest.cpp`
+**Run result**: OBSERVED — the story-056 multi-process runs (listen host + 3 clients, Round to Active, 4,800 re-open cycles) ran on this game mode with seamless travel on; no travel is triggered yet, so nothing on screen changes
+**Build + tests**: cycle.ps1 -Tests -NoLaunch: Result: Succeeded; 153/153 StealthGame.* automation tests passed (tests exit=0), 2026-10-26
+**Reviewed by**: focused self code review (dev-story Phase 5), unattended run 2026-10-26

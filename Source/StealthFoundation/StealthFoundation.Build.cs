@@ -15,6 +15,12 @@ public class StealthFoundation : ModuleRules
 		// Public so the harness, the editor module and tests see it (story tdc-008).
 		PublicDefinitions.Add(Target.Configuration == UnrealTargetConfiguration.Shipping ? "WITH_STEALTH_TEST_SEAMS=0" : "WITH_STEALTH_TEST_SEAMS=1");
 
+		// ADR-0006 section 2, story st-009: the session secret comes from BCryptGenRandom (FOsEntropySource).
+		if (Target.Platform == UnrealTargetPlatform.Win64)
+		{
+			PublicSystemLibraries.Add("bcrypt.lib");
+		}
+
 		// ADR-0004 section 2, story tdc-042: the schema bootstrap. Only tools/ci/regenerate-tuning-schema.ps1
 		// sets the environment variable STEALTH_TUNING_SCHEMA_BOOTSTRAP=1 (and deletes the UBT makefile so this
 		// file is re-read); the module then compiles an empty schema table instead of

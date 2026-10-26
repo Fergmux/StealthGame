@@ -36,6 +36,8 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	/** No-op (ADR-0005 / ADR-0010): pawns come only from UStealthPawnFactory at round start. */
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+	/** False (ADR-0005 / ADR-0010): the engine restart path never spawns a pawn. */
+	virtual bool PlayerCanRestart_Implementation(APlayerController* Player) override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;

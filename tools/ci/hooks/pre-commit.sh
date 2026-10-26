@@ -5,7 +5,7 @@
 #
 # What it does, in order (every commit):
 #   1. T0 lint: tools/ci/lint/gate.sh over the same rule scripts the per-commit gate runs (the include
-#      lint rules a-j, include-lint-*.sh, vcs-conformance.sh and config-secrets.sh), root = the repository
+#      lint rules a-j, include-lint-*.sh, forbidden-rng.sh, vcs-conformance.sh and config-secrets.sh), root = the repository
 #      top level.
 #      The gate decides; this hook only relays its output and exit code. It lints the WORKING TREE, so a
 #      partly staged change is judged on what is on disk, not on what is in the index (open point,
@@ -45,7 +45,7 @@ not_assessed=0
 
 # ---- 1. T0 lint ---------------------------------------------------------------------------------
 rules=()
-for rule in "$lintdir"/include-lint-*.sh "$lintdir/vcs-conformance.sh" "$lintdir/config-secrets.sh"; do
+for rule in "$lintdir"/include-lint-*.sh "$lintdir/forbidden-rng.sh" "$lintdir/vcs-conformance.sh" "$lintdir/config-secrets.sh"; do
   [ -f "$rule" ] && rules+=("$rule")
 done
 if [ ${#rules[@]} -eq 0 ] || [ ! -f "$lintdir/gate.sh" ]; then

@@ -1,12 +1,12 @@
 # Story 013: ServerSecret and RejoinToken never appear in logs, URLs or replicated properties
 
 > **Epic**: Session & Travel
-> **Status**: Ready
+> **Status**: Blocked — BLOCKED (readiness check 2026-10-26): Depends on `story-027-rejoin-token-gate.md` (Ready, not implemented): the criterion searches for the `RejoinToken` byte sequence, and no RejoinToken exists yet. The ServerSecret half is implementable now (stories 009-011 landed: `-StealthServerSecret` override, USessionService); unblock when 027 is Complete, then re-run `/story-readiness`.
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
