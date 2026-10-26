@@ -1,0 +1,82 @@
+﻿[2026.10.26-12.20.02:203][151]LogStealthRound: Round phase Unknown -> Lobby (change 1, round 0)
+[2026.10.26-12.20.07:477][169]LogStealthRound: Round phase Lobby -> Preparing (change 2, round 1)
+[2026.10.26-12.20.10:547][180]LogStealthRound: Round phase Preparing -> Active (change 3, round 1)
+[2026.10.26-12.20.10:547][180]LogStealth: Round started (seed 677317011, 40 NPCs).
+[2026.10.26-12.20.38:873][265]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_25 (enemy, prepared=0).
+[2026.10.26-12.20.38:873][265]LogStealthRound: Round: participant 1 state 0 -> 1 (reason 1), Active after T0 2 T1 0.
+[2026.10.26-12.20.39:194][266]LogStealthRound: Round phase Active -> Ended (change 4, round 1)
+[2026.10.26-12.20.39:194][266]LogStealthRound: Round 1 decided by the production rules: team 0 wins (public reason 2, end reason 1); latched at 36.733 s, round-end step at 37.066 s (+0.333 s).
+[2026.10.26-12.20.39:194][266]LogStealth: Round over: team 0 wins (elimination).
+[2026.10.26-12.20.39:194][266]LogStealthRound: Round 1 round-end step: team 0 wins (public reason 2); summary T0 {0, 0, 0} T1 {0, 1, 0}.
+[2026.10.26-12.20.51:211][303]LogStealthRound: Round phase Ended -> Reset (change 5, round 1)
+[2026.10.26-12.20.51:552][304]LogStealthRound: Round phase Reset -> Lobby (change 6, round 1)
+[2026.10.26-12.20.56:873][320]LogStealthRound: Round phase Lobby -> Preparing (change 7, round 2)
+[2026.10.26-12.20.59:587][328]LogStealthRound: Round phase Preparing -> Active (change 8, round 2)
+[2026.10.26-12.20.59:587][328]LogStealth: Round started (seed 1692299677, 40 NPCs).
+[2026.10.26-12.21.15:396][375]LogStealthRound: Round phase Unknown -> Lobby (change 1, round 0)
+[2026.10.26-12.21.15:473][376]LogStealthFault: Warning: Fault 7 from Roster (detail 2)
+[2026.10.26-12.21.15:473][376]LogStealthRound: Round: participant 2 connection Disconnected in phase Active.
+[2026.10.26-12.21.15:473][376]LogStealthRound: Round: grace records open 1; participant 2 converts at 103.108 s unless it rejoins.
+[2026.10.26-12.21.20:864][393]LogStealthRound: Round phase Lobby -> Preparing (change 2, round 1)
+[2026.10.26-12.21.23:539][401]LogStealthRound: Round phase Preparing -> Active (change 3, round 1)
+[2026.10.26-12.21.23:539][401]LogStealth: Round started (seed 1994726225, 40 NPCs).
+[2026.10.26-12.21.27:863][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:864][414]LogStealthFault: Warning: Fault 5 from Roster (detail 7)
+[2026.10.26-12.21.27:864][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:864][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:864][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:864][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:865][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:865][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:865][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:865][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:865][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:865][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:865][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:865][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:866][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:866][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:866][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:866][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:866][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:866][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:866][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:866][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:867][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:867][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:867][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:867][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:867][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:867][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:867][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:867][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:868][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:868][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:868][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:868][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:868][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:868][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:868][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:868][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:869][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:869][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:869][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.27:869][414]LogStealthFault: Warning: Fault 5 from Roster (detail 10)
+[2026.10.26-12.21.28:069][415]LogStealthRound: Round: participant 2 connection Connected in phase Active.
+[2026.10.26-12.21.28:069][415]LogStealthRound: Round: grace records open 0; participant 2 has no grace record.
+[2026.10.26-12.21.47:283][473]LogStealthRound: Round phase Unknown -> Lobby (change 1, round 0)
+[2026.10.26-12.21.47:362][474]LogStealthFault: Warning: Fault 7 from Roster (detail 1)
+[2026.10.26-12.21.47:362][474]LogStealthRound: Round: participant 1 connection Disconnected in phase Active.
+[2026.10.26-12.21.47:362][474]LogStealthRound: Round: grace records open 1; participant 1 converts at 135.014 s unless it rejoins.
+[2026.10.26-12.21.52:739][491]LogStealthRound: Round phase Lobby -> Preparing (change 2, round 1)
+[2026.10.26-12.21.55:423][499]LogStealthRound: Round phase Preparing -> Active (change 3, round 1)
+[2026.10.26-12.21.55:423][499]LogStealth: Round started (seed 96413318, 40 NPCs).
+[2026.10.26-12.22.17:435][565]LogStealthRound: Round: participant 1 state 0 -> 1 (reason 4), Active after T0 2 T1 0.
+[2026.10.26-12.22.17:435][565]LogStealthRound: Round phase Active -> Ended (change 9, round 2)
+[2026.10.26-12.22.17:435][565]LogStealthRound: Round 2 decided by the production rules: team 0 wins (public reason 2, end reason 2); latched at 135.300 s, round-end step at 135.300 s (+0.000 s).
+[2026.10.26-12.22.17:435][565]LogStealth: Round over: team 0 wins (elimination).
+[2026.10.26-12.22.17:435][565]LogStealthRound: Round 2 round-end step: team 0 wins (public reason 2); summary T0 {0, 0, 0} T1 {0, 1, 0}.
+[2026.10.26-12.22.29:400][601]LogStealthRound: Round phase Ended -> Reset (change 10, round 2)
+[2026.10.26-12.22.29:748][602]LogStealthRound: Round phase Reset -> Lobby (change 11, round 2)
+[2026.10.26-12.22.32:523][610]LogStealthRound: Round: participant 0 connection Disconnected in phase Active.
+[2026.10.26-12.22.32:523][610]LogStealthRound: Round: grace records open 1; participant 0 converts at 75.620 s unless it rejoins.

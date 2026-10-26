@@ -1,12 +1,12 @@
 # Story 060: Silent, quit, informant and debug-kill timelines resolve at the specified times on a fake clock (plus one PIE smoke)
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 22, scoped to this story:*
 
-- [ ] GIVEN a fake clock and an Active participant, WHEN its client goes silent at t, THEN takeover occurs in [t + 3.0, t + 3.3] s (Session F2's `L_min` to `L_max`); WHEN it quits at t, THEN takeover at t; Informant (`Disconnect`) at exactly `DisconnectedAt + G_eff` with `ReleaseToCrowd` in the same slot; a debug kill on the pawn before expiry resolves `Player`, after expiry `Npc`. One [PIE-2] smoke run checks the same timeline within ±1 s.
+- [x] GIVEN a fake clock and an Active participant, WHEN its client goes silent at t, THEN takeover occurs in [t + 3.0, t + 3.3] s (Session F2's `L_min` to `L_max`); WHEN it quits at t, THEN takeover at t; Informant (`Disconnect`) at exactly `DisconnectedAt + G_eff` with `ReleaseToCrowd` in the same slot; a debug kill on the pawn before expiry resolves `Player`, after expiry `Npc`. One [PIE-2] smoke run checks the same timeline within ±1 s.
 
 ---
 
@@ -100,7 +100,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/Round/GraceTimelineTest.cpp` — must exist and pass (CQTest network test, scenario `StealthGame.Round.GraceTimeline`, full name `StealthGame.Round.PIE.GraceTimeline.<Method>`), together with the fake-clock automation test `Source/StealthGameplay/Private/Tests/Round/GraceTimelineTest.cpp` (`StealthGame.Round.GraceTimeline`, class `FRoundGraceTimelineTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.GraceTimeline`, 2026-10-26)
 
 ---
 
@@ -110,3 +110,11 @@
 - Unlocks: `production/epics/round-match-framework/story-061-rejoin-inside-grace.md`, `production/epics/round-match-framework/story-062-rejoin-after-grace.md`, `production/epics/round-match-framework/story-063-rejoin-in-ended.md`, `production/epics/round-match-framework/story-064-last-disconnect-forfeits.md`, `production/epics/round-match-framework/story-068-grace-clamp.md`, `production/epics/round-match-framework/story-069-window-expiry-while-active.md`, `production/epics/round-match-framework/story-070-kick-window-expiry-ignored.md`, `production/epics/round-match-framework/story-071-grace-generation-guard.md`, `production/epics/round-match-framework/story-072-informant-disconnect-releases.md`, `production/epics/round-match-framework/story-077-supersede-grace-basis.md`, `production/epics/round-match-framework/story-087-takeover-no-pawn-property-delta.md`, `production/epics/round-match-framework/story-088-takeover-kinematics.md`, `production/epics/round-match-framework/story-090-hand-over-and-back.md`
 
 Cross-epic: `production/epics/session-travel` (disconnect, unresponsive and rejoin events, `ConnectionGeneration`; stories not yet created); `production/epics/participant-state-roster` (`RequestTransition`, `Disconnect` reason; stories not yet created); `production/epics/crowd-npc-behaviour` (takeover request and `ReleaseToCrowd`, faked here; stories not yet created); `production/epics/shared-character-locomotion` (kind-blind possession and hand-over pass; stories not yet created); `production/epics/tuning-data-config` (`DisconnectGraceSec`, `bHandOverOnUnresponsive`, module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (silent: takeover at Unresponsive in [t+3.0, t+3.3]; quit: takeover at t; Informant at exactly DisconnectedAt + G_eff with ReleaseToCrowd in the same call stack; kill before expiry Player + logged no-op; after expiry Npc)
+**Deviations**: The [PIE-2] +/-1 s smoke is the batch's PIE run-and-observe (no NETWORK_TEST_CLASS added); the takeover request goes through the new IRoundPawnControlGateway; the victim kind is modelled from the fake's ReleaseToCrowd record; in production only the Roster connection events reach the handlers (Quit/Kicked): Unresponsive, Responsive and Superseded have no caller until the Session epic wires its facts
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/GraceTimelineTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: PASS - PIE disconnect -> grace -> rejoin (see evidence)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

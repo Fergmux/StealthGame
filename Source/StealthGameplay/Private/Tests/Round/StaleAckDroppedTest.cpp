@@ -33,6 +33,7 @@ bool FRoundStaleAckDroppedTest::RunTest(const FString& Parameters)
 	Rig.Core->ExecuteHostCommand(FRoundExitBRig::HostCaller(), ERoundHostCommand::Abort);
 	Rig.Fakes.Roster.Script(TEXT("SetTeamsLocked"), static_cast<int64>(ERosterResult::Applied));
 	Rig.Fakes.Session.Script(TEXT("SetAdmissionMode"));
+	Rig.Core->NotifyLobbyTravelComplete(); // Session: every participant terminal (R10 (7), story rmf-058)
 	Rig.Core->Tick(); // Reset -> Lobby
 	Rig.EnterPreparing();
 	TestTrue(TEXT("a new Preparing has a new nonce"), Rig.Core->GetPreparing().GetAckEpoch() != OldEpoch);

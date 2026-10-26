@@ -40,6 +40,13 @@ enum class ERoundFakeGateway : uint8
 	CharacterPool,
 	LevelSocket,
 	Crowd,
+	/** The non-strict recording fakes of the round-end batch (stories rmf-052..065). */
+	PawnControl,
+	Commands,
+	InformantBodies,
+	Objectives,
+	/** The P6 spawner's DestroyRoundPawns (logged so Reset's cleanup order is observable). */
+	Spawner,
 };
 
 /** One recorded call. */
@@ -108,6 +115,21 @@ protected:
 		return Answer;
 	}
 
+	/**
+	 * Records the call and answers a scripted value when one is queued, else Default with no unexpected entry: the
+	 * round-end and Reset calls every round makes (RequestLobbyTravel, EndRoundAll, Halt), lenient since the round-end batch.
+	 */
+	int64 RecordLenient(FName Call, TArray<int64> Args, int64 Default) const
+	{
+		const TArray<int64>* Queue = Scripted.Find(Call);
+		if (Queue != nullptr && !Queue->IsEmpty())
+		{
+			return Record(Call, MoveTemp(Args));
+		}
+		Record(Call, MoveTemp(Args), /*bRecord*/ true, /*bScripted*/ false);
+		return Default;
+	}
+
 	FRoundFakeCallLog& Log;
 	ERoundFakeGateway Gateway;
 	mutable TMap<FName, TArray<int64>> Scripted;
@@ -123,7 +145,7 @@ public:
 	{
 		return static_cast<ERoundTravelRequestResult>(Record(TEXT("RequestRoundTravel"), { RoundIndex }));
 	}
-	virtual void RequestLobbyTravel() override { Record(TEXT("RequestLobbyTravel"), {}); }
+	virtual void RequestLobbyTravel() override { RecordLenient(TEXT("RequestLobbyTravel"), {}, 0); }
 	virtual void SetAdmissionMode(ERoundAdmissionMode Mode) override { Record(TEXT("SetAdmissionMode"), { static_cast<int64>(Mode) }); }
 	virtual ERoundConnectionState GetConnectionState(FParticipantId Participant) const override
 	{
@@ -154,6 +176,8 @@ public:
 
 	/** Per-participant Session ConnectionGeneration answered by GetConnectionGeneration. */
 	TMap<uint32, uint32> Generations;
+
+	virtual void CancelRoundTravel() override { Record(TEXT("CancelRoundTravel"), {}); }
 };
 
 class FRoundFakeRosterGateway : public FRoundFakeGatewayBase, public IRoundRosterGateway
@@ -196,13 +220,25 @@ public:
 		return Answer;
 	}
 	virtual ERosterResult ResetAll(uint32 RoundIndex) override { return Result(TEXT("ResetAll"), { RoundIndex }); }
-	virtual ERosterResult EndRoundAll() override { return Result(TEXT("EndRoundAll"), {}); }
+	virtual ERosterResult EndRoundAll() override
+	{
+		return static_cast<ERosterResult>(RecordLenient(TEXT("EndRoundAll"), {}, static_cast<int64>(ERosterResult::Applied)));
+	}
 	virtual ERosterResult RequestTransition(FParticipantId Participant, EParticipantState NewState, ERosterReason Reason,
 		const FEpochToken& ExpectedEpoch, TOptional<uint32> ExpectedConnectionGeneration) override
 	{
-		return Result(TEXT("RequestTransition"), { Participant.Value, static_cast<int64>(NewState), static_cast<int64>(Reason),
+		const ERosterResult Answer = Result(TEXT("RequestTransition"), { Participant.Value, static_cast<int64>(NewState), static_cast<int64>(Reason),
 			ExpectedEpoch.RoundEpoch, ExpectedConnectionGeneration.IsSet() ? static_cast<int64>(ExpectedConnectionGeneration.GetValue()) : -1 });
+		// An Applied answer may emit the transition event (the rig's Roster flush stand-in), inside the caller's slot.
+		if (Answer == ERosterResult::Applied && OnTransitionApplied)
+		{
+			OnTransitionApplied(Participant, NewState, Reason);
+		}
+		return Answer;
 	}
+
+	/** Called for every Applied RequestTransition (tests update Members and dispatch the event to Round). */
+	TFunction<void(FParticipantId /*Participant*/, EParticipantState /*NewState*/, ERosterReason /*Reason*/)> OnTransitionApplied;
 	virtual ERosterResult BindPawn(FParticipantId Participant, const FPawnHandle& Pawn) override { return Result(TEXT("BindPawn"), { Participant.Value }); }
 	virtual ERosterResult ReleaseToCrowd(const FPawnHandle& Pawn) override { return Result(TEXT("ReleaseToCrowd"), {}); }
 	virtual void GetUnboundActiveParticipants(TArray<FParticipantId>& OutParticipants) const override
@@ -321,12 +357,82 @@ public:
 	explicit FRoundFakeCrowdControl(FRoundFakeCallLog& InLog) : FRoundFakeGatewayBase(InLog, ERoundFakeGateway::Crowd) {}
 
 	virtual void StartRound() override { Record(TEXT("StartRound"), {}); }
-	virtual void Halt() override { Record(TEXT("Halt"), {}); }
+	virtual void Halt() override { RecordLenient(TEXT("Halt"), {}, 0); }
 	virtual void DriveBoundPawn(AStealthPawn* Pawn) override { Record(TEXT("DriveBoundPawn"), { Pawn != nullptr ? 1 : 0 }); }
 	virtual void ReleaseControl(AStealthPawn* Pawn) override { Record(TEXT("ReleaseControl"), { Pawn != nullptr ? 1 : 0 }); }
 	virtual void AdoptReleasedPawn(AStealthPawn* Pawn, const FCrowdAdoptParams& Params) override
 	{
 		Record(TEXT("AdoptReleasedPawn"), { Pawn != nullptr ? 1 : 0, Params.bExitAtNextScheduledSlot ? 1 : 0 });
+	}
+	/** Not strict: recorded as (PawnId, driver, bound in whole microseconds). */
+	virtual void RequestPawnStop(const FRoundLivePawn& Pawn, double BoundSec) override
+	{
+		Record(TEXT("RequestPawnStop"), { Pawn.PawnId, static_cast<int64>(Pawn.Driver), FMath::RoundToInt64(BoundSec * 1000000.0) }, /*bRecord*/ true, /*bScripted*/ false);
+	}
+};
+
+/** Not strict: records takeovers and hand-backs as (participant, the bound pawn id from BoundPawnIds). */
+class FRoundFakePawnControl : public FRoundFakeGatewayBase, public IRoundPawnControlGateway
+{
+public:
+	explicit FRoundFakePawnControl(FRoundFakeCallLog& InLog) : FRoundFakeGatewayBase(InLog, ERoundFakeGateway::PawnControl) {}
+
+	/** Participant -> the id of its bound pawn (a participant absent here has no bound pawn). */
+	TMap<uint32, uint32> BoundPawnIds;
+
+	virtual bool RequestTakeover(FParticipantId Participant) override { return Answer(TEXT("RequestTakeover"), Participant); }
+	virtual bool RequestHandBack(FParticipantId Participant) override { return Answer(TEXT("RequestHandBack"), Participant); }
+	virtual FPawnHandle GetBoundPawn(FParticipantId Participant) const override { return FPawnHandle(); }
+
+private:
+	bool Answer(FName Call, FParticipantId Participant)
+	{
+		const uint32* PawnId = BoundPawnIds.Find(Participant.Value);
+		Record(Call, { Participant.Value, PawnId != nullptr ? static_cast<int64>(*PawnId) : -1 }, /*bRecord*/ true, /*bScripted*/ false);
+		return PawnId != nullptr;
+	}
+};
+
+/** Not strict: the IIF's held-reply release and frozen-hold cancel of the round-end step. */
+class FRoundFakeCommandGateway : public FRoundFakeGatewayBase, public IRoundCommandGateway
+{
+public:
+	explicit FRoundFakeCommandGateway(FRoundFakeCallLog& InLog) : FRoundFakeGatewayBase(InLog, ERoundFakeGateway::Commands) {}
+
+	virtual void ReleaseHeldReplies() override { Record(TEXT("ReleaseHeldReplies"), {}, true, false); }
+	virtual void CancelFrozenHolds() override { Record(TEXT("CancelFrozenHolds"), {}, true, false); }
+};
+
+/** Not strict: Penalty's informant body provider; OnReadmitted runs the test's PEN-R9 stand-in. */
+class FRoundFakeInformantBodies : public FRoundFakeGatewayBase, public IInformantBodyProvider
+{
+public:
+	explicit FRoundFakeInformantBodies(FRoundFakeCallLog& InLog) : FRoundFakeGatewayBase(InLog, ERoundFakeGateway::InformantBodies) {}
+
+	TFunction<void(FParticipantId)> OnReadmitted;
+
+	virtual void OnInformantReadmitted(FParticipantId Participant) override
+	{
+		Record(TEXT("OnInformantReadmitted"), { Participant.Value }, true, false);
+		if (OnReadmitted)
+		{
+			OnReadmitted(Participant);
+		}
+	}
+};
+
+/** Not strict: Objectives' completed preliminary stages per team (StepsCompleted). */
+class FRoundFakeObjectiveProgress : public FRoundFakeGatewayBase, public IRoundObjectiveProgress
+{
+public:
+	explicit FRoundFakeObjectiveProgress(FRoundFakeCallLog& InLog) : FRoundFakeGatewayBase(InLog, ERoundFakeGateway::Objectives) {}
+
+	int32 PreliminaryStages[2] = { 0, 0 };
+
+	virtual int32 GetCompletedPreliminaryStages(int32 Team) const override
+	{
+		Record(TEXT("GetCompletedPreliminaryStages"), { Team }, true, false);
+		return (Team == 0 || Team == 1) ? PreliminaryStages[Team] : 0;
 	}
 };
 
@@ -353,6 +459,10 @@ public:
 	int32 CompletedPawnCount = 0;
 	int32 DestroyCalls = 0;
 	int32 LivePawns = 0;
+	/** The live pawns GetLivePawns answers (the round-end stop set fixtures). */
+	TArray<FRoundLivePawn> LivePawnList;
+
+	virtual void GetLivePawns(TArray<FRoundLivePawn>& OutPawns) const override { OutPawns = LivePawnList; }
 
 	virtual ERoundSpawnResult SpawnStartPawn(const FRoundSpawnEntry& Entry, const FEpochToken& Expected) override
 	{
@@ -374,8 +484,15 @@ public:
 		OpenedGates.Add(Participant);
 		return true;
 	}
+	/** When set, DestroyRoundPawns is also appended to the shared call-order log (the set wires it). */
+	FRoundFakeCallLog* CallLog = nullptr;
+
 	virtual int32 DestroyRoundPawns() override
 	{
+		if (CallLog != nullptr)
+		{
+			CallLog->Calls.Add(FRoundFakeCall{ ERoundFakeGateway::Spawner, TEXT("DestroyRoundPawns"), {} });
+		}
 		++DestroyCalls;
 		const int32 Destroyed = LivePawns;
 		LivePawns = 0;
@@ -412,7 +529,9 @@ class FRoundFakeGatewaySet
 public:
 	explicit FRoundFakeGatewaySet(FRoundFakeCallLog& InLog)
 		: Session(InLog), Roster(InLog), Tuning(InLog), CharacterPool(InLog), LevelSocket(InLog), Crowd(InLog)
+		, PawnControl(InLog), Commands(InLog), InformantBodies(InLog), Objectives(InLog)
 	{
+		Spawner.CallLog = &InLog;
 	}
 
 	FRoundGateways AsGateways()
@@ -425,6 +544,10 @@ public:
 		Gateways.LevelSocket = &LevelSocket;
 		Gateways.Crowd = &Crowd;
 		Gateways.Spawner = &Spawner;
+		Gateways.PawnControl = &PawnControl;
+		Gateways.Commands = &Commands;
+		Gateways.InformantBodies = &InformantBodies;
+		Gateways.ObjectiveProgress = &Objectives;
 		return Gateways;
 	}
 
@@ -436,6 +559,11 @@ public:
 	FRoundFakeCrowdControl Crowd;
 	/** Not one of the six gateways: the P6 spawn site (not strict). */
 	FRoundFakeStartSpawner Spawner;
+	/** The round-end batch's non-strict recording fakes. */
+	FRoundFakePawnControl PawnControl;
+	FRoundFakeCommandGateway Commands;
+	FRoundFakeInformantBodies InformantBodies;
+	FRoundFakeObjectiveProgress Objectives;
 };
 
 #endif // WITH_STEALTH_TEST_SEAMS

@@ -1,12 +1,12 @@
 # Story 054: FRoundResult.TeamSummary is computed at the round-end step from the Event Log and is all-zero before Ended (MVP item 9 data)
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -36,7 +36,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 12e, scoped to this story:*
 
-- [ ] GIVEN a 2v2 round won by team 0 at the final objective, with team 0 having one member `Informant` and two `WrongTarget` results and team 1 having completed 2 stages, both members `Informant` and no wrong targets, WHEN the round-end step runs, THEN `FRoundResult.TeamSummary` = [{3, 1, 2}, {2, 2, 0}] in the first `FRoundPublicState` carrying `Ended`, every earlier received `FRoundPublicState` holds an all-zero `TeamSummary`, and no summary field holds a time or a participant id; with a forfeit as the last removal, the forfeiting member is counted in `EliminatedCount`.
+- [x] GIVEN a 2v2 round won by team 0 at the final objective, with team 0 having one member `Informant` and two `WrongTarget` results and team 1 having completed 2 stages, both members `Informant` and no wrong targets, WHEN the round-end step runs, THEN `FRoundResult.TeamSummary` = [{3, 1, 2}, {2, 2, 0}] in the first `FRoundPublicState` carrying `Ended`, every earlier received `FRoundPublicState` holds an all-zero `TeamSummary`, and no summary field holds a time or a participant id; with a forfeit as the last removal, the forfeiting member is counted in `EliminatedCount`.
 
 ---
 
@@ -102,7 +102,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/TeamSummaryAtEndedTest.cpp` — must exist and pass (automation test `StealthGame.Round.TeamSummaryAtEnded`, class `FRoundTeamSummaryAtEndedTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.TeamSummaryAtEnded`, 2026-10-26)
 
 ---
 
@@ -112,3 +112,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/participant-state-roster` (member `State`, `EndRoundAll`; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing ([{3,1,2},{2,2,0}] in the first Ended write, zero before; uint8 counts only; a forfeiter counted in EliminatedCount)
+**Deviations**: Team 1's two informants are fixture Roster states (unreachable under F2 with an objective win; decision log); computed in the latch step, published in the round-end step; FRoundTeamSummary is in Foundation View/StealthRoundPublicState.h; StepsCompleted reads the new IRoundObjectiveProgress gateway
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/TeamSummaryAtEndedTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: PASS - PIE end banner shows both summary lines (see evidence)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

@@ -1,12 +1,12 @@
 # Story 062: A rejoin after grace expiry makes the participant an Informant re-pawned by the C1 takeover
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 23b, scoped to this story:*
 
-- [ ] GIVEN a rejoin after grace expiry within the window during Active, THEN the participant is an Informant and is re-pawned by the C1 takeover (fake Crowd: one NPC deregistered, `BindPawn`, `RecordAppearance` with that pawn's card, pawn count unchanged).
+- [x] GIVEN a rejoin after grace expiry within the window during Active, THEN the participant is an Informant and is re-pawned by the C1 takeover (fake Crowd: one NPC deregistered, `BindPawn`, `RecordAppearance` with that pawn's card, pawn count unchanged).
 
 ---
 
@@ -95,7 +95,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/RejoinAfterGraceTest.cpp` — must exist and pass (automation test `StealthGame.Round.RejoinAfterGrace`, class `FRoundRejoinAfterGraceTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.RejoinAfterGrace`, 2026-10-26)
 
 ---
 
@@ -105,3 +105,11 @@
 - Unlocks: `production/epics/round-match-framework/story-074-readmit-retry.md`
 
 Cross-epic: `production/epics/session-travel` (rejoin admission, acknowledgement; stories not yet created); `production/epics/participant-state-roster` (`Informant` state, `BindPawn`; stories not yet created); `production/epics/level-socket-contract` (`PickRespawnPawn`, faked here; stories not yet created); `production/epics/character-pool-appearance` (`TakeNpcCard`, `RecordAppearance`, faked here; stories not yet created); `production/epics/shared-character-locomotion` (`TakeOverCrowdPawn`, faked here; stories not yet created); `production/epics/crowd-npc-behaviour` (release of the taken NPC, faked here; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (Informant; OnInformantReadmitted once inside Round's ConnectionTransition slot; deregister -> BindPawn -> RecordAppearance with the card; pawn count unchanged)
+**Deviations**: IInformantBodyProvider declared in StealthRoundGateways.h (Round-owned); the Penalty chain is a test stand-in
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/RejoinAfterGraceTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - Logic, covered headless
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

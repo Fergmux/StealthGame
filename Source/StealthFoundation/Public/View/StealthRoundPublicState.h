@@ -26,7 +26,38 @@ enum class ERoundPhase : uint8
 	Reset = 5,
 };
 
-/** The public end-of-round result (R20: kept as LastResult through Reset into the lobby). */
+/**
+ * One team's round summary (R9 (a) TeamSummary[t]; user decision 2026-10-25, HUD-E21; story rmf-054). Team aggregates
+ * only: three saturating counts, no participant id and no time (IVP R3 RoundTeamSummary row). Computed in the latch
+ * step and published only in the round-end step; all zero in every earlier FRoundPublicState of the round.
+ */
+USTRUCT()
+struct STEALTHFOUNDATION_API FRoundTeamSummary
+{
+	GENERATED_BODY()
+
+	/** 0-3: the team's completed stages, the final counted only for the objective winner (Objectives' server store). */
+	UPROPERTY()
+	uint8 StepsCompleted = 0;
+
+	/** Members of the team whose State is Informant in the latch record, every cause alike (forfeits included). */
+	UPROPERTY()
+	uint8 EliminatedCount = 0;
+
+	/** The team's WrongTarget KillResolved rows this round (NPC and informant kills alike), saturating at 255. */
+	UPROPERTY()
+	uint8 WrongTargetCount = 0;
+
+	bool IsZero() const { return StepsCompleted == 0 && EliminatedCount == 0 && WrongTargetCount == 0; }
+
+	bool operator==(const FRoundTeamSummary& Other) const
+	{
+		return StepsCompleted == Other.StepsCompleted && EliminatedCount == Other.EliminatedCount && WrongTargetCount == Other.WrongTargetCount;
+	}
+	bool operator!=(const FRoundTeamSummary& Other) const { return !(*this == Other); }
+};
+
+/** The public end-of-round result (R20: kept as LastResult through Reset into the lobby). R9 (a): no duration field. */
 USTRUCT()
 struct STEALTHFOUNDATION_API FRoundResult
 {
@@ -44,9 +75,14 @@ struct STEALTHFOUNDATION_API FRoundResult
 	UPROPERTY()
 	uint32 RoundIndex = 0;
 
+	/** R9 (a) TeamSummary[2], indexed by team (story rmf-054). */
+	UPROPERTY()
+	FRoundTeamSummary TeamSummary[2];
+
 	bool operator==(const FRoundResult& Other) const
 	{
-		return WinningTeam == Other.WinningTeam && PublicReason == Other.PublicReason && RoundIndex == Other.RoundIndex;
+		return WinningTeam == Other.WinningTeam && PublicReason == Other.PublicReason && RoundIndex == Other.RoundIndex
+			&& TeamSummary[0] == Other.TeamSummary[0] && TeamSummary[1] == Other.TeamSummary[1];
 	}
 	bool operator!=(const FRoundResult& Other) const { return !(*this == Other); }
 };
@@ -105,3 +141,18 @@ struct STEALTHFOUNDATION_API FRoundPublicState
 
 /** Short display name of a phase (development HUD and dumps). */
 STEALTHFOUNDATION_API const TCHAR* LexRoundPhase(ERoundPhase Phase);
+
+/** FRoundResult::PublicReason values (R15 last bullet: exactly two public win types; a forfeit is an elimination). */
+namespace RoundPublicReason
+{
+	inline constexpr uint8 None = 0;
+	inline constexpr uint8 Objective = 1;
+	inline constexpr uint8 Elimination = 2;
+}
+
+/**
+ * The banner reason text of a public reason (HUD-E18's approved phrasings; R15: a forfeit shows the elimination text,
+ * never a separate forfeit phrase, R20). Example: GetRoundEndReasonText(RoundPublicReason::Elimination) is "every
+ * rival eliminated for the round". Empty for RoundPublicReason::None.
+ */
+STEALTHFOUNDATION_API FText GetRoundEndReasonText(uint8 PublicReason);

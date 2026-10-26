@@ -8,6 +8,8 @@
 
 class IEventFlushBarrier;
 class IQueueResolver;
+class IStagedWriteApplier;
+class ITerminalDecision;
 class IRoundLogWriter;
 class IServerSubSeedSource;
 class IStealthClock;
@@ -34,7 +36,12 @@ enum class EStealthFault : uint8;
  *   4. runs every stamped item in key order in its slot: epoch check (Rejected_StaleEpoch), connection-generation
  *      check (Dropped_StaleConnection), latch check (Rejected_Latched; HostCommand parked; the post-latch lane and
  *      the ConcealmentTransition exemption pass), then Resolve, then IEventFlushBarrier::FlushPending();
- *   5. stamps and runs items that became due during the drain (scheduled inline) after intake.
+ *   5. stamps and runs items that became due during the drain (scheduled inline) after intake;
+ *   6. runs the staging pass (ADR-0002 section 6): every staged write with ServerTime <= now (plus DueEpsilonMs), in
+ *      order (ServerTime, CauseKey, TypeRank), through its applier, or ITerminalDecision for RoundEndStep.
+ * A RoundEndStep staged inside a slot is bound at slot end (section 8.3): to the latest DeathWrite the same slot staged
+ * (same CauseKey), else, for a strike-decided round, to the fallback (the deciding victim's latest pending DeathWrite,
+ * else the slot time plus FallbackDeferSec, reported as a defect), else it is consumed inline at slot end.
  * Inline follow-ons run depth-first inside the causing slot through ExecuteFollowOn, bounded by
  * QueueCascadeDepthMax; a breach logs CascadeOverflow and submits the remaining work as items in raised order,
  * each carrying the slot's RootCauseKey.
@@ -124,6 +131,14 @@ enum class EStealthQueueMisuse : uint8
 	NoServerSecret = 7,
 	/** Items scheduled inline kept becoming due past MaxInlineDuePasses in one drain. */
 	InlineDueLoop = 8,
+	/** StageWrite outside a slot, or the staging pass run inside one (ADR-0002 section 6). */
+	StageWriteOutsideSlot = 9,
+	/** An applier registration for RoundEndStep (it is routed to ITerminalDecision, never to an applier). */
+	RoundEndApplierRegistration = 10,
+	/** A strike-decided RoundEndStep found no DeathWrite of its slot: the section 8.3 fallback binding ran (a defect). */
+	RoundEndFallbackBinding = 11,
+	/** A staged write whose type has no live applier (dropped; the section 6 StagedWriteNoApplier case). */
+	StagedWriteNoApplier = 12,
 };
 
 class STEALTHFOUNDATION_API FResolutionQueueCore
@@ -174,6 +189,17 @@ public:
 
 	/** The Roster's flush barrier, called after every Resolve (nullptr: no barrier). */
 	void SetEventFlushBarrier(IEventFlushBarrier* Barrier) { FlushBarrier = Barrier; }
+
+	/**
+	 * Registers the applier of a staged-write type (DeathWrite, CounterPose; Assassination). One per type; RoundEndStep
+	 * is not registrable (false and a QueueMisuse fault): it is routed to the terminal decision.
+	 */
+	bool RegisterStagedWriteApplier(EStagedWriteType Type, IStagedWriteApplier* Applier);
+	void UnregisterStagedWriteApplier(EStagedWriteType Type);
+
+	/** Round's round-end step (ADR-0002 section 8.4); the queue routes every RoundEndStep write here. */
+	void SetTerminalDecision(ITerminalDecision* InDecision) { TerminalDecision = InDecision; }
+	ITerminalDecision* GetTerminalDecision() const { return TerminalDecision; }
 
 	// --- Intake ---------------------------------------------------------------------------------------------
 
@@ -233,6 +259,28 @@ public:
 	/** Inside a slot: the owner-specific code the Voided entry carries if the resolver returns Voided. */
 	void SetVoidCode(uint32 OwnerCode);
 
+	// --- Typed staged writes (ADR-0002 sections 6 and 8.3; story rmf-053) -----------------------------------------
+
+	/**
+	 * Stages one already-decided write from inside a slot (false and a QueueMisuse fault outside one). The queue sets
+	 * CauseKey to the slot's RootCauseKey and Expected to the current epoch (a Reset drops it by epoch mismatch).
+	 * Example: a strike resolver stages {DeathWrite, ServerTime = ContactServerTime - StrikeNetLeadSec, Victim}.
+	 */
+	bool StageWrite(const FStagedWrite& Write);
+
+	/**
+	 * The staging pass (Drain runs it last, every frame): applies every staged write due now, in (ServerTime, CauseKey,
+	 * TypeRank) order with TypeRank DeathWrite < CounterPose < RoundEndStep, each followed by the flush barrier. Staged
+	 * writes run even after the latch. Refused (fault) inside a slot.
+	 */
+	void RunStagingPass();
+
+	/** Drops every pending staged write (Round's Reset decided inside a slot: the writes belong to the torn-down round). */
+	void DropStagedWrites() { StagedWrites.Reset(); Slot.RoundEndIndex = INDEX_NONE; }
+
+	/** Staged writes not yet applied (observation). */
+	const TArray<FStagedWrite>& GetPendingStagedWrites() const { return StagedWrites; }
+
 	// --- Latch storage (ADR-0002 section 8.1; Round's record is authoritative) -------------------------------------
 
 	/** Single assignment, called solely by Round's TryTerminate; closes intake. False if already latched. */
@@ -270,6 +318,12 @@ public:
 	/** Items waiting in mailboxes, and timers waiting in the heap. */
 	int32 GetPendingMailboxItemCount() const;
 	int32 GetPendingTimerCount() const { return DueHeap.Num(); }
+
+	/** The ETimerKind of every TimerFired item waiting in the due-time heap (observation; story rmf-051). */
+	void GetPendingTimerKinds(TArray<ETimerKind>& OutKinds) const;
+
+	/** Cancels every pending timer (Round R10 step 2); legal during a drain (items already stamped are unaffected). */
+	void CancelAllTimers() { DueHeap.Reset(); }
 
 private:
 	struct FPendingItem
@@ -316,6 +370,8 @@ private:
 		uint32 VoidCode = 0;
 		int32 OverflowCount = 0;
 		bool bOverflowLogged = false;
+		/** Index in StagedWrites of the RoundEndStep this slot staged, else INDEX_NONE (bound at slot end). */
+		int32 RoundEndIndex = INDEX_NONE;
 	};
 
 	FQueueItemHandle SubmitInternal(FMailboxId Source, const FQueueItem& Item, bool bHasGeneration, uint32 ConnectionGeneration);
@@ -333,6 +389,10 @@ private:
 	void AppendEntry(FRoundLogEntry& Entry, const FQueueKey& Key, FMailboxId Source) const;
 	void LogVoided(const FStampedItem& Stamped, EVoidReason Reason, uint32 OwnerCode) const;
 	void ReportFault(EStealthFault Fault, int64 Detail) const;
+	/** Section 8.3: binds or consumes the RoundEndStep the slot staged (called at slot end, after the flush). */
+	void BindRoundEndStep(int32 Index);
+	/** Applies one staged write (applier or terminal decision), then the flush barrier. */
+	void ApplyStaged(const FStagedWrite& Write);
 
 	FResolutionQueueDeps Deps;
 	IEventFlushBarrier* FlushBarrier = nullptr;
@@ -348,6 +408,9 @@ private:
 	/** RecentKeyCount entries, allocated once at construction. */
 	TArray<FRecentKey> RecentKeys;
 	TArray<FQueueItem> ParkedHostCommands;
+	TArray<FStagedWrite> StagedWrites;
+	IStagedWriteApplier* Appliers[3] = {};
+	ITerminalDecision* TerminalDecision = nullptr;
 
 	uint64 NextSeq = 1;
 	uint64 NextHandleId = 1;

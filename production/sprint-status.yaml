@@ -2029,6 +2029,204 @@ stories:
     completed: "2026-10-26"
     sprint: 2
     note: "pulled into Sprint 2 by the RMF Exit B batch (production win rules drive L_Prototype)"
+  - id: "rmf-048"
+    name: "Killing or re-informing Informants triggers no evaluation and leaves the Active count unchanged"
+    file: "production/epics/round-match-framework/story-048-informants-do-not-count.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-049"
+    name: "A final completion counts only from a human, Connected, Active completer; other cases are Voided with distinct codes"
+    file: "production/epics/round-match-framework/story-049-completion-needs-human.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-050"
+    name: "A defence-window expiry and a strike in one tick resolve by key order (strike lands or reversal)"
+    file: "production/epics/round-match-framework/story-050-brace-expiry-ordered.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-051"
+    name: "A 24 h fake-clock advance in Active ends nothing and leaves only grace and pawn-loss timers"
+    file: "production/epics/round-match-framework/story-051-no-timer-ends-active-round.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-052"
+    name: "An objective-win latch is also the round-end step: result, score, EndRoundAll, rejections and PostRound viewers"
+    file: "production/epics/round-match-framework/story-052-ended-latch-effects.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-053"
+    name: "A strike win latches server-only first and presents the result at the deciding strike's death write"
+    file: "production/epics/round-match-framework/story-053-strike-win-staging.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 2
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-054"
+    name: "FRoundResult.TeamSummary is computed at the round-end step from the Event Log and is all-zero before Ended (MVP item 9 data)"
+    file: "production/epics/round-match-framework/story-054-team-summary-at-ended.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-055"
+    name: "In Ended every command except Look is rejected and every pawn gets one stop request carrying RunStopSec"
+    file: "production/epics/round-match-framework/story-055-ended-hold.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-056"
+    name: "With Roster/GameState arrival skew a strike win changes no ally marker or HUD state before Phase = Ended"
+    file: "production/epics/round-match-framework/story-056-round-ended-arrival-order.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-057"
+    name: "The host abort in Active resets as Aborted with no score when bHostMayAbortActive, else WrongPhase"
+    file: "production/epics/round-match-framework/story-057-host-abort.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-058"
+    name: "Reset destroys player pawns before lobby travel, empties the timer heap and reaches Lobby only when all participants are terminal or timed out"
+    file: "production/epics/round-match-framework/story-058-reset-clears.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-059"
+    name: "OnSessionEnding stops processing without release and a host abort before P1 resets at P1 with 0 pawns"
+    file: "production/epics/round-match-framework/story-059-session-end-and-abort-during-travel.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-060"
+    name: "Silent, quit, informant and debug-kill timelines resolve at the specified times on a fake clock (plus one PIE smoke)"
+    file: "production/epics/round-match-framework/story-060-grace-timeline.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 2
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-061"
+    name: "A rejoin 1 s before grace expiry keeps the participant Active and repossesses the same pawn"
+    file: "production/epics/round-match-framework/story-061-rejoin-inside-grace.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-062"
+    name: "A rejoin after grace expiry makes the participant an Informant re-pawned by the C1 takeover"
+    file: "production/epics/round-match-framework/story-062-rejoin-after-grace.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-063"
+    name: "A rejoin during Ended is admitted with no pawn, no transition and bIsSpectator false"
+    file: "production/epics/round-match-framework/story-063-rejoin-in-ended.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-064"
+    name: "The last Active member of a team converting at grace expiry gives EliminationWin to the other team with ForfeitElimination"
+    file: "production/epics/round-match-framework/story-064-last-disconnect-forfeits.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
+  - id: "rmf-065"
+    name: "Both teams fully disconnected gives Void(Abandoned) and a host kick as last conversion gives Void(KickedLastActive)"
+    file: "production/epics/round-match-framework/story-065-forfeit-void-cases.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1
+    blocker: ""
+    completed: "2026-10-26"
+    sprint: 2
+    note: "pulled into Sprint 2 by the RMF round-end and disconnect batch"
   - id: "iif-001"
     name: "Command and reply types match the ADR key interfaces"
     file: "production/epics/input-interaction-framework/story-001-command-reply-types.md"

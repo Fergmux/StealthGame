@@ -10,6 +10,35 @@ namespace StealthRoundWin
 		}
 	}
 
+	ERoundCompletionValidity ValidateCompleter(const FRoundCompleterFacts& Facts)
+	{
+		if (!Facts.bRostered)
+		{
+			return ERoundCompletionValidity::NotRostered;
+		}
+		if (!Facts.bOnTeam)
+		{
+			return ERoundCompletionValidity::WrongTeam;
+		}
+		if (Facts.State != EParticipantState::Active)
+		{
+			return ERoundCompletionValidity::CompleterInformant;
+		}
+		if (Facts.bDisconnectedThisTick)
+		{
+			return ERoundCompletionValidity::CompleterDisconnectedThisTick;
+		}
+		if (!Facts.bConnected)
+		{
+			return ERoundCompletionValidity::CompleterDisconnected;
+		}
+		if (Facts.bAiDriven || !Facts.Control.IsHumanControlled())
+		{
+			return ERoundCompletionValidity::CompleterAiDriven;
+		}
+		return ERoundCompletionValidity::Valid;
+	}
+
 	bool IsDecision(const FRoundTransitionEvent& E)
 	{
 		return E.Reason == ERosterReason::Assassinated || E.Reason == ERosterReason::ReversedAgainst || E.Reason == ERosterReason::StrikeLimit;

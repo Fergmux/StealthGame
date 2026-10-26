@@ -1,12 +1,12 @@
 # Story 056: With Roster/GameState arrival skew a strike win changes no ally marker or HUD state before Phase = Ended
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 12d, scoped to this story:*
 
-- [ ] GIVEN two clients with injected arrival skew between the GameState and the Roster records (Roster first by one net frame), WHEN a strike decides the round, THEN no ally marker disappears or changes fill and the HUD viewer state does not change before that client's `Phase = Ended` (TM-R5, HUD States).
+- [x] GIVEN two clients with injected arrival skew between the GameState and the Roster records (Roster first by one net frame), WHEN a strike decides the round, THEN no ally marker disappears or changes fill and the HUD viewer state does not change before that client's `Phase = Ended` (TM-R5, HUD States).
 
 ---
 
@@ -91,7 +91,7 @@
 **Required evidence**:
 - Integration: `Source/StealthTestHarness/Private/Round/RoundEndedArrivalOrderTest.cpp` — must exist and pass (CQTest network test, scenario `StealthGame.Round.RoundEndedArrivalOrder`, full name `StealthGame.Round.PIE.RoundEndedArrivalOrder.<Method>`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.RoundEndedArrivalOrder`, 2026-10-26)
 
 ---
 
@@ -101,3 +101,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/participant-state-roster` (`EndRoundAll`, Roster records and C-TeamView carriers; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing at the model level (strike-decided round; client A receives RoundEnded one net frame before Ended: no marker/viewer change before its Ended)
+**Deviations**: Model-level [U] test instead of the 2-client PIE NETWORK_TEST_CLASS with a replication-skew hook (no Teammate Markers or HUD consumer exists; the story's QA spec allows the model level); the rule is StealthRoundArrival::ResolveRecordState in Foundation View
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/RoundEndedArrivalOrderTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - model level; no consumer exists yet
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

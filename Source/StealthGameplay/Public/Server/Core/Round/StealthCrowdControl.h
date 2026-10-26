@@ -59,4 +59,11 @@ public:
 
 	/** ReleaseToCrowd adoption: the pawn becomes an NPC with the same look. */
 	virtual void AdoptReleasedPawn(AStealthPawn* Pawn, const FCrowdAdoptParams& Params) = 0;
+
+	/**
+	 * Round, in the round-end step after Halt (R9 (f)): one kind-blind server stop-and-blend for this pawn, bounded by
+	 * BoundSec (RunStopSec), whoever drives it (NPC, AI-driven, human-driven or in hand-over; ADR-0010 owns the stop
+	 * path). Amendment of the RMF round-end batch (story rmf-055).
+	 */
+	virtual void RequestPawnStop(const struct FRoundLivePawn& Pawn, double BoundSec) = 0;
 };

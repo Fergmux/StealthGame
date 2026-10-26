@@ -161,6 +161,7 @@ bool FRoundPreparingAbortsTest::RunTest(const FString& Parameters)
 		// Act: inject, then let Session's lobby travel complete (Reset -> Lobby on the next tick).
 		Inject(Rig, Row.Inject);
 		TestTrue(FString::Printf(TEXT("%s: Preparing aborted into Reset"), Row.Name), Rig.Core->GetPhase() == ERoundPhase::Reset);
+		Rig.Core->NotifyLobbyTravelComplete(); // Session: every participant terminal (R10 (7), story rmf-058)
 		Rig.Frame();
 
 		// Assert.

@@ -1,12 +1,12 @@
 # Story 051: A 24 h fake-clock advance in Active ends nothing and leaves only grace and pawn-loss timers
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 47, scoped to this story:*
 
-- [ ] GIVEN a fake clock advanced 24 h in `Active` with no items, THEN the phase is `Active` and the timer heap holds only grace and pawn-loss retries.
+- [x] GIVEN a fake clock advanced 24 h in `Active` with no items, THEN the phase is `Active` and the timer heap holds only grace and pawn-loss retries.
 
 ---
 
@@ -94,7 +94,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/NoTimerEndsActiveRoundTest.cpp` (automation test `StealthGame.Round.NoTimerEndsActiveRound`, class `FRoundNoTimerEndsActiveRoundTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.NoTimerEndsActiveRound`, 2026-10-26)
 
 ---
 
@@ -103,3 +103,11 @@
 - Depends on: `production/epics/round-match-framework/story-008-resolver-contract.md`, `production/epics/round-match-framework/story-042-active-gate.md`
 - Unlocks: None
 - Cross-epic: `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (24 h jump: Active, no outcome, pending kinds subset of {GraceExpiry, PawnLossRetry})
+**Deviations**: Added FResolutionQueueCore::GetPendingTimerKinds (the Open item's read-only heap inspection)
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/NoTimerEndsActiveRoundTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - Logic, covered headless
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

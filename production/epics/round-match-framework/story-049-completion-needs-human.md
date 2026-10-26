@@ -1,12 +1,12 @@
 # Story 049: A final completion counts only from a human, Connected, Active completer; other cases are Voided with distinct codes
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 20, scoped to this story:*
 
-- [ ] GIVEN a final completion by a human, Connected, Active completer, THEN `ObjectiveWin`; GIVEN the completer AI-driven, Disconnected, Informant, or disconnected in the same tick, THEN `Voided(FinalCompletion, code)` with a distinct code per case and no outcome.
+- [x] GIVEN a final completion by a human, Connected, Active completer, THEN `ObjectiveWin`; GIVEN the completer AI-driven, Disconnected, Informant, or disconnected in the same tick, THEN `Voided(FinalCompletion, code)` with a distinct code per case and no outcome.
 
 ---
 
@@ -98,7 +98,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/CompletionNeedsHumanTest.cpp` (automation test `StealthGame.Round.CompletionNeedsHuman`, class `FRoundCompletionNeedsHumanTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.CompletionNeedsHuman`, 2026-10-26)
 
 ---
 
@@ -107,3 +107,11 @@
 - Depends on: `production/epics/round-match-framework/story-044-elimination-truth-table.md`
 - Unlocks: `production/epics/round-match-framework/story-060-grace-timeline.md`, `production/epics/round-match-framework/story-066-forfeit-vs-completion.md`
 - Cross-epic: `production/epics/participant-state-roster` (`State` and `Connection` of the completer, via the fake Roster gateway; stories not yet created), `production/epics/input-interaction-framework` (the `HoldTimer(Complete)` item and control-epoch rule that the validity check reads; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (human -> ObjectiveWin; AI-driven, Disconnected, Informant, same-tick disconnect -> four distinct Voided codes, round Active)
+**Deviations**: The validity function is StealthRoundWin::ValidateCompleter / FRoundMatchCore::ValidateFinalCompleter (StealthRoundWin.h, the existing F2 header, not a new RoundWinPredicates.h); codes are the closed ERoundCompletionValidity (Open item: names chosen here, decision log); the same-tick case fixes the stated order (disconnect first)
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/CompletionNeedsHumanTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - Logic, covered headless
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

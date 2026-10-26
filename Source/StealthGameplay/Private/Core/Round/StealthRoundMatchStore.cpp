@@ -91,6 +91,11 @@ void URoundMatchStore::Initialize(FSubsystemCollectionBase& Collection)
 
 void URoundMatchStore::EndMatch(ESessionEndReason Reason)
 {
+	if (Core && Reason == ESessionEndReason::SessionEnding)
+	{
+		// R8: OnSessionEnding is a terminal event: SessionEnded logged, processing stops, nothing released, no phase change.
+		Core->OnSessionEnding();
+	}
 	Queue.Reset();
 	DebugResolver.Reset();
 	Core.Reset();
@@ -147,6 +152,14 @@ void URoundMatchStore::RegisterGateways(const FRoundGateways& Gateways, UObject*
 	Core->SetParams(PendingParams);
 	Core->GetPhaseCore().SetOnPhaseChanged([this](ERoundPhase Old, ERoundPhase New) { HandlePhaseChanged(Old, New); });
 	Core->OnRoundActive = [this](uint32 Epoch, double ActivePhaseStart) { OnRoundActive.Broadcast(Epoch, ActivePhaseStart); };
+	Core->OnRoundEnded = [this](const FRoundResult& Result)
+	{
+		UE_LOGF(LogStealthRound, Log, "Round %u round-end step: team %d wins (public reason %d); summary T0 {%d, %d, %d} T1 {%d, %d, %d}.",
+			Result.RoundIndex, static_cast<int32>(Result.WinningTeam), static_cast<int32>(Result.PublicReason),
+			static_cast<int32>(Result.TeamSummary[0].StepsCompleted), static_cast<int32>(Result.TeamSummary[0].EliminatedCount), static_cast<int32>(Result.TeamSummary[0].WrongTargetCount),
+			static_cast<int32>(Result.TeamSummary[1].StepsCompleted), static_cast<int32>(Result.TeamSummary[1].EliminatedCount), static_cast<int32>(Result.TeamSummary[1].WrongTargetCount));
+		OnRoundEnded.Broadcast(Result);
+	};
 	Core->OnWatchdogWarning = [](const StealthRoundFormulas::FWatchdogBound& Bound)
 	{
 		UE_LOGF(LogStealthRound, Warning, "F6: T_needed %.2f s exceeds PreparingWatchdogSec; the effective Preparing watchdog is %.2f s.", Bound.NeededSec, Bound.EffectiveSec);
@@ -183,6 +196,7 @@ void URoundMatchStore::RegisterGateways(const FRoundGateways& Gateways, UObject*
 		};
 		Queue->RegisterResolver(EQueueItemType::DebugItem, DebugResolver.Get());
 		Queue->RegisterTimerResolver(ETimerKind::GraceExpiry, Core->GetGraceResolver());
+		Queue->RegisterResolver(EQueueItemType::ConnectionTransition, Core->GetConnectionResolver());
 		Core->SetRoundQueue(Queue.Get());
 		Core->SetDebugQueue(Queue.Get());
 	}
@@ -305,8 +319,18 @@ void URoundMatchStore::HandlePhaseChanged(ERoundPhase Old, ERoundPhase New)
 	if (New == ERoundPhase::Ended && Core)
 	{
 		const FRoundTerminalOutcome& Outcome = Core->GetLatch().GetOutcome();
-		UE_LOGF(LogStealthRound, Log, "Round %u decided by the production rules: team %d wins (public reason %d).", Core->GetPhaseCore().GetCurrentRoundIndex(),
-			static_cast<int32>(Outcome.WinningTeam), static_cast<int32>(Outcome.GetPublicReason()));
+		// The two-step end (R9): the latch step's WinLatched time against this round-end step's time.
+		double LatchedAt = Clock.GetServerTimeSeconds();
+		for (const FRoundLogEntry& Entry : Core->GetLogArchive().GetCurrentEntries())
+		{
+			if (Entry.Type == ERoundLogType::WinLatched && Entry.Key == Core->GetLatch().GetTerminalKey())
+			{
+				LatchedAt = Entry.ServerTime;
+			}
+		}
+		UE_LOGF(LogStealthRound, Log, "Round %u decided by the production rules: team %d wins (public reason %d, end reason %d); latched at %.3f s, round-end step at %.3f s (+%.3f s).",
+			Core->GetPhaseCore().GetCurrentRoundIndex(), static_cast<int32>(Outcome.WinningTeam), static_cast<int32>(Outcome.GetPublicReason()),
+			static_cast<int32>(Outcome.EndReason), LatchedAt, Clock.GetServerTimeSeconds(), Clock.GetServerTimeSeconds() - LatchedAt);
 	}
 	PublishPublicState();
 	OnPhaseChanged.Broadcast(Old, New);
@@ -337,15 +361,23 @@ void URoundMatchStore::HandleRosterEvent(const FRosterEvent& Event)
 		Transition.Reason = Event.Reason;
 		Transition.ActiveCountAfter[0] = Event.ActiveCountAfter[0];
 		Transition.ActiveCountAfter[1] = Event.ActiveCountAfter[1];
+		UE_LOGF(LogStealthRound, Log, "Round: participant %u state %d -> %d (reason %d), Active after T0 %d T1 %d.", Event.Id.Value,
+			static_cast<int32>(Event.Old), static_cast<int32>(Event.New), static_cast<int32>(Event.Reason), Event.ActiveCountAfter[0], Event.ActiveCountAfter[1]);
 		Core->OnRosterTransition(Transition);
 		break;
 	}
 	case ERosterEventType::ConnectionChanged:
 	{
+		UE_LOGF(LogStealthRound, Log, "Round: participant %u connection %ls%ls in phase %ls.", Event.Id.Value,
+			Event.Connection == ERosterConnection::Connected ? TEXT("Connected") : TEXT("Disconnected"), Event.bKicked ? TEXT(" (kicked)") : TEXT(""),
+			LexRoundPhase(Core->GetPhase()));
 		const ERoundConnectionState State = Event.Connection == ERosterConnection::Connected ? ERoundConnectionState::Connected
 			: Event.Connection == ERosterConnection::Dormant ? ERoundConnectionState::Dormant
 			: ERoundConnectionState::Disconnected;
 		Core->OnParticipantConnectionChanged(Event.Id, State, Event.bKicked, Clock.GetServerTimeSeconds());
+		const FRoundGraceRecord* Grace = Core->GetGraceTable().Find(Event.Id);
+		UE_LOGF(LogStealthRound, Log, "Round: grace records open %d; participant %u %ls.", Core->GetGraceTable().Num(), Event.Id.Value,
+			Grace != nullptr ? *FString::Printf(TEXT("converts at %.3f s unless it rejoins"), Grace->GraceExpiry) : TEXT("has no grace record"));
 		break;
 	}
 	default:
@@ -501,8 +533,9 @@ void URoundMatchStore::Tick(float DeltaTime)
 	{
 		Core->Tick();
 		// One drain per server frame while Active, and in Ended so items that arrived around an out-of-slot latch still
-		// resolve Rejected_Latched (logged); the queue is reset at Reset and is closed in the other phases.
-		if (Queue && (Core->GetPhase() == ERoundPhase::Active || Core->GetPhase() == ERoundPhase::Ended))
+		// resolve Rejected_Latched (logged) and an earlier strike's death write still plays; the queue is reset at Reset
+		// and is closed in the other phases. Nothing is processed after OnSessionEnding (R8).
+		if (Queue && !Core->HasSessionEnded() && (Core->GetPhase() == ERoundPhase::Active || Core->GetPhase() == ERoundPhase::Ended))
 		{
 			Queue->Drain();
 		}

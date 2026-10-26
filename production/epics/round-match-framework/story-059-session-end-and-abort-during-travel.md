@@ -1,12 +1,12 @@
 # Story 059: OnSessionEnding stops processing without release and a host abort before P1 resets at P1 with 0 pawns
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 43, scoped to this story:*
 
-- [ ] GIVEN `OnSessionEnding` in any phase, THEN processing stops, `SessionEnded` is logged, nothing is released and no phase change occurs; GIVEN a host abort before P1, THEN `Reset` runs at P1 (or on Session's travel cancel) with 0 pawns spawned.
+- [x] GIVEN `OnSessionEnding` in any phase, THEN processing stops, `SessionEnded` is logged, nothing is released and no phase change occurs; GIVEN a host abort before P1, THEN `Reset` runs at P1 (or on Session's travel cancel) with 0 pawns spawned.
 
 ---
 
@@ -91,7 +91,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/SessionEndAndAbortDuringTravelTest.cpp` — must exist and pass (automation test `StealthGame.Round.SessionEndAndAbortDuringTravel`, class `FRoundSessionEndAndAbortDuringTravelTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.SessionEndAndAbortDuringTravel`, 2026-10-26)
 
 ---
 
@@ -101,3 +101,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/session-travel` (`OnSessionEnding`, travel cancel, `RequestLobbyTravel`; stories not yet created); `production/epics/participant-state-roster` (`EndMatch` clearing; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (five phases: SessionEnded logged once, no phase change, nothing released, processing stopped; pre-P1 abort: Reset at P1 or at Session's cancel with 0 pawns)
+**Deviations**: OnSessionEnding makes no phase change (AC 43); FRoundPhaseCore::EnterLobbyOnSessionEnding is left unused; the pre-P1 abort enters Preparing without the readiness sequence and runs the host Preparing abort (Lobby -> Reset is illegal); IRoundSessionGateway::CancelRoundTravel added
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/SessionEndAndAbortDuringTravelTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - Logic, covered headless
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

@@ -1,12 +1,12 @@
 # Story 065: Both teams fully disconnected gives Void(Abandoned) and a host kick as last conversion gives Void(KickedLastActive)
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 24b, scoped to this story:*
 
-- [ ] GIVEN the same with every Active member of team 0 disconnected, THEN `Void(Abandoned)`: phase `Reset`, no score, `bCalledOff` true. GIVEN the last conversion was a host kick, THEN `Void(KickedLastActive)`.
+- [x] GIVEN the same with every Active member of team 0 disconnected, THEN `Void(Abandoned)`: phase `Reset`, no score, `bCalledOff` true. GIVEN the last conversion was a host kick, THEN `Void(KickedLastActive)`.
 
 ---
 
@@ -93,7 +93,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/ForfeitVoidCasesTest.cpp` — must exist and pass (automation test `StealthGame.Round.ForfeitVoidCases`, class `FRoundForfeitVoidCasesTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.ForfeitVoidCases`, 2026-10-26)
 
 ---
 
@@ -103,3 +103,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/session-travel` (`Disconnected(Kicked)`, `Expired` connection; stories not yet created); `production/epics/participant-state-roster` (`RequestTransition` for an `Expired` connection, `ConnectedActiveCount` inputs; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (Void(Abandoned) and Void(KickedLastActive): Reset, no score, no result, bCalledOff; D32 kick in the expiry frame -> KickedLastActive)
+**Deviations**: None
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/ForfeitVoidCasesTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - Logic, covered headless
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

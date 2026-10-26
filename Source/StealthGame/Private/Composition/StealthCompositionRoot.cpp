@@ -17,6 +17,7 @@
 #include "StealthCharacter.h"
 #include "StealthGame.h"
 #include "StealthGameMode.h"
+#include "StealthGameState.h"
 #include "StealthNpcController.h"
 #include "StealthPlayerState.h"
 #include "StealthSettings.h"
@@ -73,6 +74,95 @@ UWorld* UStealthMatchAdapters::GetGameWorld() const
 bool UStealthMatchAdapters::CanRequestRoundTravel() const
 {
 	return GetGameWorld() != nullptr;
+}
+
+void UStealthMatchAdapters::RequestLobbyTravel()
+{
+	UWorld* World = GetGameWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+	TWeakObjectPtr<UWorld> WeakWorld(World);
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [WeakWorld]()
+	{
+		if (URoundMatchStore* Round = URoundMatchStore::Get(WeakWorld.Get()); Round != nullptr && Round->GetMatchCore() != nullptr)
+		{
+			// Session's OnLobbyTravelComplete stand-in: every participant is terminal (R10 (7)).
+			Round->GetMatchCore()->NotifyLobbyTravelComplete();
+		}
+	}));
+}
+
+void UStealthMatchAdapters::GetLivePawns(TArray<FRoundLivePawn>& OutPawns) const
+{
+	OutPawns.Reset();
+	const UWorld* World = GetGameWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+	for (TActorIterator<AStealthCharacter> It(World); It; ++It)
+	{
+		AStealthCharacter* Character = *It;
+		if (Character == nullptr || Character->IsDying())
+		{
+			continue;
+		}
+		FRoundLivePawn& Live = OutPawns.AddDefaulted_GetRef();
+		Live.Pawn.Pawn = Character;
+		Live.PawnId = Character->GetUniqueID();
+		const AController* Controller = Character->GetController();
+		const bool bPlayerOwned = Character->GetStealthPlayerState() != nullptr;
+		Live.Driver = Controller != nullptr && Controller->IsPlayerController() ? ERoundPawnDriver::HumanDriven
+			: (bPlayerOwned ? ERoundPawnDriver::AiDriven : ERoundPawnDriver::Npc);
+	}
+}
+
+void UStealthMatchAdapters::Halt()
+{
+	if (UWorld* World = GetGameWorld())
+	{
+		for (TActorIterator<AStealthNpcController> It(World); It; ++It)
+		{
+			It->bHeld = true;
+			It->StopMovement();
+		}
+	}
+}
+
+void UStealthMatchAdapters::RequestPawnStop(const FRoundLivePawn& Pawn, double BoundSec)
+{
+	AStealthCharacter* Character = Cast<AStealthCharacter>(Pawn.Pawn.Pawn.Get());
+	if (Character == nullptr)
+	{
+		return;
+	}
+	if (AController* Controller = Character->GetController())
+	{
+		Controller->StopMovement();
+	}
+	// Held in place for the rest of Ended (the prototype has no stop-and-blend path yet; the round resets the pawns).
+	Character->HoldInPlace(FMath::Max(static_cast<float>(BoundSec), 1.f) * 60.f);
+}
+
+FPawnHandle UStealthMatchAdapters::GetBoundPawn(FParticipantId Participant) const
+{
+	FPawnHandle Handle;
+	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetGameWorld());
+	if (const APlayerController* Player = Root != nullptr ? Root->GetController(Participant) : nullptr)
+	{
+		Handle.Pawn = Player->GetPawn();
+	}
+	return Handle;
+}
+
+int32 UStealthMatchAdapters::GetCompletedPreliminaryStages(int32 Team) const
+{
+	const UWorld* World = GetGameWorld();
+	const AStealthGameState* State = World != nullptr ? World->GetGameState<AStealthGameState>() : nullptr;
+	// TeamStage is the stage being worked on (1, 2, then the final): the completed preliminary stages are one fewer.
+	return State != nullptr && (Team == 0 || Team == 1) ? FMath::Clamp(State->GetTeamStage(static_cast<uint8>(Team)) - 1, 0, 2) : 0;
 }
 
 ERoundTravelRequestResult UStealthMatchAdapters::RequestRoundTravel(FName MapId, FName PresetId, uint32 RoundIndex)
@@ -390,6 +480,8 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 		Gateways.LevelSocket = Adapters;
 		Gateways.Crowd = Adapters;
 		Gateways.Spawner = Adapters;
+		Gateways.PawnControl = Adapters;
+		Gateways.ObjectiveProgress = Adapters;
 		USessionService* Session = USessionService::Get(InGameMode->GetWorld());
 		Round->RegisterGateways(Gateways, this, Session != nullptr ? &Session->GetSubSeedSource() : nullptr);
 	}

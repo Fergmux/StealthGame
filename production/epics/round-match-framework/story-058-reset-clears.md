@@ -1,12 +1,12 @@
 # Story 058: Reset destroys player pawns before lobby travel, empties the timer heap and reaches Lobby only when all participants are terminal or timed out
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 13a, scoped to this story:*
 
-- [ ] GIVEN `Reset`, THEN all player pawns are destroyed before `RequestLobbyTravel`, the Round timer heap is empty, admission went `Closed`, and the phase becomes `Lobby` (admission `Open`) only when every participant is terminal or `TravelLoadTimeoutSec` has passed.
+- [x] GIVEN `Reset`, THEN all player pawns are destroyed before `RequestLobbyTravel`, the Round timer heap is empty, admission went `Closed`, and the phase becomes `Lobby` (admission `Open`) only when every participant is terminal or `TravelLoadTimeoutSec` has passed.
 
 ---
 
@@ -96,7 +96,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/ResetClearsTest.cpp` — must exist and pass (automation test `StealthGame.Round.ResetClears`, class `FRoundResetClearsTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.ResetClears`, 2026-10-26)
 
 ---
 
@@ -106,3 +106,11 @@
 - Unlocks: `production/epics/round-match-framework/story-059-session-end-and-abort-during-travel.md`, `production/epics/round-match-framework/story-085-pie-lifecycle-objective-and-reset.md`
 
 Cross-epic: `production/epics/session-travel` (`RequestLobbyTravel`, admission mode, participant terminal reporting, `TravelLoadTimeoutSec`; stories not yet created); `production/epics/participant-state-roster` (`SetTeamsLocked`, pawn bindings, `ResetAll` precondition; stories not yet created); `production/epics/tuning-data-config` (`TravelLoadTimeoutSec`, module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (Closed, then DestroyRoundPawns before RequestLobbyTravel; empty timer heap; no ResetAll; Lobby at the last terminal participant or at TravelLoadTimeoutSec)
+**Deviations**: DestroyRoundPawns now runs at every Reset (before only for Preparing aborts); the prototype adapter reports the lobby travel complete on the next tick
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/ResetClearsTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: PASS - PIE: Ended -> Reset -> Lobby -> next round (see evidence)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

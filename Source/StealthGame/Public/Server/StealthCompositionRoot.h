@@ -32,7 +32,7 @@ struct FRosterEvent;
 UCLASS(NotBlueprintType, NotBlueprintable)
 class STEALTHGAME_API UStealthMatchAdapters : public UObject, public IRoundSessionGateway, public IRoundTuningGateway,
 	public IRoundCharacterPoolGateway, public IRoundLevelSocketGateway, public ICrowdControl, public IStealthPawnFactoryHooks,
-	public IRoundStartSpawner
+	public IRoundStartSpawner, public IRoundPawnControlGateway, public IRoundObjectiveProgress
 {
 	GENERATED_BODY()
 
@@ -41,7 +41,10 @@ public:
 	// IRoundSessionGateway
 	virtual bool CanRequestRoundTravel() const override;
 	virtual ERoundTravelRequestResult RequestRoundTravel(FName MapId, FName PresetId, uint32 RoundIndex) override;
-	virtual void RequestLobbyTravel() override {}
+	/** No map travel exists: the same world hosts the lobby, so every participant completes the lobby travel on the next tick. */
+	virtual void RequestLobbyTravel() override;
+	/** The travel is accepted on the next tick anyway (no map travel): the abort then runs at P1 (Round's Edge Cases rule). */
+	virtual void CancelRoundTravel() override {}
 	virtual void SetAdmissionMode(ERoundAdmissionMode Mode) override { AdmissionMode = Mode; }
 	virtual ERoundConnectionState GetConnectionState(FParticipantId Participant) const override;
 	virtual void KickParticipant(FParticipantId Participant) override;
@@ -74,11 +77,16 @@ public:
 	virtual void OnStartSpawnComplete(int32 ExpectedPawnCount) override;
 	virtual bool OpenSpawnGate(FParticipantId Participant) override;
 	virtual int32 DestroyRoundPawns() override;
+	/** R9 (f): every living prototype character, classified by its controller and the round's player-pawn table. */
+	virtual void GetLivePawns(TArray<FRoundLivePawn>& OutPawns) const override;
 
 	// ICrowdControl
 	/** R7: releases every prototype NPC controller held since its spawn in Preparing. */
 	virtual void StartRound() override;
-	virtual void Halt() override {}
+	/** R9 (f): the prototype crowd holds (every NPC controller stops issuing moves). */
+	virtual void Halt() override;
+	/** R9 (f): the prototype stop: the pawn stops its movement and is held in place (human and AI pawns alike). */
+	virtual void RequestPawnStop(const FRoundLivePawn& Pawn, double BoundSec) override;
 	virtual void DriveBoundPawn(AStealthPawn* Pawn) override {}
 	virtual void ReleaseControl(AStealthPawn* Pawn) override {}
 	virtual void AdoptReleasedPawn(AStealthPawn* Pawn, const FCrowdAdoptParams& Params) override {}
@@ -87,6 +95,14 @@ public:
 	virtual void ApplyAppearance(AStealthPawn* Pawn, int32 AppearanceId) override;
 	virtual ERosterResult BindPawn(FParticipantId Participant, AStealthPawn* Pawn, const TOptional<FRosterEpochToken>& ExpectedEpoch) override;
 	virtual AController* CreateAiController(AStealthPawn* Pawn) override;
+
+	// IRoundPawnControlGateway (the prototype releases a leaver's pawn at logout: no bound pawn survives to take over)
+	virtual bool RequestTakeover(FParticipantId Participant) override { return false; }
+	virtual bool RequestHandBack(FParticipantId Participant) override { return false; }
+	virtual FPawnHandle GetBoundPawn(FParticipantId Participant) const override;
+
+	// IRoundObjectiveProgress (the prototype stage counter: stage 1, 2, then the final)
+	virtual int32 GetCompletedPreliminaryStages(int32 Team) const override;
 
 	/** Acknowledges for every connected player (travel complete, or the world-ready stage) with this Preparing's nonce. */
 	void AcknowledgeConnectedPlayers(bool bWorldReady);

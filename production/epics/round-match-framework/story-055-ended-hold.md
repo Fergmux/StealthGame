@@ -1,12 +1,12 @@
 # Story 055: In Ended every command except Look is rejected and every pawn gets one stop request carrying RunStopSec
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From the revised GDD AC 12b (`rmf-ac-overrides`, 055), scoped to this story:*
 
-- [ ] GIVEN Ended, THEN every command except Look is rejected, and the Crowd spy received exactly one stop request per NPC, AI-driven, human-driven and in-hand-over pawn in the round-end step, each carrying `RunStopSec` as its bound. (The pawn-speed < 1 cm/s within `RunStopSec` plus one frame clause is asserted in the PIE run of story 085.)
+- [x] GIVEN Ended, THEN every command except Look is rejected, and the Crowd spy received exactly one stop request per NPC, AI-driven, human-driven and in-hand-over pawn in the round-end step, each carrying `RunStopSec` as its bound. (The pawn-speed < 1 cm/s within `RunStopSec` plus one frame clause is asserted in the PIE run of story 085.)
 
 ---
 
@@ -94,7 +94,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/EndedHoldTest.cpp` — must exist and pass (automation test `StealthGame.Round.EndedHold`, class `FRoundEndedHoldTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.EndedHold`, 2026-10-26)
 
 ---
 
@@ -104,3 +104,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/crowd-npc-behaviour` (`ICrowdControl::Halt()` and Crowd R10 stop; spied here; stories not yet created); `production/epics/shared-character-locomotion` (kind-blind stop-and-blend, `RunStopSec`; stories not yet created); `production/epics/input-interaction-framework` (`RoundEnded` command class, IIF R7; stories not yet created); `production/epics/participant-state-roster` (`EndRoundAll`; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (Halt then exactly one RequestPawnStop per NPC, AI-driven, human-driven and in-hand-over pawn, bound RunStopSec; duplicates once; Ended refuses commands; no later stops)
+**Deviations**: The kind-blind stop is ICrowdControl::RequestPawnStop over IRoundStartSpawner::GetLivePawns (Open item: names chosen here); Round's command gate is AdmitCommand NotNow, the IIF's RoundEnded class table is the IIF epic's
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/EndedHoldTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: PASS - PIE: the crowd and every pawn hold at Ended (see evidence)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

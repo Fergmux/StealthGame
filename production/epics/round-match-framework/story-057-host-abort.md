@@ -1,12 +1,12 @@
 # Story 057: The host abort in Active resets as Aborted with no score when bHostMayAbortActive, else WrongPhase
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 11, scoped to this story:*
 
-- [ ] GIVEN `bHostMayAbortActive` true, WHEN the host aborts in Active, THEN `Reset` with `EndReason = Aborted`, `bCalledOff` true, `MatchScore` unchanged, the host's id in the log, nothing released, `RoundsPlayedCount` keeps its Active-entry increment; GIVEN false, THEN `WrongPhase` and the phase stays `Active`.
+- [x] GIVEN `bHostMayAbortActive` true, WHEN the host aborts in Active, THEN `Reset` with `EndReason = Aborted`, `bCalledOff` true, `MatchScore` unchanged, the host's id in the log, nothing released, `RoundsPlayedCount` keeps its Active-entry increment; GIVEN false, THEN `WrongPhase` and the phase stays `Active`.
 
 ---
 
@@ -95,7 +95,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/HostAbortTest.cpp` — must exist and pass (automation test `StealthGame.Round.HostAbort`, class `FRoundHostAbortTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.HostAbort`, 2026-10-26)
 
 ---
 
@@ -105,3 +105,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/session-travel` (`RequestLobbyTravel`, admission mode; stories not yet created); `production/epics/participant-state-roster` (`RoundsPlayedCount` scope, `ResetAll` at the next start; stories not yet created); `production/epics/tuning-data-config` (`bHostMayAbortActive`, module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (flag: Reset, Aborted with the host id, bCalledOff, score unchanged, nothing released, RoundsPlayedCount kept; no flag: WrongPhase, nothing changes)
+**Deviations**: The Active abort runs on the host entry point, not as a queue item; the refused abort writes no log entry (Open items, decision log); a reset between the latch and the round-end step is held regardless of the flag (R9 v)
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/HostAbortTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - Logic, covered headless
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

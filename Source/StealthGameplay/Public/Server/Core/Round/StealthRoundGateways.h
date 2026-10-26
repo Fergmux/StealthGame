@@ -99,6 +99,13 @@ public:
 	 * (story rmf-033). Amendment of the RMF Exit B Preparing batch (stories rmf-030..047).
 	 */
 	virtual uint32 GetConnectionGeneration(FParticipantId Participant) const = 0;
+
+	/**
+	 * R22 / Edge Cases: a host abort while the round travel has not reported P1 asks Session to cancel the travel, so
+	 * the watchdog is not the only exit (story rmf-059). Session answers with NotifyRoundTravelCancelled on Round.
+	 * Amendment of the RMF round-end batch (stories rmf-048..065).
+	 */
+	virtual void CancelRoundTravel() = 0;
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -281,6 +288,25 @@ public:
 // Shared Character & Locomotion: the P6 start spawn (Round decides order and control; the factory spawns)
 // ---------------------------------------------------------------------------------------------------------
 
+/** Who drives a live pawn at the round-end step (R9 (f): the stop set covers all four alike). */
+enum class ERoundPawnDriver : uint8
+{
+	Npc,
+	/** Participant-bound and AI-driven (hand-over or grace). */
+	AiDriven,
+	HumanDriven,
+	/** A takeover or hand-over committed earlier in the drain, not yet in effect (R9 (f), cross-review S-W1). */
+	InHandOver,
+};
+
+/** One live pawn of the round (R9 (f)). PawnId is a server-only identity for the stop set (never replicated). */
+struct FRoundLivePawn
+{
+	FPawnHandle Pawn;
+	uint32 PawnId = 0;
+	ERoundPawnDriver Driver = ERoundPawnDriver::Npc;
+};
+
 /** Who drives a start pawn (R6 P6 and the spawn gate): a participant not Connected at P6 gets Ai (never Player). */
 enum class ERoundSpawnControl : uint8
 {
@@ -340,6 +366,90 @@ public:
 
 	/** R10 (4): destroy every player pawn of the round (an abort leaves 0 pawns); returns how many were destroyed. */
 	virtual int32 DestroyRoundPawns() = 0;
+
+	/**
+	 * R9 (f): every live pawn of the round (strike role not Dead; a body awaiting its death write still counts) with who
+	 * drives it, each pawn once. The factory owns pawn lifetime and the pending hand-over table (ADR-0010), so the
+	 * enumeration is its. Amendment of the RMF round-end batch (story rmf-055). Default: none.
+	 */
+	virtual void GetLivePawns(TArray<FRoundLivePawn>& OutPawns) const {}
+};
+
+// ---------------------------------------------------------------------------------------------------------
+// Pawn control: takeover and hand-back (R17.1-R17.3; ADR-0010 section 4: the factory's hand-over pass possesses)
+// ---------------------------------------------------------------------------------------------------------
+
+/**
+ * Round -> the shared pawn's control path (UStealthPawnFactory hand-over pass through the composition root; Crowd
+ * registers the restricted Move/Look driver). Round asks; it never calls Possess or BindPawn itself. A request is
+ * committed in the drain, bumps the pawn's control epoch and takes effect at the next frame start (ADR-0010 4.3).
+ * Amendment of the RMF round-end batch (stories rmf-060, rmf-061).
+ */
+class IRoundPawnControlGateway
+{
+public:
+	virtual ~IRoundPawnControlGateway() = default;
+
+	/** R17.1 / R17.2: the participant's bound pawn is driven by the crowd AI by the normal blend path. False: no bound pawn. */
+	virtual bool RequestTakeover(FParticipantId Participant) = 0;
+
+	/** R17.3: control of the same bound pawn returns to the human by the reverse blend. False: no bound pawn. */
+	virtual bool RequestHandBack(FParticipantId Participant) = 0;
+
+	/** The participant's live bound pawn (unset when none). */
+	virtual FPawnHandle GetBoundPawn(FParticipantId Participant) const = 0;
+};
+
+// ---------------------------------------------------------------------------------------------------------
+// Input & Interaction Framework: the round-end step's held replies and frozen holds (R9 (d), (g))
+// ---------------------------------------------------------------------------------------------------------
+
+/**
+ * Round -> IIF in the round-end step (ADR-0002 section 8.4 (d), (g)). Between the latch and the round-end step the
+ * IIF holds its owed NotNow replies and every hold is frozen; Round releases both in the step, in its fixed order.
+ * Amendment of the RMF round-end batch (stories rmf-052, rmf-053).
+ */
+class IRoundCommandGateway
+{
+public:
+	virtual ~IRoundCommandGateway() = default;
+
+	/** (d): the latch's held-reply buffer is released (the NotNow replies are sent). */
+	virtual void ReleaseHeldReplies() = 0;
+
+	/** (g): every frozen hold cancels through the normal release blend (no failure cue). */
+	virtual void CancelFrozenHolds() = 0;
+};
+
+// ---------------------------------------------------------------------------------------------------------
+// NPC-Kill Penalty & Informants: the informant body provider (R18; ADR-0019 section 1)
+// ---------------------------------------------------------------------------------------------------------
+
+/**
+ * Declared by Round, bound by the composition root to Penalty (ADR-0019 section 1). Penalty owns the C1 respawn
+ * chain and its retries (PEN-R9, PEN-R10). Declared by the RMF round-end batch (story rmf-062).
+ */
+class IInformantBodyProvider
+{
+public:
+	virtual ~IInformantBodyProvider() = default;
+
+	/** R18: an Informant returned during Active (after its Session acknowledgement); called inside Round's slot. */
+	virtual void OnInformantReadmitted(FParticipantId Participant) = 0;
+};
+
+// ---------------------------------------------------------------------------------------------------------
+// Objectives Chain: the team's completed stages for TeamSummary (R9 (a))
+// ---------------------------------------------------------------------------------------------------------
+
+/** Round -> Objectives' server store (story rmf-054). Amendment of the RMF round-end batch. */
+class IRoundObjectiveProgress
+{
+public:
+	virtual ~IRoundObjectiveProgress() = default;
+
+	/** Preliminary (non-final) stages Team completed this round; Round adds the final for the objective winner. */
+	virtual int32 GetCompletedPreliminaryStages(int32 Team) const = 0;
 };
 
 // ---------------------------------------------------------------------------------------------------------
@@ -357,6 +467,14 @@ struct FRoundGateways
 	ICrowdControl* Crowd = nullptr;
 	/** The P6 spawn site (optional until Preparing runs; a null spawner skips P6 spawning). */
 	IRoundStartSpawner* Spawner = nullptr;
+	/** Optional (null: no takeover or hand-back is requested). */
+	IRoundPawnControlGateway* PawnControl = nullptr;
+	/** Optional (null: no held replies, no frozen holds). */
+	IRoundCommandGateway* Commands = nullptr;
+	/** Optional (null: an informant returner waits on Penalty's own path). */
+	IInformantBodyProvider* InformantBodies = nullptr;
+	/** Optional (null: StepsCompleted counts only the objective winner's final). */
+	IRoundObjectiveProgress* ObjectiveProgress = nullptr;
 
 	/** True when all six gateways are present (the spawner is not one of them). */
 	bool IsComplete() const

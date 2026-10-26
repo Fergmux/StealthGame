@@ -1,12 +1,12 @@
 # Story 064: The last Active member of a team converting at grace expiry gives EliminationWin to the other team with ForfeitElimination
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 24a, scoped to this story:*
 
-- [ ] GIVEN the last Active member of team 1 converts at grace expiry and team 0 has >= 1 Connected Active member, THEN `EliminationWin(0)`, log `EndReason = ForfeitElimination`, `MatchScore[0]` +1, banner reason "every rival eliminated for the round".
+- [x] GIVEN the last Active member of team 1 converts at grace expiry and team 0 has >= 1 Connected Active member, THEN `EliminationWin(0)`, log `EndReason = ForfeitElimination`, `MatchScore[0]` +1, banner reason "every rival eliminated for the round".
 
 ---
 
@@ -97,7 +97,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/LastDisconnectForfeitsTest.cpp` — must exist and pass (automation test `StealthGame.Round.LastDisconnectForfeits`, class `FRoundLastDisconnectForfeitsTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.LastDisconnectForfeits`, 2026-10-26)
 
 ---
 
@@ -107,3 +107,11 @@
 - Unlocks: `production/epics/round-match-framework/story-065-forfeit-void-cases.md`, `production/epics/round-match-framework/story-066-forfeit-vs-completion.md`
 
 Cross-epic: `production/epics/session-travel` (disconnect events and `ConnectionGeneration`; stories not yet created); `production/epics/participant-state-roster` (`RequestTransition`, `ConnectedActiveCount` inputs, `ActiveCountAfter`; stories not yet created); `production/epics/crowd-npc-behaviour` (`ReleaseToCrowd`, faked here; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (EliminationWin(0), log ForfeitElimination, MatchScore[0] +1 at the expiry, public reason elimination, banner text 'every rival eliminated for the round')
+**Deviations**: The banner text table is GetRoundEndReasonText (Foundation View) until the HUD epic
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/LastDisconnectForfeitsTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - Logic, covered headless
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

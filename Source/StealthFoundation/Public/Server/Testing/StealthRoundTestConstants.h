@@ -265,6 +265,31 @@ namespace RoundTestFixtures
 
 	/** rmf-047: the clock jump of the 1v0 round, in multiples of TargetRoundMinutes. */
 	inline constexpr int32 EmptyTeamClockJumpMultiple = 10;
+
+	// --- Round-end, disconnect and forfeit fixtures (rmf-048 .. rmf-065) ----------------------------------------------
+
+	/** rmf-051: the clock jump with no items in Active (24 h). */
+	inline constexpr double NoTimerJumpSec = 24.0 * 3600.0;
+	/** rmf-053: the strike's T_v, the BushStrike's, and StrikeNetLeadSec (GDD R9: death write 0.25 s / 0.60 s after the slot). */
+	inline constexpr double StrikeTvSec = 0.40;
+	inline constexpr double BushStrikeTvSec = 0.75;
+	inline constexpr double StrikeNetLeadSec = 0.15;
+	/** rmf-053/055: Shared Character RunStopSec (the stop bound) and the Ended dwell of the round-end rig. */
+	inline constexpr double RunStopSec = 0.75;
+	/** rmf-054: the AC's fixture: team 0 two WrongTarget rows, team 1 two completed preliminary stages. */
+	inline constexpr int32 SummaryTeam0WrongTargets = 2;
+	inline constexpr int32 SummaryTeam1PreliminaryStages = 2;
+	/** rmf-060: Session F2's Soft detection latency bounds (L_min, L_max) at the defaults. */
+	inline constexpr double SoftDetectMinSec = 3.0;
+	inline constexpr double SoftDetectMaxSec = 3.3;
+	/** rmf-060..065: the disconnect instant after Active entry and the rejoin margin before GraceExpiry (AC 23a). */
+	inline constexpr double DisconnectAfterActiveSec = 20.0;
+	inline constexpr double RejoinBeforeExpirySec = 1.0;
+	/** rmf-061/062: the bound pawn id of the fixture participant and the taken NPC's card (C1 takeover). */
+	inline constexpr uint32 FixtureBoundPawnId = 77;
+	inline constexpr uint16 FixtureTakenNpcCard = 31;
+	/** rmf-058: the lobby travel bound of the reset rig (Session TravelLoadTimeoutSec). */
+	inline constexpr double ResetTravelLoadTimeoutSec = 60.0;
 }
 
 #endif // WITH_STEALTH_TEST_SEAMS

@@ -130,6 +130,7 @@ bool FRoundStartRollbackTest::RunTest(const FString& Parameters)
 		Rig.Fakes.Session.Script(TEXT("SetAdmissionMode"), 0, 2);
 		Rig.Fakes.Roster.Script(TEXT("SetTeamsLocked"), static_cast<int64>(ERosterResult::Applied));
 		TestTrue(TEXT("reset in Ended executes"), Rig.Core->ExecuteHostCommand(FRoundExitBRig::HostCaller(), ERoundHostCommand::Reset) == ERoundCommandResult::Executed);
+		Rig.Core->NotifyLobbyTravelComplete(); // Session: every participant terminal (R10 (7), story rmf-058)
 		Rig.Core->Tick();
 		TestTrue(TEXT("Reset completed into Lobby"), Rig.Core->GetPhase() == ERoundPhase::Lobby);
 		TestEqual(TEXT("Reset never calls ResetAll"), Rig.CountSince(Mark, TEXT("ResetAll")), 0);

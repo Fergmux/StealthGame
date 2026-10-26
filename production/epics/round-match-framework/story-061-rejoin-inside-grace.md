@@ -1,12 +1,12 @@
 # Story 061: A rejoin 1 s before grace expiry keeps the participant Active and repossesses the same pawn
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 23a, scoped to this story:*
 
-- [ ] GIVEN a rejoin 1 s before grace expiry (fake clock), THEN the participant stays Active and repossesses the same pawn id.
+- [x] GIVEN a rejoin 1 s before grace expiry (fake clock), THEN the participant stays Active and repossesses the same pawn id.
 
 ---
 
@@ -92,7 +92,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/RejoinInsideGraceTest.cpp` — must exist and pass (automation test `StealthGame.Round.RejoinInsideGrace`, class `FRoundRejoinInsideGraceTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.RejoinInsideGrace`, 2026-10-26)
 
 ---
 
@@ -102,3 +102,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/session-travel` (`OnParticipantRejoined`, acknowledgement; stories not yet created); `production/epics/participant-state-roster` (state stays `Active`, bindings; stories not yet created); `production/epics/crowd-npc-behaviour` (hand-back request, faked here; stories not yet created); `production/epics/shared-character-locomotion` (hand-over pass and possession; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (Active, no transition, timer cancelled, one hand-back for the same pawn id, no spawn/bind/card)
+**Deviations**: None
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/RejoinInsideGraceTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: PASS - PIE rejoin inside grace keeps the Active role (see evidence)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

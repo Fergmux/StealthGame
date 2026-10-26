@@ -1,12 +1,12 @@
 # Story 052: An objective-win latch is also the round-end step: result, score, EndRoundAll, rejections and PostRound viewers
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 12a, scoped to this story:*
 
-- [ ] GIVEN a latch by an objective win, THEN in the latch step (which is also the round-end step) `FRoundResult` has no duration field, `MatchScore[Winner]` rose by exactly 1, `EndRoundAll` ran once and produced no evaluation, every pending item is `Rejected_Latched`, `OnRoundEnded` fired once and every viewer resolves as `PostRound`.
+- [x] GIVEN a latch by an objective win, THEN in the latch step (which is also the round-end step) `FRoundResult` has no duration field, `MatchScore[Winner]` rose by exactly 1, `EndRoundAll` ran once and produced no evaluation, every pending item is `Rejected_Latched`, `OnRoundEnded` fired once and every viewer resolves as `PostRound`.
 
 ---
 
@@ -102,7 +102,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/EndedLatchEffectsTest.cpp` (automation test `StealthGame.Round.EndedLatchEffects`, class `FRoundEndedLatchEffectsTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.EndedLatchEffects`, 2026-10-26)
 
 ---
 
@@ -111,3 +111,11 @@
 - Depends on: `production/epics/round-match-framework/story-042-active-gate.md`, `production/epics/round-match-framework/story-043-no-draw-property.md`
 - Unlocks: `production/epics/round-match-framework/story-053-strike-win-staging.md`, `production/epics/round-match-framework/story-054-team-summary-at-ended.md`, `production/epics/round-match-framework/story-055-ended-hold.md`, `production/epics/round-match-framework/story-078-hand-over-pawn-stops-at-end.md`, `production/epics/round-match-framework/story-085-pie-lifecycle-objective-and-reset.md`, `production/epics/round-match-framework/story-092-round-end-step-budget.md`
 - Cross-epic: `production/epics/participant-state-roster` (`EndRoundAll()` and the `RoundEnded` batch event, via the fake Roster gateway; stories not yet created), `production/epics/crowd-npc-behaviour` (`ICrowdControl::Halt()` hook, via the fake Crowd gateway; stories not yet created), `production/epics/input-interaction-framework` (the held `NotNow` replies and the command-rejection class `RoundEnded`; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (no duration field by reflection; score +1; EndRoundAll once, batch event not evaluated; pending items Rejected_Latched; OnRoundEnded once; every viewer PostRound; second latch re-runs nothing)
+**Deviations**: The round-end step lives in FRoundMatchCore::RunRoundEndStep with FRoundEndStepRunner as ITerminalDecision (no separate RoundEndStep.h); the viewer class is Round's GetViewerClass input (no Visibility Policy exists yet)
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/EndedLatchEffectsTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: Observed in PIE (strike win and objective win, see evidence)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

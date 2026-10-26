@@ -1,12 +1,12 @@
 # Story 053: A strike win latches server-only first and presents the result at the deciding strike's death write
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 12c, scoped to this story:*
 
-- [ ] GIVEN a latch by a strike with `T_v` 0.40 s and `StrikeNetLeadSec` 0.15 s (and a second run with a `BushStrike`, 0.75 s), WHEN the server steps are recorded, THEN in the latch step only `Terminated`, the queue close and `Rejected_Latched` results occur; between the latch and the death write the replicated `FRoundPublicState` is unchanged (phase `Active`, score unchanged), no Roster record is `RoundEnded`, the Crowd spy received no stop or Halt, no `FHoldStatus` cancel and no `NotNow` reply is sent, and pawn velocities are unchanged by Round; a command submitted in that window returns `Rejected_Latched`; AND in the server step of the death write the phase `Ended`, `FRoundResult`, `MatchScore[Winner]` + 1, `EndRoundAll`, Halt, one stop request per pawn, every hold cancel and the held replies all occur, and `EndedMinDwellSec` counts from that step; AND an earlier strike's death write due after that step still writes `FDeathState`.
+- [x] GIVEN a latch by a strike with `T_v` 0.40 s and `StrikeNetLeadSec` 0.15 s (and a second run with a `BushStrike`, 0.75 s), WHEN the server steps are recorded, THEN in the latch step only `Terminated`, the queue close and `Rejected_Latched` results occur; between the latch and the death write the replicated `FRoundPublicState` is unchanged (phase `Active`, score unchanged), no Roster record is `RoundEnded`, the Crowd spy received no stop or Halt, no `FHoldStatus` cancel and no `NotNow` reply is sent, and pawn velocities are unchanged by Round; a command submitted in that window returns `Rejected_Latched`; AND in the server step of the death write the phase `Ended`, `FRoundResult`, `MatchScore[Winner]` + 1, `EndRoundAll`, Halt, one stop request per pawn, every hold cancel and the held replies all occur, and `EndedMinDwellSec` counts from that step; AND an earlier strike's death write due after that step still writes `FDeathState`.
 
 ---
 
@@ -100,7 +100,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/StrikeWinStagingTest.cpp` — must exist and pass (automation test `StealthGame.Round.StrikeWinStaging`, class `FRoundStrikeWinStagingTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.StrikeWinStaging`, 2026-10-26)
 
 ---
 
@@ -110,3 +110,11 @@
 - Unlocks: `production/epics/round-match-framework/story-056-round-ended-arrival-order.md`, `production/epics/round-match-framework/story-092-round-end-step-budget.md`
 
 Cross-epic: `production/epics/participant-state-roster` (`EndRoundAll`, `RoundEnded` records; stories not yet created); `production/epics/input-interaction-framework` (held `NotNow` replies, `FHoldStatus` cancel, resolver registration; stories not yet created); `production/epics/shared-character-locomotion` (kind-blind stop-and-blend path; stories not yet created); `production/epics/crowd-npc-behaviour` (`ICrowdControl::Halt()`, spied here; stories not yet created); `production/epics/tuning-data-config` (`EndedMinDwellSec`, module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (T_v 0.40 and BushStrike 0.75: latch step only, nothing observable until the death write; the death write's step runs (a)-(h); dwell from it; an earlier death write still applies after Ended)
+**Deviations**: Carried the ADR-0002 s6 staging pass and the s8.3 binding in FResolutionQueueCore (no Foundation story delivered them, the Open item); FRoundEndPayload amended (bStrikeDecided, DecidingVictim, FallbackDeferSec); prototype strikes outside the queue defer the round-end step by AdapterStrikeRoundEndDelaySec (0.25 s)
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/StrikeWinStagingTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: PASS - 3-player PIE strike win: latched at 36.733 s, Ended at 37.066 s (the first ~0.33 s PIE frame at or after the 0.25 s stand-in death write; see evidence)
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

@@ -178,7 +178,7 @@ NETWORK_TEST_CLASS(MatchScopeSurvivesTravel, "StealthGame.Round.PIE")
 				const URoundMatchStore* Round = URoundMatchStore::Get(Server.World);
 				return Round != nullptr && Round->GetPhase() == ERoundPhase::Lobby && Ids.Num() == ClientCount + 1;
 			})
-			.ThenServer(TEXT("capture the lobby"), [this](FBasePIENetworkComponentState& Server) { Lobby0 = Capture(Server.World); });
+			.ThenServer(TEXT("capture the lobby"), [this](FBasePIENetworkComponentState& Server) { Lobby0 = MatchScopeSurvivesTravelTestData::Capture(Server.World); });
 
 		PlayRound(1, Ended1);
 
@@ -203,7 +203,7 @@ NETWORK_TEST_CLASS(MatchScopeSurvivesTravel, "StealthGame.Round.PIE")
 			GEngine->DestroyWorldContext(Scratch);
 			Scratch->DestroyWorld(false);
 
-			const FMatchScope AfterTravel = Capture(Server.World);
+			const FMatchScope AfterTravel = MatchScopeSurvivesTravelTestData::Capture(Server.World);
 			ASSERT_THAT(IsTrue(AfterTravel.Score[0] == Ended1.Score[0] && AfterTravel.Score[1] == Ended1.Score[1], TEXT("MatchScore persists")));
 			ASSERT_THAT(AreEqual(Ended1.RoundsPlayed, AfterTravel.RoundsPlayed, TEXT("RoundsPlayedCount persists")));
 			ASSERT_THAT(AreEqual(Ended1.HostId, AfterTravel.HostId, TEXT("the host id persists")));
@@ -220,7 +220,7 @@ NETWORK_TEST_CLASS(MatchScopeSurvivesTravel, "StealthGame.Round.PIE")
 
 		Network.ThenServer(TEXT("round 2: the match scope accumulated, the epoch advanced once more"), [this](FBasePIENetworkComponentState& Server)
 		{
-			const FMatchScope AfterTravel = Capture(Server.World);
+			const FMatchScope AfterTravel = MatchScopeSurvivesTravelTestData::Capture(Server.World);
 			ASSERT_THAT(IsTrue(Ended2.Score[0] == 1 && Ended2.Score[1] == 1, TEXT("MatchScore carried across the travel and added round 2")));
 			ASSERT_THAT(AreEqual(2u, Ended2.RoundsPlayed, TEXT("RoundsPlayedCount 2")));
 			ASSERT_THAT(AreEqual(Lobby0.HostId, Ended2.HostId, TEXT("the host id is kept")));

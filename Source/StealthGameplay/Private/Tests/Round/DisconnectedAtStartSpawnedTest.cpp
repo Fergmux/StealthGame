@@ -77,6 +77,7 @@ bool FRoundDisconnectedAtStartSpawnedTest::RunTest(const FString& Parameters)
 		FQueueOnRigClock Queue(Rig);
 		Rig.OpenLobby();
 		Rig.SetLayout(Layout2v2.Team0, Layout2v2.Team1);
+		Rig.Fakes.Roster.SetAllStates(EParticipantState::Active);
 		Rig.EnterPreparing();
 		Rig.Clock.AdvanceSeconds(GraceDisconnectedBeforeStartSec);
 		Rig.Fakes.Session.ConnectionStates[Away.Value] = ERoundConnectionState::Disconnected;
@@ -103,6 +104,7 @@ bool FRoundDisconnectedAtStartSpawnedTest::RunTest(const FString& Parameters)
 
 		// The timer fires at GraceExpiry, not before: the inline Disconnect transition is the observable effect.
 		Rig.Fakes.Roster.Script(TEXT("RequestTransition"), static_cast<int64>(ERosterResult::Applied));
+		Rig.Fakes.Roster.Script(TEXT("ReleaseToCrowd"), static_cast<int64>(ERosterResult::Applied)); // R17.4 (story rmf-060)
 		RunUntil(Rig, *Queue.Queue, ActivePhaseStart + GEff - RigFrameSec);
 		TestEqual(TEXT("no conversion before GraceExpiry"), Rig.CountSince(0, TEXT("RequestTransition")), 0);
 		RunUntil(Rig, *Queue.Queue, ActivePhaseStart + GEff);
@@ -120,6 +122,7 @@ bool FRoundDisconnectedAtStartSpawnedTest::RunTest(const FString& Parameters)
 		FQueueOnRigClock Queue(Rig);
 		Rig.OpenLobby();
 		Rig.SetLayout(Layout2v2.Team0, Layout2v2.Team1);
+		Rig.Fakes.Roster.SetAllStates(EParticipantState::Active); // the disconnect policy converts Active members (story rmf-060)
 		Rig.EnterPreparing();
 		Rig.RunPreparingToActive();
 		const double ActivePhaseStart = Rig.Core->GetActivePhaseStart();
@@ -133,6 +136,7 @@ bool FRoundDisconnectedAtStartSpawnedTest::RunTest(const FString& Parameters)
 				ActivePhaseStart + GraceDisconnectAfterStartSec + GEff);
 		}
 		Rig.Fakes.Roster.Script(TEXT("RequestTransition"), static_cast<int64>(ERosterResult::Applied));
+		Rig.Fakes.Roster.Script(TEXT("ReleaseToCrowd"), static_cast<int64>(ERosterResult::Applied)); // R17.4 (story rmf-060)
 		RunUntil(Rig, *Queue.Queue, ActivePhaseStart + GraceDisconnectAfterStartSec + GEff - RigFrameSec);
 		TestEqual(TEXT("case 2: no conversion before GraceExpiry"), Rig.CountSince(0, TEXT("RequestTransition")), 0);
 		RunUntil(Rig, *Queue.Queue, ActivePhaseStart + GraceDisconnectAfterStartSec + GEff);

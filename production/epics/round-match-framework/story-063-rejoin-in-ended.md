@@ -1,12 +1,12 @@
 # Story 063: A rejoin during Ended is admitted with no pawn, no transition and bIsSpectator false
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 23c, scoped to this story:*
 
-- [ ] GIVEN a rejoin during `Ended`, THEN admitted, no pawn, no transition, `bIsSpectator` false.
+- [x] GIVEN a rejoin during `Ended`, THEN admitted, no pawn, no transition, `bIsSpectator` false.
 
 ---
 
@@ -92,7 +92,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/RejoinInEndedTest.cpp` — must exist and pass (automation test `StealthGame.Round.RejoinInEnded`, class `FRoundRejoinInEndedTest`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.RejoinInEnded`, 2026-10-26)
 
 ---
 
@@ -102,3 +102,11 @@
 - Unlocks: None
 
 Cross-epic: `production/epics/session-travel` (rejoin admission and `ShouldAdmitExpired` call; stories not yet created); `production/epics/participant-state-roster` (`RoundEnded` records, no transition; stories not yet created); `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (ShouldAdmitExpired true; no pawn, transition, Crowd or spectator call; no log entry)
+**Deviations**: Round writes no Rejoined entry in Ended (Open item)
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/RejoinInEndedTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - Logic, covered headless
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md

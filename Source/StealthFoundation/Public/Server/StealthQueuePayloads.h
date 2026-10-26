@@ -239,7 +239,7 @@ struct FQueueItem
 };
 
 // ---------------------------------------------------------------------------------------------------------
-// Staged writes (ADR-0002 section 6; the staging pass is a later Exit A story)
+// Staged writes (ADR-0002 section 6; the staging pass and the 8.3 binding: story rmf-053)
 // ---------------------------------------------------------------------------------------------------------
 
 /** DeathWrite (meaning, times and applier: ADR-0018). */
@@ -261,6 +261,16 @@ struct FRoundEndPayload
 {
 	/** The deciding slot's key (the latch's TerminalKey). */
 	FQueueKey TerminalKey;
+	/**
+	 * The deciding transition has a strike reason (Assassinated, ReversedAgainst, StrikeLimit): when the slot staged no
+	 * DeathWrite the queue applies the section 8.3 fallback binding instead of consuming the step inline. Amendment of
+	 * the RMF round-end batch (story rmf-053), recorded in the decision log.
+	 */
+	bool bStrikeDecided = false;
+	/** Fallback binding: the deciding participant's pawn (unset when unknown). */
+	FPawnHandle DecidingVictim;
+	/** Fallback binding with no matching death write: defer this long from the slot (StrikeNetLeadSec). */
+	double FallbackDeferSec = 0.0;
 };
 
 /** One typed staged write; CauseKey is the staging slot's RootCauseKey. */

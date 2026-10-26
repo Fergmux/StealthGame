@@ -12,3 +12,13 @@ const TCHAR* LexRoundPhase(ERoundPhase Phase)
 	default: return TEXT("Unknown");
 	}
 }
+
+FText GetRoundEndReasonText(uint8 PublicReason)
+{
+	switch (PublicReason)
+	{
+	case RoundPublicReason::Objective: return NSLOCTEXT("StealthRound", "ReasonObjective", "completed the final objective");
+	case RoundPublicReason::Elimination: return NSLOCTEXT("StealthRound", "ReasonElimination", "every rival eliminated for the round");
+	default: return FText::GetEmpty();
+	}
+}

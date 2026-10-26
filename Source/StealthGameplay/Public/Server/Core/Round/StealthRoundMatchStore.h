@@ -54,6 +54,7 @@ public:
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnRoundPhaseChanged, ERoundPhase /*Old*/, ERoundPhase /*New*/);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnRoundActive, uint32 /*RoundEpoch*/, double /*ActivePhaseStart*/);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundHostMessage, const FString& /*Message*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundEnded, const FRoundResult& /*Result*/);
 
 /**
  * URoundMatchStore: the game-instance facade over FRoundMatchCore (ADR-0005 section 2: one of the four stores, it
@@ -157,6 +158,8 @@ public:
 	FOnRoundPhaseChanged OnPhaseChanged;
 	/** R7 OnRoundActive(RoundEpoch, ActivePhaseStart): once per round, in the Active-entry step. */
 	FOnRoundActive OnRoundActive;
+	/** R9 (e) OnRoundEnded(Result): once per round, in the round-end step (after EndRoundAll and the held replies). */
+	FOnRoundEnded OnRoundEnded;
 	/** Host-only messages (refusals and command results) for the host's HUD and log. */
 	FOnRoundHostMessage OnHostMessage;
 

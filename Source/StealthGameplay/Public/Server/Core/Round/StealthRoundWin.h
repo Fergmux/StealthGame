@@ -130,8 +130,59 @@ struct FRoundObjectiveCompletion
 	bool IsValid() const { return bCompleterActive && bCompleterConnected && bHumanControlled && bCompleterOnTeam && bSiteLive; }
 };
 
+/**
+ * The final completion's validity (F2 Valid(i), R13, R15; story rmf-049): one closed code per failure, shared by Round's
+ * DeclareObjectiveWin path and the Objectives resolver. Values are stable: append only.
+ */
+enum class ERoundCompletionValidity : uint8
+{
+	Valid,
+	/** The completer is not a rostered participant. */
+	NotRostered,
+	/** The completer is not on the completing team. */
+	WrongTeam,
+	/** The completer is an Informant (or out of the round). */
+	CompleterInformant,
+	/** The completer disconnected earlier in this same server tick (the disconnect's key precedes the completion). */
+	CompleterDisconnectedThisTick,
+	/** The completer is Disconnected. */
+	CompleterDisconnected,
+	/** The completer's pawn is AI-driven (grace, Unresponsive hand-over, or a control change since the hold's Begin). */
+	CompleterAiDriven,
+	/** The site is not live or already completed. */
+	SiteNotLive,
+};
+
+/**
+ * R13 "human-controlled": the pawn's control epoch at the hold's Begin and now, and whether a hand-over is pending
+ * (ADR-0020 section 5.4 (c), ADR-0010 section 4.4). Supplied by the pawn-control view; never a controller or PlayerState.
+ */
+struct FRoundCompleterControl
+{
+	uint32 BeginControlEpoch = 0;
+	uint32 CurrentControlEpoch = 0;
+	bool bHandOverPending = false;
+
+	bool IsHumanControlled() const { return BeginControlEpoch == CurrentControlEpoch && !bHandOverPending; }
+};
+
+/** The completer facts Valid(i) reads (Round fills them from the Roster, Session and its own takeover table). */
+struct FRoundCompleterFacts
+{
+	bool bRostered = false;
+	bool bOnTeam = false;
+	EParticipantState State = EParticipantState::RoundEnded;
+	bool bConnected = false;
+	bool bDisconnectedThisTick = false;
+	bool bAiDriven = false;
+	FRoundCompleterControl Control;
+};
+
 namespace StealthRoundWin
 {
+	/** F2 Valid(i) over the completer facts: the first failing clause's code, in the enum's order, else Valid. */
+	STEALTHGAMEPLAY_API ERoundCompletionValidity ValidateCompleter(const FRoundCompleterFacts& Facts);
+
 	/** The reason partition (F2): Decision, Expiry, Kick are disjoint. */
 	STEALTHGAMEPLAY_API bool IsDecision(const FRoundTransitionEvent& E);
 	STEALTHGAMEPLAY_API bool IsExpiry(const FRoundTransitionEvent& E);

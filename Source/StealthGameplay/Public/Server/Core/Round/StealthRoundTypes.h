@@ -152,6 +152,20 @@ struct FRoundRuleParams
 	double DisconnectGraceSec = 30.0;
 	/** F4: Session's RejoinWindowSec (default 120). */
 	double RejoinWindowSec = 120.0;
+	/** R9 (h): Ended leaves on its own this long after the round-end step (0 = only the host reset; never before EndedMinDwellSec). */
+	double EndedAutoResetSec = 0.0;
+	/** R17.1: an Unresponsive Active participant's pawn is AI-driven (provisional, default on). */
+	bool bHandOverOnUnresponsive = true;
+	/** R9 (f): the bound of every round-end stop request (Shared Character RunStopSec, default 0.75). */
+	double RunStopSec = 0.75;
+	/** ADR-0002 8.3 fallback: a strike-decided round-end with no death write is deferred this long (Assassination StrikeNetLeadSec, 0.15). */
+	double StrikeNetLeadSec = 0.15;
+	/**
+	 * The prototype strike adapter (outside the queue until the Assassination epic routes strikes through it): a
+	 * strike-decided round-end runs this long after the latch, the death-write offset T_v - StrikeNetLeadSec at defaults
+	 * (0.40 - 0.15 = 0.25 s, R9). Not a design key: it goes when strikes stage their own DeathWrite.
+	 */
+	double AdapterStrikeRoundEndDelaySec = 0.25;
 };
 
 /** Who issued a host command (R22: net mode listen server or standalone, a local controller, ParticipantId == HostId). */

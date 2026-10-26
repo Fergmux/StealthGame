@@ -628,10 +628,15 @@ void AStealthGameMode::HandleRoundEnded()
 		It->StopDefence();
 	}
 
-	const FText ReasonText = Reason == EStealthWinReason::FinalObjective
-		? LOCTEXT("ReasonObjective", "completed the final objective")
-		: LOCTEXT("ReasonElimination", "eliminated every active enemy");
-	MessageAll(FText::Format(LOCTEXT("RoundWon", "{0} win: they {1}."), GetTeamName(WinningTeam), ReasonText), false, Settings->RoundRestartDelay);
+	// The approved reason phrasing (HUD-E18; a forfeit shows the elimination text) and the R9 TeamSummary lines (HUD-E21).
+	const FText ReasonText = GetRoundEndReasonText(Result.PublicReason);
+	const auto SummaryLine = [&Result, this](uint8 Team)
+	{
+		const FRoundTeamSummary& Summary = Result.TeamSummary[Team];
+		return FText::Format(LOCTEXT("RoundSummaryLine", "{0}: steps {1} of 3, eliminated {2}, wrong targets {3}"), GetTeamName(Team),
+			FText::AsNumber(Summary.StepsCompleted), FText::AsNumber(Summary.EliminatedCount), FText::AsNumber(Summary.WrongTargetCount));
+	};
+	MessageAll(FText::Format(LOCTEXT("RoundWon", "{0} win: {1}.\n{2}\n{3}"), GetTeamName(WinningTeam), ReasonText, SummaryLine(0), SummaryLine(1)), false, Settings->RoundRestartDelay);
 	UE_LOG(LogStealth, Log, TEXT("Round over: team %d wins (%s)."), WinningTeam, Reason == EStealthWinReason::FinalObjective ? TEXT("objective") : TEXT("elimination"));
 
 	GetWorldTimerManager().SetTimer(RoundRestartTimer, this, &AStealthGameMode::RequestRoundReset, Settings->RoundRestartDelay, false);

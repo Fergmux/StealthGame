@@ -9,8 +9,17 @@
 
 #if WITH_STEALTH_TEST_SEAMS
 
+#include "Server/Queue/StealthStagedWriteApplier.h"
 #include "Server/Testing/StealthQueueTestRig.h"
 #include "StealthRoundExitBTestRig.h"
+
+/** Applies (counts) the strike stub's death writes, so a strike-decided round-end binds and runs in the same drain. */
+class FRoundWinQueueDeathApplier final : public IStagedWriteApplier
+{
+public:
+	int32 Applied = 0;
+	virtual void ApplyStagedWrite(const FStagedWrite& Write) override { ++Applied; }
+};
 
 struct FRoundWinQueueRig
 {
@@ -19,6 +28,7 @@ struct FRoundWinQueueRig
 	TUniquePtr<FResolutionQueueCore> Queue;
 	FStealthStubResolver Strikes;
 	FStealthStubResolver Completions;
+	FRoundWinQueueDeathApplier Deaths;
 
 	/** Strike tag -> (attacker, victim) participant values. */
 	TMap<uint32, TPair<uint32, uint32>> StrikeTargets;
@@ -37,6 +47,7 @@ struct FRoundWinQueueRig
 		Queue = MakeUnique<FResolutionQueueCore>(Deps);
 		Queue->RegisterResolver(EQueueItemType::PawnCommand, &Strikes);
 		Queue->RegisterResolver(EQueueItemType::HoldTimer, &Completions);
+		Queue->RegisterStagedWriteApplier(EStagedWriteType::DeathWrite, &Deaths);
 		Rig.Core->SetRoundQueue(Queue.Get());
 
 		// The strike stub: re-validates the attacker, removes the victim (the Roster transition), and the Roster flush of
@@ -48,6 +59,12 @@ struct FRoundWinQueueRig
 			{
 				return EResolveResult::Voided;
 			}
+			// The victim's death write at the slot's own time (no presentation lead in these ordering tests): a deciding
+			// strike's round-end step binds to it and runs in this drain's staging pass (ADR-0002 8.3, story rmf-053).
+			FStagedWrite Death;
+			Death.Type = EStagedWriteType::DeathWrite;
+			Death.ServerTime = Rig.Clock.GetServerTimeSeconds();
+			Queue->StageWrite(Death);
 			Kill(Target->Value, ERosterReason::Assassinated);
 			return EResolveResult::Executed;
 		};

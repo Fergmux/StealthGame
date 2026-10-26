@@ -5,6 +5,7 @@
 #include "Server/EventLog/StealthRoundLogWriter.h"
 #include "Server/Queue/StealthEventFlushBarrier.h"
 #include "Server/Queue/StealthQueueResolver.h"
+#include "Server/Queue/StealthStagedWriteApplier.h"
 #include "Server/Random/StealthSecretStream.h"
 #include "Server/Random/StealthServerSeeds.h"
 #include "Server/StealthClock.h"
@@ -93,7 +94,39 @@ void FResolutionQueueCore::ClearRegistrations()
 	{
 		Resolver = nullptr;
 	}
+	for (IStagedWriteApplier*& Applier : Appliers)
+	{
+		Applier = nullptr;
+	}
 	FlushBarrier = nullptr;
+	TerminalDecision = nullptr;
+}
+
+bool FResolutionQueueCore::RegisterStagedWriteApplier(EStagedWriteType Type, IStagedWriteApplier* Applier)
+{
+	if (Type == EStagedWriteType::RoundEndStep)
+	{
+		ReportFault(EStealthFault::QueueMisuse, static_cast<int64>(EStealthQueueMisuse::RoundEndApplierRegistration));
+		return false;
+	}
+	if (Applier == nullptr)
+	{
+		ReportFault(EStealthFault::QueueMisuse, static_cast<int64>(EStealthQueueMisuse::NullRegistration));
+		return false;
+	}
+	IStagedWriteApplier*& Slot_ = Appliers[static_cast<int32>(Type)];
+	if (Slot_ != nullptr)
+	{
+		ReportFault(EStealthFault::QueueDuplicateRegistration, 0x200 + static_cast<int64>(Type));
+		return false;
+	}
+	Slot_ = Applier;
+	return true;
+}
+
+void FResolutionQueueCore::UnregisterStagedWriteApplier(EStagedWriteType Type)
+{
+	Appliers[static_cast<int32>(Type)] = nullptr;
 }
 
 IQueueResolver* FResolutionQueueCore::FindResolver(const FQueueItem& Item) const
@@ -189,6 +222,19 @@ int32 FResolutionQueueCore::GetPendingMailboxItemCount() const
 	return Count;
 }
 
+void FResolutionQueueCore::GetPendingTimerKinds(TArray<ETimerKind>& OutKinds) const
+{
+	OutKinds.Reset();
+	for (const FDueEntry& Entry : DueHeap)
+	{
+		const FTimerPayload* Timer = Entry.Pending.Item.Type == EQueueItemType::TimerFired ? Entry.Pending.Item.Payload.TryGet<FTimerPayload>() : nullptr;
+		if (Timer != nullptr)
+		{
+			OutKinds.Add(Timer->Kind);
+		}
+	}
+}
+
 TOptional<FQueueKey> FResolutionQueueCore::GetKey(FQueueItemHandle Handle) const
 {
 	const FRecentKey& Recent = RecentKeys[static_cast<int32>(Handle.Id % RecentKeyCount)];
@@ -248,6 +294,9 @@ void FResolutionQueueCore::Drain()
 
 	Stamped.Reset();
 	bDraining = false;
+
+	// 6. The staging pass, in the same tick function immediately after the drain (ADR-0002 section 6).
+	RunStagingPass();
 }
 
 FQueueKey FResolutionQueueCore::StampNext(const FPendingItem& Pending, const FQueueKey* RootCause)
@@ -446,8 +495,160 @@ void FResolutionQueueCore::EndSlot()
 			ReportFault(EStealthFault::QueueFlushIncomplete, static_cast<int64>(Slot.Key.Seq));
 		}
 	}
+	const int32 RoundEndIndex = Slot.RoundEndIndex;
 	bInSlot = false;
 	FollowOnDepth = 0;
+	if (RoundEndIndex != INDEX_NONE)
+	{
+		BindRoundEndStep(RoundEndIndex);
+	}
+}
+
+bool FResolutionQueueCore::StageWrite(const FStagedWrite& Write)
+{
+	if (!bInSlot)
+	{
+		ReportFault(EStealthFault::QueueMisuse, static_cast<int64>(EStealthQueueMisuse::StageWriteOutsideSlot));
+		return false;
+	}
+	FStagedWrite& Staged = StagedWrites.Add_GetRef(Write);
+	Staged.CauseKey = Slot.RootCauseKey;
+	Staged.Expected = Deps.Epoch->GetCurrentEpoch();
+	if (Write.Type == EStagedWriteType::RoundEndStep)
+	{
+		if (Slot.RoundEndIndex != INDEX_NONE)
+		{
+			// One RoundEndStep per deciding slot (section 8.3): a second one is a defect and is dropped.
+			StagedWrites.Pop();
+			ReportFault(EStealthFault::QueueMisuse, static_cast<int64>(EStealthQueueMisuse::RoundEndFallbackBinding));
+			return false;
+		}
+		Slot.RoundEndIndex = StagedWrites.Num() - 1;
+	}
+	return true;
+}
+
+void FResolutionQueueCore::BindRoundEndStep(int32 Index)
+{
+	if (!StagedWrites.IsValidIndex(Index) || StagedWrites[Index].Type != EStagedWriteType::RoundEndStep)
+	{
+		return;
+	}
+	FStagedWrite& RoundEnd = StagedWrites[Index];
+	const FRoundEndPayload* Payload = RoundEnd.Payload.TryGet<FRoundEndPayload>();
+	// (1) A strike decided the round: the latest DeathWrite this slot staged (bound by CauseKey, not by time equality).
+	double Latest = -1.0;
+	for (const FStagedWrite& Write : StagedWrites)
+	{
+		if (Write.Type == EStagedWriteType::DeathWrite && Write.CauseKey == RoundEnd.CauseKey)
+		{
+			Latest = FMath::Max(Latest, Write.ServerTime);
+		}
+	}
+	if (Latest >= 0.0)
+	{
+		RoundEnd.ServerTime = Latest;
+		return;
+	}
+	// (2) A strike reason without a death write of the slot (only after a CascadeOverflow): the fallback, in every build.
+	if (Payload != nullptr && Payload->bStrikeDecided)
+	{
+		ReportFault(EStealthFault::QueueMisuse, static_cast<int64>(EStealthQueueMisuse::RoundEndFallbackBinding));
+		double VictimLatest = -1.0;
+		if (Payload->DecidingVictim.Pawn.IsValid())
+		{
+			for (const FStagedWrite& Write : StagedWrites)
+			{
+				const FDeathWritePayload* Death = Write.Type == EStagedWriteType::DeathWrite ? Write.Payload.TryGet<FDeathWritePayload>() : nullptr;
+				if (Death != nullptr && Death->Victim == Payload->DecidingVictim)
+				{
+					VictimLatest = FMath::Max(VictimLatest, Write.ServerTime);
+				}
+			}
+		}
+		RoundEnd.ServerTime = VictimLatest >= 0.0 ? VictimLatest : DrainStartTime + Payload->FallbackDeferSec;
+		return;
+	}
+	// (3) Objective win, forfeit, debug win: the round-end step is the latch step, consumed inline at slot end.
+	const FStagedWrite Inline = RoundEnd;
+	StagedWrites.RemoveAt(Index);
+	ApplyStaged(Inline);
+}
+
+void FResolutionQueueCore::RunStagingPass()
+{
+	if (bInSlot)
+	{
+		ReportFault(EStealthFault::QueueMisuse, static_cast<int64>(EStealthQueueMisuse::StageWriteOutsideSlot));
+		return;
+	}
+	if (StagedWrites.Num() == 0)
+	{
+		return;
+	}
+	const int64 LimitUs = ToMicroseconds(Deps.Clock->GetServerTimeSeconds()) + ToMicroseconds(DueEpsilonSec);
+	TArray<FStagedWrite, TInlineAllocator<8>> Due;
+	for (int32 Index = 0; Index < StagedWrites.Num();)
+	{
+		if (ToMicroseconds(StagedWrites[Index].ServerTime) <= LimitUs)
+		{
+			Due.Add(StagedWrites[Index]);
+			StagedWrites.RemoveAt(Index);
+		}
+		else
+		{
+			++Index;
+		}
+	}
+	Algo::StableSort(Due, [](const FStagedWrite& A, const FStagedWrite& B)
+	{
+		if (A.ServerTime != B.ServerTime)
+		{
+			return A.ServerTime < B.ServerTime;
+		}
+		if (A.CauseKey != B.CauseKey)
+		{
+			return A.CauseKey < B.CauseKey;
+		}
+		return static_cast<uint8>(A.Type) < static_cast<uint8>(B.Type);
+	});
+	for (const FStagedWrite& Write : Due)
+	{
+		// Dropped on Reset by epoch mismatch (ADR-0002 section 6), re-read per write: an applied write may reset the round.
+		if (Write.Expected == Deps.Epoch->GetCurrentEpoch())
+		{
+			ApplyStaged(Write);
+		}
+	}
+}
+
+void FResolutionQueueCore::ApplyStaged(const FStagedWrite& Write)
+{
+	if (Write.Type == EStagedWriteType::RoundEndStep)
+	{
+		const FRoundEndPayload* Payload = Write.Payload.TryGet<FRoundEndPayload>();
+		if (TerminalDecision == nullptr || Payload == nullptr)
+		{
+			ReportFault(EStealthFault::QueueMisuse, static_cast<int64>(EStealthQueueMisuse::StagedWriteNoApplier));
+			return;
+		}
+		TerminalDecision->RunRoundEndStep(*Payload);
+	}
+	else
+	{
+		IStagedWriteApplier* Applier = Appliers[static_cast<int32>(Write.Type)];
+		if (Applier == nullptr)
+		{
+			ReportFault(EStealthFault::QueueMisuse, static_cast<int64>(EStealthQueueMisuse::StagedWriteNoApplier));
+			return;
+		}
+		Applier->ApplyStagedWrite(Write);
+	}
+	// The barrier runs after every applied write that may mutate the Roster (EndRoundAll raises batch events).
+	if (FlushBarrier != nullptr)
+	{
+		FlushBarrier->FlushPending();
+	}
 }
 
 void FResolutionQueueCore::RunSlot(const FStampedItem& Current)
@@ -633,6 +834,7 @@ void FResolutionQueueCore::ResetForNewRound()
 		Recent = FRecentKey();
 	}
 	ParkedHostCommands.Reset();
+	StagedWrites.Reset();
 	DrainRecords.Reset();
 	bLatched = false;
 	TerminalKey = FQueueKey();

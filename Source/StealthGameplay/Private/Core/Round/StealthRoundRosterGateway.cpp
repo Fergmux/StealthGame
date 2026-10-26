@@ -72,7 +72,9 @@ ERosterResult URoundRosterStoreGateway::BindPawn(FParticipantId Participant, con
 
 ERosterResult URoundRosterStoreGateway::ReleaseToCrowd(const FPawnHandle& Pawn)
 {
-	return ERosterResult::Rejected_PawnInUse;
+	// R17.4: the grace conversion releases the participant's live pawn to the crowd (a pawn already gone is not bound).
+	APawn* Live = Pawn.Pawn.Get();
+	return Store.IsValid() ? (Live != nullptr ? Store->ReleaseToCrowd(Live) : ERosterResult::NoOp_NotBound) : ERosterResult::Rejected_NotAuthority;
 }
 
 void URoundRosterStoreGateway::GetUnboundActiveParticipants(TArray<FParticipantId>& OutParticipants) const

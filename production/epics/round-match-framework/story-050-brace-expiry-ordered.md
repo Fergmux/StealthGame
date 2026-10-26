@@ -1,12 +1,12 @@
 # Story 050: A defence-window expiry and a strike in one tick resolve by key order (strike lands or reversal)
 
 > **Epic**: Round & Match Framework
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -34,7 +34,7 @@
 
 *From GDD `design/gdd/round-match-framework.md` AC 21, scoped to this story:*
 
-- [ ] GIVEN stub resolvers, a defence-window expiry and a strike on that defender in one tick: expiry key lower -> the strike lands (victim `Informant`, `Assassinated`); strike key lower -> reversal (attacker `Informant`, `ReversedAgainst`).
+- [x] GIVEN stub resolvers, a defence-window expiry and a strike on that defender in one tick: expiry key lower -> the strike lands (victim `Informant`, `Assassinated`); strike key lower -> reversal (attacker `Informant`, `ReversedAgainst`).
 
 ---
 
@@ -92,7 +92,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Round/BraceExpiryOrderedTest.cpp` (automation test `StealthGame.Round.BraceExpiryOrdered`, class `FRoundBraceExpiryOrderedTest`) — must exist and pass.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Round.BraceExpiryOrdered`, 2026-10-26)
 
 ---
 
@@ -101,3 +101,11 @@
 - Depends on: `production/epics/round-match-framework/story-008-resolver-contract.md`, `production/epics/round-match-framework/story-044-elimination-truth-table.md`
 - Unlocks: None
 - Cross-epic: `production/epics/participant-state-roster` (the `Assassinated` and `ReversedAgainst` transitions, via the fake Roster gateway; stories not yet created), `production/epics/tuning-data-config` (module skeleton and StealthTestHarness bootstrap; stories not yet created)
+
+## Completion Notes
+**Completed**: 2026-10-26 (RMF round-end and disconnect batch: stories 048-065, two-step round end, TeamSummary, grace/forfeit/void)
+**Criteria**: 1/1 passing (expiry key lower -> victim Informant Assassinated; strike key lower -> attacker Informant ReversedAgainst; outcome carries the strike key)
+**Deviations**: None (test-only)
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Round/BraceExpiryOrderedTest.cpp`; full suite: `production/qa/evidence/rmf-round-end-disconnects-2026-10-26/full-suite.txt`
+**Run result**: N/A - Logic, covered headless
+**Reviewed by**: lead-programmer focused review (sonnet) + self-review, RMF round-end batch; findings and fixes in production/qa/evidence/rmf-round-end-disconnects-2026-10-26/evidence.md
