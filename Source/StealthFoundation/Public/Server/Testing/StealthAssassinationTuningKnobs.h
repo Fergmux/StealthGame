@@ -40,7 +40,7 @@ namespace StealthAssassinationTuningKnobs
 		{ "StrikeContactSec", 0.40f, 0.25f, 0.80f, 0.30f, 0.50f, true, ETuningLatch::Action, "Sec" },
 		{ "StrikeWarpLimitCm", 240.0f, 150.0f, 240.0f, 200.0f, 240.0f, true, ETuningLatch::Use, "Cm" },
 		{ "StrikeContactGapCm", 15.0f, 5.0f, 40.0f, 10.0f, 25.0f, true, ETuningLatch::Use, "Cm" },
-		{ "StrikeWarpYawLimitDeg", 30.0f, 10.0f, 45.0f, 20.0f, 35.0f, true, ETuningLatch::Use, "Deg" },
+		{ "StrikeWarpYawLimitDeg", 30.0f, 10.0f, 45.0f, 30.0f, 35.0f, true, ETuningLatch::Use, "Deg" },
 		{ "AttackAttemptLockoutSec", 1.75f, 1.2f, 3.0f, 1.5f, 2.0f, true, ETuningLatch::Action, "Sec" },
 		{ "OpenSpotToleranceCm", 75.0f, 20.0f, 200.0f, 40.0f, 120.0f, false, ETuningLatch::Round, "Cm" },
 		{ "CounterDurationSec", 1.2f, 0.8f, 2.0f, 1.0f, 1.5f, true, ETuningLatch::Action, "Sec" },

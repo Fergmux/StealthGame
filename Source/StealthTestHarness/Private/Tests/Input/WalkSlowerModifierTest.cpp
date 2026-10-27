@@ -23,6 +23,7 @@
 
 #include "CoreMinimal.h"
 #include "Tests/PIE/StealthPIENetworkComponent.h"
+#include "Tests/PIE/StealthPIEOpenCircle.h"
 
 #if WITH_DEV_AUTOMATION_TESTS && defined(ENABLE_PIE_NETWORK_TEST) && ENABLE_PIE_NETWORK_TEST
 
@@ -249,65 +250,20 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 		return nullptr;
 	}
 
-	/** Floor height under (X, Y) between Z + 150 and Z - 400, or unset (no floor: water, a hole or outside the map). */
-	static TOptional<double> FloorAt(UWorld* World, double X, double Y, double Z)
-	{
-		FHitResult Hit;
-		FCollisionQueryParams Params(SCENE_QUERY_STAT(WalkSlowerFloor), false);
-		if (World->LineTraceSingleByChannel(Hit, FVector(X, Y, Z + 150.0), FVector(X, Y, Z - 400.0), ECC_Visibility, Params) && Hit.ImpactNormal.Z > 0.99)
-		{
-			return Hit.ImpactPoint.Z;
-		}
-		return TOptional<double>();
-	}
-
-	/**
-	 * A centre near Origin whose whole circle (radius + margin) is flat floor with nothing standing on it (no wall, prop or
-	 * pawn): a box overlap over the disc and floor traces round its rim. Rings outwards, so the nearest clear one wins.
-	 */
+	/** The open-circle search with this test's radius and margin (shared helper, Tests/PIE/StealthPIEOpenCircle.h). */
 	static TOptional<FVector> FindOpenCircle(UWorld* World, const FVector& Origin, const AActor* Ignore)
 	{
 		using namespace WalkSlowerModifierTestData;
-		const double Extent = CircleRadiusCm + CircleMarginCm;
-		FCollisionObjectQueryParams Objects;
-		Objects.AddObjectTypesToQuery(ECC_WorldStatic);
-		Objects.AddObjectTypesToQuery(ECC_WorldDynamic);
-		Objects.AddObjectTypesToQuery(ECC_Pawn);
-		Objects.AddObjectTypesToQuery(ECC_PhysicsBody);
-		FCollisionQueryParams Params(SCENE_QUERY_STAT(WalkSlowerOpenCircle), false, Ignore);
-		const FCollisionShape Box = FCollisionShape::MakeBox(FVector(Extent, Extent, BoxHeightCm * 0.5));
-		for (double Ring = 0.0; Ring <= SearchRadiusCm; Ring += SearchStepCm)
-		{
-			const int32 Count = Ring > 0.0 ? FMath::Max(6, FMath::CeilToInt32(2.0 * UE_DOUBLE_PI * Ring / SearchStepCm)) : 1;
-			for (int32 Index = 0; Index < Count; ++Index)
-			{
-				const double Angle = 2.0 * UE_DOUBLE_PI * Index / Count;
-				const double X = Origin.X + Ring * FMath::Cos(Angle);
-				const double Y = Origin.Y + Ring * FMath::Sin(Angle);
-				const TOptional<double> Floor = FloorAt(World, X, Y, Origin.Z);
-				if (!Floor.IsSet())
-				{
-					continue;
-				}
-				bool bFlat = true;
-				for (int32 Rim = 0; Rim < RimTraces && bFlat; ++Rim)
-				{
-					const double RimAngle = 2.0 * UE_DOUBLE_PI * Rim / RimTraces;
-					const TOptional<double> RimFloor = FloorAt(World, X + Extent * FMath::Cos(RimAngle), Y + Extent * FMath::Sin(RimAngle), Floor.GetValue());
-					bFlat = RimFloor.IsSet() && FMath::Abs(RimFloor.GetValue() - Floor.GetValue()) <= FloorFlatnessCm;
-				}
-				if (!bFlat)
-				{
-					continue;
-				}
-				const FVector BoxCentre(X, Y, Floor.GetValue() + BoxFloorGapCm + BoxHeightCm * 0.5);
-				if (!World->OverlapAnyTestByObjectType(BoxCentre, FQuat::Identity, Objects, Box, Params))
-				{
-					return FVector(X, Y, Floor.GetValue());
-				}
-			}
-		}
-		return TOptional<FVector>();
+		StealthPIEOpenCircle::FParams Params;
+		Params.RadiusCm = CircleRadiusCm;
+		Params.MarginCm = CircleMarginCm;
+		Params.SearchStepCm = SearchStepCm;
+		Params.SearchRadiusCm = SearchRadiusCm;
+		Params.BoxFloorGapCm = BoxFloorGapCm;
+		Params.BoxHeightCm = BoxHeightCm;
+		Params.FloorFlatnessCm = FloorFlatnessCm;
+		Params.RimTraces = RimTraces;
+		return StealthPIEOpenCircle::FindOpenCircle(World, Origin, Ignore, Params);
 	}
 
 	/**
@@ -316,26 +272,14 @@ NETWORK_TEST_CLASS(WalkSlowerModifier, "StealthGame.Input.PIE")
 	 */
 	static double SteerToward(double CurrentYaw, double TargetYaw)
 	{
-		using namespace WalkSlowerModifierTestData;
-		const double Delta = FRotator::NormalizeAxis(TargetYaw - CurrentYaw);
-		return CurrentYaw + FMath::Clamp(Delta, -MaxYawStepDeg, MaxYawStepDeg);
+		return StealthPIEOpenCircle::SteerToward(CurrentYaw, TargetYaw, WalkSlowerModifierTestData::MaxYawStepDeg);
 	}
 
 	/** Closed-loop orbit: the tangent of the circle round Centre, bent back towards the circle by the radial error. */
 	static double OrbitYawDeg(const FVector& Location, const FVector& Centre)
 	{
 		using namespace WalkSlowerModifierTestData;
-		FVector Radial = Location - Centre;
-		Radial.Z = 0.0;
-		const double Distance = Radial.Size();
-		if (Distance < 1.0)
-		{
-			return 0.0;
-		}
-		Radial /= Distance;
-		const FVector Tangent(-Radial.Y, Radial.X, 0.0);
-		const FVector Heading = Tangent + Radial * FMath::Clamp((CircleRadiusCm - Distance) / CircleCorrectionCm, -1.0, 1.0);
-		return FMath::RadiansToDegrees(FMath::Atan2(Heading.Y, Heading.X));
+		return StealthPIEOpenCircle::OrbitYawDeg(Location, Centre, CircleRadiusCm, CircleCorrectionCm);
 	}
 
 	/** Points the walker's control yaw along its body facing (a start straight ahead: no idle pivot). */

@@ -3701,11 +3701,11 @@ constants:
     value: 30
     unit: deg
     hard_range: 10-45
-    safe_range: 20-35
+    safe_range: 30-35
     audience: All
     latch: Use
     added: 2026-10-24
-    revised: ""
+    revised: 2026-10-27  # D55: safe minimum 20 -> 30 (I-ASN-8 at StrikeBearingLimitDeg 90)
   - name: TargetRoundMinutes
     status: active
     source: design/gdd/round-match-framework.md

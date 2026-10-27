@@ -69,7 +69,7 @@ struct STEALTHFOUNDATION_API FAssassinationTuning_Public
 	float StrikeContactGapCm = 15.0f;
 
 	/** Presentation cap on the lunge's warp turn (I-ASN-8). */
-	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "10", ClampMax = "45", SafeMin = "20", SafeMax = "35", Latch = "Use", Owner = "Assassination", Unit = "Deg"))
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "10", ClampMax = "45", SafeMin = "30", SafeMax = "35", Latch = "Use", Owner = "Assassination", Unit = "Deg"))
 	float StrikeWarpYawLimitDeg = 30.0f;
 
 	/** F3 Lambda: attacker lockout after any executed Attack (I-ASN-2, I-ASN-6, W-ASN-10). */

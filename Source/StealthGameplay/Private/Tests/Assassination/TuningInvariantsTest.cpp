@@ -10,9 +10,9 @@
 // 10, InformantRespawnDelaySec 15, PawnRefAgreementCm 75) unless the preset overrides one. Every override lies inside its
 // hard range, so F-1 changes nothing: a rejected preset is never clamped or repaired.
 // Safe-range lint (Implementation Notes): every key at its safe minimum and maximum, others at defaults, rejects nothing
-// and warns only inside the documented bands, except the one pinned GDD conflict (StrikeWarpYawLimitDeg safe minimum 20 is
-// rejected by I-ASN-8 at StrikeBearingLimitDeg 90; flagged to game-designer). The lint fails if any finding appears or
-// disappears.
+// and warns only inside the documented bands. The former pinned conflict (StrikeWarpYawLimitDeg safe minimum 20 rejected by
+// I-ASN-8 at StrikeBearingLimitDeg 90) is resolved by decision D55 (safe minimum raised to 30 = 90 - 60), so no key at a
+// safe bound is rejected. The lint fails if any finding appears or disappears.
 
 #include "Misc/AutomationTest.h"
 
@@ -230,13 +230,12 @@ bool FAssassinationTuningInvariantsTest::RunTest(const FString& Parameters)
 	{
 		// Documented findings inside the safe ranges: the I-ASN-7 band (GDD Tuning Knobs, C-W18), the I-ASN-5w tidiness
 		// warning at the BodyLingerSec safe maximum (the GDD row names it), W-ASN-9 for any OpenSpotToleranceCm other than
-		// PawnRefAgreementCm, and the pinned GDD conflict StrikeWarpYawLimitDeg 20 vs I-ASN-8 (open question for game-designer).
+		// PawnRefAgreementCm. No rejection: D55 raised the StrikeWarpYawLimitDeg safe minimum to 30 (I-ASN-8 at bearing 90).
 		const TMap<FString, FString> Expected = {
 			{ TEXT("StrikeContactSec@SafeMin"), TEXT("warn I-ASN-7") },
 			{ TEXT("BodyLingerSec@SafeMax"), TEXT("warn I-ASN-5w") },
 			{ TEXT("OpenSpotToleranceCm@SafeMin"), TEXT("warn W-ASN-9") },
 			{ TEXT("OpenSpotToleranceCm@SafeMax"), TEXT("warn W-ASN-9") },
-			{ TEXT("StrikeWarpYawLimitDeg@SafeMin"), TEXT("reject I-ASN-8") },
 		};
 		TMap<FString, FString> Found;
 		for (const FKnob& Knob : StealthAssassinationTuningKnobs::Knobs)
@@ -268,6 +267,16 @@ bool FAssassinationTuningInvariantsTest::RunTest(const FString& Parameters)
 		for (const TPair<FString, FString>& Pair : Expected)
 		{
 			TestTrue(FString::Printf(TEXT("safe-range lint: documented finding %s -> %s still occurs (remove it when the GDD changes)"), *Pair.Key, *Pair.Value), Found.Contains(Pair.Key));
+		}
+	}
+
+	// ---- D55: the warp-yaw safe minimum is the smallest value I-ASN-8 accepts at the bearing safe maximum ----
+	{
+		const FTuningSchemaRow* Yaw = FindRow(Schema, "StrikeWarpYawLimitDeg");
+		const FTuningSchemaRow* Bearing = FindRow(Schema, "StrikeBearingLimitDeg");
+		if (TestTrue(TEXT("D55: both I-ASN-8 rows are in the schema"), Yaw != nullptr && Bearing != nullptr))
+		{
+			TestEqual(TEXT("D55: StrikeWarpYawLimitDeg safe minimum = StrikeBearingLimitDeg safe maximum - 60"), static_cast<double>(Yaw->SafeMin), static_cast<double>(Bearing->SafeMax) - 60.0);
 		}
 	}
 
