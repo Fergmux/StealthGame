@@ -1,5 +1,7 @@
 Reviewed-Content-Hash: Source/StealthGame/Private/StealthCharacter.cpp 4213435db7167e2a490d6d9f9f340c5e66466e33
 Reviewed-Content-Hash: Source/StealthGame/Public/StealthCharacter.h 25fbe84a6996de6e3e2d5dd6e03fbf354a3e3c20
+Reviewed-Content-Hash: Source/StealthGame/Private/StealthGameMode.cpp 8e7bf73b21582a71225c5fa9e63f33b400376bf2
+Reviewed-Content-Hash: Source/StealthGame/Public/StealthGameMode.h ffeef6c8a7228dc0a96157066b355c1ba42d0414
 Reviewed-Content-Hash: Source/StealthGame/Private/StealthPlayerState.cpp 456471f5ab4cb48d75856e759131a77913ff6dd3
 Reviewed-Content-Hash: Source/StealthGame/Public/StealthPlayerState.h e463cc08349e2aa36ed8996857920ddf2d73b1b3
 Reviewed-Content-Hash: Source/StealthGame/Private/StealthRules.cpp 80854d007800afaf1f8a5a8862bc543bfb30bb84
@@ -13,8 +15,14 @@ Reviewed-Content-Hash: Source/StealthTestHarness/Private/Tests/PIE/Assassination
 Reviewed-Content-Hash: Source/StealthTestHarness/Private/Scenarios/StealthHarnessScenarioS10.cpp e45d5c22911019ee21182eea0b996fcf61cd8bba
 Reviewed-Content-Hash: Source/StealthTestHarness/Private/Scenarios/StealthHarnessScenarioS10Rerun.cpp b4faaa8281048ce9d7b7ad346651340524eb3280
 Reviewed-Content-Hash: Source/StealthTestHarness/Private/Tests/PIE/Assassination/NoObserverCuePieTest.cpp 42221a3ecaa20708c73e38308015bea7163a8783
-Reviewed-Content-Hash: production/epics/assassination-defence-reversal/story-027-port-rules-reference-tests-retire-prototype.md 4a00e9f0da6e2cc1c33552b989f56edbca9d1996
-Reviewed-Content-Hash: production/qa/evidence/assassination-defence-reversal-027-2026-10-27/evidence.md ca1735e2312150203dd65dd575e25441ca61aaca
+Reviewed-Content-Hash: production/epics/assassination-defence-reversal/story-027-port-rules-reference-tests-retire-prototype.md a1945337fb20587304c912a85cbc3c0cc0af84fd
+Reviewed-Content-Hash: production/qa/evidence/assassination-defence-reversal-027-2026-10-27/evidence.md c929472ec514dafdd420c6be15834fb88302362d
 Reviewed-Content-Hash: production/qa/evidence/assassination-defence-reversal-027-2026-10-27/full-suite.txt cbd6e49a07cd88ead432be1ae7b31aed01f39421
 Reviewed-Content-Hash: production/qa/evidence/assassination-defence-reversal-027-2026-10-27/2026-10-27_asn-027-prototype-retired-scan.log fb92615000e382f29f0972f9c54b548baed7ad42
 Reviewed-Content-Hash: production/qa/evidence/assassination-defence-reversal-027-2026-10-27/2026-10-27_asn-027-pie-scenarios-acf.log a55c4f6305c2556f5101d3467f4de86eb7f6e6db
+Reviewed-Content-Hash: production/qa/evidence/story-027-port-rules-reference-tests-retire-prototype/01-client2-owner-brace-crouch-prepared.png 724959e3ce818beb0f947c73a90438775172d508
+Reviewed-Content-Hash: production/qa/evidence/story-027-port-rules-reference-tests-retire-prototype/02-client1-after-its-brace-window-standing-recovering.png 4642599faea0d2fe8fbf3c0e1c3ba12395c40a60
+Reviewed-Content-Hash: production/qa/evidence/story-027-port-rules-reference-tests-retire-prototype/03-client2-stands-again-after-the-4s-window.png f06eccb611bdeeae71a6a8f528a9005f2c75fb97
+Reviewed-Content-Hash: production/qa/evidence/story-027-port-rules-reference-tests-retire-prototype/04-client1-braced-host-attacker-approaching.png 71b601234ef5a8474412facd8ef4c62a7f9a11a1
+Reviewed-Content-Hash: production/qa/evidence/story-027-port-rules-reference-tests-retire-prototype/05-host-attacker-reversed-and-falling.png 31eb2845379014dec7a4390ef217ef29257f2018
+Reviewed-Content-Hash: production/qa/evidence/story-027-port-rules-reference-tests-retire-prototype/06-client1-defender-stands-at-contact-strike-reversed-plate.png 818bfbab047072534d1c0d3b4d925c2cd941745a

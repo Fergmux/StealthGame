@@ -81,10 +81,25 @@ This was a focused review of the changed files, with no defects found beyond the
   only, and harmless for its callers;
 - `ExilePlayer`, which is NKP's, lost only its call to the deleted `StopDefence`.
 
-## Run (run-and-observe)
+## Run (run-and-observe, `.claude/docs/run-and-observe.md`)
 
-**Pending.** The editor could not be rebuilt and launched: the tree's build fails in the NKP 009-012 agent's
-half-written `PenaltySchedulingSourcesTest.cpp` (`'Roster' / 'Respawns' is not a member of 'FRig'`), which belongs to
-another agent and was not edited. The player-visible part of this story is the crouch brace tell, now pose-driven. That
-is the PIE suite's NoObserverCue, NoWarningToVictim and DefenceStateServerOnly, plus the ACF scenarios, which all pass.
-The retained capture is still owed once the tree builds.
+Run on 2026-10-27, after NKP 009-012 (c8c37e8) made the tree build again:
+- the editor was built and launched with `tools/dev/cycle.ps1` (`Result: Succeeded`, MCP started);
+- 3-player PIE on L_Prototype (listen server and 2 clients, floating windows, 50 NPCs), driven through the Unreal MCP
+  (`StartPIE`, `RunPlayConsoleCommand` with `StealthBot` on the production command path);
+- the windows were captured with `tools/dev/capture-window.ps1` in bursts of about 2 frames per second around each
+  command. Every retained frame was looked at, and none is black.
+- Teams: the host (#0) and client 2 (#2) are Jaguar; client 1 (#1) is Eagle.
+
+| File (`production/qa/evidence/story-027-port-rules-reference-tests-retire-prototype/`) | Shows |
+|---|---|
+| 01-client2-owner-brace-crouch-prepared.png | `StealthBot 2 defend`: client 2's own pawn in the crouch tell, "Defence: PREPARED" (the owner presenting its FActionState Brace pose) |
+| 02-client1-after-its-brace-window-standing-recovering.png | Client 1 about 6 s after its brace: standing again, "Defence: recovering 54s" (the tell ended with the pose at CapEnd) |
+| 03-client2-stands-again-after-the-4s-window.png | Client 2 at about +6 s: standing, "recovering 54s" |
+| 04-client1-braced-host-attacker-approaching.png | `StealthBot 1 defend` then `StealthBot 0 "strike_enemy 150"`: the defender crouched and PREPARED, the host attacker placed behind it |
+| 05-host-attacker-reversed-and-falling.png | Host (attacker) after the reversal: its pawn falling, own context Informant (log: "reversed and eliminated", death write at 166.870, DeathServerTime 166.937) |
+| 06-client1-defender-stands-at-contact-strike-reversed-plate.png | The defender after contact: standing (the Counter released the crouch at its contact), the attacker down at its feet, plate "Strike reversed", "recovering 56s" |
+
+Run result: PASS. The brace tell appears on the Brace pose, ends at the window's end, and holds through the reversal
+until contact. The reversal eliminates the attacker on the production path, as in the before-state capture
+`2026-10-24_client1-reversal-elimination-win.png` (retained). No Config or Content file was changed by the run.

@@ -3654,12 +3654,13 @@ stories:
     name: "Port the StealthRules reference tests to the production cores and retire the prototype strike and defence code"
     file: "production/epics/assassination-defence-reversal/story-027-port-rules-reference-tests-retire-prototype.md"
     priority: must-have
-    status: review
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.5
-    blocker: "run-and-observe capture pending (tree build broken by uncommitted NKP 009-012 Penalty test)"
+    blocker: ""
+    completed: "2026-10-27"
     sprint: 2
-    note: "ASN batch 2026-10-27; PrototypeParity (AC1 mapping), PrototypeRetiredScan (AC2: 726 files, 0 findings), PIE.PrototypeScenariosACF A/C/C2/F pass (AC3); prototype strike/defence code deleted, brace crouch tell now pose-driven presentation, S10 harness kills by ApplyDeathWrite; evidence production/qa/evidence/assassination-defence-reversal-027-2026-10-27/"
+    note: "ASN batch 2026-10-27; PrototypeParity (AC1 mapping), PrototypeRetiredScan (AC2: 726 files, 0 findings), PIE.PrototypeScenariosACF A/C/C2/F pass (AC3); prototype strike/defence code deleted, brace crouch tell now pose-driven presentation, S10 harness kills by ApplyDeathWrite; evidence production/qa/evidence/assassination-defence-reversal-027-2026-10-27/; run-and-observe PASS (story-027-... captures)"
   - id: "nkp-005"
     name: "Exile sequence inside the killing Attack's slot"
     file: "production/epics/npc-kill-penalty-informants/story-005-exile-sequence-in-attack-slot.md"

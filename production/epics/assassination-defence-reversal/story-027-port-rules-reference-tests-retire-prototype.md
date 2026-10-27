@@ -1,7 +1,7 @@
 # Story 027: Port the StealthRules reference tests to the production cores and retire the prototype strike and defence code
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: In Review (AC1-AC3 pass; run-and-observe capture pending: the tree's build is broken by another agent's uncommitted NKP 009-012 Penalty test)
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
@@ -144,7 +144,7 @@ QL-STORY-READY: GAPS (resolved 2026-10-27 by /dev-story readiness, unattended: t
 **Required evidence**:
 - Logic: `PrototypeParityTest.cpp` — must exist and pass; plus the AC2 static-scan output and the AC3 harness run (PIE) retained in `production/qa/logs/`
 
-**Status**: [x] Created and passing 2026-10-27 (`PrototypeParityTest.cpp`, `PrototypeRetiredScanTest.cpp`, `PrototypeScenariosACFPieTest.cpp`). Evidence: `production/qa/evidence/assassination-defence-reversal-027-2026-10-27/` (evidence.md, full-suite.txt: build Succeeded, 409 tests, 407 pass; the 2 Tuning.Schema* failures come from another agent's uncommitted schema edit). Logs: `production/qa/logs/2026-10-27_asn-027-prototype-retired-scan.log` (726 files, 0 findings) and `production/qa/logs/2026-10-27_asn-027-pie-scenarios-acf.log` (A, C, C2 and F pass). Run result: pending. The capture of the pose-driven brace tell is still owed.
+**Status**: [x] Created and passing 2026-10-27 (`PrototypeParityTest.cpp`, `PrototypeRetiredScanTest.cpp`, `PrototypeScenariosACFPieTest.cpp`). Evidence: `production/qa/evidence/assassination-defence-reversal-027-2026-10-27/` (evidence.md, full-suite.txt: build Succeeded, 409 tests, 407 pass; the 2 Tuning.Schema* failures come from another agent's uncommitted schema edit). Logs: `production/qa/logs/2026-10-27_asn-027-prototype-retired-scan.log` (726 files, 0 findings) and `production/qa/logs/2026-10-27_asn-027-pie-scenarios-acf.log` (A, C, C2 and F pass). Run result: PASS (2026-10-27, 3-player PIE through the MCP): the pose-driven brace tell, its end at the window's end, and a reversal with the tell held to contact. Captures are in `production/qa/evidence/story-027-port-rules-reference-tests-retire-prototype/` (6 files), alongside the retained `2026-10-24_*` before-state captures.
 
 ---
 
