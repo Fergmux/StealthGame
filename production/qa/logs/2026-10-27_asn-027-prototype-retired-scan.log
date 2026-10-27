@@ -1,0 +1,9 @@
+# asn-027 AC2 static scan (StealthGame.Assassination.PrototypeRetiredScan), cycle.ps1 -Tests -NoLaunch run 2026-10-27
+[2026.10.27-15.45.00:450][367]LogAutomationController: Sending RunTest PrototypeRetiredScan to 1BB29C484F94F3A828D7B1A176AD918C
+[2026.10.27-15.45.00:450][367]LogAutomationController: Display: Test Started. Name={PrototypeRetiredScan} Path={StealthGame.Assassination.PrototypeRetiredScan}
+[2026.10.27-15.45.00:451][368]LogAutomationWorker: Received RunTests PrototypeRetiredScan from 9D142B1B4ACD1654C09382B317D193A2
+[2026.10.27-15.45.00:660][370]LogAutomationController: Display: Test Completed. Result={Success} Name={PrototypeRetiredScan} Path={StealthGame.Assassination.PrototypeRetiredScan}
+[2026.10.27-15.45.00:660][370]LogAutomationController: BeginEvents: StealthGame.Assassination.PrototypeRetiredScan
+[2026.10.27-15.45.00:660][370]LogAutomationController: PrototypeRetiredScan: 726 source files scanned under C:/Users/fergm/Documents/Unreal Projects/StealthGame/Source, 29 retired identifiers, 0 findings
+[2026.10.27-15.45.00:660][370]LogAutomationController: PrototypeRetiredScan: 6 ini files scanned under C:/Users/fergm/Documents/Unreal Projects/StealthGame/Config/, 0 findings
+[2026.10.27-15.45.00:660][370]LogAutomationController: EndEvents: StealthGame.Assassination.PrototypeRetiredScan

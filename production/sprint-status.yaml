@@ -3650,6 +3650,16 @@ stories:
     blocker: "Needs human playtest: >= 6 trained testers, a human-captured greyscale clip set and art-director sign-off (protocol, fixed order, briefing and blank sheets ready in production/qa/evidence/asn-30-results.md and asn-25-brace-tell-results.md); brace tell also needs the authored Brace_In/Hold/Out clips"
     sprint: 2
     note: "ASN batch 2026-10-27; no session run by the unattended build"
+  - id: "asn-027"
+    name: "Port the StealthRules reference tests to the production cores and retire the prototype strike and defence code"
+    file: "production/epics/assassination-defence-reversal/story-027-port-rules-reference-tests-retire-prototype.md"
+    priority: must-have
+    status: review
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: "run-and-observe capture pending (tree build broken by uncommitted NKP 009-012 Penalty test)"
+    sprint: 2
+    note: "ASN batch 2026-10-27; PrototypeParity (AC1 mapping), PrototypeRetiredScan (AC2: 726 files, 0 findings), PIE.PrototypeScenariosACF A/C/C2/F pass (AC3); prototype strike/defence code deleted, brace crouch tell now pose-driven presentation, S10 harness kills by ApplyDeathWrite; evidence production/qa/evidence/assassination-defence-reversal-027-2026-10-27/"
   - id: "nkp-005"
     name: "Exile sequence inside the killing Attack's slot"
     file: "production/epics/npc-kill-penalty-informants/story-005-exile-sequence-in-attack-slot.md"

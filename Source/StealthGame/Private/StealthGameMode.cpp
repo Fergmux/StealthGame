@@ -629,11 +629,6 @@ void AStealthGameMode::HandleRoundEnded()
 	GS->WinReason = Reason;
 	GS->PhaseEndServerTime = GS->GetServerWorldTimeSeconds() + Settings->RoundRestartDelay;
 
-	for (TActorIterator<AStealthCharacter> It(GetWorld()); It; ++It)
-	{
-		It->StopDefence();
-	}
-
 	// The approved reason phrasing (HUD-E18; a forfeit shows the elimination text) and the R9 TeamSummary lines (HUD-E21).
 	const FText ReasonText = GetRoundEndReasonText(Result.PublicReason);
 	const auto SummaryLine = [&Result, this](uint8 Team)
@@ -807,10 +802,6 @@ void AStealthGameMode::BindEncounterService(UEncounterService& Service)
 	{
 		DeathWriteHandle = Death->AddUObject(this, &AStealthGameMode::HandleEncounterDeathWrite);
 	}
-	if (FOnCounterPoseApplied* Counter = Service.GetOnCounterPoseApplied())
-	{
-		CounterPoseHandle = Counter->AddUObject(this, &AStealthGameMode::HandleEncounterCounterPose);
-	}
 	if (FOnEncounterBodyReleased* Released = Service.GetOnBodyReleased())
 	{
 		BodyReleasedHandle = Released->AddUObject(this, &AStealthGameMode::HandleEncounterBodyReleased);
@@ -818,8 +809,6 @@ void AStealthGameMode::BindEncounterService(UEncounterService& Service)
 	if (UActionHub* Hub = UActionHub::Get(GetWorld()))
 	{
 		HubStartedHandle = Hub->OnActionStarted.AddUObject(this, &AStealthGameMode::HandleHubActionStarted);
-		HubCancelledHandle = Hub->OnActionCancelled.AddUObject(this, &AStealthGameMode::HandleHubActionCancelled);
-		HubCompletedHandle = Hub->OnActionCompleted.AddUObject(this, &AStealthGameMode::HandleHubActionCompleted);
 	}
 }
 
@@ -835,10 +824,6 @@ void AStealthGameMode::UnbindEncounters()
 		{
 			Death->Remove(DeathWriteHandle);
 		}
-		if (FOnCounterPoseApplied* Counter = Service->GetOnCounterPoseApplied())
-		{
-			Counter->Remove(CounterPoseHandle);
-		}
 		if (FOnEncounterBodyReleased* Released = Service->GetOnBodyReleased())
 		{
 			Released->Remove(BodyReleasedHandle);
@@ -847,8 +832,6 @@ void AStealthGameMode::UnbindEncounters()
 	if (UActionHub* Hub = UActionHub::Get(GetWorld()))
 	{
 		Hub->OnActionStarted.Remove(HubStartedHandle);
-		Hub->OnActionCancelled.Remove(HubCancelledHandle);
-		Hub->OnActionCompleted.Remove(HubCompletedHandle);
 	}
 	BoundEncounters.Reset();
 	PendingEncounterKills.Reset();
@@ -917,25 +900,10 @@ void AStealthGameMode::HandleEncounterDeathWrite(APawn* Victim, double DeathServ
 		CrowdNpcs.Remove(Body);
 		ScheduleNpcReplacement();
 	}
-
 	// The fall is the encounter presentation's (Death_Fall from FDeathState on every machine, stories asn-018 / asn-020);
-	// the prototype's dying flags follow at DeathServerTime. The body keeps its controller and capsule here: the release
-	// and removal are the queue's BodyRelease / BodyRemoval items (story asn-019).
-	const double Delay = DeathServerTime - GetWorld()->GetTimeSeconds();
-	if (Delay <= 0.0)
-	{
-		Body->BeginEncounterDeath();
-		return;
-	}
-	TWeakObjectPtr<AStealthCharacter> WeakBody(Body);
-	FTimerHandle& Handle = PendingTimers.AddDefaulted_GetRef();
-	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, [WeakBody]()
-	{
-		if (AStealthCharacter* Pending = WeakBody.Get())
-		{
-			Pending->BeginEncounterDeath();
-		}
-	}), static_cast<float>(Delay), false);
+	// the body keeps its controller and capsule here: the release and removal are the queue's BodyRelease / BodyRemoval
+	// items (story asn-019). AStealthCharacter::IsDying() reads the same FDeathState (story asn-027 retired the prototype
+	// replicated dying flag).
 }
 
 void AStealthGameMode::HandleEncounterBodyReleased(APawn* Body, AController* FormerController)
@@ -957,71 +925,14 @@ void AStealthGameMode::HandleEncounterBodyReleased(APawn* Body, AController* For
 		TWeakObjectPtr<APawn>(Body)), Wait, false);
 }
 
-void AStealthGameMode::HandleEncounterCounterPose(APawn* Defender, double ContactServerTime)
-{
-	AStealthCharacter* Character = Cast<AStealthCharacter>(Defender);
-	if (Character == nullptr)
-	{
-		return;
-	}
-	// The prototype crouch tell ends with the counter AT ITS CONTACT, never at this staged write (StrikeNetLeadSec earlier):
-	// a tell that dropped at the write would reach the defender and every observer before contact (story asn-017).
-	const AGameStateBase* State = GetWorld() != nullptr ? GetWorld()->GetGameState() : nullptr;
-	const double Now = State != nullptr ? State->GetServerWorldTimeSeconds() : 0.0;
-	const float Delay = static_cast<float>(FMath::Max(ContactServerTime - Now, 0.0));
-	if (Delay <= 0.f)
-	{
-		Character->StopDefence();
-		return;
-	}
-	FTimerHandle Handle;
-	TWeakObjectPtr<AStealthCharacter> Weak(Character);
-	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, [Weak]()
-	{
-		if (AStealthCharacter* Target = Weak.Get())
-		{
-			Target->StopDefence();
-		}
-	}), Delay, false);
-}
-
 void AStealthGameMode::HandleHubActionStarted(AStealthPawn* Pawn, EActionType Type)
 {
+	// The brace tell is the pawn's presentation of its FActionState Brace pose (AStealthCharacter::HandleActionStateChanged,
+	// story asn-027); only the prototype concealment rule "a strike from a bush reveals the attacker" stays here.
 	AStealthCharacter* Character = Cast<AStealthCharacter>(Pawn);
-	if (Character == nullptr)
+	if (Character != nullptr && Type == EActionType::Attack)
 	{
-		return;
-	}
-	if (Type == EActionType::Prepare)
-	{
-		Character->StartDefence(); // the prototype brace tell (crouch); the window itself is the resolver's
-	}
-	else if (Type == EActionType::Attack)
-	{
-		Character->RevealFromConcealment(); // the prototype "a strike from a bush reveals the attacker"
-	}
-}
-
-void AStealthGameMode::HandleHubActionCancelled(AStealthPawn* Pawn, EActionType Type, ECancelReason Reason)
-{
-	// A reversal consumes the brace in the slot, but the defender shows nothing until its CounterPose write.
-	if (Type == EActionType::Prepare && Reason != ECancelReason::Reversed)
-	{
-		if (AStealthCharacter* Character = Cast<AStealthCharacter>(Pawn))
-		{
-			Character->StopDefence();
-		}
-	}
-}
-
-void AStealthGameMode::HandleHubActionCompleted(AStealthPawn* Pawn, EActionType Type)
-{
-	if (Type == EActionType::Prepare)
-	{
-		if (AStealthCharacter* Character = Cast<AStealthCharacter>(Pawn))
-		{
-			Character->StopDefence();
-		}
+		Character->RevealFromConcealment();
 	}
 }
 
@@ -1040,7 +951,6 @@ void AStealthGameMode::ExilePlayer(AStealthCharacter* Offender)
 	{
 		Roster->RequestTransition(Root->GetParticipant(Cast<APlayerController>(Offender->GetController())), EParticipantState::Informant, ERosterReason::StrikeLimit);
 	}
-	Offender->StopDefence();
 	HandleInteractRequest(Offender, false);
 	// The exile beat is the owner's: bExiled rides the kill's FStrikeResult (story asn-015) and the controller shows it
 	// after the plate; a server message here would arrive in the slot, before contact.
@@ -1289,9 +1199,9 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 			const AStealthCharacter* P = It->Get() ? Cast<AStealthCharacter>(It->Get()->GetPawn()) : nullptr;
 			if (PS)
 			{
-				UE_LOG(LogStealth, Log, TEXT("[Bot] #%d %s team=%d state=%s npcKills=%d pawn=%s prepared=%d concealed=%d"), Index, *PS->GetPlayerName(), PS->Team,
+				UE_LOG(LogStealth, Log, TEXT("[Bot] #%d %s team=%d state=%s npcKills=%d pawn=%s braced=%d concealed=%d"), Index, *PS->GetPlayerName(), PS->Team,
 					PS->IsInformant() ? TEXT("Informant") : TEXT("Active"), PS->NpcKills, P ? *P->GetActorLocation().ToCompactString() : TEXT("none"),
-					P ? P->IsPreparingDefence() : 0, P ? P->IsConcealed() : 0);
+					P ? (P->GetActionState().Pose == EActionPose::Brace ? 1 : 0) : 0, P ? P->IsConcealed() : 0);
 			}
 		}
 		return;
@@ -1421,8 +1331,8 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 				}
 			}
 		}
-		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d strikes %s (%s, %.0f cm, bearing %.0f, prepared=%d)."), PlayerIndex, *Best->GetName(), *Kind, StrikeDistance, StrikeBearing,
-			Best->IsPreparingDefence());
+		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d strikes %s (%s, %.0f cm, bearing %.0f, braced=%d)."), PlayerIndex, *Best->GetName(), *Kind, StrikeDistance, StrikeBearing,
+			Best->GetActionState().Pose == EActionPose::Brace ? 1 : 0);
 		// The production path (story asn-012 integration): an Attack command into Round's queue, resolved in its slot.
 		FAttackPayload Strike;
 		Strike.WorldPoint = Best->GetActorLocation();

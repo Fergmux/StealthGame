@@ -4,37 +4,18 @@
 #include "StealthTypes.h"
 
 /**
- * Pure, engine-independent game rules. Every server decision about assassination,
- * defence, NPC-kill removal, objective stages and victory goes through these functions,
- * so they can be unit-tested without a world (see Private/Tests/StealthRulesTests.cpp).
- * Source of the rules: GAME_BUILD_HANDOFF.md "Confirmed game rules" and the user's
- * decisions recorded in production/session-state/active.md (2026-10-24).
+ * Pure, engine-independent PROTOTYPE game rules still used until their epics retire them (NPC-kill removal: Penalty;
+ * objective stages and the elimination winner: Objectives and Round; team choice and the run threshold: Session and
+ * SCL), unit-tested without a world in Private/Tests/StealthRulesTests.cpp. The assassination and defence rules were
+ * retired by story asn-027: they are re-expressed on Assassination's production cores (FAttackResolverCore,
+ * FDefenceStateCore) and their reference tests ported to StealthGame.Assassination.PrototypeParity.
+ * Source of the rules: GAME_BUILD_HANDOFF.md "Confirmed game rules" and the user's decisions recorded in
+ * production/session-state/active.md (2026-10-24).
  */
 struct STEALTHGAME_API FStealthRules
 {
-	/**
-	 * Resolves an assassination attempt.
-	 * @param bAttackerIsActive  Attacker is an active (non-informant) player.
-	 * @param TargetKind         What the target is.
-	 * @param bTargetPrepared    Target is an active player holding the defensive preparation.
-	 */
-	static EStealthAssassinationOutcome ResolveAssassination(bool bAttackerIsActive, EStealthTargetKind TargetKind, bool bTargetPrepared);
-
 	/** True when this NPC-kill count removes the player (removal ON the limit-th kill). */
 	static bool ShouldRemoveForNpcKills(int32 NpcKillCount, int32 NpcKillLimit);
-
-	/**
-	 * Whether a player may start the defensive preparation now.
-	 * The cooldown is measured from the previous activation, including unused attempts.
-	 * @param LastActivationTime  Server time of the previous activation; negative if never used.
-	 */
-	static bool CanStartDefence(bool bIsActive, bool bIsRunning, bool bIsInTraversal, double Now, double LastActivationTime, float Cooldown);
-
-	/** Seconds until the defence can be used again (0 when ready). */
-	static float DefenceCooldownRemaining(double Now, double LastActivationTime, float Cooldown);
-
-	/** Whether an active defence must stop this frame. */
-	static bool ShouldEndDefence(bool bIsRunning, bool bIsInTraversal, double Now, double ActivationTime, float Duration);
 
 	/** Whether a team at CurrentStage may complete an objective of ObjectiveStage owned by ObjectiveTeam. */
 	static bool CanCompleteObjective(uint8 Team, int32 CurrentStage, uint8 ObjectiveTeam, int32 ObjectiveStage);

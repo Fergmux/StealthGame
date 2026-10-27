@@ -1,0 +1,158 @@
+# asn-027 AC3 PIE run (StealthGame.Assassination.PIE.PrototypeScenariosACF.*), headless suite 2026-10-27; LogCqTest / automation lines only
+[2026.10.27-15.43.12:185][354]LogAutomationController: Display: Test Started. Name={A_UnpreparedStrikeOnAnActiveRivalKillsIt} Path={StealthGame.Assassination.PIE.PrototypeScenariosACF.A_UnpreparedStrikeOnAnActiveRivalKillsIt}
+[2026.10.27-15.43.12:186][355]LogCqTest: Before Test
+[2026.10.27-15.43.12:194][356]LogCqTest: Running Stop PIE
+[2026.10.27-15.43.12:201][357]LogCqTest: Running Load fixture map
+[2026.10.27-15.43.12:444][358]LogCqTest: Running Start PIE
+[2026.10.27-15.43.12:685][359]LogCqTest: Starting Set Worlds
+[2026.10.27-15.43.12:897][362]LogCqTest: Finished Set Worlds after 212 milliseconds
+[2026.10.27-15.43.12:929][363]LogCqTest: Running Setup Packet Settings
+[2026.10.27-15.43.12:938][364]LogCqTest: Running Connect Clients to Server
+[2026.10.27-15.43.12:942][365]LogCqTest: Starting Await Clients Ready
+[2026.10.27-15.43.12:942][365]LogCqTest: Finished Await Clients Ready after 0 milliseconds
+[2026.10.27-15.43.12:949][366]LogCqTest: RunTest
+[2026.10.27-15.43.12:959][367]LogCqTest: Starting the round is Active and the players split 2v1
+[2026.10.27-15.43.19:461][145]LogCqTest: Finished the round is Active and the players split 2v1 after 6502 milliseconds
+[2026.10.27-15.43.19:471][146]LogCqTest: Running place the rival on a clear disc and the attacker 150 cm behind it, facing it
+[2026.10.27-15.43.19:480][147]LogCqTest: Running settle: mark
+[2026.10.27-15.43.19:486][148]LogCqTest: Starting settle
+[2026.10.27-15.43.20:279][243]LogCqTest: Finished settle after 793 milliseconds
+[2026.10.27-15.43.20:286][244]LogCqTest: Running the attacker strikes the unbraced rival
+[2026.10.27-15.43.20:293][245]LogStealth: [Encounter] BP_CrowdCharacter_C_0 killed BP_CrowdCharacter_C_2 in the slot (victim kind 0).
+[2026.10.27-15.43.20:296][245]LogCqTest: Starting contact + 3 s
+[2026.10.27-15.43.20:544][275]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_2 at 8.110 (DeathServerTime 8.260, concealed 0).
+[2026.10.27-15.43.23:695][653]LogCqTest: Finished contact + 3 s after 3399 milliseconds
+[2026.10.27-15.43.23:703][654]LogCqTest: Running assert
+[2026.10.27-15.43.23:713][655]LogCqTest: Running After Test
+[2026.10.27-15.43.23:721][656]LogCqTest: Running Restore Editor State
+[2026.10.27-15.43.23:975][657]LogCqTest: Tearing Down Test
+[2026.10.27-15.43.23:984][658]LogAutomationController: Display: Test Completed. Result={Success} Name={A_UnpreparedStrikeOnAnActiveRivalKillsIt} Path={StealthGame.Assassination.PIE.PrototypeScenariosACF.A_UnpreparedStrikeOnAnActiveRivalKillsIt}
+[2026.10.27-15.43.23:984][658]LogAutomationController: BeginEvents: StealthGame.Assassination.PIE.PrototypeScenariosACF.A_UnpreparedStrikeOnAnActiveRivalKillsIt
+[2026.10.27-15.43.23:984][658]LogAutomationController: Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log] 
+[2026.10.27-15.43.23:984][658]LogAutomationController: ACF-A contact 8.260, kills 1, death 8.260
+[2026.10.27-15.43.23:984][658]LogAutomationController: Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log] 
+[2026.10.27-15.43.23:984][658]LogAutomationController: EndEvents: StealthGame.Assassination.PIE.PrototypeScenariosACF.A_UnpreparedStrikeOnAnActiveRivalKillsIt
+[2026.10.27-15.43.23:985][658]LogAutomationController: Sending RunTest C_ReversalOfTheLastActiveAttackerEndsTheRoundByElimination to 1BB29C484F94F3A828D7B1A176AD918C
+[2026.10.27-15.43.23:985][658]LogAutomationController: Display: Test Started. Name={C_ReversalOfTheLastActiveAttackerEndsTheRoundByElimination} Path={StealthGame.Assassination.PIE.PrototypeScenariosACF.C_ReversalOfTheLastActiveAttackerEndsTheRoundByElimination}
+[2026.10.27-15.43.23:985][659]LogCqTest: Before Test
+[2026.10.27-15.43.23:994][660]LogCqTest: Running Stop PIE
+[2026.10.27-15.43.24:001][661]LogCqTest: Running Load fixture map
+[2026.10.27-15.43.24:239][662]LogCqTest: Running Start PIE
+[2026.10.27-15.43.24:475][663]LogCqTest: Starting Set Worlds
+[2026.10.27-15.43.24:695][666]LogCqTest: Finished Set Worlds after 220 milliseconds
+[2026.10.27-15.43.24:729][667]LogCqTest: Running Setup Packet Settings
+[2026.10.27-15.43.24:739][668]LogCqTest: Running Connect Clients to Server
+[2026.10.27-15.43.24:744][669]LogCqTest: Starting Await Clients Ready
+[2026.10.27-15.43.24:744][669]LogCqTest: Finished Await Clients Ready after 0 milliseconds
+[2026.10.27-15.43.24:751][670]LogCqTest: RunTest
+[2026.10.27-15.43.24:758][671]LogCqTest: Starting the round is Active and the players split 2v1
+[2026.10.27-15.43.31:253][448]LogCqTest: Finished the round is Active and the players split 2v1 after 6495 milliseconds
+[2026.10.27-15.43.31:262][449]LogCqTest: Running place the defender on a clear disc and the striker 150 cm behind it, facing it
+[2026.10.27-15.43.31:272][450]LogCqTest: Running settle: mark
+[2026.10.27-15.43.31:280][451]LogCqTest: Starting settle
+[2026.10.27-15.43.32:072][546]LogCqTest: Finished settle after 792 milliseconds
+[2026.10.27-15.43.32:080][547]LogCqTest: Running the defender braces
+[2026.10.27-15.43.32:089][548]LogCqTest: Starting the Brace pose is on the defender
+[2026.10.27-15.43.32:480][595]LogCqTest: Finished the Brace pose is on the defender after 391 milliseconds
+[2026.10.27-15.43.32:488][596]LogCqTest: Running the striker strikes the braced defender
+[2026.10.27-15.43.32:496][597]LogStealth: [Encounter] BP_CrowdCharacter_C_0 reversed and eliminated BP_CrowdCharacter_C_2 in the slot (victim kind 0).
+[2026.10.27-15.43.32:498][597]LogCqTest: Starting contact + 3 s
+[2026.10.27-15.43.32:744][627]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_2 at 8.516 (DeathServerTime 8.666, concealed 0).
+[2026.10.27-15.43.35:897][  5]LogCqTest: Finished contact + 3 s after 3399 milliseconds
+[2026.10.27-15.43.35:904][  6]LogCqTest: Starting the round ends (bounded by the contact + 3 s already waited, plus 10 s)
+[2026.10.27-15.43.35:904][  6]LogCqTest: Finished the round ends (bounded by the contact + 3 s already waited, plus 10 s) after 0 milliseconds
+[2026.10.27-15.43.35:912][  7]LogCqTest: Running assert
+[2026.10.27-15.43.35:921][  8]LogCqTest: Running After Test
+[2026.10.27-15.43.35:929][  9]LogCqTest: Running Restore Editor State
+[2026.10.27-15.43.36:168][ 10]LogCqTest: Tearing Down Test
+[2026.10.27-15.43.36:177][ 11]LogAutomationController: Display: Test Completed. Result={Success} Name={C_ReversalOfTheLastActiveAttackerEndsTheRoundByElimination} Path={StealthGame.Assassination.PIE.PrototypeScenariosACF.C_ReversalOfTheLastActiveAttackerEndsTheRoundByElimination}
+[2026.10.27-15.43.36:177][ 11]LogAutomationController: BeginEvents: StealthGame.Assassination.PIE.PrototypeScenariosACF.C_ReversalOfTheLastActiveAttackerEndsTheRoundByElimination
+[2026.10.27-15.43.36:177][ 11]LogAutomationController: Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log] 
+[2026.10.27-15.43.36:177][ 11]LogAutomationController: ACF-C contact 8.666, kills 1, phase Ended, winner 0, reason 2 (defender team 0)
+[2026.10.27-15.43.36:177][ 11]LogAutomationController: Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log] 
+[2026.10.27-15.43.36:177][ 11]LogAutomationController: EndEvents: StealthGame.Assassination.PIE.PrototypeScenariosACF.C_ReversalOfTheLastActiveAttackerEndsTheRoundByElimination
+[2026.10.27-15.43.36:179][ 11]LogAutomationController: Sending RunTest C_ReversalWithAnActiveTeammateLeftKeepsTheRoundActive to 1BB29C484F94F3A828D7B1A176AD918C
+[2026.10.27-15.43.36:179][ 11]LogAutomationController: Display: Test Started. Name={C_ReversalWithAnActiveTeammateLeftKeepsTheRoundActive} Path={StealthGame.Assassination.PIE.PrototypeScenariosACF.C_ReversalWithAnActiveTeammateLeftKeepsTheRoundActive}
+[2026.10.27-15.43.36:180][ 12]LogCqTest: Before Test
+[2026.10.27-15.43.36:188][ 13]LogCqTest: Running Stop PIE
+[2026.10.27-15.43.36:197][ 14]LogCqTest: Running Load fixture map
+[2026.10.27-15.43.36:437][ 15]LogCqTest: Running Start PIE
+[2026.10.27-15.43.36:680][ 16]LogCqTest: Starting Set Worlds
+[2026.10.27-15.43.36:896][ 19]LogCqTest: Finished Set Worlds after 216 milliseconds
+[2026.10.27-15.43.36:930][ 20]LogCqTest: Running Setup Packet Settings
+[2026.10.27-15.43.36:940][ 21]LogCqTest: Running Connect Clients to Server
+[2026.10.27-15.43.36:946][ 22]LogCqTest: Starting Await Clients Ready
+[2026.10.27-15.43.36:946][ 22]LogCqTest: Finished Await Clients Ready after 0 milliseconds
+[2026.10.27-15.43.36:954][ 23]LogCqTest: RunTest
+[2026.10.27-15.43.36:961][ 24]LogCqTest: Starting the round is Active and the players split 2v1
+[2026.10.27-15.43.43:447][800]LogCqTest: Finished the round is Active and the players split 2v1 after 6486 milliseconds
+[2026.10.27-15.43.43:456][801]LogCqTest: Running place the defender on a clear disc and the striker 150 cm behind it, facing it
+[2026.10.27-15.43.43:464][802]LogCqTest: Running settle: mark
+[2026.10.27-15.43.43:473][803]LogCqTest: Starting settle
+[2026.10.27-15.43.44:266][898]LogCqTest: Finished settle after 793 milliseconds
+[2026.10.27-15.43.44:274][899]LogCqTest: Running the defender braces
+[2026.10.27-15.43.44:286][900]LogCqTest: Starting the Brace pose is on the defender
+[2026.10.27-15.43.44:676][947]LogCqTest: Finished the Brace pose is on the defender after 390 milliseconds
+[2026.10.27-15.43.44:685][948]LogCqTest: Running the striker strikes the braced defender
+[2026.10.27-15.43.44:691][949]LogStealth: [Encounter] BP_CrowdCharacter_C_1 reversed and eliminated BP_CrowdCharacter_C_0 in the slot (victim kind 0).
+[2026.10.27-15.43.44:693][949]LogCqTest: Starting contact + 3 s
+[2026.10.27-15.43.44:942][979]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_0 at 8.515 (DeathServerTime 8.663, concealed 0).
+[2026.10.27-15.43.46:292][141]LogStealth: [Encounter] body BP_CrowdCharacter_C_0 released at 9.866 (controller StealthPlayerController_0).
+[2026.10.27-15.43.48:093][357]LogCqTest: Finished contact + 3 s after 3400 milliseconds
+[2026.10.27-15.43.48:103][358]LogCqTest: Running assert
+[2026.10.27-15.43.48:111][359]LogCqTest: Running After Test
+[2026.10.27-15.43.48:119][360]LogCqTest: Running Restore Editor State
+[2026.10.27-15.43.48:335][361]LogCqTest: Tearing Down Test
+[2026.10.27-15.43.48:344][362]LogAutomationController: Display: Test Completed. Result={Success} Name={C_ReversalWithAnActiveTeammateLeftKeepsTheRoundActive} Path={StealthGame.Assassination.PIE.PrototypeScenariosACF.C_ReversalWithAnActiveTeammateLeftKeepsTheRoundActive}
+[2026.10.27-15.43.48:344][362]LogAutomationController: BeginEvents: StealthGame.Assassination.PIE.PrototypeScenariosACF.C_ReversalWithAnActiveTeammateLeftKeepsTheRoundActive
+[2026.10.27-15.43.48:344][362]LogAutomationController: Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log] 
+[2026.10.27-15.43.48:344][362]LogAutomationController: Warning: LogStealth: Seed 1699961248: objective 'Strike at the Tlatoani' unreachable from Team0. [log] 
+[2026.10.27-15.43.48:344][362]LogAutomationController: Warning: LogStealth: Seed 1699961248: objective 'Strike at the Tlatoani' unreachable from Team1. [log] 
+[2026.10.27-15.43.48:344][362]LogAutomationController: ACF-C2 contact 8.663, kills 1, phase Active
+[2026.10.27-15.43.48:344][362]LogAutomationController: Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log] 
+[2026.10.27-15.43.48:344][362]LogAutomationController: EndEvents: StealthGame.Assassination.PIE.PrototypeScenariosACF.C_ReversalWithAnActiveTeammateLeftKeepsTheRoundActive
+[2026.10.27-15.43.48:345][362]LogAutomationController: Sending RunTest F_BlindStrikeOnABushKillsTheConcealedEnemyAndOnAnEmptyBushNobody to 1BB29C484F94F3A828D7B1A176AD918C
+[2026.10.27-15.43.48:346][362]LogAutomationController: Display: Test Started. Name={F_BlindStrikeOnABushKillsTheConcealedEnemyAndOnAnEmptyBushNobody} Path={StealthGame.Assassination.PIE.PrototypeScenariosACF.F_BlindStrikeOnABushKillsTheConcealedEnemyAndOnAnEmptyBushNobody}
+[2026.10.27-15.43.48:346][363]LogCqTest: Before Test
+[2026.10.27-15.43.48:353][364]LogCqTest: Running Stop PIE
+[2026.10.27-15.43.48:362][365]LogCqTest: Running Load fixture map
+[2026.10.27-15.43.48:597][366]LogCqTest: Running Start PIE
+[2026.10.27-15.43.48:834][367]LogCqTest: Starting Set Worlds
+[2026.10.27-15.43.49:050][370]LogCqTest: Finished Set Worlds after 216 milliseconds
+[2026.10.27-15.43.49:086][371]LogCqTest: Running Setup Packet Settings
+[2026.10.27-15.43.49:095][372]LogCqTest: Running Connect Clients to Server
+[2026.10.27-15.43.49:101][373]LogCqTest: Starting Await Clients Ready
+[2026.10.27-15.43.49:101][373]LogCqTest: Finished Await Clients Ready after 0 milliseconds
+[2026.10.27-15.43.49:108][374]LogCqTest: RunTest
+[2026.10.27-15.43.49:115][375]LogCqTest: Starting the round is Active and the players split 2v1
+[2026.10.27-15.43.55:611][152]LogCqTest: Finished the round is Active and the players split 2v1 after 6496 milliseconds
+[2026.10.27-15.43.55:623][153]LogCqTest: Running the enemy away from the bushes; the striker outside the nearest bush, facing its centre
+[2026.10.27-15.43.55:630][154]LogCqTest: Running settle: mark
+[2026.10.27-15.43.55:639][155]LogCqTest: Starting settle
+[2026.10.27-15.43.56:431][250]LogCqTest: Finished settle after 792 milliseconds
+[2026.10.27-15.43.56:440][251]LogCqTest: Running edge case: a blind strike at the empty bush
+[2026.10.27-15.43.56:449][252]LogCqTest: Starting the empty-bush strike has passed its contact and the lockout
+[2026.10.27-15.43.58:940][551]LogCqTest: Finished the empty-bush strike has passed its contact and the lockout after 2491 milliseconds
+[2026.10.27-15.43.58:949][552]LogCqTest: Running the enemy steps into the bush
+[2026.10.27-15.43.58:958][553]LogCqTest: Starting the enemy is concealed
+[2026.10.27-15.43.59:749][648]LogCqTest: Finished the enemy is concealed after 791 milliseconds
+[2026.10.27-15.43.59:757][649]LogCqTest: Running the same blind strike at the bush
+[2026.10.27-15.43.59:763][650]LogStealth: [Encounter] BP_CrowdCharacter_C_1 killed BP_CrowdCharacter_C_0 in the slot (victim kind 0).
+[2026.10.27-15.43.59:766][650]LogCqTest: Starting contact + 3 s
+[2026.10.27-15.44.00:015][680]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_0 at 11.428 (DeathServerTime 11.578, concealed 1).
+[2026.10.27-15.44.03:169][ 58]LogCqTest: Finished contact + 3 s after 3403 milliseconds
+[2026.10.27-15.44.03:179][ 59]LogCqTest: Running assert
+[2026.10.27-15.44.03:186][ 60]LogCqTest: Running After Test
+[2026.10.27-15.44.03:195][ 61]LogCqTest: Running Restore Editor State
+[2026.10.27-15.44.03:433][ 62]LogCqTest: Tearing Down Test
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: Display: Test Completed. Result={Success} Name={F_BlindStrikeOnABushKillsTheConcealedEnemyAndOnAnEmptyBushNobody} Path={StealthGame.Assassination.PIE.PrototypeScenariosACF.F_BlindStrikeOnABushKillsTheConcealedEnemyAndOnAnEmptyBushNobody}
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: BeginEvents: StealthGame.Assassination.PIE.PrototypeScenariosACF.F_BlindStrikeOnABushKillsTheConcealedEnemyAndOnAnEmptyBushNobody
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log] 
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: Warning: LogStealth: Seed 1327716974: objective 'Steal the obsidian blade' unreachable from Team0. [log] 
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: Warning: LogStealth: Seed 1327716974: objective 'Steal the obsidian blade' unreachable from Team1. [log] 
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: ACF-F empty bush: striker 190.0 cm from the bush centre, bearing 0.0 deg, dZ 88.0 cm, concealed 0
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: ACF-F occupied bush: striker 190.0 cm from the bush centre, bearing 0.0 deg, dZ 88.0 cm, concealed 0
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: ACF-F enemy 0.0 cm from the bush centre, dZ 0.0 cm, concealed 1
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: ACF-F kills after the empty bush 0, after the occupied bush 1, died concealed 1
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log] 
+[2026.10.27-15.44.03:441][ 63]LogAutomationController: EndEvents: StealthGame.Assassination.PIE.PrototypeScenariosACF.F_BlindStrikeOnABushKillsTheConcealedEnemyAndOnAnEmptyBushNobody

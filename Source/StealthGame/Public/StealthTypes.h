@@ -37,29 +37,3 @@ enum class EStealthWinReason : uint8
 	FinalObjective,
 	Elimination
 };
-
-/** What kind of character an assassination targeted, as the server sees it. */
-UENUM(BlueprintType)
-enum class EStealthTargetKind : uint8
-{
-	Npc,
-	ActiveEnemy,
-	InformantEnemy,
-	Teammate
-};
-
-/** Server-resolved result of an assassination attempt. */
-UENUM(BlueprintType)
-enum class EStealthAssassinationOutcome : uint8
-{
-	/** The attempt was not allowed (teammate, informant attacker, round not running...). */
-	Rejected,
-	/** An active enemy player was eliminated and becomes an informant. */
-	EnemyEliminated,
-	/** The defender was prepared: the attacker is eliminated instead. */
-	Reversed,
-	/** A civilian was killed; the attacker's NPC-kill count increases. */
-	NpcKilled,
-	/** An enemy informant was killed; they respawn at their team spawn. Not an NPC kill. */
-	InformantKilled
-};

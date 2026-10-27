@@ -1,52 +1,8 @@
 #include "StealthRules.h"
 
-EStealthAssassinationOutcome FStealthRules::ResolveAssassination(bool bAttackerIsActive, EStealthTargetKind TargetKind, bool bTargetPrepared)
-{
-	if (!bAttackerIsActive)
-	{
-		return EStealthAssassinationOutcome::Rejected;
-	}
-
-	switch (TargetKind)
-	{
-	case EStealthTargetKind::Npc:
-		return EStealthAssassinationOutcome::NpcKilled;
-	case EStealthTargetKind::ActiveEnemy:
-		return bTargetPrepared ? EStealthAssassinationOutcome::Reversed : EStealthAssassinationOutcome::EnemyEliminated;
-	case EStealthTargetKind::InformantEnemy:
-		return EStealthAssassinationOutcome::InformantKilled;
-	case EStealthTargetKind::Teammate:
-	default:
-		return EStealthAssassinationOutcome::Rejected;
-	}
-}
-
 bool FStealthRules::ShouldRemoveForNpcKills(int32 NpcKillCount, int32 NpcKillLimit)
 {
 	return NpcKillLimit > 0 && NpcKillCount >= NpcKillLimit;
-}
-
-bool FStealthRules::CanStartDefence(bool bIsActive, bool bIsRunning, bool bIsInTraversal, double Now, double LastActivationTime, float Cooldown)
-{
-	if (!bIsActive || bIsRunning || bIsInTraversal)
-	{
-		return false;
-	}
-	return DefenceCooldownRemaining(Now, LastActivationTime, Cooldown) <= 0.f;
-}
-
-float FStealthRules::DefenceCooldownRemaining(double Now, double LastActivationTime, float Cooldown)
-{
-	if (LastActivationTime < 0.0)
-	{
-		return 0.f;
-	}
-	return FMath::Max(0.f, static_cast<float>(LastActivationTime + Cooldown - Now));
-}
-
-bool FStealthRules::ShouldEndDefence(bool bIsRunning, bool bIsInTraversal, double Now, double ActivationTime, float Duration)
-{
-	return bIsRunning || bIsInTraversal || Now >= ActivationTime + Duration;
 }
 
 bool FStealthRules::CanCompleteObjective(uint8 Team, int32 CurrentStage, uint8 ObjectiveTeam, int32 ObjectiveStage)

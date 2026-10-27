@@ -77,6 +77,31 @@ namespace StealthHarness
 		constexpr double CrowdWaitCeiling = 40.0;
 		constexpr double ObservationCeilingSec = 10.0;
 		constexpr int32 RefVisibleFrame = 10;
+
+		/** The retired prototype kill's body life (its BodyLifetime default): a killed subject's body is removed after it. */
+		constexpr float BodyLifeSec = 10.0f;
+
+		/**
+		 * Kills Pawn by the production death path (story asn-027): FDeathState{Now} through AStealthPawn::ApplyDeathWrite
+		 * (the forced update, the freeze and the death-write re-open), then what the harness's crowd needs: the controller
+		 * released (an NPC's destroyed) and the body removed after BodyLifeSec.
+		 */
+		inline void KillByDeathWrite(AStealthCharacter& Pawn, double Now)
+		{
+			FDeathState Death;
+			Death.DeathServerTime = Now;
+			Pawn.ApplyDeathWrite(Death);
+			if (AController* Controller = Pawn.GetController())
+			{
+				const bool bIsPlayer = Controller->IsPlayerController();
+				Controller->UnPossess();
+				if (!bIsPlayer)
+				{
+					Controller->Destroy();
+				}
+			}
+			Pawn.SetLifeSpan(BodyLifeSec);
+		}
 	}
 
 	/** Counts ensures and error/warning log lines by category (as S10). */
@@ -939,7 +964,10 @@ namespace StealthHarness
 				{
 					Stub->State.DeathServerTime = Now;
 				}
-				Pawn->KillCharacter();
+				// The production death path (story asn-027 retired the prototype immediate kill): the pawn half of the death write
+				// (FDeathState on every machine, presented as Death_Fall by the encounter presentation), then the harness's own
+				// body bookkeeping that the retired kill did (controller released, the body removed after S10's body life).
+				S10R::KillByDeathWrite(*Pawn, Now);
 			}
 			Subject.State = ES10RState::Visible; // the record returns to Visible in this step; held channels open later
 			FString Held;

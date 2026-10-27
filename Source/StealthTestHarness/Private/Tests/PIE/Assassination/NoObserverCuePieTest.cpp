@@ -12,7 +12,8 @@
 // widget-list change, no camera grade or role call caused by the strike, except the dead player's allies' teammate marker
 // (TM-R6 / F6); and on every observer's copies of the two participants the only strike-related replicated changes are
 // FActionState, FDeathState (the Counter pose is an FActionState), movement, and the body release that follows the death
-// write (PlayerState / Owner / Instigator, and the prototype bDying and brace-tell crouch until story asn-027 retires them).
+// write (PlayerState / Owner / Instigator) and the brace-tell crouch (the prototype pawn's presentation of the Brace pose
+// until the authored Brace clips; story asn-027 retired the replicated dying flag).
 // The round end (step 4): no machine presents it before the deciding death write (DeathServerTime - StrikeNetLeadSec - one
 // frame); the attacker's not before its own plate, the eliminated victim's not before its own fall (HUD F10 floors).
 // No owner audio bus or haptics exist yet: nothing to record (stated in PresentationLogHook.h).
@@ -66,8 +67,8 @@ namespace NoObserverCuePieData
 	/** The properties a strike may change on an observer's copy (beyond movement). */
 	bool IsAllowedStrikeProperty(const FString& Property)
 	{
-		// bIsCrouched: the prototype brace tell (a crouch), ended with the Counter at its contact; story asn-027 retires it.
-		static const TCHAR* const Allowed[] = { TEXT(".ActionState"), TEXT(".DeathState"), TEXT(".PlayerState"), TEXT(".Owner"), TEXT(".Instigator"), TEXT(".bDying"),
+		// bIsCrouched: the brace tell (a crouch presenting the FActionState Brace pose), ended with the Counter at its contact.
+		static const TCHAR* const Allowed[] = { TEXT(".ActionState"), TEXT(".DeathState"), TEXT(".PlayerState"), TEXT(".Owner"), TEXT(".Instigator"),
 			TEXT(".bIsCrouched") };
 		for (const TCHAR* Suffix : Allowed)
 		{

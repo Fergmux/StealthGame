@@ -42,13 +42,6 @@ public:
 	int32 NpcKills = 0;
 
 	/**
-	 * Server time of the last prototype defence tell; negative if unused this round. Server only since story asn-016: the
-	 * owner's only defence datum is UDefenceOwnerComponent::CooldownEndServerTime on its PlayerController.
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Stealth")
-	double LastDefenceActivationTime = -1.0;
-
-	/**
 	 * STAND-IN for the Penalty epic (story asn-015), server only: the owner's "Wrong targets" tally (+1 for every
 	 * WrongTarget strike, an NPC and an informant kill alike, PEN-R14) that FStrikeResult.TallyAfter carries.
 	 */

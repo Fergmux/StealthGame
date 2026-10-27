@@ -68,25 +68,10 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Assassination", meta = (ClampMin = "50"))
 	float AssassinationRange = 200.f;
 
-	/** Server multiplies the range by this to tolerate ~1 RTT of positional lag. */
-	UPROPERTY(Config, EditAnywhere, Category = "Assassination", meta = (ClampMin = "1"))
-	float AssassinationServerTolerance = 1.5f;
-
-	/** Half-angle of the targeting cone in front of the attacker, degrees. */
-	UPROPERTY(Config, EditAnywhere, Category = "Assassination", meta = (ClampMin = "10", ClampMax = "180"))
-	float AssassinationConeHalfAngle = 50.f;
-
-	/** Radius around the strike point that a blind attack searches for a concealed enemy, cm. */
-	UPROPERTY(Config, EditAnywhere, Category = "Assassination", meta = (ClampMin = "10"))
-	float BlindStrikeRadius = 130.f;
-
-	/** Seconds the attacker is held in place after striking (the strike itself is a tell). */
-	UPROPERTY(Config, EditAnywhere, Category = "Assassination", meta = (ClampMin = "0"))
-	float AttackerRecoveryTime = 1.f;
-
-	/** Seconds a body stays in the world before it is removed. */
-	UPROPERTY(Config, EditAnywhere, Category = "Assassination", meta = (ClampMin = "1"))
-	float BodyLifetime = 10.f;
+	// AssassinationServerTolerance, AssassinationConeHalfAngle, BlindStrikeRadius, AttackerRecoveryTime and BodyLifetime
+	// were retired by story asn-027 (GDD "Prototype keys retired"): the reach is F1 on AssassinationRangeCm, the victim
+	// rules are ASN-R8, the lockout is AttackAttemptLockoutSec and the body times are DeathFallSec / BodyLingerSec /
+	// BodyRemovalGraceSec, all in the Assassination tuning.
 
 	/** NPC kills that remove a player from active play (removal ON this kill). */
 	UPROPERTY(Config, EditAnywhere, Category = "NPC Penalty", meta = (ClampMin = "1"))

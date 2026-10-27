@@ -9,7 +9,8 @@
 //   A  un-cull in one server step (as HideExit / OnConcealmentBroken will do) after the subject has been culled;
 //   C  the in-flight race: un-cull RaceFrames server frames after the close, long before the client can have
 //      acknowledged it (RTT ~220 ms), so a second channel for the same NetGUID opens while the first is closing;
-//   B  a death-write re-open: the culled subject is killed (KillCharacter) and un-culled in the same step.
+//   B  a death-write re-open: the culled subject is killed (its death write, AStealthPawn::ApplyDeathWrite) and un-culled
+//      in the same step.
 // Subjects are held still and carry the S10 presentation stub (UStealthSpikeActionStateComponent) so the client can
 // show what a re-created actor initialises from. Run with -StealthPacketTiming for the S12 packet-level latency.
 // Analyser: tools/ci/mp/analyze_s10.py (and analyze_net.py for S12).
@@ -48,6 +49,31 @@ namespace StealthHarness
 		constexpr int32 RaceFrames = 2;
 		constexpr int32 SubjectCount = 3;
 		constexpr double CrowdWaitCeiling = 40.0;
+
+		/** The retired prototype kill's body life (its BodyLifetime default): a killed subject's body is removed after it. */
+		constexpr float BodyLifeSec = 10.0f;
+
+		/**
+		 * Kills Pawn by the production death path (story asn-027): FDeathState{Now} through AStealthPawn::ApplyDeathWrite
+		 * (the forced update, the freeze and the death-write re-open), then what the harness's crowd needs: the controller
+		 * released (an NPC's destroyed) and the body removed after BodyLifeSec.
+		 */
+		inline void KillByDeathWrite(AStealthCharacter& Pawn, double Now)
+		{
+			FDeathState Death;
+			Death.DeathServerTime = Now;
+			Pawn.ApplyDeathWrite(Death);
+			if (AController* Controller = Pawn.GetController())
+			{
+				const bool bIsPlayer = Controller->IsPlayerController();
+				Controller->UnPossess();
+				if (!bIsPlayer)
+				{
+					Controller->Destroy();
+				}
+			}
+			Pawn.SetLifeSpan(BodyLifeSec);
+		}
 	}
 
 	/** Counts ensures and error/warning log lines by category (client and server fault accounting). */
@@ -379,7 +405,10 @@ namespace StealthHarness
 				{
 					Stub->State.DeathServerTime = Now;
 				}
-				Pawn->KillCharacter();
+				// The production death path (story asn-027 retired the prototype immediate kill): the pawn half of the death write
+				// (FDeathState on every machine, presented as Death_Fall by the encounter presentation), then the harness's own
+				// body bookkeeping that the retired kill did (controller released, the body removed after S10's body life).
+				S10::KillByDeathWrite(*Pawn, Now);
 			}
 			Subject.State = ES10State::Visible; // the channel re-opens on the subject's own update schedule (no forced update or relevancy)
 			const FVector Location = Pawn ? Pawn->GetActorLocation() : FVector::ZeroVector;

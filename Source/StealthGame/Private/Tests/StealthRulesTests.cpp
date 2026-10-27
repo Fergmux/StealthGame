@@ -1,6 +1,9 @@
 // Unit tests for FStealthRules. Run headless:
 //   UnrealEditor-Cmd.exe StealthGame.uproject -ExecCmds="Automation RunTests StealthGame.; Quit" -unattended -nullrhi
 // Values below are boundary values from the confirmed rules (that exact number IS the point).
+// StealthGame.Rules.Assassination and StealthGame.Rules.Defence were ported to the production cores by story asn-027
+// (StealthGame.Assassination.PrototypeParity, Source/StealthGameplay/Private/Tests/Assassination/PrototypeParityTest.cpp)
+// and removed here with the prototype resolver; the four tests below belong to the Penalty, Objectives and Round epics.
 
 #include "Misc/AutomationTest.h"
 #include "StealthRules.h"
@@ -9,28 +12,8 @@
 
 namespace StealthRulesTestValues
 {
-	constexpr float Cooldown = 60.f;
-	constexpr float Duration = 4.f;
 	constexpr int32 NpcLimit = 3;
 	constexpr float RunThreshold = 300.f;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FStealthRulesAssassinationTest, "StealthGame.Rules.Assassination",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
-
-bool FStealthRulesAssassinationTest::RunTest(const FString& Parameters)
-{
-	using O = EStealthAssassinationOutcome;
-	using K = EStealthTargetKind;
-
-	TestEqual(TEXT("Unprepared active enemy is eliminated"), FStealthRules::ResolveAssassination(true, K::ActiveEnemy, false), O::EnemyEliminated);
-	TestEqual(TEXT("Prepared active enemy reverses the attack"), FStealthRules::ResolveAssassination(true, K::ActiveEnemy, true), O::Reversed);
-	TestEqual(TEXT("NPC target is an NPC kill"), FStealthRules::ResolveAssassination(true, K::Npc, false), O::NpcKilled);
-	TestEqual(TEXT("Enemy informant kill is not an NPC kill"), FStealthRules::ResolveAssassination(true, K::InformantEnemy, false), O::InformantKilled);
-	TestEqual(TEXT("Teammates cannot be attacked"), FStealthRules::ResolveAssassination(true, K::Teammate, false), O::Rejected);
-	TestEqual(TEXT("Informants cannot attack"), FStealthRules::ResolveAssassination(false, K::ActiveEnemy, false), O::Rejected);
-	TestEqual(TEXT("Informants cannot attack NPCs"), FStealthRules::ResolveAssassination(false, K::Npc, false), O::Rejected);
-	return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FStealthRulesNpcPenaltyTest, "StealthGame.Rules.NpcKillRemoval",
@@ -43,30 +26,6 @@ bool FStealthRulesNpcPenaltyTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Removal happens ON the third NPC kill"), FStealthRules::ShouldRemoveForNpcKills(3, NpcLimit));
 	TestTrue(TEXT("Beyond the limit is still removed"), FStealthRules::ShouldRemoveForNpcKills(4, NpcLimit));
 	TestFalse(TEXT("A zero limit disables the penalty"), FStealthRules::ShouldRemoveForNpcKills(10, 0));
-	return true;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FStealthRulesDefenceTest, "StealthGame.Rules.Defence",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
-
-bool FStealthRulesDefenceTest::RunTest(const FString& Parameters)
-{
-	using namespace StealthRulesTestValues;
-	constexpr double Never = -1.0;
-
-	TestTrue(TEXT("First use is allowed"), FStealthRules::CanStartDefence(true, false, false, 10.0, Never, Cooldown));
-	TestFalse(TEXT("Blocked while running"), FStealthRules::CanStartDefence(true, true, false, 10.0, Never, Cooldown));
-	TestFalse(TEXT("Blocked during parkour"), FStealthRules::CanStartDefence(true, false, true, 10.0, Never, Cooldown));
-	TestFalse(TEXT("Blocked for informants"), FStealthRules::CanStartDefence(false, false, false, 10.0, Never, Cooldown));
-	TestFalse(TEXT("Cooldown runs from activation"), FStealthRules::CanStartDefence(true, false, false, 69.9, 10.0, Cooldown));
-	TestTrue(TEXT("Usable again once per minute"), FStealthRules::CanStartDefence(true, false, false, 70.0, 10.0, Cooldown));
-	TestEqual(TEXT("Cooldown remaining"), FStealthRules::DefenceCooldownRemaining(40.0, 10.0, Cooldown), 30.f);
-	TestEqual(TEXT("No cooldown before first use"), FStealthRules::DefenceCooldownRemaining(40.0, Never, Cooldown), 0.f);
-
-	TestFalse(TEXT("Defence holds within its window"), FStealthRules::ShouldEndDefence(false, false, 13.9, 10.0, Duration));
-	TestTrue(TEXT("Defence expires after its duration"), FStealthRules::ShouldEndDefence(false, false, 14.0, 10.0, Duration));
-	TestTrue(TEXT("Running cancels the defence"), FStealthRules::ShouldEndDefence(true, false, 11.0, 10.0, Duration));
-	TestTrue(TEXT("Parkour cancels the defence"), FStealthRules::ShouldEndDefence(false, true, 11.0, 10.0, Duration));
 	return true;
 }
 

@@ -15,15 +15,15 @@ class UEncounterService;
 enum class EVictimKind : uint8;
 enum class EKillCause : uint8;
 enum class EActionType : uint8;
-enum class ECancelReason : uint8;
 class AStealthObjective;
 class AStealthPlayerController;
 class AStealthPlayerState;
 
 /**
- * Server-only authority for the round: team assignment, spawns, the NPC crowd, assassination and
- * defence resolution, NPC-kill removal, informants, objectives and both victory conditions.
- * All rule decisions are delegated to FStealthRules.
+ * Server-only prototype authority for the round's presentation and stand-ins: team assignment, spawns, the NPC crowd,
+ * informants, objectives and the end-of-round messages. Strikes, braces and reversals resolve only in Assassination's
+ * queue slot (FAttackResolverCore); story asn-027 retired the prototype resolver. The remaining prototype rules are
+ * FStealthRules'.
  *
  * Team spawns: place APlayerStart actors with PlayerStartTag "Team0" / "Team1".
  * Crowd area: an actor tagged "CrowdCenter" (falls back to the world origin) and UStealthSettings::CrowdRadius.
@@ -72,9 +72,10 @@ public:
 
 	/**
 	 * Binds this world's prototype presentation to Assassination's production slot (the composition root calls it once
-	 * the service is registered on Round's queue). Strikes and braces resolve only there; this side presents them:
-	 * the prototype ragdoll at the applied death write (stand-in until stories asn-018 to asn-020), the HUD messages,
-	 * the informant respawn, the crouch brace tell, and the prototype NPC-kill exile (Penalty stand-in).
+	 * the service is registered on Round's queue). Strikes and braces resolve only there; this side keeps the prototype
+	 * follow-ons: the life state and NPC replacement at the applied death write, the informant respawn after the body's
+	 * release, the reveal of a strike from a bush, and the prototype NPC-kill exile (Penalty stand-in). The fall and the
+	 * brace tell are presentation of FDeathState / FActionState (UEncounterPresentationSubsystem, AStealthCharacter).
 	 */
 	void BindEncounterService(UEncounterService& Service);
 
@@ -158,16 +159,12 @@ protected:
 
 	/** OnPawnKilled (in the slot, server state only): records the kill for its death write; the NPC-kill exile stand-in. */
 	void HandleEncounterPawnKilled(APawn* Victim, APawn* Killer, EVictimKind Kind, EKillCause Cause);
-	/** The applied death write: the victim's own message, life state, NPC replacement and the stand-in fall at contact. */
+	/** The applied death write: the prototype life state and the NPC replacement (the fall is the presentation's). */
 	void HandleEncounterDeathWrite(APawn* Victim, double DeathServerTime, bool bDiedConcealed);
 	/** The body's release (story asn-019, DeathServerTime + DeathFallSec): the informant respawn takeover follows it. */
 	void HandleEncounterBodyReleased(APawn* Body, AController* FormerController);
-	/** The applied CounterPose: the defender's crouch brace ends (never before the death write). */
-	void HandleEncounterCounterPose(APawn* Defender, double ContactServerTime);
-	/** Hub events: the prototype brace stance (crouch) and the strike's reveal from a bush. */
+	/** Hub OnActionStarted: an Attack reveals a striker concealed in a bush (the prototype concealment rule). */
 	void HandleHubActionStarted(AStealthPawn* Pawn, EActionType Type);
-	void HandleHubActionCancelled(AStealthPawn* Pawn, EActionType Type, ECancelReason Reason);
-	void HandleHubActionCompleted(AStealthPawn* Pawn, EActionType Type);
 	void UnbindEncounters();
 
 	/**
@@ -216,11 +213,8 @@ protected:
 	TWeakObjectPtr<UEncounterService> BoundEncounters;
 	FDelegateHandle PawnKilledHandle;
 	FDelegateHandle DeathWriteHandle;
-	FDelegateHandle CounterPoseHandle;
 	FDelegateHandle BodyReleasedHandle;
 	FDelegateHandle HubStartedHandle;
-	FDelegateHandle HubCancelledHandle;
-	FDelegateHandle HubCompletedHandle;
 	/** StealthBot commands carry the controller's own sink so owner replies reach it; their seqs start here. */
 	uint32 BotCommandSeq = 0x40000000u;
 };

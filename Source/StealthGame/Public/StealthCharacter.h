@@ -14,9 +14,11 @@ class UInputAction;
 /**
  * Prototype adapter over the production Shared Pawn (decision D53): AStealthCharacter now derives from
  * AStealthPawn (ADR-0010), so every body in L_Prototype is an AStealthPawn with UStealthMovementComponent, created by
- * UStealthPawnFactory. It keeps the prototype gameplay that has no production replacement yet (concealment,
- * defence, death presentation, appearance, the prototype input) until those systems' stories land; nothing new is
- * added here.
+ * UStealthPawnFactory. It keeps the prototype gameplay that has no production replacement yet (concealment, the
+ * crouch brace tell, appearance, the prototype input) until those systems' stories land; nothing new is added here.
+ * The prototype strike and defence code (the ragdoll kill, the server-side defence window and its replicated bools) was
+ * retired by story asn-027: strikes, braces and deaths are Assassination's queue slot and the replicated FActionState /
+ * FDeathState of AStealthPawn.
  *
  * The one pawn class used for BOTH players and NPCs (ADR-001 candidate: crowd identity parity).
  * The Game Animation Sample character Blueprint (CBP_SandboxCharacter; BP_CrowdCharacter is its child)
@@ -76,11 +78,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stealth")
 	bool IsInTraversal() const;
 
+	/** True once the death write reached this pawn (AStealthPawn::HasDeathWrite: FDeathState is set, on every machine). */
 	UFUNCTION(BlueprintPure, Category = "Stealth")
-	bool IsDying() const { return bDying; }
-
-	UFUNCTION(BlueprintPure, Category = "Stealth")
-	bool IsPreparingDefence() const { return bPreparingDefence; }
+	bool IsDying() const { return HasDeathWrite(); }
 
 	UFUNCTION(BlueprintPure, Category = "Stealth")
 	bool IsConcealed() const { return bConcealed && !bRevealedUntilExit; }
@@ -96,23 +96,7 @@ public:
 
 	// ---- Server-side mutation (called by the game mode) ----------------------------------
 
-	/** Server: plays the death (ragdoll) on every machine and schedules removal (the S10 harness scenarios' immediate kill). */
-	void KillCharacter();
-
-	/**
-	 * Server, at the death write's DeathServerTime: the prototype's dying flags only (bDying, the brace tell ends). The fall,
-	 * linger and removal are the encounter presentation's (UEncounterPresentationSubsystem, stories asn-018 / asn-020:
-	 * Death_Fall from FDeathState on every machine, no ragdoll); the body sequence (story asn-019) releases and removes it.
-	 */
-	void BeginEncounterDeath();
-
-	/** Server: ends any defensive preparation. */
-	void StopDefence();
-
-	/** Server: begins the defensive preparation (rules already checked). */
-	void StartDefence();
-
-	/** Server: freezes movement for Duration seconds. */
+	/** Server: freezes movement for Duration seconds (the Round adapter's stop at Ended). */
 	void HoldInPlace(float Duration);
 
 	/** Server: bush overlap bookkeeping. */
@@ -141,9 +125,6 @@ public:
 	void HandleOwnerCommandPredicted(ECommandKind Kind);
 
 protected:
-	/** Best visible target in front of this character within range, or null. */
-	AStealthCharacter* FindAssassinationTarget() const;
-
 	/** Whether the local viewer is on this pawn's team. */
 	bool IsTeammateOfLocalViewer() const;
 
@@ -151,21 +132,26 @@ protected:
 	void UpdateConcealmentVisibility();
 
 	void ApplyAppearance();
-	/** The ragdoll; bDisableCapsule false keeps the capsule's collision (the server's body before its release). */
-	void ApplyDeathPresentation(bool bDisableCapsule = true);
-	void SetDefenceStance(bool bPrepared);
 
 	/**
-	 * The owner's predicted brace stance follows its replicated FActionState (story asn-016: the defence state is never
-	 * replicated, so the Brace pose, which every client sees anyway, confirms or undoes the prediction).
+	 * The placeholder brace tell (Pillar 2's readable deviation, first-playable known issue 6): the sample's crouch while
+	 * bBraced. Presentation only: it is driven solely by the replicated FActionState pose (HandleActionStateChanged) and the
+	 * owner's prediction, never by any defence rule. Other machines see the crouch through ACharacter's replicated
+	 * bIsCrouched. Replaced by the authored Brace clips (Animation; story asn-025's playtest needs them).
+	 */
+	void ApplyBraceTell(bool bBraced);
+
+	/**
+	 * The brace tell follows the FActionState pose (story asn-027; ADR-0018 E7: RepNotify on clients, the direct write on
+	 * the server and the listen host), on the authority (its crouch replicates to every simulated proxy) and on the owning
+	 * client (whose movement owns the crouch flag): Brace crouches; a Counter keeps the crouch until its ContactServerTime
+	 * (story asn-017: nothing changes on the defender before contact); any other pose stands. The owner's prediction
+	 * (HandleOwnerCommandPredicted) is confirmed or undone here.
 	 */
 	virtual void HandleActionStateChanged() override;
 
 	UFUNCTION()
 	void OnRep_AppearanceIndex();
-
-	UFUNCTION()
-	void OnRep_Dying();
 
 	/** Head-mounted camera for first-person mode. Inactive in third person. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stealth")
@@ -178,12 +164,6 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_AppearanceIndex)
 	int32 AppearanceIndex = INDEX_NONE;
 
-	UPROPERTY(ReplicatedUsing = OnRep_Dying)
-	bool bDying = false;
-
-	/** Server only (story asn-016): the prototype brace tell is running. Clients read the replicated FActionState pose. */
-	bool bPreparingDefence = false;
-
 	/** In a bush. Replicated to all so each client can hide enemies locally (prototype; see header note). */
 	UPROPERTY(Replicated)
 	bool bConcealed = false;
@@ -193,9 +173,6 @@ protected:
 
 	UPROPERTY(Replicated)
 	double HeldUntilServerTime = 0.0;
-
-	/** Server time the current defence began. */
-	double DefenceActivationTime = 0.0;
 
 	/** Bushes currently overlapping (server). */
 	TArray<TWeakObjectPtr<AStealthBush>> OverlappingBushes;

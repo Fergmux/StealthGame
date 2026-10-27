@@ -14,7 +14,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
-#include "EngineUtils.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerController.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -67,7 +66,6 @@ void AStealthCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AStealthCharacter, AppearanceIndex);
-	DOREPLIFETIME(AStealthCharacter, bDying);
 	DOREPLIFETIME(AStealthCharacter, bConcealed);
 	DOREPLIFETIME(AStealthCharacter, bRevealedUntilExit);
 	DOREPLIFETIME(AStealthCharacter, HeldUntilServerTime);
@@ -98,17 +96,6 @@ void AStealthCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AStealthCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	const double Now = StealthServerNow(GetWorld());
-
-	if (HasAuthority() && bPreparingDefence)
-	{
-		const UStealthSettings* Settings = UStealthSettings::Get();
-		if (FStealthRules::ShouldEndDefence(IsRunning(), IsInTraversal(), Now, DefenceActivationTime, Settings->DefenceDuration))
-		{
-			StopDefence();
-		}
-	}
 
 	if (GetNetMode() != NM_DedicatedServer)
 	{
@@ -169,7 +156,7 @@ void AStealthCharacter::PostNetInit()
 
 bool AStealthCharacter::CanJumpInternal_Implementation() const
 {
-	if (IsInformant() || bPreparingDefence || GetActionState().Pose == EActionPose::Brace || IsHeldInPlace() || bDying)
+	if (IsInformant() || GetActionState().Pose == EActionPose::Brace || IsHeldInPlace() || HasDeathWrite())
 	{
 		return false;
 	}
@@ -203,7 +190,7 @@ bool AStealthCharacter::IsInformant() const
 bool AStealthCharacter::IsActiveAgent() const
 {
 	const AStealthPlayerState* PS = GetStealthPlayerState();
-	return PS && PS->IsActivePlayer() && !bDying;
+	return PS && PS->IsActivePlayer() && !HasDeathWrite();
 }
 
 bool AStealthCharacter::IsRunning() const
@@ -252,68 +239,6 @@ bool AStealthCharacter::IsTeammateOfLocalViewer() const
 }
 
 // ---- Server-side mutation ------------------------------------------------------------------
-
-void AStealthCharacter::KillCharacter()
-{
-	if (!HasAuthority() || bDying)
-	{
-		return;
-	}
-	bDying = true;
-	StopDefence();
-	ApplyDeathPresentation();
-
-	if (AController* OwningController = GetController())
-	{
-		const bool bIsPlayer = OwningController->IsPlayerController();
-		OwningController->UnPossess();
-		if (!bIsPlayer)
-		{
-			OwningController->Destroy();
-		}
-	}
-	SetLifeSpan(UStealthSettings::Get()->BodyLifetime);
-	ForceNetUpdate();
-}
-
-void AStealthCharacter::BeginEncounterDeath()
-{
-	if (!HasAuthority() || bDying)
-	{
-		return;
-	}
-	bDying = true;
-	StopDefence();
-	ForceNetUpdate();
-}
-
-void AStealthCharacter::StartDefence()
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-	const double Now = StealthServerNow(GetWorld());
-	bPreparingDefence = true;
-	DefenceActivationTime = Now;
-	if (AStealthPlayerState* PS = GetStealthPlayerState())
-	{
-		PS->LastDefenceActivationTime = Now;
-	}
-	SetDefenceStance(true);
-	ForceNetUpdate();
-}
-
-void AStealthCharacter::StopDefence()
-{
-	if (!HasAuthority() || !bPreparingDefence)
-	{
-		return;
-	}
-	bPreparingDefence = false;
-	SetDefenceStance(false);
-	ForceNetUpdate();
-}
 
 void AStealthCharacter::HoldInPlace(float Duration)
 {
@@ -434,39 +359,10 @@ void AStealthCharacter::ApplyAppearance()
 	}
 }
 
-void AStealthCharacter::ApplyDeathPresentation(bool bDisableCapsule)
-{
-	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
-	{
-		Movement->StopMovementImmediately();
-		Movement->DisableMovement();
-	}
-	StopAnimMontage();
-
-	if (UCapsuleComponent* Capsule = GetCapsuleComponent(); Capsule != nullptr && bDisableCapsule)
-	{
-		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-	else if (Capsule != nullptr)
-	{
-		// The server's body keeps blocking pawns until its release (story asn-019), but never its own ragdoll.
-		Capsule->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
-	}
-	if (USkeletalMeshComponent* MeshComponent = GetMesh())
-	{
-		// A body is always visible: the kill itself is the tell, even from a bush.
-		MeshComponent->SetVisibility(true, true);
-		MeshComponent->SetCollisionProfileName(TEXT("Ragdoll"));
-		MeshComponent->SetAllBodiesSimulatePhysics(true);
-		MeshComponent->SetSimulatePhysics(true);
-		MeshComponent->WakeAllRigidBodies();
-	}
-}
-
-void AStealthCharacter::SetDefenceStance(bool bPrepared)
+void AStealthCharacter::ApplyBraceTell(bool bBraced)
 {
 	// Placeholder "brace" pose: the sample's crouch. Preparing a defence is a readable deviation (Pillar 2).
-	if (bPrepared)
+	if (bBraced)
 	{
 		Crouch();
 	}
@@ -480,7 +376,7 @@ void AStealthCharacter::UpdateConcealmentVisibility()
 {
 	// A body keeps the visibility it had at the death write (story asn-023 owns the killed-concealed body's hide); the
 	// encounter presentation's removal hides it afterwards (story asn-020).
-	if (bDying || HasDeathWrite())
+	if (HasDeathWrite())
 	{
 		return;
 	}
@@ -500,48 +396,39 @@ void AStealthCharacter::OnRep_AppearanceIndex()
 	ApplyAppearance();
 }
 
-void AStealthCharacter::OnRep_Dying()
-{
-	// The ragdoll is only the S10 harness's immediate KillCharacter (no FDeathState); an encounter death is presented
-	// from FDeathState by UEncounterPresentationSubsystem (Death_Fall, story asn-020).
-	if (bDying && !HasDeathWrite())
-	{
-		ApplyDeathPresentation();
-	}
-}
-
 void AStealthCharacter::HandleActionStateChanged()
 {
 	Super::HandleActionStateChanged();
-	// The owner's predicted stance (HandleOwnerCommandPredicted) follows the server's Brace pose: a Brace confirms it,
-	// any later pose (None at the window's end, Counter, Strike) undoes it. Other machines see the crouch through the
-	// character's replicated crouch state.
-	if (IsLocallyControlled() && !HasAuthority())
+	// The brace tell is presentation of the pose alone (story asn-027 retired the prototype server-side defence window):
+	// the authority crouches (replicated to every simulated proxy through bIsCrouched) and so does the owning client (its
+	// moves carry the crouch flag; its prediction is confirmed or undone here). Simulated proxies do nothing.
+	if (!HasAuthority() && !IsLocallyControlled())
 	{
-		// Story asn-017 (ASN-R6, UI-ASN-3): a reversal's Counter arrives with the staged death write, before its contact; the
-		// stance holds until that ContactServerTime, so the defender's own view changes nothing before contact.
-		const FActionState& State = GetActionState();
-		const double Now = StealthServerNow(GetWorld());
-		if (State.Pose == EActionPose::Counter && State.ContactServerTime > Now && bIsCrouched)
+		return;
+	}
+	const FActionState& State = GetActionState();
+	const double Now = StealthServerNow(GetWorld());
+	// Story asn-017 (ASN-R6, UI-ASN-3): a reversal's Counter arrives with the staged death write, before its contact; the
+	// stance holds until that ContactServerTime, so nothing on the defender changes before contact on any machine.
+	if (State.Pose == EActionPose::Counter && State.ContactServerTime > Now && bIsCrouched)
+	{
+		TWeakObjectPtr<AStealthCharacter> WeakThis(this);
+		const uint16 CounterSeq = State.Seq;
+		FTimerHandle Handle;
+		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakThis, CounterSeq]()
 		{
-			TWeakObjectPtr<AStealthCharacter> WeakThis(this);
-			const uint16 CounterSeq = State.Seq;
-			FTimerHandle Handle;
-			GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakThis, CounterSeq]()
+			AStealthCharacter* Self = WeakThis.Get();
+			if (Self != nullptr && Self->GetActionState().Seq == CounterSeq && Self->bIsCrouched)
 			{
-				AStealthCharacter* Self = WeakThis.Get();
-				if (Self != nullptr && Self->GetActionState().Seq == CounterSeq && Self->bIsCrouched)
-				{
-					Self->SetDefenceStance(false);
-				}
-			}), static_cast<float>(State.ContactServerTime - Now), false);
-			return;
-		}
-		const bool bBraced = State.Pose == EActionPose::Brace;
-		if (bBraced != bIsCrouched)
-		{
-			SetDefenceStance(bBraced);
-		}
+				Self->ApplyBraceTell(false);
+			}
+		}), static_cast<float>(State.ContactServerTime - Now), false);
+		return;
+	}
+	const bool bBraced = State.Pose == EActionPose::Brace;
+	if (bBraced != bIsCrouched)
+	{
+		ApplyBraceTell(bBraced);
 	}
 }
 
@@ -550,7 +437,7 @@ void AStealthCharacter::HandleActionStateChanged()
 void AStealthCharacter::ToggleCameraMode()
 {
 	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (!PC || !IsLocallyControlled() || bDying)
+	if (!PC || !IsLocallyControlled() || HasDeathWrite())
 	{
 		return;
 	}
@@ -600,47 +487,10 @@ void AStealthCharacter::ToggleCameraMode()
 
 // ---- Input ------------------------------------------------------------------------------------
 
-AStealthCharacter* AStealthCharacter::FindAssassinationTarget() const
-{
-	const UStealthSettings* Settings = UStealthSettings::Get();
-	const FVector Origin = GetActorLocation();
-	const FVector ViewDir = FRotator(0.f, GetControlRotation().Yaw, 0.f).Vector();
-	const float CosLimit = FMath::Cos(FMath::DegreesToRadians(Settings->AssassinationConeHalfAngle));
-
-	AStealthCharacter* Best = nullptr;
-	float BestScore = TNumericLimits<float>::Max();
-	for (TActorIterator<AStealthCharacter> It(GetWorld()); It; ++It)
-	{
-		AStealthCharacter* Other = *It;
-		if (Other == this || Other->bDying || Other->bHiddenForLocalViewer || Other->IsTeammateOfLocalViewer())
-		{
-			continue;
-		}
-		const FVector ToOther = Other->GetActorLocation() - Origin;
-		const float Distance = ToOther.Size2D();
-		if (Distance > Settings->AssassinationRange || Distance < KINDA_SMALL_NUMBER)
-		{
-			continue;
-		}
-		const float Cos = FVector::DotProduct(ViewDir, ToOther.GetSafeNormal2D());
-		if (Cos < CosLimit)
-		{
-			continue;
-		}
-		const float Score = Distance * (2.f - Cos);
-		if (Score < BestScore)
-		{
-			BestScore = Score;
-			Best = Other;
-		}
-	}
-	return Best;
-}
-
 void AStealthCharacter::HandleOwnerCommandPredicted(ECommandKind Kind)
 {
-	// Presentation-only owner prediction (D53 adapter): the server decides; OnRep_PreparingDefence and the confirmation
-	// timeout undo a wrong guess, as before.
+	// Presentation-only owner prediction (D53 adapter): the server decides; the replicated FActionState pose
+	// (HandleActionStateChanged) and the confirmation timeout undo a wrong guess.
 	switch (Kind)
 	{
 	case ECommandKind::PrepareBegin:
@@ -652,7 +502,7 @@ void AStealthCharacter::HandleOwnerCommandPredicted(ECommandKind Kind)
 		{
 			return;
 		}
-		SetDefenceStance(true);
+		ApplyBraceTell(true);
 		TWeakObjectPtr<AStealthCharacter> WeakThis(this);
 		FTimerHandle Handle;
 		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakThis]()
@@ -661,7 +511,7 @@ void AStealthCharacter::HandleOwnerCommandPredicted(ECommandKind Kind)
 			{
 				if (Self->GetActionState().Pose != EActionPose::Brace)
 				{
-					Self->SetDefenceStance(false); // no Brace confirmed in time: the prediction was wrong
+					Self->ApplyBraceTell(false); // no Brace confirmed in time: the prediction was wrong
 				}
 			}
 		}), DefenceConfirmTimeout, false);
@@ -670,7 +520,7 @@ void AStealthCharacter::HandleOwnerCommandPredicted(ECommandKind Kind)
 	case ECommandKind::PrepareEnd:
 		if (bIsCrouched)
 		{
-			SetDefenceStance(false);
+			ApplyBraceTell(false);
 		}
 		break;
 	case ECommandKind::InteractBegin:
