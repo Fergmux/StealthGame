@@ -11,7 +11,7 @@ namespace
 	constexpr int32 KindBits = 8;
 	constexpr int32 SeqBits = 16 + 32;
 
-	void SerializeDouble(FArchive& Ar, double& Value)
+	void SerializeReplyDouble(FArchive& Ar, double& Value)
 	{
 		Ar.SerializeBits(&Value, 64);
 	}
@@ -74,8 +74,8 @@ bool FCommandReply::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSucce
 		}
 		SerializeEnum(Ar, Hold.ActionType, GActionTypeCount, EActionType::Interact);
 		SerializeEnum(Ar, Hold.Outcome, GHoldOutcomeCount, EHoldOutcome::Active);
-		SerializeDouble(Ar, Hold.ServerStartTime);
-		SerializeDouble(Ar, Hold.ServerEndTime);
+		SerializeReplyDouble(Ar, Hold.ServerStartTime);
+		SerializeReplyDouble(Ar, Hold.ServerEndTime);
 		break;
 	case ECommandReplyKind::StrikeResult:
 	{
@@ -91,7 +91,7 @@ bool FCommandReply::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSucce
 		{
 			Strike.bExiled = (Exiled & 1) != 0;
 		}
-		SerializeDouble(Ar, Strike.ContactServerTime);
+		SerializeReplyDouble(Ar, Strike.ContactServerTime);
 		break;
 	}
 	case ECommandReplyKind::DefenceResult:
