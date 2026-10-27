@@ -44,4 +44,11 @@ public:
 
 	/** The attacker's tally after the strike that produced Result (called after OnPawnKilled, in the same slot). */
 	virtual FStrikeTally GetTallyForResult(const APawn* Attacker, EStrikeResult Result) = 0;
+
+	/**
+	 * The same query with the Attack's ClientCommandSeq (story nkp-003: Penalty stores it as the owner re-push's LastResultSeq,
+	 * PEN-R3). The resolver calls this one; the default forwards to GetTallyForResult, so a source that needs no sequence
+	 * overrides only that.
+	 */
+	virtual FStrikeTally GetTallyForStrike(const APawn* Attacker, EStrikeResult Result, const FClientCommandSeq& Seq) { return GetTallyForResult(Attacker, Result); }
 };

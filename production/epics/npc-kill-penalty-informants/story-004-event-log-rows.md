@@ -1,12 +1,12 @@
 # Story 004: Penalty Event Log rows, server-only and never through UE_LOG
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -64,14 +64,16 @@ The source lint for AC2 is a Logic test that scans `Source/StealthGameplay/*/Fea
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story 2026-10-27.*
 
-- `Source/StealthGameplay/Public/Server/Features/Penalty/StealthPenaltyEventRows.h`
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyEventLog.cpp`
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyEventLogRowsTest.cpp` (class `FPenaltyEventLogRowsTest`, name `StealthGame.Penalty.EventLogRows`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyNoLoggingLintTest.cpp` (class `FPenaltyNoLoggingLintTest`, name `StealthGame.Penalty.NoLoggingLint`)
-
----
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltyEventRows.h` (five fixed-size rows, `ERespawnCancelReason`, `EPenaltyPawnLostCause`, encode/decode, `FPenaltyEventLog`)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyEventLog.cpp`
+- `Source/StealthGameplay/Public/Server/Core/Round/StealthRoundGateways.h` (`ERespawnCause` beside `IInformantBodyProvider`)
+- `Source/StealthFoundation/Private/EventLog/StealthRoundEventLog.cpp` (the five Penalty rows PostRoundEligible)
+- `tools/ci/lint/log-forbidden-identifiers.txt` (include-lint rule (i) names the row types)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyEventLogRowsTest.cpp` (`StealthGame.Penalty.EventLogRows`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyEventLogRowSchemaTest.cpp` (`StealthGame.Penalty.EventLogRowSchema`, AC2 schema half)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyNoLoggingLintTest.cpp` (`StealthGame.Penalty.NoLoggingLint`, AC2 lint half)
 
 ## QA Test Cases
 
@@ -100,7 +102,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Logic: the two tests under `Source/StealthGameplay/Private/Tests/Penalty/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.EventLogRows, StealthGame.Penalty.EventLogRowSchema, StealthGame.Penalty.NoLoggingLint; evidence production/qa/evidence/npc-kill-penalty-informants-001-004-2026-10-27/
 
 ---
 
@@ -108,3 +110,22 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-001-penalty-core-store-and-service-shell.md`; cross-epic: round-match-framework `story-011-event-log-content.md` (the writer and `PostRoundEligible` flag)
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-005-exile-sequence-in-attack-slot.md`, `story-009-respawn-due-time-scheduling-and-cancellation.md`, `story-022-telemetry-and-playtest-report.md`
+
+---
+
+## Dev Notes (2026-10-27)
+
+**Readiness**: READY (depends on nkp-001; Round's writer `IRoundLogWriter` and the `ERoundLogType` values exist).
+
+**Deviations**:
+- `ERespawnCause` declared in `StealthRoundGateways.h` beside `IInformantBodyProvider` (as the story says); `ERespawnCancelReason` and `EPenaltyPawnLostCause` in the Penalty rows header.
+- `FRoundEventLog::GetReleaseClass` now returns PostRoundEligible for the five Penalty row types (PEN-R17; they were NeverReleased by default).
+- AC1: `StrikeCounted` is asserted through its real path (exile and informant-kill fixtures). `RespawnScheduled`, `InformantRespawn`, `RespawnCancelled` and `PawnLost` have no producer yet (nkp-005, 009, 010, 012): each is written through `FPenaltyEventLog` inside a slot and read back field by field; the producing stories assert them through their real paths.
+- AC2 is split into `StealthGame.Penalty.EventLogRowSchema` (names, flags, slot context, refusal outside a slot) and `StealthGame.Penalty.NoLoggingLint` (the source lint with a seeded negative control). The include lint rule (i) list now names the row types and `StrikeCount`.
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 2/2 passing (AC1: StrikeCounted through its real path; the other four rows through the writer, their real paths DEFERRED to nkp-005/009/010/012)
+**Deviations**: advisory, listed under Dev Notes (folder layout, shadow tally wiring, deferred halves)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-001-004-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 387/387 StealthGame. tests Success)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; no required changes)

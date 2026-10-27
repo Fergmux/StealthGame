@@ -1,12 +1,12 @@
 # Story 001: Penalty core store, service shell and round-scoped carry-over
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -72,17 +72,21 @@ Tests: all Logic tests inject a fake server clock, a stub Round queue, a fake Ro
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story 2026-10-27 (folder layout: `Features/Penalty/{Public/Server,Private}`, like Assassination and Crowd; decision logged).*
 
-- `Source/StealthGameplay/Public/Server/Features/Penalty/StealthPenaltyService.h`
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp`
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCore.h` and `StealthPenaltyCore.cpp`
-- `Source/StealthGame/Private/` composition root registration (the server composition root named by tuning-data-config story 003)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyCarryOverAndResetTest.cpp` (class `FPenaltyCarryOverAndResetTest`, name `StealthGame.Penalty.CarryOverAndReset`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyLatchedLimitReadTest.cpp` (class `FPenaltyLatchedLimitReadTest`, name `StealthGame.Penalty.LatchedLimitRead`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyStructureLintTest.cpp` (class `FPenaltyStructureLintTest`, name `StealthGame.Penalty.StructureLint`)
-
----
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltyService.h` (UPenaltyService, server-bound UWorldSubsystem, NotBlueprintType, IStrikeTallySource)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltySeams.h` (FPenaltyPawnKey, FPenaltyParams, the consumer-owned seams, fault details)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyService.cpp` (adapters, OnPawnKilled and Roster subscriptions)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.h` and `StealthPenaltyCore.cpp` (FPenaltyRecord, FPenaltyCore: store, latch, freeze, reset, carry-over)
+- `Source/StealthGameplay/StealthGameplay.Build.cs` (Features/Penalty include paths)
+- `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp`, `Source/StealthGame/Public/Server/StealthCompositionRoot.h` (bind, Preparing latch, unbind before the queue/encounter core go)
+- `Source/StealthGame/Private/Composition/StealthPenaltyWiring.h` and `.cpp` (FStealthShadowPenaltyTally stand-in until nkp-005)
+- `tools/ci/lint/log-forbidden-identifiers.txt` (Penalty row types and StrikeCount)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTestRig.h`, `PenaltySourceScan.h` (fakes, source scans)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyCarryOverAndResetTest.cpp` (`StealthGame.Penalty.CarryOverAndReset`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyLatchedLimitReadTest.cpp` (`StealthGame.Penalty.LatchedLimitRead`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyStructureLintTest.cpp` (`StealthGame.Penalty.StructureLint`, the QA case ServerOnlyShell)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyRoundEndedFreezeTest.cpp` (`StealthGame.Penalty.RoundEndedFreeze`, AC4)
 
 ## QA Test Cases
 
@@ -121,7 +125,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Logic: the three tests under `Source/StealthGameplay/Private/Tests/Penalty/` (`tests/unit/penalty/` in the studio docs) — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.CarryOverAndReset, StealthGame.Penalty.LatchedLimitRead, StealthGame.Penalty.StructureLint, StealthGame.Penalty.RoundEndedFreeze; evidence production/qa/evidence/npc-kill-penalty-informants-001-004-2026-10-27/
 
 ---
 
@@ -129,3 +133,23 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: cross-epic: tuning-data-config `story-002-gameplay-presentation-module-skeletons.md`, `story-008-fault-sink-and-test-seams-define.md`, `story-040-canonical-keys-and-faces.md` (the `NpcKillStrikeLimit` key and the server tuning face); participant-state-roster (`OnRosterReset`, `OnRosterRoundEnded`, connection events, stories 022-023); round-match-framework (declares `IInformantBodyProvider` and the provider registration that finds Penalty; no story path yet)
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-002-strike-rule-and-release-grace.md`, `story-003-tally-rule-and-strike-result-supply.md`, `story-004-event-log-rows.md`, `story-005-exile-sequence-in-attack-slot.md`, `story-009-respawn-due-time-scheduling-and-cancellation.md`
+
+---
+
+## Dev Notes (2026-10-27)
+
+**Readiness**: READY (QL-STORY-READY ADEQUATE; ADR-0019 Accepted; story manifest 2026-10-25f vs current 2026-10-25g: the g changes touch ADR-0002/0003/0013/0017 only, Penalty rules unchanged). Cross-epic dependencies not built are handled by consumer-owned seams: the Roster owner-view feed (psr-038) is `IPenaltyOwnerViewFeed` (null in production), the TDC frozen store is `IPenaltyTuningSource` (production stand-in: the schema defaults, as the encounter service), `IInformantBodyProvider` / the InformantRespawn resolver arrive with nkp-009/010.
+
+**Deviations**:
+- Folder layout `Source/StealthGameplay/Features/Penalty/{Public/Server,Private}` (the Assassination and Crowd layout) instead of `Public/Server/Features/Penalty/`; Build.cs include paths added.
+- The production service is bound alongside the prototype penalty (user rule: the prototype stays until nkp-021). The encounter service's tally source is `FStealthShadowPenaltyTally`: the prototype still answers (its exile sets bExiled), and every query also reaches `UPenaltyService` so its tally and rows stay in step with the strikes it counts. nkp-005 registers `UPenaltyService` itself.
+- AC3's QA name `ServerOnlyShell` is implemented as `StealthGame.Penalty.StructureLint` (the Files name); AC4 has its own test `StealthGame.Penalty.RoundEndedFreeze`.
+- AC4's respawn half (`OnInformantAwaitingBody` and the item resolve returning `Rejected_Latched`, pending-item count 0) needs nkp-009's provider and resolver: asserted there. The freeze gate (`IsFrozen`) is the first check of every mutator.
+- AC3 "every Public/Server header starts with the guard": scanned by the test over `Features/Penalty/Public/Server` (the CI include lint (b) scans `Source/<M>/Public/Server` only).
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 4/4 passing (AC4's respawn-schedule half DEFERRED to nkp-009: provider and resolver do not exist yet)
+**Deviations**: advisory, listed under Dev Notes (folder layout, shadow tally wiring, deferred halves)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-001-004-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 387/387 StealthGame. tests Success)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; no required changes)

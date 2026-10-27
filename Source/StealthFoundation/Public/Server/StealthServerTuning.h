@@ -43,6 +43,9 @@ struct STEALTHFOUNDATION_API FStealthServerTuning
 	UPROPERTY(EditAnywhere, Category = "Penalty")
 	FPenaltyTuning_Public Penalty_Public;
 
+	UPROPERTY(EditAnywhere, Category = "Penalty")
+	FPenaltyTuning_Server Penalty_Server;
+
 	UPROPERTY(EditAnywhere, Category = "Objectives")
 	FObjectivesTuning_Public Objectives_Public;
 

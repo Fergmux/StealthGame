@@ -1,12 +1,12 @@
 # Story 002: Strike rule, stale-read release grace and reversal at the limit
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -69,15 +69,16 @@ The killer-state check is an assert backed by ASN-R2 (an attacker who left `Acti
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story 2026-10-27.*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCore.cpp` (strike rule, grace predicate)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (`OnPawnKilled` subscription)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyStrikeRuleMatrixTest.cpp` (class `FPenaltyStrikeRuleMatrixTest`, name `StealthGame.Penalty.StrikeRuleMatrix`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyReleaseGraceBoundaryTest.cpp` (class `FPenaltyReleaseGraceBoundaryTest`, name `StealthGame.Penalty.ReleaseGraceBoundary`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyReversalAtLimitTest.cpp` (class `FPenaltyReversalAtLimitTest`, name `StealthGame.Penalty.ReversalAtLimit`)
-
----
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.cpp` (strike rule F1, grace predicate, InformantKiller fault, StrikeCounted pending row)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyService.cpp` (`OnPawnKilled` subscription, killer resolution)
+- `Source/StealthFoundation/Public/Server/StealthTuningSubstructs.h` (new `FPenaltyTuning_Server::StrikeOutReleaseGraceSec`), `Public/Server/StealthServerTuning.h`, `Public/Server/StealthTuningData.h` (`Penalty_Server`)
+- `Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl` (one row, fingerprint), `Public/Server/StealthTuningVersion.h` (schema version 5)
+- `Source/StealthFoundation/Public/Server/Testing/StealthPenaltyTuningKnobs.h`, `Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp` (the Penalty pin)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyStrikeRuleMatrixTest.cpp` (`StealthGame.Penalty.StrikeRuleMatrix`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyReleaseGraceBoundaryTest.cpp` (`StealthGame.Penalty.ReleaseGraceBoundary`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyReversalAtLimitTest.cpp` (`StealthGame.Penalty.ReversalAtLimit`)
 
 ## QA Test Cases
 
@@ -111,7 +112,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Logic: the three tests under `Source/StealthGameplay/Private/Tests/Penalty/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.StrikeRuleMatrix, StealthGame.Penalty.ReleaseGraceBoundary, StealthGame.Penalty.ReversalAtLimit; evidence production/qa/evidence/npc-kill-penalty-informants-001-004-2026-10-27/
 
 ---
 
@@ -119,3 +120,22 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-001-penalty-core-store-and-service-shell.md`; cross-epic: assassination-defence-reversal (`OnPawnKilled` with `VictimKind` and `Cause`, ASN-R10, ASN-R11), participant-state-roster (`GetParticipant`, Roster state)
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-003-tally-rule-and-strike-result-supply.md`, `story-005-exile-sequence-in-attack-slot.md`
+
+---
+
+## Dev Notes (2026-10-27)
+
+**Readiness**: READY (depends on nkp-001, implemented in the same batch; ASN `OnPawnKilled` exists).
+
+**Deviations**:
+- `StrikeOutReleaseGraceSec` registered as a schema key in a new `FPenaltyTuning_Server` (2.0, hard 0-5.0, safe 1.75-2.5, ServerOnly, latch Round, owner Penalty); `TuningSchemaVersion` 5. The generated table was hand-edited in the generator's exact format; regenerate with `Stealth.Tuning.SchemaGen` after the build and keep the result.
+- Order of the checks: an Informant killer faults before the victim-kind dispatch, so every Informant-killer cell of the matrix (whatever the cause or victim) reports exactly one fault.
+- AC3's scheduling half (one respawn after `OnInformantAwaitingBody(P, ReversedAgainst, t)`) is nkp-009's; only the no-strike half is asserted (as the story allows).
+- `StrikeCounted` is written for every NPC or informant kill by an Active participant, completed with `TallyAfter` at the same slot's tally query.
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC3's respawn-scheduling half DEFERRED to nkp-009, as the story allows)
+**Deviations**: advisory, listed under Dev Notes (folder layout, shadow tally wiring, deferred halves)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-001-004-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 387/387 StealthGame. tests Success)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; no required changes)

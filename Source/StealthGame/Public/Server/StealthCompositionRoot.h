@@ -212,6 +212,10 @@ private:
 	/** Stand-ins of the Penalty tally and the Concealment removal observer (stories asn-015, asn-019). */
 	TSharedPtr<class FStealthPrototypeStrikeTally> PrototypeTally;
 	TSharedPtr<class FStealthPrototypeBodyRemovalObserver> PrototypeBodyObserver;
+	/** NPC-Kill Penalty (stories nkp-001..004): the production service of the current server world, run alongside the
+	 *  prototype penalty, and the tally adapter that keeps it in step (StealthPenaltyWiring.h; nkp-005/021 swap them). */
+	TWeakObjectPtr<class UPenaltyService> Penalty;
+	TSharedPtr<class FStealthShadowPenaltyTally> ShadowTally;
 	/** The reply step's transport for the current server world. */
 	TSharedPtr<class FStealthControllerReplyTransport> ReplyTransport;
 	TWeakObjectPtr<UWorld> ReplyWorld;

@@ -1,12 +1,12 @@
 # Story 003: Wrong-target tally, FStrikeResult supply and owner re-push
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -69,15 +69,15 @@ Test seeds: randomised sequences use the fixed fixture seed `kPenaltyTestSeed`; 
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story 2026-10-27.*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCore.cpp` (tally, saturation, invariant, `LastResultSeq`)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (`IStrikeTallySource`, re-push on reclaim, rejoin and reset)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTallyRuleAndInvariantTest.cpp` (class `FPenaltyTallyRuleAndInvariantTest`, name `StealthGame.Penalty.TallyRuleAndInvariant`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyResidualBoundaryTest.cpp` (class `FPenaltyResidualBoundaryTest`, name `StealthGame.Penalty.ResidualBoundary`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTallyRepushOnReclaimTest.cpp` (class `FPenaltyTallyRepushOnReclaimTest`, name `StealthGame.Penalty.TallyRepushOnReclaim`)
-
----
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.cpp` (tally, saturation, k <= t invariant, `LastResultSeq`, slot-local bExiled, re-push on reclaim, rejoin, reset)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyService.cpp` (`IStrikeTallySource`: `GetTallyForResult` / `GetTallyForStrike`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltySeams.h` (`IPenaltyOwnerViewFeed`, the Roster owner-view feed seam until roster psr-038)
+- `Source/StealthGameplay/Features/Assassination/Public/Server/StrikeTallySource.h` (`GetTallyForStrike` with the ClientCommandSeq, default forwards) and `Features/Assassination/Private/AttackResolverCore.cpp` (one call site)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTallyRuleAndInvariantTest.cpp` (`StealthGame.Penalty.TallyRuleAndInvariant`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyResidualBoundaryTest.cpp` (`StealthGame.Penalty.ResidualBoundary`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTallyRepushOnReclaimTest.cpp` (`StealthGame.Penalty.TallyRepushOnReclaim`)
 
 ## QA Test Cases
 
@@ -111,7 +111,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Logic: the three tests under `Source/StealthGameplay/Private/Tests/Penalty/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.TallyRuleAndInvariant, StealthGame.Penalty.ResidualBoundary, StealthGame.Penalty.TallyRepushOnReclaim; evidence production/qa/evidence/npc-kill-penalty-informants-001-004-2026-10-27/
 
 ---
 
@@ -119,3 +119,22 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-001-penalty-core-store-and-service-shell.md`, `story-002-strike-rule-and-release-grace.md`; cross-epic: assassination-defence-reversal (`IStrikeTallySource` and `FStrikeResult { ClientCommandSeq, Result, TallyAfter, bExiled, ContactServerTime }`, ASN-R19), participant-state-roster `story-038-owner-view-feed.md` (`SetOwnerTally`)
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-005-exile-sequence-in-attack-slot.md`, `story-016-strike-count-never-leaves-and-removal-audiences.md`, `story-017-owner-presentation-timing.md`
+
+---
+
+## Dev Notes (2026-10-27)
+
+**Readiness**: READY (depends on nkp-001/002 in this batch; `IStrikeTallySource` exists; roster psr-038 `SetOwnerTally` not built: asserted at the `IPenaltyOwnerViewFeed` seam, as the story says).
+
+**Deviations**:
+- `LastResultSeq` needs the Attack's `ClientCommandSeq`, which `GetTallyForResult(Attacker, Result)` does not carry: `IStrikeTallySource::GetTallyForStrike(Attacker, Result, Seq)` was added (default forwards to `GetTallyForResult`, so existing fakes are unchanged) and the resolver calls it (one line in `FAttackResolverCore::DeliverOwnerResults`). `LastResultSeq` moves only when the tally actually changed (not at 255).
+- bExiled: the core computes F1's `Exile = (k' >= L) AND (S = Active)` in the strike path and holds it slot-local (consumed by the same slot's tally query); the exile sequence itself is nkp-005. In production the prototype's bExiled is still the one the plate carries (shadow wiring, see nkp-001).
+- The `k <= t` invariant is asserted at the tally update (after the Attack's fan-out), since the strike lands one call before the tally in the same slot.
+- Production has no owner-view feed yet (psr-038): `OnParticipantReclaimed` / `OnViewRebound` / `OnRosterReset` re-push into a null seam. Integration point for psr-038: pass its feed as `FPenaltyServiceInit::OwnerView`, and call `UPenaltyService::OnViewRebound` from the Roster's rejoin rebind.
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC2 asserts the core's F1 exile flag; the exile sequence is nkp-005; AC3 at the IPenaltyOwnerViewFeed seam until roster psr-038)
+**Deviations**: advisory, listed under Dev Notes (folder layout, shadow tally wiring, deferred halves)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-001-004-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 387/387 StealthGame. tests Success)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; no required changes)

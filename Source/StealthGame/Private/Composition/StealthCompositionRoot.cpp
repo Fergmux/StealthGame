@@ -4,8 +4,10 @@
 #include "Server/AssassinationAttackPredicate.h"
 #include "Server/AssassinationPreparePredicate.h"
 #include "Server/EncounterService.h"
+#include "Server/StealthPenaltyService.h"
 #include "Server/StealthTuningSubstructs.h"
 #include "StealthCommandWiring.h"
+#include "StealthPenaltyWiring.h"
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -417,6 +419,12 @@ void UStealthCompositionRoot::Deinitialize()
 	{
 		PreparePredicate->Initialize(nullptr, FAssassinationTuning_Public()); // the clock below is released
 	}
+	if (UPenaltyService* PenaltyService = Penalty.Get())
+	{
+		PenaltyService->Unbind(); // NKP: before the encounter core it subscribed to goes
+	}
+	Penalty.Reset();
+	ShadowTally.Reset();
 	if (Encounters != nullptr)
 	{
 		Encounters->Shutdown(); // Round (a dependency) still holds its queue here
@@ -576,6 +584,10 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	{
 		Encounters = NewObject<UEncounterService>(this);
 	}
+	if (UPenaltyService* PreviousPenalty = Penalty.Get())
+	{
+		PreviousPenalty->Unbind(); // NKP: it subscribed to the encounter core about to go
+	}
 	Encounters->Shutdown(); // a previous world's registration on the same queue (Release already ran for a destroyed one)
 
 	// Stand-ins of the composition root (StealthCommandWiring.h): the prototype bush query until Concealment, and the
@@ -598,7 +610,9 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	Init.Log = MatchCore->GetRoundLogWriter();
 	Init.Bushes = PrototypeBushes.Get();
 	Init.Roster = GetRosterStore();
-	Init.Tally = PrototypeTally.Get();
+	// NKP stories 001-004: the prototype tally answers; the shadow keeps the production Penalty store in step (nkp-005).
+	ShadowTally = MakeShared<FStealthShadowPenaltyTally>(PrototypeTally.Get());
+	Init.Tally = ShadowTally.Get();
 	Init.BodyObserver = PrototypeBodyObserver.Get();
 	Init.Faults = &CommandFaults;
 	if (!Encounters->Initialize(Init))
@@ -614,6 +628,27 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		UE_LOGF(LogStealth, Error, "Encounters: a PawnCommand / HoldTimer resolver or a DeathWrite / CounterPose applier was already registered.");
 	}
 	InGameMode->BindEncounterService(*Encounters);
+
+	// NPC-Kill Penalty (stories nkp-001..004): the production service, bound alongside the prototype penalty, which still
+	// exiles until story nkp-005 (nkp-021 retires it). It counts strikes from OnPawnKilled, keeps the tally through the
+	// shadow adapter and writes its Event Log rows; tuning: the schema defaults until the TDC store feeds features.
+	UPenaltyService* PenaltyService = World->GetSubsystem<UPenaltyService>();
+	if (PenaltyService != nullptr)
+	{
+		FPenaltyServiceInit PenaltyInit;
+		PenaltyInit.Clock = CommandClock.Get();
+		PenaltyInit.Queue = Queue;
+		PenaltyInit.Log = MatchCore->GetRoundLogWriter();
+		PenaltyInit.Roster = GetRosterStore();
+		PenaltyInit.Encounters = Encounters;
+		PenaltyInit.Faults = &CommandFaults;
+		if (!PenaltyService->Bind(PenaltyInit))
+		{
+			PenaltyService = nullptr;
+		}
+	}
+	Penalty = PenaltyService;
+	ShadowTally->SetPenalty(PenaltyService);
 }
 
 void UStealthCompositionRoot::HandleRoundPhaseChanged(ERoundPhase OldPhase, ERoundPhase NewPhase)
@@ -623,6 +658,14 @@ void UStealthCompositionRoot::HandleRoundPhaseChanged(ERoundPhase OldPhase, ERou
 	if (NewPhase == ERoundPhase::Reset && Encounters != nullptr)
 	{
 		Encounters->ResetRound();
+	}
+	// NKP story 001 (PEN-R4): Penalty latches L and the release grace at Preparing (TDC rule CR-11 Latching).
+	if (NewPhase == ERoundPhase::Preparing)
+	{
+		if (UPenaltyService* PenaltyService = Penalty.Get())
+		{
+			PenaltyService->OnRoundPreparing();
+		}
 	}
 }
 
@@ -639,6 +682,10 @@ void UStealthCompositionRoot::HandleRoundQueueDrained()
 
 void UStealthCompositionRoot::HandleRoundQueueReleasing()
 {
+	if (UPenaltyService* PenaltyService = Penalty.Get())
+	{
+		PenaltyService->Unbind(); // NKP: its slot context is this queue, its subscription the encounter core
+	}
 	if (Encounters != nullptr)
 	{
 		Encounters->Release();

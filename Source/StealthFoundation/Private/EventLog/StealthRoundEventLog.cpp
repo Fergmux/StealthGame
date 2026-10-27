@@ -329,6 +329,12 @@ ERoundLogReleaseClass FRoundEventLog::GetReleaseClass(ERoundLogType Type)
 	case ERoundLogType::FinalCompleted:
 	case ERoundLogType::WinLatched:
 	case ERoundLogType::PhaseChanged:
+	// Penalty's rows (GDD npc-kill-penalty-informants.md PEN-R17: all PostRoundEligible; story nkp-004).
+	case ERoundLogType::StrikeCounted:
+	case ERoundLogType::RespawnScheduled:
+	case ERoundLogType::InformantRespawn:
+	case ERoundLogType::RespawnCancelled:
+	case ERoundLogType::PawnLost:
 		return ERoundLogReleaseClass::PostRoundEligible;
 	default:
 		// Mailbox order, connection data, voids, debug and the rest: never released.

@@ -19,7 +19,7 @@
  * increase TuningSchemaVersion by one and APPEND {new version, new fingerprint} below. Never edit or
  * remove an old entry (append-only; removal is not detected by the test, a known limit).
  */
-inline constexpr int32 TuningSchemaVersion = 4;
+inline constexpr int32 TuningSchemaVersion = 5;
 
 /** One bumped schema version and the fingerprint it was bumped for. */
 struct FTuningSchemaHistoryEntry
@@ -34,4 +34,5 @@ inline constexpr FTuningSchemaHistoryEntry TuningSchemaHistory[] = {
 	{ 2, 0xc0f6026e36e2ff58ull }, // 2026-10-26, story SCL-003: the 55 Shared Character & Locomotion keys
 	{ 3, 0x6c226685555a3908ull }, // 2026-10-26, story cnb-003: the 108 Crowd keys (49 GDD + 59 OQ13 constants)
 	{ 4, 0x1aa42c9205920326ull }, // 2026-10-27, story asn-001: the 13 new Assassination keys (16 with the three canonical)
+	{ 5, 0xf5fec5bd72bd634eull }, // 2026-10-27, story nkp-002: Penalty's ServerOnly StrikeOutReleaseGraceSec
 };

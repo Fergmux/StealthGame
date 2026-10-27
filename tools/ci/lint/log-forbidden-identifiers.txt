@@ -17,3 +17,11 @@ ServerSubSeed
 FSecretStream
 MailboxOrder
 Binding
+# NPC-Kill Penalty & Informants: the Event Log row types and the ServerOnly strike count (ADR-0019 section 7; stories nkp-001, nkp-004)
+FPenaltyEventLog*
+FPenaltyStrikeCountedRow
+FPenaltyRespawnScheduledRow
+FPenaltyInformantRespawnRow
+FPenaltyRespawnCancelledRow
+FPenaltyPawnLostRow
+StrikeCount

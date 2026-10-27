@@ -45,6 +45,20 @@ struct STEALTHFOUNDATION_API FAssassinationTuning_Server
 	float StrikeNetLeadSec = 0.15f;
 };
 
+/**
+ * NPC-Kill Penalty & Informants ServerOnly keys (GDD npc-kill-penalty-informants.md Tuning Knobs, audience ServerOnly;
+ * story nkp-002). The All key NpcKillStrikeLimit is FPenaltyTuning_Public.
+ */
+USTRUCT()
+struct STEALTHFOUNDATION_API FPenaltyTuning_Server
+{
+	GENERATED_BODY()
+
+	/** PEN-R5: a released exile body killed at most this long after its release (inclusive) adds no strike (W-NKP-3 vs the lockout). */
+	UPROPERTY(EditAnywhere, Category = "Penalty", meta = (ClampMin = "0", ClampMax = "5.0", SafeMin = "1.75", SafeMax = "2.5", Latch = "Round", Owner = "Penalty", Unit = "Sec"))
+	float StrikeOutReleaseGraceSec = 2.0f;
+};
+
 /** Crowd & NPC Behaviour ServerOnly keys (the owner has no public key yet, so no _Public struct). */
 USTRUCT()
 struct STEALTHFOUNDATION_API FCrowdTuning_Server

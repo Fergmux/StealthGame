@@ -29,6 +29,7 @@
 #include "Server/Testing/StealthNegativeControl.h"
 #include "Server/Testing/StealthAssassinationTuningKnobs.h"
 #include "Server/Testing/StealthCrowdTuningKnobs.h"
+#include "Server/Testing/StealthPenaltyTuningKnobs.h"
 #include "Server/Testing/StealthSclTuningKnobs.h"
 #include "Tuning/StealthTuningSchemaGen.h"
 #include "UObject/UnrealType.h"
@@ -282,6 +283,11 @@ bool FTuningSchemaCompleteTest::RunTest(const FString& Parameters)
 		{
 			Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
 		}
+	}
+	// The Penalty Tuning Knobs rows (story nkp-002); NpcKillStrikeLimit is already a TDC canonical pin.
+	for (const StealthPenaltyTuningKnobs::FKnob& Knob : StealthPenaltyTuningKnobs::Knobs)
+	{
+		Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
 	}
 	TestEqual(TEXT("every schema key has a GDD pin and every pin a schema key"), Pins.Num(), Compiled.Num());
 	for (const FPin& Pin : Pins)

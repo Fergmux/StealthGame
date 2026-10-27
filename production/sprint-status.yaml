@@ -3573,3 +3573,47 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "ASN batch 2026-10-27; harness presentation log + replicated-property watcher; NoWarningToVictim (6 cases + negative control, 2v2, fixed 60 Hz) and NoObserverCue (4 players); fixes: server HUD lines held per frame, HUD role follows the presented role, brace crouch ends at the Counter's contact"
+  - id: "nkp-001"
+    name: "Penalty core store, service shell and round-scoped carry-over"
+    file: "production/epics/npc-kill-penalty-informants/story-001-penalty-core-store-and-service-shell.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27 (nkp-001..004); evidence production/qa/evidence/npc-kill-penalty-informants-001-004-2026-10-27/; FPenaltyCore + UPenaltyService in Features/Penalty, bound alongside the prototype penalty (shadow tally until nkp-005)"
+  - id: "nkp-002"
+    name: "Strike rule, stale-read release grace and reversal at the limit"
+    file: "production/epics/npc-kill-penalty-informants/story-002-strike-rule-and-release-grace.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27; F1 strike rule, StrikeOutReleaseGraceSec schema key (TuningSchemaVersion 5); respawn half of AC3 deferred to nkp-009"
+  - id: "nkp-003"
+    name: "Wrong-target tally, FStrikeResult supply and owner re-push"
+    file: "production/epics/npc-kill-penalty-informants/story-003-tally-rule-and-strike-result-supply.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27; IStrikeTallySource::GetTallyForStrike (LastResultSeq); re-push at the IPenaltyOwnerViewFeed seam until roster psr-038"
+  - id: "nkp-004"
+    name: "Penalty Event Log rows, server-only and never through UE_LOG"
+    file: "production/epics/npc-kill-penalty-informants/story-004-event-log-rows.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27; five rows PostRoundEligible, FPenaltyEventLog slot-only writer, NoLoggingLint; real paths of four rows in nkp-005/009/010/012"

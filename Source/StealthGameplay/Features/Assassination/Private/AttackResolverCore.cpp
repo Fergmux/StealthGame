@@ -433,7 +433,7 @@ void FAttackResolverCore::DeliverOwnerResults(const FCommandPayload& Cmd, FQueue
 	FStrikeTally Tally;
 	if (Deps.Tally != nullptr)
 	{
-		Tally = Deps.Tally->GetTallyForResult(Resolution.Attacker, Resolution.StrikeResult.Result);
+		Tally = Deps.Tally->GetTallyForStrike(Resolution.Attacker, Resolution.StrikeResult.Result, Resolution.StrikeResult.ClientCommandSeq);
 	}
 	else
 	{

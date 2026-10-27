@@ -426,6 +426,20 @@ public:
 // ---------------------------------------------------------------------------------------------------------
 
 /**
+ * Why a participant needs an informant body (ADR-0019 section 1; GDD npc-kill-penalty-informants.md PEN-R7): the cause
+ * Round passes to Penalty's provider and Penalty's RespawnScheduled row carries (story nkp-004). Append only.
+ */
+enum class ERespawnCause : uint8
+{
+	Assassinated,
+	ReversedAgainst,
+	StrikeLimit,
+	InformantKilled,
+	PawnLost,
+	Readmitted,
+};
+
+/**
  * Declared by Round, bound by the composition root to Penalty (ADR-0019 section 1). Penalty owns the C1 respawn
  * chain and its retries (PEN-R9, PEN-R10). Declared by the RMF round-end batch (story rmf-062).
  */

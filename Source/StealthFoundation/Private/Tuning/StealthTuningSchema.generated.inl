@@ -178,6 +178,7 @@ namespace StealthTuningGenerated
 		{ "StrikeContactGapCm", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::StrikeContactGapCm>, &Set<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::StrikeContactGapCm>, 15.0f, 5.0f, 40.0f, 10.0f, 25.0f, true, ETuningLatch::Use, "Assassination", "Cm", false, 0.0 },
 		{ "StrikeContactSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::StrikeContactSec>, &Set<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::StrikeContactSec>, 0.4f, 0.25f, 0.8f, 0.3f, 0.5f, true, ETuningLatch::Action, "Assassination", "Sec", false, 0.0 },
 		{ "StrikeNetLeadSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Assassination_Server, &FAssassinationTuning_Server::StrikeNetLeadSec>, &Set<&FStealthServerTuning::Assassination_Server, &FAssassinationTuning_Server::StrikeNetLeadSec>, 0.15f, 0.05f, 0.3f, 0.1f, 0.15f, false, ETuningLatch::Round, "Assassination", "Sec", false, 0.0 },
+		{ "StrikeOutReleaseGraceSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Penalty_Server, &FPenaltyTuning_Server::StrikeOutReleaseGraceSec>, &Set<&FStealthServerTuning::Penalty_Server, &FPenaltyTuning_Server::StrikeOutReleaseGraceSec>, 2.0f, 0.0f, 5.0f, 1.75f, 2.5f, false, ETuningLatch::Round, "Penalty", "Sec", false, 0.0 },
 		{ "StrikeVerticalReachCm", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Assassination_Server, &FAssassinationTuning_Server::StrikeVerticalReachCm>, &Set<&FStealthServerTuning::Assassination_Server, &FAssassinationTuning_Server::StrikeVerticalReachCm>, 75.0f, 30.0f, 120.0f, 50.0f, 100.0f, false, ETuningLatch::Use, "Assassination", "Cm", false, 0.0 },
 		{ "StrikeWarpLimitCm", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::StrikeWarpLimitCm>, &Set<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::StrikeWarpLimitCm>, 240.0f, 150.0f, 240.0f, 200.0f, 240.0f, true, ETuningLatch::Use, "Assassination", "Cm", false, 0.0 },
 		{ "StrikeWarpYawLimitDeg", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::StrikeWarpYawLimitDeg>, &Set<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::StrikeWarpYawLimitDeg>, 30.0f, 10.0f, 45.0f, 30.0f, 35.0f, true, ETuningLatch::Use, "Assassination", "Deg", false, 0.0 },
@@ -201,5 +202,5 @@ namespace StealthTuningGenerated
 	};
 
 	/** Schema fingerprint over names, types, audiences, latches and enum values (story tdc-043). */
-	inline constexpr uint64 SchemaFingerprint = 0x1aa42c9205920326ull;
+	inline constexpr uint64 SchemaFingerprint = 0xf5fec5bd72bd634eull;
 }
