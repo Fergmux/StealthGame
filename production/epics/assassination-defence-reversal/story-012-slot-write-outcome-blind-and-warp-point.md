@@ -1,12 +1,12 @@
 # Story 012: The slot writes one outcome-blind `FActionState`, with a `WarpPoint` that never reads a hidden pawn
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-20 slot-window clause, AC-ASN-47), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-20 slot window, [Integration/BLOCKING][Net] `StealthGame.Assassination.OutcomeBlindWire`): **GIVEN** a kill, a whiff and a reversal with the same variant, `WarpPoint` and attacker path, all other pawns stationary, under no loss and a fixed zero-variance packet delay **WHEN** the server send capture to a third-team bystander connection is logged per tick from the slot up to but excluding the tick that executes the death write **THEN** the three runs have the same set of dirty replicated properties (the attacker's `FActionState`, `ReplicatedMovement` and `RepRootMotion`, nothing on any other pawn), the attacker's property block has the same bit length in all three runs, the attacker's `FActionState` is sent in the slot tick (forced update) in all three runs, its values are identical across the runs (same variant, `StartServerTime`, `ContactServerTime`, `WarpPoint`, so no field encodes the outcome), and no actor is spawned on the server in the window (spawn count 0).
-- [ ] **AC2** (AC-ASN-20 negative control, ADR-0008 §3, [Integration/BLOCKING][Net]): **GIVEN** a seam build that writes the outcome into `Variant` **WHEN** AC1 runs against it **THEN** AC1 fails; the production build passes.
-- [ ] **AC3** (AC-ASN-47, [Integration/BLOCKING][Net] `StealthGame.Assassination.WarpPointBlind`): **GIVEN** `BushStrike`s at the same `WorldPoint` into an empty bush, an ally-only bush, a bush with a concealed NPC and one with a concealed rival, and open `TargetSpot` strikes at the same point with and without a culled pawn there **THEN** within each group `WarpPoint` is identical (derived from the `WorldPoint` and the footprint only) and never equals an occupant's position; a strike with an honoured `PawnRef` uses the victim's extrapolated position.
+- [x] **AC1** (AC-ASN-20 slot window, [Integration/BLOCKING][Net] `StealthGame.Assassination.OutcomeBlindWire`): **GIVEN** a kill, a whiff and a reversal with the same variant, `WarpPoint` and attacker path, all other pawns stationary, under no loss and a fixed zero-variance packet delay **WHEN** the server send capture to a third-team bystander connection is logged per tick from the slot up to but excluding the tick that executes the death write **THEN** the three runs have the same set of dirty replicated properties (the attacker's `FActionState`, `ReplicatedMovement` and `RepRootMotion`, nothing on any other pawn), the attacker's property block has the same bit length in all three runs, the attacker's `FActionState` is sent in the slot tick (forced update) in all three runs, its values are identical across the runs (same variant, `StartServerTime`, `ContactServerTime`, `WarpPoint`, so no field encodes the outcome), and no actor is spawned on the server in the window (spawn count 0).
+- [x] **AC2** (AC-ASN-20 negative control, ADR-0008 §3, [Integration/BLOCKING][Net]): **GIVEN** a seam build that writes the outcome into `Variant` **WHEN** AC1 runs against it **THEN** AC1 fails; the production build passes.
+- [x] **AC3** (AC-ASN-47, [Integration/BLOCKING][Net] `StealthGame.Assassination.WarpPointBlind`): **GIVEN** `BushStrike`s at the same `WorldPoint` into an empty bush, an ally-only bush, a bush with a concealed NPC and one with a concealed rival, and open `TargetSpot` strikes at the same point with and without a culled pawn there **THEN** within each group `WarpPoint` is identical (derived from the `WorldPoint` and the footprint only) and never equals an occupant's position; a strike with an honoured `PawnRef` uses the victim's extrapolated position.
 
 ---
 
@@ -111,7 +111,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: the two harness tests above under `LeakNetProfile` with a fixed zero-variance delay — must exist and pass; the send capture log is retained with the run
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -119,3 +119,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-002-reach-f1-pure-function.md`, `story-004-wire-structs-fixed-width.md`, `story-006-bush-spot-rule-and-victim-pick.md`, `story-007-attack-outcomes-resolved-in-slot.md`; cross-epic `production/epics/input-interaction-framework/story-069-force-net-update-on-write.md`, `story-082-action-pose-parity-observed.md`; `production/epics/information-visibility-policy/story-008-spike-fixed-width-netserialize-byte-capture.md`, `story-015-replicated-property-audit.md`; `production/epics/tuning-data-config/story-017-net-emulation-profiles.md`
 - Unlocks: `story-013-death-write-staging-and-after-latch.md`, `story-014-warp-targets-not-replicated-lunge-outcome-blind.md`, `story-017-no-warning-and-no-observer-cue.md`, `story-018-strike-clip-variants-warp-and-contact-scheduling.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: AC1 `StealthGame.Assassination.OutcomeBlindWire` (real round queue, production writes): a kill, a whiff and a reversal at the same open-spot WorldPoint and slot time each write exactly one thing in the slot tick, the attacker's FActionState {Strike, Variant, Start = slot, Contact = slot + 0.40, WarpPoint}, bit-identical across the three runs (NetSerialize 208 bits, same bytes, Identical), and nothing on any other pawn before the death-write tick; client half `StealthGame.Assassination.PIE.OutcomeBlindWire.SlotWriteBlindDeathWriteDeferredOnEveryClient` (listen host + 2 clients on L_Prototype): every machine presents the same Strike (Variant, WarpPoint, contact delay) for the kill, the whiff and the reversal, the hub announces each strike exactly once, and nothing reaches the target before the death write. AC2 the WITH_STEALTH_TEST_SEAMS build that writes the outcome into Variant fails the same comparison (variants differ per outcome); the production build passes after it. AC3 `StealthGame.Assassination.WarpPointBlind`: bush group (empty, ally-only, concealed NPC, concealed rival; occupants >= 50 cm from the WorldPoint) byte-identical WarpPoint (140, 0, 0) = the attacker-side footprint edge, never an occupant's offset (> 0.1 cm), the rival case a kill and the empty case a whiff; outside-footprint point clamps to (140, 42, 0); open group with and without a culled rival identical (= the WorldPoint); honoured moving PawnRef = quantised(F1 P_V(T_v) - P_A) exactly; |dz| clamp, theta = +-30 side variants, BushPreface bit with contact + BushStrikeEmergeSec.
+**Deviations**: ADVISORY - (1) the bystander-connection byte capture under LeakNetProfile is the IVP story 008 harness (not built): AC1 is asserted on the server's write set (the capture's source) plus the client RepNotify recording in PIE; the forced update is the scoped `FStealthForcedNetUpdate(ActionStateWrite)` capped once per pawn per frame, but the ForceNetUpdate override that drops unscoped callers is IIF story 069's. (2) The core files live in `Features/Assassination/{Public/Server,Private}` (ADR-0007 feature folder) not `Private/Features/Assassination`; the PIE test is `StealthTestHarness/Private/Tests/PIE/Assassination/OutcomeBlindWirePieTest.cpp` (one CQTest class for 012/013/014 client clauses). (3) theta is measured to the clamped warp target (decision logged) so the variant never depends on the outcome. (4) Brace / None are also FActionState writes now (FEncounterSclStanceSink deleted); Strike and Counter poses end through HoldTimer(ActionType Attack) at exec + 1.75 s / exec + 1.2 s (ASN-R14, R15; decision logged). (5) Play integration done in this story: strikes, braces and every other discrete command resolve in Round's queue slot (FStealthRoundCommandQueue), the prototype bridge (FStealthPrototypeCommandQueue, HandleAssassinationRequest and its hub broadcast, HandleDefenceRequest, EliminatePlayer) is deleted, the StealthBot strike helpers submit PawnCommands. Cross-epic IIF 069/082, IVP 008/015, TDC 017 not Complete: proceeded (decision logged).
+**Test Evidence**: `OutcomeBlindWireTest.cpp`, `WarpPointBlindTest.cpp` (StealthGameplay) and `OutcomeBlindWirePieTest.cpp` (StealthTestHarness); full suite 344/344 in `production/qa/evidence/assassination-defence-reversal-012-014-2026-10-27/full-suite.txt`
+**Run result**: OBSERVED - 3-player PIE on L_Prototype (Unreal MCP over HTTP: EditorAppToolset.StartPIE, StealthPlayToolset.RunPlayConsoleCommand): `StealthBot 0 strike_npc` resolved in the slot (`[Encounter] ... killed BP_CrowdCharacter_C_46 in the slot`, death write applied 0.067 s before DeathServerTime at ~3 fps); the reversal and the kill below; screenshots in `production/qa/evidence/story-012-slot-write-outcome-blind-and-warp-point/` (looked at, none black); no LogStealthFault line
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

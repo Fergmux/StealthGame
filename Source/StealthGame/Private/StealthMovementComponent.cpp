@@ -15,7 +15,7 @@ EStealthGaitLegality UStealthPrototypeMovementComponent::GetGaitLegality() const
 bool UStealthPrototypeMovementComponent::IsCommandedMotionDisabled() const
 {
 	const AStealthCharacter* Character = Cast<AStealthCharacter>(CharacterOwner);
-	return Character != nullptr && Character->IsHeldInPlace();
+	return Super::IsCommandedMotionDisabled() || (Character != nullptr && Character->IsHeldInPlace());
 }
 
 void UStealthPrototypeMovementComponent::OnTraversalModeRefused()

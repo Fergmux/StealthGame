@@ -110,7 +110,6 @@ ERosterResult FRoundMatchCore::OpenMatch()
 	LobbyArrived.Reset();
 	bRoundEndPending = false;
 	bRoundEndStepRan = false;
-	RoundEndDueTime = -1.0;
 	bSessionEnded = false;
 	bAbortBeforeP1 = false;
 	LogRecorder.ResetForNewMatch();
@@ -241,7 +240,6 @@ bool FRoundMatchCore::NotifyRoundTravelAccepted(int32 Seed)
 	AiDriven.Reset();
 	bRoundEndPending = false;
 	bRoundEndStepRan = false;
-	RoundEndDueTime = -1.0;
 	LatchedSummary[0] = LatchedSummary[1] = FRoundTeamSummary();
 	// R18 InRound: the records the round's ResetAll put in the round (Dormant ones stay RoundEnded).
 	InRoundParticipants.Reset();
@@ -503,7 +501,6 @@ void FRoundMatchCore::OnSessionEnding()
 	bSessionEnded = true;
 	Preparing.Cancel();
 	bRoundEndPending = false;
-	RoundEndDueTime = -1.0;
 	bResetHeld = false;
 	bResetPendingLobby = false;
 	if (RoundQueue != nullptr)
@@ -707,7 +704,6 @@ bool FRoundMatchCore::TryTerminate(const FRoundTerminalOutcome& Outcome, FQueueK
 	// The latch step (R9 i-v): TeamSummary computed now, published only by the round-end step; nothing else observable.
 	ComputeTeamSummary(Outcome, LatchedSummary);
 	bRoundEndPending = true;
-	RoundEndDueTime = -1.0;
 	// A strike decided the round when the deciding transition had a decision reason (debug eliminations excluded).
 	const bool bStrikeDecided = Outcome.EndReason == ERoundEndReason::Elimination && !bApplyingDebugItem;
 	if (RoundQueue != nullptr && RoundQueue->IsInSlot() && RoundQueue->GetTerminalDecision() == &EndStepRunner)
@@ -730,12 +726,8 @@ bool FRoundMatchCore::TryTerminate(const FRoundTerminalOutcome& Outcome, FQueueK
 			return true;
 		}
 	}
-	if (bStrikeDecided)
-	{
-		// The prototype strike adapter (outside the queue): the round-end step waits the death-write offset (Tick runs it).
-		RoundEndDueTime = Now() + Params.AdapterStrikeRoundEndDelaySec;
-		return true;
-	}
+	// Outside a slot (no strike decides a round there since strikes resolve in the queue, Assassination story asn-013):
+	// the round-end step runs at once. The prototype adapter's AdapterStrikeRoundEndDelaySec wait is gone.
 	RunRoundEndStep();
 	return true;
 }
@@ -790,7 +782,6 @@ void FRoundMatchCore::RunRoundEndStep()
 		return;
 	}
 	bRoundEndPending = false;
-	RoundEndDueTime = -1.0;
 	const FRoundTerminalOutcome& Outcome = Latch.GetOutcome();
 	FRoundResult Result;
 	Result.WinningTeam = Outcome.WinningTeam;
@@ -1019,7 +1010,6 @@ bool FRoundMatchCore::EnterReset(bool bCalledOff, ERoundEndReason Reason, uint8 
 		RoundQueue->DropStagedWrites();
 	}
 	bRoundEndPending = false;
-	RoundEndDueTime = -1.0;
 	// (3) the slice archived server-side, the round buffer cleared.
 	LogRecorder.ArchiveCurrent(PhaseCore.GetCurrentRoundIndex(), RoundEpochToken.RoundEpoch, Reason, AbortCode, bReachedEnded);
 	// (5) round scope (R21): Terminated and the queue (Seq restarts at 1) reset; a Reset decided inside a slot (a void)
@@ -1241,12 +1231,6 @@ void FRoundMatchCore::Tick()
 	if (Phase == ERoundPhase::Preparing)
 	{
 		Preparing.Tick();
-		return;
-	}
-	if (Phase == ERoundPhase::Active && bRoundEndPending && RoundEndDueTime >= 0.0 && Now() + FResolutionQueueCore::DueEpsilonSec >= RoundEndDueTime)
-	{
-		// The adapter path's round-end step (a prototype strike decided the round outside the queue).
-		RunRoundEndStep();
 		return;
 	}
 	if (Phase == ERoundPhase::Ended)

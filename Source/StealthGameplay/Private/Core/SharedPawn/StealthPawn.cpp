@@ -1,13 +1,43 @@
 #include "View/Core/StealthPawn.h"
 
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameplayTasksComponent.h"
+#include "MotionWarpingComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "Server/Core/StealthPawnCommandComponent.h"
 #include "View/Core/StealthMotionWarpingComponent.h"
 #include "View/Core/StealthPawnMovementComponent.h"
 
 const FName AStealthPawn::GameplayTasksComponentName(TEXT("GameplayTasks"));
 const FName AStealthPawn::MotionWarpingComponentName(TEXT("MotionWarping"));
+const FName AStealthPawn::StrikeWarpTargetName(TEXT("StrikeContact"));
+
+#if WITH_STEALTH_TEST_SEAMS
+bool StealthPawnTestSeams::bSkipRemoteStrikeWarpTarget = false;
+#endif
+
+namespace StealthPawnLocal
+{
+	/** This machine's estimate of server time (the server's own world time on the server). */
+	double ServerNow(const UWorld* World)
+	{
+		const AGameStateBase* GameState = World != nullptr ? World->GetGameState() : nullptr;
+		return GameState != nullptr ? GameState->GetServerWorldTimeSeconds() : (World != nullptr ? World->GetTimeSeconds() : 0.0);
+	}
+}
+
+FStealthForcedNetUpdate::FStealthForcedNetUpdate(AStealthPawn& Pawn, EForcedUpdateReason Reason)
+{
+	// At most once per pawn per frame (ADR-0003 section 2): the first force already sends this frame's state.
+	if (Pawn.LastForcedNetUpdateFrame == GFrameCounter)
+	{
+		return;
+	}
+	Pawn.LastForcedNetUpdateFrame = GFrameCounter;
+	++Pawn.ForcedNetUpdateCount;
+	Pawn.ForceNetUpdate();
+}
 
 AStealthPawn::AStealthPawn(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UStealthMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -88,4 +118,139 @@ UStealthMovementComponent* AStealthPawn::GetStealthMovement() const
 UPawnCommandComponent* AStealthPawn::GetPawnCommand() const
 {
 	return PawnCommand;
+}
+
+// ---- Encounter state (stories asn-012, asn-013, asn-014) -------------------------------------------------------------
+
+void AStealthPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	// Audience All, no condition (ADR-0018 sections 1.1, 1.2): the same rows on every pawn, NPC or player.
+	DOREPLIFETIME(AStealthPawn, ActionState);
+	DOREPLIFETIME(AStealthPawn, DeathState);
+}
+
+void AStealthPawn::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	// ADR-0018 section 7.2 / E5 (story asn-014): no strike or counter target may travel through motion warping. The Shared
+	// Pawn's own component disables WarpTargets in its class (COND_Never); the sample Blueprint's component on the D53
+	// prototype adapter replicates WarpTargets (COND_SimulatedOnly) and nothing else, so it is not replicated at all.
+	// Simulated proxies do not run the sample's traversal (spike SCL-045: 6/204), so nothing of theirs reads it.
+	TInlineComponentArray<UMotionWarpingComponent*> Warping(this);
+	for (UMotionWarpingComponent* Component : Warping)
+	{
+		if (Component != nullptr && !Component->IsA<UStealthMotionWarpingComponent>())
+		{
+			Component->SetIsReplicated(false);
+		}
+	}
+}
+
+UMotionWarpingComponent* AStealthPawn::GetWarpingForStrike() const
+{
+	if (SharedMotionWarping != nullptr)
+	{
+		return SharedMotionWarping;
+	}
+	return FindComponentByClass<UMotionWarpingComponent>();
+}
+
+bool AStealthPawn::HasStrikeWarpTarget() const
+{
+	const UMotionWarpingComponent* Warping = GetWarpingForStrike();
+	return Warping != nullptr && Warping->FindWarpTarget(StrikeWarpTargetName) != nullptr;
+}
+
+int32 AStealthPawn::CountWarpingThatCanReplicateTargets() const
+{
+	int32 Count = 0;
+	TInlineComponentArray<UMotionWarpingComponent*> Warping(this);
+	for (const UMotionWarpingComponent* Component : Warping)
+	{
+		Count += Component != nullptr && !Component->IsA<UStealthMotionWarpingComponent>() && Component->GetIsReplicated() ? 1 : 0;
+	}
+	return Count;
+}
+
+EStealthActionPose AStealthPawn::ToSclActionPose(EActionPose Pose)
+{
+	switch (Pose)
+	{
+	case EActionPose::Strike: return EStealthActionPose::Strike;
+	case EActionPose::Brace: return EStealthActionPose::Brace;
+	case EActionPose::Counter: return EStealthActionPose::Counter;
+	case EActionPose::Interact: return EStealthActionPose::InteractPose;
+	case EActionPose::BushEnter: return EStealthActionPose::BushEnter;
+	case EActionPose::BushExit: return EStealthActionPose::BushExit;
+	default: return EStealthActionPose::None;
+	}
+}
+
+double AStealthPawn::GetDeathFreezeServerTime(double Now) const
+{
+	// The freeze never interrupts a lunge (ADR-0018 section 3.2, closeout 2026-10-25): it waits for this pawn's contact.
+	if (ActionState.Pose == EActionPose::Strike && ActionState.ContactServerTime > Now)
+	{
+		return ActionState.ContactServerTime;
+	}
+	return Now;
+}
+
+bool AStealthPawn::ApplyDeathWrite(const FDeathState& State)
+{
+	if (!HasAuthority() || HasDeathWrite() || State.DeathServerTime < 0.0)
+	{
+		return false;
+	}
+	{
+		FStealthForcedNetUpdate Forced(*this, EForcedUpdateReason::DeathWrite);
+		DeathState = State;
+	}
+	HandleDeathStateChanged(); // the server (and the listen host's view) present it directly (ADR-0018 E7)
+	return true;
+}
+
+void AStealthPawn::HandleActionStateChanged()
+{
+	if (UStealthMovementComponent* Movement = GetStealthMovement())
+	{
+		Movement->SetActionPose(ToSclActionPose(ActionState.Pose));
+	}
+	if (ActionState.Pose == EActionPose::Strike && ActionState.Seq != StrikeWarpSeq)
+	{
+		StrikeWarpSeq = ActionState.Seq;
+		bool bSet = true;
+#if WITH_STEALTH_TEST_SEAMS
+		bSet = HasAuthority() || !StealthPawnTestSeams::bSkipRemoteStrikeWarpTarget;
+#endif
+		if (UMotionWarpingComponent* Warping = GetWarpingForStrike(); Warping != nullptr && bSet)
+		{
+			// Computed once from this machine's capsule and the replicated offset; the victim is never re-tracked.
+			Warping->AddOrUpdateWarpTargetFromLocation(StrikeWarpTargetName, GetActorLocation() + ActionState.WarpPoint.ToOffsetCm());
+		}
+	}
+	OnActionStateChanged.Broadcast(this);
+}
+
+void AStealthPawn::HandleDeathStateChanged()
+{
+	if (HasDeathWrite())
+	{
+		if (UStealthMovementComponent* Movement = GetStealthMovement())
+		{
+			Movement->FreezeCommandedMotionFrom(GetDeathFreezeServerTime(StealthPawnLocal::ServerNow(GetWorld())));
+		}
+	}
+	OnDeathStateChanged.Broadcast(this);
+}
+
+void AStealthPawn::OnRep_ActionState()
+{
+	HandleActionStateChanged();
+}
+
+void AStealthPawn::OnRep_DeathState()
+{
+	HandleDeathStateChanged();
 }

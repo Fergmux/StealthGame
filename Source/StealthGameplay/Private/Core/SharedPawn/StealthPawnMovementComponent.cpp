@@ -2,6 +2,7 @@
 
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/GameStateBase.h"
 #include "Server/StealthLogFaultSink.h"
 #include "Server/StealthTuningSubstructs.h"
 #include "Core/Movement/StealthSavedMove.h"
@@ -67,6 +68,18 @@ void UStealthMovementComponent::SetRunHysteresis(float ThresholdCmPerSec, float 
 EGait UStealthMovementComponent::GetEffectiveGait() const
 {
 	return StealthLocomotion::EffectiveGait(GetRequestedGait(), GetGaitLegality(), ActionPose);
+}
+
+bool UStealthMovementComponent::IsCommandedMotionFrozen() const
+{
+	if (FrozenFromServerTime < 0.0)
+	{
+		return false;
+	}
+	const UWorld* World = GetWorld();
+	const AGameStateBase* GameState = World != nullptr ? World->GetGameState() : nullptr;
+	const double Now = GameState != nullptr ? GameState->GetServerWorldTimeSeconds() : (World != nullptr ? World->GetTimeSeconds() : 0.0);
+	return Now + 0.001 >= FrozenFromServerTime; // ADR-0002 DueEpsilonSec (1 ms)
 }
 
 EStealthGaitLegality UStealthMovementComponent::GetGaitLegality() const

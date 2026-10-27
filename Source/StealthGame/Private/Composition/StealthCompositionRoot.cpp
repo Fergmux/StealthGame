@@ -3,7 +3,9 @@
 #include "Server/ActionHub.h"
 #include "Server/AssassinationAttackPredicate.h"
 #include "Server/AssassinationPreparePredicate.h"
-#include "StealthPrototypeCommandQueue.h"
+#include "Server/EncounterService.h"
+#include "Server/StealthTuningSubstructs.h"
+#include "StealthCommandWiring.h"
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -398,6 +400,8 @@ void UStealthCompositionRoot::Initialize(FSubsystemCollectionBase& Collection)
 	}
 	if (Round != nullptr)
 	{
+		QueueReleasingHandle = Round->OnRoundQueueReleasing.AddUObject(this, &UStealthCompositionRoot::HandleRoundQueueReleasing);
+		RoundActiveHandle = Round->OnRoundActive.AddUObject(this, &UStealthCompositionRoot::HandleRoundActive);
 		Round->SetLocalParticipantResolver([this](const UWorld* World) -> FParticipantId
 		{
 			const APlayerController* Local = World != nullptr ? World->GetFirstPlayerController() : nullptr;
@@ -412,6 +416,18 @@ void UStealthCompositionRoot::Deinitialize()
 	{
 		PreparePredicate->Initialize(nullptr, FAssassinationTuning_Public()); // the clock below is released
 	}
+	if (Encounters != nullptr)
+	{
+		Encounters->Shutdown(); // Round (a dependency) still holds its queue here
+	}
+	if (URoundMatchStore* Round = GetRoundStore())
+	{
+		Round->OnRoundQueueReleasing.Remove(QueueReleasingHandle);
+		Round->OnRoundActive.Remove(RoundActiveHandle);
+	}
+	PrototypeFallback.Reset();
+	PrototypeBushes.Reset();
+	CommandEpoch.Reset();
 	CommandQueue.Reset();
 	CommandClock.Reset();
 	if (URosterStore* Roster = GetRosterStore())
@@ -504,17 +520,18 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 		Factory->SetHooks(Adapters, this);
 	}
 
-	// The pawn command interface (ADR-0011; D53): every pawn's FPawnCommandCore binds these seams at BeginPlay. The
-	// queue is the prototype adapter until ADR-0002's queue facade lands (StealthPrototypeCommandQueue.h).
+	// The pawn command interface (ADR-0011): every pawn's FPawnCommandCore binds these seams at BeginPlay. Every discrete
+	// command is a PawnCommand item in Round's queue (stories asn-012/013 integration): a participant's in its own mailbox
+	// under its connection generation, AI and server-local ones in the server-local mailbox; the epoch is the Roster's.
 	if (UActionHub* Hub = UActionHub::Get(InGameMode->GetWorld()))
 	{
 		CommandClock = MakeShared<FStealthWorldCommandClock>(InGameMode->GetWorld());
-		CommandQueue = MakeShared<FStealthPrototypeCommandQueue>(InGameMode);
-		// Deps.Epoch stays null until the Round queue facade supplies its IQueueEpochSource (the prototype queue resolves
-		// immediately and never compares epochs); the real queue wiring must set it.
+		CommandQueue = MakeShared<FStealthRoundCommandQueue>(Round, Adapters);
+		CommandEpoch = MakeShared<FStealthRoundEpochSource>(RosterGateway);
 		FPawnCommandCoreDeps Deps;
 		Deps.Clock = CommandClock.Get();
 		Deps.Queue = CommandQueue.Get();
+		Deps.Epoch = CommandEpoch.Get();
 		Deps.FaultSink = &CommandFaults;
 		Hub->SetCommandWiring(Deps);
 
@@ -534,6 +551,72 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 			AttackPredicate = NewObject<UAssassinationAttackPredicate>(this);
 		}
 		Hub->RegisterPredicate(EActionType::Attack, TWeakInterfacePtr<ICommandPredicate>(AttackPredicate));
+
+		WireEncounters(InGameMode);
+	}
+}
+
+void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
+{
+	URoundMatchStore* Round = GetRoundStore();
+	FResolutionQueueCore* Queue = Round != nullptr ? Round->GetRoundQueue() : nullptr;
+	FRoundMatchCore* MatchCore = Round != nullptr ? Round->GetMatchCore() : nullptr;
+	UWorld* World = InGameMode != nullptr ? InGameMode->GetWorld() : nullptr;
+	if (Queue == nullptr || MatchCore == nullptr || World == nullptr || !CommandClock.IsValid())
+	{
+		UE_LOGF(LogStealth, Error, "Encounters not wired: no round queue (strikes cannot resolve this match).");
+		return;
+	}
+	if (Encounters == nullptr)
+	{
+		Encounters = NewObject<UEncounterService>(this);
+	}
+	Encounters->Shutdown(); // a previous world's registration on the same queue (Release already ran for a destroyed one)
+
+	// Stand-ins of the composition root (StealthCommandWiring.h): the prototype bush query until Concealment, and the
+	// Interact / Hide / Traverse dispatch until IIF stage 2. Tuning: the schema defaults until the TDC store feeds features.
+	const FEncounterParams Params = FEncounterParams::Defaults();
+	PrototypeBushes = MakeShared<FStealthPrototypeBushSpotQuery>(World, Params.Server.OpenSpotToleranceCm); // = BushSpotToleranceCm (W-ASN-9)
+	PrototypeFallback = MakeShared<FStealthPrototypeCommandFallback>(InGameMode);
+	USessionService* Session = USessionService::Get(World);
+
+	FEncounterServiceInit Init;
+	Init.World = World;
+	Init.Clock = CommandClock.Get();
+	Init.Queue = Queue;
+	Init.SubSeeds = Session != nullptr ? &Session->GetSubSeedSource() : nullptr;
+	Init.Params = Params;
+	Init.Log = MatchCore->GetRoundLogWriter();
+	Init.Bushes = PrototypeBushes.Get();
+	Init.Roster = GetRosterStore();
+	if (!Encounters->Initialize(Init))
+	{
+		UE_LOGF(LogStealth, Error, "Encounters not wired: the service refused its seams.");
+		return;
+	}
+	// HoldTimer: Assassination's Prepare timers and its pose ends; no other owner submits hold timers to the queue yet
+	// (the prototype objective keeps its own timer), so the fallback hold resolver is none.
+	Encounters->SetFallbackResolvers(PrototypeFallback.Get(), nullptr);
+	if (!Encounters->RegisterOn(*Queue))
+	{
+		UE_LOGF(LogStealth, Error, "Encounters: a PawnCommand / HoldTimer resolver or a DeathWrite / CounterPose applier was already registered.");
+	}
+	InGameMode->BindEncounterService(*Encounters);
+}
+
+void UStealthCompositionRoot::HandleRoundActive(uint32 RoundEpoch, double ActivePhaseStart)
+{
+	if (Encounters != nullptr)
+	{
+		Encounters->ResetRound(); // a new round: every strike role Ready, records dropped
+	}
+}
+
+void UStealthCompositionRoot::HandleRoundQueueReleasing()
+{
+	if (Encounters != nullptr)
+	{
+		Encounters->Release();
 	}
 }
 

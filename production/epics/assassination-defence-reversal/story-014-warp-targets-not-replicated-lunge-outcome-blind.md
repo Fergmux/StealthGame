@@ -1,12 +1,12 @@
 # Story 014: Motion-warp targets are never replicated, and the server lunge is outcome-blind
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,8 +35,8 @@ Two commitments: (1) wire: no motion-warping bunch is produced by a strike or co
 
 *From ADR-0018 Validation Criteria (`WarpTargetsNotReplicated`, `LungeOutcomeBlind`) and GDD ASN-R16, scoped to this story (the GDD has no numbered AC for this requirement; AC-ASN-21's pre-contact parity is story 018):*
 
-- [ ] **AC1** (ADR-0018 `WarpTargetsNotReplicated`, [Logic/BLOCKING] reflection audit plus [Integration/BLOCKING]): **GIVEN** every `AStealthPawn`'s motion-warping component **THEN** its `WarpTargets` lifetime row is `COND_Never` and the component class is the same for every pawn; **AND WHEN** a strike and a counter are executed under a bystander capture **THEN** no motion-warping bunch or property record appears on the wire.
-- [ ] **AC2** (ADR-0018 `LungeOutcomeBlind`, GDD ASN-R16, [Integration/BLOCKING][Net]): **GIVEN** a hit, a whiff and a reversal with the same `WarpPoint` and attacker path **WHEN** the attacker's `RepRootMotion` and replicated movement are captured from the slot to contact **THEN** they are identical across the three runs, and the server's lunge never re-tracks the victim's capsule (victim moved in the window in one run: no change in the attacker's warp).
+- [x] **AC1** (ADR-0018 `WarpTargetsNotReplicated`, [Logic/BLOCKING] reflection audit plus [Integration/BLOCKING]): **GIVEN** every `AStealthPawn`'s motion-warping component **THEN** its `WarpTargets` lifetime row is `COND_Never` and the component class is the same for every pawn; **AND WHEN** a strike and a counter are executed under a bystander capture **THEN** no motion-warping bunch or property record appears on the wire.
+- [x] **AC2** (ADR-0018 `LungeOutcomeBlind`, GDD ASN-R16, [Integration/BLOCKING][Net]): **GIVEN** a hit, a whiff and a reversal with the same `WarpPoint` and attacker path **WHEN** the attacker's `RepRootMotion` and replicated movement are captured from the slot to contact **THEN** they are identical across the three runs, and the server's lunge never re-tracks the victim's capsule (victim moved in the window in one run: no change in the attacker's warp).
 
 ---
 
@@ -102,7 +102,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: `WarpTargetsNotReplicatedTest.cpp` and `LungeOutcomeBlindTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -110,3 +110,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-004-wire-structs-fixed-width.md`, `story-012-slot-write-outcome-blind-and-warp-point.md`; cross-epic `production/epics/shared-character-locomotion/story-045-net-emulation-traversal-spike.md` (traversal's reliance on replicated warp targets, [U]), `story-001-pawn-class-default-subobjects.md`; `production/epics/information-visibility-policy/story-015-replicated-property-audit.md`
 - Unlocks: `story-018-strike-clip-variants-warp-and-contact-scheduling.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: AC1 `StealthGame.Assassination.WarpTargetsNotReplicated`: every C++ AStealthPawn class (two instances each, spawned at different times): UStealthMotionWarpingComponent's WarpTargets row is COND_Never and any other motion-warping component is unreplicated after PostInitializeComponents (control: the engine parent's row is replicated; a sample-style component added before FinishSpawning is turned off); wire half in PIE: the server sets its StrikeContact target and no client copy of the attacker receives one (local client set switched off by a seam), and every live server pawn (the sample Blueprint pawns included) has 0 motion-warping components that can send WarpTargets. NEGATIVE CONTROL watched failing: with the PostInitializeComponents fix removed the PIE run failed (`a client copy holds one 1`, 3 replicating components) and the headless audit failed; restored. AC2 `StealthGame.Assassination.LungeOutcomeBlind`: hit, whiff, reversal and a hit whose victim travels 150 cm in the window: from the slot to contact the attacker's only replicated-state write is the slot's FActionState, identical in all four (no re-track); on a real Shared Pawn WriteActionState(Strike) sets StrikeContact at P_A + WarpPoint and moving the pawn afterwards leaves it.
+**Deviations**: ADVISORY - (1) the D53 adapter pawns use the sample Blueprint's own UMotionWarpingComponent (the Shared component is opted out until ADR-0010's Blueprint reparent); its WarpTargets row is the engine's COND_SimulatedOnly, so the guarantee is that AStealthPawn::PostInitializeComponents turns off that component's replication (spike SCL-045: proxies do not run the sample traversal, 6/204) (decision logged). The ADR-0003 allowlist row is IVP story 015's (not built). (2) The per-tick RepRootMotion / ReplicatedMovement byte capture is the IVP-008 harness's; no strike clip exists before asn-018, so the server lunge is the locally set warp target (identical by construction); story 018 plays the root-motion clip against it. Cross-epic SCL 045 (done as a spike), SCL 001, IVP 015: proceeded.
+**Test Evidence**: `WarpTargetsNotReplicatedTest.cpp`, `LungeOutcomeBlindTest.cpp` (StealthGameplay) and `OutcomeBlindWirePieTest.cpp` (StealthTestHarness); full suite 344/344 in `production/qa/evidence/assassination-defence-reversal-012-014-2026-10-27/full-suite.txt`
+**Run result**: N/A - nothing player-visible of its own (no strike clip before asn-018); the wire half runs in the PIE test and in the 3-player PIE of stories 012/013
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

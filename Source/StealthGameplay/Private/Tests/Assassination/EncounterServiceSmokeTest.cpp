@@ -15,11 +15,22 @@
 #include "Tests/Assassination/AssassinationTestWorld.h"
 #include "View/Core/StealthPawnMovementComponent.h"
 
+namespace EncounterServiceSmokeTestData
+{
+	/** A probe applier (registers only if the service released the staged-write types). */
+	class FCountingAppliers final : public IStagedWriteApplier
+	{
+	public:
+		virtual void ApplyStagedWrite(const FStagedWrite& Write) override {}
+	};
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAssassinationEncounterServiceSmokeTest, "StealthGame.Assassination.EncounterServiceSmoke",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAssassinationEncounterServiceSmokeTest::RunTest(const FString& Parameters)
 {
+	using namespace EncounterServiceSmokeTestData;
 	StealthAssassinationTest::FScopedWorld World(TEXT("EncounterServiceSmokeWorld"));
 	FStealthQueueTestRig Q;
 	AStealthPawn* Attacker = World.SpawnPawn(0.0);
@@ -61,11 +72,17 @@ bool FAssassinationEncounterServiceSmokeTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("the victim's DeathWrite is staged"), Q.Queue->GetPendingStagedWrites().Num() == 1 && Q.Queue->GetPendingStagedWrites()[0].Type == EStagedWriteType::DeathWrite);
 	TestTrue(TEXT("GetScheduledDeathServerTime is the contact time"), Service->GetScheduledDeathServerTime(Victim).IsSet());
 	TestTrue(TEXT("the bracer is planted (SCL Brace pose)"), Bracer->GetStealthMovement()->GetActionPose() == EStealthActionPose::Brace);
-	TestTrue(TEXT("the bracer's CapEnd is scheduled"), Q.Queue->GetPendingTimerCount() == 1);
+	// Two timers: the bracer's CapEnd and the attacker's Strike pose end (story asn-012: the production pawn-state writer).
+	TestTrue(TEXT("the bracer's CapEnd and the attacker's pose end are scheduled"), Q.Queue->GetPendingTimerCount() == 2);
+	TestTrue(TEXT("the attacker's FActionState is the Strike (story asn-012)"), Attacker->GetActionState().Pose == EActionPose::Strike && Attacker->GetActionState().Seq == 2);
+	TestTrue(TEXT("the bracer's FActionState is Brace"), Bracer->GetActionState().Pose == EActionPose::Brace);
 
 	Service->Shutdown();
 	FStealthStubResolver Probe;
 	TestTrue(TEXT("Shutdown unregistered both types"), Q.Queue->RegisterResolver(EQueueItemType::PawnCommand, &Probe) && Q.Queue->RegisterResolver(EQueueItemType::HoldTimer, &Probe));
+	FCountingAppliers Appliers;
+	TestTrue(TEXT("Shutdown unregistered the DeathWrite and CounterPose appliers (story asn-013)"), Q.Queue->RegisterStagedWriteApplier(EStagedWriteType::DeathWrite, &Appliers)
+		&& Q.Queue->RegisterStagedWriteApplier(EStagedWriteType::CounterPose, &Appliers));
 	return true;
 }
 

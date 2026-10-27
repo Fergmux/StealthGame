@@ -12,6 +12,10 @@
 #include "Server/EventLog/StealthRoundLogWriter.h"
 #include "Server/StealthClock.h"
 
+#if WITH_STEALTH_TEST_SEAMS
+bool StealthEncounterTestSeams::bWriteOutcomeIntoVariant = false;
+#endif
+
 FAttackResolverCore::FAttackResolverCore(const FAttackResolverDeps& InDeps, const FEncounterParams& InParams)
 	: Deps(InDeps)
 	, Params(InParams)
@@ -117,6 +121,10 @@ EResolveResult FAttackResolverCore::Resolve(const FQueueItem& Item, FQueueKey Ke
 		{
 			return ResolveHoldTimer(Item, *Hold, Key);
 		}
+		if (Hold != nullptr && Hold->ActionType == static_cast<uint8>(EActionType::Attack))
+		{
+			return ResolvePoseEnd(*Hold);
+		}
 		return FallbackHolds != nullptr ? FallbackHolds->Resolve(Item, Key) : EResolveResult::Voided;
 	}
 	if (Item.Type == EQueueItemType::PawnCommand)
@@ -204,10 +212,7 @@ EResolveResult FAttackResolverCore::ResolveAttack(const FQueueItem& Item, const 
 	{
 		EndWindow(Attacker, Key);
 		Roles.EndBrace(Attacker);
-		if (Deps.Stance != nullptr)
-		{
-			Deps.Stance->SetBraceStance(Attacker, false);
-		}
+		SetBraceStance(Attacker, false, /*bWritePose: the Strike write below supersedes the Brace pose*/ false);
 		if (Deps.Events != nullptr)
 		{
 			Deps.Events->OnActionCancelled(Attacker, EActionType::Prepare, ECancelReason::Superseded);
@@ -247,6 +252,23 @@ EResolveResult FAttackResolverCore::ResolveAttack(const FQueueItem& Item, const 
 		// The fallen pawn is Dead from this slot (its death write still pending), with its scheduled death time.
 		Roles.SetDead(bBraced ? Attacker : Victim.Victim, Contact);
 	}
+
+	// Slot step 2 (ADR-0018 section 2.1, story asn-012): the attacker's one outcome-blind FActionState write. Its every
+	// field (variant, start, contact, WarpPoint) comes from the request, the attacker's capsule and public geometry, so
+	// a kill, a whiff and a reversal at the same request write the same bits; nothing is written on any other pawn here.
+	const FStrikeWarpPointResult Warp = ComputeWarp(AttackerFacts, Cmd.WorldPoint, Victim, Variant);
+	Resolution.StrikeVariantBits = Warp.Variant;
+	Resolution.WarpPoint = Warp.WarpPoint;
+	Resolution.WarpTarget = Warp.TargetLocation;
+	uint8 WireVariant = Warp.Variant;
+#if WITH_STEALTH_TEST_SEAMS
+	if (StealthEncounterTestSeams::bWriteOutcomeIntoVariant)
+	{
+		WireVariant |= static_cast<uint8>((static_cast<uint8>(Resolution.Outcome) & 0x3) << 3); // the forbidden leak (AC2 seam)
+	}
+#endif
+	WritePose(Attacker, EActionPose::Strike, WireVariant, ExecTime, Contact, Warp.WarpPoint);
+	SchedulePoseEnd(Item, Attacker, Key, ExecTime + Params.Public.AttackAttemptLockoutSec, StrikePoseEndEpoch);
 
 	// Every executed Attack: Striking and the lockout stamp (F3), and the outcome-blind execution event.
 	if (FDefenceStateCore* AttackerState = Deps.Defence->FindOrAdd(Attacker))
@@ -294,6 +316,10 @@ void FAttackResolverCore::ApplyKill(const FQueueItem& Item, FQueueKey Key, APawn
 	{
 		Deps.Bushes->RemoveOccupant(Victim);
 	}
+	if (Resolution.bVictimConcealed)
+	{
+		DiedConcealed.Add(FObjectKey(Victim)); // FDeathState.bDiedConcealed at its death write (story asn-023 reads it)
+	}
 	// (6) OnPawnKilled for every kind.
 	OnPawnKilled.Broadcast(Victim, Attacker, Kind, EKillCause::Strike);
 	// (7) The contact-time presentation write (story asn-013 applies it).
@@ -321,6 +347,7 @@ void FAttackResolverCore::ApplyReversal(const FQueueItem& Item, FQueueKey Key, A
 	// The defender: its brace is consumed and it counters (never Disabled, never charged, NOT protected; ASN-R14).
 	EndWindow(Defender, Key);
 	Roles.SetCountering(Defender, Resolution.ExecServerTime + Params.Public.CounterDurationSec);
+	SchedulePoseEnd(Item, Defender, Key, Resolution.ExecServerTime + Params.Public.CounterDurationSec, CounterPoseEndEpoch);
 	if (Deps.Events != nullptr)
 	{
 		Deps.Events->OnActionCancelled(Defender, EActionType::Prepare, ECancelReason::Reversed);
@@ -414,10 +441,7 @@ EResolveResult FAttackResolverCore::ResolvePrepareBegin(const FQueueItem& Item, 
 		return Void(Cmd, Key, ECommandRejectCode::Cooldown);
 	}
 	Roles.SetBracing(Pawn, Cmd.Sink);
-	if (Deps.Stance != nullptr)
-	{
-		Deps.Stance->SetBraceStance(Pawn, true);
-	}
+	SetBraceStance(Pawn, true);
 	if (Deps.Events != nullptr)
 	{
 		Deps.Events->OnActionStarted(Pawn, EActionType::Prepare);
@@ -468,18 +492,15 @@ EResolveResult FAttackResolverCore::ResolveHoldTimer(const FQueueItem& Item, con
 	{
 		// The window already ended (the other end item, the pawn's own Attack, or a reversal): the planted stance of a
 		// reversing defender ends here; the CounterPose write (story asn-013) owns its pose from contact.
-		if (Deps.Stance != nullptr && !Roles.IsDead(Pawn))
+		if (!Roles.IsDead(Pawn))
 		{
-			Deps.Stance->SetBraceStance(Pawn, false);
+			SetBraceStance(Pawn, false);
 		}
 		return EResolveResult::Voided;
 	}
 	State->EndWindow(Key);
 	Roles.EndBrace(Pawn);
-	if (Deps.Stance != nullptr)
-	{
-		Deps.Stance->SetBraceStance(Pawn, false);
-	}
+	SetBraceStance(Pawn, false);
 	if (Deps.Events != nullptr)
 	{
 		if (Hold.Kind == EHoldTimerKind::CapEnd)
@@ -499,4 +520,158 @@ void FAttackResolverCore::Reset()
 	Roles.Reset();
 	Resolutions.Reset();
 	Replies.Reset();
+	DiedConcealed.Reset();
+	AppliedWrites.Reset();
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Story asn-012: the slot write, the warp point, the stance through FActionState
+// ---------------------------------------------------------------------------------------------------------
+
+FStrikeWarpPointResult FAttackResolverCore::ComputeWarp(const FEncounterPawnFacts& Attacker, const FVector& WorldPoint, const FVictimResolution& Victim, EStrikeReachVariant Variant) const
+{
+	FStrikeWarpPointInput In;
+	In.AttackerLocation = Attacker.Location;
+	In.AttackerFacingYawDeg = Attacker.FacingYawDeg;
+	In.WorldPoint = WorldPoint;
+	In.bBushPreface = Variant == EStrikeReachVariant::BushStrike;
+	if (Victim.bRefHonoured)
+	{
+		// An honoured reference is knowable to the attacker (CanViewerKnow passed): its F1 extrapolation, hit or whiff.
+		In.Source = EStrikeWarpSource::PawnRef;
+		In.RefVictimAtContact = Victim.RefAtContact;
+	}
+	else if (Victim.bInBushZone)
+	{
+		// Rule 2, hit or whiff: the WorldPoint and the public footprint only; never an occupant's position.
+		In.Source = EStrikeWarpSource::BushSpot;
+		FBox2D Footprint(ForceInit);
+		if (Deps.Bushes != nullptr && Deps.Bushes->GetFootprint(Victim.BushId, Footprint))
+		{
+			In.BushFootprint = Footprint;
+		}
+	}
+	else
+	{
+		// Rule 3 or 4 (an unhonoured, culled reference falls through here too): the submitted WorldPoint.
+		In.Source = EStrikeWarpSource::OpenSpot;
+	}
+	return FStrikeWarpPointCore::Evaluate(FStrikeWarpPointParams::FromEncounter(Params), In);
+}
+
+void FAttackResolverCore::WritePose(APawn* Pawn, EActionPose Pose, uint8 Variant, double Start, double Contact, const FFixedWarpOffset& WarpPoint)
+{
+	if (Deps.PawnState == nullptr || Pawn == nullptr)
+	{
+		return;
+	}
+	FActionStateWrite Write;
+	Write.Pose = Pose;
+	Write.Variant = Variant;
+	Write.StartServerTime = Start;
+	Write.ContactServerTime = Contact;
+	Write.WarpPoint = WarpPoint;
+	Deps.PawnState->WriteActionState(Pawn, Write);
+}
+
+void FAttackResolverCore::SetBraceStance(APawn* Pawn, bool bBraced, bool bWritePose)
+{
+	if (Deps.Stance != nullptr)
+	{
+		Deps.Stance->SetBraceStance(Pawn, bBraced);
+	}
+	if (!bWritePose || Deps.PawnState == nullptr)
+	{
+		return;
+	}
+	if (bBraced)
+	{
+		WritePose(Pawn, EActionPose::Brace, 0, Now(), -1.0, FFixedWarpOffset());
+		return;
+	}
+	// Never clears a pose another writer set, never touches a reversing defender before its CounterPose (ADR-0018 section
+	// 3: nothing changes on a defender before the death write) and never a fallen pawn.
+	if (Deps.PawnState->GetPose(Pawn) == EActionPose::Brace && !Roles.IsDead(Pawn) && GetRole(Pawn) != EStrikeRole::Countering)
+	{
+		WritePose(Pawn, EActionPose::None, 0, Now(), -1.0, FFixedWarpOffset());
+	}
+}
+
+void FAttackResolverCore::SchedulePoseEnd(const FQueueItem& Item, APawn* Pawn, FQueueKey Key, double Due, uint32 Epoch)
+{
+	if (Deps.PawnState == nullptr || Pawn == nullptr)
+	{
+		return; // nothing on the wire to end (the headless rule tests)
+	}
+	FHoldTimerPayload Hold;
+	Hold.Pawn.Pawn = Pawn;
+	Hold.Kind = EHoldTimerKind::Complete;
+	Hold.ActionType = static_cast<uint8>(EActionType::Attack);
+	Hold.ActionEpoch = Epoch;
+	Hold.BeginKey = Key;
+	Deps.Queue->ScheduleAt(Due, FQueueItem::Make(EQueueItemType::HoldTimer, Item.Expected, FMailboxId::ServerLocal(), Hold));
+}
+
+EResolveResult FAttackResolverCore::ResolvePoseEnd(const FHoldTimerPayload& Hold)
+{
+	APawn* Pawn = Hold.Pawn.Pawn.Get();
+	if (Pawn == nullptr || Deps.PawnState == nullptr || Roles.IsDead(Pawn))
+	{
+		return EResolveResult::Voided; // a fallen pawn keeps its last pose under the death write
+	}
+	const EActionPose Expected = Hold.ActionEpoch == CounterPoseEndEpoch ? EActionPose::Counter : EActionPose::Strike;
+	if (Deps.PawnState->GetPose(Pawn) != Expected)
+	{
+		return EResolveResult::Voided; // a later write owns the pose
+	}
+	WritePose(Pawn, EActionPose::None, 0, Now(), -1.0, FFixedWarpOffset());
+	return EResolveResult::Executed;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Story asn-013: the DeathWrite and CounterPose applier (apply-only)
+// ---------------------------------------------------------------------------------------------------------
+
+void FAttackResolverCore::ApplyStagedWrite(const FStagedWrite& Write)
+{
+	if (Write.Type == EStagedWriteType::DeathWrite)
+	{
+		const FDeathWritePayload* Payload = Write.Payload.TryGet<FDeathWritePayload>();
+		APawn* Victim = Payload != nullptr ? Payload->Victim.Pawn.Get() : nullptr;
+		if (Victim == nullptr)
+		{
+			return; // a stale handle (the body is gone): nothing to write
+		}
+		FDeathState State;
+		State.DeathServerTime = Payload->DeathServerTime;
+		State.bDiedConcealed = DiedConcealed.Contains(FObjectKey(Victim));
+		if (Deps.PawnState != nullptr && !Deps.PawnState->WriteDeath(Victim, State))
+		{
+			return; // already written (one death write per pawn)
+		}
+		FAppliedEncounterWrite& Applied = AppliedWrites.AddDefaulted_GetRef();
+		Applied.Type = Write.Type;
+		Applied.Pawn = Victim;
+		Applied.AppliedServerTime = Now();
+		Applied.EventServerTime = State.DeathServerTime;
+		Applied.bDiedConcealed = State.bDiedConcealed;
+		OnDeathWriteApplied.Broadcast(Victim, State.DeathServerTime, State.bDiedConcealed);
+		return;
+	}
+	if (Write.Type == EStagedWriteType::CounterPose)
+	{
+		const FCounterPayload* Payload = Write.Payload.TryGet<FCounterPayload>();
+		APawn* Defender = Payload != nullptr ? Payload->Defender.Pawn.Get() : nullptr;
+		if (Defender == nullptr || Roles.IsDead(Defender))
+		{
+			return; // gone, or struck down since: its own death write owns it
+		}
+		WritePose(Defender, EActionPose::Counter, 0, Now(), Payload->ContactServerTime, FFixedWarpOffset());
+		FAppliedEncounterWrite& Applied = AppliedWrites.AddDefaulted_GetRef();
+		Applied.Type = Write.Type;
+		Applied.Pawn = Defender;
+		Applied.AppliedServerTime = Now();
+		Applied.EventServerTime = Payload->ContactServerTime;
+		OnCounterPoseApplied.Broadcast(Defender, Payload->ContactServerTime);
+	}
 }

@@ -142,6 +142,11 @@ public:
 	bool IsRoundLive() const;
 	/** The round queue (null before RegisterGateways or without sub-seeds). */
 	FResolutionQueueCore* GetRoundQueue() const { return Queue.Get(); }
+	/**
+	 * Fired just before the round queue and the match core are destroyed (EndMatch, Deinitialize): owners registered on
+	 * the queue (Assassination's UEncounterService) drop their registration without touching it.
+	 */
+	FSimpleMulticastDelegate OnRoundQueueReleasing;
 
 	/** The one host-checked entry point (console and host panel). */
 	ERoundCommandResult ExecuteCommand(const FRoundCommandCaller& Caller, ERoundHostCommand Command, const FRoundCommandArgs& Args = FRoundCommandArgs());

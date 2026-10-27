@@ -31,6 +31,12 @@ public:
 	/** The pawn is concealed now (a concealed pawn is a candidate only through rule 2). */
 	virtual bool IsConcealed(const APawn* Pawn) const = 0;
 
+	/**
+	 * The bush's footprint (ADR-0017 FBushRuntime.Footprint, public geometry identical on server and clients): the strike
+	 * WarpPoint is clamped to its attacker-side edge (ADR-0018 section 2.2, story asn-012). False: no footprint known.
+	 */
+	virtual bool GetFootprint(uint16 BushId, FBox2D& OutFootprint) const { return false; }
+
 	/** CON-R9 in-slot occupancy exit of a victim killed while concealed (its un-cull is staged with the death write). */
 	virtual void RemoveOccupant(APawn* Pawn) {}
 };

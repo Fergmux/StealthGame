@@ -106,11 +106,18 @@ private:
 	TWeakObjectPtr<UActionHub> Hub;
 };
 
-/** IEncounterBraceStanceSink over the SCL action pose (Brace plants the pawn, SCL BracePlanted; stand-in for asn-012). */
-class STEALTHGAMEPLAY_API FEncounterSclStanceSink final : public IEncounterBraceStanceSink
+/**
+ * IEncounterPawnStateWriter over the Shared Pawn (stories asn-012, asn-013): FActionState through the pawn's
+ * UPawnCommandComponent::WriteActionState (the only writer; it assigns Seq, forces the update and sets the SCL pose, so
+ * Brace plants the pawn through FActionState, SCL BracePlanted), and the death write's pawn half through
+ * AStealthPawn::ApplyDeathWrite. Any other pawn class: nothing is written.
+ */
+class STEALTHGAMEPLAY_API FEncounterPawnStateWriter final : public IEncounterPawnStateWriter
 {
 public:
-	virtual void SetBraceStance(APawn* Pawn, bool bBraced) override;
+	virtual void WriteActionState(APawn* Pawn, const FActionStateWrite& Write) override;
+	virtual EActionPose GetPose(const APawn* Pawn) const override;
+	virtual bool WriteDeath(APawn* Pawn, const FDeathState& State) override;
 };
 
 /**
@@ -165,9 +172,9 @@ struct FEncounterServiceInit
  *   Init.SubSeeds = SessionSeeds; Init.Log = MatchCore.GetRoundLogWriter(); Init.Bushes = PrototypeBushQuery;
  *   Encounters->Initialize(Init);
  *   Encounters->SetFallbackResolvers(PrototypeInteractHideDispatch, ObjectivesHoldResolver);   // stand-in dispatch
- *   Encounters->RegisterOn(*Store->GetRoundQueue());   // PawnCommand + HoldTimer resolvers
- *   ... the pawns' command cores submit PawnCommand items to that queue (IPawnCommandQueue adapter) instead of the
- *       prototype immediate queue; the staged-write applier (DeathWrite, CounterPose) is story asn-013's.
+ *   Encounters->RegisterOn(*Store->GetRoundQueue());   // PawnCommand + HoldTimer resolvers, DeathWrite + CounterPose appliers
+ *   ... the pawns' command cores submit PawnCommand items to that queue (IPawnCommandQueue adapter); the composition
+ *       root calls Release() when Round's EndMatch destroys the queue (StealthCompositionRoot.cpp, stories asn-012/013).
  */
 UCLASS(NotBlueprintable, NotBlueprintType)
 class STEALTHGAMEPLAY_API UEncounterService : public UObject
@@ -181,9 +188,21 @@ public:
 	void Shutdown();
 	bool IsInitialized() const { return Core.IsValid(); }
 
-	/** Registers the core for EQueueItemType::PawnCommand and HoldTimer; false when either type already has a resolver. */
+	/**
+	 * Registers the core for EQueueItemType::PawnCommand and HoldTimer and its applier for the DeathWrite and CounterPose
+	 * staged writes (story asn-013); false when any of them already has an owner.
+	 */
 	bool RegisterOn(FResolutionQueueCore& Queue);
 	void UnregisterFrom(FResolutionQueueCore& Queue);
+
+	/**
+	 * The queue (and the match core whose log writer the service holds) was destroyed (Round's EndMatch): drops the
+	 * registration record without touching the queue and releases the core. Initialize again for the next match.
+	 */
+	void Release();
+
+	/** The queue this service is registered on (null: none). */
+	FResolutionQueueCore* GetRegisteredQueue() const { return RegisteredQueue; }
 
 	/** The stand-in dispatch for Interact / Hide / Traverse and the non-Prepare holds (until IIF stage 2). */
 	void SetFallbackResolvers(IQueueResolver* Commands, IQueueResolver* Holds);
@@ -195,6 +214,10 @@ public:
 
 	/** OnPawnKilled(Victim, Killer, VictimKind, Cause), fired inline in the slot (null before Initialize). */
 	FOnPawnKilled* GetOnPawnKilled() const { return Core.IsValid() ? &Core->OnPawnKilled : nullptr; }
+	/** OnDeathWriteApplied(Victim, DeathServerTime, bDiedConcealed), fired by the staging pass (null before Initialize). */
+	FOnDeathWriteApplied* GetOnDeathWriteApplied() const { return Core.IsValid() ? &Core->OnDeathWriteApplied : nullptr; }
+	/** OnCounterPoseApplied(Defender, ContactServerTime) (null before Initialize). */
+	FOnCounterPoseApplied* GetOnCounterPoseApplied() const { return Core.IsValid() ? &Core->OnCounterPoseApplied : nullptr; }
 	bool IsDead(const APawn* Pawn) const { return Core.IsValid() && Core->IsDead(Pawn); }
 	TOptional<double> GetScheduledDeathServerTime(const APawn* Pawn) const { return Core.IsValid() ? Core->GetScheduledDeathServerTime(Pawn) : TOptional<double>(); }
 
@@ -210,10 +233,12 @@ private:
 	TUniquePtr<FEncounterWorldPawnQuery> PawnQuery;
 	TUniquePtr<FEncounterRosterStoreGateway> RosterGateway;
 	TUniquePtr<FEncounterHubEvents> HubEvents;
-	TUniquePtr<FEncounterSclStanceSink> StanceSink;
+	TUniquePtr<FEncounterPawnStateWriter> PawnStateWriter;
 	TUniquePtr<FEncounterConcealmentVisibility> DefaultVisibility;
 	TUniquePtr<FAttackResolverCore> Core;
 	FResolutionQueueCore* RegisteredQueue = nullptr;
 	bool bRegisteredCommands = false;
 	bool bRegisteredHolds = false;
+	bool bRegisteredDeathWrite = false;
+	bool bRegisteredCounterPose = false;
 };

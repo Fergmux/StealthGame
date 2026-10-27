@@ -119,8 +119,7 @@ private:
  * key order reaches TryTerminate, the single-assignment latch: it closes the queue (Latch(TerminalKey)), logs one
  * WinLatched and, for a win, computes TeamSummary and stages the round-end step (R9; stories rmf-052..055): inside a
  * queue slot one RoundEndStep write the queue binds to the deciding strike's death write or consumes inline at slot
- * end; outside a slot (prototype event sources) a strike-decided win runs it AdapterStrikeRoundEndDelaySec later from
- * Tick, any other win at once. Between the two steps nothing observable changes. The round-end step, in fixed order:
+ * end; outside a slot every win runs it at once (strikes resolve in the queue, Assassination story asn-013). Between the two steps nothing observable changes. The round-end step, in fixed order:
  * (a)+(c) FRoundResult with TeamSummary, MatchScore + 1 and phase Ended in one public write; (b) EndRoundAll; (d) held
  * NotNow replies; (e) OnRoundEnded, every viewer PostRound; (f) Crowd Halt and one stop request per live pawn bounded by
  * RunStopSec; (g) frozen holds cancel; (h) the Ended dwell counts from here, parked host commands are held. A void goes
@@ -380,8 +379,6 @@ private:
 	FRoundTeamSummary LatchedSummary[2];
 	/** The participant whose transition is being evaluated (the fallback binding's deciding victim). */
 	FParticipantId DecidingParticipant;
-	/** Server time the adapter path runs the pending round-end step (-1: none or queue-bound). */
-	double RoundEndDueTime = -1.0;
 	double ResetEnteredAt = 0.0;
 	bool bRoundEndPending = false;
 	bool bRoundEndStepRan = false;

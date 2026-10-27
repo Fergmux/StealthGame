@@ -85,11 +85,15 @@ FVictimResolution FVictimResolverCore::Resolve(const FEncounterParams& Params, c
 		const FRosterVictimKind Kind = Deps.Roster->ResolveVictimKind(Request.PawnRef);
 		if (bDeadRole || (Kind.Kind == ERosterVictimKind::NotTargetable && Kind.Reason == ERosterNotTargetableReason::AlreadyResolved))
 		{
+			Out.bRefHonoured = true;
+			Out.RefAtContact = FVictimResolverCore::Reach(Params, Request.Variant, Request.Attacker, RefFacts).VictimAtContact;
 			return Out; // a body: terminal whiff (never falls through to a spot rule, so a bystander beside it is never struck)
 		}
 		if (IsCandidate(Deps, Attacker, Request.PawnRef))
 		{
 			const FStrikeReachResult Reach = FVictimResolverCore::Reach(Params, Request.Variant, Request.Attacker, RefFacts);
+			Out.bRefHonoured = true;
+			Out.RefAtContact = Reach.VictimAtContact;
 			if (Reach.bInReach)
 			{
 				Out.Victim = Request.PawnRef;
@@ -106,6 +110,7 @@ FVictimResolution FVictimResolverCore::Resolve(const FEncounterParams& Params, c
 	if (Deps.Bushes != nullptr && Deps.Bushes->FindSpotZone(Request.WorldPoint, BushId))
 	{
 		Out.BushId = BushId;
+		Out.bInBushZone = true;
 		TArray<APawn*> Occupants;
 		Deps.Bushes->GetSpotOccupants(BushId, Attacker, Occupants);
 		struct FReachable

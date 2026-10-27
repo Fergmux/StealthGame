@@ -166,8 +166,17 @@ public:
 	/** A one-line production state summary (dev HUD line and StealthDumpProd). Server: full; client: empty. */
 	FString DescribeProductionState(const UWorld* World) const;
 
+	/** Assassination's server facade, registered on Round's queue for the current server world (stories asn-012/013). */
+	class UEncounterService* GetEncounterService() const { return Encounters; }
+
 private:
 	void HandleRosterEvent(const FRosterEvent& Event);
+	/** Builds the encounter service for World and registers it on Round's current queue (strikes resolve in its slot). */
+	void WireEncounters(AStealthGameMode* InGameMode);
+	/** Round's queue is about to be destroyed: the service forgets it without touching it. */
+	void HandleRoundQueueReleasing();
+	/** Round's Active-entry step: the encounter roles and records of the previous round are dropped (story asn-019 owns Reset). */
+	void HandleRoundActive(uint32 RoundEpoch, double ActivePhaseStart);
 	void MirrorTeamsToPrototype();
 
 	UPROPERTY(Transient)
@@ -187,9 +196,18 @@ private:
 	TWeakObjectPtr<AStealthGameMode> GameMode;
 	TMap<TWeakObjectPtr<APlayerController>, FParticipantId> ParticipantByController;
 
-	/** D53 command-path adapters for the current server world (StealthPrototypeCommandQueue.h). */
+	/** Assassination's server facade (stories asn-005 to asn-013), wired per server world. */
+	UPROPERTY(Transient)
+	TObjectPtr<class UEncounterService> Encounters;
+
+	/** Command-path adapters for the current server world (StealthCommandWiring.h). */
 	TSharedPtr<class FStealthWorldCommandClock> CommandClock;
-	TSharedPtr<class FStealthPrototypeCommandQueue> CommandQueue;
+	TSharedPtr<class FStealthRoundCommandQueue> CommandQueue;
+	TSharedPtr<class FStealthRoundEpochSource> CommandEpoch;
+	TSharedPtr<class FStealthPrototypeBushSpotQuery> PrototypeBushes;
+	TSharedPtr<class FStealthPrototypeCommandFallback> PrototypeFallback;
 	FStealthLogFaultSink CommandFaults;
 	FDelegateHandle RosterEventHandle;
+	FDelegateHandle QueueReleasingHandle;
+	FDelegateHandle RoundActiveHandle;
 };

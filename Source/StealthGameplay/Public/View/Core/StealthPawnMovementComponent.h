@@ -86,6 +86,20 @@ public:
 	void SetActionPose(EStealthActionPose Pose) { ActionPose = Pose; }
 	EStealthActionPose GetActionPose() const { return ActionPose; }
 
+	/**
+	 * The ADR-0010 section 4.5 freeze flag (Disabled; ADR-0018 section 3.2, story asn-013): commanded motion is ignored
+	 * from ServerTime on (the pawn brakes by its own gait's baseline, as with no input). Written by the death write on
+	 * every machine (the server applier, OnRep on clients). A time, not a bool, so the freeze of a reversed attacker
+	 * whose lunge is in progress takes effect at its ContactServerTime. Same for every pawn.
+	 */
+	void FreezeCommandedMotionFrom(double ServerTime) { FrozenFromServerTime = ServerTime; }
+	/** Clears the freeze (a pawn reused for a new round; tests). */
+	void ClearCommandedMotionFreeze() { FrozenFromServerTime = -1.0; }
+	/** True once the freeze is recorded and its time has come (the world's server time). */
+	bool IsCommandedMotionFrozen() const;
+	/** The recorded freeze time (-1: none). */
+	double GetFrozenFromServerTime() const { return FrozenFromServerTime; }
+
 	/** Injects the fault sink the backstops report to (null: the process log sink). Not owned. */
 	void SetFaultSink(IStealthFaultSink* Sink) { FaultSink = Sink; }
 
@@ -135,8 +149,8 @@ protected:
 	/** The legality class of the owning pawn (the injected source; Active without one). */
 	virtual EStealthGaitLegality GetGaitLegality() const;
 
-	/** True when the pawn itself has commanded motion disabled (a prototype adapter hook; production: false). */
-	virtual bool IsCommandedMotionDisabled() const { return false; }
+	/** True when the pawn itself has commanded motion disabled: the freeze flag (a prototype adapter adds its hold). */
+	virtual bool IsCommandedMotionDisabled() const { return IsCommandedMotionFrozen(); }
 
 	/** Called after the traversal mode was refused (a prototype adapter cancels its montage here). */
 	virtual void OnTraversalModeRefused() {}
@@ -160,6 +174,8 @@ private:
 	FStealthMotionState MotionState;
 	bool bWantsToRun = false;
 	EStealthActionPose ActionPose = EStealthActionPose::None;
+	/** The freeze flag's server time (-1: not frozen). */
+	double FrozenFromServerTime = -1.0;
 	bool bIsRunning = false;
 	/** The model stepped during the current PerformMovement (PhysicsRotation applies its facing). */
 	bool bModelSteppedThisMove = false;

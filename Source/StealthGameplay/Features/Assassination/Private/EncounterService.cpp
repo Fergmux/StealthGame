@@ -7,6 +7,7 @@
 #include "Engine/World.h"
 #include "Server/ActionHub.h"
 #include "Server/BushSpotQuery.h"
+#include "Server/Core/StealthPawnCommandComponent.h"
 #include "Server/DefenceStateComponent.h"
 #include "Server/Queue/StealthResolutionQueueCore.h"
 #include "Server/Roster/StealthRosterStore.h"
@@ -185,22 +186,25 @@ void FEncounterHubEvents::OnActionCompleted(APawn* Pawn, EActionType Type)
 	}
 }
 
-void FEncounterSclStanceSink::SetBraceStance(APawn* Pawn, bool bBraced)
+void FEncounterPawnStateWriter::WriteActionState(APawn* Pawn, const FActionStateWrite& Write)
 {
 	const AStealthPawn* Body = Cast<AStealthPawn>(Pawn);
-	UStealthMovementComponent* Movement = Body != nullptr ? Body->GetStealthMovement() : nullptr;
-	if (Movement == nullptr)
+	if (UPawnCommandComponent* Command = Body != nullptr ? Body->GetPawnCommand() : nullptr)
 	{
-		return;
+		Command->WriteActionState(Write);
 	}
-	if (bBraced)
-	{
-		Movement->SetActionPose(EStealthActionPose::Brace);
-	}
-	else if (Movement->GetActionPose() == EStealthActionPose::Brace)
-	{
-		Movement->SetActionPose(EStealthActionPose::None); // never clears a pose another writer set
-	}
+}
+
+EActionPose FEncounterPawnStateWriter::GetPose(const APawn* Pawn) const
+{
+	const AStealthPawn* Body = Cast<AStealthPawn>(Pawn);
+	return Body != nullptr ? Body->GetActionState().Pose : EActionPose::None;
+}
+
+bool FEncounterPawnStateWriter::WriteDeath(APawn* Pawn, const FDeathState& State)
+{
+	AStealthPawn* Body = Cast<AStealthPawn>(Pawn);
+	return Body != nullptr && IsValid(Body) && Body->ApplyDeathWrite(State);
 }
 
 bool FEncounterConcealmentVisibility::CanViewerKnow(const APawn* Viewer, const APawn* Pawn)
@@ -224,7 +228,7 @@ bool UEncounterService::Initialize(const FEncounterServiceInit& Init)
 	PawnQuery = MakeUnique<FEncounterWorldPawnQuery>(Init.World);
 	RosterGateway = MakeUnique<FEncounterRosterStoreGateway>(Init.Roster != nullptr ? Init.Roster : URosterStore::Get(Init.World));
 	HubEvents = MakeUnique<FEncounterHubEvents>(Init.Hub != nullptr ? Init.Hub : UActionHub::Get(Init.World));
-	StanceSink = MakeUnique<FEncounterSclStanceSink>();
+	PawnStateWriter = MakeUnique<FEncounterPawnStateWriter>();
 	DefaultVisibility = MakeUnique<FEncounterConcealmentVisibility>(Init.Bushes);
 
 	FAttackResolverDeps Deps;
@@ -237,7 +241,7 @@ bool UEncounterService::Initialize(const FEncounterServiceInit& Init)
 	Deps.Visibility = Init.Visibility != nullptr ? Init.Visibility : DefaultVisibility.Get();
 	Deps.Bushes = Init.Bushes;
 	Deps.Events = HubEvents.Get();
-	Deps.Stance = StanceSink.Get();
+	Deps.PawnState = PawnStateWriter.Get(); // FActionState carries the stance (the SCL pose follows it)
 	Deps.Cards = Init.Cards;
 	Deps.Log = Init.Log;
 	Core = MakeUnique<FAttackResolverCore>(Deps, Init.Params);
@@ -252,7 +256,7 @@ void UEncounterService::Shutdown()
 	}
 	Core.Reset();
 	DefaultVisibility.Reset();
-	StanceSink.Reset();
+	PawnStateWriter.Reset();
 	HubEvents.Reset();
 	RosterGateway.Reset();
 	PawnQuery.Reset();
@@ -268,11 +272,13 @@ bool UEncounterService::RegisterOn(FResolutionQueueCore& Queue)
 	}
 	bRegisteredCommands = Queue.RegisterResolver(EQueueItemType::PawnCommand, Core.Get());
 	bRegisteredHolds = Queue.RegisterResolver(EQueueItemType::HoldTimer, Core.Get());
-	if (bRegisteredCommands || bRegisteredHolds)
+	bRegisteredDeathWrite = Queue.RegisterStagedWriteApplier(EStagedWriteType::DeathWrite, Core->GetStagedWriteApplier());
+	bRegisteredCounterPose = Queue.RegisterStagedWriteApplier(EStagedWriteType::CounterPose, Core->GetStagedWriteApplier());
+	if (bRegisteredCommands || bRegisteredHolds || bRegisteredDeathWrite || bRegisteredCounterPose)
 	{
 		RegisteredQueue = &Queue;
 	}
-	return bRegisteredCommands && bRegisteredHolds;
+	return bRegisteredCommands && bRegisteredHolds && bRegisteredDeathWrite && bRegisteredCounterPose;
 }
 
 void UEncounterService::UnregisterFrom(FResolutionQueueCore& Queue)
@@ -289,9 +295,30 @@ void UEncounterService::UnregisterFrom(FResolutionQueueCore& Queue)
 	{
 		Queue.UnregisterResolver(EQueueItemType::HoldTimer);
 	}
+	if (bRegisteredDeathWrite)
+	{
+		Queue.UnregisterStagedWriteApplier(EStagedWriteType::DeathWrite);
+	}
+	if (bRegisteredCounterPose)
+	{
+		Queue.UnregisterStagedWriteApplier(EStagedWriteType::CounterPose);
+	}
 	RegisteredQueue = nullptr;
 	bRegisteredCommands = false;
 	bRegisteredHolds = false;
+	bRegisteredDeathWrite = false;
+	bRegisteredCounterPose = false;
+}
+
+void UEncounterService::Release()
+{
+	// The queue is gone: forget the registration without touching it, then release everything that pointed into it.
+	RegisteredQueue = nullptr;
+	bRegisteredCommands = false;
+	bRegisteredHolds = false;
+	bRegisteredDeathWrite = false;
+	bRegisteredCounterPose = false;
+	Shutdown();
 }
 
 void UEncounterService::SetFallbackResolvers(IQueueResolver* Commands, IQueueResolver* Holds)

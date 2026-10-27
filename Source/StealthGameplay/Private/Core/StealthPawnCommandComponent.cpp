@@ -149,6 +149,28 @@ void UPawnCommandComponent::Hide(const FHideCommand& Cmd)
 	}
 }
 
+FActionState UPawnCommandComponent::WriteActionState(const FActionStateWrite& Write)
+{
+	AStealthPawn* Pawn = GetOwner<AStealthPawn>();
+	if (Pawn == nullptr || !Pawn->HasAuthority())
+	{
+		return Pawn != nullptr ? Pawn->GetActionState() : FActionState();
+	}
+	FActionState Next;
+	Next.Pose = Write.Pose;
+	Next.Seq = FActionState::NextSeq(Pawn->ActionState.Seq);
+	Next.Variant = Write.Variant;
+	Next.StartServerTime = Write.StartServerTime >= 0.0 ? Write.StartServerTime : (GetWorld() != nullptr ? GetWorld()->GetTimeSeconds() : 0.0);
+	Next.ContactServerTime = Write.ContactServerTime;
+	Next.WarpPoint = Write.WarpPoint;
+	{
+		FStealthForcedNetUpdate Forced(*Pawn, EForcedUpdateReason::ActionStateWrite);
+		Pawn->ActionState = Next;
+	}
+	Pawn->HandleActionStateChanged();
+	return Next;
+}
+
 FCommandPayload UPawnCommandComponent::MakePayload() const
 {
 	FCommandPayload Payload;

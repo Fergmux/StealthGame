@@ -3452,3 +3452,36 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "ASN batch 2026-10-27 (asn-005..011); headless integration tests (crowd sink -> command component -> real queue; 50-NPC 10-min sim; SCL planted stance)"
+  - id: "asn-012"
+    name: "The slot writes one outcome-blind FActionState, with a WarpPoint that never reads a hidden pawn"
+    file: "production/epics/assassination-defence-reversal/story-012-slot-write-outcome-blind-and-warp-point.md"
+    priority: must-have
+    status: done
+    owner: "network-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-012..014 + play integration); FActionState/FDeathState on AStealthPawn, UPawnCommandComponent::WriteActionState (Seq, forced update, SCL pose map), FStrikeWarpPointCore; strikes resolve in Round's queue in play; byte capture deferred to IVP-008 harness"
+  - id: "asn-013"
+    name: "Death write staging at contact minus the lead, applied identically even after the latch"
+    file: "production/epics/assassination-defence-reversal/story-013-death-write-staging-and-after-latch.md"
+    priority: must-have
+    status: done
+    owner: "network-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; DeathWrite/CounterPose applier registered on the round queue, timed freeze flag, Round's AdapterStrikeRoundEndDelaySec stand-in removed; prototype ragdoll at DeathServerTime as the presentation stand-in until 018-020; StealthLeak2 presentation clause deferred to 018/020"
+  - id: "asn-014"
+    name: "Motion-warp targets are never replicated, and the server lunge is outcome-blind"
+    file: "production/epics/assassination-defence-reversal/story-014-warp-targets-not-replicated-lunge-outcome-blind.md"
+    priority: must-have
+    status: done
+    owner: "network-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; sample Blueprint motion warping unreplicated at PostInitializeComponents (negative control watched failing in PIE), local StrikeContact target set once per write on every machine"

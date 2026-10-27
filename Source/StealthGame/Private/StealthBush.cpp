@@ -36,6 +36,16 @@ AStealthBush::AStealthBush()
 	}
 }
 
+FBox2D AStealthBush::GetFootprint2D() const
+{
+	if (Volume == nullptr)
+	{
+		return FBox2D(ForceInit);
+	}
+	const FBox Bounds = Volume->Bounds.GetBox();
+	return FBox2D(FVector2D(Bounds.Min), FVector2D(Bounds.Max));
+}
+
 void AStealthBush::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);

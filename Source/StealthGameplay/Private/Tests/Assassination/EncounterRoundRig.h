@@ -37,16 +37,23 @@ namespace StealthEncounterTest
 		FFakeVisibility Visibility;
 		FEncounterQueueAdapter QueueAdapter;
 		FCountingCounterApplier Counters;
+		/** Production writes (bProductionWrites): the recorded FActionState / death writes, applied by the core's applier. */
+		FRecordingPawnState PawnState;
 		FCallLog Calls;
 		TArray<FKill> Kills;
 		TUniquePtr<FAttackResolverCore> Core;
 		double SpawnX = 0.0;
 		uint64 NextSerial = 1;
 
-		explicit FRoundEncounterRig(const TCHAR* Name)
+		/**
+		 * bProductionWrites (stories asn-012, 013): the core writes FActionState and applies its own DeathWrite and CounterPose
+		 * (the rig's counting appliers are replaced by FAttackResolverCore::GetStagedWriteApplier()), recorded in PawnState.
+		 */
+		explicit FRoundEncounterRig(const TCHAR* Name, bool bProductionWrites = false)
 			: World(Name)
 			, QueueAdapter(W.Queue.Get())
 		{
+			PawnState.Clock = &W.Rig.Clock;
 			Roster.Calls = &Calls;
 			Roster.OnTransition = [this](const APawn* Pawn, ERosterReason Reason)
 			{
@@ -64,6 +71,7 @@ namespace StealthEncounterTest
 			Deps.SubSeeds = &Seeds;
 			Deps.Visibility = &Visibility;
 			Deps.Log = W.Rig.Core->GetRoundLogWriter();
+			Deps.PawnState = bProductionWrites ? &PawnState : nullptr;
 			Core = MakeUnique<FAttackResolverCore>(Deps, FEncounterParams::Defaults());
 			Core->OnPawnKilled.AddLambda([this](APawn* Victim, APawn* Killer, EVictimKind Kind, EKillCause Cause)
 			{
@@ -72,8 +80,20 @@ namespace StealthEncounterTest
 			});
 			W.Queue->UnregisterResolver(EQueueItemType::PawnCommand);
 			W.Queue->RegisterResolver(EQueueItemType::PawnCommand, Core.Get());
-			W.Queue->RegisterStagedWriteApplier(EStagedWriteType::CounterPose, &Counters);
+			if (bProductionWrites)
+			{
+				W.Queue->UnregisterStagedWriteApplier(EStagedWriteType::DeathWrite);
+				W.Queue->RegisterStagedWriteApplier(EStagedWriteType::DeathWrite, Core->GetStagedWriteApplier());
+				W.Queue->RegisterStagedWriteApplier(EStagedWriteType::CounterPose, Core->GetStagedWriteApplier());
+			}
+			else
+			{
+				W.Queue->RegisterStagedWriteApplier(EStagedWriteType::CounterPose, &Counters);
+			}
 		}
+
+		/** Drains one empty tick (time advances one rig frame; due timers and the staging pass run). */
+		void Tick() { W.DrainOneTick({}); }
 
 		/** A pawn at Location bound to Participant (its team from the rig's layout), or an NPC for 0. */
 		APawn* Spawn(const FVector& Location, uint32 Participant = 0, double YawDeg = 0.0)

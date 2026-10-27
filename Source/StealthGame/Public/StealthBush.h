@@ -21,6 +21,12 @@ class STEALTHGAME_API AStealthBush : public AActor
 public:
 	AStealthBush();
 
+	/**
+	 * The bush's 2D footprint: the concealment volume's world-aligned bounds (the Assassination bush-spot stand-in's
+	 * footprint until Concealment's FBushRuntime, ADR-0017).
+	 */
+	FBox2D GetFootprint2D() const;
+
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;

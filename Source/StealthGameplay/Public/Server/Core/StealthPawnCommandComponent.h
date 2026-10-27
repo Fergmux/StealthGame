@@ -8,8 +8,25 @@
 #include "Server/Core/PawnCommandTypes.h"
 #include "View/CourtFixtureId.h"
 #include "View/Core/StealthGait.h"
+#include "View/StealthEncounterWire.h"
 
 #include "StealthPawnCommandComponent.generated.h"
+
+/**
+ * One FActionState write as its caller decides it (ADR-0011 section 7, ADR-0018 section 1.1): everything except Seq,
+ * which UPawnCommandComponent::WriteActionState assigns itself. StartServerTime < 0 means "now" (the writer fills it).
+ */
+struct FActionStateWrite
+{
+	EActionPose Pose = EActionPose::None;
+	/** Strike: StrikeVariant bits; 0 for every other pose. */
+	uint8 Variant = 0;
+	double StartServerTime = -1.0;
+	/** Strike and Counter: the strike's contact time; -1 otherwise. */
+	double ContactServerTime = -1.0;
+	/** Strike: the quantised warp offset; zero otherwise. */
+	FFixedWarpOffset WarpPoint;
+};
 
 /**
  * The boundary of the pawn command interface (ADR-0011 section 1; stories iif-002 and iif-005): the one
@@ -83,6 +100,15 @@ public:
 
 	/** Binds the core's seams (composition root; tests). */
 	void InitializeCore(const FPawnCommandCoreDeps& Deps) { Core.Initialize(Deps); }
+
+	/**
+	 * Server: the only writer of the owning pawn's FActionState (ADR-0011 section 7, ADR-0018 section 1.1; story asn-012).
+	 * Assigns Seq (FActionState::NextSeq of the current one), fills StartServerTime (now when the write leaves it unset),
+	 * writes the struct inside FStealthForcedNetUpdate(ActionStateWrite), and presents it on the server at once (the SCL
+	 * pose, the local strike warp target; ADR-0018 E7). The same call for every pawn and every outcome; no-op off the
+	 * server. Returns the state written (the current one when nothing was written).
+	 */
+	FActionState WriteActionState(const FActionStateWrite& Write);
 
 	/** The plain core (read-only). */
 	const FPawnCommandCore& GetCore() const { return Core; }

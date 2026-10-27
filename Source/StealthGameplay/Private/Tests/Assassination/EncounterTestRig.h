@@ -139,6 +139,8 @@ namespace StealthEncounterTest
 			uint16 Id = 0;
 			FVector Center = FVector::ZeroVector;
 			double ZoneRadiusCm = 0.0;
+			/** The square footprint (story asn-012's WarpPoint clamp reads it). */
+			FBox2D Footprint = FBox2D(ForceInit);
 			TArray<APawn*> Occupants;
 		};
 		TArray<FBush> Bushes;
@@ -168,6 +170,18 @@ namespace StealthEncounterTest
 			}
 		}
 		virtual bool IsConcealed(const APawn* Pawn) const override { return Concealed.Contains(Pawn); }
+		virtual bool GetFootprint(uint16 BushId, FBox2D& Out) const override
+		{
+			for (const FBush& Bush : Bushes)
+			{
+				if (Bush.Id == BushId)
+				{
+					Out = Bush.Footprint;
+					return Out.bIsValid;
+				}
+			}
+			return false;
+		}
 		virtual void RemoveOccupant(APawn* Pawn) override
 		{
 			Removed.Add(Pawn);
@@ -266,6 +280,68 @@ namespace StealthEncounterTest
 		virtual void VacateCard(APawn* Pawn) override { Vacated.Add(Pawn); if (Calls != nullptr) { Calls->Add(TEXT("VacateCard")); } }
 	};
 
+	/**
+	 * Records the replicated pawn-state writes (stories asn-012, 013) as UPawnCommandComponent::WriteActionState and
+	 * AStealthPawn::ApplyDeathWrite would make them: Seq assigned per pawn (from the default 1), StartServerTime filled from
+	 * the clock when unset, one death write per pawn. Each record carries the clock time of the write.
+	 */
+	class FRecordingPawnState final : public IEncounterPawnStateWriter
+	{
+	public:
+		struct FWrite
+		{
+			/** false: an FActionState write; true: a death write. */
+			bool bDeath = false;
+			APawn* Pawn = nullptr;
+			FActionState State;
+			FDeathState Death;
+			double ServerTime = 0.0;
+		};
+		const IStealthClock* Clock = nullptr;
+		TArray<FWrite> Writes;
+		TMap<const APawn*, FActionState> Current;
+		TMap<const APawn*, FDeathState> Deaths;
+
+		virtual void WriteActionState(APawn* Pawn, const FActionStateWrite& Write) override
+		{
+			FActionState& State = Current.FindOrAdd(Pawn);
+			FActionState Next;
+			Next.Pose = Write.Pose;
+			Next.Seq = FActionState::NextSeq(State.Seq);
+			Next.Variant = Write.Variant;
+			Next.StartServerTime = Write.StartServerTime >= 0.0 ? Write.StartServerTime : Now();
+			Next.ContactServerTime = Write.ContactServerTime;
+			Next.WarpPoint = Write.WarpPoint;
+			State = Next;
+			FWrite& Record = Writes.AddDefaulted_GetRef();
+			Record.Pawn = Pawn;
+			Record.State = Next;
+			Record.ServerTime = Now();
+		}
+		virtual EActionPose GetPose(const APawn* Pawn) const override
+		{
+			const FActionState* State = Current.Find(Pawn);
+			return State != nullptr ? State->Pose : EActionPose::None;
+		}
+		virtual bool WriteDeath(APawn* Pawn, const FDeathState& State) override
+		{
+			if (Deaths.Contains(Pawn))
+			{
+				return false;
+			}
+			Deaths.Add(Pawn, State);
+			FWrite& Record = Writes.AddDefaulted_GetRef();
+			Record.bDeath = true;
+			Record.Pawn = Pawn;
+			Record.Death = State;
+			Record.ServerTime = Now();
+			return true;
+		}
+		double Now() const { return Clock != nullptr ? Clock->GetServerTimeSeconds() : 0.0; }
+		/** The records on Pawn (an FActionState write when bDeath is false). */
+		TArray<FWrite> For(const APawn* Pawn) const { return Writes.FilterByPredicate([Pawn](const FWrite& W) { return W.Pawn == Pawn; }); }
+	};
+
 	/** One OnPawnKilled call. */
 	struct FKill
 	{
@@ -292,6 +368,8 @@ namespace StealthEncounterTest
 		FRecordingEvents Events;
 		FRecordingStance Stance;
 		FRecordingCards Cards;
+		/** Bound only when the rig is built with bWithPawnState (the wire-write tests, stories asn-012 / 013). */
+		FRecordingPawnState PawnState;
 		FCallLog Calls;
 		TArray<FKill> Kills;
 		TUniquePtr<FAttackResolverCore> Core;
@@ -300,9 +378,10 @@ namespace StealthEncounterTest
 		uint64 NextSerial = 1;
 		double SpawnX = 0.0;
 
-		explicit FRig(const TCHAR* Name, IEncounterQueue* QueueOverride = nullptr)
+		explicit FRig(const TCHAR* Name, IEncounterQueue* QueueOverride = nullptr, bool bWithPawnState = false)
 			: World(Name)
 		{
+			PawnState.Clock = &Clock;
 			Roster.Calls = &Calls;
 			Cards.Calls = &Calls;
 			FAttackResolverDeps Deps;
@@ -317,6 +396,7 @@ namespace StealthEncounterTest
 			Deps.Events = &Events;
 			Deps.Stance = &Stance;
 			Deps.Cards = &Cards;
+			Deps.PawnState = bWithPawnState ? &PawnState : nullptr;
 			Core = MakeUnique<FAttackResolverCore>(Deps, Params);
 			Core->OnPawnKilled.AddLambda([this](APawn* Victim, APawn* Killer, EVictimKind Kind, EKillCause Cause)
 			{
@@ -425,6 +505,7 @@ namespace StealthEncounterTest
 			Bush.Id = Id;
 			Bush.Center = Center;
 			Bush.ZoneRadiusCm = FootprintCm + Params.Server.OpenSpotToleranceCm;
+			Bush.Footprint = FBox2D(FVector2D(Center) - FVector2D(FootprintCm, FootprintCm), FVector2D(Center) + FVector2D(FootprintCm, FootprintCm));
 			return Bush;
 		}
 

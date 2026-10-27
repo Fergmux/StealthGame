@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Delegates/Delegate.h"
 #include "Server/Core/CancelReason.h"
+#include "Server/Core/StealthPawnCommandComponent.h"
 #include "Server/Roster/StealthRosterCore.h"
 #include "Server/StealthQueuePayloads.h"
 #include "Server/StealthTuningSubstructs.h"
@@ -79,6 +80,12 @@ enum class EVictimRule : uint8
 
 /** OnPawnKilled(Victim, Killer, VictimKind, Cause): server-only, fired inline in the slot after the Roster transition. */
 DECLARE_MULTICAST_DELEGATE_FourParams(FOnPawnKilled, APawn* /*Victim*/, APawn* /*Killer*/, EVictimKind /*VictimKind*/, EKillCause /*Cause*/);
+
+/** OnDeathWriteApplied(Victim, DeathServerTime, bDiedConcealed): server-only, after the death write's pawn half (story asn-013). */
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnDeathWriteApplied, APawn* /*Victim*/, double /*DeathServerTime*/, bool /*bDiedConcealed*/);
+
+/** OnCounterPoseApplied(Defender, ContactServerTime): server-only, after the CounterPose write (story asn-013). */
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCounterPoseApplied, APawn* /*Defender*/, double /*ContactServerTime*/);
 
 /**
  * Keys other owners have not registered yet (the TD-TDC-I3 pattern, as StealthTuningPendingOwnerKeys). When the IIF
@@ -236,6 +243,25 @@ public:
 	virtual void SetBraceStance(APawn* Pawn, bool bBraced) = 0;
 };
 
+/**
+ * The pawn's replicated encounter state (production: FEncounterPawnStateWriter over UPawnCommandComponent::WriteActionState
+ * and AStealthPawn::ApplyDeathWrite; tests: a recorder). The core writes FActionState through it at the slot (the
+ * attacker's Strike, story asn-012; Brace and its release) and the death write and CounterPose through it from the
+ * staging pass (story asn-013). Optional: with none bound nothing is written on the wire (the headless rule tests).
+ */
+class IEncounterPawnStateWriter
+{
+public:
+	virtual ~IEncounterPawnStateWriter() = default;
+
+	/** WriteActionState(Pawn, Write): the component assigns Seq. */
+	virtual void WriteActionState(APawn* Pawn, const FActionStateWrite& Write) = 0;
+	/** The pawn's current FActionState pose (None for an unknown pawn). */
+	virtual EActionPose GetPose(const APawn* Pawn) const = 0;
+	/** The death write's pawn half (FDeathState and the freeze); false when the pawn is gone or already written. */
+	virtual bool WriteDeath(APawn* Pawn, const FDeathState& State) = 0;
+};
+
 /** The server-only card ledger's VacateCard(Dead pawn) (ADR-0018 section 2.1 step 4); no kind parameter. Optional. */
 class IEncounterCardLedger
 {
@@ -296,6 +322,10 @@ struct FAttackResolution
 	bool bVictimConcealed = false;
 	/** Reversal: the defender's Prepare sink (index 0 = the null sink of an AI-driven pawn: no FDefenceResult). */
 	FReplySinkId DefenderSink;
+	/** The attacker's slot write (story asn-012): FActionState.Variant and WarpPoint, and the clamped world target. */
+	uint8 StrikeVariantBits = 0;
+	FFixedWarpOffset WarpPoint;
+	FVector WarpTarget = FVector::ZeroVector;
 
 	/** True when a bound defender receives FDefenceResult {Reversed} (a reversal with a non-null sink). */
 	bool HasDefenceResult() const { return Outcome == EAttackOutcome::Reversal && DefenderSink.Index != 0; }

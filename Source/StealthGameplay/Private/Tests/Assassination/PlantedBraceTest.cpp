@@ -1,6 +1,7 @@
 // Story asn-011, AC3 / AC-ASN-15 PlantedBrace (ASN-R4; SCL BracePlanted observed from the Assassination side). A real
 // AStealthPawn on a floor, AI-possessed (the NPC path; the brace is kind-blind), braces through the strike resolver's
-// Prepare slot with the production stance adapter (FEncounterSclStanceSink) and the production pawn query and defence
+// Prepare slot with the production pawn-state writer (FEncounterPawnStateWriter: FActionState Brace, mapped to the SCL
+// pose by WriteActionState; story asn-012) and the production pawn query and defence
 // component. Over 4 s (inside the 4 s window cap plus nothing: CapEnd is resolved only afterwards) Move is held forward,
 // reversed at 2 s, and Look sweeps +-90 degrees (past the 70.6 degree head clamp): server displacement <= 0.1 cm and body
 // yaw change <= 0.1 degree, while the look target (the control rotation, the SCL head-look filter's input; the filter is
@@ -47,21 +48,22 @@ bool FAssassinationPlantedBraceTest::RunTest(const FString& Parameters)
 	FFakeRoster Roster;
 	FEncounterWorldPawnQuery Pawns(TestWorld.World);
 	FEncounterComponentDefenceStore Defence;
-	FEncounterSclStanceSink Stance;
+	FEncounterPawnStateWriter PawnState;
 	FAttackResolverDeps Deps;
 	Deps.Clock = &Clock;
 	Deps.Queue = &Queue;
 	Deps.Roster = &Roster;
 	Deps.Pawns = &Pawns;
 	Deps.Defence = &Defence;
-	Deps.Stance = &Stance;
+	Deps.PawnState = &PawnState;
 	FAttackResolverCore Core(Deps);
 	FCommandPayload Prepare;
 	Prepare.Pawn.Pawn = Pawn;
 	Prepare.Kind = static_cast<uint8>(ECommandKind::PrepareBegin);
 	const EResolveResult Begin = Core.Resolve(FQueueItem::Make(EQueueItemType::PawnCommand, FEpochToken(), FMailboxId::ServerLocal(), Prepare), FQueueKey(6000, 1));
 	TestTrue(TEXT("the Prepare executed in its slot"), Begin == EResolveResult::Executed && Core.GetRole(Pawn) == EStrikeRole::Bracing);
-	TestTrue(TEXT("the stance is the SCL Brace pose"), Pawn->GetStealthMovement()->GetActionPose() == EStealthActionPose::Brace);
+	TestTrue(TEXT("the stance is FActionState Brace"), Pawn->GetActionState().Pose == EActionPose::Brace && Pawn->GetActionState().Seq == 2);
+	TestTrue(TEXT("mapped to the SCL Brace pose"), Pawn->GetStealthMovement()->GetActionPose() == EStealthActionPose::Brace);
 	TestTrue(TEXT("the defence component holds the stamp (created by the execution)"), UDefenceStateComponent::Find(*Pawn) != nullptr);
 
 	// 4 s of Move (forward, reversed at 2 s) and a +-90 degree Look sweep.
@@ -94,7 +96,8 @@ bool FAssassinationPlantedBraceTest::RunTest(const FString& Parameters)
 		Clock.Advance(4.0, 240);
 		Core.Resolve(*CapEnd, FQueueKey(6240, 1));
 	}
-	TestTrue(TEXT("the window end releases the stance"), Pawn->GetStealthMovement()->GetActionPose() == EStealthActionPose::None);
+	TestTrue(TEXT("the window end releases the stance"), Pawn->GetStealthMovement()->GetActionPose() == EStealthActionPose::None
+		&& Pawn->GetActionState().Pose == EActionPose::None);
 	for (int32 Frame = 0; Frame < 60; ++Frame)
 	{
 		StealthLocomotionTest::DriveMove(Pawn, 0.0f, 1.0f, EGait::Walk);

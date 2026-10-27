@@ -1,0 +1,5 @@
+[2026.10.27-06.00.44:793][ 62]LogAutomationController: Error: Test Completed. Result={Fail} Name={SlotWriteBlindDeathWriteDeferredOnEveryClient} Path={StealthGame.Assassination.PIE.OutcomeBlindWire.SlotWriteBlindDeathWriteDeferredOnEveryClient}
+[2026.10.27-06.00.44:795][ 63]LogAutomationController: ASNPIE warp targets: server set 1, a client copy holds one 1; replicating motion-warping components on live pawns 3
+[2026.10.27-06.00.44:795][ 63]LogAutomationController: Error: no client received a strike warp target over the wire [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\PIE\Assassination\OutcomeBlindWirePieTest.cpp(448)]
+[2026.10.27-06.00.44:863][ 64]LogAutomationController: Error: Test Completed. Result={Fail} Name={WarpTargetsNotReplicated} Path={StealthGame.Assassination.WarpTargetsNotReplicated}
+[2026.10.27-06.00.44:863][ 64]LogAutomationController: Error: Expected 'the sample-style component is no longer replicated after PostInitializeComponents' to be true. [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthGameplay\Private\Tests\Assassination\WarpTargetsNotReplicatedTest.cpp(124)]

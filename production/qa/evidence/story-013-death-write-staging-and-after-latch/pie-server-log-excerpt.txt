@@ -1,0 +1,69 @@
+[2026.10.27-06.02.56:658][276]LogStealthRound: Round phase Unknown -> Lobby (change 1, round 0)
+[2026.10.27-06.02.56:664][276]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: You are Jaguar. Blend in. Watch for who doesn't.
+[2026.10.27-06.02.57:547][280]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: You are Eagle. Blend in. Watch for who doesn't.
+[2026.10.27-06.02.57:550][280]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: You are Jaguar. Blend in. Watch for who doesn't.
+[2026.10.27-06.03.01:921][294]LogStealthRound: Round phase Lobby -> Preparing (change 2, round 1)
+[2026.10.27-06.03.05:044][306]LogStealthRound: Round phase Preparing -> Active (change 3, round 1)
+[2026.10.27-06.03.05:044][306]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.27-06.03.05:044][306]LogStealth: Round started (seed 2076862099, 50 NPCs).
+[2026.10.27-06.03.05:073][307]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.27-06.03.05:082][307]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.27-06.03.26:110][370]LogStealth: [Bot] Phase=1 Stages=1/1 Winner=255 NPCs=50
+[2026.10.27-06.03.26:110][370]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.27-06.03.26:110][370]LogStealth: [Bot] #0 FergsPC-395962A94BFD team=0 state=Active npcKills=0 pawn=V(X=-2550.00, Y=-2600.00, Z=88.27) prepared=0 concealed=0
+[2026.10.27-06.03.26:110][370]LogStealth: [Bot] #1 FergsPC-06256FD049E4 team=1 state=Active npcKills=0 pawn=V(X=-2400.00, Y=2600.00, Z=88.28) prepared=0 concealed=0
+[2026.10.27-06.03.26:110][370]LogStealth: [Bot] #2 FergsPC-F9E702DA47A0 team=0 state=Active npcKills=0 pawn=V(X=-2700.00, Y=-2600.00, Z=88.28) prepared=0 concealed=0
+[2026.10.27-06.04.09:501][500]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_13 (npc, prepared=0).
+[2026.10.27-06.04.09:821][501]LogStealth: [Encounter] BP_CrowdCharacter_C_37 killed BP_CrowdCharacter_C_13 in the slot (victim kind 1).
+[2026.10.27-06.04.10:152][502]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_13 at 73.539 (DeathServerTime 73.605, concealed 0).
+[2026.10.27-06.04.10:152][502]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: A civilian. Civilians killed: 1/3.
+[2026.10.27-06.04.10:831][504]LogStealth: [Bot] #2 watches #0.
+[2026.10.27-06.04.13:171][511]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_46 (npc, prepared=0).
+[2026.10.27-06.04.13:484][512]LogStealth: [Encounter] BP_CrowdCharacter_C_37 killed BP_CrowdCharacter_C_46 in the slot (victim kind 1).
+[2026.10.27-06.04.13:823][513]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_46 at 77.205 (DeathServerTime 77.272, concealed 0).
+[2026.10.27-06.04.13:823][513]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: A civilian. Civilians killed: 2/3.
+[2026.10.27-06.04.35:831][579]LogStealth: [Bot] #2 watches #1.
+[2026.10.27-06.04.37:171][583]LogStealth: [Bot] #1 defend: PrepareBegin submitted
+[2026.10.27-06.04.39:171][589]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_35 (enemy, prepared=1).
+[2026.10.27-06.04.39:484][590]LogStealthRound: Round: participant 0 state 0 -> 1 (reason 2), Active after T0 1 T1 1.
+[2026.10.27-06.04.39:485][590]LogStealth: [Encounter] BP_CrowdCharacter_C_35 reversed and eliminated BP_CrowdCharacter_C_37 in the slot (victim kind 0).
+[2026.10.27-06.04.39:825][591]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_37 at 103.205 (DeathServerTime 103.272, concealed 0).
+[2026.10.27-06.04.39:825][591]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: Your target was ready. You have been eliminated and are now an informant.
+[2026.10.27-06.04.39:855][592]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Reversal! Your attacker is eliminated.
+[2026.10.27-06.05.04:891][667]LogStealth: [Bot] #2 strikes BP_CrowdCharacter_C_35 (enemy, prepared=0).
+[2026.10.27-06.05.05:209][668]LogStealthRound: Round: participant 1 state 0 -> 1 (reason 1), Active after T0 1 T1 0.
+[2026.10.27-06.05.05:209][668]LogStealth: [Encounter] BP_CrowdCharacter_C_43 killed BP_CrowdCharacter_C_35 in the slot (victim kind 0).
+[2026.10.27-06.05.05:543][669]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_35 at 128.931 (DeathServerTime 128.998, concealed 0).
+[2026.10.27-06.05.05:543][669]LogStealthRound: Round phase Active -> Ended (change 4, round 1)
+[2026.10.27-06.05.05:543][669]LogStealthRound: Round 1 decided by the production rules: team 0 wins (public reason 2, end reason 1); latched at 128.598 s, round-end step at 128.931 s (+0.333 s).
+[2026.10.27-06.05.05:543][669]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: Jaguar win: every rival eliminated for the round.
+[2026.10.27-06.05.05:543][669]LogStealthRound: Round 1 round-end step: team 0 wins (public reason 2); summary T0 {0, 1, 2} T1 {0, 1, 0}.
+[2026.10.27-06.05.05:856][670]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: You were assassinated. You are now an informant.
+[2026.10.27-06.05.05:856][670]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Jaguar win: every rival eliminated for the round.
+[2026.10.27-06.05.05:866][670]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Target eliminated: an enemy agent.
+[2026.10.27-06.05.05:866][670]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Jaguar win: every rival eliminated for the round.
+[2026.10.27-06.05.17:517][705]LogStealthRound: Round phase Ended -> Reset (change 5, round 1)
+[2026.10.27-06.05.17:861][706]LogStealthRound: Round phase Reset -> Lobby (change 6, round 1)
+[2026.10.27-06.05.23:177][722]LogStealthRound: Round phase Lobby -> Preparing (change 7, round 2)
+[2026.10.27-06.05.25:900][730]LogStealthRound: Round phase Preparing -> Active (change 8, round 2)
+[2026.10.27-06.05.25:900][730]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.27-06.05.25:900][730]LogStealth: Round started (seed 950455632, 50 NPCs).
+[2026.10.27-06.05.26:184][731]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.27-06.05.26:192][731]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.27-06.05.29:213][740]LogStealth: [Bot] Phase=1 Stages=1/1 Winner=255 NPCs=50
+[2026.10.27-06.05.29:213][740]LogStealth: [Bot] [prod] Round Active  idx 2  changes 8  played 2 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 2 | factory pawns 109, untokened 0
+[2026.10.27-06.05.29:213][740]LogStealth: [Bot] #0 FergsPC-395962A94BFD team=0 state=Active npcKills=0 pawn=V(X=-2400.00, Y=-2600.00, Z=88.27) prepared=0 concealed=0
+[2026.10.27-06.05.29:213][740]LogStealth: [Bot] #1 FergsPC-06256FD049E4 team=1 state=Active npcKills=0 pawn=V(X=-2850.00, Y=2600.00, Z=88.28) prepared=0 concealed=0
+[2026.10.27-06.05.29:213][740]LogStealth: [Bot] #2 FergsPC-F9E702DA47A0 team=0 state=Active npcKills=0 pawn=V(X=-2550.00, Y=-2600.00, Z=88.27) prepared=0 concealed=0
+[2026.10.27-06.05.38:226][767]LogStealth: [Bot] #1 defend: PrepareBegin submitted
+[2026.10.27-06.05.39:562][771]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_70 (enemy, prepared=1).
+[2026.10.27-06.05.39:877][772]LogStealthRound: Round: participant 0 state 0 -> 1 (reason 2), Active after T0 1 T1 1.
+[2026.10.27-06.05.39:877][772]LogStealth: [Encounter] BP_CrowdCharacter_C_70 reversed and eliminated BP_CrowdCharacter_C_89 in the slot (victim kind 0).
+[2026.10.27-06.05.40:216][773]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_89 at 163.598 (DeathServerTime 163.665, concealed 0).
+[2026.10.27-06.05.40:216][773]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: Your target was ready. You have been eliminated and are now an informant.
+[2026.10.27-06.05.40:520][774]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Reversal! Your attacker is eliminated.
+[2026.10.27-06.05.48:896][799]LogStealth: [Bot] Phase=1 Stages=1/1 Winner=255 NPCs=50
+[2026.10.27-06.05.48:896][799]LogStealth: [Bot] [prod] Round Active  idx 2  changes 8  played 2 | Roster 3 (T0 2 act 1 inf 1 / T1 1 act 1 inf 0) epoch 2 | factory pawns 110, untokened 0
+[2026.10.27-06.05.48:896][799]LogStealth: [Bot] #0 FergsPC-395962A94BFD team=0 state=Informant npcKills=0 pawn=V(X=-2400.00, Y=-2600.00, Z=88.27) prepared=0 concealed=0
+[2026.10.27-06.05.48:896][799]LogStealth: [Bot] #1 FergsPC-06256FD049E4 team=1 state=Active npcKills=0 pawn=V(X=-2850.00, Y=2600.00, Z=88.28) prepared=0 concealed=0
+[2026.10.27-06.05.48:896][799]LogStealth: [Bot] #2 FergsPC-F9E702DA47A0 team=0 state=Active npcKills=0 pawn=V(X=-2550.00, Y=-2600.00, Z=88.27) prepared=0 concealed=0

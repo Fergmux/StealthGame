@@ -96,6 +96,10 @@ void URoundMatchStore::EndMatch(ESessionEndReason Reason)
 		// R8: OnSessionEnding is a terminal event: SessionEnded logged, processing stops, nothing released, no phase change.
 		Core->OnSessionEnding();
 	}
+	if (Queue)
+	{
+		OnRoundQueueReleasing.Broadcast();
+	}
 	Queue.Reset();
 	DebugResolver.Reset();
 	Core.Reset();
@@ -121,6 +125,10 @@ void URoundMatchStore::Deinitialize()
 		Roster->OnRosterEvent.Remove(RosterEventHandle);
 		Roster->UnregisterRoundPhase(this);
 	}
+	if (Queue)
+	{
+		OnRoundQueueReleasing.Broadcast();
+	}
 	Queue.Reset();
 	DebugResolver.Reset();
 	Core.Reset();
@@ -144,6 +152,10 @@ void URoundMatchStore::RegisterGateways(const FRoundGateways& Gateways, UObject*
 		return;
 	}
 	GatewayOwner = Owner;
+	if (Queue)
+	{
+		OnRoundQueueReleasing.Broadcast();
+	}
 	Queue.Reset();
 	DebugResolver.Reset();
 	Core.Reset();

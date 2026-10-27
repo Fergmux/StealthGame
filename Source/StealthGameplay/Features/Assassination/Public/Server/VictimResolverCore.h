@@ -69,8 +69,16 @@ struct FVictimResolution
 	EVictimRule Rule = EVictimRule::None;
 	/** Rule 2: the bush whose zone held the WorldPoint (also on a bush whiff). */
 	uint16 BushId = 0;
+	/** Rule 2 applied (the WorldPoint lies in BushId's spot zone), hit or whiff. */
+	bool bInBushZone = false;
 	/** F1 for the victim. */
 	FStrikeReachResult Reach;
+	/**
+	 * Rule 1 ended the resolution (an honoured reference: a hit, a reach-failed whiff, or a body), so the strike's warp
+	 * target is the reference's F1 extrapolation RefAtContact (ADR-0018 section 2.2, story asn-012). Knowable by definition.
+	 */
+	bool bRefHonoured = false;
+	FVector RefAtContact = FVector::ZeroVector;
 	/** Rule 2 observation (tests): the survivors of the reach filter and the UniformBelow draws consumed. */
 	int32 ReachableCount = 0;
 	int32 BushDraws = 0;

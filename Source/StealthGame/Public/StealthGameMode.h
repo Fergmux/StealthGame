@@ -10,6 +10,12 @@
 
 class AStealthCharacter;
 class AStealthGameState;
+class AStealthPawn;
+class UEncounterService;
+enum class EVictimKind : uint8;
+enum class EKillCause : uint8;
+enum class EActionType : uint8;
+enum class ECancelReason : uint8;
 class AStealthObjective;
 class AStealthPlayerController;
 class AStealthPlayerState;
@@ -59,9 +65,18 @@ public:
 
 	// ---- Requests from characters (already on the server) -------------------------------
 
-	void HandleAssassinationRequest(AStealthCharacter* Attacker, AStealthCharacter* Target, const FVector& StrikePoint);
-	void HandleDefenceRequest(AStealthCharacter* Defender);
+	/** The prototype objective handler (the composition root's Interact stand-in calls it inside the queue slot). */
 	void HandleInteractRequest(AStealthCharacter* Character, bool bWantsInteract);
+
+	// ---- Encounters (Assassination stories asn-012 / asn-013 play integration) ----------------------------------
+
+	/**
+	 * Binds this world's prototype presentation to Assassination's production slot (the composition root calls it once
+	 * the service is registered on Round's queue). Strikes and braces resolve only there; this side presents them:
+	 * the prototype ragdoll at the applied death write (stand-in until stories asn-018 to asn-020), the HUD messages,
+	 * the informant respawn, the crouch brace tell, and the prototype NPC-kill exile (Penalty stand-in).
+	 */
+	void BindEncounterService(UEncounterService& Service);
 	void HandlePing(AStealthCharacter* Sender, const FVector& Location);
 
 	/** Called by an objective when Completer finished interacting with it. */
@@ -132,11 +147,17 @@ protected:
 	bool FindCrowdPoint(FVector& OutLocation) const;
 	FVector GetCrowdCenter() const;
 
-	/**
-	 * Kills the player's pawn and makes them an informant who respawns at the team spawn. Reason is the Roster
-	 * transition (Assassinated, ReversedAgainst); None for an informant killed again (not a transition, D10).
-	 */
-	void EliminatePlayer(AStealthCharacter* Victim, ERosterReason Reason);
+	/** OnPawnKilled (in the slot, server state only): records the kill for its death write; the NPC-kill exile stand-in. */
+	void HandleEncounterPawnKilled(APawn* Victim, APawn* Killer, EVictimKind Kind, EKillCause Cause);
+	/** The applied death write: messages, informant respawn, NPC replacement and the prototype ragdoll at contact. */
+	void HandleEncounterDeathWrite(APawn* Victim, double DeathServerTime, bool bDiedConcealed);
+	/** The applied CounterPose: the defender's crouch brace ends (never before the death write). */
+	void HandleEncounterCounterPose(APawn* Defender, double ContactServerTime);
+	/** Hub events: the prototype brace stance (crouch) and the strike's reveal from a bush. */
+	void HandleHubActionStarted(AStealthPawn* Pawn, EActionType Type);
+	void HandleHubActionCancelled(AStealthPawn* Pawn, EActionType Type, ECancelReason Reason);
+	void HandleHubActionCompleted(AStealthPawn* Pawn, EActionType Type);
+	void UnbindEncounters();
 
 	/** Removes a player from active play without killing their pawn (NPC-kill penalty). */
 	void ExilePlayer(AStealthCharacter* Offender);
@@ -168,4 +189,20 @@ protected:
 	/** The start pawns of the round's participants (P6). */
 	TMap<uint32, TWeakObjectPtr<APawn>> RoundPlayerPawns;
 	TArray<FTimerHandle> PendingTimers;
+
+	/** A kill decided in a slot whose death write has not been applied yet (server only). */
+	struct FPendingEncounterKill
+	{
+		TWeakObjectPtr<APawn> Killer;
+		EVictimKind Kind;
+		EKillCause Cause;
+	};
+	TMap<TWeakObjectPtr<APawn>, FPendingEncounterKill> PendingEncounterKills;
+	TWeakObjectPtr<UEncounterService> BoundEncounters;
+	FDelegateHandle PawnKilledHandle;
+	FDelegateHandle DeathWriteHandle;
+	FDelegateHandle CounterPoseHandle;
+	FDelegateHandle HubStartedHandle;
+	FDelegateHandle HubCancelledHandle;
+	FDelegateHandle HubCompletedHandle;
 };
