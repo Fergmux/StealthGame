@@ -1,0 +1,1 @@
+self-test: the fixture report matches (3 rounds, 1 skipped)

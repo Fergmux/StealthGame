@@ -137,6 +137,79 @@ namespace EncounterPresentationLocal
 				Mesh->SetHiddenInGame(true, /*bPropagateToChildren*/ true);
 			}
 		}
+
+		virtual void BeginWarmUp(AStealthPawn& Pawn, TFunction<void()> OnWarm) override
+		{
+			// ADR-0003 S10-R5: hidden (client-local mesh flag, so no shadow or trace of the un-posed body), evaluated and bones
+			// refreshed while hidden, shown at the first bone finalisation after the presentation applied (E11: the callback
+			// fires for a hidden mesh). The concealment latch uses the mesh's visibility flag, a separate one.
+			USkeletalMeshComponent* Mesh = Pawn.GetMesh();
+			if (Mesh == nullptr || Mesh->GetSkeletalMeshAsset() == nullptr)
+			{
+				OnWarm();
+				return;
+			}
+			FlushDeferred();
+			EndWarmUp(Pawn, /*bShow*/ false);
+			FWarm& Warm = Warming.Add(TWeakObjectPtr<AStealthPawn>(&Pawn));
+			Warm.PreviousTickOption = Mesh->VisibilityBasedAnimTickOption;
+			Mesh->SetHiddenInGame(true, /*bPropagateToChildren*/ true);
+			Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+			Warm.Handle = Mesh->RegisterOnBoneTransformsFinalizedDelegate(FOnBoneTransformsFinalizedMultiCast::FDelegate::CreateLambda(MoveTemp(OnWarm)));
+		}
+
+		virtual void EndWarmUp(AStealthPawn& Pawn, bool bShow) override
+		{
+			for (auto It = Warming.CreateIterator(); It; ++It)
+			{
+				if (!It.Key().IsValid())
+				{
+					It.RemoveCurrent(); // a pawn destroyed while warming: its mesh and delegate went with it
+				}
+			}
+			FWarm Warm;
+			if (!Warming.RemoveAndCopyValue(TWeakObjectPtr<AStealthPawn>(&Pawn), Warm))
+			{
+				return;
+			}
+			if (USkeletalMeshComponent* Mesh = Pawn.GetMesh())
+			{
+				// The delegate is unregistered later (FlushDeferred): this often runs inside its own broadcast, and removing a
+				// bound lambda there would destroy it while it executes. A late call finds no warming state and does nothing.
+				Deferred.Add({ TWeakObjectPtr<USkeletalMeshComponent>(Mesh), Warm.Handle });
+				Mesh->VisibilityBasedAnimTickOption = Warm.PreviousTickOption;
+				if (bShow)
+				{
+					Mesh->SetHiddenInGame(false, /*bPropagateToChildren*/ true);
+				}
+			}
+		}
+
+		virtual void FlushDeferred() override
+		{
+			for (const FDeferredUnregister& Entry : Deferred)
+			{
+				if (USkeletalMeshComponent* Mesh = Entry.Mesh.Get())
+				{
+					Mesh->UnregisterOnBoneTransformsFinalizedDelegate(Entry.Handle);
+				}
+			}
+			Deferred.Reset();
+		}
+
+	private:
+		struct FWarm
+		{
+			FDelegateHandle Handle;
+			EVisibilityBasedAnimTickOption PreviousTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPose;
+		};
+		struct FDeferredUnregister
+		{
+			TWeakObjectPtr<USkeletalMeshComponent> Mesh;
+			FDelegateHandle Handle;
+		};
+		TMap<TWeakObjectPtr<AStealthPawn>, FWarm> Warming;
+		TArray<FDeferredUnregister> Deferred;
 	};
 
 	/** The ViewBlock trace channel (Camera story 007's project-owned channel), else Visibility. */
@@ -266,6 +339,9 @@ const TCHAR* LexEncounterPresentationEvent(EEncounterPresentationEvent Event)
 	case EEncounterPresentationEvent::BodyHidden: return TEXT("BodyHidden");
 	case EEncounterPresentationEvent::RoleChange: return TEXT("RoleChange");
 	case EEncounterPresentationEvent::Grade: return TEXT("Grade");
+	case EEncounterPresentationEvent::WarmUpBegin: return TEXT("WarmUpBegin");
+	case EEncounterPresentationEvent::WarmUpShown: return TEXT("WarmUpShown");
+	case EEncounterPresentationEvent::WarmUpTimeout: return TEXT("WarmUpTimeout");
 	default: return TEXT("UnsyncedFallback");
 	}
 }
@@ -383,6 +459,7 @@ void UEncounterPresentationSubsystem::HandleEncounterStateChanged(AStealthPawn* 
 
 void UEncounterPresentationSubsystem::Tick(float DeltaTime)
 {
+	Player().FlushDeferred();
 	if (Scheduled.IsEmpty())
 	{
 		return;
@@ -394,6 +471,12 @@ void UEncounterPresentationSubsystem::Tick(float DeltaTime)
 		if (AStealthPawn* Pawn = Weak.Get())
 		{
 			Refresh(*Pawn, TimeNow);
+			// The warm-up failsafe (S10-R5): shown anyway after WarmUpMaxFrames without a bone finalisation.
+			const FPawnState* State = States.Find(Weak);
+			if (State != nullptr && State->bWarming && GFrameCounter - State->WarmBeginFrame >= static_cast<uint64>(FMath::Max(1, UEncounterPresentationSettings::Get()->WarmUpMaxFrames)))
+			{
+				FinishWarmUp(*Pawn, /*bTimeout*/ true);
+			}
 		}
 		else
 		{
@@ -418,6 +501,7 @@ void UEncounterPresentationSubsystem::AddRow(EEncounterPresentationEvent Event, 
 	Row.Value = Value;
 	Row.DueServerTime = Due;
 	Row.bLate = bLate;
+	Row.Frame = GFrameCounter;
 	UE_LOGF(LogStealthGameplay, Verbose, "[EncounterPresentation] %ls %ls %ls now %.3f value %.3f due %.3f late %d (net mode %d)", LexEncounterPresentationEvent(Event),
 		*Row.PawnName, LexEncounterClip(Clip), TimeNow, Value, Due, bLate ? 1 : 0, GetWorld() != nullptr ? static_cast<int32>(GetWorld()->GetNetMode()) : -1);
 }
@@ -446,10 +530,38 @@ bool UEncounterPresentationSubsystem::IsScheduled(const AStealthPawn* Pawn) cons
 	return Scheduled.Contains(TWeakObjectPtr<AStealthPawn>(const_cast<AStealthPawn*>(Pawn)));
 }
 
+bool UEncounterPresentationSubsystem::IsWarmingUp(const AStealthPawn* Pawn) const
+{
+	const FPawnState* State = States.Find(TWeakObjectPtr<AStealthPawn>(const_cast<AStealthPawn*>(Pawn)));
+	return State != nullptr && State->bWarming;
+}
+
+void UEncounterPresentationSubsystem::FinishWarmUp(AStealthPawn& Pawn, bool bTimeout)
+{
+	FPawnState* State = States.Find(TWeakObjectPtr<AStealthPawn>(&Pawn));
+	if (State == nullptr || !State->bWarming)
+	{
+		return;
+	}
+	State->bWarming = false;
+	const uint64 Frames = GFrameCounter - State->WarmBeginFrame;
+	Player().EndWarmUp(Pawn, /*bShow: a body hidden meanwhile stays hidden*/ !State->bHidden);
+	AddRow(bTimeout ? EEncounterPresentationEvent::WarmUpTimeout : EEncounterPresentationEvent::WarmUpShown, Pawn, State->PlayingClip, Now(), static_cast<double>(Frames), -1.0);
+	if (bTimeout)
+	{
+		UE_LOGF(LogStealthGameplay, Log, "[EncounterPresentation] %ls: warm-up failsafe after %llu frames (no bone finalisation)", *Pawn.GetName(), static_cast<unsigned long long>(Frames));
+	}
+}
+
 void UEncounterPresentationSubsystem::Refresh(AStealthPawn& Pawn, double TimeNow)
 {
 	using namespace EncounterPresentationLocal;
+	if (!Pawn.IsPresentationReady())
+	{
+		return; // a new actor's first-bunch RepNotify: AStealthPawn::PostNetInit evaluates it in the same frame (story asn-022)
+	}
 	const TWeakObjectPtr<AStealthPawn> Key(&Pawn);
+	const bool bFirstSight = !States.Contains(Key);
 	FPawnState& State = States.FindOrAdd(Key);
 	const FActionState& Action = Pawn.GetActionState();
 	const FDeathState& Death = Pawn.GetDeathState();
@@ -483,6 +595,31 @@ void UEncounterPresentationSubsystem::Refresh(AStealthPawn& Pawn, double TimeNow
 		UE_LOGF(LogStealthGameplay, Log, "[EncounterPresentation] %ls: server clock not synced, presenting on receipt", *Pawn.GetName());
 	}
 
+	// 0 A fresh client actor (re-open at the death write, late join; story asn-022) carrying a death or a playing clip stays
+	// hidden until its first posed frame (ADR-0003 S10-R5: a re-created pawn renders one collapsed frame otherwise). The
+	// warm-up of every other fresh pawn is ADR-0013's significance subsystem's (not built yet).
+	if (bFirstSight && !Pawn.HasAuthority() && Pawn.WasNetInitialisedThisFrame())
+	{
+		State.bFreshActor = true;
+		if (!Plan.bNeverShow && (Death.DeathServerTime >= 0.0 || (Plan.Clip != EEncounterClip::None && Plan.Position >= 0.0)))
+		{
+			State.bWarming = true;
+			State.WarmBeginFrame = GFrameCounter;
+			AddRow(EEncounterPresentationEvent::WarmUpBegin, Pawn, Plan.Clip, TimeNow, 0.0, -1.0);
+			TWeakObjectPtr<UEncounterPresentationSubsystem> WeakThis(this);
+			TWeakObjectPtr<AStealthPawn> WeakPawn(&Pawn);
+			Player().BeginWarmUp(Pawn, [WeakThis, WeakPawn]()
+			{
+				UEncounterPresentationSubsystem* Self = WeakThis.Get();
+				AStealthPawn* Warmed = WeakPawn.Get();
+				if (Self != nullptr && Warmed != nullptr)
+				{
+					Self->FinishWarmUp(*Warmed, /*bTimeout*/ false);
+				}
+			});
+		}
+	}
+
 	// 1 The clip (seeked, never restarted; a strike that ended before this machine saw it is not started late).
 	if (Plan.Clip != EEncounterClip::None && Plan.Position >= 0.0 && !Plan.bNeverShow && !State.bHidden)
 	{
@@ -494,9 +631,16 @@ void UEncounterPresentationSubsystem::Refresh(AStealthPawn& Pawn, double TimeNow
 			State.PlayingRate = Plan.PlayRate;
 			if (!Plan.bClipEnded || Plan.Clip == EEncounterClip::DeathFall)
 			{
-				const bool bPlayed = Player().Play(Pawn, Plan);
-				AddRow(EEncounterPresentationEvent::ClipStart, Pawn, Plan.Clip, TimeNow, Plan.Position,
-					Plan.Clip == EEncounterClip::DeathFall ? Death.DeathServerTime : Action.ContactServerTime, Plan.bLate);
+				// A fresh actor's fall (a re-open or late actor, story asn-022) cross-fades within MaxCrossFadeSec (ASN-R21).
+				FEncounterPresentationPlan Start = Plan;
+				if (State.bFreshActor && Start.Clip == EEncounterClip::DeathFall)
+				{
+					Start.BlendInSec = FMath::Min(Start.BlendInSec, Params.MaxCrossFadeSec);
+				}
+				const bool bPlayed = Player().Play(Pawn, Start);
+				AddRow(EEncounterPresentationEvent::ClipStart, Pawn, Start.Clip, TimeNow, Start.Position,
+					Start.Clip == EEncounterClip::DeathFall ? Death.DeathServerTime : Action.ContactServerTime, Start.bLate);
+				Log.Last().BlendInSec = Start.BlendInSec;
 				if (bPlayed && IsStrikeClip(Plan.Clip) && Plan.Position < Plan.WarpWindowEndSec)
 				{
 					Player().BeginStrikeWarp(Pawn, Plan, Params);
@@ -580,7 +724,7 @@ void UEncounterPresentationSubsystem::Refresh(AStealthPawn& Pawn, double TimeNow
 
 	// 5 The schedule: tick only while the plan needs it (a pending Counter's grade too).
 	const bool bCounterPending = Action.Pose == EActionPose::Counter && State.CounterGradedSeq != Action.Seq;
-	if ((Plan.bNeedsTick || bCounterPending) && !(State.bHidden && Plan.bDeathPresented))
+	if (State.bWarming || ((Plan.bNeedsTick || bCounterPending) && !(State.bHidden && Plan.bDeathPresented)))
 	{
 		Scheduled.Add(Key);
 	}

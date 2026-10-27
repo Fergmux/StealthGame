@@ -39,6 +39,19 @@ public:
 
 	/** Hides the body on this machine in one frame (no fade, dissolve, sink or effect). */
 	virtual void HideBody(AStealthPawn& Pawn) = 0;
+
+	/**
+	 * The hidden-until-first-pose warm-up of a fresh client actor (ADR-0003 S10-R5, story asn-022): hide Pawn, evaluate its
+	 * animation while hidden, and call OnWarm once at the first bone-transform finalisation after the presentation applied
+	 * (a re-created pawn otherwise renders one un-evaluated, collapsed frame, spike S10 Q3b). Default: warm at once.
+	 */
+	virtual void BeginWarmUp(AStealthPawn& Pawn, TFunction<void()> OnWarm) { OnWarm(); }
+
+	/** Ends the warm-up: restores the mesh's tick settings and, when bShow, shows the pawn again. Default: nothing. */
+	virtual void EndWarmUp(AStealthPawn& Pawn, bool bShow) {}
+
+	/** Releases what EndWarmUp could not release inside a callback (called from the subsystem's tick). Default: nothing. */
+	virtual void FlushDeferred() {}
 };
 
 /** What the local viewer sees of a body (the VA-ASN-2 geometry test; pawns are not occluders). */
@@ -82,6 +95,12 @@ enum class EEncounterPresentationEvent : uint8
 	RoleChange,
 	Grade,
 	UnsyncedFallback,
+	/** A fresh actor's first presentation went hidden for its warm-up (story asn-022). */
+	WarmUpBegin,
+	/** The warm-up ended at the first posed frame (Value: client frames since WarmUpBegin). */
+	WarmUpShown,
+	/** The warm-up failsafe showed the pawn after WarmUpMaxFrames without a bone finalisation (Value: frames). */
+	WarmUpTimeout,
 };
 
 /** Log name of an event. */
@@ -102,6 +121,10 @@ struct FEncounterPresentationLogRow
 	/** The time the row answers: ContactServerTime / DeathServerTime / the due time. */
 	double DueServerTime = -1.0;
 	bool bLate = false;
+	/** ClipStart: the blend-in the clip was commanded with (seconds); -1 for other rows. */
+	double BlendInSec = -1.0;
+	/** GFrameCounter at the row. */
+	uint64 Frame = 0;
 };
 
 /**
@@ -153,6 +176,9 @@ public:
 	/** True while Pawn is in the per-frame schedule. */
 	bool IsScheduled(const AStealthPawn* Pawn) const;
 
+	/** True while Pawn is hidden for its fresh-actor warm-up (story asn-022). */
+	bool IsWarmingUp(const AStealthPawn* Pawn) const;
+
 	/** Test seams: replace the engine half, the view query, the owner side, the clock and the params (null restores production). */
 	void SetClipPlayer(IEncounterClipPlayer* Player);
 	void SetBodyViewQuery(IEncounterBodyViewQuery* Query);
@@ -183,10 +209,17 @@ private:
 		bool bRoleDispatched = false;
 		uint16 CounterGradedSeq = 0;
 		bool bLoggedUnsynced = false;
+		/** First seen on a client actor created that frame (a re-open or late join, story asn-022). */
+		bool bFreshActor = false;
+		/** Fresh-actor warm-up (story asn-022): hidden until the first posed frame. */
+		bool bWarming = false;
+		uint64 WarmBeginFrame = 0;
 		FEncounterPresentationPlan LastPlan;
 	};
 
 	void HandleEncounterStateChanged(AStealthPawn* Pawn);
+	/** Ends Pawn's warm-up (the bone finalisation, or the failsafe when bTimeout). */
+	void FinishWarmUp(AStealthPawn& Pawn, bool bTimeout);
 	void AddRow(EEncounterPresentationEvent Event, const AStealthPawn& Pawn, EEncounterClip Clip, double Now, double Value, double Due, bool bLate = false);
 	double Now() const;
 	bool ClockSynced() const;

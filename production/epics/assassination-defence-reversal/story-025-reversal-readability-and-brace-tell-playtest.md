@@ -1,12 +1,12 @@
 # Story 025: A reversal reads as "the striker fell" and the brace reads as a stance (playtest protocol)
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Blocked — Needs human playtest (2026-10-27): AC-ASN-30 and VA-ASN-3(b) are human studies (>= 6 trained testers, a human-captured greyscale clip set and an art-director sign-off); the unattended build prepared the protocol, fixed shuffle order, briefing script, capture drivers and blank results sheets (production/qa/evidence/asn-30-results.md, asn-25-brace-tell-results.md) and ran no session. The brace tell additionally needs the authored Brace_In/Hold/Out clips (a stand-in session is provisional)
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 

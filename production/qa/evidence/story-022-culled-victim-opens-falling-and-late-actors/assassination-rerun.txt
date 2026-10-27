@@ -1,0 +1,90 @@
+LogAutomationController: Display: Test Completed. Result={Success} Name={NpcPlayerAndInformantReopenAtTheDeathWriteAlreadyFalling} Path={StealthGame.Assassination.PIE.CulledVictimOpensFalling.NpcPlayerAndInformantReopenAtTheDeathWriteAlreadyFalling}
+LogAutomationController: ASN45 NPC: settle frame 1191, death-write frame 1207, early open frames 0, first open +1
+LogAutomationController: ASN45 NPC warm-up: begin yes (frame 1208, instance 1208), shown yes (frame 1208), timeout 0, first shown sample 1208
+LogAutomationController: ASN45 NPC: instance first seen at 10.276 (death 10.433), Death_Fall at 10.443 sought to 0.0095 s (now - death 0.0095), blend 0.100 s
+LogAutomationController: ASN45 NPC: fall weight 0.000 on its first frame, 1 after 7 frames
+LogAutomationController: ASN45 player: settle frame 1339, death-write frame 1355, early open frames 0, first open +1
+LogAutomationController: ASN45 player warm-up: begin yes (frame 1356, instance 1356), shown yes (frame 1356), timeout 0, first shown sample 1356
+LogAutomationController: ASN45 player: instance first seen at 12.743 (death 12.900), Death_Fall at 12.909 sought to 0.0090 s (now - death 0.0090), blend 0.100 s
+LogAutomationController: ASN45 player: fall weight 0.000 on its first frame, 1 after 7 frames
+LogAutomationController: ASN45 informant: settle frame 1677, death-write frame 1693, early open frames 0, first open +1
+LogAutomationController: ASN45 informant warm-up: begin yes (frame 1694, instance 1694), shown yes (frame 1694), timeout 0, first shown sample 1694
+LogAutomationController: ASN45 informant: instance first seen at 18.376 (death 18.533), Death_Fall at 18.542 sought to 0.0088 s (now - death 0.0088), blend 0.100 s
+LogAutomationController: ASN45 informant: fall weight 0.000 on its first frame, 1 after 7 frames
+LogAutomationController: ASN45 negative control: 13 open frames before the death-write tick
+LogAutomationController: Display: Test Completed. Result={Success} Name={OnlyTheBracersOwnControllerHoldsItsCooldownEnd} Path={StealthGame.Assassination.PIE.DefenceStateServerOnly.OnlyTheBracersOwnControllerHoldsItsCooldownEnd}
+LogAutomationController: Display: Test Completed. Result={Success} Name={RivalAt230cmIsAssassinatedAndFallsAtContactWithNoGameCameraRotation} Path={StealthGame.Assassination.PIE.KillAtArmsLength.RivalAt230cmIsAssassinatedAndFallsAtContactWithNoGameCameraRotation}
+LogAutomationController: Display: Test Completed. Result={Success} Name={FivePlatesOnTheirContactFrameWithOneTimeline} Path={StealthGame.Assassination.PIE.KillPlateTellsOneThing.FivePlatesOnTheirContactFrameWithOneTimeline}
+LogAutomationController: Display: Test Completed. Result={Success} Name={MidFallSeeksWithoutPopAndPastLingerNeverShows} Path={StealthGame.Assassination.PIE.LateActorSeeksNeverSnaps.MidFallSeeksWithoutPopAndPastLingerNeverShows}
+LogAutomationController: ASN25 +0.6 s: released at +0.617, instance at +0.610, Death_Fall at +0.593 sought to 0.5930 s, blend 0.100 s
+LogAutomationController: ASN25 +0.6 s warm-up: begin yes (frame 7426, instance 7426), shown yes (frame 7426), timeout 0, first shown sample 7426
+LogAutomationController: ASN25 +0.6 s pop: bystander max per-frame bone delta 35.64 cm over 10 shown frames; clip's own 21.62 cm, blend span 79.23 cm, bound 37.82 cm
+LogAutomationController: ASN25 +7.5 s: instance at +7.526, 62 frames sampled, shown on any: 0
+LogAutomationController: ASN25 machine 0 (host): Death_Fall at ContactServerTime -0.0000 s
+LogAutomationController: ASN25 machine 1 (client): Death_Fall at ContactServerTime +0.0097 s
+LogAutomationController: Display: Test Completed. Result={Success} Name={OccupiedAndEmptyBushShowTheUnaimedWidgetListBeforeAndAfterAStrike} Path={StealthGame.Assassination.PIE.NoBushTargetingUi.OccupiedAndEmptyBushShowTheUnaimedWidgetListBeforeAndAfterAStrike}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ObserversSeeNoCueForAKillAWhiffOrAReversalAndNoEarlyRoundEnd} Path={StealthGame.Assassination.PIE.NoObserverCue.ObserversSeeNoCueForAKillAWhiffOrAReversalAndNoEarlyRoundEnd}
+LogAutomationController: Display: Test Completed. Result={Success} Name={BracedDefenderFromBehind} Path={StealthGame.Assassination.PIE.NoWarningToVictim.BracedDefenderFromBehind}
+LogAutomationController: Display: Test Completed. Result={Success} Name={BracedDefenderFromFront} Path={StealthGame.Assassination.PIE.NoWarningToVictim.BracedDefenderFromFront}
+LogAutomationController: Display: Test Completed. Result={Success} Name={NegativeControlWidgetOnRosterReceiptIsReported} Path={StealthGame.Assassination.PIE.NoWarningToVictim.NegativeControlWidgetOnRosterReceiptIsReported}
+LogAutomationController: Display: Test Completed. Result={Success} Name={UnbracedMovingFromBehind} Path={StealthGame.Assassination.PIE.NoWarningToVictim.UnbracedMovingFromBehind}
+LogAutomationController: Display: Test Completed. Result={Success} Name={UnbracedMovingFromFront} Path={StealthGame.Assassination.PIE.NoWarningToVictim.UnbracedMovingFromFront}
+LogAutomationController: Display: Test Completed. Result={Success} Name={UnbracedStandingFromBehind} Path={StealthGame.Assassination.PIE.NoWarningToVictim.UnbracedStandingFromBehind}
+LogAutomationController: Display: Test Completed. Result={Success} Name={UnbracedStandingFromFront} Path={StealthGame.Assassination.PIE.NoWarningToVictim.UnbracedStandingFromFront}
+LogAutomationController: Display: Test Completed. Result={Success} Name={NpcPlayerAndInformantFallLingerAndGoAlike} Path={StealthGame.Assassination.PIE.OneBodySequence.NpcPlayerAndInformantFallLingerAndGoAlike}
+LogAutomationController: Display: Test Completed. Result={Success} Name={SlotWriteBlindDeathWriteDeferredOnEveryClient} Path={StealthGame.Assassination.PIE.OutcomeBlindWire.SlotWriteBlindDeathWriteDeferredOnEveryClient}
+LogAutomationController: Display: Test Completed. Result={Success} Name={BraceEndsAndDefencePlateAndRemovalCardStartAtContactNeverOnReceipt} Path={StealthGame.Assassination.PIE.OutcomePresentedAtContact.BraceEndsAndDefencePlateAndRemovalCardStartAtContactNeverOnReceipt}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ReceiptSeamPutsThePlateUpBeforeContact} Path={StealthGame.Assassination.PIE.OutcomePresentedAtContact.ReceiptSeamPutsThePlateUpBeforeContact}
+LogAutomationController: Display: Test Completed. Result={Success} Name={EveryResultReachesOnlyItsOwnerAtOneSize} Path={StealthGame.Assassination.PIE.OwnerResultShape.EveryResultReachesOnlyItsOwnerAtOneSize}
+LogAutomationController: Display: Test Completed. Result={Success} Name={KilledBodiesKeepTheirControllerUntilReleaseAlike} Path={StealthGame.Assassination.PIE.PossessionThroughFall.KilledBodiesKeepTheirControllerUntilReleaseAlike}
+LogAutomationController: Display: Test Completed. Result={Success} Name={OwnRoleDispatchFiresOnceAtDeathOnRemoteClientAndListenHost} Path={StealthGame.Assassination.PIE.RoleChangeGate.OwnRoleDispatchFiresOnceAtDeathOnRemoteClientAndListenHost}
+LogAutomationController: Display: Test Completed. Result={Success} Name={FiveTargetsAtOneBearingPoseAlikeOnServerAndBystander} Path={StealthGame.Assassination.PIE.StrikeClipParity.FiveTargetsAtOneBearingPoseAlikeOnServerAndBystander}
+LogAutomationController: Display: Test Completed. Result={Success} Name={OnlyParticipantsGradeOnTheirContactFrameAndNeverForAWhiff} Path={StealthGame.Assassination.PIE.TransientGradeAtContact.OnlyParticipantsGradeOnTheirContactFrameAndNeverForAWhiff}
+LogAutomationController: Display: Test Completed. Result={Success} Name={AlliesNeverVictims} Path={StealthGame.Assassination.AlliesNeverVictims}
+LogAutomationController: Display: Test Completed. Result={Success} Name={BlindBushStrikeIsACommitment} Path={StealthGame.Assassination.BlindBushStrikeIsACommitment}
+LogAutomationController: Display: Test Completed. Result={Success} Name={BodyRemovalEvaluator} Path={StealthGame.Assassination.BodyRemovalEvaluator}
+LogAutomationController: Display: Test Completed. Result={Success} Name={BodySequenceParity} Path={StealthGame.Assassination.BodySequenceParity}
+LogAutomationController: Display: Test Completed. Result={Success} Name={BracedAtAttackKeyOrder} Path={StealthGame.Assassination.BracedAtAttackKeyOrder}
+LogAutomationController: Display: Test Completed. Result={Success} Name={BushVictimHash} Path={StealthGame.Assassination.BushVictimHash}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ContactWriteAfterLatch} Path={StealthGame.Assassination.ContactWriteAfterLatch}
+LogAutomationController: Display: Test Completed. Result={Success} Name={CooldownFromActivation} Path={StealthGame.Assassination.CooldownFromActivation}
+LogAutomationController: Display: Test Completed. Result={Success} Name={CounterIsNotProtected} Path={StealthGame.Assassination.CounterIsNotProtected}
+LogAutomationController: Display: Test Completed. Result={Success} Name={DeadBodyIsNoContact} Path={StealthGame.Assassination.DeadBodyIsNoContact}
+LogAutomationController: Display: Test Completed. Result={Success} Name={DefenceOwnerCooldown} Path={StealthGame.Assassination.DefenceOwnerCooldown}
+LogAutomationController: Display: Test Completed. Result={Success} Name={DefenceStateSurvivesPossession} Path={StealthGame.Assassination.DefenceStateSurvivesPossession}
+LogAutomationController: Display: Test Completed. Result={Success} Name={DisconnectKeepsTimers} Path={StealthGame.Assassination.DisconnectKeepsTimers}
+LogAutomationController: Display: Test Completed. Result={Success} Name={EncounterPresentationTimeline} Path={StealthGame.Assassination.EncounterPresentationTimeline}
+LogAutomationController: Display: Test Completed. Result={Success} Name={EncounterServiceSmoke} Path={StealthGame.Assassination.EncounterServiceSmoke}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ExileFlagAndTally} Path={StealthGame.Assassination.ExileFlagAndTally}
+LogAutomationController: Display: Test Completed. Result={Success} Name={KillEventMatrix} Path={StealthGame.Assassination.KillEventMatrix}
+LogAutomationController: Display: Test Completed. Result={Success} Name={LateActorBoundaries} Path={StealthGame.Assassination.LateActorBoundaries}
+LogAutomationController: Display: Test Completed. Result={Success} Name={LockoutForEveryOutcome} Path={StealthGame.Assassination.LockoutForEveryOutcome}
+LogAutomationController: Display: Test Completed. Result={Success} Name={LungeOutcomeBlind} Path={StealthGame.Assassination.LungeOutcomeBlind}
+LogAutomationController: Display: Test Completed. Result={Success} Name={MovingVictims} Path={StealthGame.Assassination.MovingVictims}
+LogAutomationController: Display: Test Completed. Result={Success} Name={NoTargetDependentRejection} Path={StealthGame.Assassination.NoTargetDependentRejection}
+LogAutomationController: Display: Test Completed. Result={Success} Name={NpcBraceSamePath} Path={StealthGame.Assassination.NpcBraceSamePath}
+LogAutomationController: Display: Test Completed. Result={Success} Name={NpcsNeverStrike} Path={StealthGame.Assassination.NpcsNeverStrike}
+LogAutomationController: Display: Test Completed. Result={Success} Name={OutcomeBlindWire} Path={StealthGame.Assassination.OutcomeBlindWire}
+LogAutomationController: Display: Test Completed. Result={Success} Name={OutcomeInSlot} Path={StealthGame.Assassination.OutcomeInSlot}
+LogAutomationController: Display: Test Completed. Result={Success} Name={OwnerResultShape} Path={StealthGame.Assassination.OwnerResultShape}
+LogAutomationController: Display: Test Completed. Result={Success} Name={OwnResultMatcher} Path={StealthGame.Assassination.OwnResultMatcher}
+LogAutomationController: Display: Test Completed. Result={Success} Name={PlantedBrace} Path={StealthGame.Assassination.PlantedBrace}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ProbeAndBraceTelemetryProbes} Path={StealthGame.Assassination.ProbeAndBraceTelemetryProbes}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ProbeEconomicsF5} Path={StealthGame.Assassination.ProbeEconomicsF5}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ReachBushStrike} Path={StealthGame.Assassination.ReachBushStrike}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ReachF1} Path={StealthGame.Assassination.ReachF1}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ResetClearsState} Path={StealthGame.Assassination.ResetClearsState}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ResolverCost} Path={StealthGame.Assassination.ResolverCost}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ReversalCanEndTheRound} Path={StealthGame.Assassination.ReversalCanEndTheRound}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ReversalEliminatesAttacker} Path={StealthGame.Assassination.ReversalEliminatesAttacker}
+LogAutomationController: Display: Test Completed. Result={Success} Name={RoleChangeDispatchOnce} Path={StealthGame.Assassination.RoleChangeDispatchOnce}
+LogAutomationController: Display: Test Completed. Result={Success} Name={SameDrainOrdering} Path={StealthGame.Assassination.SameDrainOrdering}
+LogAutomationController: Display: Test Completed. Result={Success} Name={StrikeBearingGroups} Path={StealthGame.Assassination.StrikeBearingGroups}
+LogAutomationController: Display: Test Completed. Result={Success} Name={StrikerStruckMidLunge} Path={StealthGame.Assassination.StrikerStruckMidLunge}
+LogAutomationController: Display: Test Completed. Result={Success} Name={TuningInvariants} Path={StealthGame.Assassination.TuningInvariants}
+LogAutomationController: Display: Test Completed. Result={Success} Name={VictimResolutionOrder} Path={StealthGame.Assassination.VictimResolutionOrder}
+LogAutomationController: Display: Test Completed. Result={Success} Name={VictimUntouchedUntilWrite} Path={StealthGame.Assassination.VictimUntouchedUntilWrite}
+LogAutomationController: Display: Test Completed. Result={Success} Name={WarpPointBlind} Path={StealthGame.Assassination.WarpPointBlind}
+LogAutomationController: Display: Test Completed. Result={Success} Name={WarpTargetsNotReplicated} Path={StealthGame.Assassination.WarpTargetsNotReplicated}
+LogAutomationController: Display: Test Completed. Result={Success} Name={WireShape} Path={StealthGame.Assassination.WireShape}
+LogAutomationController: Display: Test Completed. Result={Success} Name={WireWidth} Path={StealthGame.Assassination.WireWidth}

@@ -6,6 +6,7 @@
 #include "Engine/World.h"
 #include "Server/ActionHub.h"
 #include "Server/AttackResolverCore.h"
+#include "Server/EncounterTelemetryProbe.h"
 #include "Server/Roster/StealthRosterStore.h"
 #include "UObject/Object.h"
 #include "UObject/WeakObjectPtrTemplates.h"
@@ -223,6 +224,11 @@ struct FEncounterServiceInit
 	IBodyRemovalObserver* BodyObserver = nullptr;
 	/** The fault sink of the missing-seam reports (null: none reported). */
 	IStealthFaultSink* Faults = nullptr;
+	/**
+	 * ADR-0023's playtest telemetry sink (story asn-026: StrikeResolved, BraceEnded). Null: the null object (the Event Log's
+	 * telemetry section does not exist yet; UStealthEventLogSubsystem::GetTelemetrySink() feeds this when it does).
+	 */
+	IStealthTelemetrySink* Telemetry = nullptr;
 };
 
 /**
@@ -278,6 +284,12 @@ public:
 	/** The resolver to register by hand (the core itself). */
 	IQueueResolver* GetResolver() const { return Core.Get(); }
 
+	/**
+	 * The resolver RegisterOn registers for PawnCommand and HoldTimer (story asn-026): the core inside the
+	 * Stealth.Budget.Assassination cost scope plus the ADR-0023 probe call sites (null before Initialize).
+	 */
+	FEncounterTelemetryProbe* GetTelemetryProbe() const { return Probe.Get(); }
+
 	/** OnPawnKilled(Victim, Killer, VictimKind, Cause), fired inline in the slot (null before Initialize). */
 	FOnPawnKilled* GetOnPawnKilled() const { return Core.IsValid() ? &Core->OnPawnKilled : nullptr; }
 	/** OnDeathWriteApplied(Victim, DeathServerTime, bDiedConcealed), fired by the staging pass (null before Initialize). */
@@ -310,6 +322,7 @@ private:
 	TUniquePtr<FEncounterHubReplySink> ReplySink;
 	TUniquePtr<FEncounterOwnerCooldownPublisher> OwnerCooldown;
 	TUniquePtr<FEncounterPawnFactoryHandOver> HandOver;
+	TUniquePtr<FEncounterTelemetryProbe> Probe;
 	TUniquePtr<FAttackResolverCore> Core;
 	FResolutionQueueCore* RegisteredQueue = nullptr;
 	bool bRegisteredCommands = false;

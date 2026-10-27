@@ -1,12 +1,12 @@
 # Story 026: Advisory checks: probe economics (F5), probe and brace telemetry, resolver cost
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete (2026-10-27, advisory) — AC1 and AC3 pass; AC2 producer probes and the offline report pass, the live >= 10-match pull is DEFERRED until the Event Log telemetry section (Round/Foundation) and internal playtests exist; evidence production/qa/evidence/story-026-advisory-economics-telemetry-resolver-cost-evidence.md
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -34,9 +34,9 @@ F5 (`q = p(1 − b_P)`, `ρ = p·b_P + (1 − p)·b_N`, `m = (1 − p)(1 − b_N
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-32, AC-ASN-33, AC-ASN-34), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-32, [Config/ADVISORY] `ProbeEconomicsF5`): **GIVEN** `TeamSize` 5, `NpcCount` 50, L 3, b_P 0.067, b_N 0.00135 **WHEN** F5 is evaluated **THEN** E[N] = 2.98 ± 0.01, E[RivalKills] = 0.276 ± 0.002, P(≥ 1 kill) = 0.232 ± 0.002, P(strike-out) = 0.976 ± 0.002 and P(reversed) = 0.024 ± 0.002.
-- [ ] **AC2** (AC-ASN-33, [Integration/ADVISORY] `ProbeAndBraceTelemetry`, playtest): **GIVEN** ≥ 10 logged internal matches **THEN** the Event Log store yields per match strikes by outcome, NPC kills per rival kill, reversals, braces, and pair trades (a reversal followed within 10 s by a kill of the same defender); targets for review, not gates: NPC kills per rival kill 3 to 15 (F5 baseline 10.7 at `NpcCount` 50), pair trades ≤ 25 % of reversals (the creative director reviews above), reversals per match 0.5 to 2.
-- [ ] **AC3** (AC-ASN-34, [Integration/ADVISORY] `ResolverCost`): **GIVEN** 50 pawns and 10 Attacks in one server frame **THEN** Assassination's resolution costs ≤ 0.1 ms of server game-thread time in total in a Development build, and the per-strike replicated payload to each relevant client is ≤ 64 bytes before property headers.
+- [x] **AC1** (AC-ASN-32, [Config/ADVISORY] `ProbeEconomicsF5`): **GIVEN** `TeamSize` 5, `NpcCount` 50, L 3, b_P 0.067, b_N 0.00135 **WHEN** F5 is evaluated **THEN** E[N] = 2.98 ± 0.01, E[RivalKills] = 0.276 ± 0.002, P(≥ 1 kill) = 0.232 ± 0.002, P(strike-out) = 0.976 ± 0.002 and P(reversed) = 0.024 ± 0.002.
+- [ ] **AC2** (producer probes + report generator done and tested; live pull of >= 10 matches DEFERRED) (AC-ASN-33, [Integration/ADVISORY] `ProbeAndBraceTelemetry`, playtest): **GIVEN** ≥ 10 logged internal matches **THEN** the Event Log store yields per match strikes by outcome, NPC kills per rival kill, reversals, braces, and pair trades (a reversal followed within 10 s by a kill of the same defender); targets for review, not gates: NPC kills per rival kill 3 to 15 (F5 baseline 10.7 at `NpcCount` 50), pair trades ≤ 25 % of reversals (the creative director reviews above), reversals per match 0.5 to 2.
+- [x] **AC3** (AC-ASN-34, [Integration/ADVISORY] `ResolverCost`): **GIVEN** 50 pawns and 10 Attacks in one server frame **THEN** Assassination's resolution costs ≤ 0.1 ms of server game-thread time in total in a Development build, and the per-strike replicated payload to each relevant client is ≤ 64 bytes before property headers.
 
 ---
 
@@ -64,12 +64,15 @@ Cost capture: a Development-build stat scope `Stealth.Budget.Assassination` (Ins
 
 ## Files
 
-- `Source/StealthGameplay/Private/Tests/Assassination/ProbeEconomicsF5Test.cpp` (class `FAssassinationProbeEconomicsF5Test`, name `StealthGame.Assassination.ProbeEconomicsF5`)
-- `Source/StealthTestHarness/Private/Assassination/ResolverCostTest.cpp` (`StealthGame.Assassination.ResolverCost`)
-- `Source/StealthGameplay/Private/Features/Assassination/EncounterService.cpp` (probe call sites for strikes by outcome and braces: ADR-0023 hooks)
-- `tools/qa/assassination-telemetry-report.py` (offline report over an exported telemetry section; not shipped) and the resulting `production/qa/assassination-telemetry-[date].md`
+- `Source/StealthFoundation/Public/Server/EventLog/StealthTelemetrySink.h` (ADR-0023 Key Interfaces: `IStealthTelemetrySink`, the `FTelemetry*` records, `FNullStealthTelemetrySink`; the Event Log section itself stays out of scope)
+- `Source/StealthGameplay/Features/Assassination/Public/Server/EncounterTelemetryProbe.h`, `Private/EncounterTelemetryProbe.cpp` (StrikeResolved / BraceEnded probe call sites, the `Stealth.Budget.Assassination` scope and `FAssassinationCostMeter`)
+- `Source/StealthGameplay/Features/Assassination/Public/Server/EncounterService.h`, `Private/EncounterService.cpp` (the probe registered for PawnCommand / HoldTimer, `FEncounterServiceInit::Telemetry`, Reset closes open braces)
+- `Source/StealthGameplay/Private/Tests/Assassination/ProbeEconomicsF5Test.cpp` (`StealthGame.Assassination.ProbeEconomicsF5`, `FProbeEconomicsF5` test-only)
+- `Source/StealthGameplay/Private/Tests/Assassination/ProbeAndBraceTelemetryTest.cpp` (`StealthGame.Assassination.ProbeAndBraceTelemetryProbes`)
+- `Source/StealthGameplay/Private/Tests/Assassination/ResolverCostTest.cpp` (`StealthGame.Assassination.ResolverCost`)
+- `tools/analysis/assassination_telemetry_report.py` (offline AC2 report, observations only; `--self-test`) and its synthetic fixture `tests/fixtures/asn/telemetry/` (`expected-report.md`)
 
----
+Deviations (decision log 2026-10-27): ResolverCost reuses the private resolver rig and so lives in `StealthGameplay/Private/Tests/Assassination/`, not the harness; the report sits in `tools/analysis/` beside the crowd gate (ADR-0023 section 7 analysis tools), not `tools/qa/`; the live table `production/qa/assassination-telemetry-[date].md` needs >= 10 logged internal matches and the Event Log's telemetry section (Round / Foundation epics): until both exist production passes the null sink.
 
 ## QA Test Cases
 
@@ -106,7 +109,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration (ADVISORY): `ProbeEconomicsF5Test.cpp`, `ResolverCostTest.cpp`, and a telemetry report from ≥ 10 internal matches in `production/qa/` or a playtest document — advisory gate
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing 2026-10-27 (ProbeEconomicsF5, ProbeAndBraceTelemetryProbes, ResolverCost, report `--self-test`); live telemetry report pending playtests
 
 ---
 

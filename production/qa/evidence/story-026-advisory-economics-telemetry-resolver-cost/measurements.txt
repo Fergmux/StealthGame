@@ -1,0 +1,12 @@
+LogAutomationCommandLine: Display: 	StealthGame.Assassination.ResolverCost
+LogAutomationController: F5 defaults: p 0.0909 q 0.0848 rho 0.00732 m 0.9079 pi 0.99200 | E[N] 2.9761 E[RivalKills] 0.2758 P(>=1) 0.2317 P(strike-out) 0.9762 P(reversed) 0.0238 NPC kills per rival kill 10.70
+LogAutomationController: TDC vs F5 at TeamSize 5 NpcCount 50 L 3: BlindGuessSuccess 0.2487 vs 0.2317 (+7.3 %), ExpectedBlindKills 0.3000 vs 0.2758 (+8.8 %)
+LogAutomationController: TDC vs F5 at TeamSize 4 NpcCount 30 L 3: BlindGuessSuccess 0.3130 vs 0.2917 (+7.3 %), ExpectedBlindKills 0.4000 vs 0.3661 (+9.2 %)
+LogAutomationController: TDC vs F5 at TeamSize 5 NpcCount 80 L 4: BlindGuessSuccess 0.2153 vs 0.2005 (+7.4 %), ExpectedBlindKills 0.2500 vs 0.2304 (+8.5 %)
+LogAutomationController: Display: Test Started. Name={ResolverCost} Path={StealthGame.Assassination.ResolverCost}
+LogAutomationController: Display: Test Completed. Result={Success} Name={ResolverCost} Path={StealthGame.Assassination.ResolverCost}
+LogAutomationController: BeginEvents: StealthGame.Assassination.ResolverCost
+LogAutomationController: ResolverCost 10 kills, 50 pawns: median 0.0057 ms, max 0.0083 ms over 100 frames (cold first frame 0.0209 ms); outcomes K10 R0 W0; payload 44 bytes per strike
+LogAutomationController: ResolverCost 10 reversals, 50 pawns: median 0.0070 ms, max 0.0088 ms over 100 frames (cold first frame 0.0183 ms); outcomes K0 R10 W0; payload 44 bytes per strike
+LogAutomationController: ResolverCost 10 on one victim, 50 pawns: median 0.0036 ms, max 0.0065 ms over 100 frames (cold first frame 0.0158 ms); outcomes K1 R0 W9; payload 44 bytes per strike
+LogAutomationController: EndEvents: StealthGame.Assassination.ResolverCost

@@ -3617,3 +3617,35 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "NKP batch 2026-10-27; five rows PostRoundEligible, FPenaltyEventLog slot-only writer, NoLoggingLint; real paths of four rows in nkp-005/009/010/012"
+  - id: "asn-022"
+    name: "A culled victim re-opens already falling, and late actors seek and never snap"
+    file: "production/epics/assassination-defence-reversal/story-022-culled-victim-opens-falling-and-late-actors.md"
+    priority: must-have
+    status: done
+    owner: "network-programmer"
+    estimate_days: 3.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; PostNetInit evaluation, fresh-actor warm-up (S10-R5) and <= 0.1 s fall cross-fade in the presentation, test-only per-connection deny seam released at the death write; PIE CulledVictimOpensFalling + LateActorSeeksNeverSnaps (warm-up negative control watched failing)"
+  - id: "asn-026"
+    name: "Advisory checks: probe economics (F5), probe and brace telemetry, resolver cost"
+    file: "production/epics/assassination-defence-reversal/story-026-advisory-economics-telemetry-resolver-cost.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; ADR-0023 sink interface + null object, FEncounterTelemetryProbe (StrikeResolved/BraceEnded, Stealth.Budget.Assassination), F5 test, ResolverCost, offline report + fixture; live >=10-match pull waits on the Event Log telemetry section and playtests (advisory, deferred)"
+  - id: "asn-025"
+    name: "A reversal reads as the striker fell and the brace reads as a stance (playtest protocol)"
+    file: "production/epics/assassination-defence-reversal/story-025-reversal-readability-and-brace-tell-playtest.md"
+    priority: must-have
+    status: blocked
+    owner: "qa-lead"
+    estimate_days: 1.0
+    blocker: "Needs human playtest: >= 6 trained testers, a human-captured greyscale clip set and art-director sign-off (protocol, fixed order, briefing and blank sheets ready in production/qa/evidence/asn-30-results.md and asn-25-brace-tell-results.md); brace tell also needs the authored Brace_In/Hold/Out clips"
+    sprint: 2
+    note: "ASN batch 2026-10-27; no session run by the unattended build"

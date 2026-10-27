@@ -1,12 +1,12 @@
 # Story 022: A culled victim re-opens already falling, and late actors seek and never snap
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready — Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25). Other dependencies are ordinary story order (see Dependencies).
+> **Status**: Complete (2026-10-27) — AC1 and AC2 pass (PIE CulledVictimOpensFalling, LateActorSeeksNeverSnaps, LateActorBoundaries); evidence production/qa/evidence/story-022-culled-victim-opens-falling-and-late-actors-evidence.md. Readiness: IVP-028 is a test-only sibling with no deliverable this story consumes; S9/S10 PASS
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: 2026-10-26
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,8 +35,8 @@ When viewer W's channel to the victim is closed for a reason other than concealm
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-45, AC-ASN-25), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-45, [Integration/BLOCKING][Net] `StealthGame.Assassination.CulledVictimOpensFalling`): **GIVEN** the defensive path of ASN-R10 / R21 (a victim whose channel to viewer W is closed for a reason other than concealment, exercised through the test-only per-connection deny seam) and W placed near the victim before the death write **WHEN** the victim is struck (an NPC, a player and an informant victim, as three runs) **THEN** the server send capture to W shows no record for the victim before the death-write tick; the record opens in the death-write tick or the next with `FDeathState` in the initial block; W's presentation log first commands `Death_Fall` seeked to `EstimatedServerNow() − DeathServerTime` (± 1 frame), blended in over ≤ 0.1 s with a blend weight that ramps over at least 2 frames, identically for the three victim kinds; CONTROL: with the seam released and no strike, W receives the victim's normal state; NEGATIVE CONTROL: a seam build that opens the record in the slot makes this test fail.
-- [ ] **AC2** (AC-ASN-25, [Integration/BLOCKING][Net] `StealthGame.Assassination.LateActorSeeksNeverSnaps`): **GIVEN** a bystander client that receives the victim's actor 0.6 s after `DeathServerTime` **THEN** it shows the fall seeked to 0.6 s with no pose pop; **GIVEN** one that receives it 7.5 s after **THEN** the body is never shown; **AND** on the listen-server host the fall starts on the same `ContactServerTime` schedule as on clients.
+- [x] **AC1** (AC-ASN-45, [Integration/BLOCKING][Net] `StealthGame.Assassination.CulledVictimOpensFalling`): **GIVEN** the defensive path of ASN-R10 / R21 (a victim whose channel to viewer W is closed for a reason other than concealment, exercised through the test-only per-connection deny seam) and W placed near the victim before the death write **WHEN** the victim is struck (an NPC, a player and an informant victim, as three runs) **THEN** the server send capture to W shows no record for the victim before the death-write tick; the record opens in the death-write tick or the next with `FDeathState` in the initial block; W's presentation log first commands `Death_Fall` seeked to `EstimatedServerNow() − DeathServerTime` (± 1 frame), blended in over ≤ 0.1 s with a blend weight that ramps over at least 2 frames, identically for the three victim kinds; CONTROL: with the seam released and no strike, W receives the victim's normal state; NEGATIVE CONTROL: a seam build that opens the record in the slot makes this test fail.
+- [x] **AC2** (AC-ASN-25, [Integration/BLOCKING][Net] `StealthGame.Assassination.LateActorSeeksNeverSnaps`): **GIVEN** a bystander client that receives the victim's actor 0.6 s after `DeathServerTime` **THEN** it shows the fall seeked to 0.6 s with no pose pop; **GIVEN** one that receives it 7.5 s after **THEN** the body is never shown; **AND** on the listen-server host the fall starts on the same `ContactServerTime` schedule as on clients.
 
 ---
 
@@ -64,11 +64,17 @@ Use S10's reported facts (NetGUID reuse or not, AnimBP initialisation, destroy t
 
 ## Files
 
-- `Source/StealthGameplay/Private/Features/Assassination/EncounterPresentation.cpp` (`PostNetInit` evaluation, seek and blend; shared with stories 018 and 020)
-- `Source/StealthTestHarness/Private/Assassination/CulledVictimOpensFallingTest.cpp` (`StealthGame.Assassination.PIE.CulledVictimOpensFalling`, with the per-connection deny seam)
-- `Source/StealthTestHarness/Private/Assassination/LateActorSeeksNeverSnapsTest.cpp` (`StealthGame.Assassination.PIE.LateActorSeeksNeverSnaps`)
+- `Source/StealthGameplay/Public/View/Core/StealthPawn.h`, `Source/StealthGameplay/Private/Core/SharedPawn/StealthPawn.cpp` (`PostNetInit` evaluation of a re-opened / late actor, `IsPresentationReady`, `WasNetInitialisedThisFrame`; the test-seam `IsNetRelevantFor` and the death-write release call)
+- `Source/StealthGameplay/Public/Server/Testing/StealthRelevancyDenySeam.h`, `Source/StealthGameplay/Private/Core/Testing/StealthRelevancyDenySeam.cpp` (the test-only per-connection deny seam, `WITH_STEALTH_TEST_SEAMS`)
+- `Source/StealthGameplay/Features/Assassination/Public/View/EncounterPresentation.h`, `Private/EncounterPresentation.cpp` (Refresh waits for PostNetInit; fresh-actor warm-up S10-R5; fresh-actor fall cross-fade <= 0.1 s; WarmUp log rows; row BlendInSec and Frame)
+- `Source/StealthGameplay/Features/Assassination/Public/View/EncounterPresentationCore.h`, `Private/EncounterPresentationCore.cpp` (a late fall cross-fades within MaxCrossFadeSec)
+- `Source/StealthGameplay/Features/Assassination/Public/View/EncounterPresentationSettings.h`, `Config/DefaultGame.ini` (`WarmUpMaxFrames` 3, stand-in for the IVP key `ReopenWarmupMaxFrames`)
+- `Source/StealthGameplay/Private/Tests/Assassination/LateActorBoundariesTest.cpp` (`StealthGame.Assassination.LateActorBoundaries`, the pure boundary cases)
+- `Source/StealthTestHarness/Private/Tests/PIE/Assassination/ReopenPieSupport.h` (deny + channel / instance / bone watchers)
+- `Source/StealthTestHarness/Private/Tests/PIE/Assassination/CulledVictimOpensFallingPieTest.cpp` (`StealthGame.Assassination.PIE.CulledVictimOpensFalling.NpcPlayerAndInformantReopenAtTheDeathWriteAlreadyFalling`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Assassination/LateActorSeeksNeverSnapsPieTest.cpp` (`StealthGame.Assassination.PIE.LateActorSeeksNeverSnaps.MidFallSeeksWithoutPopAndPastLingerNeverShows`)
 
----
+Deviations (decision log 2026-10-27): the PIE tests live under `Tests/PIE/Assassination/` (the harness's test root), not `Private/Assassination/`; the general warm-up of every fresh pawn stays ADR-0013's (this story warms up the fresh actors carrying a death or a playing clip); AC2's pop bound uses the QA rewrite, fixed with S10's facts (max per-frame root-relative bone delta over the first 10 shown frames <= the clip's own per-frame motion on the server + the blend allowance + 3 cm foot-placement noise).
 
 ## QA Test Cases
 
@@ -99,7 +105,7 @@ QL-STORY-READY: GAPS (blocked on S10; the spec is conditional on S10's reported 
 **Required evidence**:
 - Integration: `CulledVictimOpensFallingTest.cpp` and `LateActorSeeksNeverSnapsTest.cpp` (`LeakNetProfile`, `WITH_STEALTH_TEST_SEAMS`) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing 2026-10-27 (`Source/StealthTestHarness/Private/Tests/PIE/Assassination/CulledVictimOpensFallingPieTest.cpp`, `LateActorSeeksNeverSnapsPieTest.cpp`, `Source/StealthGameplay/Private/Tests/Assassination/LateActorBoundariesTest.cpp`); Run result: N/A — no non-concealment cull exists in ordinary play (SCL R13); the path runs only through the test seam
 
 ---
 

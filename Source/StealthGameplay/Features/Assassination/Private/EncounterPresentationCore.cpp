@@ -188,8 +188,10 @@ FEncounterPresentationPlan FEncounterPresentationCore::Evaluate(const FEncounter
 			Plan.PlayRate = Clips.FallLengthSec / Fall;
 			Plan.Position = FMath::Clamp(Since, 0.0, Fall) * Plan.PlayRate;
 			Plan.bClipEnded = Since >= Fall;
-			Plan.BlendInSec = Params.FallEntryBlendSec;
 			Plan.bLate = FirstSeen > Death + DueEpsilon;
+			// A fall joined late (a re-opened or late actor, story asn-022) is a seek plus a cross-fade capped at
+			// MaxCrossFadeSec (ASN-R21: <= 0.1 s, never a snap); an on-time fall keeps its inertialised entry.
+			Plan.BlendInSec = Plan.bLate ? FMath::Min(Params.FallEntryBlendSec, Params.MaxCrossFadeSec) : Params.FallEntryBlendSec;
 			Plan.bDeathPresented = true;
 			Plan.bUnsyncedFallback = bUnsynced;
 			Plan.bCollisionOff = Since + DueEpsilon >= Params.DeathFallSec;

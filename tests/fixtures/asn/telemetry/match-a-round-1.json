@@ -1,0 +1,27 @@
+{
+  "SchemaVersion": 1,
+  "MatchId": "match-a",
+  "RoundIndex": 1,
+  "EndReason": "ObjectiveWin",
+  "NpcCount": 50,
+  "Subjects": [
+    {"Key": 1, "Label": "Participant", "Team": 0},
+    {"Key": 2, "Label": "Participant", "Team": 0},
+    {"Key": 3, "Label": "Participant", "Team": 1},
+    {"Key": 4, "Label": "Participant", "Team": 1},
+    {"Key": 10, "Label": "Npc"},
+    {"Key": 11, "Label": "Npc"}
+  ],
+  "StrikeResolved": [
+    {"ServerTime": 10.0, "Attacker": 1, "Victim": 10, "Outcome": "Kill"},
+    {"ServerTime": 20.0, "Attacker": 1, "Victim": 11, "Outcome": "Kill"},
+    {"ServerTime": 30.0, "Attacker": 3, "Victim": 2, "Outcome": "Reversal"},
+    {"ServerTime": 40.0, "Attacker": 4, "Victim": 2, "Outcome": "Kill"},
+    {"ServerTime": 50.0, "Attacker": 1, "Victim": 3, "Outcome": "Kill"},
+    {"ServerTime": 60.0, "Attacker": 4, "Victim": null, "Outcome": "Whiff"}
+  ],
+  "BraceEnded": [
+    {"ServerTime": 30.0, "Subject": 2, "StartTime": 28.5, "Cause": "Reversal"},
+    {"ServerTime": 70.0, "Subject": 11, "StartTime": 66.0, "Cause": "Expired"}
+  ]
+}

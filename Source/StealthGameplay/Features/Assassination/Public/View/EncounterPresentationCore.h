@@ -49,7 +49,7 @@ struct STEALTHGAMEPLAY_API FEncounterPresentationParams
 	double StrikeContactGapCm = 15.0;
 	/** Cross-fade cap of a late (sought) strike or counter clip (ADR-0018 section 5.1: <= 0.1 s, never a snap). */
 	double MaxCrossFadeSec = 0.10;
-	/** Inertialised entry of Death_Fall (<= 0.15 s, story asn-020 engine notes). */
+	/** Inertialised entry of an on-time Death_Fall (<= 0.15 s, story asn-020 engine notes); a late fall uses MaxCrossFadeSec. */
 	double FallEntryBlendSec = 0.15;
 
 	static FEncounterPresentationParams FromPublic(const FAssassinationTuning_Public& Public);

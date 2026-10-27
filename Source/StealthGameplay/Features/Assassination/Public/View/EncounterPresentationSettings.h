@@ -60,6 +60,14 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Clock", meta = (ClampMin = "0", Units = "s"))
 	float UnsyncedClockGraceSec = 5.0f;
 
+	/**
+	 * Failsafe of the fresh-actor warm-up (ADR-0003 S10-R5, story asn-022): a pawn hidden for its warm-up that has had no bone
+	 * finalisation after this many client frames is shown anyway (logged as WarmUpTimeout). STAND-IN for the IVP tuning key
+	 * ReopenWarmupMaxFrames (default 3, hard 1-10, audience All) until the IVP keys are registered.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Clips", meta = (ClampMin = "1", ClampMax = "10"))
+	int32 WarmUpMaxFrames = 3;
+
 	/** A playing clip further than this from its scheduled position is sought (never restarted). */
 	UPROPERTY(Config, EditAnywhere, Category = "Clips", meta = (ClampMin = "0.005", Units = "s"))
 	float SeekToleranceSec = 0.05f;

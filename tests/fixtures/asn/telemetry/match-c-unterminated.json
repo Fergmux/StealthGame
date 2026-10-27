@@ -1,0 +1,10 @@
+{
+  "SchemaVersion": 1,
+  "MatchId": "match-c",
+  "RoundIndex": 1,
+  "EndReason": "Active",
+  "NpcCount": 50,
+  "Subjects": [{"Key": 1, "Label": "Participant", "Team": 0}, {"Key": 10, "Label": "Npc"}],
+  "StrikeResolved": [{"ServerTime": 3.0, "Attacker": 1, "Victim": 10, "Outcome": "Kill"}],
+  "BraceEnded": []
+}

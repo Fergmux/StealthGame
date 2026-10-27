@@ -25,3 +25,7 @@ FPenaltyInformantRespawnRow
 FPenaltyRespawnCancelledRow
 FPenaltyPawnLostRow
 StrikeCount
+# Playtest telemetry (ADR-0023 Implementation Guidelines 1; story asn-026): never a log, check, ensure or trace argument
+FTelemetry*
+FPlaytestTelemetryCore
+IStealthTelemetrySink

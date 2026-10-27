@@ -333,6 +333,8 @@ bool UEncounterService::Initialize(const FEncounterServiceInit& Init)
 	ReplySink = MakeUnique<FEncounterHubReplySink>(Init.Hub != nullptr ? Init.Hub : UActionHub::Get(Init.World));
 	OwnerCooldown = MakeUnique<FEncounterOwnerCooldownPublisher>(Init.World);
 	HandOver = MakeUnique<FEncounterPawnFactoryHandOver>();
+	Probe = MakeUnique<FEncounterTelemetryProbe>();
+	Probe->SetInnerEvents(HubEvents.Get());
 
 	FAttackResolverDeps Deps;
 	Deps.Clock = Init.Clock;
@@ -343,7 +345,7 @@ bool UEncounterService::Initialize(const FEncounterServiceInit& Init)
 	Deps.SubSeeds = Init.SubSeeds;
 	Deps.Visibility = Init.Visibility != nullptr ? Init.Visibility : DefaultVisibility.Get();
 	Deps.Bushes = Init.Bushes;
-	Deps.Events = HubEvents.Get();
+	Deps.Events = Probe.Get(); // the ADR-0023 BraceEnded probe, forwarding every event to the hub
 	Deps.PawnState = PawnStateWriter.Get(); // FActionState carries the stance (the SCL pose follows it)
 	Deps.Cards = Init.Cards;
 	Deps.Log = Init.Log;
@@ -354,6 +356,7 @@ bool UEncounterService::Initialize(const FEncounterServiceInit& Init)
 	Deps.BodyObserver = Init.BodyObserver;
 	Deps.Faults = Init.Faults;
 	Core = MakeUnique<FAttackResolverCore>(Deps, Init.Params);
+	Probe->Bind(Core.Get(), DefenceStore.Get(), Init.Clock, Init.Params.Public.DefenceCooldownSec, Init.Telemetry);
 	return true;
 }
 
@@ -364,6 +367,7 @@ void UEncounterService::Shutdown()
 		UnregisterFrom(*RegisteredQueue);
 	}
 	Core.Reset();
+	Probe.Reset();
 	HandOver.Reset();
 	OwnerCooldown.Reset();
 	ReplySink.Reset();
@@ -382,8 +386,9 @@ bool UEncounterService::RegisterOn(FResolutionQueueCore& Queue)
 	{
 		return false;
 	}
-	bRegisteredCommands = Queue.RegisterResolver(EQueueItemType::PawnCommand, Core.Get());
-	bRegisteredHolds = Queue.RegisterResolver(EQueueItemType::HoldTimer, Core.Get());
+	// Through the probe (story asn-026): the core inside the cost scope, then the StrikeResolved call site in the slot.
+	bRegisteredCommands = Queue.RegisterResolver(EQueueItemType::PawnCommand, Probe.Get());
+	bRegisteredHolds = Queue.RegisterResolver(EQueueItemType::HoldTimer, Probe.Get());
 	bRegisteredDeathWrite = Queue.RegisterStagedWriteApplier(EStagedWriteType::DeathWrite, Core->GetStagedWriteApplier());
 	bRegisteredCounterPose = Queue.RegisterStagedWriteApplier(EStagedWriteType::CounterPose, Core->GetStagedWriteApplier());
 	bRegisteredBodyRelease = Queue.RegisterTimerResolver(ETimerKind::BodyRelease, Core.Get());
@@ -466,5 +471,9 @@ void UEncounterService::ResetRound()
 	if (Core.IsValid())
 	{
 		Core->Reset();
+	}
+	if (Probe.IsValid())
+	{
+		Probe->OnRoundReset();
 	}
 }

@@ -1,0 +1,19 @@
+{
+  "SchemaVersion": 1,
+  "RoundIndex": 1,
+  "EndReason": "Aborted",
+  "NpcCount": 50,
+  "Subjects": [
+    {"Key": 1, "Label": "Participant", "Team": 0},
+    {"Key": 10, "Label": "Npc"},
+    {"Key": 11, "Label": "Npc"},
+    {"Key": 12, "Label": "Npc"}
+  ],
+  "StrikeResolved": [
+    {"ServerTime": 3.0, "Attacker": 1, "Victim": 10, "Outcome": "Kill"},
+    {"ServerTime": 8.0, "Attacker": 1, "Victim": 11, "Outcome": "Kill"},
+    {"ServerTime": 13.0, "Attacker": 1, "Victim": 12, "Outcome": "Kill"},
+    {"ServerTime": 18.0, "Attacker": 1, "Victim": 99, "Outcome": "Kill"}
+  ],
+  "BraceEnded": []
+}

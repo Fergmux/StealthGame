@@ -176,6 +176,29 @@ public:
 	/** Turns off the WarpTargets replication of any non-Shared motion warping component (ADR-0018 section 7.2, story asn-014). */
 	virtual void PostInitializeComponents() override;
 
+	/**
+	 * A newly created network actor on this machine (ADR-0003 section 5.8 / S10-R5, story asn-022): marks the pawn ready for
+	 * presentation and, when it arrived carrying encounter state (a death write or a pose), runs the one idempotent
+	 * presentation evaluation (OnAnyEncounterStateChanged) from that replicated state, so a re-opened or late victim joins
+	 * its fall at the right frame. Nothing renders between the actor's spawn and this call (one channel bunch).
+	 */
+	virtual void PostNetInit() override;
+
+	/**
+	 * Test seam only (WITH_STEALTH_TEST_SEAMS, story asn-022): a per-connection relevancy deny installed by the harness
+	 * (Server/Testing/StealthRelevancyDenySeam.h) makes the pawn not relevant to that viewer; otherwise APawn's decision.
+	 */
+	virtual bool IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const override;
+
+	/**
+	 * True once replicated state may be presented on this machine: the authority, a pawn past PostNetInit, or one that has
+	 * begun play. RepNotifies of a new actor's first bunch arrive before PostNetInit; the presentation waits for it.
+	 */
+	bool IsPresentationReady() const;
+
+	/** True during the frame this machine created the pawn from the network (its PostNetInit frame): a fresh actor. */
+	bool WasNetInitialisedThisFrame() const { return NetInitFrame == GFrameCounter; }
+
 protected:
 	/**
 	 * Presents the current FActionState on this machine (ADR-0018 E7: RepNotify on clients; the server write and the
@@ -209,6 +232,10 @@ private:
 	uint16 StrikeWarpSeq = 0;
 	uint64 LastForcedNetUpdateFrame = MAX_uint64;
 	uint32 ForcedNetUpdateCount = 0;
+	/** PostNetInit has run on this machine (story asn-022). */
+	bool bNetInitialised = false;
+	/** GFrameCounter of PostNetInit (MAX_uint64 before). */
+	uint64 NetInitFrame = MAX_uint64;
 
 private:
 	/** Default subobject "PawnCommand" (ADR-0011): non-replicated, the same on every pawn. */

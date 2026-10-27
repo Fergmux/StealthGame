@@ -8,6 +8,9 @@
 #include "Server/Core/StealthPawnCommandComponent.h"
 #include "View/Core/StealthMotionWarpingComponent.h"
 #include "View/Core/StealthPawnMovementComponent.h"
+#if WITH_STEALTH_TEST_SEAMS
+#include "Server/Testing/StealthRelevancyDenySeam.h"
+#endif
 
 const FName AStealthPawn::GameplayTasksComponentName(TEXT("GameplayTasks"));
 const FName AStealthPawn::MotionWarpingComponentName(TEXT("MotionWarping"));
@@ -147,6 +150,35 @@ void AStealthPawn::PostInitializeComponents()
 	}
 }
 
+void AStealthPawn::PostNetInit()
+{
+	Super::PostNetInit();
+	bNetInitialised = true;
+	NetInitFrame = GFrameCounter;
+	// ADR-0003 section 5.8 / ADR-0018 section 5.1 (story asn-022): a re-opened or late actor is presented from the state it
+	// arrived with, through the same idempotent evaluation as every RepNotify (the first bunch's RepNotifies waited for this).
+	if (HasDeathWrite() || ActionState.Pose != EActionPose::None)
+	{
+		OnAnyEncounterStateChanged().Broadcast(this);
+	}
+}
+
+bool AStealthPawn::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const
+{
+#if WITH_STEALTH_TEST_SEAMS
+	if (StealthRelevancyDenySeam::IsDenied(this, RealViewer))
+	{
+		return false;
+	}
+#endif
+	return Super::IsNetRelevantFor(RealViewer, ViewTarget, SrcLocation);
+}
+
+bool AStealthPawn::IsPresentationReady() const
+{
+	return HasAuthority() || bNetInitialised || HasActorBegunPlay();
+}
+
 UMotionWarpingComponent* AStealthPawn::GetWarpingForStrike() const
 {
 	if (SharedMotionWarping != nullptr)
@@ -207,6 +239,11 @@ bool AStealthPawn::ApplyDeathWrite(const FDeathState& State)
 		FStealthForcedNetUpdate Forced(*this, EForcedUpdateReason::DeathWrite);
 		DeathState = State;
 	}
+#if WITH_STEALTH_TEST_SEAMS
+	// Story asn-022: the Visibility Policy's death-write re-open (ADR-0018 section 3.2 step 3, ADR-0003 section 5.8) has no
+	// production cull to undo in the MVP (SCL R13); the harness's deny seam stands for it and re-opens here, in this step.
+	StealthRelevancyDenySeam::NotifyDeathWrite(this);
+#endif
 	HandleDeathStateChanged(); // the server (and the listen host's view) present it directly (ADR-0018 E7)
 	return true;
 }

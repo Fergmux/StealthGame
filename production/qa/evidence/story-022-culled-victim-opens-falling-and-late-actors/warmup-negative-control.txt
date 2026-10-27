@@ -1,0 +1,6 @@
+LogAutomationController: Error: Test Completed. Result={Fail} Name={NpcPlayerAndInformantReopenAtTheDeathWriteAlreadyFalling} Path={StealthGame.Assassination.PIE.CulledVictimOpensFalling.NpcPlayerAndInformantReopenAtTheDeathWriteAlreadyFalling}
+LogAutomationController: ASN45 NPC warm-up: begin no (frame 0, instance 1209), shown no (frame 0), timeout 0, first shown sample 1209
+LogAutomationController: Error: NPC: hidden from its creation until its first posed frame (S10-R5 warm-up) [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\PIE\Assassination\CulledVictimOpensFallingPieTest.cpp(392)]
+LogAutomationController: Error: Test Completed. Result={Fail} Name={MidFallSeeksWithoutPopAndPastLingerNeverShows} Path={StealthGame.Assassination.PIE.LateActorSeeksNeverSnaps.MidFallSeeksWithoutPopAndPastLingerNeverShows}
+LogAutomationController: ASN25 +0.6 s warm-up: begin no (frame 0, instance 2563), shown no (frame 0), timeout 0, first shown sample 2563
+LogAutomationController: Error: +0.6 s: hidden from its creation until its first posed frame (S10-R5 warm-up), never a failsafe [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\PIE\Assassination\LateActorSeeksNeverSnapsPieTest.cpp(313)]

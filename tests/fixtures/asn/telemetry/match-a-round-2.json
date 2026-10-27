@@ -1,0 +1,24 @@
+{
+  "SchemaVersion": 1,
+  "MatchId": "match-a",
+  "RoundIndex": 2,
+  "EndReason": "Elimination",
+  "NpcCount": 50,
+  "Subjects": [
+    {"Key": 1, "Label": "Participant", "Team": 0},
+    {"Key": 2, "Label": "Participant", "Team": 0},
+    {"Key": 3, "Label": "Participant", "Team": 1},
+    {"Key": 4, "Label": "Participant", "Team": 1},
+    {"Key": 12, "Label": "Npc"},
+    {"Key": 13, "Label": "Npc"}
+  ],
+  "StrikeResolved": [
+    {"ServerTime": 5.0, "Attacker": 3, "Victim": 12, "Outcome": "Kill"},
+    {"ServerTime": 15.0, "Attacker": 1, "Victim": 4, "Outcome": "Reversal"},
+    {"ServerTime": 25.01, "Attacker": 2, "Victim": 4, "Outcome": "Kill"},
+    {"ServerTime": 30.0, "Attacker": 2, "Victim": 13, "Outcome": "Kill"}
+  ],
+  "BraceEnded": [
+    {"ServerTime": 15.0, "Subject": 4, "StartTime": 13.2, "Cause": "Reversal"}
+  ]
+}
