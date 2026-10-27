@@ -1,12 +1,12 @@
 # Story 009: Braced at the Attack by key compare, and same-drain ordering
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,8 +35,8 @@ A defender is *braced* for an Attack iff, at the Attack's slot, its IIF slot sta
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-04, AC-ASN-19), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-04, [Logic/BLOCKING] `StealthGame.Assassination.BracedAtAttackKeyOrder`): **GIVEN** a defender's `Prepare(Begin)` at key (1000, 4) and its `DebounceExpiry` at (1124, 2) **WHEN** Attacks resolve at (1124, 1) and, in a separate run, at (1124, 3) **THEN** the first is a reversal and the second is a kill; **AND** an Attack keyed before the Begin in the same tick is a kill and the Begin is then voided `NotNow` with no cooldown stamp.
-- [ ] **AC2** (AC-ASN-19, [Logic/BLOCKING] `StealthGame.Assassination.SameDrainOrdering`): **GIVEN** stub items in one drain **THEN** (a) A→B (key 3) and B→A (key 7): A kills B and B's Attack is `Voided(NotNow)`; (b) A1→B (key 3) and A2→B (key 7): A1 kills B and A2 is `NoContact`; (c) a final completion (key 3) and a strike (key 7): the strike is `Rejected_Latched` with no lockout and no `FStrikeResult`; (d) a braced A strikes braced B: A is reversed.
+- [x] **AC1** (AC-ASN-04, [Logic/BLOCKING] `StealthGame.Assassination.BracedAtAttackKeyOrder`): **GIVEN** a defender's `Prepare(Begin)` at key (1000, 4) and its `DebounceExpiry` at (1124, 2) **WHEN** Attacks resolve at (1124, 1) and, in a separate run, at (1124, 3) **THEN** the first is a reversal and the second is a kill; **AND** an Attack keyed before the Begin in the same tick is a kill and the Begin is then voided `NotNow` with no cooldown stamp.
+- [x] **AC2** (AC-ASN-19, [Logic/BLOCKING] `StealthGame.Assassination.SameDrainOrdering`): **GIVEN** stub items in one drain **THEN** (a) A→B (key 3) and B→A (key 7): A kills B and B's Attack is `Voided(NotNow)`; (b) A1→B (key 3) and A2→B (key 7): A1 kills B and A2 is `NoContact`; (c) a final completion (key 3) and a strike (key 7): the strike is `Rejected_Latched` with no lockout and no `FStrikeResult`; (d) a braced A strikes braced B: A is reversed.
 
 ---
 
@@ -103,7 +103,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `BracedAtAttackKeyOrderTest.cpp` and `SameDrainOrderingTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -111,3 +111,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-003-defence-state-component-and-cooldown.md`, `story-007-attack-outcomes-resolved-in-slot.md`; cross-epic `production/epics/round-match-framework/story-004-test-seam-stub-resolvers.md`, `story-007-intake-ordering-rules.md`, `story-052-ended-latch-effects.md`; `production/epics/input-interaction-framework/story-050-hold-timer-key-order.md`, `story-053-brace-sampled-at-execution.md`
 - Unlocks: `story-010-reversal-counter-and-chained-strikes.md`, `story-013-death-write-staging-and-after-latch.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 2/2 passing (AC1 Begin (1000,4), release (1120,1), DebounceExpiry (1124,2): an Attack at (1124,1) is a reversal (a pending End still protects), at (1124,3) a kill; a CapEnd at (1100,1) ends the window first; an Attack at (1000,3) kills and the Begin (1000,4) is then voided NotNow with no stamp; FBracedAtAttackCore is never true for Countering, Striking, Dead, Cooling, Ready or at the Begin's own key. AC2 on the real queue, keys at the drain's 3rd and 7th Seq of one tick: (a) A kills B and B's Attack is Voided(NotNow) with no lockout; (b) A1 kills B, A2's PawnRef is NoContact and the NPC beside B is untouched; (c) a final completion latches, the strike is Rejected_Latched with no lockout, no FStrikeResult and a held NotNow; (d) a braced A striking a braced B is reversed, A's own window ended at its key) - `StealthGame.Assassination.BracedAtAttackKeyOrder`, `.SameDrainOrdering`
+**Deviations**: ADVISORY - the Prepare hold machinery is a stand-in in FAttackResolverCore (HoldTimer(CapEnd) at T_act + 4 s and HoldTimer(DebounceExpiry) at release + ReleaseDebounceSec 0.10, a pending-owner constant) until IIF 042-050; keys (T,3)/(T,7) are realised as the drain's 3rd/7th Seq (Seq is per round, not per tick). Watched failing: SameDrainOrdering (b) failed while the Round rig bound no visibility seam (default-deny turned A2's ref into a spot strike that killed the bystander), then passed with it bound.
+**Test Evidence**: `BracedAtAttackKeyOrderTest.cpp`, `SameDrainOrderingTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/` (shared rigs `EncounterTestRig.h`, `EncounterRoundRig.h`); run in `production/qa/evidence/assassination-defence-reversal-005-011-2026-10-27/full-suite.txt`
+**Run result**: N/A - server resolver logic, not yet registered in play (the composition-root wiring and the prototype-bridge removal are stories asn-012/013), so nothing player-visible changes in this story
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

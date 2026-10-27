@@ -180,6 +180,10 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<class UAssassinationPreparePredicate> PreparePredicate;
 
+	/** Assassination's Attack predicate (story asn-008: always Allow), registered weakly on the server world's action hub. */
+	UPROPERTY(Transient)
+	TObjectPtr<class UAssassinationAttackPredicate> AttackPredicate;
+
 	TWeakObjectPtr<AStealthGameMode> GameMode;
 	TMap<TWeakObjectPtr<APlayerController>, FParticipantId> ParticipantByController;
 

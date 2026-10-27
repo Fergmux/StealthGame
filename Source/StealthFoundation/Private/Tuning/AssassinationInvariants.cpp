@@ -26,7 +26,7 @@ namespace
 	ETuningCheck RejectUnless(bool bHolds) { return bHolds ? ETuningCheck::Pass : ETuningCheck::Reject; }
 	ETuningCheck WarnUnless(bool bHolds) { return bHolds ? ETuningCheck::Pass : ETuningCheck::Warn; }
 
-	const StealthAssassinationInvariants::FRow Rows[] = {
+	const StealthAssassinationInvariants::FRow AssassinationInvariantRows[] = {
 		{ "I-ASN-1", &StealthAssassinationInvariants::CheckIAsn1 },
 		{ "I-ASN-2", &StealthAssassinationInvariants::CheckIAsn2 },
 		{ "I-ASN-3", &StealthAssassinationInvariants::CheckIAsn3 },
@@ -124,13 +124,13 @@ namespace StealthAssassinationInvariants
 
 	TConstArrayView<FRow> GetRows()
 	{
-		return MakeArrayView(Rows);
+		return MakeArrayView(AssassinationInvariantRows);
 	}
 
 	FAssassinationInvariantReport Evaluate(const FStealthServerTuning& Values, const FAssassinationInvariantInputs& Inputs)
 	{
 		FAssassinationInvariantReport Report;
-		for (const FRow& Row : Rows)
+		for (const FRow& Row : AssassinationInvariantRows)
 		{
 			const ETuningCheck Result = Row.Check(Values, Inputs);
 			if (Result == ETuningCheck::Reject)

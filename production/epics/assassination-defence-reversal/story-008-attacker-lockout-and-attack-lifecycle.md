@@ -1,12 +1,12 @@
 # Story 008: Attack is never rejected by its target; every executed Attack locks the attacker for 1.75 s
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-06, AC-ASN-07, AC-ASN-11), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-06, [Logic/BLOCKING] `StealthGame.Assassination.NoTargetDependentRejection`): **GIVEN** Attacks at an NPC, an Active rival, an informant, an ally, a concealed rival, an empty open spot, an empty bush and a dead body **WHEN** each resolves **THEN** every one executes (none is rejected), each produces the same IIF reply path and enqueue step, each starts the 1.75 s lockout, and only `FStrikeResult.Result` differs.
-- [ ] **AC2** (AC-ASN-07, [Logic/BLOCKING] `StealthGame.Assassination.LockoutForEveryOutcome`): **GIVEN** an executed kill and, separately, an executed whiff **WHEN** Attack, Prepare (cooldown clear), Interact (at a live site) and Hide (beside a bush) are issued at +1.74 s **THEN** each replies `Busy`; at +1.75 s (± 1 server tick) each passes the slot check and executes given those preconditions, and no other cooldown follows the whiff; **AND** 10 Attack presses at 10 Hz during the lockout all reply `Busy` and an Attack at +1.75 s executes; **AND** for a reversed attacker `LockoutEnd` is stamped at t_exec + 1.75 (its later commands reply `NotNow` as an informant).
-- [ ] **AC3** (AC-ASN-11, [Logic/BLOCKING] `StealthGame.Assassination.MovingVictims`): **GIVEN** a runner moving away at d0 = 150 and a vaulter at d0 = 150 with Δz ≤ 75 **THEN** both are killed at their server positions; **GIVEN** a climber with Δz = 80 **THEN** `NoContact`; **AND** an attacker that is running or traversing is rejected `NotNow` (IIF R7).
+- [x] **AC1** (AC-ASN-06, [Logic/BLOCKING] `StealthGame.Assassination.NoTargetDependentRejection`): **GIVEN** Attacks at an NPC, an Active rival, an informant, an ally, a concealed rival, an empty open spot, an empty bush and a dead body **WHEN** each resolves **THEN** every one executes (none is rejected), each produces the same IIF reply path and enqueue step, each starts the 1.75 s lockout, and only `FStrikeResult.Result` differs.
+- [x] **AC2** (AC-ASN-07, [Logic/BLOCKING] `StealthGame.Assassination.LockoutForEveryOutcome`): **GIVEN** an executed kill and, separately, an executed whiff **WHEN** Attack, Prepare (cooldown clear), Interact (at a live site) and Hide (beside a bush) are issued at +1.74 s **THEN** each replies `Busy`; at +1.75 s (± 1 server tick) each passes the slot check and executes given those preconditions, and no other cooldown follows the whiff; **AND** 10 Attack presses at 10 Hz during the lockout all reply `Busy` and an Attack at +1.75 s executes; **AND** for a reversed attacker `LockoutEnd` is stamped at t_exec + 1.75 (its later commands reply `NotNow` as an informant).
+- [x] **AC3** (AC-ASN-11, [Logic/BLOCKING] `StealthGame.Assassination.MovingVictims`): **GIVEN** a runner moving away at d0 = 150 and a vaulter at d0 = 150 with Δz ≤ 75 **THEN** both are killed at their server positions; **GIVEN** a climber with Δz = 80 **THEN** `NoContact`; **AND** an attacker that is running or traversing is rejected `NotNow` (IIF R7).
 
 ---
 
@@ -110,7 +110,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: the three test files above — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -118,3 +118,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-002-reach-f1-pure-function.md`, `story-003-defence-state-component-and-cooldown.md`, `story-007-attack-outcomes-resolved-in-slot.md`; cross-epic `production/epics/input-interaction-framework/story-030-attack-never-rejected-by-target.md`, `story-036-lockout-occupies-slot.md`, `story-033-legality-matrix.md`
 - Unlocks: `story-010-reversal-counter-and-chained-strikes.md`, `story-011-npc-brace-parity-never-strike-planted.md`, `story-026-advisory-economics-telemetry-resolver-cost.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC1 NPC, Active rival, informant, ally, concealed rival, empty spot, empty bush, dead body: every Attack executes, same reply (Executed, tick), nothing scheduled, LockoutEnd = t_exec + 1.75 exactly, Result per the table (WrongTarget, RivalEliminated, WrongTarget, NoContact, RivalEliminated, NoContact, NoContact, NoContact); Attack's CanBegin is Allow. AC2 after a kill and after a whiff, Attack, Prepare, Interact and Hide on the last tick before t_exec + 1.75 reply Busy and at t_exec + 1.75 execute (one round per command); 10 presses at 10 Hz all Busy with no queue growth and the +1.75 press executes (no miss cooldown); a reversed attacker's LockoutEnd = t_exec + 1.75 and its later Attack and Prepare reply NotNow. AC3 a runner at 450 cm/s from d0 150 killed (X_eff 238.25), vaulters at dz 0 and 75 killed, a climber at dz 80 NoContact; a running or traversing attacker NotNow) - `StealthGame.Assassination.NoTargetDependentRejection`, `.LockoutForEveryOutcome`, `.MovingVictims`
+**Deviations**: ADVISORY - Striking / Countering expire lazily at slot time from the stamped ends on the queue clock (no timer item, never FTimerManager; decision logged). The IIF slot (IIF 030/035/036) is not built: the resolver gates every discrete command it sees (Busy while Striking/Countering, and while Bracing for non-Prepare kinds) and forwards Interact/Hide/Traverse to an injected fallback (the stand-in dispatch until IIF stage 2). `UAssassinationAttackPredicate` (always Allow) is registered for EActionType::Attack in UStealthCompositionRoot.
+**Test Evidence**: `NoTargetDependentRejectionTest.cpp`, `LockoutForEveryOutcomeTest.cpp`, `MovingVictimsTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/` (shared rigs `EncounterTestRig.h`, `EncounterRoundRig.h`); run in `production/qa/evidence/assassination-defence-reversal-005-011-2026-10-27/full-suite.txt`
+**Run result**: N/A - server resolver logic, not yet registered in play (the composition-root wiring and the prototype-bridge removal are stories asn-012/013), so nothing player-visible changes in this story
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

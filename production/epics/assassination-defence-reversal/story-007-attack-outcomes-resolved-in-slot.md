@@ -1,12 +1,12 @@
 # Story 007: One strike, one outcome: kill, reversal or whiff resolved with every effect inside the slot
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -36,9 +36,9 @@ The outcome table (ASN-R10): no victim is a **whiff**; a braced victim (F2, stor
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-10, AC-ASN-13, AC-ASN-29), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-10, [Logic/BLOCKING] `StealthGame.Assassination.OutcomeInSlot`): **GIVEN** a kill of a team's last Active player **WHEN** the slot executes **THEN** `RequestTransition` is called before `OnPawnKilled`, Round's elimination check returns `EliminationWin` for the attacker's team inside the same slot, no deferred queue item is created by Assassination, and a later item in the drain returns `Rejected_Latched`.
-- [ ] **AC2** (AC-ASN-13, [Logic/BLOCKING] `StealthGame.Assassination.KillEventMatrix`): **GIVEN** kills of an NPC, an Active rival and an informant, and a reversal **THEN** `OnPawnKilled` carries `(Npc, Strike)`, `(Player, Strike)`, `(Informant, Strike)` and `(Player, Reversal)` respectively; only the rival kill and the reversal request a Roster transition; and the Assassination module holds no strike counter (reflected field check).
-- [ ] **AC3** (AC-ASN-29, [Logic/BLOCKING] `StealthGame.Assassination.ReversalCanEndTheRound`): **GIVEN** team 0 with one Active player A and team 1 with ≥ 1 Active player **WHEN** A is reversed by (a) a team-1 player and (b) an NPC **THEN** in both runs Round latches `EliminationWin(1)` in the reversal's slot.
+- [x] **AC1** (AC-ASN-10, [Logic/BLOCKING] `StealthGame.Assassination.OutcomeInSlot`): **GIVEN** a kill of a team's last Active player **WHEN** the slot executes **THEN** `RequestTransition` is called before `OnPawnKilled`, Round's elimination check returns `EliminationWin` for the attacker's team inside the same slot, no deferred queue item is created by Assassination, and a later item in the drain returns `Rejected_Latched`.
+- [x] **AC2** (AC-ASN-13, [Logic/BLOCKING] `StealthGame.Assassination.KillEventMatrix`): **GIVEN** kills of an NPC, an Active rival and an informant, and a reversal **THEN** `OnPawnKilled` carries `(Npc, Strike)`, `(Player, Strike)`, `(Informant, Strike)` and `(Player, Reversal)` respectively; only the rival kill and the reversal request a Roster transition; and the Assassination module holds no strike counter (reflected field check).
+- [x] **AC3** (AC-ASN-29, [Logic/BLOCKING] `StealthGame.Assassination.ReversalCanEndTheRound`): **GIVEN** team 0 with one Active player A and team 1 with ≥ 1 Active player **WHEN** A is reversed by (a) a team-1 player and (b) an NPC **THEN** in both runs Round latches `EliminationWin(1)` in the reversal's slot.
 
 ---
 
@@ -114,7 +114,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: the three test files above (stub Round queue and injected clock, ADR-0008) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -122,3 +122,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-001-assassination-tuning-keys-and-invariants.md`, `story-003-defence-state-component-and-cooldown.md`, `story-005-victim-resolution-order.md`; cross-epic `production/epics/round-match-framework/story-008-resolver-contract.md`, `story-009-follow-ons-inline.md`, `story-044-elimination-truth-table.md`, `story-045-same-tick-final-vs-elimination.md`; `production/epics/participant-state-roster/story-014-transition-active-to-informant.md`, `story-020-informant-kill-is-not-a-transition.md`, `story-021-retire-at-server-time-source.md`
 - Unlocks: `story-008-attacker-lockout-and-attack-lifecycle.md`, `story-009-same-drain-ordering-and-braced-key-compare.md`, `story-010-reversal-counter-and-chained-strikes.md`, `story-013-death-write-staging-and-after-latch.md`, `story-015-owner-results-reply-entries-and-tally.md`, `story-019-server-body-sequence-and-reset.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC1 on the real round queue and Round core: RequestTransition before OnPawnKilled; EliminationWin(0) latched with terminal key = the Attack's slot key; a later Attack in the drain Rejected_Latched with only a held NotNow; no timer or mailbox item from Assassination, only the victim's DeathWrite staged (Round's round-end step binds to it, no fallback fault); the victim Dead at the slot and GetScheduledDeathServerTime valid inside the fan-out; one KillResolved row with the slot key. AC2 (Npc, Strike), (Player, Strike), (Informant, Strike), (Player, Reversal) with Victim = attacker and Killer = defender; only the rival kill and the reversal request a transition; a whiff emits nothing; a Penalty stub's counter moves only through its subscriber; UEncounterService reflects no numeric property. AC3 a reversal by a team-1 player and by an NPC both latch EliminationWin(1) at the reversal's slot key) - `StealthGame.Assassination.OutcomeInSlot`, `.KillEventMatrix`, `.ReversalCanEndTheRound`; facade smoke `StealthGame.Assassination.EncounterServiceSmoke`
+**Deviations**: ADVISORY - the DeathWrite / CounterPose staging call is made in the slot now (at ContactServerTime - StrikeNetLeadSec) so Round's section 8.3 binding finds the deciding death write; their applier, timing and after-latch tests remain story asn-013 (decision logged). The resolver is NOT yet registered in play: `UEncounterService::RegisterOn(*Store->GetRoundQueue())` is the integration stories' (asn-012/013). Event Log rows: KillResolved{P0 attacker, P1 victim, Code ERoundKillResult, D0 attacker team, D1 victim kind}, Reversal{P0 attacker, P1 defender, D0/D1 teams}. Foundation fix: `AssassinationInvariants.cpp`'s anonymous `Rows` renamed `AssassinationInvariantRows` (a unity-build C4459 clash with StealthTuningSchema.cpp, latent since asn-001). Cross-epic Round 008/009/044/045 exist in code; Roster 014/020/021 stand in behind the gateway.
+**Test Evidence**: `OutcomeInSlotTest.cpp`, `KillEventMatrixTest.cpp`, `ReversalCanEndTheRoundTest.cpp`, `EncounterServiceSmokeTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/` (shared rigs `EncounterTestRig.h`, `EncounterRoundRig.h`); run in `production/qa/evidence/assassination-defence-reversal-005-011-2026-10-27/full-suite.txt`
+**Run result**: N/A - server resolver logic, not yet registered in play (the composition-root wiring and the prototype-bridge removal are stories asn-012/013), so nothing player-visible changes in this story
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

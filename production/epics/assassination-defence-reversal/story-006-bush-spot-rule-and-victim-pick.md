@@ -1,12 +1,12 @@
 # Story 006: Bush spot rule is terminal, with an unbiased victim pick from the secret stream
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,8 +35,8 @@ Rule 2 applies when the `WorldPoint` lies in a bush's spot zone: `GetSpotOccupan
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-12, AC-ASN-39), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-12, [Integration/BLOCKING] `StealthGame.Assassination.BlindBushStrikeIsACommitment`): **GIVEN** a bush concealing one rival **WHEN** the attacker strikes 10 `WorldPoint`s spread across the bush's spot zone **THEN** every strike resolves the same candidate set and kills the rival (`RivalEliminated`); **GIVEN** an empty bush with a visible NPC standing just outside the footprint within the zone **WHEN** struck by `TargetSpot` inside the zone **THEN** `NoContact` (rule 2 is terminal).
-- [ ] **AC2** (AC-ASN-39, [Logic/BLOCKING] `StealthGame.Assassination.BushVictimHash`): **GIVEN** a bush with two non-ally occupants and 1,000 strikes whose picks are drawn from `BushSpotPick` with a fixed injected stream seed **THEN** exactly one victim is picked per strike, only after the F1 reach filter, and each occupant is picked 50 ± 5 % (`UniformBelow` draws from Concealment's server-secret `BushSpotPick` stream per F4, never `RoundSeed`; shared with AC-CON-14).
+- [x] **AC1** (AC-ASN-12, [Integration/BLOCKING] `StealthGame.Assassination.BlindBushStrikeIsACommitment`): **GIVEN** a bush concealing one rival **WHEN** the attacker strikes 10 `WorldPoint`s spread across the bush's spot zone **THEN** every strike resolves the same candidate set and kills the rival (`RivalEliminated`); **GIVEN** an empty bush with a visible NPC standing just outside the footprint within the zone **WHEN** struck by `TargetSpot` inside the zone **THEN** `NoContact` (rule 2 is terminal).
+- [x] **AC2** (AC-ASN-39, [Logic/BLOCKING] `StealthGame.Assassination.BushVictimHash`): **GIVEN** a bush with two non-ally occupants and 1,000 strikes whose picks are drawn from `BushSpotPick` with a fixed injected stream seed **THEN** exactly one victim is picked per strike, only after the F1 reach filter, and each occupant is picked 50 ± 5 % (`UniformBelow` draws from Concealment's server-secret `BushSpotPick` stream per F4, never `RoundSeed`; shared with AC-CON-14).
 
 ---
 
@@ -104,7 +104,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: the two test files above (AC1 in a 2-client PIE or a stub-Concealment integration harness; AC2 headless with the injected stream) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -112,3 +112,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/assassination-defence-reversal/story-002-reach-f1-pure-function.md`, `story-005-victim-resolution-order.md`; cross-epic Concealment epic `production/epics/concealment-bushes/EPIC.md` (no stories yet: `GetSpotOccupants`, `BushSpotPick`); ADR-0006 seed streams (Foundation)
 - Unlocks: `story-007-attack-outcomes-resolved-in-slot.md`, `story-012-slot-write-outcome-blind-and-warp-point.md`, `story-023-concealed-body-stays-hidden.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 2/2 passing (AC1 a bush (footprint 60 cm, zone 135 cm) concealing one rival: 10 enumerated points (centre, footprint edge, zone boundary) each in a fresh round kill it by rule 2 with `RivalEliminated` and the in-slot occupancy exit; an empty bush with a visible NPC 10 cm outside the footprint inside the zone is NoContact and the NPC untouched (control: without the bush rule 3 would strike it); an Exiting un-culled occupant is still a zone candidate. AC2 1,000 strikes with the injected sub-seed BushPickSeed: one victim per strike, O1 493 / O2 507 (450-550), a third occupant failing F1 never picked, exactly one draw per strike in both runs and with one or zero reachable occupants; the sub-seed spy saw only BushSpotPick, never a RoundSeed draw) - `StealthGame.Assassination.BlindBushStrikeIsACommitment`, `.BushVictimHash`
+**Deviations**: ADVISORY - Concealment is not built: AC1 runs on the stub-Concealment harness (an `IBushSpotQuery` fake) as the story allows; the composition-root stand-in over `AStealthBush` / `AStealthCharacter::IsConcealed` is deferred to the wiring stories asn-012/013 (decision logged). The pick is `FSecretStream(GetServerSubSeed(BushSpotPick, LayoutAttempt), "CON_SPOT")` in counter mode keyed (ServerTickIndex, queue Seq as AttackerCommandSeq, BushId, i), occupants sorted by spawn serial before the draw; the always-one-draw rule is to be confirmed by Concealment's author.
+**Test Evidence**: `BlindBushStrikeIsACommitmentTest.cpp`, `BushVictimHashTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/` (shared rigs `EncounterTestRig.h`, `EncounterRoundRig.h`); run in `production/qa/evidence/assassination-defence-reversal-005-011-2026-10-27/full-suite.txt`
+**Run result**: N/A - server resolver logic, not yet registered in play (the composition-root wiring and the prototype-bridge removal are stories asn-012/013), so nothing player-visible changes in this story
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

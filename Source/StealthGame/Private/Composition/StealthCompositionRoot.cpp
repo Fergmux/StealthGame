@@ -1,6 +1,7 @@
 #include "Server/StealthCompositionRoot.h"
 
 #include "Server/ActionHub.h"
+#include "Server/AssassinationAttackPredicate.h"
 #include "Server/AssassinationPreparePredicate.h"
 #include "StealthPrototypeCommandQueue.h"
 
@@ -526,6 +527,13 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 		}
 		PreparePredicate->Initialize(CommandClock.Get(), FAssassinationTuning_Public());
 		Hub->RegisterPredicate(EActionType::Prepare, TWeakInterfacePtr<ICommandPredicate>(PreparePredicate));
+		// Story asn-008: Attack's CanBegin is always Allow (no Attack is rejected for a reason about its target, ASN-R1);
+		// the lockout is the action slot's Busy at the Attack's queue slot.
+		if (AttackPredicate == nullptr)
+		{
+			AttackPredicate = NewObject<UAssassinationAttackPredicate>(this);
+		}
+		Hub->RegisterPredicate(EActionType::Attack, TWeakInterfacePtr<ICommandPredicate>(AttackPredicate));
 	}
 }
 

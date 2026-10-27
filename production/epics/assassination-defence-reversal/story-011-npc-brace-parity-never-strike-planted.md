@@ -1,12 +1,12 @@
 # Story 011: NPCs brace through the same path, NPCs never strike, and a brace is planted
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@ Crowd issues real `Prepare` commands (Tell Matrix T4: flinch and startle braces)
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-15, AC-ASN-26, AC-ASN-27), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-26, [Integration/BLOCKING] `StealthGame.Assassination.NpcBraceSamePath`, Crowd T4): **GIVEN** an NPC brace issued by Crowd **THEN** it enters through the IIF `Prepare` path with the same 60 s cooldown and planted stance, and a rival's strike on it is a reversal exactly as on a braced player (same transition, same `OnPawnKilled` fields with `Killer` = the NPC pawn, same presentation and timings; only the null sink means no `FDefenceResult`; nothing is charged to anyone).
-- [ ] **AC2** (AC-ASN-27, [Integration/BLOCKING] `StealthGame.Assassination.NpcsNeverStrike`, Crowd T6): **GIVEN** the reference crowd scene with 50 NPCs, a fixed crowd seed and 10 simulated minutes at a fixed timestep **THEN** 0 `Attack` commands are issued by any AI controller driving an unbound pawn; **AND** (Logic) the Crowd command emitter's command set contains no `Attack` path (reflection check).
-- [ ] **AC3** (AC-ASN-15, [Integration/BLOCKING] `StealthGame.Assassination.PlantedBrace`): **GIVEN** a bracing pawn whose owner holds Move and sweeps Look for 4 s **THEN** server displacement is 0 cm and body yaw changes by 0°, while head-look follows input.
+- [x] **AC1** (AC-ASN-26, [Integration/BLOCKING] `StealthGame.Assassination.NpcBraceSamePath`, Crowd T4): **GIVEN** an NPC brace issued by Crowd **THEN** it enters through the IIF `Prepare` path with the same 60 s cooldown and planted stance, and a rival's strike on it is a reversal exactly as on a braced player (same transition, same `OnPawnKilled` fields with `Killer` = the NPC pawn, same presentation and timings; only the null sink means no `FDefenceResult`; nothing is charged to anyone).
+- [x] **AC2** (AC-ASN-27, [Integration/BLOCKING] `StealthGame.Assassination.NpcsNeverStrike`, Crowd T6): **GIVEN** the reference crowd scene with 50 NPCs, a fixed crowd seed and 10 simulated minutes at a fixed timestep **THEN** 0 `Attack` commands are issued by any AI controller driving an unbound pawn; **AND** (Logic) the Crowd command emitter's command set contains no `Attack` path (reflection check).
+- [x] **AC3** (AC-ASN-15, [Integration/BLOCKING] `StealthGame.Assassination.PlantedBrace`): **GIVEN** a bracing pawn whose owner holds Move and sweeps Look for 4 s **THEN** server displacement is 0 cm and body yaw changes by 0°, while head-look follows input.
 
 ---
 
@@ -109,7 +109,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: the three test files above (PIE, `LeakNetProfile` where networked) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -117,3 +117,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-003-defence-state-component-and-cooldown.md`, `story-010-reversal-counter-and-chained-strikes.md`; cross-epic `production/epics/shared-character-locomotion/story-015-brace-planted.md`; `production/epics/crowd-npc-behaviour/story-005-command-sinks-epoch-and-halt-filter.md`, `story-013-identity-and-command-path-gate.md`, `story-021-brace-and-startle-herring.md`
 - Unlocks: `story-025-reversal-readability-and-brace-tell-playtest.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC1 an NPC brace issued through FCrowdCommandSink::PrepareBegin enters the real command component and queue (server-local mailbox, null sink) and a player's through its owner origin; a rival's strike on each is a reversal with identical traces (outcome, ReversedAgainst, OnPawnKilled with Killer = the defender, Countering end, staged writes and times, stance writes, Reversal row, cooldown end = activation + 60 s); the only difference is FDefenceResult (player only); nothing charged; a second NPC brace inside the cooldown replies Cooldown. AC2 50 NPCs, fixed seed, every tell, the reference sites, 10 simulated minutes at 1/60 s: 1,800,100 Move calls and 232 discrete commands (non-vacuous), 0 Attack (not even a dry run); no Attack member on ICrowdAgentOutput, FCrowdCommandSink, FCrowdMotionSink or the sim driver (negative control caught). AC3 an AI-possessed pawn braced through the resolver with the production stance adapter, Move held and reversed and Look swept +-90 deg for 4 s: displacement 0.0000 cm, body yaw 0.0000 deg, the look target follows exactly; released at CapEnd, Move moves it again) - `StealthGame.Assassination.NpcBraceSamePath`, `.NpcsNeverStrike`, `.PlantedBrace`
+**Deviations**: ADVISORY - implemented headless in `Source/StealthGameplay/Private/Tests/Assassination/` rather than CQTest PIE in StealthTestHarness (names without `.PIE.`; decision logged): the slot is not yet wired into play and the assertions are the same. The SCL head-look filter (SCL-021) is not built, so AC3 asserts the look target (control rotation) and no turn-to-look past the clamp. `ReleaseToCrowd keeps the stamp` is covered by asn-003's DefenceStateSurvivesPossession. Crowd 005/013/021 and SCL 015 exist in code.
+**Test Evidence**: `NpcBraceSamePathTest.cpp`, `NpcsNeverStrikeTest.cpp`, `PlantedBraceTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/` (shared rigs `EncounterTestRig.h`, `EncounterRoundRig.h`); run in `production/qa/evidence/assassination-defence-reversal-005-011-2026-10-27/full-suite.txt`
+**Run result**: N/A - server resolver logic, not yet registered in play (the composition-root wiring and the prototype-bridge removal are stories asn-012/013), so nothing player-visible changes in this story
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

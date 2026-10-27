@@ -1,12 +1,12 @@
 # Story 005: Victim resolution order, ally exclusion and dead bodies (rules 1, 3 and 4)
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@ The candidate set excludes the attacker, every pawn with `GetRelation(Attacker, 
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-08, AC-ASN-09, AC-ASN-17), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-08, [Logic/BLOCKING] `StealthGame.Assassination.VictimResolutionOrder`): **GIVEN** a visible pawn named by an honoured `PawnRef` and a second pawn nearer the `WorldPoint` **THEN** the named pawn is the victim; **GIVEN** the same `PawnRef` culled for the attacker or 76 cm from the `WorldPoint` **THEN** the outcome equals a `TargetSpot` at that point; **GIVEN** an open spot with pawns whose axes are 109 cm and 111 cm from the point **THEN** only the first is a candidate; **GIVEN** two candidates equidistant **THEN** the lower spawn serial is the victim, in both spawn orders of kind (NPC first, player first).
-- [ ] **AC2** (AC-ASN-09, [Logic/BLOCKING] `StealthGame.Assassination.AlliesNeverVictims`): **GIVEN** a forged `PawnRef` naming the attacker's ally with a rival 50 cm behind it **THEN** the rival is the victim; with no rival **THEN** `NoContact`; **GIVEN** a bush holding only allies **THEN** `NoContact`; no case returns a distinct reply or timing.
-- [ ] **AC3** (AC-ASN-17, [Logic/BLOCKING] `StealthGame.Assassination.DeadBodyIsNoContact`): **GIVEN** a dying NPC body and a dying player body (strike role `Dead`, one with its death write still pending) **WHEN** each is struck by `PawnRef` and by `TargetSpot` with no other pawn near **THEN** all four are `NoContact`, no `OnPawnKilled` fires and no strike is charged; **AND GIVEN** a live NPC 50 cm beside each body **THEN** the `PawnRef` strikes are still `NoContact` (terminal; the neighbour is not struck), while a `TargetSpot` strike resolves exactly as if the body were absent, byte-identically for the NPC and the player body.
+- [x] **AC1** (AC-ASN-08, [Logic/BLOCKING] `StealthGame.Assassination.VictimResolutionOrder`): **GIVEN** a visible pawn named by an honoured `PawnRef` and a second pawn nearer the `WorldPoint` **THEN** the named pawn is the victim; **GIVEN** the same `PawnRef` culled for the attacker or 76 cm from the `WorldPoint` **THEN** the outcome equals a `TargetSpot` at that point; **GIVEN** an open spot with pawns whose axes are 109 cm and 111 cm from the point **THEN** only the first is a candidate; **GIVEN** two candidates equidistant **THEN** the lower spawn serial is the victim, in both spawn orders of kind (NPC first, player first).
+- [x] **AC2** (AC-ASN-09, [Logic/BLOCKING] `StealthGame.Assassination.AlliesNeverVictims`): **GIVEN** a forged `PawnRef` naming the attacker's ally with a rival 50 cm behind it **THEN** the rival is the victim; with no rival **THEN** `NoContact`; **GIVEN** a bush holding only allies **THEN** `NoContact`; no case returns a distinct reply or timing.
+- [x] **AC3** (AC-ASN-17, [Logic/BLOCKING] `StealthGame.Assassination.DeadBodyIsNoContact`): **GIVEN** a dying NPC body and a dying player body (strike role `Dead`, one with its death write still pending) **WHEN** each is struck by `PawnRef` and by `TargetSpot` with no other pawn near **THEN** all four are `NoContact`, no `OnPawnKilled` fires and no strike is charged; **AND GIVEN** a live NPC 50 cm beside each body **THEN** the `PawnRef` strikes are still `NoContact` (terminal; the neighbour is not struck), while a `TargetSpot` strike resolves exactly as if the body were absent, byte-identically for the NPC and the player body.
 
 ---
 
@@ -110,7 +110,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: the three test files above — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -118,3 +118,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/assassination-defence-reversal/story-002-reach-f1-pure-function.md`; cross-epic `production/epics/participant-state-roster/story-013-resolve-victim-kind-matrix.md`, `story-032-get-relation-matrix.md`; `production/epics/input-interaction-framework/story-061-pawnref-same-as-spot.md`, `story-063-pawnref-gate.md`; `production/epics/information-visibility-policy/story-010-query-default-deny.md`
 - Unlocks: `story-006-bush-spot-rule-and-victim-pick.md`, `story-007-attack-outcomes-resolved-in-slot.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC1 honoured ref beats a nearer pawn; a culled ref and a ref 76 cm away equal the TargetSpot result as full FVictimResolution structs; 75 cm honoured; 109 cm a candidate, 111 never, 110 inclusive; ties to the lower spawn serial with NPC first and with player first; an honoured ref out of reach (dz 100) is a whiff, never a fall-through. AC2 a forged ally ref falls through: the rival 50 cm beyond the ally is killed; no rival NoContact; allies-only bush NoContact; replies identical (Executed, same tick) for team 0 and team 1; the forged ref resolves equal to the spot strike. AC3 an NPC body (death write pending) and a player body (also Roster AlreadyResolved) struck by PawnRef and TargetSpot: NoContact, no OnPawnKilled, the Penalty stub's strike count unchanged; with a live NPC 50 cm beside, the PawnRef stays NoContact and the TargetSpot result equals the body-removed probe and is identical for NPC and player bodies) - `StealthGame.Assassination.VictimResolutionOrder`, `.AlliesNeverVictims`, `.DeadBodyIsNoContact`
+**Deviations**: ADVISORY - files live in `Features/Assassination/{Public/Server,Private}` (the ADR-0007 feature folder, as asn-002/003), not the story's `Private/Features/Assassination`. Victim identity is an opaque `APawn*` with facts from `IEncounterPawnQuery`; the production spawn serial is a stand-in (UObject unique id) until SCL/ADR-0010 publishes one. `PawnRefAgreementCm` is measured horizontally on capsule axes; the Dead-ref terminal rule applies once a ref is honoured (an unhonoured ref always falls through, so it equals a TargetSpot). Cross-epic Roster 013/032, IIF 061/063 and IVP 010 not Complete: proceeded with consumer-owned seams (`IEncounterRosterGateway`, `IEncounterVisibilityQuery`; a null visibility query is default-deny; the world stand-in answers knowable unless concealed). Decisions logged.
+**Test Evidence**: `VictimResolutionOrderTest.cpp`, `AlliesNeverVictimsTest.cpp`, `DeadBodyIsNoContactTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/` (shared rigs `EncounterTestRig.h`, `EncounterRoundRig.h`); run in `production/qa/evidence/assassination-defence-reversal-005-011-2026-10-27/full-suite.txt`
+**Run result**: N/A - server resolver logic, not yet registered in play (the composition-root wiring and the prototype-bridge removal are stories asn-012/013), so nothing player-visible changes in this story
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

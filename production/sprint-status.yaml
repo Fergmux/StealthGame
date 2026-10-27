@@ -3375,3 +3375,80 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "ASN batch 2026-10-27 (asn-001..004); View/StealthEncounterWire.h, negative control watched failing"
+  - id: "asn-005"
+    name: "Victim resolution order, ally exclusion and dead bodies (rules 1, 3 and 4)"
+    file: "production/epics/assassination-defence-reversal/story-005-victim-resolution-order.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-005..011); FVictimResolverCore + FStrikeRoleTable (Dead excludes pending-death bodies); IVP/Roster seams stand-ins"
+  - id: "asn-006"
+    name: "Bush spot rule is terminal, with an unbiased victim pick from the secret stream"
+    file: "production/epics/assassination-defence-reversal/story-006-bush-spot-rule-and-victim-pick.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-005..011); IBushSpotQuery seam (Concealment not built: stub harness; prototype-bush adapter deferred to the composition-root wiring), BushSpotPick counter-mode draw, one draw per bush strike"
+  - id: "asn-007"
+    name: "One strike, one outcome: kill, reversal or whiff resolved with every effect inside the slot"
+    file: "production/epics/assassination-defence-reversal/story-007-attack-outcomes-resolved-in-slot.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-005..011); FAttackResolverCore (IQueueResolver for PawnCommand + HoldTimer) and UEncounterService facade, not yet registered in play (asn-012/013); DeathWrite/CounterPose staged in the slot"
+  - id: "asn-008"
+    name: "Attack is never rejected by its target; every executed Attack locks the attacker for 1.75 s"
+    file: "production/epics/assassination-defence-reversal/story-008-attacker-lockout-and-attack-lifecycle.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-005..011); UAssassinationAttackPredicate (Allow) registered in the composition root; Striking/Countering Busy at the slot, lazy expiry on the queue clock"
+  - id: "asn-009"
+    name: "Braced at the Attack by key compare, and same-drain ordering"
+    file: "production/epics/assassination-defence-reversal/story-009-same-drain-ordering-and-braced-key-compare.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-005..011); FBracedAtAttackCore; Prepare hold stand-in (CapEnd/DebounceExpiry HoldTimer items) until IIF 042-050"
+  - id: "asn-010"
+    name: "Reversal eliminates the attacker, the counter is not protected, and chained strikes"
+    file: "production/epics/assassination-defence-reversal/story-010-reversal-counter-and-chained-strikes.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-005..011); reversal eliminates the attacker (user rule), Countering 1.2 s from the slot, brace cancelled Reversed"
+  - id: "asn-011"
+    name: "NPCs brace through the same path, NPCs never strike, and a brace is planted"
+    file: "production/epics/assassination-defence-reversal/story-011-npc-brace-parity-never-strike-planted.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-005..011); headless integration tests (crowd sink -> command component -> real queue; 50-NPC 10-min sim; SCL planted stance)"

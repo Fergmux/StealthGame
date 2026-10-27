@@ -1,12 +1,12 @@
 # Story 010: Reversal eliminates the attacker, the counter is not protected, and chained strikes
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@ On a reversal the attacker A is eliminated (`RequestTransition(A, Informant, Rev
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-03, AC-ASN-28, AC-ASN-37), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-03, [Integration/BLOCKING] `StealthGame.Assassination.ReversalEliminatesAttacker`): **GIVEN** a defender (player or NPC) whose `Prepare` executed earlier in the round and is still in its window **WHEN** a rival player's Attack resolves on it **THEN** the attacker's Roster state becomes `Informant` with reason `ReversedAgainst`, `OnPawnKilled(Victim = attacker, Killer = defender, Player, Reversal)` fires once, the defender's brace is cancelled with reason `Reversed`, its slot is `Countering` for 1.2 s, the attacker receives `FStrikeResult.Reversed`, a bound defender receives `FDefenceResult.Reversed`, and the defender is not eliminated and is charged nothing.
-- [ ] **AC2** (AC-ASN-28, [Integration/BLOCKING] `StealthGame.Assassination.CounterIsNotProtected`): **GIVEN** a defender that has just reversed A1 **WHEN** a second rival A2's Attack resolves during `Countering` **THEN** the defender is killed; during `Countering` every discrete command from the defender replies `Busy`, and after 1.2 s its cooldown still counts from the original activation.
-- [ ] **AC3** (AC-ASN-37, [Logic/BLOCKING] `StealthGame.Assassination.StrikerStruckMidLunge`): **GIVEN** A kills B at key k **WHEN** C's Attack on A resolves in a later drain while A is `Striking` **THEN** A is killed, B stays killed, and two `OnPawnKilled` events are recorded.
+- [x] **AC1** (AC-ASN-03, [Integration/BLOCKING] `StealthGame.Assassination.ReversalEliminatesAttacker`): **GIVEN** a defender (player or NPC) whose `Prepare` executed earlier in the round and is still in its window **WHEN** a rival player's Attack resolves on it **THEN** the attacker's Roster state becomes `Informant` with reason `ReversedAgainst`, `OnPawnKilled(Victim = attacker, Killer = defender, Player, Reversal)` fires once, the defender's brace is cancelled with reason `Reversed`, its slot is `Countering` for 1.2 s, the attacker receives `FStrikeResult.Reversed`, a bound defender receives `FDefenceResult.Reversed`, and the defender is not eliminated and is charged nothing.
+- [x] **AC2** (AC-ASN-28, [Integration/BLOCKING] `StealthGame.Assassination.CounterIsNotProtected`): **GIVEN** a defender that has just reversed A1 **WHEN** a second rival A2's Attack resolves during `Countering` **THEN** the defender is killed; during `Countering` every discrete command from the defender replies `Busy`, and after 1.2 s its cooldown still counts from the original activation.
+- [x] **AC3** (AC-ASN-37, [Logic/BLOCKING] `StealthGame.Assassination.StrikerStruckMidLunge`): **GIVEN** A kills B at key k **WHEN** C's Attack on A resolves in a later drain while A is `Striking` **THEN** A is killed, B stays killed, and two `OnPawnKilled` events are recorded.
 
 ---
 
@@ -111,7 +111,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: the three test files above (AC1 and AC2 in PIE or the integration harness; AC3 headless on stub items) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -119,3 +119,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-003-defence-state-component-and-cooldown.md`, `story-007-attack-outcomes-resolved-in-slot.md`, `story-008-attacker-lockout-and-attack-lifecycle.md`, `story-009-same-drain-ordering-and-braced-key-compare.md`; cross-epic `production/epics/input-interaction-framework/story-049-reversal-consumes-brace.md`, `story-035-slot-priority.md`
 - Unlocks: `story-011-npc-brace-parity-never-strike-planted.md`, `story-013-death-write-staging-and-after-latch.md`, `story-025-reversal-readability-and-brace-tell-playtest.md`, `story-026-advisory-economics-telemetry-resolver-cost.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC1 a player defender (sink 5) and an NPC defender (null sink): attacker Informant / ReversedAgainst, one OnPawnKilled(attacker, defender, Player, Reversal), brace cancelled Reversed, Countering to slot + 1.2 s (still Countering one tick before, Cooling at 1.2 s), FStrikeResult.Reversed, FDefenceResult only for the bound defender, the defender not eliminated and its stamp unchanged, exactly one CounterPose write and one attacker DeathWrite. AC2 A2 kills the countering defender at the first tick, at 0.6 s and at the last tick of the window; every discrete kind replies Busy at 0.2, 0.6 and 1.0 s; after 1.2 s + 1 tick the cooldown end is the original activation + 60 s exactly. AC3 C kills A mid-lunge one tick and 0.5 s after A killed B: A killed, B stays killed, two OnPawnKilled, A's own outcome stands) - `StealthGame.Assassination.ReversalEliminatesAttacker`, `.CounterIsNotProtected`, `.StrikerStruckMidLunge`
+**Deviations**: ADVISORY - the confirmed user rule is applied (a reversal eliminates the attacker). Countering is measured from the slot (QA rewrite). AC1/AC2 run on the integration harness (the resolver over its seams with real pawn identities), not PIE. The defender's planted stance is kept until its window item, then the CounterPose applier (asn-013) owns the pose; the IIF 049 FHoldStatus end with ServerEndTime = ContactServerTime belongs to the reply step (asn-015).
+**Test Evidence**: `ReversalEliminatesAttackerTest.cpp`, `CounterIsNotProtectedTest.cpp`, `StrikerStruckMidLungeTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/` (shared rigs `EncounterTestRig.h`, `EncounterRoundRig.h`); run in `production/qa/evidence/assassination-defence-reversal-005-011-2026-10-27/full-suite.txt`
+**Run result**: N/A - server resolver logic, not yet registered in play (the composition-root wiring and the prototype-bridge removal are stories asn-012/013), so nothing player-visible changes in this story
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)
