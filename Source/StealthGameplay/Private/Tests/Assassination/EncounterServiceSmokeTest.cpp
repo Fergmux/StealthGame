@@ -72,14 +72,20 @@ bool FAssassinationEncounterServiceSmokeTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("the victim's DeathWrite is staged"), Q.Queue->GetPendingStagedWrites().Num() == 1 && Q.Queue->GetPendingStagedWrites()[0].Type == EStagedWriteType::DeathWrite);
 	TestTrue(TEXT("GetScheduledDeathServerTime is the contact time"), Service->GetScheduledDeathServerTime(Victim).IsSet());
 	TestTrue(TEXT("the bracer is planted (SCL Brace pose)"), Bracer->GetStealthMovement()->GetActionPose() == EStealthActionPose::Brace);
-	// Two timers: the bracer's CapEnd and the attacker's Strike pose end (story asn-012: the production pawn-state writer).
-	TestTrue(TEXT("the bracer's CapEnd and the attacker's pose end are scheduled"), Q.Queue->GetPendingTimerCount() == 2);
+	// Four timers: the bracer's CapEnd, the attacker's Strike pose end (story asn-012: the production pawn-state writer) and
+	// the victim's BodyRelease and BodyRemoval (story asn-019: the production hand-over).
+	TArray<ETimerKind> TimerKinds;
+	Q.Queue->GetPendingTimerKinds(TimerKinds);
+	TestTrue(TEXT("the bracer's CapEnd, the attacker's pose end and the body's release and removal are scheduled"), Q.Queue->GetPendingTimerCount() == 4
+		&& TimerKinds.Contains(ETimerKind::BodyRelease) && TimerKinds.Contains(ETimerKind::BodyRemoval));
 	TestTrue(TEXT("the attacker's FActionState is the Strike (story asn-012)"), Attacker->GetActionState().Pose == EActionPose::Strike && Attacker->GetActionState().Seq == 2);
 	TestTrue(TEXT("the bracer's FActionState is Brace"), Bracer->GetActionState().Pose == EActionPose::Brace);
 
 	Service->Shutdown();
 	FStealthStubResolver Probe;
 	TestTrue(TEXT("Shutdown unregistered both types"), Q.Queue->RegisterResolver(EQueueItemType::PawnCommand, &Probe) && Q.Queue->RegisterResolver(EQueueItemType::HoldTimer, &Probe));
+	TestTrue(TEXT("Shutdown unregistered both body timer kinds (story asn-019)"), Q.Queue->RegisterTimerResolver(ETimerKind::BodyRelease, &Probe)
+		&& Q.Queue->RegisterTimerResolver(ETimerKind::BodyRemoval, &Probe));
 	FCountingAppliers Appliers;
 	TestTrue(TEXT("Shutdown unregistered the DeathWrite and CounterPose appliers (story asn-013)"), Q.Queue->RegisterStagedWriteApplier(EStagedWriteType::DeathWrite, &Appliers)
 		&& Q.Queue->RegisterStagedWriteApplier(EStagedWriteType::CounterPose, &Appliers));

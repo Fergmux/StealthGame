@@ -15,6 +15,7 @@
 #include "Server/DefenceStateCore.h"
 #include "Server/Random/StealthServerSeeds.h"
 #include "Server/Testing/StealthFakeClock.h"
+#include "Server/Testing/StealthFaultSinkTestSupport.h"
 #include "Tests/Assassination/AssassinationTestWorld.h"
 #include "UObject/ObjectKey.h"
 
@@ -212,6 +213,138 @@ namespace StealthEncounterTest
 			}
 			return Slot.Get();
 		}
+		int32 ResetCount = 0;
+		virtual void ResetAll() override
+		{
+			++ResetCount;
+			for (TPair<FObjectKey, TUniquePtr<FDefenceStateCore>>& Pair : States)
+			{
+				if (Pair.Value.IsValid())
+				{
+					Pair.Value->Reset();
+				}
+			}
+		}
+	};
+
+	/** A scripted tally source (story asn-015): per-attacker answers, every call logged with its Result. */
+	class FScriptedTally final : public IStrikeTallySource
+	{
+	public:
+		struct FCall
+		{
+			const APawn* Attacker = nullptr;
+			EStrikeResult Result = EStrikeResult::NoContact;
+		};
+		/** The answer per attacker (missing: Default). */
+		TMap<const APawn*, FStrikeTally> Scripted;
+		FStrikeTally Default;
+		TArray<FCall> Calls;
+		FCallLog* Log = nullptr;
+		/** Called on every query (a test may script the answer from the call's Result). */
+		TFunction<FStrikeTally(const APawn*, EStrikeResult)> Answer;
+
+		virtual FStrikeTally GetTallyForResult(const APawn* Attacker, EStrikeResult Result) override
+		{
+			Calls.Add({ Attacker, Result });
+			if (Log != nullptr)
+			{
+				Log->Add(TEXT("GetTallyForResult"));
+			}
+			if (Answer)
+			{
+				return Answer(Attacker, Result);
+			}
+			const FStrikeTally* Found = Scripted.Find(Attacker);
+			return Found != nullptr ? *Found : Default;
+		}
+	};
+
+	/** Records every appended owner reply with its sink and slot key (story asn-015). Index 0 (the null sink) discards. */
+	class FRecordingReplies final : public IEncounterReplySink
+	{
+	public:
+		struct FEntry
+		{
+			FReplySinkId Sink;
+			FQueueKey Key;
+			FCommandReply Reply;
+		};
+		TArray<FEntry> Entries;
+		/** Appends to the null sink (counted, then discarded as the table does). */
+		int32 NullSinkAppends = 0;
+		FCallLog* Log = nullptr;
+
+		virtual void AppendReply(FReplySinkId Sink, FQueueKey Key, const FCommandReply& Reply) override
+		{
+			if (Log != nullptr)
+			{
+				Log->Add(Reply.Kind == ECommandReplyKind::StrikeResult ? TEXT("AppendStrikeResult") : TEXT("AppendReply"));
+			}
+			if (Sink.Index == 0)
+			{
+				++NullSinkAppends;
+				return;
+			}
+			Entries.Add({ Sink, Key, Reply });
+		}
+		TArray<FCommandReply> For(uint16 SinkIndex, TOptional<ECommandReplyKind> Kind = {}) const
+		{
+			TArray<FCommandReply> Out;
+			for (const FEntry& Entry : Entries)
+			{
+				if (Entry.Sink.Index == SinkIndex && (!Kind.IsSet() || Entry.Reply.Kind == Kind.GetValue()))
+				{
+					Out.Add(Entry.Reply);
+				}
+			}
+			return Out;
+		}
+		int32 Count(ECommandReplyKind Kind) const
+		{
+			return Entries.FilterByPredicate([Kind](const FEntry& E) { return E.Reply.Kind == Kind; }).Num();
+		}
+	};
+
+	/** Records the owner-only cooldown publications (story asn-016). */
+	class FRecordingOwnerCooldown final : public IEncounterOwnerCooldown
+	{
+	public:
+		TArray<TPair<const APawn*, double>> Writes;
+		TMap<const APawn*, double> Current;
+		int32 ResetCount = 0;
+		virtual void PublishCooldownEnd(APawn* Pawn, double End) override { Writes.Add({ Pawn, End }); Current.Add(Pawn, End); }
+		virtual void ResetAll() override { ++ResetCount; Current.Reset(); }
+		double Get(const APawn* Pawn) const { const double* V = Current.Find(Pawn); return V != nullptr ? *V : -1.0; }
+	};
+
+	/** Records the body hand-over calls with the clock time of each (story asn-019). */
+	class FRecordingHandOver final : public IEncounterBodyHandOver
+	{
+	public:
+		struct FCall
+		{
+			APawn* Body = nullptr;
+			double ServerTime = 0.0;
+		};
+		const IStealthClock* Clock = nullptr;
+		TArray<FCall> Released;
+		TArray<FCall> TornDown;
+		FCallLog* Log = nullptr;
+		virtual void ReleaseBody(APawn* Body) override { Released.Add({ Body, Now() }); if (Log != nullptr) { Log->Add(TEXT("ReleaseBody")); } }
+		virtual void RequestTeardown(APawn* Body) override { TornDown.Add({ Body, Now() }); if (Log != nullptr) { Log->Add(TEXT("RequestTeardown")); } }
+		double Now() const { return Clock != nullptr ? Clock->GetServerTimeSeconds() : 0.0; }
+		int32 CountReleased(const APawn* Body) const { return Released.FilterByPredicate([Body](const FCall& C) { return C.Body == Body; }).Num(); }
+		int32 CountTornDown(const APawn* Body) const { return TornDown.FilterByPredicate([Body](const FCall& C) { return C.Body == Body; }).Num(); }
+	};
+
+	/** Records the committed body removals (story asn-019). */
+	class FRecordingRemovalObserver final : public IBodyRemovalObserver
+	{
+	public:
+		TArray<APawn*> Committed;
+		FCallLog* Log = nullptr;
+		virtual void OnBodyRemovalCommitted(APawn* Body) override { Committed.Add(Body); if (Log != nullptr) { Log->Add(TEXT("OnBodyRemovalCommitted")); } }
 	};
 
 	/** Records what the core asks of the queue (the direct-call tests; the drain tests use FEncounterQueueAdapter). */
@@ -370,6 +503,14 @@ namespace StealthEncounterTest
 		FRecordingCards Cards;
 		/** Bound only when the rig is built with bWithPawnState (the wire-write tests, stories asn-012 / 013). */
 		FRecordingPawnState PawnState;
+		/** Always bound (stories asn-015, asn-016): the tally answers {0, false} unless scripted. */
+		FScriptedTally Tally;
+		FRecordingReplies Replies;
+		FRecordingOwnerCooldown OwnerCooldown;
+		/** Bound only with bWithBodySequence (story asn-019; the body timers go to the rig's queue). */
+		FRecordingHandOver HandOver;
+		FRecordingRemovalObserver RemovalObserver;
+		FStealthRecordingFaultSink Faults;
 		FCallLog Calls;
 		TArray<FKill> Kills;
 		TUniquePtr<FAttackResolverCore> Core;
@@ -378,12 +519,16 @@ namespace StealthEncounterTest
 		uint64 NextSerial = 1;
 		double SpawnX = 0.0;
 
-		explicit FRig(const TCHAR* Name, IEncounterQueue* QueueOverride = nullptr, bool bWithPawnState = false)
+		explicit FRig(const TCHAR* Name, IEncounterQueue* QueueOverride = nullptr, bool bWithPawnState = false, bool bWithBodySequence = false)
 			: World(Name)
 		{
 			PawnState.Clock = &Clock;
+			HandOver.Clock = &Clock;
 			Roster.Calls = &Calls;
 			Cards.Calls = &Calls;
+			Tally.Log = &Calls;
+			HandOver.Log = &Calls;
+			RemovalObserver.Log = &Calls;
 			FAttackResolverDeps Deps;
 			Deps.Clock = &Clock;
 			Deps.Queue = QueueOverride != nullptr ? QueueOverride : &Queue;
@@ -397,6 +542,12 @@ namespace StealthEncounterTest
 			Deps.Stance = &Stance;
 			Deps.Cards = &Cards;
 			Deps.PawnState = bWithPawnState ? &PawnState : nullptr;
+			Deps.Tally = &Tally;
+			Deps.Replies = &Replies;
+			Deps.OwnerCooldown = &OwnerCooldown;
+			Deps.BodyHandOver = bWithBodySequence ? &HandOver : nullptr;
+			Deps.BodyObserver = bWithBodySequence ? &RemovalObserver : nullptr;
+			Deps.Faults = &Faults;
 			Core = MakeUnique<FAttackResolverCore>(Deps, Params);
 			Core->OnPawnKilled.AddLambda([this](APawn* Victim, APawn* Killer, EVictimKind Kind, EKillCause Cause)
 			{
@@ -478,6 +629,50 @@ namespace StealthEncounterTest
 		EResolveResult Command(APawn* Pawn, ECommandKind Kind, TOptional<FQueueKey> Key = {}, uint16 SinkIndex = 0)
 		{
 			return Core->Resolve(Item(Payload(Pawn, Kind, SinkIndex)), Key.IsSet() ? Key.GetValue() : NextKey());
+		}
+
+		/** An Attack from SinkIndex with ClientSeq Seq (the owner-result tests, story asn-015). */
+		EResolveResult AttackFrom(APawn* Attacker, const FVector& WorldPoint, APawn* Ref, uint16 SinkIndex, uint32 Seq, TOptional<FQueueKey> Key = {})
+		{
+			FQueueItem I = AttackItem(Attacker, WorldPoint, Ref, SinkIndex);
+			I.Payload.Get<FCommandPayload>().ClientSeq.Seq = Seq;
+			return Core->Resolve(I, Key.IsSet() ? Key.GetValue() : NextKey());
+		}
+
+		/** A Prepare(Begin) from SinkIndex with ClientSeq Seq. */
+		EResolveResult BraceFrom(APawn* Pawn, uint16 SinkIndex, uint32 Seq, TOptional<FQueueKey> Key = {})
+		{
+			FCommandPayload P = Payload(Pawn, ECommandKind::PrepareBegin, SinkIndex);
+			P.ClientSeq.Seq = Seq;
+			return Core->Resolve(Item(P), Key.IsSet() ? Key.GetValue() : NextKey());
+		}
+
+		/** Resolves every scheduled TimerFired item of Kind for Body (the body timers; story asn-019). */
+		EResolveResult FireBodyTimer(APawn* Body, ETimerKind Kind)
+		{
+			for (int32 Index = Queue.Scheduled.Num() - 1; Index >= 0; --Index)
+			{
+				const FTimerPayload* Timer = Queue.Scheduled[Index].Item.Payload.TryGet<FTimerPayload>();
+				if (Timer != nullptr && Timer->Kind == Kind && Timer->Subject.Pawn.Pawn.Get() == Body)
+				{
+					return Core->Resolve(Queue.Scheduled[Index].Item, NextKey());
+				}
+			}
+			return EResolveResult::Voided;
+		}
+
+		/** The due time of Body's scheduled TimerFired item of Kind (unset when none). */
+		TOptional<double> BodyTimerDue(const APawn* Body, ETimerKind Kind) const
+		{
+			for (const FFakeQueue::FScheduled& Entry : Queue.Scheduled)
+			{
+				const FTimerPayload* Timer = Entry.Item.Payload.TryGet<FTimerPayload>();
+				if (Timer != nullptr && Timer->Kind == Kind && Timer->Subject.Pawn.Pawn.Get() == Body)
+				{
+					return Entry.Due;
+				}
+			}
+			return {};
 		}
 
 		/** Resolves the latest scheduled hold timer of Pawn (the CapEnd or DebounceExpiry the core scheduled) at Key. */

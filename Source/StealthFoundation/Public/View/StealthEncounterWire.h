@@ -20,7 +20,7 @@ class UPackageMap;
  * Replicated defaults are sentinels (Seq 1, StartServerTime and ContactServerTime -1, DeathServerTime -1), so an actor
  * opened late that receives both structs in one bunch presents correctly (story asn-018). The replicated properties on
  * AStealthPawn (OnRep_ActionState / OnRep_DeathState, allowlist rows) belong to story asn-012; FStrikeResult and
- * FDefenceResult are built by story asn-015.
+ * FDefenceResult (View/CommandReplyTypes.h) are built by story asn-015.
  *
  * Usage (server writer, story asn-012):
  *   FActionState Next;  Next.Pose = EActionPose::Strike;  Next.Seq = FActionState::NextSeq(Current.Seq);
@@ -44,22 +44,8 @@ enum class EActionPose : uint8
 /** Number of EActionPose values. */
 inline constexpr uint8 GActionPoseCount = 7;
 
-/** The attacker's owner-only strike result (one shape for every value, ASN-R19). */
-UENUM()
-enum class EStrikeResult : uint8
-{
-	RivalEliminated,
-	WrongTarget,
-	NoContact,
-	Reversed,
-};
-
-/** The defender's owner-only result (sent only on a reversal by a bound defender). */
-UENUM()
-enum class EDefenceResult : uint8
-{
-	Reversed,
-};
+// EStrikeResult, EDefenceResult, FStrikeResult and FDefenceResult moved to View/CommandReplyTypes.h (story asn-015): they
+// are entries of the batched ClientCommandReplies (FCommandReply carries them), and that header is included above.
 
 /** FActionState.Variant for Pose Strike: bits 0-1 the entry variant (ASN-R16), bit 2 the bush preface; 0 for every other pose. */
 namespace StrikeVariant
@@ -196,42 +182,6 @@ struct TStructOpsTypeTraits<FDeathState> : public TStructOpsTypeTraitsBase2<FDea
 		WithNetSharedSerialization = true,
 		WithIdentical = true,
 	};
-};
-
-/**
- * The attacker's owner result (ADR-0018 section 1.3): an entry of the batched ClientCommandReplies, never a property; one
- * shape for every Result. TallyAfter (saturating at 255) and bExiled come from Penalty (IStrikeTallySource, story asn-015);
- * ContactServerTime equals the strike write's (for NoContact the whiff's nominal contact time).
- */
-USTRUCT()
-struct STEALTHFOUNDATION_API FStrikeResult
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FClientCommandSeq ClientCommandSeq;
-
-	UPROPERTY()
-	EStrikeResult Result = EStrikeResult::NoContact;
-
-	UPROPERTY()
-	uint8 TallyAfter = 0;
-
-	UPROPERTY()
-	bool bExiled = false;
-
-	UPROPERTY()
-	double ContactServerTime = -1.0;
-};
-
-/** The defender's owner result (ADR-0018 section 1.4): no time, no attacker reference. */
-USTRUCT()
-struct STEALTHFOUNDATION_API FDefenceResult
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	EDefenceResult Result = EDefenceResult::Reversed;
 };
 
 #if WITH_STEALTH_TEST_SEAMS

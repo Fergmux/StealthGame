@@ -147,6 +147,11 @@ public:
 	 * the queue (Assassination's UEncounterService) drop their registration without touching it.
 	 */
 	FSimpleMulticastDelegate OnRoundQueueReleasing;
+	/**
+	 * Fired right after each server frame's drain of the round queue (story asn-015): the reply step flushes the reply-sink
+	 * table here, one batched ClientCommandReplies per connection per drain (ADR-0011 section 8). Never inside a slot.
+	 */
+	FSimpleMulticastDelegate OnRoundQueueDrained;
 
 	/** The one host-checked entry point (console and host panel). */
 	ERoundCommandResult ExecuteCommand(const FRoundCommandCaller& Caller, ERoundHostCommand Command, const FRoundCommandArgs& Args = FRoundCommandArgs());

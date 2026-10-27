@@ -3,8 +3,12 @@
 
 #include "Server/EncounterService.h"
 
+#include "Components/CapsuleComponent.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
+#include "GameFramework/Controller.h"
+#include "Server/Core/StealthPawnFactory.h"
+#include "View/DefenceOwnerComponent.h"
 #include "Server/ActionHub.h"
 #include "Server/BushSpotQuery.h"
 #include "Server/Core/StealthPawnCommandComponent.h"
@@ -50,6 +54,102 @@ FDefenceStateCore* FEncounterComponentDefenceStore::FindOrAdd(const APawn* Pawn)
 {
 	UDefenceStateComponent* Component = Pawn != nullptr ? UDefenceStateComponent::FindOrAdd(*const_cast<APawn*>(Pawn)) : nullptr;
 	return Component != nullptr ? &Component->GetCore() : nullptr;
+}
+
+void FEncounterComponentDefenceStore::ResetAll()
+{
+	if (UWorld* Target = World.Get())
+	{
+		for (TActorIterator<APawn> It(Target); It; ++It)
+		{
+			if (UDefenceStateComponent* Component = UDefenceStateComponent::Find(**It))
+			{
+				Component->GetCore().Reset();
+			}
+		}
+	}
+}
+
+void FEncounterHubReplySink::AppendReply(FReplySinkId Sink, FQueueKey SlotKey, const FCommandReply& Reply)
+{
+	if (UActionHub* Target = Hub.Get())
+	{
+		Target->GetReplySinks().Append(Sink, SlotKey, Reply);
+	}
+}
+
+void FEncounterOwnerCooldownPublisher::PublishCooldownEnd(APawn* Pawn, double CooldownEndServerTime)
+{
+	if (UDefenceOwnerComponent* Owner = Pawn != nullptr ? UDefenceOwnerComponent::Find(Pawn->GetController()) : nullptr)
+	{
+		Owner->SetCooldownEndServerTime(CooldownEndServerTime);
+	}
+}
+
+void FEncounterOwnerCooldownPublisher::ResetAll()
+{
+	if (UWorld* Target = World.Get())
+	{
+		for (TActorIterator<AController> It(Target); It; ++It)
+		{
+			if (UDefenceOwnerComponent* Owner = UDefenceOwnerComponent::Find(*It))
+			{
+				Owner->ClearCooldownEnd();
+			}
+		}
+	}
+}
+
+void FEncounterPawnFactoryHandOver::ReleaseBody(APawn* Body)
+{
+	if (Body == nullptr || !IsValid(Body))
+	{
+		return;
+	}
+	// (a) After the fall the body blocks no pawn (ADR-0018 section 6.2): the capsule ignores the pawn channel (the server
+	// keeps its world collision so the body still lies on the floor).
+	if (UCapsuleComponent* Capsule = Body->FindComponentByClass<UCapsuleComponent>())
+	{
+		Capsule->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	}
+	// (b) The factory's ReleaseBody (ADR-0010; the only release path): crowd controller destroyed, PlayerController left
+	// pawnless and playing.
+	AController* Former = Body->GetController();
+	if (UStealthPawnFactory* Factory = UStealthPawnFactory::Get(Body->GetWorld()))
+	{
+		Factory->ReleaseBody(Body);
+	}
+	else if (Former != nullptr)
+	{
+		Former->UnPossess();
+		if (!Former->IsPlayerController())
+		{
+			Former->Destroy();
+		}
+	}
+	OnReleased.Broadcast(Body, Former);
+}
+
+void FEncounterPawnFactoryHandOver::RequestTeardown(APawn* Body)
+{
+	if (Body == nullptr || !IsValid(Body))
+	{
+		return;
+	}
+	if (UStealthPawnFactory* Factory = UStealthPawnFactory::Get(Body->GetWorld()))
+	{
+		Factory->RequestTeardown(Body);
+		return;
+	}
+	if (AController* Controller = Body->GetController())
+	{
+		Controller->UnPossess(); // never destroy a possessed pawn
+		if (!Controller->IsPlayerController())
+		{
+			Controller->Destroy();
+		}
+	}
+	Body->Destroy();
 }
 
 bool FEncounterWorldPawnQuery::MakeFacts(const APawn* Pawn, FEncounterPawnFacts& OutFacts)
@@ -224,12 +324,15 @@ bool UEncounterService::Initialize(const FEncounterServiceInit& Init)
 		return false;
 	}
 	QueueAdapter = MakeUnique<FEncounterQueueAdapter>(Init.Queue);
-	DefenceStore = MakeUnique<FEncounterComponentDefenceStore>();
+	DefenceStore = MakeUnique<FEncounterComponentDefenceStore>(Init.World);
 	PawnQuery = MakeUnique<FEncounterWorldPawnQuery>(Init.World);
 	RosterGateway = MakeUnique<FEncounterRosterStoreGateway>(Init.Roster != nullptr ? Init.Roster : URosterStore::Get(Init.World));
 	HubEvents = MakeUnique<FEncounterHubEvents>(Init.Hub != nullptr ? Init.Hub : UActionHub::Get(Init.World));
 	PawnStateWriter = MakeUnique<FEncounterPawnStateWriter>();
 	DefaultVisibility = MakeUnique<FEncounterConcealmentVisibility>(Init.Bushes);
+	ReplySink = MakeUnique<FEncounterHubReplySink>(Init.Hub != nullptr ? Init.Hub : UActionHub::Get(Init.World));
+	OwnerCooldown = MakeUnique<FEncounterOwnerCooldownPublisher>(Init.World);
+	HandOver = MakeUnique<FEncounterPawnFactoryHandOver>();
 
 	FAttackResolverDeps Deps;
 	Deps.Clock = Init.Clock;
@@ -244,6 +347,12 @@ bool UEncounterService::Initialize(const FEncounterServiceInit& Init)
 	Deps.PawnState = PawnStateWriter.Get(); // FActionState carries the stance (the SCL pose follows it)
 	Deps.Cards = Init.Cards;
 	Deps.Log = Init.Log;
+	Deps.Tally = Init.Tally;
+	Deps.Replies = ReplySink.Get();
+	Deps.OwnerCooldown = OwnerCooldown.Get();
+	Deps.BodyHandOver = HandOver.Get();
+	Deps.BodyObserver = Init.BodyObserver;
+	Deps.Faults = Init.Faults;
 	Core = MakeUnique<FAttackResolverCore>(Deps, Init.Params);
 	return true;
 }
@@ -255,6 +364,9 @@ void UEncounterService::Shutdown()
 		UnregisterFrom(*RegisteredQueue);
 	}
 	Core.Reset();
+	HandOver.Reset();
+	OwnerCooldown.Reset();
+	ReplySink.Reset();
 	DefaultVisibility.Reset();
 	PawnStateWriter.Reset();
 	HubEvents.Reset();
@@ -274,11 +386,13 @@ bool UEncounterService::RegisterOn(FResolutionQueueCore& Queue)
 	bRegisteredHolds = Queue.RegisterResolver(EQueueItemType::HoldTimer, Core.Get());
 	bRegisteredDeathWrite = Queue.RegisterStagedWriteApplier(EStagedWriteType::DeathWrite, Core->GetStagedWriteApplier());
 	bRegisteredCounterPose = Queue.RegisterStagedWriteApplier(EStagedWriteType::CounterPose, Core->GetStagedWriteApplier());
-	if (bRegisteredCommands || bRegisteredHolds || bRegisteredDeathWrite || bRegisteredCounterPose)
+	bRegisteredBodyRelease = Queue.RegisterTimerResolver(ETimerKind::BodyRelease, Core.Get());
+	bRegisteredBodyRemoval = Queue.RegisterTimerResolver(ETimerKind::BodyRemoval, Core.Get());
+	if (bRegisteredCommands || bRegisteredHolds || bRegisteredDeathWrite || bRegisteredCounterPose || bRegisteredBodyRelease || bRegisteredBodyRemoval)
 	{
 		RegisteredQueue = &Queue;
 	}
-	return bRegisteredCommands && bRegisteredHolds && bRegisteredDeathWrite && bRegisteredCounterPose;
+	return bRegisteredCommands && bRegisteredHolds && bRegisteredDeathWrite && bRegisteredCounterPose && bRegisteredBodyRelease && bRegisteredBodyRemoval;
 }
 
 void UEncounterService::UnregisterFrom(FResolutionQueueCore& Queue)
@@ -303,11 +417,21 @@ void UEncounterService::UnregisterFrom(FResolutionQueueCore& Queue)
 	{
 		Queue.UnregisterStagedWriteApplier(EStagedWriteType::CounterPose);
 	}
+	if (bRegisteredBodyRelease)
+	{
+		Queue.UnregisterTimerResolver(ETimerKind::BodyRelease);
+	}
+	if (bRegisteredBodyRemoval)
+	{
+		Queue.UnregisterTimerResolver(ETimerKind::BodyRemoval);
+	}
 	RegisteredQueue = nullptr;
 	bRegisteredCommands = false;
 	bRegisteredHolds = false;
 	bRegisteredDeathWrite = false;
 	bRegisteredCounterPose = false;
+	bRegisteredBodyRelease = false;
+	bRegisteredBodyRemoval = false;
 }
 
 void UEncounterService::Release()
@@ -318,6 +442,8 @@ void UEncounterService::Release()
 	bRegisteredHolds = false;
 	bRegisteredDeathWrite = false;
 	bRegisteredCounterPose = false;
+	bRegisteredBodyRelease = false;
+	bRegisteredBodyRemoval = false;
 	Shutdown();
 }
 

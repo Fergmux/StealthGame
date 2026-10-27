@@ -3,14 +3,17 @@
 #include "StealthServerOnlyGuard.h"
 
 #include "CoreMinimal.h"
+#include "Server/BodyRemovalObserver.h"
 #include "Server/EncounterTypes.h"
 #include "Server/Queue/StealthQueueResolver.h"
 #include "Server/Queue/StealthStagedWriteApplier.h"
 #include "Server/StrikeWarpPointCore.h"
 #include "Server/StrikeRoleTable.h"
+#include "Server/StrikeTallySource.h"
 #include "Server/VictimResolverCore.h"
 
 class IBushSpotQuery;
+class IStealthFaultSink;
 class IRoundLogWriter;
 class IServerSubSeedSource;
 class IStealthClock;
@@ -36,7 +39,33 @@ struct FAttackResolverDeps
 	IRoundLogWriter* Log = nullptr;
 	/** The replicated pawn state (FActionState, FDeathState; stories asn-012, 013); null: nothing written on the wire. */
 	IEncounterPawnStateWriter* PawnState = nullptr;
+	/** Penalty's tally (story asn-015); null: every FStrikeResult carries {0, false} and Faults gets one report per Attack. */
+	IStrikeTallySource* Tally = nullptr;
+	/** The reply step's per-pass buffers (story asn-015); null: no owner reply is delivered. */
+	IEncounterReplySink* Replies = nullptr;
+	/** The owner-only cooldown end on the PlayerController (story asn-016); null: none published. */
+	IEncounterOwnerCooldown* OwnerCooldown = nullptr;
+	/**
+	 * The body hand-over (story asn-019). When bound, every kill slot schedules the fallen pawn's BodyRelease and
+	 * BodyRemoval TimerFired items (register the core for both ETimerKinds); null: no body sequence (the headless rule tests).
+	 */
+	IEncounterBodyHandOver* BodyHandOver = nullptr;
+	/** Concealment's removal observer (story asn-019); null with a hand-over bound: a fault per removed body. */
+	IBodyRemovalObserver* BodyObserver = nullptr;
+	/** Where a missing tally source or removal observer is reported (EStealthFault::DeadRegistration, EncounterFaultDetail). */
+	IStealthFaultSink* Faults = nullptr;
 };
+
+/** EStealthFault::DeadRegistration Detail values the resolver reports. */
+namespace EncounterFaultDetail
+{
+	inline constexpr int64 NoTallySource = 1;
+	inline constexpr int64 NoBodyRemovalObserver = 2;
+	inline constexpr int64 NoBodyHandOver = 3;
+}
+
+/** BodyReleased(Body) / BodyRemoved(Body): server-only, fired by the body timers' resolution (story asn-019). */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEncounterBodyEvent, APawn* /*Body*/);
 
 /** One staged write the applier applied (observation for tests and the next stories; story asn-013). */
 struct FAppliedEncounterWrite
@@ -102,6 +131,17 @@ namespace StealthEncounterTestSeams
  *
  * Rejected_Latched (OnRejectedLatched): an Attack gets no lockout, pose, outcome or result; its owner reply NotNow is
  * recorded as held (the held-reply buffer releases it at the round-end step). Other kinds go to the fallback.
+ *
+ * Owner results (story asn-015, slot step 8): after the OnPawnKilled fan-out every executed Attack asks the tally source
+ * (whatever its Result), fills FStrikeResult.TallyAfter / bExiled and appends FCommandReply::MakeStrikeResult to the
+ * attacker's sink; a reversal by a bound defender (non-null brace sink) also appends MakeDefenceResult{Reversed} to the
+ * defender's sink, keyed by the defender's Prepare(Begin) seq. A voided command appends MakeRejected(Code) (the IIF's
+ * reply of the slot); a Rejected_Latched one is held (nothing appended). The null sink discards.
+ * Owner cooldown (story asn-016): an executed Prepare(Begin) publishes T_act + DefenceCooldownSec to the owner.
+ * Body sequence (story asn-019, hand-over bound): the kill slot schedules TimerFired(BodyRelease) at Contact +
+ * DeathFallSec and TimerFired(BodyRemoval) at Contact + DeathFallSec + BodyLingerSec + BodyRemovalGraceSec for the fallen
+ * pawn (identical for every victim kind); release -> IEncounterBodyHandOver::ReleaseBody; removal -> the observer, then
+ * RequestTeardown. A Rejected_Latched body item changes nothing: the body lies until Reset.
  */
 class STEALTHGAMEPLAY_API FAttackResolverCore final : public IQueueResolver
 {
@@ -176,8 +216,26 @@ public:
 	/** The warp derivation of one Attack at its slot (pure; story asn-012). */
 	FStrikeWarpPointResult ComputeWarp(const FEncounterPawnFacts& Attacker, const FVector& WorldPoint, const FVictimResolution& Victim, EStrikeReachVariant Variant) const;
 
-	/** Round Reset (story asn-019 asserts it): every role Ready; records dropped. Defence components are cleared by their owner. */
+	/**
+	 * Round Reset (story asn-019, AC-ASN-41): every role Ready; every defence state (stamp, window, lockout) and every owner
+	 * cooldown back to none; pending death / counter writes forgotten (a stale one that still reached the applier is a
+	 * no-op); every body still lying torn down through the hand-over; the body generation bumped so no body item of the
+	 * reset round resolves; records dropped. Safe to call twice and with no body.
+	 */
 	void Reset();
+
+	// --- Body sequence (story asn-019) ------------------------------------------------------------------------------
+
+	/** Every body of the round so far (removed ones too), in kill order (cleared by Reset). */
+	const TArray<FEncounterBody>& GetBodies() const { return Bodies; }
+	/** The body record of Pawn (null when it never fell this round). */
+	const FEncounterBody* FindBody(const APawn* Pawn) const;
+	/** The generation stamped on this round's body items (FTimerPayload.Generation); Reset bumps it. */
+	uint32 GetBodyGeneration() const { return BodyGeneration; }
+	/** Fired when a body's release resolves (after the hand-over released it). */
+	FOnEncounterBodyEvent OnBodyReleased;
+	/** Fired when a body's removal resolves (after the observer, before the teardown). */
+	FOnEncounterBodyEvent OnBodyRemoved;
 
 private:
 	EResolveResult ResolveCommand(const FQueueItem& Item, const FCommandPayload& Cmd, FQueueKey Key);
@@ -196,7 +254,14 @@ private:
 	void ApplyKill(const FQueueItem& Item, FQueueKey Key, APawn* Attacker, FAttackResolution& Resolution);
 	/** The reversal branch (attacker eliminated, brace consumed, Countering). */
 	void ApplyReversal(const FQueueItem& Item, FQueueKey Key, APawn* Attacker, APawn* Defender, FAttackResolution& Resolution);
-	void StageDeath(APawn* Fallen, double ContactServerTime);
+	void StageDeath(const FQueueItem& Item, APawn* Fallen, double ContactServerTime);
+	/** Slot step 8 (story asn-015): the tally, then the owner results appended to their sinks. */
+	void DeliverOwnerResults(const FCommandPayload& Cmd, FQueueKey Key, FAttackResolution& Resolution);
+	void AppendReply(FReplySinkId Sink, FQueueKey Key, const FCommandReply& Reply);
+	/** TimerFired(BodyRelease / BodyRemoval) of the current body generation (story asn-019). */
+	EResolveResult ResolveBodyTimer(const FTimerPayload& Timer);
+	FEncounterBody* FindBodyMutable(const APawn* Pawn);
+	void ReportFault(int64 Detail) const;
 	void LogRow(const FQueueItem& Item, FQueueKey Key, bool bReversal, APawn* Attacker, APawn* Other, EVictimKind Kind);
 	/** Ends Pawn's open window at Key (supersede, reversal): role Cooling-or-Countering is set by the caller. */
 	void EndWindow(APawn* Pawn, FQueueKey Key);
@@ -228,4 +293,9 @@ private:
 	/** Victims killed while concealed (FDeathState.bDiedConcealed at their death write). */
 	TSet<FObjectKey> DiedConcealed;
 	TArray<FAppliedEncounterWrite> AppliedWrites;
+	/** Death / counter writes this round staged and not yet applied (Reset forgets them: a stale one is a no-op). */
+	TSet<FObjectKey> PendingDeaths;
+	TSet<FObjectKey> PendingCounters;
+	TArray<FEncounterBody> Bodies;
+	uint32 BodyGeneration = 1;
 };

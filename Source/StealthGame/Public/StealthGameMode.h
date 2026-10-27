@@ -149,8 +149,10 @@ protected:
 
 	/** OnPawnKilled (in the slot, server state only): records the kill for its death write; the NPC-kill exile stand-in. */
 	void HandleEncounterPawnKilled(APawn* Victim, APawn* Killer, EVictimKind Kind, EKillCause Cause);
-	/** The applied death write: messages, informant respawn, NPC replacement and the prototype ragdoll at contact. */
+	/** The applied death write: the victim's own message, life state, NPC replacement and the stand-in fall at contact. */
 	void HandleEncounterDeathWrite(APawn* Victim, double DeathServerTime, bool bDiedConcealed);
+	/** The body's release (story asn-019, DeathServerTime + DeathFallSec): the informant respawn takeover follows it. */
+	void HandleEncounterBodyReleased(APawn* Body, AController* FormerController);
 	/** The applied CounterPose: the defender's crouch brace ends (never before the death write). */
 	void HandleEncounterCounterPose(APawn* Defender, double ContactServerTime);
 	/** Hub events: the prototype brace stance (crouch) and the strike's reveal from a bush. */
@@ -162,7 +164,8 @@ protected:
 	/** Removes a player from active play without killing their pawn (NPC-kill penalty). */
 	void ExilePlayer(AStealthCharacter* Offender);
 
-	void RespawnInformant(TWeakObjectPtr<AController> Controller);
+	/** Respawns an informant at its team spawn; the released body (still lying until its removal) drops its binding first. */
+	void RespawnInformant(TWeakObjectPtr<AController> Controller, TWeakObjectPtr<APawn> ReleasedBody);
 
 	void MessagePlayer(const AStealthCharacter* Character, const FText& Text, bool bDanger = false, float Duration = 4.f) const;
 	void MessageController(AController* Controller, const FText& Text, bool bDanger = false, float Duration = 4.f) const;
@@ -202,7 +205,10 @@ protected:
 	FDelegateHandle PawnKilledHandle;
 	FDelegateHandle DeathWriteHandle;
 	FDelegateHandle CounterPoseHandle;
+	FDelegateHandle BodyReleasedHandle;
 	FDelegateHandle HubStartedHandle;
 	FDelegateHandle HubCancelledHandle;
 	FDelegateHandle HubCompletedHandle;
+	/** StealthBot commands carry the controller's own sink so owner replies reach it; their seqs start here. */
+	uint32 BotCommandSeq = 0x40000000u;
 };

@@ -11,6 +11,7 @@
 #include "Server/EventLog/StealthRoundLogTypes.h"
 #include "Server/EventLog/StealthRoundLogWriter.h"
 #include "Server/StealthClock.h"
+#include "Server/StealthFaultSink.h"
 
 #if WITH_STEALTH_TEST_SEAMS
 bool StealthEncounterTestSeams::bWriteOutcomeIntoVariant = false;
@@ -94,6 +95,8 @@ EResolveResult FAttackResolverCore::Void(const FCommandPayload& Cmd, FQueueKey K
 	Reply.Code = Code;
 	Reply.Sink = Cmd.Sink;
 	Reply.ClientSeq = Cmd.ClientSeq;
+	// The IIF's reply of the slot (ADR-0011 section 8): the owner learns the code at drain end with every other reply.
+	AppendReply(Cmd.Sink, Key, FCommandReply::MakeRejected(Cmd.ClientSeq, Code));
 	return EResolveResult::Voided;
 }
 
@@ -134,11 +137,29 @@ EResolveResult FAttackResolverCore::Resolve(const FQueueItem& Item, FQueueKey Ke
 			return ResolveCommand(Item, *Cmd, Key);
 		}
 	}
+	if (Item.Type == EQueueItemType::TimerFired)
+	{
+		if (const FTimerPayload* Timer = Item.Payload.TryGet<FTimerPayload>())
+		{
+			return ResolveBodyTimer(*Timer);
+		}
+	}
 	return EResolveResult::Voided;
 }
 
 void FAttackResolverCore::OnRejectedLatched(const FQueueItem& Item, FQueueKey Key)
 {
+	if (Item.Type == EQueueItemType::TimerFired)
+	{
+		// A body item after the Ended latch changes nothing: the body keeps its controller and collision and lies until
+		// Reset (ADR-0018 section 6.3; the round-end step froze every pawn's movement). Only the observation is kept.
+		const FTimerPayload* Timer = Item.Payload.TryGet<FTimerPayload>();
+		if (FEncounterBody* Body = Timer != nullptr && Timer->Generation == BodyGeneration ? FindBodyMutable(Timer->Subject.Pawn.Pawn.Get()) : nullptr)
+		{
+			++Body->LatchedItems;
+		}
+		return;
+	}
 	const FCommandPayload* Cmd = Item.Type == EQueueItemType::PawnCommand ? Item.Payload.TryGet<FCommandPayload>() : nullptr;
 	const ECommandKind Kind = Cmd != nullptr ? static_cast<ECommandKind>(Cmd->Kind) : ECommandKind::Traverse;
 	if (Cmd != nullptr && (Kind == ECommandKind::Attack || Kind == ECommandKind::PrepareBegin || Kind == ECommandKind::PrepareEnd))
@@ -290,6 +311,9 @@ EResolveResult FAttackResolverCore::ResolveAttack(const FQueueItem& Item, const 
 		ApplyReversal(Item, Key, Attacker, Victim.Victim, Resolution);
 	}
 
+	// (8) The owner results, after the OnPawnKilled fan-out (Penalty's tally and exile have applied), in this slot.
+	DeliverOwnerResults(Cmd, Key, Resolution);
+
 	Resolutions.Add(Resolution);
 	RecordExecuted(Cmd, Key);
 	return EResolveResult::Executed;
@@ -322,8 +346,8 @@ void FAttackResolverCore::ApplyKill(const FQueueItem& Item, FQueueKey Key, APawn
 	}
 	// (6) OnPawnKilled for every kind.
 	OnPawnKilled.Broadcast(Victim, Attacker, Kind, EKillCause::Strike);
-	// (7) The contact-time presentation write (story asn-013 applies it).
-	StageDeath(Victim, Resolution.ContactServerTime);
+	// (7) The contact-time presentation write (story asn-013 applies it) and the body sequence (story asn-019).
+	StageDeath(Item, Victim, Resolution.ContactServerTime);
 	// (9) Round's Event Log row.
 	LogRow(Item, Key, /*bReversal*/ false, Attacker, Victim, Kind);
 }
@@ -335,6 +359,7 @@ void FAttackResolverCore::ApplyReversal(const FQueueItem& Item, FQueueKey Key, A
 	Resolution.FallenKind = Kind;
 	Resolution.StrikeResult.Result = EStrikeResult::Reversed;
 	Resolution.DefenderSink = Roles.GetBraceSink(Defender);
+	Resolution.DefenderSeq = Roles.GetBraceSeq(Defender);
 	if (Kind == EVictimKind::Player)
 	{
 		Deps.Roster->RequestElimination(Attacker, ERosterReason::ReversedAgainst, Resolution.ContactServerTime);
@@ -353,7 +378,7 @@ void FAttackResolverCore::ApplyReversal(const FQueueItem& Item, FQueueKey Key, A
 		Deps.Events->OnActionCancelled(Defender, EActionType::Prepare, ECancelReason::Reversed);
 	}
 	// Staged: DeathWrite{A} before CounterPose{V} (TypeRank), the same server step.
-	StageDeath(Attacker, Resolution.ContactServerTime);
+	StageDeath(Item, Attacker, Resolution.ContactServerTime);
 	FStagedWrite Counter;
 	Counter.Type = EStagedWriteType::CounterPose;
 	Counter.ServerTime = Resolution.ContactServerTime - Params.Server.StrikeNetLeadSec;
@@ -361,11 +386,14 @@ void FAttackResolverCore::ApplyReversal(const FQueueItem& Item, FQueueKey Key, A
 	Payload.Defender.Pawn = Defender;
 	Payload.ContactServerTime = Resolution.ContactServerTime;
 	Counter.Payload.Set<FCounterPayload>(Payload);
-	Deps.Queue->StageWrite(Counter);
+	if (Deps.Queue->StageWrite(Counter))
+	{
+		PendingCounters.Add(FObjectKey(Defender));
+	}
 	LogRow(Item, Key, /*bReversal*/ true, Attacker, Defender, Kind);
 }
 
-void FAttackResolverCore::StageDeath(APawn* Fallen, double ContactServerTime)
+void FAttackResolverCore::StageDeath(const FQueueItem& Item, APawn* Fallen, double ContactServerTime)
 {
 	FStagedWrite Death;
 	Death.Type = EStagedWriteType::DeathWrite;
@@ -374,7 +402,130 @@ void FAttackResolverCore::StageDeath(APawn* Fallen, double ContactServerTime)
 	Payload.Victim.Pawn = Fallen;
 	Payload.DeathServerTime = ContactServerTime;
 	Death.Payload.Set<FDeathWritePayload>(Payload);
-	Deps.Queue->StageWrite(Death);
+	if (Deps.Queue->StageWrite(Death))
+	{
+		PendingDeaths.Add(FObjectKey(Fallen));
+	}
+
+	// Story asn-019: the body sequence, the same two due-time items for every victim kind (ADR-0018 section 6). The
+	// controller keeps the dying pawn until the release, so every ownership change follows the visible fall.
+	if (Deps.BodyHandOver == nullptr || Fallen == nullptr || FindBodyMutable(Fallen) != nullptr)
+	{
+		return;
+	}
+	FEncounterBody& Body = Bodies.AddDefaulted_GetRef();
+	Body.Pawn = Fallen;
+	Body.DeathServerTime = ContactServerTime;
+	Body.ReleaseDueServerTime = ContactServerTime + Params.BodyReleaseDelaySec();
+	Body.RemovalDueServerTime = ContactServerTime + Params.BodyRemovalDelaySec();
+	FTimerPayload Timer;
+	Timer.Subject = FSubjectRef::ForPawn(FPawnHandle{ Fallen });
+	Timer.Generation = BodyGeneration;
+	Timer.Kind = ETimerKind::BodyRelease;
+	Deps.Queue->ScheduleAt(Body.ReleaseDueServerTime, FQueueItem::Make(EQueueItemType::TimerFired, Item.Expected, FMailboxId::ServerLocal(), Timer));
+	Timer.Kind = ETimerKind::BodyRemoval;
+	Deps.Queue->ScheduleAt(Body.RemovalDueServerTime, FQueueItem::Make(EQueueItemType::TimerFired, Item.Expected, FMailboxId::ServerLocal(), Timer));
+}
+
+void FAttackResolverCore::DeliverOwnerResults(const FCommandPayload& Cmd, FQueueKey Key, FAttackResolution& Resolution)
+{
+	// Every Result asks the source (a uniform call pattern: the call itself never tells which outcome it was).
+	FStrikeTally Tally;
+	if (Deps.Tally != nullptr)
+	{
+		Tally = Deps.Tally->GetTallyForResult(Resolution.Attacker, Resolution.StrikeResult.Result);
+	}
+	else
+	{
+		ReportFault(EncounterFaultDetail::NoTallySource);
+	}
+	Resolution.StrikeResult.TallyAfter = Tally.TallyAfter;
+	Resolution.StrikeResult.bExiled = Tally.bExiled;
+	AppendReply(Cmd.Sink, Key, FCommandReply::MakeStrikeResult(Resolution.StrikeResult));
+	if (Resolution.HasDefenceResult())
+	{
+		FDefenceResult Defence;
+		Defence.Result = EDefenceResult::Reversed;
+		AppendReply(Resolution.DefenderSink, Key, FCommandReply::MakeDefenceResult(Resolution.DefenderSeq, Defence));
+	}
+}
+
+void FAttackResolverCore::AppendReply(FReplySinkId Sink, FQueueKey Key, const FCommandReply& Reply)
+{
+	if (Deps.Replies != nullptr)
+	{
+		Deps.Replies->AppendReply(Sink, Key, Reply); // the null sink discards in the table, never by a check here
+	}
+}
+
+void FAttackResolverCore::ReportFault(int64 Detail) const
+{
+	if (Deps.Faults != nullptr)
+	{
+		Deps.Faults->Report(EStealthFault::DeadRegistration, TEXT("Assassination"), Detail);
+	}
+}
+
+FEncounterBody* FAttackResolverCore::FindBodyMutable(const APawn* Pawn)
+{
+	return Pawn != nullptr ? Bodies.FindByPredicate([Pawn](const FEncounterBody& Body) { return Body.Pawn == Pawn; }) : nullptr;
+}
+
+const FEncounterBody* FAttackResolverCore::FindBody(const APawn* Pawn) const
+{
+	return const_cast<FAttackResolverCore*>(this)->FindBodyMutable(Pawn);
+}
+
+EResolveResult FAttackResolverCore::ResolveBodyTimer(const FTimerPayload& Timer)
+{
+	APawn* Pawn = Timer.Subject.Pawn.Pawn.Get();
+	FEncounterBody* Body = Timer.Generation == BodyGeneration ? FindBodyMutable(Pawn) : nullptr;
+	if (Body == nullptr || Pawn == nullptr)
+	{
+		return EResolveResult::Voided; // a reset round's item, or a body already gone
+	}
+	if (Timer.Kind == ETimerKind::BodyRelease)
+	{
+		if (Body->IsReleased())
+		{
+			return EResolveResult::Voided;
+		}
+		Body->ReleasedAtServerTime = Now();
+		if (Deps.BodyHandOver != nullptr)
+		{
+			Deps.BodyHandOver->ReleaseBody(Pawn);
+		}
+		else
+		{
+			ReportFault(EncounterFaultDetail::NoBodyHandOver);
+		}
+		OnBodyReleased.Broadcast(Pawn);
+		return EResolveResult::Executed;
+	}
+	if (Timer.Kind == ETimerKind::BodyRemoval)
+	{
+		if (Body->IsRemoved())
+		{
+			return EResolveResult::Voided;
+		}
+		Body->RemovedAtServerTime = Now();
+		// The observer runs for every body (Concealment clears its killed-concealed flags), then the teardown.
+		if (Deps.BodyObserver != nullptr)
+		{
+			Deps.BodyObserver->OnBodyRemovalCommitted(Pawn);
+		}
+		else
+		{
+			ReportFault(EncounterFaultDetail::NoBodyRemovalObserver);
+		}
+		OnBodyRemoved.Broadcast(Pawn);
+		if (Deps.BodyHandOver != nullptr)
+		{
+			Deps.BodyHandOver->RequestTeardown(Pawn);
+		}
+		return EResolveResult::Executed;
+	}
+	return EResolveResult::Voided;
 }
 
 void FAttackResolverCore::LogRow(const FQueueItem& Item, FQueueKey Key, bool bReversal, APawn* Attacker, APawn* Other, EVictimKind Kind)
@@ -440,7 +591,15 @@ EResolveResult FAttackResolverCore::ResolvePrepareBegin(const FQueueItem& Item, 
 	{
 		return Void(Cmd, Key, ECommandRejectCode::Cooldown);
 	}
-	Roles.SetBracing(Pawn, Cmd.Sink);
+	Roles.SetBracing(Pawn, Cmd.Sink, Cmd.ClientSeq);
+	// Story asn-016: the owner's only defence datum, from the same stamp as the Cooldown verdict (F3).
+	if (Deps.OwnerCooldown != nullptr)
+	{
+		if (const TOptional<double> CooldownEnd = State->GetCooldownEndServerTime(Params.Public.DefenceCooldownSec))
+		{
+			Deps.OwnerCooldown->PublishCooldownEnd(Pawn, CooldownEnd.GetValue());
+		}
+	}
 	SetBraceStance(Pawn, true);
 	if (Deps.Events != nullptr)
 	{
@@ -522,6 +681,31 @@ void FAttackResolverCore::Reset()
 	Replies.Reset();
 	DiedConcealed.Reset();
 	AppliedWrites.Reset();
+	PendingDeaths.Reset();
+	PendingCounters.Reset();
+	if (Deps.Defence != nullptr)
+	{
+		Deps.Defence->ResetAll(); // every stamp, window and lockout: none
+	}
+	if (Deps.OwnerCooldown != nullptr)
+	{
+		Deps.OwnerCooldown->ResetAll();
+	}
+	// Bodies go with the round (ADR-0018 section 6.4): the ones still lying are torn down now; the reset round's body items
+	// can never resolve again (generation), whatever the queue still holds.
+	TArray<FEncounterBody> Lying = MoveTemp(Bodies);
+	Bodies.Reset();
+	++BodyGeneration;
+	if (Deps.BodyHandOver != nullptr)
+	{
+		for (const FEncounterBody& Body : Lying)
+		{
+			if (!Body.IsRemoved() && Body.Pawn != nullptr)
+			{
+				Deps.BodyHandOver->RequestTeardown(Body.Pawn);
+			}
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -638,9 +822,9 @@ void FAttackResolverCore::ApplyStagedWrite(const FStagedWrite& Write)
 	{
 		const FDeathWritePayload* Payload = Write.Payload.TryGet<FDeathWritePayload>();
 		APawn* Victim = Payload != nullptr ? Payload->Victim.Pawn.Get() : nullptr;
-		if (Victim == nullptr)
+		if (Victim == nullptr || PendingDeaths.Remove(FObjectKey(Victim)) == 0)
 		{
-			return; // a stale handle (the body is gone): nothing to write
+			return; // a stale handle (the body is gone), or a write of a reset round (story asn-019): nothing to write
 		}
 		FDeathState State;
 		State.DeathServerTime = Payload->DeathServerTime;
@@ -662,9 +846,9 @@ void FAttackResolverCore::ApplyStagedWrite(const FStagedWrite& Write)
 	{
 		const FCounterPayload* Payload = Write.Payload.TryGet<FCounterPayload>();
 		APawn* Defender = Payload != nullptr ? Payload->Defender.Pawn.Get() : nullptr;
-		if (Defender == nullptr || Roles.IsDead(Defender))
+		if (Defender == nullptr || PendingCounters.Remove(FObjectKey(Defender)) == 0 || Roles.IsDead(Defender))
 		{
-			return; // gone, or struck down since: its own death write owns it
+			return; // gone, a reset round's write, or struck down since: its own death write owns it
 		}
 		WritePose(Defender, EActionPose::Counter, 0, Now(), Payload->ContactServerTime, FFixedWarpOffset());
 		FAppliedEncounterWrite& Applied = AppliedWrites.AddDefaulted_GetRef();

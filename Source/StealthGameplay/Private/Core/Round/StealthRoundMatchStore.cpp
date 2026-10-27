@@ -550,6 +550,7 @@ void URoundMatchStore::Tick(float DeltaTime)
 		if (Queue && !Core->HasSessionEnded() && (Core->GetPhase() == ERoundPhase::Active || Core->GetPhase() == ERoundPhase::Ended))
 		{
 			Queue->Drain();
+			OnRoundQueueDrained.Broadcast(); // the reply step's flush (story asn-015)
 		}
 		PublishPublicState();
 	}

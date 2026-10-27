@@ -15,8 +15,7 @@ void AStealthPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME(AStealthPlayerState, Team);
 	DOREPLIFETIME(AStealthPlayerState, LifeState);
-	DOREPLIFETIME_CONDITION(AStealthPlayerState, NpcKills, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(AStealthPlayerState, LastDefenceActivationTime, COND_OwnerOnly);
+	// NpcKills and LastDefenceActivationTime are server only (stories asn-015, asn-016).
 
 #if !UE_BUILD_SHIPPING
 	StealthSpike::ApplyPlayerStateTrims(StaticClass(), OutLifetimeProps); // SPIKE: no-op unless stealth.Spike.IdentityTrims is set
@@ -34,5 +33,7 @@ void AStealthPlayerState::ResetForRound()
 	LifeState = EStealthLifeState::Active;
 	NpcKills = 0;
 	LastDefenceActivationTime = -1.0;
+	WrongTargetTally = 0;
+	bExiledByPendingResult = false;
 	LastPingTime = -1000.0;
 }

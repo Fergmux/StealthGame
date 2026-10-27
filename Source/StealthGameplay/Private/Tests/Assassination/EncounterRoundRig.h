@@ -39,6 +39,12 @@ namespace StealthEncounterTest
 		FCountingCounterApplier Counters;
 		/** Production writes (bProductionWrites): the recorded FActionState / death writes, applied by the core's applier. */
 		FRecordingPawnState PawnState;
+		/** Story asn-019 (bWithBodySequence): the body hand-over and removal observer, the core on both body timer kinds. */
+		FRecordingHandOver HandOver;
+		FRecordingRemovalObserver RemovalObserver;
+		FScriptedTally Tally;
+		FRecordingReplies Replies;
+		FRecordingOwnerCooldown OwnerCooldown;
 		FCallLog Calls;
 		TArray<FKill> Kills;
 		TUniquePtr<FAttackResolverCore> Core;
@@ -49,11 +55,12 @@ namespace StealthEncounterTest
 		 * bProductionWrites (stories asn-012, 013): the core writes FActionState and applies its own DeathWrite and CounterPose
 		 * (the rig's counting appliers are replaced by FAttackResolverCore::GetStagedWriteApplier()), recorded in PawnState.
 		 */
-		explicit FRoundEncounterRig(const TCHAR* Name, bool bProductionWrites = false)
+		explicit FRoundEncounterRig(const TCHAR* Name, bool bProductionWrites = false, bool bWithBodySequence = false)
 			: World(Name)
 			, QueueAdapter(W.Queue.Get())
 		{
 			PawnState.Clock = &W.Rig.Clock;
+			HandOver.Clock = &W.Rig.Clock;
 			Roster.Calls = &Calls;
 			Roster.OnTransition = [this](const APawn* Pawn, ERosterReason Reason)
 			{
@@ -72,6 +79,11 @@ namespace StealthEncounterTest
 			Deps.Visibility = &Visibility;
 			Deps.Log = W.Rig.Core->GetRoundLogWriter();
 			Deps.PawnState = bProductionWrites ? &PawnState : nullptr;
+			Deps.Tally = &Tally;
+			Deps.Replies = &Replies;
+			Deps.OwnerCooldown = &OwnerCooldown;
+			Deps.BodyHandOver = bWithBodySequence ? &HandOver : nullptr;
+			Deps.BodyObserver = bWithBodySequence ? &RemovalObserver : nullptr;
 			Core = MakeUnique<FAttackResolverCore>(Deps, FEncounterParams::Defaults());
 			Core->OnPawnKilled.AddLambda([this](APawn* Victim, APawn* Killer, EVictimKind Kind, EKillCause Cause)
 			{
@@ -80,6 +92,11 @@ namespace StealthEncounterTest
 			});
 			W.Queue->UnregisterResolver(EQueueItemType::PawnCommand);
 			W.Queue->RegisterResolver(EQueueItemType::PawnCommand, Core.Get());
+			if (bWithBodySequence)
+			{
+				W.Queue->RegisterTimerResolver(ETimerKind::BodyRelease, Core.Get());
+				W.Queue->RegisterTimerResolver(ETimerKind::BodyRemoval, Core.Get());
+			}
 			if (bProductionWrites)
 			{
 				W.Queue->UnregisterStagedWriteApplier(EStagedWriteType::DeathWrite);

@@ -1,0 +1,28 @@
+[2026.10.27-07.15.38:288][156]LogStealth: Round started (seed 945558362, 50 NPCs).
+[2026.10.27-07.15.50:364][193]LogStealth: [Bot] Phase=1 Stages=1/1 Winner=255 NPCs=50
+[2026.10.27-07.15.50:364][193]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.27-07.15.50:364][193]LogStealth: [Bot] #0 FergsPC-40D99D264643 team=0 state=Active npcKills=0 pawn=V(X=-2700.00, Y=-2600.00, Z=88.28) prepared=0 concealed=0
+[2026.10.27-07.15.50:364][193]LogStealth: [Bot] #1 FergsPC-EC00D6D34395 team=1 state=Active npcKills=0 pawn=V(X=-2850.00, Y=2600.00, Z=88.28) prepared=0 concealed=0
+[2026.10.27-07.15.50:364][193]LogStealth: [Bot] #2 FergsPC-CD77701C4C63 team=0 state=Active npcKills=0 pawn=V(X=-2550.00, Y=-2630.17, Z=88.27) prepared=0 concealed=0
+[2026.10.27-07.16.01:029][225]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_49 (npc, prepared=0).
+[2026.10.27-07.16.01:346][226]LogStealth: [Encounter] BP_CrowdCharacter_C_13 killed BP_CrowdCharacter_C_49 in the slot (victim kind 1).
+[2026.10.27-07.16.01:681][227]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_49 at 31.801 (DeathServerTime 31.868, concealed 0).
+[2026.10.27-07.16.03:013][231]LogStealth: [Encounter] body BP_CrowdCharacter_C_49 released at 33.134 (controller StealthCrowdController_46).
+[2026.10.27-07.16.12:694][260]LogStealth: [Bot] #1 defend: PrepareBegin submitted
+[2026.10.27-07.16.19:028][279]LogStealth: [Bot] #2 strikes BP_CrowdCharacter_C_37 (enemy, prepared=0).
+[2026.10.27-07.16.19:343][280]LogStealth: [Encounter] BP_CrowdCharacter_C_1 killed BP_CrowdCharacter_C_37 in the slot (victim kind 0).
+[2026.10.27-07.16.19:682][281]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_37 at 49.801 (DeathServerTime 49.868, concealed 0).
+[2026.10.27-07.16.40:089][343]LogStealth: Round started (seed 1062756200, 50 NPCs).
+[2026.10.27-07.16.46:404][362]LogStealth: [Bot] #1 defend: PrepareBegin submitted
+[2026.10.27-07.16.47:410][365]LogStealth: [Bot] #2 strikes BP_CrowdCharacter_C_90 (enemy, prepared=1).
+[2026.10.27-07.16.47:724][366]LogStealth: [Encounter] BP_CrowdCharacter_C_90 reversed and eliminated BP_CrowdCharacter_C_87 in the slot (victim kind 0).
+[2026.10.27-07.16.48:064][367]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_87 at 78.184 (DeathServerTime 78.251, concealed 0).
+[2026.10.27-07.16.49:392][371]LogStealth: [Encounter] body BP_CrowdCharacter_C_87 released at 79.517 (controller StealthPlayerController_2).
+[2026.10.27-07.17.21:414][467]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_94 (npc, prepared=0).
+[2026.10.27-07.17.21:727][468]LogStealth: [Encounter] BP_CrowdCharacter_C_93 killed BP_CrowdCharacter_C_94 in the slot (victim kind 1).
+[2026.10.27-07.17.22:067][469]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_94 at 112.184 (DeathServerTime 112.251, concealed 0).
+[2026.10.27-07.17.23:398][473]LogStealth: [Encounter] body BP_CrowdCharacter_C_94 released at 113.517 (controller StealthCrowdController_88).
+[2026.10.27-07.17.52:408][560]LogStealth: [Bot] #1 strikes BP_CrowdCharacter_C_107 (informant, prepared=0).
+[2026.10.27-07.17.52:731][561]LogStealth: [Encounter] BP_CrowdCharacter_C_90 killed BP_CrowdCharacter_C_107 in the slot (victim kind 2).
+[2026.10.27-07.17.53:063][562]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_107 at 143.184 (DeathServerTime 143.251, concealed 0).
+[2026.10.27-07.17.54:410][566]LogStealth: [Encounter] body BP_CrowdCharacter_C_107 released at 144.517 (controller StealthPlayerController_2).

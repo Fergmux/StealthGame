@@ -3,6 +3,8 @@
 //   - ECommandRejectCode, EHoldOutcome, EActionType, ECancelReason (and the confirmed ECommandKind / ECommandReplyKind
 //     sets): uint8, exact names, contiguous values from 0, exact count.
 //   - FClientCommandSeq, FHoldStatus, FCommandReply, FNetPawnCommand, FNetCommandArgs: exact field names and types.
+//     FCommandReply carries ADR-0018's StrikeResult / DefenceResult payloads since Assassination story asn-015 (the
+//     reserved tags' members Strike and Defence; FStrikeResult and FDefenceResult moved into this header).
 //   - No UObject-pointer field and no ECancelReason field in any reply or command struct; no identity-named field.
 //   - A binary round trip (UScriptStruct::SerializeBin) of each struct is value-equal, including Seq 0, the
 //     uint16/uint32 maxima and an invalid PawnRefGuid (which round-trips as invalid).
@@ -135,7 +137,11 @@ bool FInputCommandReplyTypesTest::RunTest(const FString& Parameters)
 		  { TEXT("ServerStartTime"), TEXT("double") }, { TEXT("ServerEndTime"), TEXT("double") } });
 	StructShape(*this, FCommandReply::StaticStruct(),
 		{ { TEXT("Kind"), TEXT("ECommandReplyKind") }, { TEXT("Seq"), TEXT("FClientCommandSeq") }, { TEXT("Code"), TEXT("ECommandRejectCode") },
-		  { TEXT("Hold"), TEXT("FHoldStatus") } });
+		  { TEXT("Hold"), TEXT("FHoldStatus") }, { TEXT("Strike"), TEXT("FStrikeResult") }, { TEXT("Defence"), TEXT("FDefenceResult") } });
+	StructShape(*this, FStrikeResult::StaticStruct(),
+		{ { TEXT("ClientCommandSeq"), TEXT("FClientCommandSeq") }, { TEXT("Result"), TEXT("EStrikeResult") }, { TEXT("TallyAfter"), TEXT("uint8") },
+		  { TEXT("bExiled"), TEXT("bool") }, { TEXT("ContactServerTime"), TEXT("double") } });
+	StructShape(*this, FDefenceResult::StaticStruct(), { { TEXT("Result"), TEXT("EDefenceResult") } });
 	StructShape(*this, FNetPawnCommand::StaticStruct(),
 		{ { TEXT("Kind"), TEXT("ECommandKind") }, { TEXT("Seq"), TEXT("FClientCommandSeq") }, { TEXT("Args"), TEXT("FNetCommandArgs") } });
 	StructShape(*this, FNetCommandArgs::StaticStruct(),
@@ -145,7 +151,8 @@ bool FInputCommandReplyTypesTest::RunTest(const FString& Parameters)
 
 	// No UObject pointer, no cancel reason, no identity anywhere in the wire and reply structs.
 	const UScriptStruct* WireStructs[] = { FClientCommandSeq::StaticStruct(), FHoldStatus::StaticStruct(), FCommandReply::StaticStruct(),
-		FNetPawnCommand::StaticStruct(), FNetCommandArgs::StaticStruct(), FCourtFixtureId::StaticStruct() };
+		FNetPawnCommand::StaticStruct(), FNetCommandArgs::StaticStruct(), FCourtFixtureId::StaticStruct(), FStrikeResult::StaticStruct(),
+		FDefenceResult::StaticStruct() };
 	for (const UScriptStruct* Struct : WireStructs)
 	{
 		const TArray<FString> ObjectFields = StealthIdentityCheck::FindObjectFields(Struct);

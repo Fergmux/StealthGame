@@ -14,6 +14,8 @@
 #include "StealthCharacter.h"
 #include "StealthGame.h"
 #include "StealthGameMode.h"
+#include "StealthPlayerController.h"
+#include "StealthPlayerState.h"
 
 double FStealthWorldCommandClock::GetServerTimeSeconds() const
 {
@@ -165,5 +167,50 @@ EResolveResult FStealthPrototypeCommandFallback::Resolve(const FQueueItem& Item,
 		return EResolveResult::Executed; // no-ops, as under the D53 prototype queue
 	default:
 		return EResolveResult::Voided; // Attack and Prepare never reach the fallback (Assassination resolves them)
+	}
+}
+
+// ---- FStealthPrototypeStrikeTally (stand-in until the Penalty epic) ------------------------------------------------
+
+FStrikeTally FStealthPrototypeStrikeTally::GetTallyForResult(const APawn* Attacker, EStrikeResult Result)
+{
+	const AStealthCharacter* Character = Cast<AStealthCharacter>(Attacker);
+	AStealthPlayerState* State = Character != nullptr ? Character->GetStealthPlayerState() : nullptr;
+	FStrikeTally Tally;
+	if (State == nullptr)
+	{
+		return Tally;
+	}
+	Tally.TallyAfter = static_cast<uint8>(FMath::Clamp(State->WrongTargetTally, 0, 255));
+	Tally.bExiled = State->bExiledByPendingResult;
+	State->bExiledByPendingResult = false;
+	return Tally;
+}
+
+// ---- FStealthPrototypeBodyRemovalObserver (stand-in until Concealment) --------------------------------------------
+
+void FStealthPrototypeBodyRemovalObserver::OnBodyRemovalCommitted(APawn* Body)
+{
+	UE_LOGF(LogStealth, Verbose, "[Encounter] body removal committed for %ls", Body != nullptr ? *Body->GetName() : TEXT("?"));
+}
+
+// ---- FStealthControllerReplyTransport --------------------------------------------------------------------------------
+
+void FStealthControllerReplyTransport::SendCommandReplies(FReplySinkId Sink, const TArray<FCommandReply>& Replies)
+{
+	UWorld* Target = World.Get();
+	if (Target == nullptr)
+	{
+		return;
+	}
+	for (FConstPlayerControllerIterator It = Target->GetPlayerControllerIterator(); It; ++It)
+	{
+		AStealthPlayerController* Controller = Cast<AStealthPlayerController>(It->Get());
+		const FReplySinkId Held = Controller != nullptr ? Controller->GetReplySink() : FReplySinkId();
+		if (Controller != nullptr && Held.Index == Sink.Index && Held.Generation == Sink.Generation)
+		{
+			Controller->ClientCommandReplies(Replies);
+			return;
+		}
 	}
 }

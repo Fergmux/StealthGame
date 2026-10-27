@@ -31,12 +31,13 @@ EStrikeRole FStrikeRoleTable::GetRole(const APawn* Pawn, double NowServerTime, c
 	return bCooling ? EStrikeRole::Cooling : EStrikeRole::Ready;
 }
 
-void FStrikeRoleTable::SetBracing(const APawn* Pawn, FReplySinkId BraceSink)
+void FStrikeRoleTable::SetBracing(const APawn* Pawn, FReplySinkId BraceSink, const FClientCommandSeq& BraceSeq)
 {
 	FEntry& Entry = FindOrAdd(Pawn);
 	Entry.Role = EStrikeRole::Bracing;
 	Entry.RoleEndServerTime = 0.0;
 	Entry.BraceSink = BraceSink;
+	Entry.BraceSeq = BraceSeq;
 }
 
 void FStrikeRoleTable::EndBrace(const APawn* Pawn)
@@ -93,6 +94,12 @@ FReplySinkId FStrikeRoleTable::GetBraceSink(const APawn* Pawn) const
 {
 	const FEntry* Entry = Find(Pawn);
 	return Entry != nullptr ? Entry->BraceSink : FReplySinkId();
+}
+
+FClientCommandSeq FStrikeRoleTable::GetBraceSeq(const APawn* Pawn) const
+{
+	const FEntry* Entry = Find(Pawn);
+	return Entry != nullptr ? Entry->BraceSeq : FClientCommandSeq();
 }
 
 double FStrikeRoleTable::GetRoleEnd(const APawn* Pawn) const

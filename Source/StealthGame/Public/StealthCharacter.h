@@ -96,8 +96,16 @@ public:
 
 	// ---- Server-side mutation (called by the game mode) ----------------------------------
 
-	/** Server: plays the death (ragdoll) on every machine and schedules removal. */
+	/** Server: plays the death (ragdoll) on every machine and schedules removal (the S10 harness scenarios' immediate kill). */
 	void KillCharacter();
+
+	/**
+	 * Server, STAND-IN fall (until stories asn-018 / asn-020 own the strike clips and the client fall and linger): the
+	 * prototype ragdoll on every machine at the death write's DeathServerTime. Unlike KillCharacter it neither unpossesses
+	 * nor schedules a removal, and the server keeps the capsule's collision: the body sequence (story asn-019) releases the
+	 * body from its controller at DeathServerTime + DeathFallSec and removes it through the round queue.
+	 */
+	void BeginDeathFallPresentation();
 
 	/** Server: ends any defensive preparation. */
 	void StopDefence();
@@ -144,17 +152,21 @@ protected:
 	void UpdateConcealmentVisibility();
 
 	void ApplyAppearance();
-	void ApplyDeathPresentation();
+	/** The ragdoll; bDisableCapsule false keeps the capsule's collision (the server's body before its release). */
+	void ApplyDeathPresentation(bool bDisableCapsule = true);
 	void SetDefenceStance(bool bPrepared);
+
+	/**
+	 * The owner's predicted brace stance follows its replicated FActionState (story asn-016: the defence state is never
+	 * replicated, so the Brace pose, which every client sees anyway, confirms or undoes the prediction).
+	 */
+	virtual void HandleActionStateChanged() override;
 
 	UFUNCTION()
 	void OnRep_AppearanceIndex();
 
 	UFUNCTION()
 	void OnRep_Dying();
-
-	UFUNCTION()
-	void OnRep_PreparingDefence();
 
 	/** Head-mounted camera for first-person mode. Inactive in third person. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stealth")
@@ -170,7 +182,7 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_Dying)
 	bool bDying = false;
 
-	UPROPERTY(ReplicatedUsing = OnRep_PreparingDefence)
+	/** Server only (story asn-016): the prototype brace tell is running. Clients read the replicated FActionState pose. */
 	bool bPreparingDefence = false;
 
 	/** In a bush. Replicated to all so each client can hide enemies locally (prototype; see header note). */

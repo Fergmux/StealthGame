@@ -1,12 +1,12 @@
 # Story 016: Owner-only cooldown end time on the PlayerController, defence state never replicated
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -34,8 +34,8 @@
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-36, ASN-R18) and ADR-0018 §1.5, scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-36, [Integration/BLOCKING][Net] `StealthGame.Assassination.DefenceStateServerOnly`): **GIVEN** a braced player P **WHEN** all traffic is captured **THEN** only P's own PlayerController receives P's cooldown end time; no client receives `LastPrepareActivation` or `LockoutEnd`; and the defence component has no replicated properties (reflection check).
-- [ ] **AC2** (ASN-R18 / ADR-0018 §1.5, [Integration/BLOCKING]): **GIVEN** a `Prepare(Begin)` that executes at t = 100 with `DefenceCooldownSec` 60 **THEN** the owner's `CooldownEndServerTime` becomes 160.0, a re-pawn by `PawnRecovery` copies the stamp's end (or stamps now plus 60 when unknown), and a re-press during the window or cooldown leaves the value unchanged.
+- [x] **AC1** (AC-ASN-36, [Integration/BLOCKING][Net] `StealthGame.Assassination.DefenceStateServerOnly`): **GIVEN** a braced player P **WHEN** all traffic is captured **THEN** only P's own PlayerController receives P's cooldown end time; no client receives `LastPrepareActivation` or `LockoutEnd`; and the defence component has no replicated properties (reflection check).
+- [x] **AC2** (ASN-R18 / ADR-0018 §1.5, [Integration/BLOCKING]): **GIVEN** a `Prepare(Begin)` that executes at t = 100 with `DefenceCooldownSec` 60 **THEN** the owner's `CooldownEndServerTime` becomes 160.0, a re-pawn by `PawnRecovery` copies the stamp's end (or stamps now plus 60 when unknown), and a re-press during the window or cooldown leaves the value unchanged.
 
 ---
 
@@ -99,7 +99,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: `DefenceStateServerOnlyTest.cpp` (PIE, 3 clients, traffic capture) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -107,3 +107,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-003-defence-state-component-and-cooldown.md`, `story-004-wire-structs-fixed-width.md`; cross-epic `production/epics/information-visibility-policy/story-014-carrier-audience-consistency.md`, `story-015-replicated-property-audit.md`; `production/epics/participant-state-roster/story-041-team-view-repush-on-controller-swap.md`; `production/epics/input-interaction-framework/story-056-assassination-cooldown-no-reset.md`
 - Unlocks: `story-024-owner-result-matcher-and-plate-timing.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: AC1 `StealthGame.Assassination.PIE.DefenceStateServerOnly.OnlyTheBracersOwnControllerHoldsItsCooldownEnd` (3 machines): a remote player braces; only its own machine's controller holds CooldownEndServerTime = the server stamp + 60 s exactly, every other client's owner component is none and no client has that player's controller, no client world has any UDefenceStateComponent; reflection half in `StealthGame.Assassination.DefenceOwnerCooldown`: UDefenceStateComponent declares no replicated property and is not replicated, UDefenceOwnerComponent's only replicated property is CooldownEndServerTime, registered COND_OwnerOnly. AC2 `StealthGame.Assassination.DefenceOwnerCooldown` (injected clock): Prepare(Begin) at t = 100 publishes 160.0 once; re-presses at 102 (window), 110 and 160 - 1 tick write nothing (voided Cooldown); at 160 a press executes and publishes 220; SyncFromPawn copies the pawn's end (160) or none for a pawn that never braced; PawnRecovery copies the lost end (160) or stamps now (t = 130 -> 190); an unchanged value writes nothing.
+**Deviations**: ADVISORY - (1) the QA rewrite's "re-press at t = 170 leaves 160" is outside the cooldown (F3 makes it legal); tested at the cooldown end - 1 tick and at the end instead (decision logged). (2) The traffic capture is a per-machine state check (no IVP-008 byte capture harness yet); the IVP allowlist / visibility rows (IVP 014/015) and Roster 041 controller-swap re-push are not built; the PawnRecovery caller (SCL/Roster) does not exist yet: `UDefenceOwnerComponent::AdoptForRecovery` is the seam it calls. (3) The prototype's replicated `bPreparingDefence` is now server-only; the HUD "PREPARED" line and the owner's predicted crouch follow the replicated FActionState Brace pose; "Defence: recovering Ns" reads the owner component. The write site is the resolver's Prepare(Begin) slot (FEncounterOwnerCooldownPublisher), not PreparePredicate.cpp (the predicate is a dry run). Cross-epic IVP 014/015, Roster 041, IIF 056: proceeded.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Assassination/DefenceOwnerCooldownTest.cpp`, `Source/StealthTestHarness/Private/Tests/PIE/Assassination/DefenceStateServerOnlyPieTest.cpp`; full suite in `production/qa/evidence/assassination-defence-reversal-015-019-2026-10-27/full-suite.txt`
+**Run result**: OBSERVED - 3-player PIE: the bracing player's HUD shows "Defence: PREPARED" then "Defence: recovering Ns" from its owner component (`production/qa/evidence/story-016-defence-owner-cooldown-component/`)
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

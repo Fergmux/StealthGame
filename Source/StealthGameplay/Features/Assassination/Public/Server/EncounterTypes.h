@@ -124,6 +124,10 @@ struct STEALTHGAMEPLAY_API FEncounterParams
 	double ContactSec(EStrikeReachVariant Variant) const;
 	/** r_c + OpenSpotToleranceCm: the open-spot candidate radius around the WorldPoint (rule 3). */
 	double OpenSpotRadiusCm() const { return CapsuleRadiusCm + Server.OpenSpotToleranceCm; }
+	/** BodyRelease after DeathServerTime: DeathFallSec (ASN-R17; story asn-019). */
+	double BodyReleaseDelaySec() const { return Public.DeathFallSec; }
+	/** BodyRemoval after DeathServerTime: DeathFallSec + BodyLingerSec + BodyRemovalGraceSec (ASN-R17, ASN-R22). */
+	double BodyRemovalDelaySec() const { return static_cast<double>(Public.DeathFallSec) + Public.BodyLingerSec + Public.BodyRemovalGraceSec; }
 };
 
 /** What the resolver reads about one pawn at the slot (server capsule state; never bones, never kind or team). */
@@ -203,6 +207,37 @@ public:
 	virtual FDefenceStateCore* Find(const APawn* Pawn) = 0;
 	/** The state, created on the first defence write (an executed Prepare or Attack). */
 	virtual FDefenceStateCore* FindOrAdd(const APawn* Pawn) = 0;
+	/** Round Reset (story asn-019): every pawn's state back to none (stamp, window, lockout). */
+	virtual void ResetAll() = 0;
+};
+
+/**
+ * The reply step's per-pass buffers (ADR-0011 section 8; production: UActionHub::GetReplySinks(), flushed once per
+ * connection at drain end; tests: a recorder). The resolver appends inside the slot that produced the reply; the null
+ * sink (index 0) discards. Optional: with none bound no owner reply is delivered (the headless rule tests).
+ */
+class IEncounterReplySink
+{
+public:
+	virtual ~IEncounterReplySink() = default;
+
+	virtual void AppendReply(FReplySinkId Sink, FQueueKey SlotKey, const FCommandReply& Reply) = 0;
+};
+
+/**
+ * The owner-only cooldown end (ADR-0018 section 1.5; story asn-016): written at an executed Prepare(Begin) as
+ * T_act + DefenceCooldownSec on the owning PlayerController's UDefenceOwnerComponent (an AI-driven pawn has none: nothing
+ * is written). Production: FEncounterOwnerCooldownPublisher; tests: a recorder. Optional.
+ */
+class IEncounterOwnerCooldown
+{
+public:
+	virtual ~IEncounterOwnerCooldown() = default;
+
+	/** The pawn's owner (if a PlayerController) now shows CooldownEndServerTime. */
+	virtual void PublishCooldownEnd(APawn* Pawn, double CooldownEndServerTime) = 0;
+	/** Round Reset: every owner's value back to none (-1). */
+	virtual void ResetAll() = 0;
 };
 
 /** What the resolver asks of the round queue from inside its slot (production: FEncounterQueueAdapter). */
@@ -297,6 +332,25 @@ struct FEncounterCommandReply
 	}
 };
 
+/** One killed pawn's body sequence (story asn-019): scheduled in the kill slot, observed by tests and the next stories. */
+struct FEncounterBody
+{
+	APawn* Pawn = nullptr;
+	/** The deciding strike's contact (FDeathState.DeathServerTime). */
+	double DeathServerTime = 0.0;
+	/** Due times of the two TimerFired items. */
+	double ReleaseDueServerTime = 0.0;
+	double RemovalDueServerTime = 0.0;
+	/** Server times the release / removal resolved (negative while pending). */
+	double ReleasedAtServerTime = -1.0;
+	double RemovedAtServerTime = -1.0;
+	/** Release / removal items that arrived after the Ended latch (Rejected_Latched; the body lies until Reset). */
+	int32 LatchedItems = 0;
+
+	bool IsReleased() const { return ReleasedAtServerTime >= 0.0; }
+	bool IsRemoved() const { return RemovedAtServerTime >= 0.0; }
+};
+
 /** One executed Attack, everything its slot decided (stories asn-012, 013, 015 read it). */
 struct FAttackResolution
 {
@@ -322,6 +376,8 @@ struct FAttackResolution
 	bool bVictimConcealed = false;
 	/** Reversal: the defender's Prepare sink (index 0 = the null sink of an AI-driven pawn: no FDefenceResult). */
 	FReplySinkId DefenderSink;
+	/** Reversal: the defender's Prepare(Begin) seq (its FDefenceResult entry answers it; story asn-015). */
+	FClientCommandSeq DefenderSeq;
 	/** The attacker's slot write (story asn-012): FActionState.Variant and WarpPoint, and the clamped world target. */
 	uint8 StrikeVariantBits = 0;
 	FFixedWarpOffset WarpPoint;

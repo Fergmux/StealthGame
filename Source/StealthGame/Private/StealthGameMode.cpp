@@ -810,6 +810,10 @@ void AStealthGameMode::BindEncounterService(UEncounterService& Service)
 	{
 		CounterPoseHandle = Counter->AddUObject(this, &AStealthGameMode::HandleEncounterCounterPose);
 	}
+	if (FOnEncounterBodyReleased* Released = Service.GetOnBodyReleased())
+	{
+		BodyReleasedHandle = Released->AddUObject(this, &AStealthGameMode::HandleEncounterBodyReleased);
+	}
 	if (UActionHub* Hub = UActionHub::Get(GetWorld()))
 	{
 		HubStartedHandle = Hub->OnActionStarted.AddUObject(this, &AStealthGameMode::HandleHubActionStarted);
@@ -834,6 +838,10 @@ void AStealthGameMode::UnbindEncounters()
 		{
 			Counter->Remove(CounterPoseHandle);
 		}
+		if (FOnEncounterBodyReleased* Released = Service->GetOnBodyReleased())
+		{
+			Released->Remove(BodyReleasedHandle);
+		}
 	}
 	if (UActionHub* Hub = UActionHub::Get(GetWorld()))
 	{
@@ -853,15 +861,22 @@ void AStealthGameMode::HandleEncounterPawnKilled(APawn* Victim, APawn* Killer, E
 	UE_LOG(LogStealth, Log, TEXT("[Encounter] %s %s %s in the slot (victim kind %d)."), Killer != nullptr ? *Killer->GetName() : TEXT("?"),
 		Cause == EKillCause::Reversal ? TEXT("reversed and eliminated") : TEXT("killed"), Victim != nullptr ? *Victim->GetName() : TEXT("?"), static_cast<int32>(Kind));
 
-	// STAND-IN for the Penalty epic (strike tally, NpcKillStrikeLimit exile): the prototype NPC-kill count and exile.
+	// STAND-IN for the Penalty epic (story asn-015: FStealthPrototypeStrikeTally reads these after this fan-out, in the same
+	// slot): the owner's "Wrong targets" tally rises for every WrongTarget (an NPC and an informant kill alike, PEN-R14);
+	// the strike count (NpcKills, server only) only for an NPC, and the kill that reaches NpcKillLimit exiles (bExiled).
 	AStealthCharacter* Attacker = Cast<AStealthCharacter>(Killer);
 	AStealthPlayerState* AttackerPS = Attacker != nullptr ? Attacker->GetStealthPlayerState() : nullptr;
+	if (Cause == EKillCause::Strike && (Kind == EVictimKind::Npc || Kind == EVictimKind::Informant) && AttackerPS != nullptr)
+	{
+		++AttackerPS->WrongTargetTally;
+	}
 	if (Cause == EKillCause::Strike && Kind == EVictimKind::Npc && AttackerPS != nullptr)
 	{
 		++AttackerPS->NpcKills;
 		if (FStealthRules::ShouldRemoveForNpcKills(AttackerPS->NpcKills, UStealthSettings::Get()->NpcKillLimit))
 		{
 			ExilePlayer(Attacker);
+			AttackerPS->bExiledByPendingResult = true;
 		}
 	}
 }
@@ -877,39 +892,23 @@ void AStealthGameMode::HandleEncounterDeathWrite(APawn* Victim, double DeathServ
 	{
 		return;
 	}
-	AStealthCharacter* Killer = Cast<AStealthCharacter>(Kill.Killer.Get());
-	const UStealthSettings* Settings = UStealthSettings::Get();
-	if (Kill.Cause == EKillCause::Reversal)
+	// The attacker's and the defender's owner results travel as FStrikeResult / FDefenceResult entries of their own
+	// ClientCommandReplies (story asn-015; the plates are the controller's stand-in until story asn-024). Only the fallen
+	// player's own removal message remains here, one text for an assassination and a reversal alike.
+	if (Kill.Cause == EKillCause::Reversal || Kill.Kind == EVictimKind::Player)
 	{
-		MessagePlayer(Killer, LOCTEXT("Reversal", "Reversal! Your attacker is eliminated."), false, 5.f);
-		MessagePlayer(Body, LOCTEXT("Reversed", "Your target was ready. You have been eliminated and are now an informant."), true, 6.f);
-	}
-	else if (Kill.Kind == EVictimKind::Player)
-	{
-		MessagePlayer(Killer, LOCTEXT("KillEnemy", "Target eliminated: an enemy agent."));
-		MessagePlayer(Body, LOCTEXT("YouDied", "You were assassinated. You are now an informant."), true, 6.f);
+		MessagePlayer(Body, LOCTEXT("YouWereEliminated", "You have been eliminated. You are now an informant."), true, 6.f);
 	}
 	else if (Kill.Kind == EVictimKind::Informant)
 	{
-		MessagePlayer(Killer, LOCTEXT("KillInformant", "An enemy informant, silenced for now."));
 		MessagePlayer(Body, LOCTEXT("InformantDied", "You were silenced. Returning to your team's spawn."), true);
 	}
-	else if (const AStealthPlayerState* KillerPS = Killer != nullptr ? Killer->GetStealthPlayerState() : nullptr; KillerPS != nullptr && KillerPS->IsActivePlayer())
-	{
-		MessagePlayer(Killer, FText::Format(LOCTEXT("KillNpc", "A civilian. Civilians killed: {0}/{1}."), KillerPS->NpcKills, Settings->NpcKillLimit), true);
-	}
 
-	// A player's body (Active or informant): the prototype life state and the informant respawn at the team spawn. The
-	// Roster transition already ran in the slot (the production resolver); nothing here transitions again.
+	// A player's body (Active or informant): the prototype life state. The Roster transition already ran in the slot; the
+	// informant respawn waits for the body's release (story asn-019, HandleEncounterBodyReleased).
 	if (AStealthPlayerState* PS = Body->GetStealthPlayerState())
 	{
 		PS->LifeState = EStealthLifeState::Informant;
-		if (AController* Controller = Body->GetController())
-		{
-			FTimerHandle& Handle = PendingTimers.AddDefaulted_GetRef();
-			GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateUObject(this, &AStealthGameMode::RespawnInformant, TWeakObjectPtr<AController>(Controller)),
-				FMath::Max(0.1f, Settings->InformantRespawnDelay), false);
-		}
 	}
 	else
 	{
@@ -917,12 +916,13 @@ void AStealthGameMode::HandleEncounterDeathWrite(APawn* Victim, double DeathServ
 		ScheduleNpcReplacement();
 	}
 
-	// STAND-IN presentation (until stories asn-018 to asn-020: strike clips, fall montage, linger): the prototype ragdoll,
-	// started at DeathServerTime (the strike's contact) so every client sees the body fall at contact.
+	// STAND-IN presentation (until stories asn-018 / asn-020: strike clips, client fall montage and linger): the prototype
+	// ragdoll, started at DeathServerTime (the strike's contact) so every client sees the body fall at contact. The body
+	// keeps its controller and capsule here: the release and removal are the queue's BodyRelease / BodyRemoval items.
 	const double Delay = DeathServerTime - GetWorld()->GetTimeSeconds();
 	if (Delay <= 0.0)
 	{
-		Body->KillCharacter();
+		Body->BeginDeathFallPresentation();
 		return;
 	}
 	TWeakObjectPtr<AStealthCharacter> WeakBody(Body);
@@ -931,9 +931,28 @@ void AStealthGameMode::HandleEncounterDeathWrite(APawn* Victim, double DeathServ
 	{
 		if (AStealthCharacter* Pending = WeakBody.Get())
 		{
-			Pending->KillCharacter();
+			Pending->BeginDeathFallPresentation();
 		}
 	}), static_cast<float>(Delay), false);
+}
+
+void AStealthGameMode::HandleEncounterBodyReleased(APawn* Body, AController* FormerController)
+{
+	APlayerController* Player = Cast<APlayerController>(FormerController);
+	const AStealthPlayerState* PS = Player != nullptr ? Player->GetPlayerState<AStealthPlayerState>() : nullptr;
+	UE_LOG(LogStealth, Log, TEXT("[Encounter] body %s released at %.3f (controller %s)."), Body != nullptr ? *Body->GetName() : TEXT("?"), GetWorld()->GetTimeSeconds(),
+		FormerController != nullptr ? *FormerController->GetName() : TEXT("none"));
+	if (PS == nullptr || !PS->IsInformant())
+	{
+		return;
+	}
+	// The informant respawn takeover follows the visible fall (story asn-019 AC1; Penalty rule C1's T_due floor): the
+	// prototype delay counts from the death, so the wait left after the release is the delay minus the fall.
+	const float Fall = FEncounterParams::Defaults().Public.DeathFallSec;
+	const float Wait = FMath::Max(0.1f, UStealthSettings::Get()->InformantRespawnDelay - Fall);
+	FTimerHandle& Handle = PendingTimers.AddDefaulted_GetRef();
+	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateUObject(this, &AStealthGameMode::RespawnInformant, TWeakObjectPtr<AController>(Player),
+		TWeakObjectPtr<APawn>(Body)), Wait, false);
 }
 
 void AStealthGameMode::HandleEncounterCounterPose(APawn* Defender, double ContactServerTime)
@@ -1001,15 +1020,26 @@ void AStealthGameMode::ExilePlayer(AStealthCharacter* Offender)
 	}
 	Offender->StopDefence();
 	HandleInteractRequest(Offender, false);
-	MessagePlayer(Offender, FText::Format(LOCTEXT("Exiled", "Exiled for killing {0} civilians. You are now an informant: watch, and report to your team."), PS->NpcKills), true, 8.f);
+	// The exile beat is the owner's: bExiled rides the kill's FStrikeResult (story asn-015) and the controller shows it
+	// after the plate; a server message here would arrive in the slot, before contact.
 }
 
-void AStealthGameMode::RespawnInformant(TWeakObjectPtr<AController> Controller)
+void AStealthGameMode::RespawnInformant(TWeakObjectPtr<AController> Controller, TWeakObjectPtr<APawn> ReleasedBody)
 {
 	AController* Resolved = Controller.Get();
 	if (!Resolved || !IsRoundInProgress())
 	{
 		return;
+	}
+	if (APawn* Body = ReleasedBody.Get())
+	{
+		// The released body lies until its BodyRemoval; its Roster row goes now so the participant binds its new pawn (the
+		// informant-kill RetireBinding is story psr-020).
+		URosterStore* Roster = URosterStore::Get(GetWorld());
+		if (Roster && Roster->IsMatchOpen())
+		{
+			Roster->ClearBinding(Body, EEndPlayReason::RemovedFromWorld);
+		}
 	}
 	if (APawn* Old = Resolved->GetPawn())
 	{
@@ -1230,6 +1260,33 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 		return;
 	}
 
+	// Bot commands carry this controller's own origin (mailbox, reply sink, recorded control epoch), as ingress would for
+	// its client, so the owner results of story asn-015 reach that connection.
+	const auto AsOwner = [this, Controller, Pawn](TFunctionRef<void(UPawnCommandComponent&)> Submit)
+	{
+		UPawnCommandComponent* Command = Pawn->GetPawnCommand();
+		AStealthPlayerController* OwnerController = Cast<AStealthPlayerController>(Controller);
+		if (Command == nullptr)
+		{
+			return;
+		}
+		if (OwnerController == nullptr)
+		{
+			Submit(*Command);
+			return;
+		}
+		const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld());
+		const FParticipantId Participant = Root ? Root->GetParticipant(OwnerController) : FParticipantId();
+		FCommandOrigin Origin;
+		Origin.Mailbox = Participant.IsValid() ? FMailboxId::ForParticipant(Participant) : FMailboxId::ServerLocal();
+		Origin.Sink = OwnerController->GetReplySink();
+		FClientCommandSeq Seq;
+		Seq.PossessionEpoch = OwnerController->GetServerPossessionEpoch();
+		Seq.Seq = ++BotCommandSeq;
+		FScopedCommandOrigin Scope(*Command, Origin, Seq, OwnerController->GetPossessedControlEpoch());
+		Submit(*Command);
+	};
+
 	auto FaceAndApproach = [Pawn](const AActor* Target, float Distance)
 	{
 		const FVector Away = (Pawn->GetActorLocation() - Target->GetActorLocation()).GetSafeNormal2D();
@@ -1291,20 +1348,20 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 		FAttackPayload Strike;
 		Strike.WorldPoint = Best->GetActorLocation();
 		Strike.PawnRef = Best;
-		Pawn->GetPawnCommand()->Attack(Strike);
+		AsOwner([&Strike](UPawnCommandComponent& Command) { Command.Attack(Strike); });
 		return;
 	}
 
 	if (Action.Equals(TEXT("defend"), ESearchCase::IgnoreCase))
 	{
-		Pawn->GetPawnCommand()->PrepareBegin(); // resolved in the next drain's slot
+		AsOwner([](UPawnCommandComponent& Command) { Command.PrepareBegin(); }); // resolved in the next drain's slot
 		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d defend: PrepareBegin submitted"), PlayerIndex);
 		return;
 	}
 
 	if (Action.Equals(TEXT("release"), ESearchCase::IgnoreCase))
 	{
-		Pawn->GetPawnCommand()->PrepareEnd();
+		AsOwner([](UPawnCommandComponent& Command) { Command.PrepareEnd(); });
 		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d release: PrepareEnd submitted"), PlayerIndex);
 		return;
 	}
@@ -1380,7 +1437,7 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 				UE_LOG(LogStealth, Log, TEXT("[Bot] #%d blind-strikes at %s."), PlayerIndex, *StrikePoint.ToCompactString());
 				FAttackPayload Strike;
 				Strike.WorldPoint = StrikePoint; // no PawnRef: a TargetSpot strike at the bush (rule 2)
-				Pawn->GetPawnCommand()->Attack(Strike);
+				AsOwner([&Strike](UPawnCommandComponent& Command) { Command.Attack(Strike); });
 				return;
 			}
 		}

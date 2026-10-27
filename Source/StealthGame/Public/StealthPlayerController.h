@@ -10,6 +10,7 @@
 
 class URosterTeamViewComponent;
 class UPawnCommandClient;
+class UDefenceOwnerComponent;
 
 /** A message shown on the HUD (kill confirmation, removal notice, stage progress...). */
 USTRUCT()
@@ -123,6 +124,18 @@ public:
 	/** Owner: replies received so far (development HUD and tests). */
 	int32 GetReceivedReplyCount() const { return ReceivedReplyCount; }
 
+	/** Owner: the latest received reply entries (at most MaxKeptReplies, oldest first; tests and story asn-024's matcher). */
+	const TArray<FCommandReply>& GetReceivedReplies() const { return ReceivedReplies; }
+
+	/**
+	 * Owner: the "Wrong targets" tally the HUD shows: FStrikeResult.TallyAfter of the latest result plate, changed only at
+	 * that plate's show time (HUD-R7; story asn-015 stand-in until story asn-024).
+	 */
+	int32 GetShownWrongTargetTally() const;
+
+	/** The owner-only cooldown end (story asn-016): the only defence datum a client holds. */
+	UDefenceOwnerComponent* GetDefenceOwner() const { return DefenceOwner; }
+
 #if !UE_BUILD_SHIPPING
 	/** Every possession event of every AStealthPlayerController in this process (spike V2); cleared by the spike. */
 	static TArray<FStealthPossessionTraceEvent>& GetPossessionTrace();
@@ -140,6 +153,8 @@ public:
 
 	virtual void SetupInputComponent() override;
 	virtual void OnPossess(APawn* InPawn) override;
+	/** A body release (UStealthPawnFactory::IsReleasingBody, story asn-019) keeps the view target on the falling body. */
+	virtual void OnUnPossess() override;
 	virtual void ClientRestart_Implementation(APawn* NewPawn) override;
 	/** Owner: an unpossession or a new pawn arrived by replication; outstanding Begins are ended first (story iif-013 d). */
 	virtual void OnRep_Pawn() override;
@@ -210,6 +225,17 @@ protected:
 	uint32 PossessedControlEpoch = 0;
 	FReplySinkId ReplySink;
 	int32 ReceivedReplyCount = 0;
+	TArray<FCommandReply> ReceivedReplies;
+	int32 ShownWrongTargetTally = 0;
+	/** The round (FRoundPublicState::RoundIndex) of the shown tally: a new round shows 0 (HUD-R7). */
+	uint32 ShownTallyRoundIndex = 0;
+
+	/** Owner, STAND-IN for story asn-024's plates: the result's HUD message at its contact time (DefenceResult at once). */
+	void PresentOwnerResult(const FCommandReply& Reply);
+
+	/** The owner-only cooldown end (story asn-016), replicated to the owning connection only. */
+	UPROPERTY(VisibleAnywhere, Category = "Stealth")
+	TObjectPtr<UDefenceOwnerComponent> DefenceOwner;
 
 	/** C-TeamView, Roster part (ADR-0001): replicated to the owning connection only. */
 	UPROPERTY(VisibleAnywhere, Category = "Stealth")

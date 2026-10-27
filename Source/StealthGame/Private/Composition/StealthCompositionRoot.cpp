@@ -401,7 +401,8 @@ void UStealthCompositionRoot::Initialize(FSubsystemCollectionBase& Collection)
 	if (Round != nullptr)
 	{
 		QueueReleasingHandle = Round->OnRoundQueueReleasing.AddUObject(this, &UStealthCompositionRoot::HandleRoundQueueReleasing);
-		RoundActiveHandle = Round->OnRoundActive.AddUObject(this, &UStealthCompositionRoot::HandleRoundActive);
+		RoundPhaseHandle = Round->OnPhaseChanged.AddUObject(this, &UStealthCompositionRoot::HandleRoundPhaseChanged);
+		QueueDrainedHandle = Round->OnRoundQueueDrained.AddUObject(this, &UStealthCompositionRoot::HandleRoundQueueDrained);
 		Round->SetLocalParticipantResolver([this](const UWorld* World) -> FParticipantId
 		{
 			const APlayerController* Local = World != nullptr ? World->GetFirstPlayerController() : nullptr;
@@ -423,10 +424,14 @@ void UStealthCompositionRoot::Deinitialize()
 	if (URoundMatchStore* Round = GetRoundStore())
 	{
 		Round->OnRoundQueueReleasing.Remove(QueueReleasingHandle);
-		Round->OnRoundActive.Remove(RoundActiveHandle);
+		Round->OnPhaseChanged.Remove(RoundPhaseHandle);
+		Round->OnRoundQueueDrained.Remove(QueueDrainedHandle);
 	}
 	PrototypeFallback.Reset();
 	PrototypeBushes.Reset();
+	PrototypeTally.Reset();
+	PrototypeBodyObserver.Reset();
+	ReplyTransport.Reset();
 	CommandEpoch.Reset();
 	CommandQueue.Reset();
 	CommandClock.Reset();
@@ -578,6 +583,10 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	const FEncounterParams Params = FEncounterParams::Defaults();
 	PrototypeBushes = MakeShared<FStealthPrototypeBushSpotQuery>(World, Params.Server.OpenSpotToleranceCm); // = BushSpotToleranceCm (W-ASN-9)
 	PrototypeFallback = MakeShared<FStealthPrototypeCommandFallback>(InGameMode);
+	PrototypeTally = MakeShared<FStealthPrototypeStrikeTally>();               // STAND-IN: the Penalty epic's tally source
+	PrototypeBodyObserver = MakeShared<FStealthPrototypeBodyRemovalObserver>(); // STAND-IN: Concealment's removal observer
+	ReplyTransport = MakeShared<FStealthControllerReplyTransport>(World);
+	ReplyWorld = World;
 	USessionService* Session = USessionService::Get(World);
 
 	FEncounterServiceInit Init;
@@ -589,6 +598,9 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	Init.Log = MatchCore->GetRoundLogWriter();
 	Init.Bushes = PrototypeBushes.Get();
 	Init.Roster = GetRosterStore();
+	Init.Tally = PrototypeTally.Get();
+	Init.BodyObserver = PrototypeBodyObserver.Get();
+	Init.Faults = &CommandFaults;
 	if (!Encounters->Initialize(Init))
 	{
 		UE_LOGF(LogStealth, Error, "Encounters not wired: the service refused its seams.");
@@ -604,11 +616,24 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	InGameMode->BindEncounterService(*Encounters);
 }
 
-void UStealthCompositionRoot::HandleRoundActive(uint32 RoundEpoch, double ActivePhaseStart)
+void UStealthCompositionRoot::HandleRoundPhaseChanged(ERoundPhase OldPhase, ERoundPhase NewPhase)
 {
-	if (Encounters != nullptr)
+	// Story asn-019 (AC-ASN-41): Round's Reset step clears the encounter round with it (Round story 058): roles Ready,
+	// every defence stamp and owner cooldown none, pending writes forgotten, bodies torn down, body items voided.
+	if (NewPhase == ERoundPhase::Reset && Encounters != nullptr)
 	{
-		Encounters->ResetRound(); // a new round: every strike role Ready, records dropped
+		Encounters->ResetRound();
+	}
+}
+
+void UStealthCompositionRoot::HandleRoundQueueDrained()
+{
+	// The reply step (ADR-0011 section 8; story asn-015): every reply appended inside this drain's slots, one batched
+	// ClientCommandReplies per connection, in queue-key order; connections with nothing get no call.
+	UActionHub* Hub = UActionHub::Get(ReplyWorld.Get());
+	if (Hub != nullptr && ReplyTransport.IsValid())
+	{
+		Hub->GetReplySinks().FlushPass(*ReplyTransport);
 	}
 }
 

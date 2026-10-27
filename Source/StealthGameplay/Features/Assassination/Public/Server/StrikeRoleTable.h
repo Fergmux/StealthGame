@@ -26,8 +26,8 @@ public:
 	/** The role at Now; Cooling vs Ready reads the pawn's defence cooldown (null state: never braced). */
 	EStrikeRole GetRole(const APawn* Pawn, double NowServerTime, const FDefenceStateCore* Defence, double CooldownSec) const;
 
-	/** Prepare(Begin) executed: Bracing, remembering the Prepare's reply sink (the defender's FDefenceResult target). */
-	void SetBracing(const APawn* Pawn, FReplySinkId BraceSink);
+	/** Prepare(Begin) executed: Bracing, remembering the Prepare's reply sink and seq (the defender's FDefenceResult target). */
+	void SetBracing(const APawn* Pawn, FReplySinkId BraceSink, const FClientCommandSeq& BraceSeq = FClientCommandSeq());
 	/** The window ended (debounce, CapEnd, own Attack): Bracing -> Cooling. No-op in any other role. */
 	void EndBrace(const APawn* Pawn);
 	/** An Attack executed: Striking until LockoutEnd. */
@@ -42,6 +42,8 @@ public:
 	TOptional<double> GetScheduledDeathServerTime(const APawn* Pawn) const;
 	/** The Prepare sink recorded at the last executed Begin (index 0: none or the null sink). */
 	FReplySinkId GetBraceSink(const APawn* Pawn) const;
+	/** The ClientCommandSeq of the last executed Begin (the FDefenceResult entry answers it; story asn-015). */
+	FClientCommandSeq GetBraceSeq(const APawn* Pawn) const;
 	/** The stamped end of a Striking or Countering role (0 when none). */
 	double GetRoleEnd(const APawn* Pawn) const;
 
@@ -58,6 +60,7 @@ private:
 		double RoleEndServerTime = 0.0;
 		double DeathServerTime = -1.0;
 		FReplySinkId BraceSink;
+		FClientCommandSeq BraceSeq;
 	};
 
 	const FEntry* Find(const APawn* Pawn) const { return Entries.Find(FObjectKey(Pawn)); }

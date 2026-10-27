@@ -1,12 +1,12 @@
 # Story 015: Owner results `FStrikeResult` and `FDefenceResult` as reply entries, with tally and exile flag
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,8 +35,8 @@ Results: `RivalEliminated` (kill of an Active rival), `WrongTarget` (kill of an 
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-46, AC-ASN-16 payload clause), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-46, [Logic/BLOCKING] `StealthGame.Assassination.ExileFlagAndTally`): **GIVEN** an attacker with two NPC strikes and a tally of 2 **WHEN** its third NPC kill resolves **THEN** its `FStrikeResult` carries `WrongTarget`, `TallyAfter` 3 and `bExiled` true, filled inside the same slot; an informant kill at the same counts carries `TallyAfter` 3 and `bExiled` false; no `FStrikeResult` field or size reveals the strike count; `ContactServerTime` equals the attacker's strike write's contact time.
-- [ ] **AC2** (AC-ASN-16 payload clause, [Integration/BLOCKING] `StealthGame.Assassination.KillPlateTellsOneThing` data half): **GIVEN** strikes that kill an Active rival, an NPC and an informant, a whiff and a reversed strike **THEN** every `FStrikeResult` has the same serialised size; the NPC and informant kills' payloads are identical apart from `ClientCommandSeq` and `TallyAfter`, and `TallyAfter` rises by exactly 1 for each of them (unchanged for the rival kill, the whiff and the reversal); and no other client receives any result field.
+- [x] **AC1** (AC-ASN-46, [Logic/BLOCKING] `StealthGame.Assassination.ExileFlagAndTally`): **GIVEN** an attacker with two NPC strikes and a tally of 2 **WHEN** its third NPC kill resolves **THEN** its `FStrikeResult` carries `WrongTarget`, `TallyAfter` 3 and `bExiled` true, filled inside the same slot; an informant kill at the same counts carries `TallyAfter` 3 and `bExiled` false; no `FStrikeResult` field or size reveals the strike count; `ContactServerTime` equals the attacker's strike write's contact time.
+- [x] **AC2** (AC-ASN-16 payload clause, [Integration/BLOCKING] `StealthGame.Assassination.KillPlateTellsOneThing` data half): **GIVEN** strikes that kill an Active rival, an NPC and an informant, a whiff and a reversed strike **THEN** every `FStrikeResult` has the same serialised size; the NPC and informant kills' payloads are identical apart from `ClientCommandSeq` and `TallyAfter`, and `TallyAfter` rises by exactly 1 for each of them (unchanged for the rival kill, the whiff and the reversal); and no other client receives any result field.
 
 ---
 
@@ -102,7 +102,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: `ExileFlagAndTallyTest.cpp` (headless, injected tally source) and `OwnerResultShapeTest.cpp` (PIE, 3 clients) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -110,3 +110,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-004-wire-structs-fixed-width.md`, `story-007-attack-outcomes-resolved-in-slot.md`; cross-epic `production/epics/input-interaction-framework/story-001-command-reply-types.md`, `story-004-reply-sink-and-drain-end-flush.md`; Penalty epic `production/epics/npc-kill-penalty-informants/EPIC.md` (no stories yet)
 - Unlocks: `story-024-owner-result-matcher-and-plate-timing.md`, `story-026-advisory-economics-telemetry-resolver-cost.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: AC1 `StealthGame.Assassination.ExileFlagAndTally` (QA rewrite): a fake Penalty on OnPawnKilled + IStrikeTallySource: the third NPC kill's FStrikeResult is WrongTarget / TallyAfter 3 / bExiled true, the informant kill at the same counts WrongTarget / 3 / false; the tally is read after the OnPawnKilled fan-out and before the append (call log); ContactServerTime equals the attacker's Strike write's contact exactly; one serialised width (137 bits) for tallies 0-3 and 255, exiled or not; NoContact and Reversed still ask the source; a missing source gives {0, false} plus one DeadRegistration fault. AC2 data half `StealthGame.Assassination.OwnerResultShape` (fresh resolvers at one slot time): rival / NPC / informant kill, whiff and reversal each give exactly one FStrikeResult on the attacker's sink at the same size, the NPC and informant entries are bit-identical once ClientCommandSeq and TallyAfter are equalised, TallyAfter +1 for those two only, the bystander sink gets nothing, a bound defender gets exactly one FDefenceResult {Reversed} answering its Prepare seq, an NPC defender none, a Rejected_Latched Attack no result; every Kind round-trips at its fixed width. AC2 delivery half `StealthGame.Assassination.PIE.OwnerResultShape.EveryResultReachesOnlyItsOwnerAtOneSize` (3 machines): every result is received through ClientCommandReplies only on its owner's machine, at one size, the non-striking player receives none.
+**Deviations**: ADVISORY - (1) the IIF drain-end flush had no production caller: `URoundMatchStore::OnRoundQueueDrained` + the composition root's `FStealthControllerReplyTransport` wire it (decision logged); voided Attack/Prepare commands also append their Rejected reply (held Rejected_Latched replies do not). (2) FStrikeResult / FDefenceResult moved from View/StealthEncounterWire.h to View/CommandReplyTypes.h so FCommandReply carries them; FCommandReply has a fixed-width NetSerialize per Kind (StealthGame.Input.CommandReplyTypes amended). (3) Penalty is not built: STAND-IN `FStealthPrototypeStrikeTally` over server-only AStealthPlayerState::WrongTargetTally (+1 per WrongTarget, NPC and informant) and the NpcKillLimit exile flag; NpcKills and LastDefenceActivationTime no longer replicate; the HUD shows "Wrong targets: n". (4) The plates are story 024's: a STAND-IN in AStealthPlayerController shows one HUD message per result at its ContactServerTime (FDefenceResult at receipt); the killer-side server messages and the in-slot exile message are removed. (5) The guardrail "<= 4 bytes plus FClientCommandSeq" cannot hold with story 004's double ContactServerTime (8 bytes): the entry is 137 bits. Cross-epic IIF 001/004, Penalty: proceeded (risk accepted).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Assassination/ExileFlagAndTallyTest.cpp`, `OwnerResultShapeTest.cpp`, `Source/StealthTestHarness/Private/Tests/PIE/Assassination/OwnerResultShapePieTest.cpp`; full suite in `production/qa/evidence/assassination-defence-reversal-015-019-2026-10-27/full-suite.txt`
+**Run result**: OBSERVED - 3-player PIE: each owner's own HUD shows its result from the owner replies: "Wrong target. Wrong targets: 1" (NPC kill by the host; informant kill by client 1), "Target eliminated" (rival kill by client 2), "Reversed" (client 2 reversed) and the defender's "Reversal! Your attacker is eliminated." (client 1); bystanders show none (a whiff's "No contact" is covered by the PIE test) (`production/qa/evidence/story-015-owner-results-reply-entries-and-tally/`)
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

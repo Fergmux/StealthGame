@@ -10,6 +10,7 @@
 #include "Server/StealthCompositionRoot.h"
 #include "View/StealthRosterTeamView.h"
 #include "View/StealthRoundPublicState.h"
+#include "View/DefenceOwnerComponent.h"
 
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
@@ -124,7 +125,6 @@ void AStealthHUD::DrawShadowedText(const FString& Text, float X, float Y, const 
 
 void AStealthHUD::DrawStatusPanel(const AStealthPlayerState* PS, const AStealthGameState* GS, const AStealthCharacter* Pawn, double ServerNow)
 {
-	const UStealthSettings* Settings = UStealthSettings::Get();
 	float Y = 24.f;
 	const float X = 24.f;
 	const float Line = 22.f;
@@ -146,14 +146,18 @@ void AStealthHUD::DrawStatusPanel(const AStealthPlayerState* PS, const AStealthG
 	{
 		FString Defence;
 		FLinearColor DefenceColor = Neutral;
-		if (Pawn && Pawn->IsPreparingDefence())
+		// Story asn-016: the brace reads the replicated FActionState pose (public anyway: the brace is a readable tell) and
+		// the cooldown the owner-only UDefenceOwnerComponent on this controller; the pawn's defence state never replicates.
+		const AStealthPlayerController* OwnerController = Cast<AStealthPlayerController>(GetOwningPlayerController());
+		const UDefenceOwnerComponent* DefenceOwner = OwnerController ? OwnerController->GetDefenceOwner() : nullptr;
+		if (Pawn && Pawn->GetActionState().Pose == EActionPose::Brace)
 		{
 			Defence = TEXT("Defence: PREPARED");
 			DefenceColor = AlliedTurquoise;
 		}
 		else
 		{
-			const float Remaining = FStealthRules::DefenceCooldownRemaining(ServerNow, PS->LastDefenceActivationTime, Settings->DefenceCooldown);
+			const float Remaining = DefenceOwner ? static_cast<float>(DefenceOwner->GetCooldownRemaining(ServerNow)) : 0.f;
 			if (Remaining > 0.f)
 			{
 				Defence = FString::Printf(TEXT("Defence: recovering %.0fs"), Remaining);
@@ -172,7 +176,10 @@ void AStealthHUD::DrawStatusPanel(const AStealthPlayerState* PS, const AStealthG
 		DrawShadowedText(Defence, X, Y, DefenceColor);
 		Y += Line;
 
-		DrawShadowedText(FString::Printf(TEXT("Civilians killed: %d/%d"), PS->NpcKills, Settings->NpcKillLimit), X, Y, PS->NpcKills > 0 ? DangerCochineal : Muted);
+		// Story asn-015: the owner's "Wrong targets" tally (UI-ASN-2), from the latest result plate's TallyAfter; the true
+		// strike count stays on the server.
+		const int32 WrongTargets = OwnerController ? OwnerController->GetShownWrongTargetTally() : 0;
+		DrawShadowedText(FString::Printf(TEXT("Wrong targets: %d"), WrongTargets), X, Y, WrongTargets > 0 ? DangerCochineal : Muted);
 		Y += Line;
 
 		if (Pawn && Pawn->IsConcealed())

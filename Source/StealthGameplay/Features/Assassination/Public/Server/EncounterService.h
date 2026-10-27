@@ -12,8 +12,10 @@
 
 #include "EncounterService.generated.h"
 
+class AController;
 class FResolutionQueueCore;
 class IBushSpotQuery;
+class IStealthFaultSink;
 class IRoundLogWriter;
 class IServerSubSeedSource;
 class IStealthClock;
@@ -45,8 +47,65 @@ private:
 class STEALTHGAMEPLAY_API FEncounterComponentDefenceStore final : public IEncounterDefenceStore
 {
 public:
+	explicit FEncounterComponentDefenceStore(UWorld* InWorld = nullptr) : World(InWorld) {}
+
 	virtual FDefenceStateCore* Find(const APawn* Pawn) override;
 	virtual FDefenceStateCore* FindOrAdd(const APawn* Pawn) override;
+	/** Every UDefenceStateComponent of the world's pawns back to none (Round Reset, story asn-019). */
+	virtual void ResetAll() override;
+
+private:
+	TWeakObjectPtr<UWorld> World;
+};
+
+/**
+ * IEncounterReplySink over the world's UActionHub reply-sink table (ADR-0011 section 8; story asn-015): appended inside the
+ * slot, flushed once per connection at drain end by the composition root's reply step (URoundMatchStore::OnRoundQueueDrained).
+ */
+class STEALTHGAMEPLAY_API FEncounterHubReplySink final : public IEncounterReplySink
+{
+public:
+	explicit FEncounterHubReplySink(UActionHub* InHub = nullptr) : Hub(InHub) {}
+
+	virtual void AppendReply(FReplySinkId Sink, FQueueKey SlotKey, const FCommandReply& Reply) override;
+
+private:
+	TWeakObjectPtr<UActionHub> Hub;
+};
+
+/**
+ * IEncounterOwnerCooldown over UDefenceOwnerComponent on the pawn's controller (ADR-0018 section 1.5; story asn-016):
+ * a pawn driven by a controller without the component (AI) publishes nothing; ResetAll clears every controller's value.
+ */
+class STEALTHGAMEPLAY_API FEncounterOwnerCooldownPublisher final : public IEncounterOwnerCooldown
+{
+public:
+	explicit FEncounterOwnerCooldownPublisher(UWorld* InWorld = nullptr) : World(InWorld) {}
+
+	virtual void PublishCooldownEnd(APawn* Pawn, double CooldownEndServerTime) override;
+	virtual void ResetAll() override;
+
+private:
+	TWeakObjectPtr<UWorld> World;
+};
+
+/** BodyReleased(Body, FormerController): the controller that held the body until its release (story asn-019). */
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEncounterBodyReleased, APawn* /*Body*/, AController* /*FormerController*/);
+
+/**
+ * IEncounterBodyHandOver over UStealthPawnFactory (ADR-0010 ReleaseBody; story asn-019). Release: the body's capsule stops
+ * blocking pawn channels, then the factory lets its controller go (crowd controller destroyed, PlayerController left
+ * pawnless, never Spectating) and OnReleased fires with the former controller (the informant respawn takeover and
+ * every ownership change follow it). Teardown: released first if still possessed, then destroyed. Any other actor: the
+ * same calls through the engine (a world without a factory, e.g. a bare test world).
+ */
+class STEALTHGAMEPLAY_API FEncounterPawnFactoryHandOver final : public IEncounterBodyHandOver
+{
+public:
+	virtual void ReleaseBody(APawn* Body) override;
+	virtual void RequestTeardown(APawn* Body) override;
+
+	FOnEncounterBodyReleased OnReleased;
 };
 
 /**
@@ -158,6 +217,12 @@ struct FEncounterServiceInit
 	URosterStore* Roster = nullptr;
 	/** Overrides the world's action hub (null: UActionHub::Get(World)). */
 	UActionHub* Hub = nullptr;
+	/** Penalty's tally (story asn-015; the composition root's stand-in until the Penalty epic). Null: a fault per Attack. */
+	IStrikeTallySource* Tally = nullptr;
+	/** Concealment's body removal observer (story asn-019; a stand-in until Concealment). Null: a fault per body. */
+	IBodyRemovalObserver* BodyObserver = nullptr;
+	/** The fault sink of the missing-seam reports (null: none reported). */
+	IStealthFaultSink* Faults = nullptr;
 };
 
 /**
@@ -189,8 +254,9 @@ public:
 	bool IsInitialized() const { return Core.IsValid(); }
 
 	/**
-	 * Registers the core for EQueueItemType::PawnCommand and HoldTimer and its applier for the DeathWrite and CounterPose
-	 * staged writes (story asn-013); false when any of them already has an owner.
+	 * Registers the core for EQueueItemType::PawnCommand and HoldTimer, for TimerFired(BodyRelease, BodyRemoval) (story
+	 * asn-019) and its applier for the DeathWrite and CounterPose staged writes (story asn-013); false when any of them
+	 * already has an owner.
 	 */
 	bool RegisterOn(FResolutionQueueCore& Queue);
 	void UnregisterFrom(FResolutionQueueCore& Queue);
@@ -221,8 +287,14 @@ public:
 	bool IsDead(const APawn* Pawn) const { return Core.IsValid() && Core->IsDead(Pawn); }
 	TOptional<double> GetScheduledDeathServerTime(const APawn* Pawn) const { return Core.IsValid() ? Core->GetScheduledDeathServerTime(Pawn) : TOptional<double>(); }
 
-	/** Round Reset (story asn-019): the strike roles return to Ready. */
+	/**
+	 * Round Reset (story asn-019, called from Round's Reset step by the composition root): every strike role Ready, every
+	 * defence component and owner cooldown none, pending writes forgotten, every body torn down, body items voided.
+	 */
 	void ResetRound();
+
+	/** BodyReleased(Body, FormerController) (null before Initialize): the game mode's informant respawn waits for it. */
+	FOnEncounterBodyReleased* GetOnBodyReleased() const { return HandOver.IsValid() ? &HandOver->OnReleased : nullptr; }
 
 	/** Unregisters before the object goes (the queue holds raw resolver pointers). */
 	virtual void BeginDestroy() override;
@@ -235,10 +307,15 @@ private:
 	TUniquePtr<FEncounterHubEvents> HubEvents;
 	TUniquePtr<FEncounterPawnStateWriter> PawnStateWriter;
 	TUniquePtr<FEncounterConcealmentVisibility> DefaultVisibility;
+	TUniquePtr<FEncounterHubReplySink> ReplySink;
+	TUniquePtr<FEncounterOwnerCooldownPublisher> OwnerCooldown;
+	TUniquePtr<FEncounterPawnFactoryHandOver> HandOver;
 	TUniquePtr<FAttackResolverCore> Core;
 	FResolutionQueueCore* RegisteredQueue = nullptr;
 	bool bRegisteredCommands = false;
 	bool bRegisteredHolds = false;
 	bool bRegisteredDeathWrite = false;
 	bool bRegisteredCounterPose = false;
+	bool bRegisteredBodyRelease = false;
+	bool bRegisteredBodyRemoval = false;
 };

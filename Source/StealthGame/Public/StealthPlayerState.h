@@ -34,13 +34,28 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Stealth")
 	EStealthLifeState LifeState = EStealthLifeState::Active;
 
-	/** Civilians this player has killed this round. Owner-only (it is a private counter). */
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Stealth")
+	/**
+	 * Civilians this player has killed this round: the prototype strike count (Penalty stand-in). Server only since story
+	 * asn-015: the true strike count never reaches a client (the owner sees FStrikeResult.TallyAfter at its plate).
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stealth")
 	int32 NpcKills = 0;
 
-	/** Server time of the last defence activation; negative if unused this round. Owner-only. */
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Stealth")
+	/**
+	 * Server time of the last prototype defence tell; negative if unused this round. Server only since story asn-016: the
+	 * owner's only defence datum is UDefenceOwnerComponent::CooldownEndServerTime on its PlayerController.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stealth")
 	double LastDefenceActivationTime = -1.0;
+
+	/**
+	 * STAND-IN for the Penalty epic (story asn-015), server only: the owner's "Wrong targets" tally (+1 for every
+	 * WrongTarget strike, an NPC and an informant kill alike, PEN-R14) that FStrikeResult.TallyAfter carries.
+	 */
+	int32 WrongTargetTally = 0;
+
+	/** STAND-IN (Penalty), server only: an NPC kill reached the limit in the current slot; the tally source consumes it. */
+	bool bExiledByPendingResult = false;
 
 	/** Server time of this player's last ping (server-side spam guard). */
 	double LastPingTime = -1000.0;

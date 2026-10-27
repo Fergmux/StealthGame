@@ -1,12 +1,12 @@
 # Story 019: Server body sequence (release, removal, possession through the fall) and Reset
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@ The kill slot schedules `TimerFired(BodyRelease, PawnHandle, Epoch)` and `TimerF
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-24, AC-ASN-41) and ADR-0018 Validation Criteria `BodySequenceParity`, scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-24, [Integration/BLOCKING] `StealthGame.Assassination.PossessionThroughFall`): **GIVEN** a killed player **THEN** its controller keeps the dying pawn until `DeathServerTime + DeathFallSec`, and no informant respawn takeover or ownership change happens before that time.
-- [ ] **AC2** (ADR-0018 `BodySequenceParity`, [Integration/BLOCKING]): **GIVEN** an NPC, a player and an informant victim **THEN** body release and removal times are identical (± 1 server frame) for the three, the observer is called once for each body, no `Spectating` state is entered, and after the latch both items return `Rejected_Latched` while the body persists until `Reset`.
-- [ ] **AC3** (AC-ASN-41, [Logic/BLOCKING] `StealthGame.Assassination.ResetClearsState`): **GIVEN** pending contact writes, a running cooldown, a lockout and bodies **WHEN** `Reset` runs **THEN** every stamp is `none`, every strike role is `Ready`, no dropped write fires afterwards, and no body remains.
+- [x] **AC1** (AC-ASN-24, [Integration/BLOCKING] `StealthGame.Assassination.PossessionThroughFall`): **GIVEN** a killed player **THEN** its controller keeps the dying pawn until `DeathServerTime + DeathFallSec`, and no informant respawn takeover or ownership change happens before that time.
+- [x] **AC2** (ADR-0018 `BodySequenceParity`, [Integration/BLOCKING]): **GIVEN** an NPC, a player and an informant victim **THEN** body release and removal times are identical (± 1 server frame) for the three, the observer is called once for each body, no `Spectating` state is entered, and after the latch both items return `Rejected_Latched` while the body persists until `Reset`.
+- [x] **AC3** (AC-ASN-41, [Logic/BLOCKING] `StealthGame.Assassination.ResetClearsState`): **GIVEN** pending contact writes, a running cooldown, a lockout and bodies **WHEN** `Reset` runs **THEN** every stamp is `none`, every strike role is `Ready`, no dropped write fires afterwards, and no body remains.
 
 ---
 
@@ -108,7 +108,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: the three test files above — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -116,3 +116,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-003-defence-state-component-and-cooldown.md`, `story-007-attack-outcomes-resolved-in-slot.md`, `story-013-death-write-staging-and-after-latch.md`; cross-epic `production/epics/round-match-framework/story-058-reset-clears.md`, `story-052-ended-latch-effects.md`; ADR-0010 `UStealthPawnFactory::ReleaseBody` (SCL/Roster pawn factory stories); `production/epics/camera-system/story-018-dying-hold-and-view-release.md`
 - Unlocks: `story-020-client-fall-linger-and-occlusion-removal.md`, Penalty epic informant takeover after release
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: AC1 `StealthGame.Assassination.PIE.PossessionThroughFall.KilledBodiesKeepTheirControllerUntilReleaseAlike` (3 machines, sampled every server frame): an AI-driven NPC, a reversed player and an informant each keep their controller until DeathServerTime + 1.2 s and are released within one frame after it (no earlier change or takeover), the PlayerController never enters Spectating, the informant respawns only after the release (a new pawn). AC2: the same PIE run's release / removal times match across the three kinds within one frame and every body is removed at +9.2 s; `StealthGame.Assassination.BodySequenceParity` (real round queue + Round core): NPC, player and informant victims released at +1.2 s and removed at +9.2 s (+ one frame) through two TimerFired items, the observer once per body before the teardown; a round-deciding kill (latch in its own slot, before both due times) gets both items Rejected_Latched, no release, no observer, no teardown until Reset removes it; a missing observer is a DeadRegistration fault and the body is still removed. AC3 `StealthGame.Assassination.ResetClearsState`: two NPC bodies plus a reversed attacker's body (pending death writes and a CounterPose), a running cooldown (owner value), two lockouts: after Reset every stamp and owner cooldown is none, every role Ready, every body torn down once, the body generation moved on; past the latest due time + 1 s the stale writes apply nothing and all six body items, and the stale CapEnds, execute nothing; Reset twice and with zero bodies change nothing more.
+**Deviations**: ADVISORY - (1) ADR-0010's ReleaseBody and hand-over pass are not built: minimal `UStealthPawnFactory::ReleaseBody` / `RequestTeardown` (control epoch bump, UnPossess, crowd controller destroyed; never Spectating), committed directly in the release item's slot; `AStealthPlayerController::OnUnPossess` keeps the view target during it. (2) Concealment is not built: STAND-IN no-op `FStealthPrototypeBodyRemovalObserver`. (3) The prototype ragdoll stays the fall presentation STAND-IN (`AStealthCharacter::BeginDeathFallPresentation` at DeathServerTime, no unpossess, no BodyLifetime, server capsule kept until release) until stories 018/020; the informant respawn is scheduled from the release (InformantRespawnDelay - DeathFallSec later) and clears the released body's binding. (4) The encounter service's ResetRound moved from Round's Active entry to Round's Reset phase. (5) AC2's "PIE.BodySequenceParity" is covered by the headless real-queue test plus the PIE.PossessionThroughFall session (one PIE session for both possession ACs; decision logged). Cross-epic Round 052/058, SCL ReleaseBody, Camera 018, Penalty takeover: proceeded.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Assassination/ResetClearsStateTest.cpp`, `BodySequenceParityTest.cpp`, `Source/StealthTestHarness/Private/Tests/PIE/Assassination/PossessionThroughFallPieTest.cpp`; full suite in `production/qa/evidence/assassination-defence-reversal-015-019-2026-10-27/full-suite.txt`
+**Run result**: OBSERVED - 3-player PIE: bodies fall at contact, lie, and are removed about 9 s later; a killed informant respawns at its team spawn after the fall (`production/qa/evidence/story-019-server-body-sequence-and-reset/`)
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

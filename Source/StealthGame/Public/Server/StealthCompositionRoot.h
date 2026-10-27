@@ -9,6 +9,7 @@
 #include "Server/Core/StealthPawnFactory.h"
 #include "Server/Random/StealthServerSeeds.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "View/StealthRoundPublicState.h"
 
 #include "StealthCompositionRoot.generated.h"
 
@@ -175,8 +176,10 @@ private:
 	void WireEncounters(AStealthGameMode* InGameMode);
 	/** Round's queue is about to be destroyed: the service forgets it without touching it. */
 	void HandleRoundQueueReleasing();
-	/** Round's Active-entry step: the encounter roles and records of the previous round are dropped (story asn-019 owns Reset). */
-	void HandleRoundActive(uint32 RoundEpoch, double ActivePhaseStart);
+	/** Round's Reset step (story asn-019): the encounter service clears its round (roles, stamps, writes, bodies). */
+	void HandleRoundPhaseChanged(ERoundPhase OldPhase, ERoundPhase NewPhase);
+	/** The reply step (story asn-015): after each drain, one batched ClientCommandReplies per connection. */
+	void HandleRoundQueueDrained();
 	void MirrorTeamsToPrototype();
 
 	UPROPERTY(Transient)
@@ -206,8 +209,15 @@ private:
 	TSharedPtr<class FStealthRoundEpochSource> CommandEpoch;
 	TSharedPtr<class FStealthPrototypeBushSpotQuery> PrototypeBushes;
 	TSharedPtr<class FStealthPrototypeCommandFallback> PrototypeFallback;
+	/** Stand-ins of the Penalty tally and the Concealment removal observer (stories asn-015, asn-019). */
+	TSharedPtr<class FStealthPrototypeStrikeTally> PrototypeTally;
+	TSharedPtr<class FStealthPrototypeBodyRemovalObserver> PrototypeBodyObserver;
+	/** The reply step's transport for the current server world. */
+	TSharedPtr<class FStealthControllerReplyTransport> ReplyTransport;
+	TWeakObjectPtr<UWorld> ReplyWorld;
 	FStealthLogFaultSink CommandFaults;
 	FDelegateHandle RosterEventHandle;
 	FDelegateHandle QueueReleasingHandle;
-	FDelegateHandle RoundActiveHandle;
+	FDelegateHandle RoundPhaseHandle;
+	FDelegateHandle QueueDrainedHandle;
 };

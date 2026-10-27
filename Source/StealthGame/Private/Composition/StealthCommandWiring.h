@@ -1,11 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Server/BodyRemovalObserver.h"
 #include "Server/BushSpotQuery.h"
 #include "Server/Core/PawnCommandCore.h"
+#include "Server/Core/ReplySink.h"
 #include "Server/Queue/StealthQueueResolver.h"
 #include "Server/Queue/StealthResolutionQueueCore.h"
 #include "Server/StealthClock.h"
+#include "Server/StrikeTallySource.h"
 
 class AStealthBush;
 class AStealthGameMode;
@@ -108,4 +111,43 @@ public:
 
 private:
 	TWeakObjectPtr<AStealthGameMode> GameMode;
+};
+
+/**
+ * STAND-IN (NPC-Kill Penalty epic not built; its IStrikeTallySource replaces it; story asn-015): the attacker's
+ * AStealthPlayerState counters the prototype game mode keeps in the OnPawnKilled fan-out (AStealthGameMode::
+ * HandleEncounterPawnKilled): WrongTargetTally (+1 for every WrongTarget kill, an NPC and an informant alike, PEN-R14)
+ * and the exile flag set when an NPC kill reached NpcKillLimit in the same slot (consumed here, so bExiled is true only on
+ * the triggering kill's result). An NPC attacker (no player state): {0, false}.
+ */
+class FStealthPrototypeStrikeTally final : public IStrikeTallySource
+{
+public:
+	virtual FStrikeTally GetTallyForResult(const APawn* Attacker, EStrikeResult Result) override;
+};
+
+/**
+ * STAND-IN (Concealment epic not built; its FBushRuntime observer replaces it; story asn-019): the prototype keeps no
+ * killed-concealed owner / team flags, so a committed body removal changes nothing here (it is logged at Verbose).
+ */
+class FStealthPrototypeBodyRemovalObserver final : public IBodyRemovalObserver
+{
+public:
+	virtual void OnBodyRemovalCommitted(APawn* Body) override;
+};
+
+/**
+ * The reply step's transport (ADR-0011 section 8; story asn-015): one connection's batch goes to the AStealthPlayerController
+ * whose reply sink it is, through its reliable owner-only ClientCommandReplies (the listen host's own controller runs it
+ * locally). A sink no controller holds any more discards.
+ */
+class FStealthControllerReplyTransport final : public IReplyTransport
+{
+public:
+	explicit FStealthControllerReplyTransport(UWorld* InWorld) : World(InWorld) {}
+
+	virtual void SendCommandReplies(FReplySinkId Sink, const TArray<FCommandReply>& Replies) override;
+
+private:
+	TWeakObjectPtr<UWorld> World;
 };

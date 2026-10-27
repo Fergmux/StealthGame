@@ -3485,3 +3485,36 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "ASN batch 2026-10-27; sample Blueprint motion warping unreplicated at PostInitializeComponents (negative control watched failing in PIE), local StrikeContact target set once per write on every machine"
+  - id: "asn-015"
+    name: "Owner results FStrikeResult and FDefenceResult as reply entries, with tally and exile flag"
+    file: "production/epics/assassination-defence-reversal/story-015-owner-results-reply-entries-and-tally.md"
+    priority: must-have
+    status: done
+    owner: "network-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-015/016/019); FCommandReply carries Strike/Defence (fixed-width NetSerialize, 137 bits for every result), drain-end reply flush wired (OnRoundQueueDrained), Penalty tally stand-in (WrongTargetTally, exile flag), owner plate stand-in until asn-024"
+  - id: "asn-016"
+    name: "Owner-only cooldown end time on the PlayerController, defence state never replicated"
+    file: "production/epics/assassination-defence-reversal/story-016-defence-owner-cooldown-component.md"
+    priority: must-have
+    status: done
+    owner: "network-programmer"
+    estimate_days: 0.75
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; UDefenceOwnerComponent (COND_OwnerOnly CooldownEndServerTime) on AStealthPlayerController, published in the Prepare(Begin) slot; bPreparingDefence server-only, HUD reads the owner component and the Brace pose"
+  - id: "asn-019"
+    name: "Server body sequence (release, removal, possession through the fall) and Reset"
+    file: "production/epics/assassination-defence-reversal/story-019-server-body-sequence-and-reset.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 2.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; BodyRelease/BodyRemoval TimerFired items (+1.2 s / +9.2 s), minimal UStealthPawnFactory::ReleaseBody, informant respawn after release, encounter Reset on Round's Reset phase; Concealment observer and fall presentation are stand-ins"

@@ -112,6 +112,22 @@ public:
 	/** Bumps Pawn's control epoch (the hand-over commit inside the drain, ADR-0010 4.3) and returns the new value. */
 	uint32 BumpControlEpoch(const AActor* Pawn);
 
+	/**
+	 * ReleaseBody (ADR-0010; Assassination story asn-019's body sequence, the ONLY path that lets a controller go of a
+	 * killed pawn): bumps the pawn's control epoch, then its controller unpossesses it. A crowd (non-player) controller is
+	 * destroyed; a PlayerController is left pawnless in its normal playing state, never Spectating, and
+	 * AStealthPlayerController keeps its view target while IsReleasingBody() (Camera's Dying -> NoPawn fade owns the
+	 * view). Returns the former controller (null when none held it). Minimal implementation until the SCL hand-over
+	 * pass (ADR-0010 4.3) executes it apply-only; the caller commits it inside its queue slot.
+	 */
+	AController* ReleaseBody(APawn* Pawn);
+
+	/** Body teardown (story asn-019 BodyRemoval and Reset): released first when still possessed, then destroyed. */
+	void RequestTeardown(APawn* Pawn);
+
+	/** True while ReleaseBody runs its UnPossess (the controller's OnUnPossess keeps the view target then). */
+	static bool IsReleasingBody() { return ReleasingBodyDepth > 0; }
+
 	/** No spawn ordinal (a pawn this factory did not spawn). */
 	static constexpr uint32 NoSpawnOrdinal = MAX_uint32;
 
@@ -136,4 +152,7 @@ private:
 	uint32 NextSpawnOrdinal = 0;
 	int32 SpawnCount = 0;
 	FStealthLogFaultSink FaultSink;
+
+	/** Nesting of ReleaseBody (game thread only). */
+	static int32 ReleasingBodyDepth;
 };

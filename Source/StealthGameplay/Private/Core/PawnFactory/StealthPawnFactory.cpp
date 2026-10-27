@@ -190,6 +190,40 @@ uint32 UStealthPawnFactory::BumpControlEpoch(const AActor* Pawn)
 	return ++Epoch;
 }
 
+int32 UStealthPawnFactory::ReleasingBodyDepth = 0;
+
+AController* UStealthPawnFactory::ReleaseBody(APawn* Pawn)
+{
+	if (Pawn == nullptr || !Pawn->HasAuthority())
+	{
+		return nullptr;
+	}
+	AController* Controller = Pawn->GetController();
+	if (Controller == nullptr)
+	{
+		return nullptr;
+	}
+	BumpControlEpoch(Pawn); // the hand-over commit: a command stamped under the old control is stale from here
+	++ReleasingBodyDepth;
+	Controller->UnPossess();
+	--ReleasingBodyDepth;
+	if (!Controller->IsPlayerController())
+	{
+		Controller->Destroy(); // a crowd controller never outlives its body's release
+	}
+	return Controller;
+}
+
+void UStealthPawnFactory::RequestTeardown(APawn* Pawn)
+{
+	if (Pawn == nullptr || !IsValid(Pawn) || !Pawn->HasAuthority())
+	{
+		return;
+	}
+	ReleaseBody(Pawn); // never destroy a possessed pawn (AController::PawnPendingDestroy would act on its controller)
+	Pawn->Destroy();
+}
+
 uint32 UStealthPawnFactory::GetSpawnOrdinal(const AActor* Pawn) const
 {
 	const uint32* Ordinal = Pawn != nullptr ? SpawnOrdinals.Find(FObjectKey(Pawn)) : nullptr;

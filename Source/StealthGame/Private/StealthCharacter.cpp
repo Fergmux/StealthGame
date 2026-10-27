@@ -7,6 +7,7 @@
 #include "StealthMovementComponent.h"
 #include "StealthPlayerState.h"
 #include "StealthRules.h"
+#include "View/DefenceOwnerComponent.h"
 #include "StealthSettings.h"
 
 #include "Camera/CameraComponent.h"
@@ -67,7 +68,6 @@ void AStealthCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME(AStealthCharacter, AppearanceIndex);
 	DOREPLIFETIME(AStealthCharacter, bDying);
-	DOREPLIFETIME(AStealthCharacter, bPreparingDefence);
 	DOREPLIFETIME(AStealthCharacter, bConcealed);
 	DOREPLIFETIME(AStealthCharacter, bRevealedUntilExit);
 	DOREPLIFETIME(AStealthCharacter, HeldUntilServerTime);
@@ -169,7 +169,7 @@ void AStealthCharacter::PostNetInit()
 
 bool AStealthCharacter::CanJumpInternal_Implementation() const
 {
-	if (IsInformant() || bPreparingDefence || IsHeldInPlace() || bDying)
+	if (IsInformant() || bPreparingDefence || GetActionState().Pose == EActionPose::Brace || IsHeldInPlace() || bDying)
 	{
 		return false;
 	}
@@ -273,6 +273,18 @@ void AStealthCharacter::KillCharacter()
 		}
 	}
 	SetLifeSpan(UStealthSettings::Get()->BodyLifetime);
+	ForceNetUpdate();
+}
+
+void AStealthCharacter::BeginDeathFallPresentation()
+{
+	if (!HasAuthority() || bDying)
+	{
+		return;
+	}
+	bDying = true;
+	StopDefence();
+	ApplyDeathPresentation(/*bDisableCapsule*/ false);
 	ForceNetUpdate();
 }
 
@@ -423,7 +435,7 @@ void AStealthCharacter::ApplyAppearance()
 	}
 }
 
-void AStealthCharacter::ApplyDeathPresentation()
+void AStealthCharacter::ApplyDeathPresentation(bool bDisableCapsule)
 {
 	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
 	{
@@ -432,9 +444,14 @@ void AStealthCharacter::ApplyDeathPresentation()
 	}
 	StopAnimMontage();
 
-	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent(); Capsule != nullptr && bDisableCapsule)
 	{
 		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	else if (Capsule != nullptr)
+	{
+		// The server's body keeps blocking pawns until its release (story asn-019), but never its own ragdoll.
+		Capsule->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
 	}
 	if (USkeletalMeshComponent* MeshComponent = GetMesh())
 	{
@@ -490,11 +507,19 @@ void AStealthCharacter::OnRep_Dying()
 	}
 }
 
-void AStealthCharacter::OnRep_PreparingDefence()
+void AStealthCharacter::HandleActionStateChanged()
 {
-	if (IsLocallyControlled() && !bPreparingDefence)
+	Super::HandleActionStateChanged();
+	// The owner's predicted stance (HandleOwnerCommandPredicted) follows the server's Brace pose: a Brace confirms it,
+	// any later pose (None at the window's end, Counter, Strike) undoes it. Other machines see the crouch through the
+	// character's replicated crouch state.
+	if (IsLocallyControlled() && !HasAuthority())
 	{
-		SetDefenceStance(false);
+		const bool bBraced = GetActionState().Pose == EActionPose::Brace;
+		if (bBraced != bIsCrouched)
+		{
+			SetDefenceStance(bBraced);
+		}
 	}
 }
 
@@ -598,11 +623,10 @@ void AStealthCharacter::HandleOwnerCommandPredicted(ECommandKind Kind)
 	{
 	case ECommandKind::PrepareBegin:
 	{
-		const AStealthPlayerState* PS = GetStealthPlayerState();
-		const UStealthSettings* Settings = UStealthSettings::Get();
+		// Story asn-016: the owner's only defence datum is its controller's cooldown end (never the pawn's state).
+		const UDefenceOwnerComponent* DefenceOwner = UDefenceOwnerComponent::Find(GetController());
 		const double Now = StealthServerNow(GetWorld());
-		if (!PS || !IsActiveAgent()
-			|| !FStealthRules::CanStartDefence(true, IsRunning(), IsInTraversal(), Now, PS->LastDefenceActivationTime, Settings->DefenceCooldown))
+		if (!IsActiveAgent() || IsRunning() || IsInTraversal() || (DefenceOwner != nullptr && DefenceOwner->GetCooldownRemaining(Now) > 0.0))
 		{
 			return;
 		}
@@ -613,16 +637,16 @@ void AStealthCharacter::HandleOwnerCommandPredicted(ECommandKind Kind)
 		{
 			if (AStealthCharacter* Self = WeakThis.Get())
 			{
-				if (!Self->bPreparingDefence)
+				if (Self->GetActionState().Pose != EActionPose::Brace)
 				{
-					Self->SetDefenceStance(false);
+					Self->SetDefenceStance(false); // no Brace confirmed in time: the prediction was wrong
 				}
 			}
 		}), DefenceConfirmTimeout, false);
 		break;
 	}
 	case ECommandKind::PrepareEnd:
-		if (bPreparingDefence || bIsCrouched)
+		if (bIsCrouched)
 		{
 			SetDefenceStance(false);
 		}

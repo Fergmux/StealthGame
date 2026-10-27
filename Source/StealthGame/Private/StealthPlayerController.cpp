@@ -21,12 +21,21 @@
 #include "Server/Spikes/StealthSpikeHooks.h" // THROWAWAY SPIKE hook (IVP S10 re-run, story-056)
 #include "View/Input/PawnCommandClient.h"
 #include "Server/Core/StealthPawnCommandComponent.h"
+#include "Server/Core/StealthPawnFactory.h"
+#include "View/DefenceOwnerComponent.h"
+#include "View/StealthTuningPublicSubstructs.h"
+#include "GameFramework/GameStateBase.h"
+#include "TimerManager.h"
 
 namespace
 {
 	constexpr int32 MaxHudMessages = 5;
 	/** Short confirmations were missed in playtests; keep every message up at least this long. */
 	constexpr float MinHudMessageSeconds = 6.f;
+	/** Received reply entries kept for the owner-side readers (tests, the story asn-024 matcher). */
+	constexpr int32 MaxKeptReplies = 64;
+	/** STAND-IN for Penalty's ExileBeatSec (0.8 s): the exile line follows the WrongTarget plate. */
+	constexpr float ExileBeatSec = 0.8f;
 }
 
 AStealthPlayerController::AStealthPlayerController()
@@ -35,6 +44,8 @@ AStealthPlayerController::AStealthPlayerController()
 	bReplicateUsingRegisteredSubObjectList = true;
 	TeamView = CreateDefaultSubobject<URosterTeamViewComponent>(TEXT("TeamView"));
 	CommandClient = CreateDefaultSubobject<UPawnCommandClient>(TEXT("CommandClient"));
+	// Story asn-016 (ADR-0018 section 1.5): the owner's cooldown end, COND_OwnerOnly through the registered subobject list.
+	DefenceOwner = CreateDefaultSubobject<UDefenceOwnerComponent>(TEXT("DefenceOwner"));
 }
 
 // ---- Pawn command transport (ADR-0011 section 2; story iif-094) -------------------------------------------------
@@ -178,6 +189,26 @@ void AStealthPlayerController::OnPossess(APawn* InPawn)
 	STEALTH_POSSESSION_TRACE(ServerOnPossess, ServerPossessionEpoch, InPawn);
 	ClientSetPossessionEpoch(ServerPossessionEpoch);
 	Super::OnPossess(InPawn);
+	// Story asn-016: a re-pawn copies the new pawn's cooldown end (none for a pawn that never braced). Tuning stand-in:
+	// the schema default until the TDC store feeds features (as the composition root's predicates).
+	if (DefenceOwner)
+	{
+		DefenceOwner->SyncFromPawn(InPawn, FAssassinationTuning_Public().DefenceCooldownSec);
+	}
+}
+
+void AStealthPlayerController::OnUnPossess()
+{
+	if (UStealthPawnFactory::IsReleasingBody() && GetPawn() != nullptr)
+	{
+		// The body's release (story asn-019, ADR-0018 section 6.2): APlayerController::OnUnPossess minus its
+		// SetViewTarget(this), so the view stays on the falling body and Camera's Dying -> NoPawn fade owns it (ADR-0015).
+		GetPawn()->SetReplicates(true);
+		GetPawn()->UnPossessed();
+		SetPawn(nullptr);
+		return;
+	}
+	Super::OnUnPossess();
 }
 
 void AStealthPlayerController::ClientRestart_Implementation(APawn* NewPawn)
@@ -253,6 +284,88 @@ void AStealthPlayerController::ClientCommandReplies_Implementation(const TArray<
 {
 	ReceivedReplyCount += Replies.Num();
 	UE_LOGF(LogStealth, Verbose, "[cmd] %ls received %d reply(ies)", *GetName(), Replies.Num());
+	for (const FCommandReply& Reply : Replies)
+	{
+		ReceivedReplies.Add(Reply);
+		if (Reply.Kind == ECommandReplyKind::StrikeResult || Reply.Kind == ECommandReplyKind::DefenceResult)
+		{
+			PresentOwnerResult(Reply);
+		}
+	}
+	if (ReceivedReplies.Num() > MaxKeptReplies)
+	{
+		ReceivedReplies.RemoveAt(0, ReceivedReplies.Num() - MaxKeptReplies);
+	}
+}
+
+int32 AStealthPlayerController::GetShownWrongTargetTally() const
+{
+	// HUD-R7: a new RoundEpoch shows 0 until its first plate.
+	const AStealthGameState* RoundState = GetWorld() != nullptr ? GetWorld()->GetGameState<AStealthGameState>() : nullptr;
+	return RoundState != nullptr && RoundState->GetRoundPublicState().RoundIndex != ShownTallyRoundIndex ? 0 : ShownWrongTargetTally;
+}
+
+void AStealthPlayerController::PresentOwnerResult(const FCommandReply& Reply)
+{
+	// STAND-IN for story asn-024 (the owner result matcher and the HUD plates): one HUD message per result, the strike's
+	// shown at its own ContactServerTime (never earlier, UI-ASN-1), the tally line changing with it (HUD-R7).
+	UWorld* World = GetWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+	if (Reply.Kind == ECommandReplyKind::DefenceResult)
+	{
+		ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "Reversal", "Reversal! Your attacker is eliminated."), false, 5.f);
+		return;
+	}
+	const FStrikeResult Strike = Reply.Strike;
+	const AGameStateBase* State = World->GetGameState();
+	const double Now = State != nullptr ? State->GetServerWorldTimeSeconds() : World->GetTimeSeconds();
+	const float Delay = static_cast<float>(FMath::Max(Strike.ContactServerTime - Now, 0.0));
+	TWeakObjectPtr<AStealthPlayerController> WeakThis(this);
+	auto Show = [WeakThis, Strike]()
+	{
+		AStealthPlayerController* Self = WeakThis.Get();
+		if (Self == nullptr)
+		{
+			return;
+		}
+		Self->ShownWrongTargetTally = Strike.TallyAfter;
+		const AStealthGameState* RoundState = Self->GetWorld() != nullptr ? Self->GetWorld()->GetGameState<AStealthGameState>() : nullptr;
+		Self->ShownTallyRoundIndex = RoundState != nullptr ? RoundState->GetRoundPublicState().RoundIndex : 0;
+		switch (Strike.Result)
+		{
+		case EStrikeResult::RivalEliminated:
+			Self->ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "TargetEliminated", "Target eliminated"), false, 4.f);
+			break;
+		case EStrikeResult::WrongTarget:
+			Self->ClientStealthMessage_Implementation(FText::Format(NSLOCTEXT("StealthOwnerResults", "WrongTarget", "Wrong target. Wrong targets: {0}"), Strike.TallyAfter), true, 4.f);
+			break;
+		case EStrikeResult::NoContact:
+			Self->ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "NoContact", "No contact"), false, 4.f);
+			break;
+		case EStrikeResult::Reversed:
+			Self->ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "Reversed", "Reversed"), true, 4.f);
+			break;
+		}
+		if (Strike.bExiled)
+		{
+			FTimerHandle ExileHandle;
+			Self->GetWorldTimerManager().SetTimer(ExileHandle, FTimerDelegate::CreateWeakLambda(Self, [Self]()
+			{
+				Self->ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "Exiled",
+					"Exiled: too many wrong targets. You are now an informant: watch, and report to your team."), true, 8.f);
+			}), ExileBeatSec, false);
+		}
+	};
+	if (Delay <= 0.f)
+	{
+		Show();
+		return;
+	}
+	FTimerHandle Handle;
+	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, Show), Delay, false);
 }
 
 void AStealthPlayerController::SendTeamPing(const FVector& Location)
