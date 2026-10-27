@@ -4,6 +4,7 @@
 #include "Server/AssassinationAttackPredicate.h"
 #include "Server/AssassinationPreparePredicate.h"
 #include "Server/EncounterService.h"
+#include "Server/StealthPenaltyDueAdapter.h"
 #include "Server/StealthPenaltyService.h"
 #include "Server/StealthTuningSubstructs.h"
 #include "StealthCommandWiring.h"
@@ -395,6 +396,8 @@ void UStealthCompositionRoot::Initialize(FSubsystemCollectionBase& Collection)
 	Adapters = NewObject<UStealthMatchAdapters>(this);
 	RosterGateway = NewObject<URoundRosterStoreGateway>(this);
 	RosterGateway->Bind(Roster);
+	// NKP story 009: Round's informant body provider lives as long as this root (the Round gateways hold it raw).
+	InformantBodies = MakeShared<FStealthInformantBodiesProvider>();
 
 	if (Roster != nullptr)
 	{
@@ -419,12 +422,23 @@ void UStealthCompositionRoot::Deinitialize()
 	{
 		PreparePredicate->Initialize(nullptr, FAssassinationTuning_Public()); // the clock below is released
 	}
+	if (DueAdapter.IsValid())
+	{
+		DueAdapter->Unbind();
+	}
 	if (UPenaltyService* PenaltyService = Penalty.Get())
 	{
 		PenaltyService->Unbind(); // NKP: before the encounter core it subscribed to goes
 	}
 	Penalty.Reset();
 	PenaltyPawns.Reset();
+	PenaltyRespawns.Reset();
+	DueAdapter.Reset();
+	OwnerViewFeed.Reset();
+	if (InformantBodies.IsValid())
+	{
+		InformantBodies->SetService(nullptr);
+	}
 	if (Encounters != nullptr)
 	{
 		Encounters->Shutdown(); // Round (a dependency) still holds its queue here
@@ -520,6 +534,7 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 		Gateways.Spawner = Adapters;
 		Gateways.PawnControl = Adapters;
 		Gateways.ObjectiveProgress = Adapters;
+		Gateways.InformantBodies = InformantBodies.Get(); // NKP story 009: Penalty's provider (OnInformantAwaitingBody, R18)
 		USessionService* Session = USessionService::Get(InGameMode->GetWorld());
 		Round->RegisterGateways(Gateways, this, Session != nullptr ? &Session->GetSubSeedSource() : nullptr);
 	}
@@ -584,6 +599,10 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	{
 		Encounters = NewObject<UEncounterService>(this);
 	}
+	if (DueAdapter.IsValid())
+	{
+		DueAdapter->Unbind();
+	}
 	if (UPenaltyService* PreviousPenalty = Penalty.Get())
 	{
 		PreviousPenalty->Unbind(); // NKP: it subscribed to the encounter core about to go
@@ -638,6 +657,9 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	if (PenaltyService != nullptr)
 	{
 		PenaltyPawns = MakeShared<FStealthPenaltyPawnGateway>(InGameMode);
+		// NKP story 012: the respawn commit's gateways (pick, takeover and card are stand-ins behind the seam until LSC 033,
+		// SCL 028 and the Character Pool land; TryReleaseNpc / AdoptReleasedPawn are the Crowd Director's).
+		PenaltyRespawns = MakeShared<FStealthPenaltyRespawnGateway>(World, this);
 		FPenaltyServiceInit PenaltyInit;
 		PenaltyInit.Clock = CommandClock.Get();
 		PenaltyInit.Queue = Queue;
@@ -646,6 +668,7 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		PenaltyInit.Encounters = Encounters;
 		PenaltyInit.Crowd = UCrowdDirector::Get(World);
 		PenaltyInit.Pawns = PenaltyPawns.Get();
+		PenaltyInit.RespawnGateway = PenaltyRespawns.Get();
 		PenaltyInit.Faults = &CommandFaults;
 		if (!PenaltyService->Bind(PenaltyInit))
 		{
@@ -653,6 +676,27 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		}
 	}
 	Penalty = PenaltyService;
+	if (InformantBodies.IsValid())
+	{
+		InformantBodies->SetService(PenaltyService); // Round's OnInformantAwaitingBody / R18 readmission / R17.9 reach it
+	}
+	// NKP story 011: the T_due carrier adapter writes OnDueTimeChanged to the C-TeamView owner part through the Roster's
+	// owner-view feed, never while Round's queue is latched.
+	if (PenaltyService != nullptr)
+	{
+		OwnerViewFeed = MakeShared<FStealthRosterOwnerViewFeed>(this);
+		DueAdapter = MakeShared<FPenaltyDueAdapter>(OwnerViewFeed.Get(), [this]()
+		{
+			const URoundMatchStore* RoundStore = GetRoundStore();
+			const FResolutionQueueCore* RoundQueue = RoundStore != nullptr ? RoundStore->GetRoundQueue() : nullptr;
+			return RoundQueue != nullptr && RoundQueue->IsLatched();
+		}, [this]() -> uint32
+		{
+			const URosterStore* Store = GetRosterStore();
+			return Store != nullptr && Store->IsStoreInitialized() ? Store->GetEpochToken().RoundEpoch : 0u;
+		});
+		DueAdapter->Bind(*PenaltyService);
+	}
 }
 
 void UStealthCompositionRoot::HandleRoundPhaseChanged(ERoundPhase OldPhase, ERoundPhase NewPhase)
@@ -686,6 +730,10 @@ void UStealthCompositionRoot::HandleRoundQueueDrained()
 
 void UStealthCompositionRoot::HandleRoundQueueReleasing()
 {
+	if (DueAdapter.IsValid())
+	{
+		DueAdapter->Unbind();
+	}
 	if (UPenaltyService* PenaltyService = Penalty.Get())
 	{
 		PenaltyService->Unbind(); // NKP: its slot context is this queue, its subscription the encounter core

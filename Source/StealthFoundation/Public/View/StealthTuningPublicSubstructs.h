@@ -102,6 +102,10 @@ struct STEALTHFOUNDATION_API FPenaltyTuning_Public
 	/** Removal on the Nth NPC kill (hard minimum 1 only in a bTestAllowsStrikeLimitOne preset, applied by F-1). */
 	UPROPERTY(EditAnywhere, Category = "Penalty", meta = (ClampMin = "2", ClampMax = "5", SafeMin = "2", SafeMax = "4", Latch = "Round", Owner = "Penalty", Unit = "Limit"))
 	int32 NpcKillStrikeLimit = 3;
+
+	/** F2 D: time from the loss (kill, exile, disconnect release) to the takeover attempt; the same for every cause (PEN-R8, story nkp-009). */
+	UPROPERTY(EditAnywhere, Category = "Penalty", meta = (ClampMin = "5", ClampMax = "60", SafeMin = "10", SafeMax = "20", Latch = "Round", Owner = "Penalty", Unit = "Sec"))
+	float InformantRespawnDelaySec = 15.0f;
 };
 
 /** Objectives Chain keys a client needs. */

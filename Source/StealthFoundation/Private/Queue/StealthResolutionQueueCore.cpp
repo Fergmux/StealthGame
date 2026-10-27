@@ -212,6 +212,24 @@ FQueueItemHandle FResolutionQueueCore::ScheduleAt(double DueServerTime, const FQ
 	return FQueueItemHandle{ HandleId };
 }
 
+bool FResolutionQueueCore::CancelTimer(FQueueItemHandle Handle)
+{
+	if (!Handle.IsSet())
+	{
+		return false;
+	}
+	const int32 Index = DueHeap.IndexOfByPredicate([Handle](const FDueEntry& Entry) { return Entry.Pending.HandleId == Handle.Id; });
+	if (Index == INDEX_NONE)
+	{
+		return false;
+	}
+	DueHeap.HeapRemoveAt(Index, [](const FDueEntry& A, const FDueEntry& B)
+	{
+		return A.DueTime < B.DueTime || (A.DueTime == B.DueTime && A.ScheduleOrder < B.ScheduleOrder);
+	}, EAllowShrinking::No);
+	return true;
+}
+
 int32 FResolutionQueueCore::GetPendingMailboxItemCount() const
 {
 	int32 Count = 0;

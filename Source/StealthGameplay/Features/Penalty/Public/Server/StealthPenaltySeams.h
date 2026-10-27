@@ -43,6 +43,26 @@ struct FPenaltyPawnKey
 };
 
 /**
+ * Penalty's per-participant sub-state (GDD States and Transitions; ADR-0019 sections 1, 3.1). Server-only; the Roster state
+ * is authoritative. Exiled is never a resting state (the exile leaves the participant Awaiting).
+ */
+enum class EInformantLifeState : uint8
+{
+	/** Competing (Roster Active), or an informant whose request ended without a body. */
+	Active,
+	/** Informant, no pawn, one InformantRespawn item pending. */
+	Awaiting,
+	/** The item fired: drawing or retrying (the LSC widening level is the record's LastWideningLevel). */
+	Picking,
+	/** Informant with a live bound pawn. */
+	Embodied,
+	/** Informant, disconnected, no pawn, no item; t_lost and t_floor kept. */
+	Absent,
+	/** Frozen at the round end. */
+	RoundEnded,
+};
+
+/**
  * Every tuning value Penalty reads, latched once per round at Preparing (TDC rule CR-11 Latching; PEN-R4). Never a
  * literal in Penalty code: the values come from the server tuning face through IPenaltyTuningSource.
  *
@@ -55,6 +75,14 @@ struct STEALTHGAMEPLAY_API FPenaltyParams
 	int32 NpcKillStrikeLimit = 0;
 	/** PEN-R5 StrikeOutReleaseGraceSec (inclusive window after a release in which a kill adds no strike). */
 	double StrikeOutReleaseGraceSec = 0.0;
+	/** F2 D: InformantRespawnDelaySec (Penalty's public key, story nkp-009). */
+	double InformantRespawnDelaySec = 0.0;
+	/** F2 floor input: Assassination's DeathFallSec. */
+	double DeathFallSec = 0.0;
+	/** F2 floor input: Camera's NoPawnFadeSec (a pending-owner constant until Camera registers it; TD-TDC-I3). */
+	double NoPawnFadeSec = 0.0;
+	/** The commit's regular retry cadence: LSC's EmergenceRetrySec (pending-owner constant until LSC registers it). */
+	double EmergenceRetrySec = 0.0;
 
 	/** The Penalty values of a tuning set (server face). */
 	static FPenaltyParams FromTuning(const FStealthServerTuning& Values);
@@ -80,6 +108,16 @@ public:
 	virtual TOptional<EParticipantState> GetState(FParticipantId Participant) const = 0;
 	/** The Roster's current RoundEpoch (the ExpectedEpoch of every owner-view write). */
 	virtual uint32 GetRoundEpoch() const = 0;
+
+	/**
+	 * True when the participant's Roster connection projection is Disconnected or Dormant (Session's Unresponsive collapses
+	 * to Connected, Roster R11: an Unresponsive participant counts as connected; PEN-R8). Default: connected.
+	 */
+	virtual bool IsDisconnected(FParticipantId Participant) const { return false; }
+	/** The participant's team (the respawn pick's region). Default: none. */
+	virtual ERosterTeam GetTeam(FParticipantId Participant) const { return ERosterTeam::None; }
+	/** True when the participant has a live (BoundLive) pawn (the commit's re-validation). Default: none. */
+	virtual bool HasLivePawn(FParticipantId Participant) const { return false; }
 };
 
 /**
@@ -95,6 +133,12 @@ public:
 
 	/** Writes {WrongTargetTally, LastResultSeq} to Participant's C-TeamView owner part (owner audience only). */
 	virtual void SetOwnerTally(FParticipantId Participant, uint8 WrongTargetTally, FClientCommandSeq LastResultSeq, uint32 ExpectedEpoch) = 0;
+
+	/**
+	 * Writes the respawn due time T_due (0 clears) to Participant's C-TeamView owner part (ADR-0019 section 6 option (a);
+	 * story nkp-011). Only the carrier adapter (FPenaltyDueAdapter) calls it, never while the round is latched.
+	 */
+	virtual void SetOwnerRespawnDue(FParticipantId Participant, double DueServerTime, uint32 ExpectedEpoch) = 0;
 };
 
 /**
@@ -148,17 +192,103 @@ public:
 };
 
 /**
- * The respawn scheduler of story nkp-009 (F2 T_due, the InformantRespawn heap item), as the informant kill calls it
- * (ADR-0019 section 2.1: ScheduleRespawn(VictimParticipant, InformantKilled, slot time)). Null until nkp-009 lands: the
- * production respawn is still the prototype game mode's (AStealthGameMode::HandleEncounterBodyReleased).
+ * One TimerFired(InformantRespawn) item as Penalty asks for it (ADR-0019 section 3.2; ADR-0002 section 2a): the queue
+ * adapter turns it into FTimerPayload {Kind = InformantRespawn, Subject = Participant, Seq = RequestSeq, Generation = 0,
+ * Phase = 0} with {MatchId, RoundEpoch} as FQueueItem::Expected. Cause is an observation for tests and is never put in
+ * the payload.
  */
-class IPenaltyRespawnScheduler
+struct FPenaltyRespawnItem
+{
+	FParticipantId Participant;
+	uint32 RequestSeq = 0;
+	uint32 RoundEpoch = 0;
+	ERespawnCause Cause = ERespawnCause::Assassinated;
+};
+
+/**
+ * The due-time heap as Penalty uses it (stories nkp-009 scheduling and cancellation, nkp-012 retries). Production:
+ * FPenaltyRespawnQueueAdapter over Round's FResolutionQueueCore (ScheduleAt / CancelTimer), which is also the
+ * InformantRespawn resolver. Penalty uses no engine timer, tick or latent action (ADR-0019 forbidden approach).
+ */
+class IPenaltyRespawnTimers
 {
 public:
-	virtual ~IPenaltyRespawnScheduler() = default;
+	virtual ~IPenaltyRespawnTimers() = default;
 
-	/** Schedules Participant's informant body for Cause, the body lost at LostServerTime (inside the causing slot). */
-	virtual void ScheduleRespawn(FParticipantId Participant, ERespawnCause Cause, double LostServerTime) = 0;
+	/** Schedules Item at DueServerTime; returns its handle (0 when it could not be scheduled). */
+	virtual uint64 ScheduleRespawnItem(double DueServerTime, const FPenaltyRespawnItem& Item) = 0;
+	/** Cancels a pending item by handle (Cancel(TimerHandle)); a handle no longer pending is a no-op. */
+	virtual void CancelRespawnItem(uint64 Handle) = 0;
+};
+
+/** PickRespawnPawn's status (ADR-0014 section 7.3 FRespawnPick, confirmation requested; ADR-0019 section 4.1 step 2). */
+enum class EPenaltyPickStatus : uint8
+{
+	Picked,
+	/** No eligible unseen pawn in the region at the current widening level: the regular retry. */
+	None,
+	/** The one-pick-per-server-frame guard: the next-frame retry, no widening time consumed. */
+	Deferred,
+};
+
+/** One pick (Pawn set only for Picked). */
+struct FPenaltyRespawnPick
+{
+	EPenaltyPickStatus Status = EPenaltyPickStatus::None;
+	FPenaltyPawnKey Pawn;
+	/** The LSC widening level the pick used (0..2). */
+	uint8 WideningLevel = 0;
+};
+
+/** TakeOverCrowdPawn's answer as Penalty acts on it (ADR-0010 section 3.2; ADR-0019 section 4.1 step 5). */
+enum class EPenaltyTakeoverResult : uint8
+{
+	Applied,
+	/** The factory's eligibility failed (a defect once the step-3 pre-check exists). */
+	NotEligible,
+	/** BindPawn rejected (Rejected_StaleEpoch / WrongState): the request is stale. */
+	Rejected_Stale,
+};
+
+/**
+ * The respawn commit's calls on other systems' facades (ADR-0019 section 4.1 steps 2-6; story nkp-012), by pawn key, in
+ * one call stack inside the InformantRespawn slot. Production: the composition root's FStealthPenaltyRespawnGateway, whose
+ * pick (Level Socket Contract story 033), takeover (Shared Character story 028) and card (Character Pool) are STAND-INs
+ * behind this seam until those epics land; TryReleaseNpc and AdoptReleasedPawn are the Crowd Director's. The Logic tests
+ * inject recording fakes (StealthGame.Penalty.CommitSequence).
+ */
+class IPenaltyRespawnGateway
+{
+public:
+	virtual ~IPenaltyRespawnGateway() = default;
+
+	/** ULayoutService::PickRespawnPawn(Team, RequestSeq, Exclude): the only random draw of the sequence. */
+	virtual FPenaltyRespawnPick PickRespawnPawn(ERosterTeam Team, uint32 RequestSeq, TConstArrayView<FPenaltyPawnKey> Exclude) = 0;
+	/** UStealthPawnFactory::CheckTakeOverEligibility(Pawn): side-effect free, the same predicate as TakeOverCrowdPawn's. */
+	virtual bool CheckTakeOverEligibility(FPenaltyPawnKey Pawn) const = 0;
+	/** ITakeoverEligibilitySource::TryReleaseNpc(Pawn, Expected): Penalty is its only caller. */
+	virtual bool TryReleaseNpc(FPenaltyPawnKey Pawn, uint32 ExpectedRoundEpoch) = 0;
+	/** UStealthPawnFactory::TakeOverCrowdPawn(Pawn, Participant, ExpectedEpoch): the factory binds on Penalty's behalf. */
+	virtual EPenaltyTakeoverResult TakeOverCrowdPawn(FPenaltyPawnKey Pawn, FParticipantId Participant, uint32 ExpectedRoundEpoch) = 0;
+	/** ICrowdControl::AdoptReleasedPawn(Pawn, {}): the exact reverse of TryReleaseNpc (a released pawn not taken over). */
+	virtual void AdoptReleasedPawn(FPenaltyPawnKey Pawn) = 0;
+	/** UAppearanceAllocator::TakeNpcCard(Participant, Pawn): NpcLive -> BoundLive; the AppearanceId, unset on failure. */
+	virtual TOptional<uint16> TakeNpcCard(FParticipantId Participant, FPenaltyPawnKey Pawn) = 0;
+	/** Roster RecordAppearance(Participant, AppearanceId) (log-only history). */
+	virtual void RecordAppearance(FParticipantId Participant, uint16 AppearanceId) = 0;
+};
+
+/**
+ * Where Penalty raises OnDueTimeChanged(P, T_due) (ADR-0019 section 6; stories nkp-009..011): set at scheduling and
+ * readmission, unset at embodiment, cancellation, round end and reset. Production: UPenaltyService broadcasts its
+ * server-only FOnDueTimeChanged, which the carrier adapter (FPenaltyDueAdapter) consumes.
+ */
+class IPenaltyDueTimeSink
+{
+public:
+	virtual ~IPenaltyDueTimeSink() = default;
+
+	virtual void OnDueTimeChanged(FParticipantId Participant, TOptional<double> DueServerTime) = 0;
 };
 
 /**
@@ -194,4 +324,10 @@ namespace PenaltyFaultDetail
 	inline constexpr int64 ExileTransitionRejected = 0x4E4B5005;
 	/** An informant kill's RetireBinding did not apply (the body stays BoundLive; story nkp-008). */
 	inline constexpr int64 InformantRetireRejected = 0x4E4B5006;
+	/** TakeOverCrowdPawn answered NotEligible after the step-3 pre-check passed (a defect; story nkp-012). */
+	inline constexpr int64 TakeoverNotEligibleAfterPrecheck = 0x4E4B5007;
+	/** TakeNpcCard failed after an Applied takeover (LedgerMismatch: the takeover stands, no rollback; story nkp-012). */
+	inline constexpr int64 LedgerMismatch = 0x4E4B5008;
+	/** A respawn item could not be scheduled (no timer seam, or the queue refused it; EStealthFault::DeadRegistration). */
+	inline constexpr int64 RespawnNotScheduled = 0x4E4B5009;
 }

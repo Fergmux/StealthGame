@@ -441,15 +441,26 @@ enum class ERespawnCause : uint8
 
 /**
  * Declared by Round, bound by the composition root to Penalty (ADR-0019 section 1). Penalty owns the C1 respawn
- * chain and its retries (PEN-R9, PEN-R10). Declared by the RMF round-end batch (story rmf-062).
+ * chain and its retries (PEN-R9, PEN-R10). Declared by the RMF round-end batch (story rmf-062); OnInformantAwaitingBody
+ * and OnInformantPawnLost added by NPC-Kill Penalty story nkp-009 (ADR-0019 Key Interfaces).
  */
 class IInformantBodyProvider
 {
 public:
 	virtual ~IInformantBodyProvider() = default;
 
+	/**
+	 * An Active -> Informant transition (Assassinated, ReversedAgainst, StrikeLimit) Round evaluated in its Roster flush,
+	 * called AFTER its elimination check and only when the round did not latch (ADR-0002 section 8.2: no respawn is ever
+	 * scheduled inside a deciding slot). LostServerTime is the slot time (F2 t_lost). The only scheduler of those causes.
+	 */
+	virtual void OnInformantAwaitingBody(FParticipantId Participant, ERespawnCause Cause, double LostServerTime) = 0;
+
 	/** R18: an Informant returned during Active (after its Session acknowledgement); called inside Round's slot. */
 	virtual void OnInformantReadmitted(FParticipantId Participant) = 0;
+
+	/** R17.9, the informant case: an embodied informant's body was lost without a kill (KillZ, destroyed); inside the slot. */
+	virtual void OnInformantPawnLost(FParticipantId Participant) = 0;
 };
 
 // ---------------------------------------------------------------------------------------------------------

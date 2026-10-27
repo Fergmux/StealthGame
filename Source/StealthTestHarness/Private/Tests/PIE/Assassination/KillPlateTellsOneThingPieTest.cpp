@@ -50,6 +50,8 @@ NETWORK_TEST_CLASS(KillPlateTellsOneThing, "StealthGame.Assassination.PIE")
 	StealthOwnPresentationPie::FFrameTracker Frames;
 	uint32 Seq = 0x24100000u;
 	double Mark = 0.0;
+	/** Server time the respawned P2 pawn was first seen (-1: not yet); it settles before step 4 strikes it. */
+	double RespawnSeenAt = -1.0;
 
 	BEFORE_ALL()
 	{
@@ -172,7 +174,21 @@ NETWORK_TEST_CLASS(KillPlateTellsOneThing, "StealthGame.Assassination.PIE")
 				Bearing, SoloPawn->GetActorLocation().Z - Striker->GetActorLocation().Z, static_cast<int32>(SoloPawn->GetActionState().Pose)));
 			StrikeAt(PawnOf(Pair[1]), SoloPawn.Get(), Seq);
 		}, RespawnWaitSec,
-			[this]() { return PawnOf(Pair[1]) != nullptr; });
+			[this]()
+			{
+				// NKP stories nkp-009 / nkp-012: Penalty's respawn (15 s by default) settles one second before step 4 strikes it.
+				const double Now = StealthAssassinationPie::ServerNow(StealthAssassinationPie::ServerWorld());
+				if (PawnOf(Pair[1]) == nullptr)
+				{
+					RespawnSeenAt = -1.0;
+					return false;
+				}
+				if (RespawnSeenAt < 0.0)
+				{
+					RespawnSeenAt = Now;
+				}
+				return Now - RespawnSeenAt >= 1.0;
+			});
 		Step(TEXT("4 S kills P2 (an informant)"), [this]()
 		{
 			PlaceFacing(PawnOf(Pair[1]), SoloPawn.Get(), 150.0);

@@ -10,22 +10,12 @@
 class IStealthClock;
 class IRoundLogWriter;
 
-/** Penalty's per-participant sub-state (GDD States and Transitions; ADR-0019 section 1). The Roster state is authoritative. */
-enum class EInformantLifeState : uint8
-{
-	Active,
-	Awaiting,
-	Picking,
-	Embodied,
-	Absent,
-	RoundEnded,
-};
-
 /**
  * One participant's Penalty record (ADR-0019 section 1 table), keyed by ParticipantId in FPenaltyCore. Plain C++, never a
  * USTRUCT and never replicated: StrikeCount is ServerOnly (it never reaches any client, its owner included, before Ended);
  * the tally reaches its owner only through FStrikeResult.TallyAfter and the owner re-push (PEN-R3). The respawn fields
- * (LostServerTime .. ExcludePawn) are declared now so later stories (009-013) do not reshape the record.
+ * (LostServerTime .. bClearExclusionsAtFire) are the lifecycle of stories nkp-009 to nkp-012; T_due reaches its owner only
+ * through OnDueTimeChanged and the carrier adapter (story nkp-011).
  */
 struct FPenaltyRecord
 {
@@ -51,6 +41,14 @@ struct FPenaltyRecord
 	uint64 TimerHandle = 0;
 	/** The participant's own released body: never re-adopted (PEN-R5, CR-5). */
 	FPenaltyPawnKey ExcludePawn;
+	/** F2 D of the current loss: InformantRespawnDelaySec, or 0 for a body lost without a kill (kept across Absent). */
+	double RespawnDelaySec = 0.0;
+	/** The cause of the current request (its RespawnScheduled row). */
+	ERespawnCause RespawnCause = ERespawnCause::Assassinated;
+	/** The request's short-lived exclusion set (ADR-0019 section 4.1 step 3): pawns that failed the pre-check, the release or the takeover. */
+	TArray<FPenaltyPawnKey> RequestExclusions;
+	/** True when the pending item is a regular EmergenceRetrySec retry: the exclusion set is cleared when it fires. */
+	bool bClearExclusionsAtFire = false;
 };
 
 /** One OnPawnKilled, as the core sees it (the service resolves the killer's participant inside the slot). */
@@ -105,8 +103,12 @@ struct FPenaltyCoreDeps
 	 * bExiled of story nkp-003 is still set, nothing is called; the Logic tests of stories nkp-001..004 run so).
 	 */
 	IPenaltyBodyGateway* Bodies = nullptr;
-	/** Story nkp-009's scheduler (null until it lands: the informant kill schedules nothing here). */
-	IPenaltyRespawnScheduler* Respawns = nullptr;
+	/** The due-time heap (story nkp-009; null: nothing is scheduled and each scheduling reports one DeadRegistration fault). */
+	IPenaltyRespawnTimers* Timers = nullptr;
+	/** The respawn commit's gateways (story nkp-012; null: a fired item retries after EmergenceRetrySec). */
+	IPenaltyRespawnGateway* Respawn = nullptr;
+	/** OnDueTimeChanged (story nkp-011's carrier adapter listens; null: not raised). */
+	IPenaltyDueTimeSink* DueTimes = nullptr;
 	IStealthFaultSink* Faults = nullptr;
 };
 
@@ -148,14 +150,61 @@ public:
 
 	// --- Connection (PEN-R6 carry-over: no counter changes) -------------------------------------------------------
 
-	/** The Roster projected Disconnected (or Connected again without a reclaim). Counters untouched. */
+	/**
+	 * The Roster projected Disconnected (or Connected again without a reclaim). Counters untouched (PEN-R6). Disconnected
+	 * while Awaiting / Picking: the item is cancelled (Cancel(TimerHandle)), t_lost and t_floor kept, state Absent,
+	 * RespawnCancelled{Disconnect} logged, T_due unset; while Embodied (Round R17.5 releases the pawn in this slot): Absent
+	 * with t_lost = t_floor = now and no item (stories nkp-009, nkp-010).
+	 */
 	void OnConnectionChanged(FParticipantId Participant, bool bConnected);
 	/** The participant reclaimed its record: the owner re-push {tally, LastResultSeq} (PEN-R3, ADR-0019 section 2.2a). */
 	void OnParticipantReclaimed(FParticipantId Participant);
 	/** The participant's C-TeamView was rebound after a rejoin (Roster OnViewRebound): the owner re-push. */
 	void OnViewRebound(FParticipantId Participant);
-	/** A returning informant was readmitted (Round R18). Counters untouched; its respawn is story nkp-010. */
+	/**
+	 * A returning informant was readmitted (Round R18, after its Session acknowledgement; story nkp-010). Counters untouched.
+	 * From Absent: T_due = max(t_lost + D, t_floor, now) from the KEPT t_lost and t_floor (never restarted, never skipped):
+	 * Awaiting with a new item when now < T_due, else Picking(0) and the commit runs in this slot.
+	 */
 	void OnInformantReadmitted(FParticipantId Participant);
+
+	// --- Respawn lifecycle (stories nkp-009, nkp-010, nkp-012; ADR-0019 sections 3, 4) -------------------------------
+
+	/**
+	 * Round's IInformantBodyProvider::OnInformantAwaitingBody (after its elimination check, never when latched): the only
+	 * scheduler of the Active -> Informant causes Assassinated, ReversedAgainst and StrikeLimit. A dying body's floor reads
+	 * the death time recorded by this slot's OnPawnKilled (ADR-0018 section 4.1); the exile's body does not fall.
+	 */
+	void OnInformantAwaitingBody(FParticipantId Participant, ERespawnCause Cause, double LostServerTime);
+	/**
+	 * Round R17.9's informant case (IInformantBodyProvider::OnInformantPawnLost): an Embodied informant's body lost without
+	 * a kill. T_due = now (D = 0), PawnLost{Participant, Cause} logged, Picking(0) and the commit in this slot; strike and
+	 * tally unchanged. Disconnected: Absent instead. Any other state: an idempotent no-op (a second report).
+	 */
+	void OnInformantPawnLost(FParticipantId Participant, EPenaltyPawnLostCause Cause);
+	/**
+	 * Round's grace expiry turned an Active participant into Informant(Disconnect) and released its pawn (Round R17.4; the
+	 * Roster state event): Absent with t_lost = t_floor = now and no item (story nkp-010). Never schedules anything.
+	 */
+	void OnGraceExpired(FParticipantId Participant);
+	/**
+	 * The InformantRespawn item fired (the queue adapter's resolver, inside its slot): re-validated against the request
+	 * (sequence, state, epoch) and then the commit (story nkp-012). False (Voided) for a stale or cancelled item.
+	 */
+	bool ResolveRespawnItem(FParticipantId Participant, uint32 RequestSeq, uint32 ItemRoundEpoch);
+
+	/** F2: T_due = max(t_lost + D, t_floor, t_now). */
+	static double ComputeDueTime(double LostServerTime, double DelaySec, double FloorServerTime, double ServerTimeNow);
+	/** F2: t_floor = DeathServerTime + DeathFallSec + NoPawnFadeSec for a dying body (DeathServerTime set), else t_lost. */
+	static double ComputeFloor(TOptional<double> DeathServerTime, double DeathFallSec, double NoPawnFadeSec, double LostServerTime);
+	/**
+	 * The next-frame retry offset (ADR-0019 section 4.3, "ServerNow + 1 ms", meaning strictly after this drain). The queue
+	 * stamps every item due at or before DrainStart + DueEpsilonSec (1 ms, inclusive) in the same drain, so the smallest
+	 * offset that really lands in the next frame is twice the due tolerance: 2 ms.
+	 */
+	static double NextFrameRetryOffsetSec();
+	/** The latched F2 and retry values. */
+	const FPenaltyParams& GetLatchedParams() const { return Latched; }
 
 	// --- Strikes, tally (stories nkp-002, nkp-003) -----------------------------------------------------------------
 
@@ -188,6 +237,10 @@ public:
 	// --- Server-only queries (tests, the service; never copied to a client-visible type) --------------------------
 
 	const FPenaltyRecord* FindRecord(FParticipantId Participant) const { return Records.Find(Participant); }
+	/** The participant's Penalty sub-state (Active for an unknown participant). */
+	EInformantLifeState GetLifeState(FParticipantId Participant) const;
+	/** T_due while one is pending (Awaiting or Picking), else unset. */
+	TOptional<double> GetDueServerTime(FParticipantId Participant) const;
 	uint8 GetStrikeCount(FParticipantId Participant) const;
 	uint8 GetWrongTargetTally(FParticipantId Participant) const;
 	int32 GetReleasedBodyCount() const { return ReleasedBodies.Num(); }
@@ -207,6 +260,27 @@ private:
 	/** The informant kill (PEN-R7; ADR-0019 section 2.1; story nkp-008): RetireBinding inline, then ScheduleRespawn. */
 	void RetireInformant(const FPenaltyKill& Kill, double SlotServerTime);
 	void RepushOwnerTally(FParticipantId Participant, const FPenaltyRecord& Record);
+	/**
+	 * ADR-0019 section 3.2: F2, then Absent (Disconnected: t_lost and t_floor kept, no item) or Awaiting with one item, the
+	 * RespawnScheduled row and OnDueTimeChanged. DeathServerTime: the dying body's death write time (unset: no fall).
+	 */
+	void ScheduleRespawn(FParticipantId Participant, ERespawnCause Cause, double LostServerTime, TOptional<double> DeathServerTime);
+	/** Arms a new request (a fresh RespawnRequestSeq) due at DueServerTime: Awaiting, item, RespawnScheduled, OnDueTimeChanged. */
+	void ArmRequest(FParticipantId Participant, ERespawnCause Cause, double DueServerTime);
+	/** Starts a new request that is due now: Picking(0) and the commit in this call stack (readmission after T_due, PawnLost). */
+	void StartPickingNow(FParticipantId Participant, double DueServerTime);
+	/** ADR-0019 section 4.1: re-validate, pick, pre-check, TryReleaseNpc, TakeOverCrowdPawn, (Applied) card, bookkeeping. */
+	void RunCommit(FParticipantId Participant);
+	/** A retry of the same request (same RespawnRequestSeq) at DueServerTime; bRegular: the EmergenceRetrySec cadence. */
+	void ScheduleRetry(FParticipantId Participant, double DueServerTime, bool bRegular);
+	/** Cancels the pending item (if any) and forgets the request; t_lost and t_floor are kept. */
+	void CancelRequest(FPenaltyRecord& Record);
+	/** Ends the request without a body (re-validation failed, round over, stale bind): the row, T_due unset. */
+	void VoidRequest(FParticipantId Participant, ERespawnCancelReason Reason, EInformantLifeState NewState);
+	uint64 ScheduleItem(FParticipantId Participant, const FPenaltyRecord& Record, double DueServerTime);
+	void RaiseDueTime(FParticipantId Participant, TOptional<double> DueServerTime);
+	bool IsDisconnected(FParticipantId Participant) const;
+	double NowServerTime() const;
 	FQueueKey CurrentSlotKey() const;
 	void ReportFault(EStealthFault Fault, int64 Detail) const;
 
@@ -236,6 +310,10 @@ private:
 	TMap<FPenaltyPawnKey, double> ReleasedBodies;
 	TOptional<FPendingStrikeRow> PendingStrikeRow;
 	TOptional<FSlotExile> SlotExile;
+	/** Round-scoped: a dying participant body's death write time, from its OnPawnKilled (the F2 floor of its respawn). */
+	TMap<FParticipantId, double> DyingBodyDeathTimes;
+	/** The next RespawnRequestSeq (round-scoped, never 0). */
+	uint32 NextRespawnRequestSeq = 1;
 	uint32 RoundEpoch = 0;
 	bool bFrozen = false;
 };

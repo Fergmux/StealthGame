@@ -108,13 +108,23 @@ namespace StealthTuningPendingOwnerKeys
 	inline constexpr double EmergenceSocketCooldownSec = 20.0;
 	/**
 	 * The keys the Assassination invariants read from owners that have not registered them yet (story asn-001; the TD-TDC-I3
-	 * pattern): Concealment's BushStrikeEmergeSec 0.35 (I-ASN-3, W-ASN-10), Penalty's InformantRespawnDelaySec 15 (W-ASN-11)
-	 * and the IIF's PawnRefAgreementCm 75 (W-ASN-9), each the owner GDD's default. When the owner registers the key, the
-	 * invariant reads it from the value set (FAssassinationInvariantInputs::FromValues) and the constant is deleted.
+	 * pattern): Concealment's BushStrikeEmergeSec 0.35 (I-ASN-3, W-ASN-10) and the IIF's PawnRefAgreementCm 75 (W-ASN-9),
+	 * each the owner GDD's default. When the owner registers the key, the invariant reads it from the value set
+	 * (FAssassinationInvariantInputs::FromValues) and the constant is deleted (Penalty's InformantRespawnDelaySec was, story
+	 * nkp-009: W-ASN-11 reads the schema row).
 	 */
 	inline constexpr double BushStrikeEmergeSec = 0.35;
-	inline constexpr double InformantRespawnDelaySec = 15.0;
 	inline constexpr double PawnRefAgreementCm = 75.0;
+	/**
+	 * The keys Penalty's F2 respawn due time and its commit retries read from owners that have not registered them yet
+	 * (stories nkp-009, nkp-012; the TD-TDC-I3 pattern), each the owner GDD's default: Camera's NoPawnFadeSec 0.5 (the F2
+	 * floor, CS-R12.1), the Level Socket Contract's EmergenceRetrySec 1 (the takeover retry cadence, LSC R5b.5) and
+	 * InformantRespawnPathCm 4500 (the respawn region radius the stand-in picker uses until LSC story 033). When the owner
+	 * registers the key, FPenaltyParams::FromTuning reads it from the value set and the constant is deleted.
+	 */
+	inline constexpr double NoPawnFadeSec = 0.5;
+	inline constexpr double EmergenceRetrySec = 1.0;
+	inline constexpr double InformantRespawnPathCm = 4500.0;
 }
 
 /**

@@ -325,6 +325,14 @@ public:
 	/** Cancels every pending timer (Round R10 step 2); legal during a drain (items already stamped are unaffected). */
 	void CancelAllTimers() { DueHeap.Reset(); }
 
+	/**
+	 * Cancels one pending timer by the handle ScheduleAt returned (ADR-0019 section 3.3 Cancel(TimerHandle); story nkp-009).
+	 * False when it is no longer in the heap (already stamped, already cancelled, or never a timer). Legal during a drain:
+	 * an item already stamped in this drain is unaffected (its resolver re-validates). O(n) in the heap size plus a
+	 * re-heapify; called only on a cancellation, never per frame.
+	 */
+	bool CancelTimer(FQueueItemHandle Handle);
+
 private:
 	struct FPendingItem
 	{

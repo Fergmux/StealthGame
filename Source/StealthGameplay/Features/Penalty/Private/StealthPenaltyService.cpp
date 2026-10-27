@@ -10,11 +10,14 @@
 #include "Server/Roster/StealthRosterStore.h"
 #include "Server/StealthServerTuning.h"
 #include "StealthPenaltyCore.h"
+#include "StealthPenaltyQueueAdapter.h"
 #include "UObject/UObjectArray.h"
 #include "View/Core/StealthPawn.h"
 
 // Stories nkp-001 (shell, subscriptions, carry-over), nkp-002 (OnPawnKilled), nkp-003 (IStrikeTallySource, re-push),
-// nkp-005 (the exile's gateway), nkp-008 (the informant kill's RetireBinding).
+// nkp-005 (the exile's gateway), nkp-008 (the informant kill's RetireBinding), nkp-009 / nkp-010 (the provider calls, the
+// InformantRespawn resolver, the connection and grace-expiry events), nkp-011 (OnDueTimeChanged), nkp-012 (the commit's
+// gateway pass-through).
 // ADR-0007 thin facade: every adapter below adapts one engine owner and adds no rule.
 
 /** The production adapters the service binds (one engine owner each). */
@@ -36,6 +39,45 @@ struct FPenaltyServiceAdapters
 		{
 			const URosterStore* Roster = Store.Get();
 			return Roster != nullptr && Roster->IsStoreInitialized() ? Roster->GetEpochToken().RoundEpoch : 0;
+		}
+
+		virtual bool IsDisconnected(FParticipantId Participant) const override
+		{
+			// Session's Unresponsive collapses to Connected in the Roster projection (R11): it counts as connected.
+			const FParticipantRecord* Record = Find(Participant);
+			return Record != nullptr && Record->Connection.Projection != ERosterConnection::Connected;
+		}
+
+		virtual ERosterTeam GetTeam(FParticipantId Participant) const override
+		{
+			const FParticipantRecord* Record = Find(Participant);
+			return Record != nullptr ? Record->Team : ERosterTeam::None;
+		}
+
+		virtual bool HasLivePawn(FParticipantId Participant) const override
+		{
+			const FParticipantRecord* Record = Find(Participant);
+			return Record != nullptr && Record->HasLivePawn();
+		}
+
+		const FParticipantRecord* Find(FParticipantId Participant) const
+		{
+			const URosterStore* Roster = Store.Get();
+			return Roster != nullptr && Roster->IsStoreInitialized() ? Roster->FindRecord(Participant) : nullptr;
+		}
+	};
+
+	/** IPenaltyDueTimeSink broadcasting UPenaltyService::OnDueTimeChanged (story nkp-011's adapter binds the delegate). */
+	struct FDueSink final : IPenaltyDueTimeSink
+	{
+		FOnPenaltyDueTimeChanged* Delegate = nullptr;
+
+		virtual void OnDueTimeChanged(FParticipantId Participant, TOptional<double> DueServerTime) override
+		{
+			if (Delegate != nullptr)
+			{
+				Delegate->Broadcast(Participant, DueServerTime);
+			}
 		}
 	};
 
@@ -135,6 +177,11 @@ struct FPenaltyServiceAdapters
 	FQueueSlot Slot;
 	FSchemaDefaultsTuning DefaultTuning;
 	FBodies Bodies;
+	FDueSink DueSink;
+	/** The InformantRespawn timers and resolver over the round queue (null without a queue). */
+	TUniquePtr<FPenaltyRespawnQueueAdapter> RespawnQueue;
+	/** True while RespawnQueue is the queue's InformantRespawn resolver (Unbind removes it). */
+	bool bResolverRegistered = false;
 };
 
 bool UPenaltyService::ShouldCreateSubsystem(UObject* Outer) const
@@ -166,6 +213,16 @@ bool UPenaltyService::Bind(const FPenaltyServiceInit& Init)
 	Adapters->Bodies.Store = Roster;
 	Adapters->Bodies.Crowd = Init.Crowd;
 	Adapters->Bodies.Pawns = Init.Pawns;
+	Adapters->DueSink.Delegate = &OnDueTimeChanged;
+	if (Init.Queue != nullptr)
+	{
+		TWeakObjectPtr<URosterStore> WeakRoster = Roster;
+		Adapters->RespawnQueue = MakeUnique<FPenaltyRespawnQueueAdapter>(Init.Queue, [WeakRoster]() -> uint64
+		{
+			const URosterStore* Store = WeakRoster.Get();
+			return Store != nullptr && Store->IsStoreInitialized() ? Store->GetEpochToken().MatchId : 0;
+		});
+	}
 
 	FPenaltyCoreDeps Deps;
 	Deps.Clock = Init.Clock;
@@ -175,9 +232,17 @@ bool UPenaltyService::Bind(const FPenaltyServiceInit& Init)
 	Deps.Log = Init.Log;
 	Deps.OwnerView = Init.OwnerView;
 	Deps.Bodies = &Adapters->Bodies;
-	Deps.Respawns = Init.Respawns;
+	Deps.Timers = Adapters->RespawnQueue.Get();
+	Deps.Respawn = Init.RespawnGateway;
+	Deps.DueTimes = &Adapters->DueSink;
 	Deps.Faults = Init.Faults;
 	Core = MakeShared<FPenaltyCore>(Deps);
+	if (Adapters->RespawnQueue.IsValid())
+	{
+		// ADR-0019 section 1: Penalty registers the TimerFired(InformantRespawn) resolver (one per kind, ADR-0002 section 5).
+		Adapters->RespawnQueue->SetCore(Core.Get());
+		Adapters->bResolverRegistered = Init.Queue->RegisterTimerResolver(ETimerKind::InformantRespawn, Adapters->RespawnQueue.Get());
+	}
 
 	if (UEncounterService* Service = Encounters.Get())
 	{
@@ -212,6 +277,15 @@ void UPenaltyService::Unbind()
 		Store->OnRosterEvent.Remove(RosterEventHandle);
 	}
 	RosterEventHandle.Reset();
+	if (Adapters.IsValid() && Adapters->RespawnQueue.IsValid())
+	{
+		if (Adapters->bResolverRegistered && Adapters->RespawnQueue->GetQueue() != nullptr)
+		{
+			Adapters->RespawnQueue->GetQueue()->UnregisterTimerResolver(ETimerKind::InformantRespawn);
+		}
+		Adapters->RespawnQueue->SetCore(nullptr);
+		Adapters->bResolverRegistered = false;
+	}
 	Core.Reset();
 	Adapters.Reset();
 	Roster.Reset();
@@ -232,6 +306,46 @@ void UPenaltyService::OnViewRebound(FParticipantId Participant)
 	{
 		Core->OnViewRebound(Participant);
 	}
+}
+
+void UPenaltyService::OnInformantAwaitingBody(FParticipantId Participant, ERespawnCause Cause, double LostServerTime)
+{
+	if (Core.IsValid())
+	{
+		const TSharedPtr<FPenaltyCore> KeepCore = Core; // the commit's Roster events may reach a listener that unbinds
+		KeepCore->OnInformantAwaitingBody(Participant, Cause, LostServerTime);
+	}
+}
+
+void UPenaltyService::OnInformantReadmitted(FParticipantId Participant)
+{
+	if (Core.IsValid())
+	{
+		const TSharedPtr<FPenaltyCore> KeepCore = Core;
+		const TSharedPtr<FPenaltyServiceAdapters> KeepAdapters = Adapters;
+		KeepCore->OnInformantReadmitted(Participant);
+	}
+}
+
+void UPenaltyService::OnInformantPawnLost(FParticipantId Participant)
+{
+	if (Core.IsValid())
+	{
+		// Round R17.9 names no finer cause yet: KillZ (the common case; a destroyed body is a defect Round reports itself).
+		const TSharedPtr<FPenaltyCore> KeepCore = Core;
+		const TSharedPtr<FPenaltyServiceAdapters> KeepAdapters = Adapters;
+		KeepCore->OnInformantPawnLost(Participant, EPenaltyPawnLostCause::KillZ);
+	}
+}
+
+EInformantLifeState UPenaltyService::GetLifeState(FParticipantId Participant) const
+{
+	return Core.IsValid() ? Core->GetLifeState(Participant) : EInformantLifeState::Active;
+}
+
+TOptional<double> UPenaltyService::GetDueServerTime(FParticipantId Participant) const
+{
+	return Core.IsValid() ? Core->GetDueServerTime(Participant) : TOptional<double>();
 }
 
 FStrikeTally UPenaltyService::GetTallyForResult(const APawn* Attacker, EStrikeResult Result)
@@ -309,9 +423,16 @@ void UPenaltyService::HandleRosterEvent(const FRosterEvent& Event)
 	case ERosterEventType::ConnectionChanged:
 		Core->OnConnectionChanged(Event.Id, Event.Connection == ERosterConnection::Connected);
 		break;
+	case ERosterEventType::ParticipantStateChanged:
+		// Never a scheduling trigger (delegate order inside the flush is unspecified, ADR-0019 section 1): Round calls
+		// IInformantBodyProvider for the respawn causes. Only Round's grace expiry (Active -> Informant(Disconnect), R17.4)
+		// is recorded here, as Absent with no item (story nkp-010).
+		if (Event.Old == EParticipantState::Active && Event.New == EParticipantState::Informant && Event.Reason == ERosterReason::Disconnect)
+		{
+			Core->OnGraceExpired(Event.Id);
+		}
+		break;
 	default:
-		// ParticipantStateChanged is never a scheduling trigger here (delegate order inside the flush is unspecified,
-		// ADR-0019 section 1): Round calls IInformantBodyProvider instead (story nkp-009).
 		break;
 	}
 }

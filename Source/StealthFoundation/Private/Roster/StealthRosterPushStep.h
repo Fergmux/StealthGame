@@ -46,6 +46,16 @@ public:
 	bool IsReconnecting(FParticipantId Id) const;
 	EReconnectEndCause GetReconnectEndCause(FParticipantId Id) const;
 
+	/**
+	 * The owner-view feed's respawn due time (ADR-0019 section 6 option (a); the T_due half of roster story psr-038, built
+	 * early by NPC-Kill Penalty story nkp-011): Id's owner part carries DueServerTime (0 = none) from the next flush, owner
+	 * audience only. Rejected_StaleEpoch when ExpectedEpoch is not the current RoundEpoch; NoOp_Unchanged when the value is
+	 * already in place. Cleared for everyone by OnRosterReset and EndMatch.
+	 */
+	ERosterResult SetOwnerRespawnDue(FParticipantId Id, double DueServerTime, uint32 ExpectedEpoch);
+	/** The owner part's current T_due of Id (0 = none; tests and dumps). */
+	double GetOwnerRespawnDue(FParticipantId Id) const;
+
 	/** Forgets every view, flag and dirty mark (EndMatch). */
 	void Reset();
 
@@ -68,6 +78,10 @@ private:
 	TMap<FParticipantId, FReconnectState> Reconnect;
 	/** Participants whose next flush is their retiring update (Active -> Informant this frame). */
 	TSet<FParticipantId> RetiringThisFrame;
+	/** Owner-part T_due per participant (absent = 0; SetOwnerRespawnDue). */
+	TMap<FParticipantId, double> OwnerRespawnDue;
+	/** Participants whose own view must be rebuilt at the next flush (an owner-part write). */
+	TSet<FParticipantId> OwnerDirty;
 	/** Participants whose retiring fields must be cleared by the following flush. */
 	TSet<FParticipantId> RetiringClearNextFrame;
 	bool bDirty[2] = { false, false };

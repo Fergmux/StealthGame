@@ -3703,3 +3703,46 @@ stories:
     blocker: "AC3 (FKillCueInput) and AC2's PIE-3 capture need the HUD epic"
     sprint: 2
     note: "NKP batch 2026-10-27; RetireBinding inline + respawn seam, AC1 and AC2 server half pass; evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/"
+  - id: "nkp-009"
+    name: "Respawn due time (F2), scheduling from Round's provider call, and cancellation"
+    file: "production/epics/npc-kill-penalty-informants/story-009-respawn-due-time-scheduling-and-cancellation.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27 (nkp-009..012); F2 in FPenaltyCore, InformantRespawn items on Round's queue (FPenaltyRespawnQueueAdapter, new CancelTimer), Round calls OnInformantAwaitingBody after its elimination check; InformantRespawnDelaySec schema key (TuningSchemaVersion 6); evidence production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/"
+  - id: "nkp-010"
+    name: "Absent path for disconnected victims, readmission and bodies lost without a kill"
+    file: "production/epics/npc-kill-penalty-informants/story-010-absent-path-readmission-and-lost-body.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27; Absent rows, readmission from the kept t_lost/t_floor, OnInformantPawnLost (D = 0); Round's R17.9 caller and R17.5 release are Round's (rmf-072, not built); evidence production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/"
+  - id: "nkp-011"
+    name: "T_due carrier adapter writes the countdown end to the owner part only"
+    file: "production/epics/npc-kill-penalty-informants/story-011-t-due-owner-carrier-adapter.md"
+    priority: must-have
+    status: review
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: "AC3's PIE-3 per-connection T_due wire capture and reflected RPC / reply-struct scan (CQTest DueOwnerOnly) not written; server half passes"
+    sprint: 2
+    note: "NKP batch 2026-10-27; FPenaltyDueAdapter + the T_due half of psr-038 (URosterStore::SetOwnerRespawnDue in the push step); AC3 by the Roster owner-only test + documented PIE run (CQTest DueOwnerOnly not written); evidence production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/"
+  - id: "nkp-012"
+    name: "Respawn commit sequence: pick, pre-check, release, takeover, card"
+    file: "production/epics/npc-kill-penalty-informants/story-012-respawn-commit-sequence.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27; RunCommit over IPenaltyRespawnGateway; STAND-INs behind the seam: pick (LSC 033), takeover (SCL 028, factory RequestHandOverToPlayer), card (CPA), team-start fallback in a world with no crowd; evidence production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/"

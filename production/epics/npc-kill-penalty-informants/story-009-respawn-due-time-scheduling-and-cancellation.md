@@ -1,12 +1,12 @@
 # Story 009: Respawn due time (F2), scheduling from Round's provider call, and cancellation
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -38,7 +38,7 @@ The delay is counted from the cause, not from the fall's end, so every cause wai
 
 - [ ] **AC1** (AC-NKP-10, [L] `StealthGame.Penalty.RespawnDueTime`): **GIVEN** the F2 cases (kill slot at 100.0 s with defaults; exile at 100.0 s; an informant killed at 100.0 s that disconnects while awaiting at 103.0 s and reclaims at 120.0 s (the F2 example); embodied informant disconnected at 103.0 s and reclaimed at 120.0 s; disconnected at 103.0 s and reclaimed at 110.0 s; body lost without a kill at 130.0 s) **WHEN** `T_due` is computed **THEN** it equals 115.0, 115.0, 120.0, 120.0, 118.0 and 130.0 respectively; **AND** with D = 5 and every floor input at its hard maximum, for both the open strike and the bush variant (`T_v` = 1.2), the floor (≤ 4.7 s after `t_lost`) is never later than `t_lost + D` (F2).
 - [ ] **AC2** (AC-NKP-25, [L] `StealthGame.Penalty.DisconnectNeverShortens`): **GIVEN** an embodied informant that disconnects at t and reclaims at t + 5 s **WHEN** its respawn is scheduled **THEN** `T_due = t + InformantRespawnDelaySec`, and the body it held was released at t (PEN-R11, F2).
-- [ ] **AC3** (AC-NKP-11 as clarified at QL-STORY-READY, [L] `StealthGame.Penalty.RespawnCancellation`): **GIVEN** a pending respawn item **WHEN** the event below occurs before it resolves **THEN** zero `BindPawn` calls are made in every row and the row's outcome holds (PEN-R10): participant disconnect -> the item is cancelled (`Cancel(TimerHandle)`), `RespawnCancelled{Disconnect}` is logged, state `Absent` with `t_lost` kept; `OnRosterRoundEnded` -> every item is cancelled, `RespawnCancelled{RoundEnded}` is logged per pending item, state `RoundEnded`; `OnRosterReset` -> `RespawnCancelled{Reset}` is logged for each pending item, state `Active(0)`, and a leftover item from the earlier epoch that still fires resolves `Rejected_StaleEpoch`. *(Reason values `Disconnect`, `RoundEnded`, `Reset` are this story's proposal for the GDD's "with the reason"; confirm at `/story-readiness`.)*
+- [ ] **AC3** (AC-NKP-11 as clarified at QL-STORY-READY, [L] `StealthGame.Penalty.RespawnCancellation`): **GIVEN** a pending respawn item **WHEN** the event below occurs before it resolves **THEN** zero `BindPawn` calls are made in every row and the row's outcome holds (PEN-R10): participant disconnect -> the item is cancelled (`Cancel(TimerHandle)`), `RespawnCancelled{Disconnect}` is logged, state `Absent` with `t_lost` kept; `OnRosterRoundEnded` -> every item is cancelled, `RespawnCancelled{RoundEnded}` is logged per pending item, state `RoundEnded`; `OnRosterReset` -> `RespawnCancelled{Reset}` is logged for each pending item, state `Active(0)`, and a leftover item from the earlier epoch that still fires resolves `Rejected_StaleEpoch`. *(Reason values `Disconnect`, `RoundEnded`, `Reset` are this story's proposal for the GDD's "with the reason"; confirmed at `/story-readiness` 2026-10-27, already in `ERespawnCancelReason` since nkp-004, plus `Stale` for a re-validation void.)*
 - [ ] **AC4** (derived, ADR-0019 §3.2 and Implementation Guidelines): **GIVEN** each Active-to-Informant cause (`Assassinated`, `ReversedAgainst`, `StrikeLimit`) **WHEN** Round calls `IInformantBodyProvider::OnInformantAwaitingBody` after its elimination check **THEN** exactly one `TimerFired(InformantRespawn)` item is scheduled with payload `{Subject = P, Seq = RespawnRequestSeq, Generation = 0, Phase = 0}` and `RoundEpoch` as its Expected, and the state is `Awaiting`; **AND** no item is scheduled when the round latched (Round makes no call), none from a Roster state-event subscription, and no engine timer or tick is used.
 
 ---
@@ -74,16 +74,17 @@ F2 test data: boundary values are the point (the AC states the numbers), so use 
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*The code and test files this story changed (`/dev-story` 2026-10-27; the Penalty feature lives under `Source/StealthGameplay/Features/Penalty/`).*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCore.cpp` (`ComputeDueTime`, `ScheduleRespawn`)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (`IInformantBodyProvider`, queue resolver registration, cancellation handlers)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyRespawnDueTimeTest.cpp` (class `FPenaltyRespawnDueTimeTest`, name `StealthGame.Penalty.RespawnDueTime`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyDisconnectNeverShortensTest.cpp` (class `FPenaltyDisconnectNeverShortensTest`, name `StealthGame.Penalty.DisconnectNeverShortens`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyRespawnCancellationTest.cpp` (class `FPenaltyRespawnCancellationTest`, name `StealthGame.Penalty.RespawnCancellation`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltySchedulingSourcesTest.cpp` (class `FPenaltySchedulingSourcesTest`, name `StealthGame.Penalty.SchedulingSources`)
-
----
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.h`, `StealthPenaltyCore.cpp` (`ComputeDueTime`, `ComputeFloor`, `OnInformantAwaitingBody`, `ScheduleRespawn`, `ArmRequest`, cancellation in `OnConnectionChanged` / `OnRosterRoundEnded` / `OnRosterReset`, `ResolveRespawnItem`)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyQueueAdapter.h`, `StealthPenaltyQueueAdapter.cpp` (new: `IPenaltyRespawnTimers` over `FResolutionQueueCore::ScheduleAt` / `CancelTimer`, and the `TimerFired(InformantRespawn)` resolver)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltySeams.h` (`EInformantLifeState` made public, `FPenaltyParams` F2 inputs, Roster query connection / team / live pawn, `IPenaltyRespawnTimers` replacing `IPenaltyRespawnScheduler`, `IPenaltyDueTimeSink`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltyService.h`, `Private/StealthPenaltyService.cpp` (provider methods, resolver registration, `OnDueTimeChanged`, grace-expiry event)
+- `Source/StealthGameplay/Public/Server/Core/Round/StealthRoundGateways.h` (`IInformantBodyProvider::OnInformantAwaitingBody`, `OnInformantPawnLost`), `Source/StealthGameplay/Private/Core/Round/StealthRoundMatchCore.cpp` (the call after the elimination check, never latched), `Source/StealthGameplay/Public/Server/Testing/StealthRoundFakeGateways.h`
+- `Source/StealthFoundation/Public/Server/Queue/StealthResolutionQueueCore.h`, `Private/Queue/StealthResolutionQueueCore.cpp` (`CancelTimer`)
+- Tuning: `Source/StealthFoundation/Public/View/StealthTuningPublicSubstructs.h` (`InformantRespawnDelaySec`), `Private/Tuning/StealthTuningSchema.generated.inl`, `Public/Server/StealthTuningVersion.h` (version 6), `Public/Server/Testing/StealthPenaltyTuningKnobs.h`, `Public/Server/StealthTuningInvariants.h` (pending-owner `NoPawnFadeSec`, `EmergenceRetrySec`, `InformantRespawnPathCm`), `Private/Tuning/AssassinationInvariants.cpp` (W-ASN-11 reads the row)
+- Composition: `Source/StealthGame/Private/Composition/StealthPenaltyWiring.h/.cpp` (`FStealthInformantBodiesProvider`), `StealthCompositionRoot.cpp`, `Source/StealthGame/Public/Server/StealthCompositionRoot.h`; `Source/StealthGame/Private/StealthGameMode.cpp`, `Public/StealthGameMode.h` (prototype respawns stand down while the service is bound)
+- Tests: `Source/StealthGameplay/Private/Tests/Penalty/PenaltyRespawnDueTimeTest.cpp` (`StealthGame.Penalty.RespawnDueTime`), `PenaltyDisconnectNeverShortensTest.cpp` (`StealthGame.Penalty.DisconnectNeverShortens`), `PenaltyRespawnCancellationTest.cpp` (`StealthGame.Penalty.RespawnCancellation`), `PenaltySchedulingSourcesTest.cpp` (`StealthGame.Penalty.SchedulingSources`); rigs `PenaltyTestRig.h`, `PenaltyEncounterRig.h`, `PenaltyRealRosterRig.h`
 
 ## QA Test Cases
 
@@ -104,7 +105,7 @@ F2 test data: boundary values are the point (the AC states the numbers), so use 
   - When: a disconnect, `OnRosterRoundEnded` or `OnRosterReset` occurs.
   - Then: 0 `BindPawn` calls in every row; disconnect: `Cancel(TimerHandle)`, `RespawnCancelled{Disconnect}`, Absent, `t_lost` kept; round end: all items cancelled, `RespawnCancelled{RoundEnded}` per item, `RoundEnded`; reset: `RespawnCancelled{Reset}` per item, `Active(0)`, an injected leftover item resolves `Rejected_StaleEpoch`.
   - Edge cases: the rows are written inside the end handling, not rejected by the freeze; two pending items give two rows; the reason values are a story proposal.
-- **AC4** (derived, `StealthGame.Penalty.RespawnScheduling`, three causes plus a lint)
+- **AC4** (derived, `StealthGame.Penalty.SchedulingSources` (the Files name; readiness 2026-10-27), three causes plus a lint)
   - Given: stub Round calls for `Assassinated`, `ReversedAgainst` and `StrikeLimit`.
   - When: `OnInformantAwaitingBody` is called after the elimination check.
   - Then: exactly one `TimerFired(InformantRespawn)` item with `{Subject = P, Seq, Generation = 0, Phase = 0}` and `Expected = RoundEpoch`, state Awaiting; when the round latched there is no call and no item; a raised Roster state event schedules nothing; the lint finds no engine timer, tick or `OnParticipantStateChanged` binding.
@@ -122,7 +123,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Logic: the four tests under `Source/StealthGameplay/Private/Tests/Penalty/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.RespawnDueTime, DisconnectNeverShortens, RespawnCancellation, SchedulingSources; evidence production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/
 
 ---
 
@@ -130,3 +131,10 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-001-penalty-core-store-and-service-shell.md`, `story-004-event-log-rows.md`; cross-epic: round-match-framework (due-time heap, `IInformantBodyProvider` declaration; no story path yet), assassination-defence-reversal (`GetScheduledDeathServerTime`, ADR-0018 §4.1), participant-state-roster (connection state, `story-022-reset-all-batch.md`, `story-023-end-round-all-batch-idempotent.md`)
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-010-absent-path-readmission-and-lost-body.md`, `story-011-t-due-owner-carrier-adapter.md`, `story-012-respawn-commit-sequence.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: AC1-AC4 passing (AC2: the Penalty half; the body release at the disconnect is Round R17.5 / Roster psr-030, not built)
+**Deviations**: the timer seam replaced IPenaltyRespawnScheduler (FPenaltyRespawnQueueAdapter over Round's queue, new FResolutionQueueCore::CancelTimer); InformantRespawnDelaySec registered (TuningSchemaVersion 6), NoPawnFadeSec / EmergenceRetrySec pending-owner constants; AC4 test named SchedulingSources (the Files name)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 421/421 StealthGame. tests Success); run-and-observe OBSERVED in 3-player PIE (screenshots 01-05)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; notes in the evidence)

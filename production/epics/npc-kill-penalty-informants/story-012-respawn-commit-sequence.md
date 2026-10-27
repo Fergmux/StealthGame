@@ -1,12 +1,12 @@
 # Story 012: Respawn commit sequence — pick, pre-check, release, takeover, card
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -38,7 +38,7 @@ The order is what makes the takeover safe to fail: nothing has to be reverted fo
 
 - [ ] **AC1** (AC-NKP-30, [L] `StealthGame.Penalty.CommitSequence`): **GIVEN** fake gateways where `TryReleaseNpc` fails once and `TakeOverCrowdPawn` fails once **WHEN** a respawn commits **THEN** per attempt the call order is pick, pre-check, release, takeover, card; there are three picks in three different frames (one pick per slot: attempt 1 fails the release, attempt 2 fails the takeover, attempt 3 succeeds); the takeover failure sends exactly one defect to the fault sink (once the pre-check exists a takeover `NotEligible` is a defect) and the pawn goes back through `AdoptReleasedPawn` with no card move; no card moves for a failed attempt and one card move follows attempt 3's `Applied`; and every attempt reuses the same `RequestSeq` (PEN-R9). *(GDD AC-NKP-30 says "two picks"; one release failure plus one takeover failure force three: report to the GDD owner.)*
 - [ ] **AC2** (AC-NKP-33, [L] `StealthGame.Penalty.SameTeamDueOneDrain`): **GIVEN** two same-team informants due in one drain and a single eligible pawn **WHEN** both resolve **THEN** the lower key takes it and the other retries; the same pawn is never taken twice (PEN-R9, Edge Cases).
-- [ ] **AC3** (AC-NKP-42, [L] `StealthGame.Penalty.TakeoverTickRace`): **GIVEN** a strike on a takeover candidate in the takeover's commit tick, in both key orders **WHEN** the drain resolves **THEN** attack first: the pawn is dead when the respawn slot runs, the pre-check returns `NotEligible`, the pawn is excluded, a retry is scheduled at `ServerNow + 1 ms` with the same `RequestSeq` and no card moves; takeover first: the strike is an informant kill (`WrongTarget`, tally +1, no strike) and a new `T_due` is scheduled (Edge Cases).
+- [ ] **AC3** (AC-NKP-42, [L] `StealthGame.Penalty.TakeoverTickRace`): **GIVEN** a strike on a takeover candidate in the takeover's commit tick, in both key orders **WHEN** the drain resolves **THEN** attack first: the pawn is dead when the respawn slot runs, the pre-check returns `NotEligible`, the pawn is excluded, a retry is scheduled at `ServerNow + 1 ms` (implemented as `ServerNow + 2 ms`, `FPenaltyCore::NextFrameRetryOffsetSec`: the queue stamps every item due at or before DrainStart + 1 ms in the same drain, so 1 ms would re-run in this drain; 2 ms is the smallest offset strictly after it, the ADR's intent; readiness 2026-10-27) with the same `RequestSeq` and no card moves; takeover first: the strike is an informant kill (`WrongTarget`, tally +1, no strike) and a new `T_due` is scheduled (Edge Cases).
 
 ---
 
@@ -74,15 +74,13 @@ Each fake gateway records its call list with the frame index; the test asserts t
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*The code and test files this story changed (`/dev-story` 2026-10-27). The commit lives in `FPenaltyCore::RunCommit` (no separate `StealthPenaltyCommit` file: it shares the record and the retry bookkeeping).*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCommit.h` and `StealthPenaltyCommit.cpp` (the commit, over injected gateway interfaces)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (resolver body)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyCommitSequenceTest.cpp` (class `FPenaltyCommitSequenceTest`, name `StealthGame.Penalty.CommitSequence`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltySameTeamDueOneDrainTest.cpp` (class `FPenaltySameTeamDueOneDrainTest`, name `StealthGame.Penalty.SameTeamDueOneDrain`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTakeoverTickRaceTest.cpp` (class `FPenaltyTakeoverTickRaceTest`, name `StealthGame.Penalty.TakeoverTickRace`)
-
----
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.h`, `StealthPenaltyCore.cpp` (`RunCommit`, `ScheduleRetry`, `VoidRequest`, `NextFrameRetryOffsetSec`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltySeams.h` (`IPenaltyRespawnGateway`, `FPenaltyRespawnPick`, `EPenaltyTakeoverResult`, fault details)
+- `Source/StealthGameplay/Public/Server/Core/StealthPawnFactory.h`, `Private/Core/PawnFactory/StealthPawnFactory.cpp` (`RequestHandOverToPlayer`: the commit now, the possession at the next frame; stand-in for the SCL hand-over pass)
+- Composition: `Source/StealthGame/Private/Composition/StealthPenaltyWiring.h/.cpp` (`FStealthPenaltyRespawnGateway`: STAND-IN pick for LSC story 033, STAND-IN takeover for SCL story 028, STAND-IN card for the Character Pool; Crowd `TryReleaseNpc` / `AdoptReleasedPawn`), `StealthCompositionRoot.cpp`; `Source/StealthGame/Private/StealthGameMode.cpp` (the exile's stand-in respawn and the prototype informant respawn stand down while the service is bound)
+- Tests: `Source/StealthGameplay/Private/Tests/Penalty/PenaltyCommitSequenceTest.cpp` (`StealthGame.Penalty.CommitSequence`), `PenaltySameTeamDueOneDrainTest.cpp` (`StealthGame.Penalty.SameTeamDueOneDrain`), `PenaltyTakeoverTickRaceTest.cpp` (`StealthGame.Penalty.TakeoverTickRace`)
 
 ## QA Test Cases
 
@@ -116,7 +114,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Logic: the three tests under `Source/StealthGameplay/Private/Tests/Penalty/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.CommitSequence, SameTeamDueOneDrain, TakeoverTickRace; evidence production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/
 
 ---
 
@@ -124,3 +122,10 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-009-respawn-due-time-scheduling-and-cancellation.md`, `story-010-absent-path-readmission-and-lost-body.md`, `story-008-informant-kill-inline-retire.md` (AC3's takeover-first run); cross-epic: level-socket-contract `story-033-respawn-pick-eligibility-unseen-draw.md`, crowd-npc-behaviour `story-030-takeover-eligibility-and-atomic-release.md`, shared-character-locomotion `story-028-informant-respawn-takes-over-unseen-crowd-pawn.md`, character-pool-appearance (`TakeNpcCard`), participant-state-roster (`BindPawn`, `RecordAppearance`)
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-013-starvation-retries-and-widening.md`, `story-014-one-respawn-path-and-takeover-wire-parity.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: AC1-AC3 passing (AC1: three picks, as the story corrects the GDD's two)
+**Deviations**: next-frame retry ServerNow + 2 ms (1 ms would re-run in the same drain; ADR-0019 note added); STAND-INs behind IPenaltyRespawnGateway: pick (LSC 033), takeover (SCL 028; factory RequestHandOverToPlayer), card (Character Pool), plus a team-start spawn fallback used only in a world with no crowd agent (the 0-NPC harness rounds)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 421/421 StealthGame. tests Success); run-and-observe OBSERVED in 3-player PIE (screenshots 01-05)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; notes in the evidence)

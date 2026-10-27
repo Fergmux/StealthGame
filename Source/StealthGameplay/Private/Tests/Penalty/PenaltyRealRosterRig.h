@@ -159,7 +159,7 @@ namespace StealthPenaltyRealRoster
 			PenaltyDeps.Slot = &Slot;
 			PenaltyDeps.Log = &Log;
 			PenaltyDeps.Bodies = &Bodies;
-			PenaltyDeps.Respawns = &Respawns;
+			PenaltyDeps.Timers = &Respawns;
 			PenaltyDeps.Faults = &PenaltyFaults;
 			Penalty = MakeUnique<FPenaltyCore>(PenaltyDeps);
 		}

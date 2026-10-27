@@ -267,6 +267,39 @@ bool UStealthPawnFactory::RequestHandOver(APawn* Pawn, EStealthPawnControlKind K
 	return true;
 }
 
+bool UStealthPawnFactory::RequestHandOverToPlayer(APawn* Pawn, AController* PlayerController)
+{
+	UWorld* World = GetWorld();
+	if (Pawn == nullptr || !IsValid(Pawn) || !Pawn->HasAuthority() || PlayerController == nullptr || !IsValid(PlayerController) || World == nullptr)
+	{
+		return false;
+	}
+	// The commit, now (inside the caller's queue slot): the epoch bump makes every crowd-stamped command stale.
+	BumpControlEpoch(Pawn);
+	TWeakObjectPtr<APawn> WeakPawn(Pawn);
+	TWeakObjectPtr<AController> WeakPlayer(PlayerController);
+	++PendingHandOvers;
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, WeakPawn, WeakPlayer]()
+	{
+		PendingHandOvers = FMath::Max(PendingHandOvers - 1, 0);
+		APawn* Target = WeakPawn.Get();
+		AController* Player = WeakPlayer.Get();
+		const AStealthPawn* Shared = Cast<AStealthPawn>(Target);
+		if (!IsValid(Target) || Target->IsActorBeingDestroyed() || !IsValid(Player) || (Shared != nullptr && Shared->HasDeathWrite()))
+		{
+			return;
+		}
+		// Releases before possessions (ADR-0010 4.3 request): the crowd controller lets go first (it is destroyed).
+		if (Target->GetController() != nullptr && Target->GetController() != Player)
+		{
+			ReleaseBody(Target);
+		}
+		BumpControlEpoch(Target);
+		Player->Possess(Target);
+	}));
+	return true;
+}
+
 uint32 UStealthPawnFactory::GetSpawnOrdinal(const AActor* Pawn) const
 {
 	const uint32* Ordinal = Pawn != nullptr ? SpawnOrdinals.Find(FObjectKey(Pawn)) : nullptr;

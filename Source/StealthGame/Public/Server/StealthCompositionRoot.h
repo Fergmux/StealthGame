@@ -217,6 +217,15 @@ private:
 	 *  prototype follow-ons the gateway still calls). */
 	TWeakObjectPtr<class UPenaltyService> Penalty;
 	TSharedPtr<class FStealthPenaltyPawnGateway> PenaltyPawns;
+	/**
+	 * NPC-Kill Penalty respawns (stories nkp-009..012): Round's IInformantBodyProvider (registered once with the Round
+	 * gateways, forwarding to the current world's service), the commit's gateways (pick / takeover / card stand-ins), and
+	 * the T_due carrier adapter with its Roster owner-view feed.
+	 */
+	TSharedPtr<class FStealthInformantBodiesProvider> InformantBodies;
+	TSharedPtr<class FStealthPenaltyRespawnGateway> PenaltyRespawns;
+	TSharedPtr<class FStealthRosterOwnerViewFeed> OwnerViewFeed;
+	TSharedPtr<class FPenaltyDueAdapter> DueAdapter;
 	/** The reply step's transport for the current server world. */
 	TSharedPtr<class FStealthControllerReplyTransport> ReplyTransport;
 	TWeakObjectPtr<UWorld> ReplyWorld;

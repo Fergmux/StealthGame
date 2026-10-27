@@ -82,9 +82,9 @@ public:
 	/**
 	 * STAND-IN (NPC-Kill Penalty stories nkp-009..015 not built; story nkp-021 retires it): the prototype follow-ons of the
 	 * PRODUCTION exile (story nkp-005), called by the composition root's IPenaltyPawnGateway right after the factory's
-	 * hand-over commit released Body from FormerController: the prototype life state Informant, the objective interaction
-	 * dropped, and the prototype informant respawn (a fresh factory pawn after InformantRespawnDelay; the production
-	 * respawn is Round's OnInformantAwaitingBody and the takeover of an unseen crowd pawn, stories nkp-009 and nkp-012).
+	 * hand-over commit released Body from FormerController: the prototype life state Informant and the objective interaction
+	 * dropped. The respawn is Penalty's own (Round's OnInformantAwaitingBody and the takeover of an unseen crowd pawn,
+	 * stories nkp-009 and nkp-012); the prototype RespawnInformant runs only in a world with no bound Penalty service.
 	 */
 	void HandleProductionExile(AStealthCharacter* Body, AController* FormerController);
 	void HandlePing(AStealthCharacter* Sender, const FVector& Location);
@@ -94,6 +94,14 @@ public:
 
 	/** True while Round's phase is Active and the round is not latched (the production rules decide the round). */
 	bool IsRoundInProgress() const;
+
+	/**
+	 * STAND-IN (NPC-Kill Penalty story nkp-012's respawn gateway, FStealthPenaltyRespawnGateway): a world with NO crowd pawn
+	 * at all (the 0-NPC harness rounds) has nothing to take over, so the informant gets a fresh factory pawn at its team
+	 * start, bound to its participant and possessed (the prototype respawn). Never used while any crowd pawn exists; the
+	 * Level Socket Contract (story 033) and story nkp-014's no-spawn proof decide its fate. Null when nothing spawned.
+	 */
+	APawn* SpawnInformantFallbackPawn(APlayerController* Player);
 
 	// ---- Round adapters (the composition root's engine side until the LSC, Crowd and Session facades exist) ----
 

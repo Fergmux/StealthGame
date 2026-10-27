@@ -143,6 +143,11 @@ AStealthGameState* AStealthGameMode::GetStealthGameState() const
 	return GetGameState<AStealthGameState>();
 }
 
+APawn* AStealthGameMode::SpawnInformantFallbackPawn(APlayerController* Player)
+{
+	return IsRoundInProgress() ? SpawnPlayerPawn(Player) : nullptr;
+}
+
 bool AStealthGameMode::IsRoundInProgress() const
 {
 	const URoundMatchStore* Round = URoundMatchStore::Get(GetWorld());
@@ -916,6 +921,13 @@ void AStealthGameMode::HandleEncounterBodyReleased(APawn* Body, AController* For
 	{
 		return;
 	}
+	// NPC-Kill Penalty stories nkp-009 / nkp-012: the production service owns the respawn (the InformantRespawn item at
+	// F2's T_due and the takeover of an unseen crowd pawn); the prototype respawn below runs only in a world it is not bound in.
+	const UPenaltyService* ProductionPenalty = GetWorld() != nullptr ? GetWorld()->GetSubsystem<UPenaltyService>() : nullptr;
+	if (ProductionPenalty != nullptr && ProductionPenalty->IsBound())
+	{
+		return;
+	}
 	// The informant respawn takeover follows the visible fall (story asn-019 AC1; Penalty rule C1's T_due floor): the
 	// prototype delay counts from the death, so the wait left after the release is the delay minus the fall.
 	const float Fall = FEncounterParams::Defaults().Public.DeathFallSec;
@@ -970,11 +982,8 @@ void AStealthGameMode::HandleProductionExile(AStealthCharacter* Body, AControlle
 	{
 		HandleInteractRequest(Body, false);
 	}
-	// STAND-IN respawn: a fresh pawn for the participant after the prototype delay (stories nkp-009 / nkp-012 replace it
-	// with the due-time-heap item and the takeover of an unseen crowd pawn). The exiled body stays a crowd NPC.
-	FTimerHandle& Handle = PendingTimers.AddDefaulted_GetRef();
-	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateUObject(this, &AStealthGameMode::RespawnInformant, TWeakObjectPtr<AController>(FormerController),
-		TWeakObjectPtr<APawn>()), FMath::Max(0.1f, UStealthSettings::Get()->InformantRespawnDelay), false);
+	// The respawn is Penalty's (stories nkp-009 / nkp-012): Round's OnInformantAwaitingBody(StrikeLimit) schedules the
+	// InformantRespawn item and its commit takes over an unseen crowd pawn. The exiled body stays a crowd NPC.
 }
 
 void AStealthGameMode::RespawnInformant(TWeakObjectPtr<AController> Controller, TWeakObjectPtr<APawn> ReleasedBody)

@@ -1,12 +1,12 @@
 # Story 011: T_due carrier adapter writes the countdown end to the owner part only
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -68,26 +68,24 @@ Seam fakes: for the Logic part (AC1, AC2) the Roster feed is a recording fake; A
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*The code and test files this story changed (`/dev-story` 2026-10-27). The adapter's header is public (`Public/Server/`) because the composition root in `StealthGame` registers it.*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyDueAdapter.h` and `StealthPenaltyDueAdapter.cpp`
-- `Source/StealthGameplay/Public/Server/Features/Penalty/StealthPenaltyService.h` (`FOnDueTimeChanged`, if not added by story 009)
-- `Source/StealthGame/Private/` composition root registration of the adapter
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyDueAdapterTest.cpp` (class `FPenaltyDueAdapterTest`, name `StealthGame.Penalty.DueAdapter`)
-- `Source/StealthTestHarness/Private/Penalty/DueOwnerOnlyTest.cpp` (CQTest, `StealthGame.Penalty.PIE.DueOwnerOnly.*`)
-
----
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltyDueAdapter.h`, `Private/StealthPenaltyDueAdapter.cpp` (new: `FPenaltyDueAdapter`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltyService.h` (`FOnPenaltyDueTimeChanged OnDueTimeChanged`), `StealthPenaltySeams.h` (`IPenaltyOwnerViewFeed::SetOwnerRespawnDue`)
+- Roster owner-view feed, T_due half of psr-038 built early: `Source/StealthFoundation/Private/Roster/StealthRosterPushStep.h/.cpp` (`SetOwnerRespawnDue`, owner part `T_due`), `Public/Server/Roster/StealthRosterStore.h`, `Private/Roster/StealthRosterStore.cpp`
+- Composition: `Source/StealthGame/Private/Composition/StealthPenaltyWiring.h/.cpp` (`FStealthRosterOwnerViewFeed`), `StealthCompositionRoot.cpp` (the adapter bound per world, latch from Round's queue)
+- Tests: `Source/StealthGameplay/Private/Tests/Penalty/PenaltyDueAdapterTest.cpp` (`StealthGame.Penalty.DueAdapter`, `StealthGame.Penalty.DueAdapterLatched`), `Source/StealthFoundation/Private/Tests/Roster/StealthRosterOwnerRespawnDueTest.cpp` (`StealthGame.Roster.OwnerRespawnDueOwnerOnly`, AC3's Roster half); AC3's wire capture: the PIE run in the evidence (documented playtest; the CQTest `DueOwnerOnly` is not written)
 
 ## QA Test Cases
 
 *Written by qa-lead at story creation. The developer implements against these — do not invent new test cases during implementation.*
 
-- **AC1** (derived, `StealthGame.Penalty.DueTimeAdapter`)
+- **AC1** (derived, `StealthGame.Penalty.DueAdapter`; readiness 2026-10-27: the Files name)
   - Given: a fake Roster that records `SetOwnerRespawnDue(P, T_due, ExpectedEpoch)` with the adapter bound to `OnDueTimeChanged`.
   - When: a schedule or readmission fires with 115.0; then embodiment, disconnect-cancellation and reset; then round end.
   - Then: exactly one call per change with the double and the current epoch; embodiment, disconnect and reset each write 0; at round end `OnDueTimeChanged(P, unset)` fires and 0 calls are made.
   - Edge cases: Picking writes nothing (T_due stays in the past and HUD shows the static "Returning"); reset must run with `IsLatched()` false: confirm Round clears the latch first.
-- **AC2** (derived, `StealthGame.Penalty.DueTimeAdapterLatched`)
+- **AC2** (derived, `StealthGame.Penalty.DueAdapterLatched`)
   - Given: `IsLatched()` is true.
   - When: `OnDueTimeChanged` fires with a value and with unset; separately three ordinary strikes.
   - Then: 0 `SetOwnerRespawnDue` calls; the strikes cause 0 `SetOwnerTally` and 0 `SetOwnerRespawnDue` calls.
@@ -110,7 +108,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Integration: the CQTest PIE test under `Source/StealthTestHarness/Private/Penalty/` and the unit test under `Source/StealthGameplay/Private/Tests/Penalty/` OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.DueAdapter, DueAdapterLatched, StealthGame.Roster.OwnerRespawnDueOwnerOnly; evidence production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/
 
 ---
 
@@ -118,3 +116,10 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-009-respawn-due-time-scheduling-and-cancellation.md`, `story-010-absent-path-readmission-and-lost-body.md`; cross-epic: participant-state-roster `story-038-owner-view-feed.md` (`SetOwnerRespawnDue`), information-visibility-policy (the `T_due` Owner fact and allowlist row), tuning-data-config `story-019-cqtest-headless-proof.md`
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-018-tally-countdown-and-exile-card-ui.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (status In Review)
+**Criteria**: AC1, AC2 passing; AC3 server half passing (only the owner's own view carries T_due, no teammate entry has the field, stale epoch rejected); AC3's PIE-3 per-connection wire capture and the reflected RPC / reply-struct scan DEFERRED (the CQTest DueOwnerOnly is not written)
+**Deviations**: the T_due half of roster story psr-038 built early (URosterStore::SetOwnerRespawnDue in the push step); SetOwnerTally stays a no-op stand-in, so the Roster feed is not the service's OwnerView
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 421/421 StealthGame. tests Success); run-and-observe OBSERVED in 3-player PIE (screenshots 01-05)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; notes in the evidence)

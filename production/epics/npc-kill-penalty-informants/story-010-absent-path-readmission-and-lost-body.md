@@ -1,12 +1,12 @@
 # Story 010: Absent path for disconnected victims, readmission and bodies lost without a kill
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -69,14 +69,12 @@ Test data: the literal times in the ACs (100.0, 110.0, 115.0, 130.0) are boundar
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*The code and test files this story changed (`/dev-story` 2026-10-27).*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCore.cpp` (Absent transitions, kept `t_lost`/`t_floor`)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (`OnInformantReadmitted`, `OnInformantPawnLost`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyDisconnectedVictimAbsentTest.cpp` (class `FPenaltyDisconnectedVictimAbsentTest`, name `StealthGame.Penalty.DisconnectedVictimAbsent`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyLostBodyRepawnTest.cpp` (class `FPenaltyLostBodyRepawnTest`, name `StealthGame.Penalty.LostBodyRepawn`)
-
----
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.h`, `StealthPenaltyCore.cpp` (Absent rows: cause on a Disconnected participant, Embodied disconnect, grace expiry `OnGraceExpired`; `OnInformantReadmitted` from the kept `t_lost` / `t_floor`; `OnInformantPawnLost` with `D = 0`, `PawnLost` row, commit in the same slot)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyService.cpp` (`OnInformantReadmitted`, `OnInformantPawnLost`, the grace-expiry Roster event)
+- `Source/StealthGame/Private/Composition/StealthPenaltyWiring.h/.cpp` (`FStealthInformantBodiesProvider` forwards Round R18 and R17.9)
+- Tests: `Source/StealthGameplay/Private/Tests/Penalty/PenaltyDisconnectedVictimAbsentTest.cpp` (`StealthGame.Penalty.DisconnectedVictimAbsent`), `PenaltyLostBodyRepawnTest.cpp` (`StealthGame.Penalty.LostBodyRepawn`)
 
 ## QA Test Cases
 
@@ -105,7 +103,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Logic: the two tests under `Source/StealthGameplay/Private/Tests/Penalty/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.DisconnectedVictimAbsent, LostBodyRepawn; evidence production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/
 
 ---
 
@@ -113,3 +111,10 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-009-respawn-due-time-scheduling-and-cancellation.md`; cross-epic: round-match-framework (`OnInformantReadmitted`, `OnInformantPawnLost`, grace expiry R17.4/R17.5/R17.9, `story-072-informant-disconnect-releases.md`), participant-state-roster (connection state)
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-012-respawn-commit-sequence.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: AC1, AC2 passing (AC1's "logged Voided" is Round's own row: asserted only as "Penalty unchanged", per the QA case)
+**Deviations**: Round's grace expiry is recorded from the Roster state event as Absent (no scheduling); Round R17.9 (the OnInformantPawnLost caller) and R17.5 are Round's, not built (rmf-072)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 421/421 StealthGame. tests Success); run-and-observe OBSERVED in 3-player PIE (screenshots 01-05)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; notes in the evidence)

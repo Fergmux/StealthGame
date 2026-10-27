@@ -23,6 +23,13 @@ class URosterStore;
 struct FRosterEvent;
 struct FPenaltyServiceAdapters;
 
+/**
+ * OnDueTimeChanged(P, T_due) (ADR-0019 section 6): server-only, raised on every change of a participant's DueServerTime
+ * (set at scheduling and readmission; unset at embodiment, cancellation, round end and reset). The T_due carrier adapter
+ * (FPenaltyDueAdapter, story nkp-011) is its consumer; nothing replicates from it directly.
+ */
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPenaltyDueTimeChanged, FParticipantId /*Participant*/, TOptional<double> /*DueServerTime*/);
+
 /** What the composition root hands the service (Clock required; the rest optional, each documented). */
 struct FPenaltyServiceInit
 {
@@ -43,8 +50,11 @@ struct FPenaltyServiceInit
 	ICrowdControl* Crowd = nullptr;
 	/** Character Pool ReleaseCard and the factory's RequestHandOver (null: steps 2 and 4 are skipped). */
 	IPenaltyPawnGateway* Pawns = nullptr;
-	/** Story nkp-009's respawn scheduler (null until it lands). */
-	IPenaltyRespawnScheduler* Respawns = nullptr;
+	/**
+	 * The respawn commit's gateways (story nkp-012: PickRespawnPawn, the factory takeover, Crowd's release and hand-back, the
+	 * card; null: a fired respawn retries after EmergenceRetrySec and no informant is re-pawned).
+	 */
+	IPenaltyRespawnGateway* RespawnGateway = nullptr;
 	IStealthFaultSink* Faults = nullptr;
 };
 
@@ -59,8 +69,12 @@ struct FPenaltyServiceInit
  * to the Roster's events (OnRosterReset, OnRosterRoundEnded, reclaim and connection changes). In the OnPawnKilled fan-out
  * it runs the exile of the L-th ungraced NPC kill (story nkp-005: Roster StrikeLimit, ReleaseCard, Crowd adoption, the
  * factory hand-over) and the informant kill's inline RetireBinding (story nkp-008) through IPenaltyBodyGateway over the
- * Roster store, Init.Crowd and Init.Pawns. IInformantBodyProvider and the InformantRespawn resolver arrive with stories
- * nkp-009 / nkp-010.
+ * Roster store, Init.Crowd and Init.Pawns.
+ *
+ * Respawns (stories nkp-009, nkp-010, nkp-012): the IInformantBodyProvider calls arrive through OnInformantAwaitingBody /
+ * OnInformantReadmitted / OnInformantPawnLost (the composition root registers a forwarding provider with Round); the service
+ * registers the TimerFired(InformantRespawn) resolver on Init.Queue (FPenaltyRespawnQueueAdapter, which is also the core's
+ * timer seam) and the commit runs through Init.RespawnGateway. OnDueTimeChanged feeds the T_due carrier (story nkp-011).
  *
  * Usage (the composition root, after the encounter service is initialised on the round queue):
  *   UPenaltyService* Penalty = World->GetSubsystem<UPenaltyService>();
@@ -88,6 +102,22 @@ public:
 	void OnRoundPreparing();
 	/** The participant's C-TeamView was rebound after a rejoin (Roster OnViewRebound, story psr-038): the owner re-push. */
 	void OnViewRebound(FParticipantId Participant);
+
+	// IInformantBodyProvider (ADR-0019 section 1; forwarded by the composition root's provider registered with Round)
+
+	/** Round, after its elimination check and never when latched: schedule (or Absent) for an Active -> Informant cause. */
+	void OnInformantAwaitingBody(FParticipantId Participant, ERespawnCause Cause, double LostServerTime);
+	/** Round R18: a returning informant after its Session acknowledgement (Awaiting, or the commit now). */
+	void OnInformantReadmitted(FParticipantId Participant);
+	/** Round R17.9 informant case: an embodied informant's body lost without a kill (D = 0, the commit now). */
+	void OnInformantPawnLost(FParticipantId Participant);
+
+	/** Server-only (ADR-0019 Key Interfaces): the participant's sub-state, and T_due while one is pending. */
+	EInformantLifeState GetLifeState(FParticipantId Participant) const;
+	TOptional<double> GetDueServerTime(FParticipantId Participant) const;
+
+	/** Raised on every DueServerTime change (server-only; the T_due carrier adapter binds it). */
+	FOnPenaltyDueTimeChanged OnDueTimeChanged;
 
 	// IStrikeTallySource
 	virtual FStrikeTally GetTallyForResult(const APawn* Attacker, EStrikeResult Result) override;

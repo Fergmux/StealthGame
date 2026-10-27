@@ -68,6 +68,8 @@ NETWORK_TEST_CLASS(OwnerResultShape, "StealthGame.Assassination.PIE")
 	TWeakObjectPtr<AStealthPawn> Npc;
 	uint32 Seq = 0x10000000u;
 	double Mark = 0.0;
+	/** Server time the respawned P2 pawn was first seen (-1: not yet); it settles before step 4 strikes it. */
+	double RespawnSeenAt = -1.0;
 
 	BEFORE_ALL()
 	{
@@ -164,8 +166,20 @@ NETWORK_TEST_CLASS(OwnerResultShape, "StealthGame.Assassination.PIE")
 		Network.Then(TEXT("3b P2 strikes S (reversed)"), [this]() { StrikeAt(PawnOf(Pair[1]), SoloPawn.Get(), Seq); Mark = StealthAssassinationPie::ServerNow(StealthAssassinationPie::ServerWorld()); })
 			.Until(TEXT("3b: settle until P2 respawned"), [this]()
 			{
-				const double Elapsed = StealthAssassinationPie::ServerNow(StealthAssassinationPie::ServerWorld()) - Mark;
-				return Elapsed >= 6.0 && PawnOf(Pair[1]) != nullptr;
+				// NKP stories nkp-009 / nkp-012: the respawn is Penalty's (InformantRespawnDelaySec, 15 s by default); the new pawn
+				// (a taken-over crowd pawn, or the team-start stand-in in this crowd-less round) settles one second before the
+				// strike, so every client has it before it is struck (a strike on a pawn spawned that frame warped from NaNs).
+				const double Now = StealthAssassinationPie::ServerNow(StealthAssassinationPie::ServerWorld());
+				if (Now - Mark < 6.0 || PawnOf(Pair[1]) == nullptr)
+				{
+					RespawnSeenAt = -1.0;
+					return false;
+				}
+				if (RespawnSeenAt < 0.0)
+				{
+					RespawnSeenAt = Now;
+				}
+				return Now - RespawnSeenAt >= 1.0;
 			});
 		Step(TEXT("4 S kills P2 (an informant)"), [this]()
 		{

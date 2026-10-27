@@ -161,6 +161,17 @@ public:
 	/** The push step's reconnect flag of Id (dumps and tests). */
 	bool IsTeammateReconnecting(FParticipantId Id) const;
 
+	/**
+	 * The owner-view feed's T_due write (ADR-0019 section 6 option (a); the respawn-due half of story psr-038, built early by
+	 * NPC-Kill Penalty story nkp-011, whose carrier adapter is the only caller): Id's C-TeamView owner part carries
+	 * DueServerTime (0 clears) from the next push, owner audience only, never on a pawn. Rejected_StaleEpoch for an
+	 * ExpectedEpoch that is not the current RoundEpoch; Rejected_NotAuthority before the match opens.
+	 *   Store->SetOwnerRespawnDue(Participant, 115.0, Store->GetEpochToken().RoundEpoch);
+	 */
+	ERosterResult SetOwnerRespawnDue(FParticipantId Id, double DueServerTime, uint32 ExpectedEpoch);
+	/** The owner part's T_due of Id as the push step holds it (0 = none; tests and dumps). */
+	double GetOwnerRespawnDue(FParticipantId Id) const;
+
 	// --- FTickableGameObject ------------------------------------------------------------------------------------------
 
 	virtual void Tick(float DeltaTime) override;

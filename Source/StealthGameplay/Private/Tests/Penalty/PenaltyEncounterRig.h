@@ -161,7 +161,7 @@ namespace StealthPenaltyEncounterTest
 			Deps.Slot = &Slot;
 			Deps.Log = R.W.Rig.Core->GetRoundLogWriter();
 			Deps.Bodies = &Bodies;
-			Deps.Respawns = &Respawns;
+			Deps.Timers = &Respawns;
 			Deps.Faults = &PenaltyFaults;
 			Penalty = MakeUnique<FPenaltyCore>(Deps);
 			R.Core->SetFallbackResolvers(&Fallback, nullptr);

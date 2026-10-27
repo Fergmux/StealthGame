@@ -411,6 +411,26 @@ public:
 
 	TFunction<void(FParticipantId)> OnReadmitted;
 
+	/** One OnInformantAwaitingBody call (story nkp-009), in call order. */
+	struct FAwaitingCall
+	{
+		FParticipantId Participant;
+		ERespawnCause Cause = ERespawnCause::Assassinated;
+		double LostServerTime = 0.0;
+	};
+	/**
+	 * Every OnInformantAwaitingBody call. Kept out of the shared call log on purpose: Round makes this call after every
+	 * non-latching elimination, and the earlier Round tests assert exact mutating-call sequences that predate it.
+	 */
+	TArray<FAwaitingCall> AwaitingCalls;
+	/** Every OnInformantPawnLost call's participant (story nkp-010), also kept out of the shared log. */
+	TArray<FParticipantId> PawnLostCalls;
+
+	virtual void OnInformantAwaitingBody(FParticipantId Participant, ERespawnCause Cause, double LostServerTime) override
+	{
+		AwaitingCalls.Add({ Participant, Cause, LostServerTime });
+	}
+
 	virtual void OnInformantReadmitted(FParticipantId Participant) override
 	{
 		Record(TEXT("OnInformantReadmitted"), { Participant.Value }, true, false);
@@ -418,6 +438,11 @@ public:
 		{
 			OnReadmitted(Participant);
 		}
+	}
+
+	virtual void OnInformantPawnLost(FParticipantId Participant) override
+	{
+		PawnLostCalls.Add(Participant);
 	}
 };
 

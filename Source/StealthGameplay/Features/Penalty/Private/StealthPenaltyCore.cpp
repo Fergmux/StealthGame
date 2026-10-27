@@ -1,11 +1,14 @@
 #include "StealthPenaltyCore.h"
 
+#include "Server/Queue/StealthResolutionQueueCore.h"
 #include "Server/StealthClock.h"
 #include "Server/StealthServerTuning.h"
+#include "Server/StealthTuningInvariants.h"
 
-// Stories nkp-001 (store, lifetime), nkp-002 (strike rule, release grace), nkp-003 (tally, bExiled, owner re-push) and
-// nkp-004 (the StrikeCounted row). GDD npc-kill-penalty-informants.md PEN-R2..R6, F1; ADR-0019 sections 1, 2.1, 2.2,
-// 2.2a, 7. Server-only values: nothing here formats, logs or traces a record, a count or a row.
+// Stories nkp-001 (store, lifetime), nkp-002 (strike rule, release grace), nkp-003 (tally, bExiled, owner re-push),
+// nkp-004 (the StrikeCounted row), nkp-005..008 (exile, informant kill), nkp-009 (F2, scheduling, cancellation), nkp-010
+// (Absent, readmission, lost body) and nkp-012 (the respawn commit). GDD npc-kill-penalty-informants.md PEN-R2..R11, F1,
+// F2; ADR-0019 sections 1-4, 7. Server-only values: nothing here formats, logs or traces a record, a count or a row.
 
 namespace StealthPenaltyCoreLocal
 {
@@ -23,6 +26,11 @@ FPenaltyParams FPenaltyParams::FromTuning(const FStealthServerTuning& Values)
 	FPenaltyParams Out;
 	Out.NpcKillStrikeLimit = Values.Penalty_Public.NpcKillStrikeLimit;
 	Out.StrikeOutReleaseGraceSec = static_cast<double>(Values.Penalty_Server.StrikeOutReleaseGraceSec);
+	Out.InformantRespawnDelaySec = static_cast<double>(Values.Penalty_Public.InformantRespawnDelaySec);
+	Out.DeathFallSec = static_cast<double>(Values.Assassination_Public.DeathFallSec);
+	// Owned elsewhere and not registered yet (TD-TDC-I3): Camera's NoPawnFadeSec, LSC's EmergenceRetrySec.
+	Out.NoPawnFadeSec = StealthTuningPendingOwnerKeys::NoPawnFadeSec;
+	Out.EmergenceRetrySec = StealthTuningPendingOwnerKeys::EmergenceRetrySec;
 	return Out;
 }
 
@@ -50,6 +58,28 @@ void FPenaltyCore::OnRoundPreparing()
 
 void FPenaltyCore::OnRosterRoundEnded()
 {
+	if (!bFrozen)
+	{
+		// ADR-0019 section 3.3 "any -> RoundEnded": every pending item cancelled, one RespawnCancelled{RoundEnded} row each
+		// (written inside the end handling, before the freeze), and T_due unset (the carrier adapter writes nothing: latched).
+		TArray<FParticipantId> Ids;
+		Records.GetKeys(Ids);
+		for (const FParticipantId& Id : Ids)
+		{
+			FPenaltyRecord& Record = Records.FindChecked(Id);
+			const bool bPending = Record.LifeState == EInformantLifeState::Awaiting || Record.LifeState == EInformantLifeState::Picking;
+			const bool bHadDue = Record.DueServerTime > 0.0;
+			CancelRequest(Record);
+			if (bPending)
+			{
+				EventLog.Write(FPenaltyRespawnCancelledRow{ Id, ERespawnCancelReason::RoundEnded }, RoundEpoch);
+			}
+			if (bHadDue)
+			{
+				RaiseDueTime(Id, TOptional<double>());
+			}
+		}
+	}
 	bFrozen = true;
 	for (TPair<FParticipantId, FPenaltyRecord>& Pair : Records)
 	{
@@ -60,8 +90,31 @@ void FPenaltyCore::OnRosterRoundEnded()
 
 void FPenaltyCore::OnRosterReset(uint32 NewRoundEpoch)
 {
+	// ADR-0019 section 3.3 "any -> Active(0)": a request still pending (a reset without a round end) is cancelled with one
+	// RespawnCancelled{Reset} row under the old epoch; a leftover item that still fires is the queue's Rejected_StaleEpoch.
+	{
+		TArray<FParticipantId> Ids;
+		Records.GetKeys(Ids);
+		for (const FParticipantId& Id : Ids)
+		{
+			FPenaltyRecord& Record = Records.FindChecked(Id);
+			const bool bPending = Record.LifeState == EInformantLifeState::Awaiting || Record.LifeState == EInformantLifeState::Picking;
+			const bool bHadDue = Record.DueServerTime > 0.0;
+			CancelRequest(Record);
+			if (bPending)
+			{
+				EventLog.Write(FPenaltyRespawnCancelledRow{ Id, ERespawnCancelReason::Reset }, RoundEpoch);
+			}
+			if (bHadDue)
+			{
+				RaiseDueTime(Id, TOptional<double>());
+			}
+		}
+	}
 	bFrozen = false;
 	RoundEpoch = NewRoundEpoch;
+	DyingBodyDeathTimes.Reset();
+	NextRespawnRequestSeq = 1;
 	for (TPair<FParticipantId, FPenaltyRecord>& Pair : Records)
 	{
 		Pair.Value = FPenaltyRecord(); // Active(0), tally 0, no respawn fields, no excluded pawn
@@ -80,7 +133,46 @@ void FPenaltyCore::OnRosterReset(uint32 NewRoundEpoch)
 
 void FPenaltyCore::OnConnectionChanged(FParticipantId Participant, bool bConnected)
 {
-	// PEN-R6: a disconnect or a return never touches the counters. The Absent path (story nkp-010) hooks here.
+	// PEN-R6: a disconnect or a return never touches the counters. A return is Round R18's readmission (OnInformantReadmitted).
+	if (bFrozen || bConnected)
+	{
+		return;
+	}
+	FPenaltyRecord* Record = Records.Find(Participant);
+	if (Record == nullptr)
+	{
+		return;
+	}
+	switch (Record->LifeState)
+	{
+	case EInformantLifeState::Awaiting:
+	case EInformantLifeState::Picking:
+	{
+		// Awaiting / Picking -> Absent: Cancel(TimerHandle), t_lost and t_floor kept (PEN-R10, AC-NKP-11).
+		const bool bHadDue = Record->DueServerTime > 0.0;
+		CancelRequest(*Record);
+		Record->LifeState = EInformantLifeState::Absent;
+		EventLog.Write(FPenaltyRespawnCancelledRow{ Participant, ERespawnCancelReason::Disconnect }, RoundEpoch);
+		if (bHadDue)
+		{
+			RaiseDueTime(Participant, TOptional<double>());
+		}
+		break;
+	}
+	case EInformantLifeState::Embodied:
+	{
+		// Embodied -> Absent (Round R17.5 releases the pawn to the crowd in this slot): t_lost = t_floor = now, no item.
+		const double Now = NowServerTime();
+		CancelRequest(*Record);
+		Record->LifeState = EInformantLifeState::Absent;
+		Record->LostServerTime = Now;
+		Record->FloorServerTime = Now;
+		Record->RespawnDelaySec = Latched.InformantRespawnDelaySec;
+		break;
+	}
+	default:
+		break; // Active: the Absent rule is applied when a cause arrives (PEN-R8); Absent / RoundEnded: nothing
+	}
 }
 
 void FPenaltyCore::OnParticipantReclaimed(FParticipantId Participant)
@@ -97,7 +189,375 @@ void FPenaltyCore::OnViewRebound(FParticipantId Participant)
 
 void FPenaltyCore::OnInformantReadmitted(FParticipantId Participant)
 {
-	// PEN-R6: counters unchanged. The readmission's respawn scheduling is story nkp-010.
+	// PEN-R6: counters unchanged. PEN-R11 / ADR-0019 section 3.3 "Absent -> Awaiting / Picking".
+	if (bFrozen || !Participant.IsValid())
+	{
+		return;
+	}
+	const double Now = NowServerTime();
+	FPenaltyRecord& Record = FindOrAddRecord(Participant);
+	if (Record.LifeState == EInformantLifeState::Active)
+	{
+		// An Informant this store never saw leave (no cause reached it): the loss is the readmission itself.
+		Record.LifeState = EInformantLifeState::Absent;
+		Record.LostServerTime = Now;
+		Record.FloorServerTime = Now;
+		Record.RespawnDelaySec = Latched.InformantRespawnDelaySec;
+	}
+	if (Record.LifeState != EInformantLifeState::Absent)
+	{
+		return; // Awaiting / Picking / Embodied: already on its way, a duplicate readmission changes nothing
+	}
+	// The KEPT t_lost and t_floor: reclaiming never shortens the wait and never restarts it (F2: t_now only pushes it later).
+	const double Due = ComputeDueTime(Record.LostServerTime, Record.RespawnDelaySec, Record.FloorServerTime, Now);
+	if (Now < Due)
+	{
+		ArmRequest(Participant, ERespawnCause::Readmitted, Due);
+	}
+	else
+	{
+		EventLog.Write(FPenaltyRespawnScheduledRow{ Participant, ERespawnCause::Readmitted, Record.LostServerTime, Due }, RoundEpoch);
+		StartPickingNow(Participant, Due);
+	}
+}
+
+// ---- Respawn lifecycle ------------------------------------------------------------------------------------------------
+
+double FPenaltyCore::ComputeDueTime(double LostServerTime, double DelaySec, double FloorServerTime, double ServerTimeNow)
+{
+	return FMath::Max3(LostServerTime + DelaySec, FloorServerTime, ServerTimeNow);
+}
+
+double FPenaltyCore::ComputeFloor(TOptional<double> DeathServerTime, double DeathFallSec, double NoPawnFadeSec, double LostServerTime)
+{
+	return DeathServerTime.IsSet() ? DeathServerTime.GetValue() + DeathFallSec + NoPawnFadeSec : LostServerTime;
+}
+
+double FPenaltyCore::NextFrameRetryOffsetSec()
+{
+	return 2.0 * FResolutionQueueCore::DueEpsilonSec;
+}
+
+void FPenaltyCore::OnInformantAwaitingBody(FParticipantId Participant, ERespawnCause Cause, double LostServerTime)
+{
+	if (bFrozen || !Participant.IsValid())
+	{
+		return;
+	}
+	TOptional<double> Death;
+	if (Cause == ERespawnCause::Assassinated || Cause == ERespawnCause::ReversedAgainst)
+	{
+		// The dying body's death write (ADR-0018 section 4.1, valid from the kill slot), recorded by this slot's OnPawnKilled.
+		double DeathTime = 0.0;
+		if (DyingBodyDeathTimes.RemoveAndCopyValue(Participant, DeathTime))
+		{
+			Death = DeathTime;
+		}
+	}
+	ScheduleRespawn(Participant, Cause, LostServerTime, Death);
+}
+
+void FPenaltyCore::OnInformantPawnLost(FParticipantId Participant, EPenaltyPawnLostCause Cause)
+{
+	FPenaltyRecord* Record = bFrozen ? nullptr : Records.Find(Participant);
+	if (Record == nullptr || Record->LifeState != EInformantLifeState::Embodied)
+	{
+		return; // only an embodied informant has a body to lose; a second report is a no-op
+	}
+	const double Now = NowServerTime();
+	Record->LostServerTime = Now;
+	Record->FloorServerTime = Now;
+	Record->RespawnDelaySec = 0.0; // F2: D = 0 for a body lost without a kill
+	Record->RespawnCause = ERespawnCause::PawnLost;
+	EventLog.Write(FPenaltyPawnLostRow{ Participant, Cause }, RoundEpoch);
+	if (IsDisconnected(Participant))
+	{
+		Record->LifeState = EInformantLifeState::Absent;
+		return;
+	}
+	StartPickingNow(Participant, Now);
+}
+
+void FPenaltyCore::OnGraceExpired(FParticipantId Participant)
+{
+	if (bFrozen || !Participant.IsValid())
+	{
+		return;
+	}
+	const double Now = NowServerTime();
+	FPenaltyRecord& Record = FindOrAddRecord(Participant);
+	CancelRequest(Record);
+	Record.LifeState = EInformantLifeState::Absent;
+	Record.LostServerTime = Now;
+	Record.FloorServerTime = Now;
+	Record.RespawnDelaySec = Latched.InformantRespawnDelaySec;
+}
+
+void FPenaltyCore::ScheduleRespawn(FParticipantId Participant, ERespawnCause Cause, double LostServerTime, TOptional<double> DeathServerTime)
+{
+	if (bFrozen || !Participant.IsValid())
+	{
+		return;
+	}
+	FPenaltyRecord& Record = FindOrAddRecord(Participant);
+	const bool bHadDue = Record.DueServerTime > 0.0;
+	CancelRequest(Record);
+	const bool bBodyFalls = Cause == ERespawnCause::Assassinated || Cause == ERespawnCause::ReversedAgainst || Cause == ERespawnCause::InformantKilled;
+	Record.LostServerTime = LostServerTime;
+	Record.RespawnDelaySec = Cause == ERespawnCause::PawnLost ? 0.0 : Latched.InformantRespawnDelaySec;
+	Record.FloorServerTime = ComputeFloor(bBodyFalls ? DeathServerTime : TOptional<double>(), Latched.DeathFallSec, Latched.NoPawnFadeSec, LostServerTime);
+	Record.RespawnCause = Cause;
+	if (IsDisconnected(Participant))
+	{
+		// PEN-R8 / S-B3: a cause on a Disconnected participant keeps t_lost and t_floor and schedules nothing (Absent).
+		Record.LifeState = EInformantLifeState::Absent;
+		if (bHadDue)
+		{
+			RaiseDueTime(Participant, TOptional<double>());
+		}
+		return;
+	}
+	ArmRequest(Participant, Cause, ComputeDueTime(LostServerTime, Record.RespawnDelaySec, Record.FloorServerTime, NowServerTime()));
+}
+
+void FPenaltyCore::ArmRequest(FParticipantId Participant, ERespawnCause Cause, double DueServerTime)
+{
+	FPenaltyRecord& Record = FindOrAddRecord(Participant);
+	Record.RespawnRequestSeq = NextRespawnRequestSeq++;
+	Record.DueServerTime = DueServerTime;
+	Record.RespawnCause = Cause;
+	Record.LifeState = EInformantLifeState::Awaiting;
+	Record.TimerHandle = ScheduleItem(Participant, Record, DueServerTime);
+	EventLog.Write(FPenaltyRespawnScheduledRow{ Participant, Cause, Record.LostServerTime, DueServerTime }, RoundEpoch);
+	RaiseDueTime(Participant, DueServerTime);
+}
+
+void FPenaltyCore::StartPickingNow(FParticipantId Participant, double DueServerTime)
+{
+	FPenaltyRecord& Record = FindOrAddRecord(Participant);
+	CancelRequest(Record);
+	Record.RespawnRequestSeq = NextRespawnRequestSeq++;
+	Record.DueServerTime = DueServerTime;
+	Record.LifeState = EInformantLifeState::Picking;
+	RunCommit(Participant);
+}
+
+bool FPenaltyCore::ResolveRespawnItem(FParticipantId Participant, uint32 RequestSeq, uint32 ItemRoundEpoch)
+{
+	FPenaltyRecord* Record = Records.Find(Participant);
+	if (bFrozen || ItemRoundEpoch != RoundEpoch || Record == nullptr || Record->RespawnRequestSeq != RequestSeq || RequestSeq == 0
+		|| (Record->LifeState != EInformantLifeState::Awaiting && Record->LifeState != EInformantLifeState::Picking))
+	{
+		return false; // stale (another request, a cancelled one, another round): changed nothing
+	}
+	Record->TimerHandle = 0;
+	if (Record->bClearExclusionsAtFire)
+	{
+		// ADR-0019 section 4.1 step 3: a regular retry clears the exclusion set (a transiently ineligible pawn can return).
+		Record->RequestExclusions.Reset();
+		Record->bClearExclusionsAtFire = false;
+	}
+	Record->LifeState = EInformantLifeState::Picking;
+	RunCommit(Participant);
+	return true;
+}
+
+void FPenaltyCore::RunCommit(FParticipantId Participant)
+{
+	// ADR-0019 section 4.1, one call stack. Every gateway call may dispatch Roster events that reach this store, so the
+	// record is looked up again after each one (no reference is held across a call).
+	const double Now = NowServerTime();
+	FPenaltyRecord* Record = Records.Find(Participant);
+	if (Record == nullptr || bFrozen)
+	{
+		return; // the round is over: OnRosterRoundEnded already cancelled and logged
+	}
+
+	// 1. Re-validate: Roster state Informant, no live pawn, connection not Disconnected (phase and epoch: the freeze and the
+	//    item's epoch check).
+	if (IsDisconnected(Participant))
+	{
+		VoidRequest(Participant, ERespawnCancelReason::Disconnect, EInformantLifeState::Absent);
+		return;
+	}
+	const TOptional<EParticipantState> State = Deps.Roster != nullptr ? Deps.Roster->GetState(Participant) : TOptional<EParticipantState>();
+	const bool bLivePawn = Deps.Roster != nullptr && Deps.Roster->HasLivePawn(Participant);
+	if (!State.IsSet() || State.GetValue() != EParticipantState::Informant || bLivePawn)
+	{
+		VoidRequest(Participant, ERespawnCancelReason::Stale, bLivePawn ? EInformantLifeState::Embodied : EInformantLifeState::Active);
+		return;
+	}
+	Record->LifeState = EInformantLifeState::Picking;
+	if (Record->PickStartServerTime <= 0.0)
+	{
+		Record->PickStartServerTime = Now;
+	}
+	if (Deps.Respawn == nullptr)
+	{
+		ScheduleRetry(Participant, Now + Latched.EmergenceRetrySec, /*bRegular*/ true); // no gateway yet: keep waiting
+		return;
+	}
+	const uint32 RequestSeq = Record->RespawnRequestSeq;
+	const uint32 Epoch = RoundEpoch;
+	TArray<FPenaltyPawnKey, TInlineAllocator<8>> Exclude;
+	if (Record->ExcludePawn.IsSet())
+	{
+		Exclude.Add(Record->ExcludePawn); // the participant's own released exile body (LSC R5b.1, PEN-R5)
+	}
+	Exclude.Append(Record->RequestExclusions);
+	const ERosterTeam Team = Deps.Roster != nullptr ? Deps.Roster->GetTeam(Participant) : ERosterTeam::None;
+
+	// 2. Pick (the only random draw; at most one pick per slot).
+	const FPenaltyRespawnPick Pick = Deps.Respawn->PickRespawnPawn(Team, RequestSeq, TConstArrayView<FPenaltyPawnKey>(Exclude.GetData(), Exclude.Num()));
+	if (Pick.Status == EPenaltyPickStatus::Deferred)
+	{
+		ScheduleRetry(Participant, Now + NextFrameRetryOffsetSec(), /*bRegular*/ false); // the per-frame guard: next frame
+		return;
+	}
+	if (Pick.Status != EPenaltyPickStatus::Picked || !Pick.Pawn.IsSet())
+	{
+		ScheduleRetry(Participant, Now + Latched.EmergenceRetrySec, /*bRegular*/ true); // None (story nkp-013 widens)
+		return;
+	}
+	if (FPenaltyRecord* Picked = Records.Find(Participant))
+	{
+		Picked->LastWideningLevel = Pick.WideningLevel;
+	}
+	const auto ExcludeAndRetryNextFrame = [this, Participant, Now](FPenaltyPawnKey Pawn)
+	{
+		if (FPenaltyRecord* Current = Records.Find(Participant))
+		{
+			Current->RequestExclusions.AddUnique(Pawn);
+		}
+		ScheduleRetry(Participant, Now + NextFrameRetryOffsetSec(), /*bRegular*/ false);
+	};
+
+	// 3. Pre-check (side-effect free; the same predicate as TakeOverCrowdPawn's step 1).
+	if (!Deps.Respawn->CheckTakeOverEligibility(Pick.Pawn))
+	{
+		ExcludeAndRetryNextFrame(Pick.Pawn);
+		return;
+	}
+	// 4. Crowd release (atomic Eligible re-check; Penalty is its only caller).
+	if (!Deps.Respawn->TryReleaseNpc(Pick.Pawn, Epoch))
+	{
+		ExcludeAndRetryNextFrame(Pick.Pawn);
+		return;
+	}
+	// 5. Takeover (the factory binds on Penalty's behalf; Penalty never calls BindPawn).
+	const EPenaltyTakeoverResult Takeover = Deps.Respawn->TakeOverCrowdPawn(Pick.Pawn, Participant, Epoch);
+	if (Takeover != EPenaltyTakeoverResult::Applied)
+	{
+		// The released pawn goes back to the crowd in this same stack; no card ever moved.
+		Deps.Respawn->AdoptReleasedPawn(Pick.Pawn);
+		if (Takeover == EPenaltyTakeoverResult::NotEligible)
+		{
+			// Steps 3-5 run with nothing in between that can change the pawn: a defect.
+			ReportFault(EStealthFault::InvariantViolation, PenaltyFaultDetail::TakeoverNotEligibleAfterPrecheck);
+			ExcludeAndRetryNextFrame(Pick.Pawn);
+			return;
+		}
+		VoidRequest(Participant, ERespawnCancelReason::Stale, EInformantLifeState::Active); // a stale bind: the request is void
+		return;
+	}
+	// 6. Card, only after Applied; a failed card move leaves the takeover standing (no rollback).
+	const TOptional<uint16> Card = Deps.Respawn->TakeNpcCard(Participant, Pick.Pawn);
+	if (Card.IsSet())
+	{
+		Deps.Respawn->RecordAppearance(Participant, Card.GetValue());
+	}
+	else
+	{
+		ReportFault(EStealthFault::InvariantViolation, PenaltyFaultDetail::LedgerMismatch);
+	}
+	// 7. Bookkeeping.
+	FPenaltyRecord* Done = Records.Find(Participant);
+	if (Done == nullptr)
+	{
+		return;
+	}
+	const double Latency = FMath::Max(0.0, NowServerTime() - Done->DueServerTime);
+	const uint8 Widening = Done->LastWideningLevel;
+	CancelRequest(*Done);
+	Done->LifeState = EInformantLifeState::Embodied;
+	Done->ExcludePawn = FPenaltyPawnKey();
+	EventLog.Write(FPenaltyInformantRespawnRow{ Participant, Latency, Widening }, RoundEpoch);
+	RaiseDueTime(Participant, TOptional<double>());
+}
+
+void FPenaltyCore::ScheduleRetry(FParticipantId Participant, double DueServerTime, bool bRegular)
+{
+	FPenaltyRecord* Record = Records.Find(Participant);
+	if (Record == nullptr)
+	{
+		return;
+	}
+	// The same request: the same RespawnRequestSeq (the LSC stream continues), T_due unchanged (the latency's origin).
+	Record->LifeState = EInformantLifeState::Picking;
+	Record->bClearExclusionsAtFire = bRegular;
+	Record->TimerHandle = ScheduleItem(Participant, *Record, DueServerTime);
+}
+
+void FPenaltyCore::CancelRequest(FPenaltyRecord& Record)
+{
+	if (Record.TimerHandle != 0 && Deps.Timers != nullptr)
+	{
+		Deps.Timers->CancelRespawnItem(Record.TimerHandle);
+	}
+	Record.TimerHandle = 0;
+	Record.DueServerTime = 0.0;
+	Record.RespawnRequestSeq = 0;
+	Record.PickStartServerTime = 0.0;
+	Record.LastWideningLevel = 0;
+	Record.RequestExclusions.Reset();
+	Record.bClearExclusionsAtFire = false;
+}
+
+void FPenaltyCore::VoidRequest(FParticipantId Participant, ERespawnCancelReason Reason, EInformantLifeState NewState)
+{
+	FPenaltyRecord* Record = Records.Find(Participant);
+	if (Record == nullptr)
+	{
+		return;
+	}
+	const bool bHadDue = Record->DueServerTime > 0.0;
+	CancelRequest(*Record);
+	Record->LifeState = NewState;
+	EventLog.Write(FPenaltyRespawnCancelledRow{ Participant, Reason }, RoundEpoch);
+	if (bHadDue)
+	{
+		RaiseDueTime(Participant, TOptional<double>());
+	}
+}
+
+uint64 FPenaltyCore::ScheduleItem(FParticipantId Participant, const FPenaltyRecord& Record, double DueServerTime)
+{
+	const uint64 Handle = Deps.Timers != nullptr
+		? Deps.Timers->ScheduleRespawnItem(DueServerTime, FPenaltyRespawnItem{ Participant, Record.RespawnRequestSeq, RoundEpoch, Record.RespawnCause })
+		: 0;
+	if (Handle == 0)
+	{
+		ReportFault(EStealthFault::DeadRegistration, PenaltyFaultDetail::RespawnNotScheduled);
+	}
+	return Handle;
+}
+
+void FPenaltyCore::RaiseDueTime(FParticipantId Participant, TOptional<double> DueServerTime)
+{
+	if (Deps.DueTimes != nullptr)
+	{
+		Deps.DueTimes->OnDueTimeChanged(Participant, DueServerTime);
+	}
+}
+
+bool FPenaltyCore::IsDisconnected(FParticipantId Participant) const
+{
+	return Deps.Roster != nullptr && Deps.Roster->IsDisconnected(Participant);
+}
+
+double FPenaltyCore::NowServerTime() const
+{
+	return Deps.Clock != nullptr ? Deps.Clock->GetServerTimeSeconds() : 0.0;
 }
 
 // ---- Strikes and tally ----------------------------------------------------------------------------------------------
@@ -109,6 +569,12 @@ EPenaltyKillOutcome FPenaltyCore::OnPawnKilled(const FPenaltyKill& Kill)
 		return EPenaltyKillOutcome::NoStrike; // frozen at round end: nothing is counted, released or retired
 	}
 	const double SlotServerTime = Deps.Clock != nullptr ? Deps.Clock->GetServerTimeSeconds() : 0.0;
+	if (Kill.VictimKind == EVictimKind::Player && Kill.VictimParticipant.IsValid() && Kill.VictimDeathServerTime > 0.0)
+	{
+		// A participant's body is dying (Assassinated / ReversedAgainst): its death write time is the F2 floor of the respawn
+		// Round asks for after its elimination check, in this slot's Roster flush (story nkp-009).
+		DyingBodyDeathTimes.Add(Kill.VictimParticipant, Kill.VictimDeathServerTime);
+	}
 	if (Kill.Cause == EKillCause::Strike && Kill.VictimKind == EVictimKind::Informant)
 	{
 		// PEN-R7 / ADR-0019 section 2.1 (story nkp-008): every informant kill retires its binding inline, whoever struck.
@@ -201,9 +667,11 @@ void FPenaltyCore::RetireInformant(const FPenaltyKill& Kill, double SlotServerTi
 		// The body would stay BoundLive: a second strike would read Informant instead of AlreadyResolved.
 		ReportFault(EStealthFault::InvariantViolation, PenaltyFaultDetail::InformantRetireRejected);
 	}
-	if (Deps.Respawns != nullptr && Kill.VictimParticipant.IsValid())
+	if (Kill.VictimParticipant.IsValid())
 	{
-		Deps.Respawns->ScheduleRespawn(Kill.VictimParticipant, ERespawnCause::InformantKilled, SlotServerTime);
+		// Not a Roster transition, so no Round call: Penalty schedules this respawn itself, inline (PEN-R8, ADR-0019 2.1).
+		ScheduleRespawn(Kill.VictimParticipant, ERespawnCause::InformantKilled, SlotServerTime,
+			Kill.VictimDeathServerTime > 0.0 ? TOptional<double>(Kill.VictimDeathServerTime) : TOptional<double>());
 	}
 }
 
@@ -288,6 +756,18 @@ TOptional<double> FPenaltyCore::FindReleaseTime(FPenaltyPawnKey Body) const
 {
 	const double* Released = ReleasedBodies.Find(Body);
 	return Released != nullptr ? TOptional<double>(*Released) : TOptional<double>();
+}
+
+EInformantLifeState FPenaltyCore::GetLifeState(FParticipantId Participant) const
+{
+	const FPenaltyRecord* Record = Records.Find(Participant);
+	return Record != nullptr ? Record->LifeState : EInformantLifeState::Active;
+}
+
+TOptional<double> FPenaltyCore::GetDueServerTime(FParticipantId Participant) const
+{
+	const FPenaltyRecord* Record = Records.Find(Participant);
+	return Record != nullptr && Record->DueServerTime > 0.0 ? TOptional<double>(Record->DueServerTime) : TOptional<double>();
 }
 
 uint8 FPenaltyCore::GetStrikeCount(FParticipantId Participant) const

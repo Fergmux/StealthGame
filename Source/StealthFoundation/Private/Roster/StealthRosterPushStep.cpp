@@ -24,6 +24,8 @@ void FRosterPushStep::Reset()
 {
 	Views.Reset();
 	Reconnect.Reset();
+	OwnerRespawnDue.Reset();
+	OwnerDirty.Reset();
 	RetiringThisFrame.Reset();
 	RetiringClearNextFrame.Reset();
 	bDirty[0] = bDirty[1] = false;
@@ -93,6 +95,10 @@ void FRosterPushStep::OnRosterEvent(const FRosterEvent& Event)
 
 	case ERosterEventType::RosterRoundEnded:
 	case ERosterEventType::RosterReset:
+		if (Event.Type == ERosterEventType::RosterReset)
+		{
+			OwnerRespawnDue.Reset(); // the new epoch starts with no countdown (Penalty also writes 0 before the latch)
+		}
 		for (TPair<FParticipantId, FReconnectState>& Pair : Reconnect)
 		{
 			ClearReconnect(Pair.Key, EReconnectEndCause::Cleared);
@@ -118,6 +124,10 @@ FTeamView FRosterPushStep::BuildView(const FParticipantRecord& Owner) const
 	View.Owner.Team = static_cast<uint8>(Owner.Team);
 	View.Owner.State = static_cast<uint8>(Owner.State);
 	View.Owner.RoundEpoch = Core.GetRoundEpoch();
+	if (const double* Due = OwnerRespawnDue.Find(Owner.ParticipantId))
+	{
+		View.Owner.T_due = *Due;
+	}
 	if (Owner.Team == ERosterTeam::None)
 	{
 		return View;
@@ -166,7 +176,7 @@ int32 FRosterPushStep::Flush()
 	}
 	RetiringClearNextFrame.Reset();
 
-	if (!bAllDirty && !bDirty[0] && !bDirty[1])
+	if (!bAllDirty && !bDirty[0] && !bDirty[1] && OwnerDirty.Num() == 0)
 	{
 		return 0;
 	}
@@ -180,7 +190,7 @@ int32 FRosterPushStep::Flush()
 		{
 			continue;
 		}
-		const bool bOwnerDirty = bAllDirty || (Owner->Team != ERosterTeam::None && bDirty[static_cast<int32>(Owner->Team)]);
+		const bool bOwnerDirty = bAllDirty || OwnerDirty.Contains(Pair.Key) || (Owner->Team != ERosterTeam::None && bDirty[static_cast<int32>(Owner->Team)]);
 		if (!bOwnerDirty)
 		{
 			continue;
@@ -197,7 +207,41 @@ int32 FRosterPushStep::Flush()
 	RetiringThisFrame.Reset();
 	bDirty[0] = bDirty[1] = false;
 	bAllDirty = false;
+	OwnerDirty.Reset();
 	return Written;
+}
+
+ERosterResult FRosterPushStep::SetOwnerRespawnDue(FParticipantId Id, double DueServerTime, uint32 ExpectedEpoch)
+{
+	if (ExpectedEpoch != Core.GetRoundEpoch())
+	{
+		return ERosterResult::Rejected_StaleEpoch;
+	}
+	if (Core.FindRecord(Id) == nullptr)
+	{
+		return ERosterResult::Rejected_UnknownParticipant;
+	}
+	const double Value = DueServerTime > 0.0 ? DueServerTime : 0.0;
+	if (GetOwnerRespawnDue(Id) == Value)
+	{
+		return ERosterResult::NoOp_Unchanged;
+	}
+	if (Value == 0.0)
+	{
+		OwnerRespawnDue.Remove(Id);
+	}
+	else
+	{
+		OwnerRespawnDue.Add(Id, Value);
+	}
+	OwnerDirty.Add(Id); // the owner's own view only: teammates' views carry no T_due
+	return ERosterResult::Applied;
+}
+
+double FRosterPushStep::GetOwnerRespawnDue(FParticipantId Id) const
+{
+	const double* Due = OwnerRespawnDue.Find(Id);
+	return Due != nullptr ? *Due : 0.0;
 }
 
 bool FRosterPushStep::IsReconnecting(FParticipantId Id) const

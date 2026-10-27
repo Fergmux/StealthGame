@@ -171,7 +171,7 @@ Penalty adds no restriction of its own (an informant-only rule would itself be a
 | Tell Matrix T7 (never seen running, vaulting, climbing, interacting, bracing, hiding) | ADR-0011 + ADR-0010 clamps; Crowd T7 calibration (ADR-0016) | the above | AC-NKP-17 / AC-CNB-30 |
 
 ### 6. The `T_due` carrier (decided by the user 2026-10-25: option (a))
-Penalty always computes and stores `DueServerTime` (§3.2) and raises a server-side notification on every change: `OnDueTimeChanged(P, TOptional<double> T_due)` (set at scheduling and readmission; unset at embodiment, cancellation, round end and reset). The **carrier adapter** is option (a), chosen by the user 2026-10-25 (ADR-0001 §6; AQ-02 closed): on `OnDueTimeChanged` Penalty writes `T_due` (double; 0 when unset) into the owner part through the Roster server face `SetOwnerRespawnDue(P, T_due)`, never while `IsLatched()`; it survives reconnects as replicated state, and HUD F7 shows a live countdown. The options that were analysed for the decision:
+Penalty always computes and stores `DueServerTime` (§3.2) and raises a server-side notification on every change: `OnDueTimeChanged(P, TOptional<double> T_due)` (set at scheduling and readmission; unset at embodiment, cancellation, round end and reset). The **carrier adapter** is option (a), chosen by the user 2026-10-25 (ADR-0001 §6; AQ-02 closed): on `OnDueTimeChanged` Penalty writes `T_due` (double; 0 when unset) into the owner part through the Roster server face `SetOwnerRespawnDue(P, T_due, ExpectedEpoch)` (GDD PEN-R15's form; a stale epoch is the Roster's `Rejected_StaleEpoch`), never while `IsLatched()`; it survives reconnects as replicated state, and HUD F7 shows a live countdown. The options that were analysed for the decision:
 
 | ADR-0001 §6 option | Adapter (only after the decision) | Reconnect / rejoin | Inputs the client would need, and whether it already holds them |
 |---|---|---|---|
@@ -398,3 +398,8 @@ Closeout 2026-10-25 (re-review follow-ups, `production/design-closeout/2026-10-2
 
 Architecture review 2026-10-25b (`docs/architecture/architecture-review-2026-10-25b.md`); text corrections only, decision unchanged, Status unchanged (Accepted).
 - Pings milestone corrected (VS → MVP); §6 option (a) row aligned with ADR-0001's `T_due` field name and sentinel.
+
+Implementation notes (stories nkp-009 to nkp-012, 2026-10-27); text corrections only, decision unchanged, Status unchanged (Accepted).
+- §6: `SetOwnerRespawnDue(P, T_due, ExpectedEpoch)`, the GDD PEN-R15 form (story nkp-011 AC1).
+- §4.3: "`ServerNow + 1 ms`" is implemented as `ServerNow + 2 ms` (twice ADR-0002's `DueEpsilonSec`): the queue stamps every item due at or before DrainStart + 1 ms (inclusive) in the same drain, so only an offset beyond that lands in the next frame, which is the stated intent (story nkp-012).
+- §3.2: Penalty schedules on Round's due-time heap through `FResolutionQueueCore::ScheduleAt` and cancels with the new `FResolutionQueueCore::CancelTimer(Handle)` (the `Cancel(TimerHandle)` this section names).

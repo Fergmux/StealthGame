@@ -137,6 +137,16 @@ public:
 	 */
 	bool RequestHandOver(APawn* Pawn, EStealthPawnControlKind Kind, double PossessNotBeforeServerTime);
 
+	/**
+	 * RequestHandOver(Pawn, Player) for an informant takeover (ADR-0010 sections 3.2, 4.3; NPC-Kill Penalty story nkp-012,
+	 * called by the takeover after BindPawn and Crowd's ReleaseControl): the commit runs now (the control epoch is bumped, so
+	 * every command stamped under the crowd's control is stale), and the possession executes at the next frame start: the
+	 * crowd controller lets go (ReleaseBody) and PlayerController possesses the same pawn (no actor is created, the look and
+	 * velocity are unchanged). A pawn that has a death write or is being destroyed by then is left alone. STAND-IN for the
+	 * SCL hand-over pass (a next-tick world timer until the pass exists). False without authority or a controller.
+	 */
+	bool RequestHandOverToPlayer(APawn* Pawn, AController* PlayerController);
+
 	/** Hand-overs requested by RequestHandOver whose AI possession has not executed yet (tests and dumps). */
 	int32 GetPendingHandOverCount() const { return PendingHandOvers; }
 

@@ -13,6 +13,18 @@ namespace RoundMatchCoreLocal
 	{
 		return Team == ERosterTeam::Team0 ? 0 : (Team == ERosterTeam::Team1 ? 1 : INDEX_NONE);
 	}
+
+	/** The respawn cause of an Active -> Informant reason Penalty schedules (ADR-0019 section 1); unset for the rest. */
+	TOptional<ERespawnCause> RespawnCauseOf(ERosterReason Reason)
+	{
+		switch (Reason)
+		{
+		case ERosterReason::Assassinated: return ERespawnCause::Assassinated;
+		case ERosterReason::ReversedAgainst: return ERespawnCause::ReversedAgainst;
+		case ERosterReason::StrikeLimit: return ERespawnCause::StrikeLimit;
+		default: return TOptional<ERespawnCause>(); // Disconnect (grace expiry, Absent at Penalty), RoundEnd, Reset
+		}
+	}
 }
 
 FRoundMatchCore::FRoundMatchCore(const FRoundGateways& InGateways, IRoundHostSink* InHostSink, IRoundLogWriter* InLog, const IStealthClock* InClock)
@@ -950,6 +962,18 @@ void FRoundMatchCore::OnRosterTransition(const FRoundTransitionEvent& InEvent)
 		DecidingParticipant = Event.Participant;
 		TryTerminate(Outcome.GetValue(), Key);
 		DecidingParticipant = FParticipantId();
+	}
+	// ADR-0019 section 1 / PEN-R8 (story nkp-009): after the elimination check, and only when the round did not latch, an
+	// Active -> Informant cause asks Penalty for an informant body (Penalty schedules the respawn, or records Absent for a
+	// Disconnected participant). Never from a deciding slot: a latched round schedules no respawn and publishes no countdown.
+	if (Event.bApplied && Event.Old == EParticipantState::Active && Event.New == EParticipantState::Informant && !Latch.IsTerminated()
+		&& Gateways.InformantBodies != nullptr)
+	{
+		const TOptional<ERespawnCause> Cause = RoundMatchCoreLocal::RespawnCauseOf(Event.Reason);
+		if (Cause.IsSet())
+		{
+			Gateways.InformantBodies->OnInformantAwaitingBody(Event.Participant, Cause.GetValue(), Now());
+		}
 	}
 }
 

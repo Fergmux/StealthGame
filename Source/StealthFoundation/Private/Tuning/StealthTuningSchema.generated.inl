@@ -149,6 +149,7 @@ namespace StealthTuningGenerated
 		{ "HandoverHoldSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Locomotion_Server, &FLocomotionTuning_Server::HandoverHoldSec>, &Set<&FStealthServerTuning::Locomotion_Server, &FLocomotionTuning_Server::HandoverHoldSec>, 0.8f, 0.3f, 2.0f, 0.5f, 1.2f, false, ETuningLatch::Use, "SCL", "Sec", false, 0.0 },
 		{ "IdleGazeDelaySec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Locomotion_Server, &FLocomotionTuning_Server::IdleGazeDelaySec>, &Set<&FStealthServerTuning::Locomotion_Server, &FLocomotionTuning_Server::IdleGazeDelaySec>, 3.0f, 1.0f, 10.0f, 2.0f, 5.0f, false, ETuningLatch::Use, "SCL", "Sec", false, 0.0 },
 		{ "IdleGazeLookDeadzoneDegPerSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Locomotion_Server, &FLocomotionTuning_Server::IdleGazeLookDeadzoneDegPerSec>, &Set<&FStealthServerTuning::Locomotion_Server, &FLocomotionTuning_Server::IdleGazeLookDeadzoneDegPerSec>, 0.5f, 0.0f, 3.0f, 0.2f, 1.0f, false, ETuningLatch::Use, "SCL", "PerSec", false, 0.0 },
+		{ "InformantRespawnDelaySec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Penalty_Public, &FPenaltyTuning_Public::InformantRespawnDelaySec>, &Set<&FStealthServerTuning::Penalty_Public, &FPenaltyTuning_Public::InformantRespawnDelaySec>, 15.0f, 5.0f, 60.0f, 10.0f, 20.0f, true, ETuningLatch::Round, "Penalty", "Sec", false, 0.0 },
 		{ "InputStarvationSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Locomotion_Server, &FLocomotionTuning_Server::InputStarvationSec>, &Set<&FStealthServerTuning::Locomotion_Server, &FLocomotionTuning_Server::InputStarvationSec>, 0.25f, 0.25f, 1.0f, 0.25f, 0.4f, false, ETuningLatch::Use, "SCL", "Sec", false, 0.0 },
 		{ "LookEaseSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::LookEaseSec>, &Set<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::LookEaseSec>, 0.15f, 0.0f, 0.5f, 0.1f, 0.25f, true, ETuningLatch::Round, "SCL", "Sec", false, 0.0 },
 		{ "LookMaxRateDegPerSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::LookMaxRateDegPerSec>, &Set<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::LookMaxRateDegPerSec>, 140.0f, 60.0f, 300.0f, 120.0f, 160.0f, true, ETuningLatch::Round, "SCL", "PerSec", false, 0.0 },
@@ -202,5 +203,5 @@ namespace StealthTuningGenerated
 	};
 
 	/** Schema fingerprint over names, types, audiences, latches and enum values (story tdc-043). */
-	inline constexpr uint64 SchemaFingerprint = 0xf5fec5bd72bd634eull;
+	inline constexpr uint64 SchemaFingerprint = 0x020f2efe6081516bull;
 }

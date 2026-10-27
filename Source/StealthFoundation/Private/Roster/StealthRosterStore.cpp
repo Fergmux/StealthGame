@@ -472,6 +472,16 @@ bool URosterStore::IsTeammateReconnecting(FParticipantId Id) const
 	return PushStep ? PushStep->IsReconnecting(Id) : false;
 }
 
+ERosterResult URosterStore::SetOwnerRespawnDue(FParticipantId Id, double DueServerTime, uint32 ExpectedEpoch)
+{
+	return PushStep ? PushStep->SetOwnerRespawnDue(Id, DueServerTime, ExpectedEpoch) : ERosterResult::Rejected_NotAuthority;
+}
+
+double URosterStore::GetOwnerRespawnDue(FParticipantId Id) const
+{
+	return PushStep ? PushStep->GetOwnerRespawnDue(Id) : 0.0;
+}
+
 // --- Tick --------------------------------------------------------------------------------------------------------------
 
 void URosterStore::Tick(float DeltaTime)
