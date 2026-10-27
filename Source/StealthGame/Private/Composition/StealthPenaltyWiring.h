@@ -90,12 +90,15 @@ private:
  *                            LSC's ViewBlock traces stand-in), sorted by spawn ordinal, one uniform draw from the
  *                            request's RespawnPick sub-seed stream (it continues across the request's retries). Widening
  *                            stand-in: an empty region widens at once to 2 x the radius (level 1), then to any cell not
- *                            within the radius of the enemy anchor (level 2); LSC's time-based widening is story nkp-013 /
- *                            LSC 033. One pick per server frame (Deferred after the first). Team-start fallback (STAND-IN):
- *                            when the world has NO crowd agent at all (the 0-NPC harness rounds), the pick names a reserved
- *                            key and TakeOverCrowdPawn spawns the participant's pawn at its team start through the factory
- *                            (AStealthGameMode::SpawnInformantFallbackPawn, the prototype respawn); never while a crowd
- *                            exists (then the participant keeps waiting, the unseen test never relaxed).
+ *                            within the radius of the enemy anchor (level 2); LSC's time-based widening (RespawnStarvationSec
+ *                            after the request's first pick) is LSC 033's, Penalty records whatever level is reported (story
+ *                            nkp-013). One pick per server frame (Deferred after the first). No eligible unseen pawn: None,
+ *                            and the participant keeps waiting (the unseen test is never relaxed and no pawn is ever spawned,
+ *                            story nkp-014). The one exception is HARNESS-ONLY: in a test-seam build whose PIE harness round
+ *                            switched StealthPenaltyHarnessSeams' crowd-less respawn on, a world with NO crowd agent at all
+ *                            (the 0-NPC harness rounds) gets a reserved key whose takeover spawns the participant's pawn at
+ *                            its team start (AStealthGameMode::SpawnHarnessCrowdlessRespawnPawn). Off by default, compiled
+ *                            out of Shipping; story nkp-014's OneRespawnPath shows a production round never spawns.
  *   CheckTakeOverEligibility STAND-IN for Shared Character story 028's predicate: alive (no death write), not being
  *                            destroyed, unbound, crowd-driven (no PlayerController) and Crowd-Eligible.
  *   TryReleaseNpc            UCrowdDirector::TryReleaseNpc (Crowd story cnb-030).
@@ -123,6 +126,12 @@ public:
 	virtual void RecordAppearance(FParticipantId Participant, uint16 AppearanceId) override;
 
 private:
+	/** The stand-in pick itself (PickRespawnPawn adds story nkp-014's probe record around it). */
+	FPenaltyRespawnPick Pick(ERosterTeam Team, uint32 RequestSeq, TConstArrayView<FPenaltyPawnKey> Exclude);
+	/** Crowd's TryReleaseNpc (TryReleaseNpc adds the probe record and the injected failure around it). */
+	bool Release(FPenaltyPawnKey Pawn, uint32 ExpectedRoundEpoch);
+	/** The stand-in takeover itself (TakeOverCrowdPawn adds the probe record and the commit-tick sight query around it). */
+	EPenaltyTakeoverResult TakeOver(FPenaltyPawnKey Pawn, FParticipantId Participant, uint32 ExpectedRoundEpoch);
 	APawn* Resolve(FPenaltyPawnKey Key) const;
 	/** The stand-in takeover predicate (alive, unbound, crowd-driven, Crowd-Eligible). */
 	bool IsTakeoverEligible(APawn* Pawn) const;

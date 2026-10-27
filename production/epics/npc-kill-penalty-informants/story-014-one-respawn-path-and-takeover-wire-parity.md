@@ -1,12 +1,12 @@
 # Story 014: One respawn path for every cause, and the takeover is invisible on the wire
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Blocked — BLOCKED (AC2 only): the content and cadence clauses of AC-NKP-37 wait on information-visibility-policy story 018 (owner-only PlayerState / Controller / Owner on AStealthPawn; PIE measured `Actor.PlayerState` changing on the taken pawn for a non-team client), shared-character-locomotion's pawn differentiators (RemoteViewPitch16 from HeadLook, CharacterInputState, TraversalResult) and the ADR-0008 section 6 multi-process raw-bunch capture (cadence). AC1 and the AC2 clause "no actor channel opens or closes" pass.
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -36,7 +36,7 @@ This is the PIE proof of the epic's central promise: "no client can tell that a 
 
 *From GDD `design/gdd/npc-kill-penalty-informants.md` (AC-NKP-09, AC-NKP-37), scoped to this story:*
 
-- [ ] **AC1** (AC-NKP-09, [I][PIE-3] `StealthGame.Penalty.PIE.OneRespawnPath`, parameterised over Assassinated, ReversedAgainst, StrikeLimit, informant killed, returning informant, body lost to KillZ): **GIVEN** the cause **WHEN** the informant's body is provided **THEN** Penalty's path spawns 0 pawns (Crowd's replacement emergence for a dead body is excluded from the count and is Crowd's AC), the body is a pre-existing crowd pawn inside the team's `RespawnRegion` (or its widened region), no non-team pawn had line of sight to it at the commit tick, and, over the whole respawn, exactly one card move occurred (after the takeover returned `Applied`) and exactly one LSC `RespawnPick` draw occurred per commit attempt (retries after a failed release or takeover draw again but move no card) (PEN-R7, R9; order is story 012).
+- [x] **AC1** (AC-NKP-09, [I][PIE-3] `StealthGame.Penalty.PIE.OneRespawnPath`, parameterised over Assassinated, ReversedAgainst, StrikeLimit, informant killed, returning informant, body lost to KillZ): **GIVEN** the cause **WHEN** the informant's body is provided **THEN** Penalty's path spawns 0 pawns (Crowd's replacement emergence for a dead body is excluded from the count and is Crowd's AC), the body is a pre-existing crowd pawn inside the team's `RespawnRegion` (or its widened region), no non-team pawn had line of sight to it at the commit tick, and, over the whole respawn, exactly one card move occurred (after the takeover returned `Applied`) and exactly one LSC `RespawnPick` draw occurred per commit attempt (retries after a failed release or takeover draw again but move no card) (PEN-R7, R9; order is story 012).
 - [ ] **AC2** (AC-NKP-37, [I][PIE-3][Provisional: spikes S1/S14] `StealthGame.Penalty.PIE.TakeoverWireParity`): **GIVEN** an informant takeover of a pawn relevant to a non-team client (unseen at commit) and a control NPC pawn that is not taken over **WHEN** that client's received property bunches for both pawns are diffed across the takeover **THEN** they are equal in shape and content apart from movement, the taken pawn's bunch cadence over the 5 s before and after the takeover matches the control pawn's within ± 10 %, and no actor channel opens or closes (PEN-R9, IVP R9c, R14).
 
 ---
@@ -67,13 +67,19 @@ Note on `[Provisional]`: GDD AC-NKP-37 was tagged provisional against S1/S14; bo
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-27). The PIE tests live under the harness test root (`Source/StealthTestHarness/Private/Tests/PIE/Penalty/`, not the planned `Private/Penalty/`).*
 
-- `Source/StealthTestHarness/Private/Penalty/OneRespawnPathTest.cpp` (CQTest, `StealthGame.Penalty.PIE.OneRespawnPath.*`)
-- `Source/StealthTestHarness/Private/Penalty/TakeoverWireParityTest.cpp` (CQTest, `StealthGame.Penalty.PIE.TakeoverWireParity.*`)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCommit.cpp` (only for defects the tests expose)
+- `Source/StealthGame/Public/Server/StealthPenaltyHarnessSeams.h` (new: the harness-only crowd-less respawn switch, the respawn probe, release fault injection; WITH_STEALTH_TEST_SEAMS only)
+- `Source/StealthGame/Private/Composition/StealthPenaltyWiring.cpp`, `StealthPenaltyWiring.h` (the team-start fallback gated to the harness seam, off by default and compiled out of Shipping; probe records; seam definitions)
+- `Source/StealthGame/Public/StealthGameMode.h`, `Source/StealthGame/Private/StealthGameMode.cpp` (`SpawnInformantFallbackPawn` renamed `SpawnHarnessCrowdlessRespawnPawn`, null unless the seam is on)
+- `Source/StealthTestHarness/Private/Tests/PIE/Assassination/{OwnerResultShape,PossessionThroughFall,KillPlateTellsOneThing,CulledVictimOpensFalling,OneBodySequence,StrikeClipParity}PieTest.cpp` (the 0-NPC rounds switch the harness-only respawn on)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/PenaltyPieSupport.h` (new: shared helpers)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/OneRespawnPathPieTest.cpp` (CQTest `StealthGame.Penalty.PIE.OneRespawnPath.{Assassinated,ReversedAgainst,StrikeLimit,InformantKilled,ReturningInformant,BodyLostToKillZ,FailedReleaseRedrawsWithoutCardMove}`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/TakeoverWireParityPieTest.cpp` (CQTest `StealthGame.Penalty.PIE.TakeoverWireParity.NoChannelOpenOrCloseAndSameNetGuid`)
 
----
+Readiness / implementation notes (2026-10-27):
+- Stand-ins in AC1, logged: ReturningInformant drops and returns through `URosterStore::NotifyConnectionChanged` (the composition root's logout and reclaim projection; Round R18 then readmits through its own queue item) because Session's PIE rejoin reclaim (session-travel stories 026-027) is not built; BodyLostToKillZ reports the loss through `UPenaltyService::OnInformantPawnLost`, the call Round R17.9 makes (round-match-framework rmf-072 not built). The pick, pre-check and takeover are the documented stand-ins (LSC 033, SCL 028); the card is the Character Pool stand-in, counted by the probe.
+- AC2 is BLOCKED for its content and cadence clauses: with engine-default replication a player-possessed pawn sends `PlayerState`, `Controller` and `Owner` to non-owners (spike S1 baseline R0); the owner-only reset on `AStealthPawn` is information-visibility-policy story 018 (Blocked), and `RemoteViewPitch16` / `CharacterInputState` / `TraversalResult` are shared-character-locomotion's pawn differentiators; the bunch cadence needs the ADR-0008 section 6 raw-bunch capture (multi-process). The clause that holds today (no actor channel opens or closes, same actor, same NetGUID) is asserted; the content diff is logged as evidence for those owners.
 
 ## QA Test Cases
 
@@ -102,7 +108,9 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Integration: the two CQTest PIE tests under `Source/StealthTestHarness/Private/Penalty/` OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: AC1 created and passing 2026-10-27: `StealthGame.Penalty.PIE.OneRespawnPath.*` (7 methods). AC2 partial: `StealthGame.Penalty.PIE.TakeoverWireParity.NoChannelOpenOrCloseAndSameNetGuid` passes (same actor, channel and NetGUID on the non-team observer); content and cadence BLOCKED (see Status). Evidence: `production/qa/evidence/npc-kill-penalty-informants-013-015-2026-10-27/evidence.md`.
+
+Run result: OBSERVED — 3-player PIE with a crowd: the 3rd NPC kill exiles and the informant takes over an unseen crowd pawn in its team's region 15 s later; a killed informant respawns the same way; no pawn spawned (screenshots 01-05 in the evidence folder).
 
 ---
 

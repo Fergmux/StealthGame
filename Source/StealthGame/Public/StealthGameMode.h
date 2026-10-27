@@ -96,12 +96,13 @@ public:
 	bool IsRoundInProgress() const;
 
 	/**
-	 * STAND-IN (NPC-Kill Penalty story nkp-012's respawn gateway, FStealthPenaltyRespawnGateway): a world with NO crowd pawn
-	 * at all (the 0-NPC harness rounds) has nothing to take over, so the informant gets a fresh factory pawn at its team
-	 * start, bound to its participant and possessed (the prototype respawn). Never used while any crowd pawn exists; the
-	 * Level Socket Contract (story 033) and story nkp-014's no-spawn proof decide its fate. Null when nothing spawned.
+	 * HARNESS-ONLY (NPC-Kill Penalty story nkp-014; called only by FStealthPenaltyRespawnGateway while the PIE harness has
+	 * switched StealthPenaltyHarnessSeams' crowd-less team-start respawn on, in a world with NO crowd agent at all): a fresh
+	 * factory pawn at the informant's team start, bound to its participant and possessed, so the 0-NPC harness rounds can
+	 * still respawn an informant. A production respawn never spawns (ADR-0019 section 4): it takes over an unseen crowd pawn
+	 * or keeps waiting. Null when nothing spawned (no live round, or the seam is off / compiled out).
 	 */
-	APawn* SpawnInformantFallbackPawn(APlayerController* Player);
+	APawn* SpawnHarnessCrowdlessRespawnPawn(APlayerController* Player);
 
 	// ---- Round adapters (the composition root's engine side until the LSC, Crowd and Session facades exist) ----
 

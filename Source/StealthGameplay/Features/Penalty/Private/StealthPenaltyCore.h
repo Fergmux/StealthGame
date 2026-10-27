@@ -35,7 +35,7 @@ struct FPenaltyRecord
 	/** The respawn request's sequence (the pick stream continues with it, PEN-R9). */
 	uint32 RespawnRequestSeq = 0;
 	double PickStartServerTime = 0.0;
-	/** The starvation widening level reached (0..2, PEN-R10). */
+	/** The starvation widening level LSC reported for this request (0..2, PEN-R10; never decreases within a request, story nkp-013). */
 	uint8 LastWideningLevel = 0;
 	/** The pending InformantRespawn item's handle value (0 = none; story nkp-009). */
 	uint64 TimerHandle = 0;
@@ -273,6 +273,11 @@ private:
 	void RunCommit(FParticipantId Participant);
 	/** A retry of the same request (same RespawnRequestSeq) at DueServerTime; bRegular: the EmergenceRetrySec cadence. */
 	void ScheduleRetry(FParticipantId Participant, double DueServerTime, bool bRegular);
+	/**
+	 * Stores the widening level LSC reported for the request (story nkp-013; ADR-0019 section 4.3): a None pick's level and
+	 * the committed pick's level, never a Deferred or excluded one, and never lower than a level the request already reached.
+	 */
+	void RecordWideningLevel(FParticipantId Participant, uint8 WideningLevel);
 	/** Cancels the pending item (if any) and forgets the request; t_lost and t_floor are kept. */
 	void CancelRequest(FPenaltyRecord& Record);
 	/** Ends the request without a body (re-validation failed, round over, stale bind): the row, T_due unset. */

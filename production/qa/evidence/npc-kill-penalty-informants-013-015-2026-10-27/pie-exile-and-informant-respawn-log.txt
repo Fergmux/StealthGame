@@ -1,0 +1,25 @@
+[2026.10.27-21.27.21:239][ 82]LogStealthRound: Round phase Unknown -> Lobby (change 1, round 0)
+[2026.10.27-21.27.26:506][100]LogStealthRound: Round phase Lobby -> Preparing (change 2, round 1)
+[2026.10.27-21.27.29:619][112]LogStealthRound: Round phase Preparing -> Active (change 3, round 1)
+[2026.10.27-21.27.29:619][112]LogStealth: Round started (seed 1020789637, 50 NPCs).
+[2026.10.27-21.27.50:363][175]LogStealth: [Bot] Phase=1 Stages=1/1 Winner=255 NPCs=50
+[2026.10.27-21.27.50:363][175]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.27-21.27.50:363][175]LogStealth: [Bot] #0 FergsPC-9FFD89A0460B team=0 state=Active npcKills=0 pawn=V(X=-2550.00, Y=-2600.00, Z=88.27) braced=0 concealed=0
+[2026.10.27-21.27.50:363][175]LogStealth: [Bot] #1 FergsPC-35D232CF41A7 team=1 state=Active npcKills=0 pawn=V(X=-2550.00, Y=2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.27-21.27.50:363][175]LogStealth: [Bot] #2 FergsPC-193485734E8A team=0 state=Active npcKills=0 pawn=V(X=-2700.00, Y=-2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.27-21.27.58:020][198]LogStealth: [Bot] #2 strikes BP_CrowdCharacter_C_13 (npc, 150 cm, bearing 0, braced=0).
+[2026.10.27-21.27.58:349][199]LogStealth: [Encounter] BP_CrowdCharacter_C_14 killed BP_CrowdCharacter_C_13 in the slot (victim kind 1).
+[2026.10.27-21.28.07:357][226]LogStealth: [Bot] #2 strikes BP_CrowdCharacter_C_16 (npc, 150 cm, bearing 0, braced=0).
+[2026.10.27-21.28.07:682][227]LogStealth: [Encounter] BP_CrowdCharacter_C_14 killed BP_CrowdCharacter_C_16 in the slot (victim kind 1).
+[2026.10.27-21.28.17:028][255]LogStealth: [Bot] #2 strikes BP_CrowdCharacter_C_23 (npc, 150 cm, bearing 0, braced=0).
+[2026.10.27-21.28.17:346][256]LogStealthRound: Round: participant 2 state 0 -> 1 (reason 3), Active after T0 1 T1 1.
+[2026.10.27-21.28.17:346][256]LogStealth: [Encounter] BP_CrowdCharacter_C_14 killed BP_CrowdCharacter_C_23 in the slot (victim kind 1).
+[2026.10.27-21.28.32:396][302]LogStealth: [Penalty] informant takeover (stand-in): participant 2 binds BP_CrowdCharacter_C_35 at V(X=1047.36, Y=-2500.08, Z=88.27)
+[2026.10.27-21.28.48:758][351]LogStealth: [Bot] #1 strikes BP_CrowdCharacter_C_35 (informant, 150 cm, bearing 0, braced=0).
+[2026.10.27-21.28.49:063][352]LogStealth: [Encounter] BP_CrowdCharacter_C_38 killed BP_CrowdCharacter_C_35 in the slot (victim kind 2).
+[2026.10.27-21.29.04:067][397]LogStealth: [Penalty] informant takeover (stand-in): participant 2 binds BP_CrowdCharacter_C_9 at V(X=984.97, Y=-1999.91, Z=88.28)
+[2026.10.27-21.29.15:744][432]LogStealth: [Bot] Phase=1 Stages=1/1 Winner=255 NPCs=50
+[2026.10.27-21.29.15:744][432]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 1 inf 1 / T1 1 act 1 inf 0) epoch 1 | factory pawns 56, untokened 0
+[2026.10.27-21.29.15:744][432]LogStealth: [Bot] #0 FergsPC-9FFD89A0460B team=0 state=Active npcKills=0 pawn=V(X=-2550.00, Y=-2600.00, Z=88.27) braced=0 concealed=0
+[2026.10.27-21.29.15:744][432]LogStealth: [Bot] #1 FergsPC-35D232CF41A7 team=1 state=Active npcKills=0 pawn=V(X=1042.10, Y=-2337.51, Z=88.28) braced=0 concealed=0
+[2026.10.27-21.29.15:744][432]LogStealth: [Bot] #2 FergsPC-193485734E8A team=0 state=Informant npcKills=0 pawn=V(X=984.97, Y=-1999.91, Z=88.28) braced=0 concealed=0

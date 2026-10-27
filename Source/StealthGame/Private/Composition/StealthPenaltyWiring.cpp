@@ -14,7 +14,9 @@
 #include "Server/Random/StealthServerSeeds.h"
 #include "Server/Roster/StealthRosterStore.h"
 #include "Server/Session/StealthSessionService.h"
+#include "GameFramework/GameStateBase.h"
 #include "Server/StealthCompositionRoot.h"
+#include "Server/StealthPenaltyHarnessSeams.h"
 #include "Server/StealthPenaltyService.h"
 #include "Server/StealthTuningInvariants.h"
 #include "StealthCharacter.h"
@@ -29,10 +31,35 @@ namespace StealthPenaltyWiringLocal
 	/** The stand-in pick's stream tag (ADR-0006 section 5: one tag per draw site). */
 	constexpr uint64 RespawnPickStreamTag = StealthRandom::Tag("RSPNPICK");
 	/**
-	 * The key of the STAND-IN team-start fallback (a world with no crowd agent at all): no real pawn has it (a pawn key is
-	 * serial << 32 | object index, and no object has index 0xFFFFFFFF).
+	 * The key of the HARNESS-ONLY crowd-less team-start respawn (StealthPenaltyHarnessSeams; never in production): no real
+	 * pawn has it (a pawn key is serial << 32 | object index, and no object has index 0xFFFFFFFF).
 	 */
 	constexpr uint64 TeamStartFallbackKey = 0xFA11BAC5FFFFFFFFull;
+
+	/** True only in a test-seam build whose harness switched the crowd-less team-start respawn on (story nkp-014). */
+	bool IsHarnessCrowdlessRespawnOn()
+	{
+#if WITH_STEALTH_TEST_SEAMS
+		return StealthPenaltyHarnessSeams::IsCrowdlessTeamStartRespawn();
+#else
+		return false;
+#endif
+	}
+
+#if WITH_STEALTH_TEST_SEAMS
+	/** One probe event stamped with the frame and the server time (story nkp-014). */
+	StealthPenaltyHarnessSeams::FRespawnProbeEvent ProbeEvent(StealthPenaltyHarnessSeams::ERespawnProbeStep Step, const UWorld* World, APawn* Pawn)
+	{
+		StealthPenaltyHarnessSeams::FRespawnProbeEvent Event;
+		Event.Step = Step;
+		Event.Pawn = Pawn;
+		Event.Location = Pawn != nullptr ? Pawn->GetActorLocation() : FVector::ZeroVector;
+		Event.Frame = GFrameCounter;
+		const AGameStateBase* State = World != nullptr ? World->GetGameState() : nullptr;
+		Event.ServerTime = State != nullptr ? State->GetServerWorldTimeSeconds() : 0.0;
+		return Event;
+	}
+#endif
 }
 
 // ---- FStealthPenaltyPawnGateway (story nkp-005) ---------------------------------------------------------------------
@@ -215,6 +242,23 @@ bool FStealthPenaltyRespawnGateway::IsUnseenByOpponents(ERosterTeam Team, const 
 
 FPenaltyRespawnPick FStealthPenaltyRespawnGateway::PickRespawnPawn(ERosterTeam Team, uint32 RequestSeq, TConstArrayView<FPenaltyPawnKey> Exclude)
 {
+	const FPenaltyRespawnPick Out = Pick(Team, RequestSeq, Exclude);
+#if WITH_STEALTH_TEST_SEAMS
+	if (StealthPenaltyHarnessSeams::IsRespawnProbeOn())
+	{
+		StealthPenaltyHarnessSeams::FRespawnProbeEvent Event = StealthPenaltyWiringLocal::ProbeEvent(StealthPenaltyHarnessSeams::ERespawnProbeStep::Pick, World.Get(), Resolve(Out.Pawn));
+		Event.RequestSeq = RequestSeq;
+		Event.Team = Team;
+		Event.PickStatus = Out.Status;
+		Event.WideningLevel = Out.WideningLevel;
+		StealthPenaltyHarnessSeams::RecordRespawnProbeEvent(Event);
+	}
+#endif
+	return Out;
+}
+
+FPenaltyRespawnPick FStealthPenaltyRespawnGateway::Pick(ERosterTeam Team, uint32 RequestSeq, TConstArrayView<FPenaltyPawnKey> Exclude)
+{
 	FPenaltyRespawnPick Out;
 	if (LastPickFrame == GFrameCounter)
 	{
@@ -283,14 +327,15 @@ FPenaltyRespawnPick FStealthPenaltyRespawnGateway::PickRespawnPawn(ERosterTeam T
 	if (Pool.Num() == 0)
 	{
 		Out.WideningLevel = 2;
-		if (!bAnyCrowdAgent)
+		if (!bAnyCrowdAgent && StealthPenaltyWiringLocal::IsHarnessCrowdlessRespawnOn())
 		{
-			// STAND-IN: a world with no crowd at all (the 0-NPC harness rounds) has nothing to take over: the team-start
-			// fallback (TakeOverCrowdPawn spawns the participant's pawn at its team start, the prototype respawn).
+			// HARNESS-ONLY (story nkp-014; StealthPenaltyHarnessSeams, compiled out of Shipping and off unless a PIE harness
+			// round switches it on): a world with no crowd at all has nothing to take over, so the harness round's
+			// TakeOverCrowdPawn spawns the participant's pawn at its team start. Production never reaches this branch.
 			Out.Status = EPenaltyPickStatus::Picked;
 			Out.Pawn = FPenaltyPawnKey(StealthPenaltyWiringLocal::TeamStartFallbackKey);
 		}
-		return Out; // otherwise None: keep waiting (the unseen test is never relaxed)
+		return Out; // None: keep waiting (no spawn, the unseen test never relaxed; PEN-R10)
 	}
 
 	// The only random draw: uniform over the pool from the request's RespawnPick stream (it continues across retries).
@@ -313,11 +358,40 @@ FPenaltyRespawnPick FStealthPenaltyRespawnGateway::PickRespawnPawn(ERosterTeam T
 
 bool FStealthPenaltyRespawnGateway::CheckTakeOverEligibility(FPenaltyPawnKey Pawn) const
 {
-	return Pawn.Value == StealthPenaltyWiringLocal::TeamStartFallbackKey || IsTakeoverEligible(Resolve(Pawn));
+	const bool bEligible = Pawn.Value == StealthPenaltyWiringLocal::TeamStartFallbackKey || IsTakeoverEligible(Resolve(Pawn));
+#if WITH_STEALTH_TEST_SEAMS
+	if (StealthPenaltyHarnessSeams::IsRespawnProbeOn())
+	{
+		StealthPenaltyHarnessSeams::FRespawnProbeEvent Event = StealthPenaltyWiringLocal::ProbeEvent(StealthPenaltyHarnessSeams::ERespawnProbeStep::PreCheck, World.Get(), Resolve(Pawn));
+		Event.bOk = bEligible;
+		StealthPenaltyHarnessSeams::RecordRespawnProbeEvent(Event);
+	}
+#endif
+	return bEligible;
 }
 
 bool FStealthPenaltyRespawnGateway::TryReleaseNpc(FPenaltyPawnKey Pawn, uint32 ExpectedRoundEpoch)
 {
+	const bool bReleased = Release(Pawn, ExpectedRoundEpoch);
+#if WITH_STEALTH_TEST_SEAMS
+	if (StealthPenaltyHarnessSeams::IsRespawnProbeOn())
+	{
+		StealthPenaltyHarnessSeams::FRespawnProbeEvent Event = StealthPenaltyWiringLocal::ProbeEvent(StealthPenaltyHarnessSeams::ERespawnProbeStep::Release, World.Get(), Resolve(Pawn));
+		Event.bOk = bReleased;
+		StealthPenaltyHarnessSeams::RecordRespawnProbeEvent(Event);
+	}
+#endif
+	return bReleased;
+}
+
+bool FStealthPenaltyRespawnGateway::Release(FPenaltyPawnKey Pawn, uint32 ExpectedRoundEpoch)
+{
+#if WITH_STEALTH_TEST_SEAMS
+	if (StealthPenaltyHarnessSeams::ConsumeInjectedReleaseFailure())
+	{
+		return false; // story nkp-014's injected failure: the crowd is not touched
+	}
+#endif
 	if (Pawn.Value == StealthPenaltyWiringLocal::TeamStartFallbackKey)
 	{
 		return true; // the fallback has no crowd pawn to release
@@ -335,18 +409,52 @@ bool FStealthPenaltyRespawnGateway::TryReleaseNpc(FPenaltyPawnKey Pawn, uint32 E
 
 EPenaltyTakeoverResult FStealthPenaltyRespawnGateway::TakeOverCrowdPawn(FPenaltyPawnKey Pawn, FParticipantId Participant, uint32 ExpectedRoundEpoch)
 {
+#if WITH_STEALTH_TEST_SEAMS
+	// Story nkp-014's probe: the stand-in LSC sight query re-run at the commit tick, before the takeover changes anything.
+	const bool bProbe = StealthPenaltyHarnessSeams::IsRespawnProbeOn();
+	StealthPenaltyHarnessSeams::FRespawnProbeEvent Event = StealthPenaltyWiringLocal::ProbeEvent(StealthPenaltyHarnessSeams::ERespawnProbeStep::Takeover, World.Get(), Resolve(Pawn));
+	if (bProbe)
+	{
+		const UStealthCompositionRoot* ProbeRoot = Root.Get();
+		URosterStore* ProbeStore = ProbeRoot != nullptr ? ProbeRoot->GetRosterStore() : nullptr;
+		const FParticipantRecord* ProbeRecord = ProbeStore != nullptr && ProbeStore->IsStoreInitialized() ? ProbeStore->FindRecord(Participant) : nullptr;
+		const APawn* Candidate = Resolve(Pawn);
+		Event.Participant = Participant;
+		Event.bUnseenAtCommit = ProbeRecord != nullptr && Candidate != nullptr && IsUnseenByOpponents(ProbeRecord->Team, Candidate);
+	}
+	const EPenaltyTakeoverResult Result = TakeOver(Pawn, Participant, ExpectedRoundEpoch);
+	if (bProbe)
+	{
+		Event.TakeoverResult = Result;
+		StealthPenaltyHarnessSeams::RecordRespawnProbeEvent(Event);
+	}
+	return Result;
+#else
+	return TakeOver(Pawn, Participant, ExpectedRoundEpoch);
+#endif
+}
+
+EPenaltyTakeoverResult FStealthPenaltyRespawnGateway::TakeOver(FPenaltyPawnKey Pawn, FParticipantId Participant, uint32 ExpectedRoundEpoch)
+{
 	if (Pawn.Value == StealthPenaltyWiringLocal::TeamStartFallbackKey)
 	{
-		// STAND-IN (no crowd in this world): the participant's pawn at its team start through the factory (BindPawn inside).
+		// HARNESS-ONLY (the pick names this key only while StealthPenaltyHarnessSeams' crowd-less respawn is on): the
+		// participant's pawn at its team start through the factory (BindPawn inside). Never reached in production.
 		UStealthCompositionRoot* FallbackRoot = Root.Get();
 		AStealthGameMode* Mode = FallbackRoot != nullptr ? FallbackRoot->GetGameMode() : nullptr;
 		APlayerController* FallbackPlayer = FallbackRoot != nullptr ? FallbackRoot->GetController(Participant) : nullptr;
-		APawn* Spawned = Mode != nullptr && FallbackPlayer != nullptr ? Mode->SpawnInformantFallbackPawn(FallbackPlayer) : nullptr;
+		APawn* Spawned = Mode != nullptr && FallbackPlayer != nullptr && StealthPenaltyWiringLocal::IsHarnessCrowdlessRespawnOn()
+			? Mode->SpawnHarnessCrowdlessRespawnPawn(FallbackPlayer) : nullptr;
 		if (Spawned == nullptr)
 		{
 			return EPenaltyTakeoverResult::Rejected_Stale;
 		}
-		UE_LOGF(LogStealth, Log, "[Penalty] informant respawn (stand-in, no crowd to take over): participant %u spawned %ls at its team start", Participant.Value,
+#if WITH_STEALTH_TEST_SEAMS
+		StealthPenaltyHarnessSeams::FRespawnProbeEvent Spawn = StealthPenaltyWiringLocal::ProbeEvent(StealthPenaltyHarnessSeams::ERespawnProbeStep::HarnessSpawn, World.Get(), Spawned);
+		Spawn.Participant = Participant;
+		StealthPenaltyHarnessSeams::RecordRespawnProbeEvent(Spawn);
+#endif
+		UE_LOGF(LogStealth, Log, "[Penalty] informant respawn (HARNESS-ONLY crowd-less round): participant %u spawned %ls at its team start", Participant.Value,
 			*Spawned->GetName());
 		return EPenaltyTakeoverResult::Applied;
 	}
@@ -400,6 +508,14 @@ void FStealthPenaltyRespawnGateway::AdoptReleasedPawn(FPenaltyPawnKey Pawn)
 TOptional<uint16> FStealthPenaltyRespawnGateway::TakeNpcCard(FParticipantId Participant, FPenaltyPawnKey Pawn)
 {
 	// STAND-IN (Character Pool not built): no ledger; the pawn keeps its look and its card is untouched.
+#if WITH_STEALTH_TEST_SEAMS
+	if (StealthPenaltyHarnessSeams::IsRespawnProbeOn())
+	{
+		StealthPenaltyHarnessSeams::FRespawnProbeEvent Event = StealthPenaltyWiringLocal::ProbeEvent(StealthPenaltyHarnessSeams::ERespawnProbeStep::Card, World.Get(), Resolve(Pawn));
+		Event.Participant = Participant;
+		StealthPenaltyHarnessSeams::RecordRespawnProbeEvent(Event);
+	}
+#endif
 	return TOptional<uint16>(0);
 }
 
@@ -407,3 +523,56 @@ void FStealthPenaltyRespawnGateway::RecordAppearance(FParticipantId Participant,
 {
 	// STAND-IN no-op: the Roster's AppearanceHistory writer is unnamed (psr-022).
 }
+
+// ---- StealthPenaltyHarnessSeams (story nkp-014; test-seam builds only) -------------------------------------------------
+
+#if WITH_STEALTH_TEST_SEAMS
+namespace StealthPenaltyHarnessSeamsLocal
+{
+	bool GCrowdlessTeamStartRespawn = false;
+	bool GProbeOn = false;
+	TArray<StealthPenaltyHarnessSeams::FRespawnProbeEvent> GEvents;
+	int32 GHarnessSpawns = 0;
+	int32 GInjectedReleaseFailures = 0;
+}
+
+void StealthPenaltyHarnessSeams::SetCrowdlessTeamStartRespawn(bool bOn) { StealthPenaltyHarnessSeamsLocal::GCrowdlessTeamStartRespawn = bOn; }
+bool StealthPenaltyHarnessSeams::IsCrowdlessTeamStartRespawn() { return StealthPenaltyHarnessSeamsLocal::GCrowdlessTeamStartRespawn; }
+
+void StealthPenaltyHarnessSeams::SetRespawnProbe(bool bOn)
+{
+	StealthPenaltyHarnessSeamsLocal::GProbeOn = bOn;
+	StealthPenaltyHarnessSeamsLocal::GEvents.Reset();
+	StealthPenaltyHarnessSeamsLocal::GInjectedReleaseFailures = 0;
+}
+
+bool StealthPenaltyHarnessSeams::IsRespawnProbeOn() { return StealthPenaltyHarnessSeamsLocal::GProbeOn; }
+
+const TArray<StealthPenaltyHarnessSeams::FRespawnProbeEvent>& StealthPenaltyHarnessSeams::GetRespawnProbeEvents() { return StealthPenaltyHarnessSeamsLocal::GEvents; }
+
+void StealthPenaltyHarnessSeams::RecordRespawnProbeEvent(const FRespawnProbeEvent& Event)
+{
+	if (Event.Step == ERespawnProbeStep::HarnessSpawn)
+	{
+		++StealthPenaltyHarnessSeamsLocal::GHarnessSpawns;
+	}
+	if (StealthPenaltyHarnessSeamsLocal::GProbeOn)
+	{
+		StealthPenaltyHarnessSeamsLocal::GEvents.Add(Event);
+	}
+}
+
+int32 StealthPenaltyHarnessSeams::GetHarnessSpawnCount() { return StealthPenaltyHarnessSeamsLocal::GHarnessSpawns; }
+
+void StealthPenaltyHarnessSeams::InjectReleaseFailures(int32 Count) { StealthPenaltyHarnessSeamsLocal::GInjectedReleaseFailures = FMath::Max(0, Count); }
+
+bool StealthPenaltyHarnessSeams::ConsumeInjectedReleaseFailure()
+{
+	if (StealthPenaltyHarnessSeamsLocal::GInjectedReleaseFailures <= 0)
+	{
+		return false;
+	}
+	--StealthPenaltyHarnessSeamsLocal::GInjectedReleaseFailures;
+	return true;
+}
+#endif

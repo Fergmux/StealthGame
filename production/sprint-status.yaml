@@ -3574,6 +3574,49 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "ASN batch 2026-10-27; harness presentation log + replicated-property watcher; NoWarningToVictim (6 cases + negative control, 2v2, fixed 60 Hz) and NoObserverCue (4 players); fixes: server HUD lines held per frame, HUD role follows the presented role, brace crouch ends at the Counter's contact"
+  - id: "asn-022"
+    name: "A culled victim re-opens already falling, and late actors seek and never snap"
+    file: "production/epics/assassination-defence-reversal/story-022-culled-victim-opens-falling-and-late-actors.md"
+    priority: must-have
+    status: done
+    owner: "network-programmer"
+    estimate_days: 3.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; PostNetInit evaluation, fresh-actor warm-up (S10-R5) and <= 0.1 s fall cross-fade in the presentation, test-only per-connection deny seam released at the death write; PIE CulledVictimOpensFalling + LateActorSeeksNeverSnaps (warm-up negative control watched failing)"
+  - id: "asn-026"
+    name: "Advisory checks: probe economics (F5), probe and brace telemetry, resolver cost"
+    file: "production/epics/assassination-defence-reversal/story-026-advisory-economics-telemetry-resolver-cost.md"
+    priority: should-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; ADR-0023 sink interface + null object, FEncounterTelemetryProbe (StrikeResolved/BraceEnded, Stealth.Budget.Assassination), F5 test, ResolverCost, offline report + fixture; live >=10-match pull waits on the Event Log telemetry section and playtests (advisory, deferred)"
+  - id: "asn-025"
+    name: "A reversal reads as the striker fell and the brace reads as a stance (playtest protocol)"
+    file: "production/epics/assassination-defence-reversal/story-025-reversal-readability-and-brace-tell-playtest.md"
+    priority: must-have
+    status: blocked
+    owner: "qa-lead"
+    estimate_days: 1.0
+    blocker: "Needs human playtest: >= 6 trained testers, a human-captured greyscale clip set and art-director sign-off (protocol, fixed order, briefing and blank sheets ready in production/qa/evidence/asn-30-results.md and asn-25-brace-tell-results.md); brace tell also needs the authored Brace_In/Hold/Out clips"
+    sprint: 2
+    note: "ASN batch 2026-10-27; no session run by the unattended build"
+  - id: "asn-027"
+    name: "Port the StealthRules reference tests to the production cores and retire the prototype strike and defence code"
+    file: "production/epics/assassination-defence-reversal/story-027-port-rules-reference-tests-retire-prototype.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; PrototypeParity (AC1 mapping), PrototypeRetiredScan (AC2: 726 files, 0 findings), PIE.PrototypeScenariosACF A/C/C2/F pass (AC3); prototype strike/defence code deleted, brace crouch tell now pose-driven presentation, S10 harness kills by ApplyDeathWrite; evidence production/qa/evidence/assassination-defence-reversal-027-2026-10-27/; run-and-observe PASS (story-027-... captures)"
   - id: "nkp-001"
     name: "Penalty core store, service shell and round-scoped carry-over"
     file: "production/epics/npc-kill-penalty-informants/story-001-penalty-core-store-and-service-shell.md"
@@ -3618,49 +3661,6 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "NKP batch 2026-10-27; five rows PostRoundEligible, FPenaltyEventLog slot-only writer, NoLoggingLint; real paths of four rows in nkp-005/009/010/012"
-  - id: "asn-022"
-    name: "A culled victim re-opens already falling, and late actors seek and never snap"
-    file: "production/epics/assassination-defence-reversal/story-022-culled-victim-opens-falling-and-late-actors.md"
-    priority: must-have
-    status: done
-    owner: "network-programmer"
-    estimate_days: 3.0
-    blocker: ""
-    completed: "2026-10-27"
-    sprint: 2
-    note: "ASN batch 2026-10-27; PostNetInit evaluation, fresh-actor warm-up (S10-R5) and <= 0.1 s fall cross-fade in the presentation, test-only per-connection deny seam released at the death write; PIE CulledVictimOpensFalling + LateActorSeeksNeverSnaps (warm-up negative control watched failing)"
-  - id: "asn-026"
-    name: "Advisory checks: probe economics (F5), probe and brace telemetry, resolver cost"
-    file: "production/epics/assassination-defence-reversal/story-026-advisory-economics-telemetry-resolver-cost.md"
-    priority: should-have
-    status: done
-    owner: "gameplay-programmer"
-    estimate_days: 1.5
-    blocker: ""
-    completed: "2026-10-27"
-    sprint: 2
-    note: "ASN batch 2026-10-27; ADR-0023 sink interface + null object, FEncounterTelemetryProbe (StrikeResolved/BraceEnded, Stealth.Budget.Assassination), F5 test, ResolverCost, offline report + fixture; live >=10-match pull waits on the Event Log telemetry section and playtests (advisory, deferred)"
-  - id: "asn-025"
-    name: "A reversal reads as the striker fell and the brace reads as a stance (playtest protocol)"
-    file: "production/epics/assassination-defence-reversal/story-025-reversal-readability-and-brace-tell-playtest.md"
-    priority: must-have
-    status: blocked
-    owner: "qa-lead"
-    estimate_days: 1.0
-    blocker: "Needs human playtest: >= 6 trained testers, a human-captured greyscale clip set and art-director sign-off (protocol, fixed order, briefing and blank sheets ready in production/qa/evidence/asn-30-results.md and asn-25-brace-tell-results.md); brace tell also needs the authored Brace_In/Hold/Out clips"
-    sprint: 2
-    note: "ASN batch 2026-10-27; no session run by the unattended build"
-  - id: "asn-027"
-    name: "Port the StealthRules reference tests to the production cores and retire the prototype strike and defence code"
-    file: "production/epics/assassination-defence-reversal/story-027-port-rules-reference-tests-retire-prototype.md"
-    priority: must-have
-    status: done
-    owner: "gameplay-programmer"
-    estimate_days: 1.5
-    blocker: ""
-    completed: "2026-10-27"
-    sprint: 2
-    note: "ASN batch 2026-10-27; PrototypeParity (AC1 mapping), PrototypeRetiredScan (AC2: 726 files, 0 findings), PIE.PrototypeScenariosACF A/C/C2/F pass (AC3); prototype strike/defence code deleted, brace crouch tell now pose-driven presentation, S10 harness kills by ApplyDeathWrite; evidence production/qa/evidence/assassination-defence-reversal-027-2026-10-27/; run-and-observe PASS (story-027-... captures)"
   - id: "nkp-005"
     name: "Exile sequence inside the killing Attack's slot"
     file: "production/epics/npc-kill-penalty-informants/story-005-exile-sequence-in-attack-slot.md"
@@ -3747,3 +3747,34 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "NKP batch 2026-10-27; RunCommit over IPenaltyRespawnGateway; STAND-INs behind the seam: pick (LSC 033), takeover (SCL 028, factory RequestHandOverToPlayer), card (CPA), team-start fallback in a world with no crowd; evidence production/qa/evidence/npc-kill-penalty-informants-009-012-2026-10-27/"
+  - id: "nkp-013"
+    name: "Starvation, retries and widening"
+    file: "production/epics/npc-kill-penalty-informants/story-013-starvation-retries-and-widening.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27; widening level from None and committed picks only, never decreasing; StarvationWidening + RetryBookkeeping; Round's LateJoin fallback not built (shown by no cancellation + source scan); evidence production/qa/evidence/npc-kill-penalty-informants-013-015-2026-10-27/"
+  - id: "nkp-014"
+    name: "One respawn path for every cause, and the takeover is invisible on the wire"
+    file: "production/epics/npc-kill-penalty-informants/story-014-one-respawn-path-and-takeover-wire-parity.md"
+    priority: must-have
+    status: blocked
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: "AC2 content/cadence: IVP story 018 (owner-only PlayerState/Controller/Owner on AStealthPawn; PIE measured Actor.PlayerState changing on the taken pawn), SCL pawn differentiators (RemoteViewPitch16, CharacterInputState, TraversalResult), ADR-0008 multi-process raw-bunch capture"
+    sprint: 2
+    note: "NKP batch 2026-10-27; AC1 OneRespawnPath x7 passes (crowd present, 0 spawns); team-start fallback gated to the harness-only StealthPenaltyHarnessSeams switch (6 Assassination 0-NPC PIE rounds use it); AC2 clause 'no channel open/close, same NetGUID' passes; evidence production/qa/evidence/npc-kill-penalty-informants-013-015-2026-10-27/"
+  - id: "nkp-015"
+    name: "Informant contract, pawn parity and the owner-AC trace"
+    file: "production/epics/npc-kill-penalty-informants/story-015-informant-contract-and-pawn-parity.md"
+    priority: must-have
+    status: blocked
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: "Traverse/Interact/Hide NotNow (IIF story 057); no x-ray (IVP viewer class OpponentInformant, AC-CON-04); concealed ally marker (Teammate Markers AC-TMK-16a)"
+    sprint: 2
+    note: "NKP batch 2026-10-27; InformantPawnParity + InformantContract.EveryBuiltRowHolds pass for every built row; AC3 trace production/qa/evidence/penalty-informant-contract-trace.md; evidence production/qa/evidence/npc-kill-penalty-informants-013-015-2026-10-27/"

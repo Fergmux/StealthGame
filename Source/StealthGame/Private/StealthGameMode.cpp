@@ -19,6 +19,7 @@
 #include "Server/Core/StealthPawnFactory.h"
 #include "Server/Roster/StealthRosterStore.h"
 #include "Server/StealthCompositionRoot.h"
+#include "Server/StealthPenaltyHarnessSeams.h"
 #include "Server/StealthPenaltyService.h"
 
 #include "EngineUtils.h"
@@ -143,9 +144,13 @@ AStealthGameState* AStealthGameMode::GetStealthGameState() const
 	return GetGameState<AStealthGameState>();
 }
 
-APawn* AStealthGameMode::SpawnInformantFallbackPawn(APlayerController* Player)
+APawn* AStealthGameMode::SpawnHarnessCrowdlessRespawnPawn(APlayerController* Player)
 {
-	return IsRoundInProgress() ? SpawnPlayerPawn(Player) : nullptr;
+#if WITH_STEALTH_TEST_SEAMS
+	return IsRoundInProgress() && StealthPenaltyHarnessSeams::IsCrowdlessTeamStartRespawn() ? SpawnPlayerPawn(Player) : nullptr;
+#else
+	return nullptr;
+#endif
 }
 
 bool AStealthGameMode::IsRoundInProgress() const

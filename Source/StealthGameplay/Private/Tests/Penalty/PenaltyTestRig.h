@@ -320,6 +320,11 @@ namespace StealthPenaltyTest
 		/** One pick per frame (ADR-0014's guard) when true: a second pick in the same Frame answers Deferred. */
 		bool bOnePickPerFrame = true;
 		int32 LastPickFrame = -1;
+		/**
+		 * Optional scripted LSC (story nkp-013): when set, it answers every pick that passes the per-frame guard instead of
+		 * Picks / PickPawn (a fake LSC whose widening level follows a fake clock).
+		 */
+		TFunction<FPenaltyRespawnPick(uint32 /*RequestSeq*/, TConstArrayView<FPenaltyPawnKey> /*Exclude*/)> PickFn;
 
 		template <typename T>
 		static T Next(TArray<T>& Script, const T& Default)
@@ -351,6 +356,12 @@ namespace StealthPenaltyTest
 				return Deferred;
 			}
 			LastPickFrame = Frame;
+			if (PickFn)
+			{
+				const FPenaltyRespawnPick Scripted = PickFn(RequestSeq, Exclude);
+				Call.Pawn = Scripted.Pawn;
+				return Scripted;
+			}
 			FPenaltyRespawnPick Default;
 			Default.Status = PickPawn.IsSet() && !Exclude.Contains(PickPawn) && !Ineligible.Contains(PickPawn) ? EPenaltyPickStatus::Picked : EPenaltyPickStatus::None;
 			Default.Pawn = Default.Status == EPenaltyPickStatus::Picked ? PickPawn : FPenaltyPawnKey();

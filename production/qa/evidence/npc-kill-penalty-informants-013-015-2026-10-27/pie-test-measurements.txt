@@ -1,0 +1,30 @@
+NKPPIE walk: informant peak 140.00 cm/s (walk 140.00)
+NKPPIE run: informant peak 140.00, Active mate peak 450.00 (walk 140.00)
+NKPPIE first frame after the takeover: seen by an opponent 0
+NKPPIE Assassinated attempt 0: 0@84373 1@84373 2@84373 3@84373 4@84373
+NKPPIE Assassinated: cause 7.768 T_due 22.792 body BP_CrowdCharacter_C_31
+NKPPIE first frame after the takeover: seen by an opponent 0
+NKPPIE first frame after the takeover: seen by an opponent 0
+NKPPIE BodyLostToKillZ attempt 0: 0@85865 1@85865 2@85865 3@85865 4@85865
+NKPPIE BodyLostToKillZ: cause 23.853 T_due 23.899 body BP_CrowdCharacter_C_32
+NKPPIE first frame after the takeover: seen by an opponent 0
+NKPPIE FailedRelease attempt 0: 0@87301 1@87301 2@87301
+NKPPIE FailedRelease attempt 1: 0@87302 1@87302 2@87302 3@87302 4@87302
+NKPPIE FailedRelease: cause 7.766 T_due 22.790 body BP_CrowdCharacter_C_15
+NKPPIE first frame after the takeover: seen by an opponent 0
+NKPPIE first frame after the takeover: seen by an opponent 0
+NKPPIE InformantKilled attempt 0: 0@89413 1@89413 2@89413 3@89413 4@89413
+NKPPIE InformantKilled: cause 23.867 T_due 38.889 body BP_CrowdCharacter_C_38
+NKPPIE first frame after the takeover: seen by an opponent 0
+NKPPIE ReturningInformant attempt 0: 0@90841 1@90841 2@90841 3@90841 4@90841
+NKPPIE ReturningInformant: cause 7.780 T_due 22.805 body BP_CrowdCharacter_C_38
+NKPPIE first frame after the takeover: seen by an opponent 0
+NKPPIE ReversedAgainst attempt 0: 0@92294 1@92294 2@92294 3@92294 4@92294
+NKPPIE ReversedAgainst: cause 8.269 T_due 23.294 body BP_CrowdCharacter_C_19
+NKPPIE first frame after the takeover: seen by an opponent 0
+NKPPIE StrikeLimit attempt 0: 0@93929 1@93929 2@93929 3@93929 4@93929
+NKPPIE StrikeLimit: cause 13.452 T_due 28.483 body BP_CrowdCharacter_C_12
+NKPPIE wire: taken BP_CrowdCharacter_C_42 guid 190 ch 58 -> copy BP_CrowdCharacter_C_42 guid 190 ch 58; bound to the informant 1
+NKPPIE wire: taken pawn, non-movement replicated changes on the observer: Actor.PlayerState
+NKPPIE wire: control NPC BP_CrowdCharacter_C_33, non-movement replicated changes on the observer: none
+NKP015 Run: informant peak 140.00 cm/s, Active peak 450.00 cm/s, walk 140.00

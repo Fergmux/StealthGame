@@ -18,6 +18,7 @@
 
 #include "CQTest.h"
 #include "HAL/IConsoleManager.h"
+#include "Server/StealthPenaltyHarnessSeams.h"
 #include "StealthGameMode.h"
 #include "StealthSettings.h"
 #include "Tests/PIE/Assassination/OwnPresentationPieSupport.h"
@@ -63,10 +64,13 @@ NETWORK_TEST_CLASS(KillPlateTellsOneThing, "StealthGame.Assassination.PIE")
 		UStealthSettings* Settings = GetMutableDefault<UStealthSettings>();
 		PreviousNpcCount = Settings->NpcCount;
 		Settings->NpcCount = 0;
+		// NKP story nkp-014: a 0-NPC round has no crowd pawn to take over; the harness-only team-start respawn stands in.
+		StealthPenaltyHarnessSeams::SetCrowdlessTeamStartRespawn(true);
 	}
 
 	AFTER_ALL()
 	{
+		StealthPenaltyHarnessSeams::SetCrowdlessTeamStartRespawn(false);
 		if (IConsoleVariable* Timeout = IConsoleManager::Get().FindConsoleVariable(CQTestConsoleVariables::NetworkTimeoutName); Timeout && !PreviousNetworkTimeout.IsEmpty())
 		{
 			Timeout->Set(*PreviousNetworkTimeout, ECVF_SetByCode);

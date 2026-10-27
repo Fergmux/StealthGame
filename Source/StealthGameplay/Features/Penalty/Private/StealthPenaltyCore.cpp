@@ -7,7 +7,7 @@
 
 // Stories nkp-001 (store, lifetime), nkp-002 (strike rule, release grace), nkp-003 (tally, bExiled, owner re-push),
 // nkp-004 (the StrikeCounted row), nkp-005..008 (exile, informant kill), nkp-009 (F2, scheduling, cancellation), nkp-010
-// (Absent, readmission, lost body) and nkp-012 (the respawn commit). GDD npc-kill-penalty-informants.md PEN-R2..R11, F1,
+// (Absent, readmission, lost body), nkp-012 (the respawn commit) and nkp-013 (retry kinds, the widening level). GDD npc-kill-penalty-informants.md PEN-R2..R11, F1,
 // F2; ADR-0019 sections 1-4, 7. Server-only values: nothing here formats, logs or traces a record, a count or a row.
 
 namespace StealthPenaltyCoreLocal
@@ -411,17 +411,19 @@ void FPenaltyCore::RunCommit(FParticipantId Participant)
 	const FPenaltyRespawnPick Pick = Deps.Respawn->PickRespawnPawn(Team, RequestSeq, TConstArrayView<FPenaltyPawnKey>(Exclude.GetData(), Exclude.Num()));
 	if (Pick.Status == EPenaltyPickStatus::Deferred)
 	{
-		ScheduleRetry(Participant, Now + NextFrameRetryOffsetSec(), /*bRegular*/ false); // the per-frame guard: next frame
+		// ADR-0019 section 4.3: the per-frame guard costs a frame, never widening time (PickStartServerTime and the stored
+		// level are untouched) and never the exclusion set.
+		ScheduleRetry(Participant, Now + NextFrameRetryOffsetSec(), /*bRegular*/ false);
 		return;
 	}
 	if (Pick.Status != EPenaltyPickStatus::Picked || !Pick.Pawn.IsSet())
 	{
-		ScheduleRetry(Participant, Now + Latched.EmergenceRetrySec, /*bRegular*/ true); // None (story nkp-013 widens)
+		// None (PEN-R10, story nkp-013): the widening level is LSC's (keyed by this request); Penalty only records the level
+		// LSC reports, never lower than one already reached, and keeps waiting at the regular EmergenceRetrySec cadence
+		// (no timeout, no view-only fallback, no spawn). This retry clears the exclusion set when it fires.
+		RecordWideningLevel(Participant, Pick.WideningLevel);
+		ScheduleRetry(Participant, Now + Latched.EmergenceRetrySec, /*bRegular*/ true);
 		return;
-	}
-	if (FPenaltyRecord* Picked = Records.Find(Participant))
-	{
-		Picked->LastWideningLevel = Pick.WideningLevel;
 	}
 	const auto ExcludeAndRetryNextFrame = [this, Participant, Now](FPenaltyPawnKey Pawn)
 	{
@@ -470,7 +472,8 @@ void FPenaltyCore::RunCommit(FParticipantId Participant)
 	{
 		ReportFault(EStealthFault::InvariantViolation, PenaltyFaultDetail::LedgerMismatch);
 	}
-	// 7. Bookkeeping.
+	// 7. Bookkeeping (the committed pick's level joins the request's record: an excluded or failed candidate never did).
+	RecordWideningLevel(Participant, Pick.WideningLevel);
 	FPenaltyRecord* Done = Records.Find(Participant);
 	if (Done == nullptr)
 	{
@@ -496,6 +499,14 @@ void FPenaltyCore::ScheduleRetry(FParticipantId Participant, double DueServerTim
 	Record->LifeState = EInformantLifeState::Picking;
 	Record->bClearExclusionsAtFire = bRegular;
 	Record->TimerHandle = ScheduleItem(Participant, *Record, DueServerTime);
+}
+
+void FPenaltyCore::RecordWideningLevel(FParticipantId Participant, uint8 WideningLevel)
+{
+	if (FPenaltyRecord* Record = Records.Find(Participant))
+	{
+		Record->LastWideningLevel = FMath::Max(Record->LastWideningLevel, WideningLevel);
+	}
 }
 
 void FPenaltyCore::CancelRequest(FPenaltyRecord& Record)

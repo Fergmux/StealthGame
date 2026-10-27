@@ -1,12 +1,12 @@
 # Story 015: Informant contract, pawn parity and the owner-AC trace
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Blocked — BLOCKED: the owners of three PEN-R12 rows are not built: Traverse / Interact / Hide NotNow for the Informant legality class (input-interaction-framework story 057), no x-ray (IVP viewer class OpponentInformant, concealment AC-CON-04) and the concealed ally's marker (Teammate Markers AC-TMK-16a). Every built row passes (InformantPawnParity, InformantContract.EveryBuiltRowHolds); AC3 trace done.
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -38,7 +38,7 @@ PEN-R12 is the informant role contract in one table, user-locked. Penalty owns n
 
 - [ ] **AC1** (AC-NKP-17, [L][Dep:Crowd][Dep:SCL][Provisional: spikes S1/S14] `StealthGame.Penalty.InformantPawnParity`, Tell Matrix T7, Crowd AC-CNB-30): **GIVEN** an informant pawn and an NPC pawn **WHEN** their replication settings, collision profiles, capsule and avoidance settings are dumped **THEN** they are equal (SCL AC-SCL-16); **AND** the informant's `Gait=Run` is clamped to Walk while `Traverse`, `Interact`, `Prepare`, `Attack` and `Hide` are rejected `NotNow` (IIF R7) (PEN-R13).
 - [ ] **AC2** (AC-NKP-29, [I][PIE-3] `StealthGame.Penalty.PIE.InformantContract`): **GIVEN** an embodied informant **WHEN** each PEN-R12 row is exercised (walk, run clamp, each rejected command, a concealed opponent in view, a concealed ally in view, the elimination count, being killed, the respawn) **THEN** every row holds (PEN-R12; the owner-AC trace is AC3).
-- [ ] **AC3** (AC-NKP-47, [Review/ADVISORY] informant contract trace): **GIVEN** PEN-R12 **WHEN** the GDDs named under "Enforced by" are reviewed **THEN** each row maps to an acceptance criterion in its owner's GDD, listed as (row, GDD, AC id) with no missing entry (PEN-R12).
+- [x] **AC3** (AC-NKP-47, [Review/ADVISORY] informant contract trace): **GIVEN** PEN-R12 **WHEN** the GDDs named under "Enforced by" are reviewed **THEN** each row maps to an acceptance criterion in its owner's GDD, listed as (row, GDD, AC id) with no missing entry (PEN-R12).
 
 ---
 
@@ -69,13 +69,13 @@ No Penalty production code is expected: any defect found is a defect in the owni
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-27).*
 
 - `Source/StealthGameplay/Private/Tests/Penalty/PenaltyInformantPawnParityTest.cpp` (class `FPenaltyInformantPawnParityTest`, name `StealthGame.Penalty.InformantPawnParity`)
-- `Source/StealthTestHarness/Private/Penalty/InformantContractTest.cpp` (CQTest, `StealthGame.Penalty.PIE.InformantContract.*`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/InformantContractPieTest.cpp` (CQTest `StealthGame.Penalty.PIE.InformantContract.EveryBuiltRowHolds`)
 - `production/qa/evidence/penalty-informant-contract-trace.md` (AC3 trace table)
 
----
+No Penalty production code (as planned). Rows whose owners are not built are NOT exercised and keep the story Blocked after the build: Traverse, Interact and Hide `NotNow` (input-interaction-framework story 057, Ready), a concealed opponent not visible and a concealed ally's marker visible (information-visibility-policy viewer class `OpponentInformant`, Teammate Markers, concealment-bushes AC-CON-04). The run clamp's legality source in PIE is still the prototype PlayerState adapter (iif-071).
 
 ## QA Test Cases
 
@@ -109,7 +109,9 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Integration: the CQTest PIE test under `Source/StealthTestHarness/Private/Penalty/`, the unit test under `Source/StealthGameplay/Private/Tests/Penalty/` and the trace table in `production/qa/evidence/` OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: created and passing 2026-10-27: `StealthGame.Penalty.InformantPawnParity` (dump parity, Run clamp, Attack and Prepare NotNow) and `StealthGame.Penalty.PIE.InformantContract.EveryBuiltRowHolds` (walk, run clamp, Attack and Prepare NotNow, CountActive, killed, respawn); AC3 trace `production/qa/evidence/penalty-informant-contract-trace.md`. AC1 and AC2 stay open for the rows named in Status. Evidence: `production/qa/evidence/npc-kill-penalty-informants-013-015-2026-10-27/evidence.md`.
+
+Run result: OBSERVED — 3-player PIE: the informant walks at 140 cm/s, its Run is clamped (140 vs 450 for an Active player), its Attack and Prepare are answered NotNow, a killed informant gives the killer a WrongTarget with tally + 1 and respawns still an informant (PIE test log, and screenshots 03-05 of the evidence folder).
 
 ---
 

@@ -1,12 +1,12 @@
 # Story 013: Starvation, retries and widening
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -36,8 +36,8 @@ A starved informant keeps waiting on the neutral view with a static "Returning" 
 
 *From GDD `design/gdd/npc-kill-penalty-informants.md` (AC-NKP-14) and ADR-0019 §4.3 (derived item marked), scoped to this story:*
 
-- [ ] **AC1** (AC-NKP-14, [L] `StealthGame.Penalty.StarvationWidening`): **GIVEN** a fake clock and a fake LSC gateway with no eligible pawn **WHEN** a respawn is due **THEN** `PickRespawnPawn` is retried every `EmergenceRetrySec` with the same `RequestSeq`; Penalty records the `WideningLevel` the fake LSC returns (0, then 1, then 2 at its 10 s and 20 s thresholds) and stores it for the `InformantRespawn` row; past level 2 it keeps waiting; no pawn is spawned; and Round's `LateJoinTakeoverTimeoutSec` view-only fallback is never applied (PEN-R10). *(The widening thresholds and the `RespawnStarved` row are LSC's, LSC R5b.5 and ADR-0019 §7: the fake LSC supplies the levels, and the once-per-request `RespawnStarved` row is asserted in the integration run with the real LSC; Penalty writes no such row.)*
-- [ ] **AC2** (derived, ADR-0019 §4.3): **GIVEN** a `Deferred` pick, an excluded candidate and a `None` **WHEN** the request retries **THEN** every retry reuses the same `RespawnRequestSeq`; a `Deferred` or excluded retry is scheduled at `ServerNow + 1 ms` (strictly after the drain start, never inline) and consumes no widening time; a regular `EmergenceRetrySec` retry clears the exclusion set.
+- [x] **AC1** (AC-NKP-14, [L] `StealthGame.Penalty.StarvationWidening`): **GIVEN** a fake clock and a fake LSC gateway with no eligible pawn **WHEN** a respawn is due **THEN** `PickRespawnPawn` is retried every `EmergenceRetrySec` with the same `RequestSeq`; Penalty records the `WideningLevel` the fake LSC returns (0, then 1, then 2 at its 10 s and 20 s thresholds) and stores it for the `InformantRespawn` row; past level 2 it keeps waiting; no pawn is spawned; and Round's `LateJoinTakeoverTimeoutSec` view-only fallback is never applied (PEN-R10). *(The widening thresholds and the `RespawnStarved` row are LSC's, LSC R5b.5 and ADR-0019 §7: the fake LSC supplies the levels, and the once-per-request `RespawnStarved` row is asserted in the integration run with the real LSC; Penalty writes no such row.)*
+- [x] **AC2** (derived, ADR-0019 §4.3): **GIVEN** a `Deferred` pick, an excluded candidate and a `None` **WHEN** the request retries **THEN** every retry reuses the same `RespawnRequestSeq`; a `Deferred` or excluded retry is scheduled at `ServerNow + 1 ms` (strictly after the drain start, never inline) and consumes no widening time; a regular `EmergenceRetrySec` retry clears the exclusion set.
 
 ---
 
@@ -68,14 +68,15 @@ Use a fake LSC gateway that returns `None` for N calls then a pawn, and records 
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-27). The planned `StealthPenaltyCommit.cpp` does not exist: the commit lives in `StealthPenaltyCore.cpp` (story 012). The QA case's test name `RetryBookkeeping` is used (the planned file name `RetryTiming` was a mismatch; readiness fix, logged).*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCommit.cpp` (retry kinds, bookkeeping)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCore.cpp` (`PickStartServerTime`, `LastWideningLevel`, exclusion set)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.cpp` (the widening level of a None pick and of the committed pick, never of a Deferred or excluded one, never decreasing; retry comments)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.h` (`RecordWideningLevel`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTestRig.h` (`FFakeRespawnGateway::PickFn`, a scripted LSC)
 - `Source/StealthGameplay/Private/Tests/Penalty/PenaltyStarvationWideningTest.cpp` (class `FPenaltyStarvationWideningTest`, name `StealthGame.Penalty.StarvationWidening`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyRetryTimingTest.cpp` (class `FPenaltyRetryTimingTest`, name `StealthGame.Penalty.RetryTiming`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyRetryBookkeepingTest.cpp` (class `FPenaltyRetryBookkeepingTest`, name `StealthGame.Penalty.RetryBookkeeping`)
 
----
+Readiness notes (2026-10-27): Round's `LateJoinTakeoverTimeoutSec` view-only fallback is not built in Round (no such symbol), so "applied 0 times" is shown as: the starved request never ends without a body (no `RespawnCancelled` row, one pending retry after every pick) and no Penalty source names a late-join fallback, a spawn or a `RespawnStarved` row (source scan with a negative control). `RespawnStarved` is LSC's row (LSC story 033); the stand-in pick widens at once, so the 10 s / 20 s thresholds are the fake LSC's in the test.
 
 ## QA Test Cases
 
@@ -104,7 +105,9 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Logic: the two tests under `Source/StealthGameplay/Private/Tests/Penalty/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing 2026-10-27: `StealthGame.Penalty.StarvationWidening`, `StealthGame.Penalty.RetryBookkeeping` (433/433 suite). Evidence: `production/qa/evidence/npc-kill-penalty-informants-013-015-2026-10-27/evidence.md`.
+
+Run result: N/A — Logic story: retry timing and bookkeeping in the plain core have no player-visible surface of their own (the respawn they drive was observed in the 3-player PIE run of the same evidence file).
 
 ---
 
