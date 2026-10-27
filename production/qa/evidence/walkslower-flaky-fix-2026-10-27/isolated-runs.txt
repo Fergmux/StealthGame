@@ -1,0 +1,80 @@
+== old60 (ExecCmds="t.MaxFPS 60, Automation RunTests ^StealthGame.Input.PIE.WalkSlowerModifier; Quit")
+Test Completed. Result={Success}
+WALKSLOWER open circle centre V(X=-2938.38, Y=2695.73, Z=0.12)
+WALKSLOWER warm-up done: owner/server distance 0.01 cm, owner speed 0.00, server speed 0.00
+WALKSLOWER neither (reference): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+WALKSLOWER Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+WALKSLOWER Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+WALKSLOWER both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+WALKSLOWER neither: server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+WALKSLOWER Run + Left Ctrl: server-received magnitude 1.000 (expected 1.00), target pace 450.0 cm/s (ratio 3.214), measured speed 450.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+WALKSLOWER informant: neither (settle): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+WALKSLOWER informant: Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+WALKSLOWER informant: Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+WALKSLOWER informant: both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s)
+Error: /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter : Failed import for CameraRigAsset /Game/Blueprints/Cameras/CameraAsset_SandboxCharacter.CameraAsset_SandboxCharacter:CameraRigAsset_0 Referenced by export K2Node_CallFunction /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter.CameraDirector_SandboxCharacter:EventGraph.K2Node_CallFunction_7
+Finished phase Run + Left Ctrl: 3 s, sampled at the end after 2986 milliseconds
+== watchfail60 (ExecCmds="t.MaxFPS 60, Automation RunTests ^StealthGame.Input.PIE.WalkSlowerModifier; Quit")
+Test Completed. Result={Fail}
+WALKSLOWER open circle centre V(X=-3030.19, Y=2686.78, Z=0.12)
+WALKSLOWER warm-up done: owner/server distance 0.01 cm, owner speed 0.00, server speed 0.00
+WALKSLOWER neither (reference): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 59.0 cm
+WALKSLOWER Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 9.2 cm
+WALKSLOWER Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.6 cm
+WALKSLOWER both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.4 cm
+WALKSLOWER neither: server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.4 cm
+WALKSLOWER Run + Left Ctrl: server-received magnitude 1.000 (expected 1.00), target pace 450.0 cm/s (ratio 3.214), measured speed 450.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 594.1 cm
+Error: /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter : Failed import for CameraRigAsset /Game/Blueprints/Cameras/CameraAsset_SandboxCharacter.CameraAsset_SandboxCharacter:CameraRigAsset_0 Referenced by export K2Node_CallFunction /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter.CameraDirector_SandboxCharacter:EventGraph.K2Node_CallFunction_7
+Error: Run + Left Ctrl: the walker stayed on the open circle (max radial error 594.1 cm) 
+Finished phase Run + Left Ctrl: 3 s, sampled at the end after 3016 milliseconds
+== fixb0 (ExecCmds="Automation RunTests ^StealthGame.Input.PIE.WalkSlowerModifier; Quit")
+Test Completed. Result={Success}
+WALKSLOWER open circle centre V(X=-2894.50, Y=2794.99, Z=0.12)
+WALKSLOWER warm-up walk: 8.06 s, 5.0 cm off the orbit at the stop
+WALKSLOWER warm-up done: owner/server distance 0.05 cm, owner speed 0.00, server speed 0.00
+WALKSLOWER neither (reference): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 7.4 cm (frame 31; 7.0 cm at the start)
+WALKSLOWER Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.4 cm (frame 2; 0.4 cm at the start)
+WALKSLOWER Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.2 cm (frame 295; 0.2 cm at the start)
+WALKSLOWER both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.2 cm (frame 2; 0.2 cm at the start)
+WALKSLOWER neither: server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.2 cm (frame 330; 0.2 cm at the start)
+WALKSLOWER Run + Left Ctrl: server-received magnitude 1.000 (expected 1.00), target pace 450.0 cm/s (ratio 3.214), measured speed 450.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.6 cm (frame 305; 0.2 cm at the start)
+WALKSLOWER informant: neither (settle): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 61 moves, max step over limit 6.19 (frame 4, 350.0 -> 335.0 cm/s), max radial error 44.8 cm (frame 173; 7.0 cm at the start)
+WALKSLOWER informant: Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 13.2 cm (frame 1; 13.2 cm at the start)
+WALKSLOWER informant: Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.6 cm (frame 1; 0.6 cm at the start)
+WALKSLOWER informant: both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.2 cm (frame 2; 0.2 cm at the start)
+Error: /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter : Failed import for CameraRigAsset /Game/Blueprints/Cameras/CameraAsset_SandboxCharacter.CameraAsset_SandboxCharacter:CameraRigAsset_0 Referenced by export K2Node_CallFunction /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter.CameraDirector_SandboxCharacter:EventGraph.K2Node_CallFunction_7
+Finished phase Run + Left Ctrl: 3 s, sampled at the end after 3017 milliseconds
+== fixb60 (ExecCmds="t.MaxFPS 60, Automation RunTests ^StealthGame.Input.PIE.WalkSlowerModifier; Quit")
+Test Completed. Result={Success}
+WALKSLOWER open circle centre V(X=-2927.68, Y=2885.57, Z=0.12)
+WALKSLOWER warm-up walk: 4.47 s, 4.9 cm off the orbit at the stop
+WALKSLOWER warm-up done: owner/server distance 0.01 cm, owner speed 0.00, server speed 0.00
+WALKSLOWER neither (reference): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 7.4 cm (frame 16; 7.0 cm at the start)
+WALKSLOWER Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.6 cm (frame 2; 0.6 cm at the start)
+WALKSLOWER Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.3 cm (frame 174; 0.3 cm at the start)
+WALKSLOWER both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.4 cm (frame 2; 0.4 cm at the start)
+WALKSLOWER neither: server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.4 cm (frame 179; 0.3 cm at the start)
+WALKSLOWER Run + Left Ctrl: server-received magnitude 1.000 (expected 1.00), target pace 450.0 cm/s (ratio 3.214), measured speed 450.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 1.2 cm (frame 177; 0.4 cm at the start)
+WALKSLOWER informant: neither (settle): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 63.6 cm (frame 94; 20.1 cm at the start)
+WALKSLOWER informant: Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 27.7 cm (frame 1; 27.7 cm at the start)
+WALKSLOWER informant: Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 1.2 cm (frame 1; 1.2 cm at the start)
+WALKSLOWER informant: both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 61 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.4 cm (frame 2; 0.4 cm at the start)
+Error: /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter : Failed import for CameraRigAsset /Game/Blueprints/Cameras/CameraAsset_SandboxCharacter.CameraAsset_SandboxCharacter:CameraRigAsset_0 Referenced by export K2Node_CallFunction /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter.CameraDirector_SandboxCharacter:EventGraph.K2Node_CallFunction_7
+Finished phase Run + Left Ctrl: 3 s, sampled at the end after 3017 milliseconds
+== fixb30 (ExecCmds="t.MaxFPS 30, Automation RunTests ^StealthGame.Input.PIE.WalkSlowerModifier; Quit")
+Test Completed. Result={Success}
+WALKSLOWER open circle centre V(X=-2999.40, Y=2865.25, Z=0.12)
+WALKSLOWER warm-up walk: 4.60 s, 4.8 cm off the orbit at the stop
+WALKSLOWER warm-up done: owner/server distance 0.00 cm, owner speed 0.00, server speed 0.00
+WALKSLOWER neither (reference): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 7.6 cm (frame 9; 7.1 cm at the start)
+WALKSLOWER Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 1.0 cm (frame 2; 1.0 cm at the start)
+WALKSLOWER Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.7 cm (frame 2; 0.7 cm at the start)
+WALKSLOWER both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.8 cm (frame 2; 0.8 cm at the start)
+WALKSLOWER neither: server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.8 cm (frame 90; 0.7 cm at the start)
+WALKSLOWER Run + Left Ctrl: server-received magnitude 1.000 (expected 1.00), target pace 450.0 cm/s (ratio 3.214), measured speed 450.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 2.5 cm (frame 90; 0.9 cm at the start)
+WALKSLOWER informant: neither (settle): server-received magnitude 1.000 (expected 1.00), target pace 140.0 cm/s (ratio 1.000), measured speed 140.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 86.6 cm (frame 51; 38.4 cm at the start)
+WALKSLOWER informant: Left Ctrl: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 49.1 cm (frame 1; 49.1 cm at the start)
+WALKSLOWER informant: Left Alt: server-received magnitude 0.900 (expected 0.90), target pace 126.0 cm/s (ratio 0.900), measured speed 126.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 2.2 cm (frame 1; 2.2 cm at the start)
+WALKSLOWER informant: both: server-received magnitude 0.800 (expected 0.80), target pace 112.0 cm/s (ratio 0.800), measured speed 112.0 cm/s over 31 moves, max step over limit 0.00 (frame 0, 0.0 -> 0.0 cm/s), max radial error 0.8 cm (frame 2; 0.8 cm at the start)
+Error: /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter : Failed import for CameraRigAsset /Game/Blueprints/Cameras/CameraAsset_SandboxCharacter.CameraAsset_SandboxCharacter:CameraRigAsset_0 Referenced by export K2Node_CallFunction /Game/Blueprints/Cameras/CameraDirector_SandboxCharacter.CameraDirector_SandboxCharacter:EventGraph.K2Node_CallFunction_7
+Finished phase Run + Left Ctrl: 3 s, sampled at the end after 3034 milliseconds

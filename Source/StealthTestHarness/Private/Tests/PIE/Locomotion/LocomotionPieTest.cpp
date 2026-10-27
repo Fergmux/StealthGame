@@ -243,16 +243,8 @@ NETWORK_TEST_CLASS(LocomotionPie, "StealthGame.Locomotion.PIE")
 	/** The client's pawn on its own machine (the owner copy). */
 	static ACharacter* OwnerPawn() { APlayerController* PC = ClientController(); return PC ? Cast<ACharacter>(PC->GetPawn()) : nullptr; }
 
-	/**
-	 * The client timestamp of the last ServerMove the server applied to its copy (the owner's move clock), or -1 before the
-	 * first one. Server frame timing never reaches a sample taken on it.
-	 */
-	static double ServerMoveTime(const ACharacter* ServerPawn)
-	{
-		UCharacterMovementComponent* Movement = ServerPawn ? ServerPawn->GetCharacterMovement() : nullptr;
-		const FNetworkPredictionData_Server_Character* Data = Movement ? Movement->GetPredictionData_Server_Character() : nullptr;
-		return Data ? static_cast<double>(Data->CurrentClientTimeStamp) : -1.0;
-	}
+	/** The server copy's move clock (shared helper, Tests/PIE/StealthPIEOpenCircle.h). */
+	static double ServerMoveTime(const ACharacter* ServerPawn) { return StealthPIEOpenCircle::ServerMoveTime(ServerPawn); }
 
 	/** Steers the owner's control yaw one step along the orbit round CircleCentre. */
 	void SteerOrbit() const

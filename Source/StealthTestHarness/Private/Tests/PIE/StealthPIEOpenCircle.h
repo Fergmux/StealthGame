@@ -14,6 +14,8 @@
 
 #include "CollisionQueryParams.h"
 #include "Engine/HitResult.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/World.h"
 #include "WorldCollision.h"
 
@@ -115,6 +117,26 @@ namespace StealthPIEOpenCircle
 	{
 		const double Delta = FRotator::NormalizeAxis(TargetYaw - CurrentYaw);
 		return CurrentYaw + FMath::Clamp(Delta, -MaxStepDeg, MaxStepDeg);
+	}
+
+	/**
+	 * The client timestamp (s) of the last ServerMove the server applied to ServerPawn (the owner's move clock), or -1 before
+	 * the first one. A sample taken once per new value is taken once per processed move, so server frame timing never reaches
+	 * it (the 2026-10-27 ReleaseBaselineStopUnderLag fix, 8015f9f).
+	 */
+	inline double ServerMoveTime(const ACharacter* ServerPawn)
+	{
+		UCharacterMovementComponent* Movement = ServerPawn ? ServerPawn->GetCharacterMovement() : nullptr;
+		const FNetworkPredictionData_Server_Character* Data = Movement ? Movement->GetPredictionData_Server_Character() : nullptr;
+		return Data ? static_cast<double>(Data->CurrentClientTimeStamp) : -1.0;
+	}
+
+	/** The owner's move clock (s): the timestamp of the last move it created, the clock ServerMoveTime reads on the server. */
+	inline double OwnerMoveTime(const ACharacter* OwnerPawn)
+	{
+		UCharacterMovementComponent* Movement = OwnerPawn ? OwnerPawn->GetCharacterMovement() : nullptr;
+		const FNetworkPredictionData_Client_Character* Data = Movement ? Movement->GetPredictionData_Client_Character() : nullptr;
+		return Data ? static_cast<double>(Data->CurrentTimeStamp) : -1.0;
 	}
 
 	/**
