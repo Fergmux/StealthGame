@@ -1,12 +1,12 @@
 # Story 007: Exile of a last Active player latches the round; two exiles in one drain
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -65,11 +65,12 @@ These are Integration because they cross Penalty, Roster, Round and Assassinatio
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story 2026-10-27.*
 
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyExileLatchesRoundTest.cpp` (class `FPenaltyExileLatchesRoundTest`, name `StealthGame.Penalty.ExileLatchesRound`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTwoExilesOneDrainTest.cpp` (class `FPenaltyTwoExilesOneDrainTest`, name `StealthGame.Penalty.TwoExilesOneDrain`)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (only if the tests expose a latched-path defect)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyEncounterRig.h` (shared with nkp-005: Penalty on the real queue, resolver and Round core)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyExileLatchesRoundTest.cpp` (`StealthGame.Penalty.ExileLatchesRound`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTwoExilesOneDrainTest.cpp` (`StealthGame.Penalty.TwoExilesOneDrain`)
+- No change to `StealthPenaltyService.cpp` was needed for the latched path.
 
 ---
 
@@ -100,7 +101,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Integration: the two tests under `Source/StealthGameplay/Private/Tests/Penalty/` (`tests/integration/penalty/` in the studio docs) OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.ExileLatchesRound, TwoExilesOneDrain; evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/
 
 ---
 
@@ -108,3 +109,18 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-005-exile-sequence-in-attack-slot.md`; cross-epic: round-match-framework (elimination check, terminal latch, `Rejected_Latched`), participant-state-roster `story-017-transition-no-revival-no-late-events.md`
 - Unlocks: None
+
+## Dev Notes (2026-10-27)
+
+**Readiness**: READY (nkp-005 in the same batch; Round's elimination check, latch and `Rejected_Latched` exist).
+
+**Deviations**:
+- Round writes the StrikeLimit transition as its `StateTransition` row (Code = `ERosterReason::StrikeLimit`); there is no separate `StrikeLimit` row type in use, so AC1 asserts that row.
+- The Roster in these tests is the rig's fake (`FRoundEncounterRig`): Penalty's body gateway applies the StrikeLimit release and forwards the transition to Round's F2 check, as the store's event does. "OnInformantAwaitingBody is never called" is trivially true until nkp-009 adds the provider; asserted as no respawn call and no `RespawnScheduled` row.
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 2/2 passing
+**Deviations**: the StrikeLimit row is Round's StateTransition row (Code = StrikeLimit)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 408/409 StealthGame. tests Success (the one failure is asn-027's uncommitted PrototypeScenariosACF.F_BlindStrike, not this batch)); run-and-observe OBSERVED in 3-player PIE (screenshots 01-05)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; notes in the evidence)

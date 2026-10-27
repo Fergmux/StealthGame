@@ -5,6 +5,7 @@
 #if WITH_STEALTH_TEST_SEAMS
 
 #include "Server/EventLog/StealthRoundLogWriter.h"
+#include "View/StealthTuningPublicSubstructs.h"
 #include "Server/StealthServerTuning.h"
 #include "Server/Testing/StealthFakeClock.h"
 #include "Server/Testing/StealthFaultSinkTestSupport.h"
@@ -106,6 +107,114 @@ namespace StealthPenaltyTest
 	/** A pawn key from a number (no UObject). */
 	inline FPenaltyPawnKey Pawn(uint64 Id) { return FPenaltyPawnKey(Id); }
 
+	/**
+	 * IPenaltyBodyGateway recording every call in order with its arguments and the slot it ran in (stories nkp-005,
+	 * nkp-008). RequestStrikeLimit answers TransitionAnswer and, when Applied, makes the fake Roster state Informant (the
+	 * Roster's own write); RetireBinding answers RetireAnswer.
+	 */
+	struct FRecordingBodies final : IPenaltyBodyGateway
+	{
+		struct FCall
+		{
+			FString Name;
+			FParticipantId Participant;
+			FPenaltyPawnKey Body;
+			uint32 Epoch = 0;
+			double Time = 0.0;
+			bool bExit = false;
+			FQueueKey SlotKey;
+			bool bInSlot = false;
+		};
+		TArray<FCall> Calls;
+		const IPenaltySlotContext* Slot = nullptr;
+		FFakeRoster* Roster = nullptr;
+		ERosterResult TransitionAnswer = ERosterResult::Applied;
+		ERosterResult RetireAnswer = ERosterResult::Applied;
+		/** Called inside RequestStrikeLimit after the state write (a test drives Round's elimination check from it). */
+		TFunction<void(FParticipantId)> OnStrikeLimit;
+
+		FCall& Record(const TCHAR* Name)
+		{
+			FCall& Call = Calls.AddDefaulted_GetRef();
+			Call.Name = Name;
+			Call.bInSlot = Slot != nullptr && Slot->IsInSlot();
+			Call.SlotKey = Slot != nullptr ? Slot->CurrentKey() : FQueueKey();
+			return Call;
+		}
+		virtual ERosterResult RequestStrikeLimit(FParticipantId Participant, uint32 ExpectedRoundEpoch) override
+		{
+			FCall& Call = Record(TEXT("RequestTransition"));
+			Call.Participant = Participant;
+			Call.Epoch = ExpectedRoundEpoch;
+			if (TransitionAnswer == ERosterResult::Applied)
+			{
+				if (Roster != nullptr)
+				{
+					Roster->States.Add(Participant, EParticipantState::Informant);
+				}
+				if (OnStrikeLimit)
+				{
+					OnStrikeLimit(Participant);
+				}
+			}
+			return TransitionAnswer;
+		}
+		virtual void ReleaseCard(FPenaltyPawnKey Body) override { Record(TEXT("ReleaseCard")).Body = Body; }
+		virtual void AdoptReleasedPawn(FPenaltyPawnKey Body, double RestrictedUntilServerTime, bool bExitAtNextScheduledSlot) override
+		{
+			FCall& Call = Record(TEXT("AdoptReleasedPawn"));
+			Call.Body = Body;
+			Call.Time = RestrictedUntilServerTime;
+			Call.bExit = bExitAtNextScheduledSlot;
+		}
+		virtual void RequestHandOverToAi(FPenaltyPawnKey Body, uint32 ExpectedRoundEpoch, double PossessNotBeforeServerTime) override
+		{
+			FCall& Call = Record(TEXT("RequestHandOver"));
+			Call.Body = Body;
+			Call.Epoch = ExpectedRoundEpoch;
+			Call.Time = PossessNotBeforeServerTime;
+		}
+		virtual ERosterResult RetireBinding(FPenaltyPawnKey Body, double RetireAtServerTime) override
+		{
+			FCall& Call = Record(TEXT("RetireBinding"));
+			Call.Body = Body;
+			Call.Time = RetireAtServerTime;
+			return RetireAnswer;
+		}
+
+		/** The recorded call names, in order, joined by spaces. */
+		FString Sequence() const
+		{
+			FString Out;
+			for (const FCall& Call : Calls)
+			{
+				Out += Out.IsEmpty() ? Call.Name : TEXT(" ") + Call.Name;
+			}
+			return Out;
+		}
+		int32 Count(const TCHAR* Name) const
+		{
+			return Calls.FilterByPredicate([Name](const FCall& Call) { return Call.Name == Name; }).Num();
+		}
+	};
+
+	/** IPenaltyRespawnScheduler recording every ScheduleRespawn (story nkp-009's seam). */
+	struct FRecordingRespawns final : IPenaltyRespawnScheduler
+	{
+		struct FCall
+		{
+			FParticipantId Participant;
+			ERespawnCause Cause = ERespawnCause::Assassinated;
+			double LostServerTime = 0.0;
+		};
+		TArray<FCall> Calls;
+
+		virtual void ScheduleRespawn(FParticipantId Participant, ERespawnCause Cause, double LostServerTime) override
+		{
+			Calls.Add({ Participant, Cause, LostServerTime });
+		}
+	};
+
 	/** One core on the fakes; the participants start Active. */
 	struct FRig
 	{
@@ -116,10 +225,13 @@ namespace StealthPenaltyTest
 		FRecordingOwnerView OwnerView;
 		FRecordingLog Log;
 		FStealthRecordingFaultSink Faults;
+		FRecordingBodies Bodies;
+		FRecordingRespawns Respawns;
 		TUniquePtr<FPenaltyCore> Core;
 		uint32 NextSeq = 1;
 
-		explicit FRig(TFunction<void(FFakeTuning&)> ConfigureTuning = nullptr)
+		/** bWithGateways (stories nkp-005, nkp-008): the core calls the recording body gateway and respawn scheduler. */
+		explicit FRig(TFunction<void(FFakeTuning&)> ConfigureTuning = nullptr, bool bWithGateways = false)
 		{
 			if (ConfigureTuning)
 			{
@@ -136,7 +248,45 @@ namespace StealthPenaltyTest
 			Deps.Log = &Log;
 			Deps.OwnerView = &OwnerView;
 			Deps.Faults = &Faults;
+			Bodies.Slot = &Slot;
+			Bodies.Roster = &Roster;
+			if (bWithGateways)
+			{
+				Deps.Bodies = &Bodies;
+				Deps.Respawns = &Respawns;
+			}
 			Core = MakeUnique<FPenaltyCore>(Deps);
+		}
+
+		/** The lockout a strike leaves on its attacker in these tests: AttackAttemptLockoutSec after the slot (schema default). */
+		static double LockoutSec() { return static_cast<double>(FAssassinationTuning_Public().AttackAttemptLockoutSec); }
+
+		/**
+		 * An ungraced NPC kill by Attacker whose body is AttackerBody, with the killer's lockout end as Assassination writes
+		 * it (slot time + AttackAttemptLockoutSec). Returns the tally; OutSlotKey / OutSlotTime are the kill's slot.
+		 */
+		FStrikeTally NpcKillWithBody(FParticipantId Attacker, FPenaltyPawnKey AttackerBody, uint64 Victim, EPenaltyKillOutcome* OutOutcome = nullptr,
+			FQueueKey* OutSlotKey = nullptr, double* OutSlotTime = nullptr)
+		{
+			Slot.NextSlot();
+			Clock.Advance(0.25, 1);
+			FPenaltyKill Kill{ Pawn(Victim), Attacker, EVictimKind::Npc, EKillCause::Strike };
+			Kill.KillerPawn = AttackerBody;
+			Kill.KillerLockoutEndServerTime = Clock.GetServerTimeSeconds() + LockoutSec();
+			const EPenaltyKillOutcome Outcome = Core->OnPawnKilled(Kill);
+			if (OutOutcome != nullptr)
+			{
+				*OutOutcome = Outcome;
+			}
+			if (OutSlotKey != nullptr)
+			{
+				*OutSlotKey = Slot.CurrentKey();
+			}
+			if (OutSlotTime != nullptr)
+			{
+				*OutSlotTime = Clock.GetServerTimeSeconds();
+			}
+			return Core->GetTallyForResult(Attacker, EStrikeResult::WrongTarget, Seq(NextSeq++), AttackerBody);
 		}
 
 		static FClientCommandSeq Seq(uint32 Value)

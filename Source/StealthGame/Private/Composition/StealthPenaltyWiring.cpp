@@ -1,22 +1,33 @@
 #include "StealthPenaltyWiring.h"
 
-#include "Server/StealthPenaltyService.h"
+#include "GameFramework/Controller.h"
+#include "Server/Core/StealthPawnFactory.h"
+#include "StealthCharacter.h"
+#include "StealthGameMode.h"
 
-void FStealthShadowPenaltyTally::SetPenalty(UPenaltyService* InPenalty)
+FStealthPenaltyPawnGateway::FStealthPenaltyPawnGateway(AStealthGameMode* InGameMode)
+	: GameMode(InGameMode)
 {
-	Penalty = InPenalty;
 }
 
-FStrikeTally FStealthShadowPenaltyTally::GetTallyForResult(const APawn* Attacker, EStrikeResult Result)
+void FStealthPenaltyPawnGateway::ReleaseCard(APawn* Pawn)
 {
-	return GetTallyForStrike(Attacker, Result, FClientCommandSeq());
+	// STAND-IN (Character Pool & Appearance not built): no card ledger exists and the pawn keeps its look.
 }
 
-FStrikeTally FStealthShadowPenaltyTally::GetTallyForStrike(const APawn* Attacker, EStrikeResult Result, const FClientCommandSeq& Seq)
+void FStealthPenaltyPawnGateway::RequestHandOverToAi(APawn* Pawn, uint32 ExpectedRoundEpoch, double PossessNotBeforeServerTime)
 {
-	if (UPenaltyService* Service = Penalty.Get())
+	if (Pawn == nullptr)
 	{
-		Service->GetTallyForStrike(Attacker, Result, Seq); // production store kept in step; its answer is not used yet
+		return;
 	}
-	return Prototype != nullptr ? Prototype->GetTallyForResult(Attacker, Result) : FStrikeTally();
+	AController* Former = Pawn->GetController();
+	if (UStealthPawnFactory* Factory = UStealthPawnFactory::Get(Pawn->GetWorld()))
+	{
+		Factory->RequestHandOver(Pawn, EStealthPawnControlKind::Ai, PossessNotBeforeServerTime);
+	}
+	if (AStealthGameMode* Mode = GameMode.Get())
+	{
+		Mode->HandleProductionExile(Cast<AStealthCharacter>(Pawn), Former);
+	}
 }

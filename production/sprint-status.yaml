@@ -1395,12 +1395,13 @@ stories:
     name: "Killing an informant retires its binding without a state event"
     file: "production/epics/participant-state-roster/story-020-informant-kill-is-not-a-transition.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-27"
     sprint: 2
+    note: "Landed with nkp-008 (RetireBinding); evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/"
   - id: "psr-021"
     name: "RetireAtServerTime reaches teammate entries for each retiring reason"
     file: "production/epics/participant-state-roster/story-021-retire-at-server-time-source.md"
@@ -3649,3 +3650,46 @@ stories:
     blocker: "Needs human playtest: >= 6 trained testers, a human-captured greyscale clip set and art-director sign-off (protocol, fixed order, briefing and blank sheets ready in production/qa/evidence/asn-30-results.md and asn-25-brace-tell-results.md); brace tell also needs the authored Brace_In/Hold/Out clips"
     sprint: 2
     note: "ASN batch 2026-10-27; no session run by the unattended build"
+  - id: "nkp-005"
+    name: "Exile sequence inside the killing Attack's slot"
+    file: "production/epics/npc-kill-penalty-informants/story-005-exile-sequence-in-attack-slot.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27 (nkp-005..008); RunExile in the OnPawnKilled fan-out, UPenaltyService is the tally source, factory RequestHandOver (timer stand-in), prototype exile gated; evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/"
+  - id: "nkp-006"
+    name: "The exiled body becomes an ordinary NPC and leaves through a scheduled exit slot"
+    file: "production/epics/npc-kill-penalty-informants/story-006-exile-releases-body-to-crowd.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27; headless on the real Roster core and the crowd sim; card NpcLive (Character Pool) and PickRespawnPawn (nkp-012) halves deferred; evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/"
+  - id: "nkp-007"
+    name: "Exile of a last Active player latches the round; two exiles in one drain"
+    file: "production/epics/npc-kill-penalty-informants/story-007-exile-latches-round-and-double-exile.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "NKP batch 2026-10-27; real Round latch through the exile's transition; evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/"
+  - id: "nkp-008"
+    name: "Informant kill retires the binding inline and looks exactly like an NPC kill"
+    file: "production/epics/npc-kill-penalty-informants/story-008-informant-kill-inline-retire.md"
+    priority: must-have
+    status: review
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: "AC3 (FKillCueInput) and AC2's PIE-3 capture need the HUD epic"
+    sprint: 2
+    note: "NKP batch 2026-10-27; RetireBinding inline + respawn seam, AC1 and AC2 server half pass; evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/"

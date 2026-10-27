@@ -104,9 +104,19 @@ void FPenaltyCore::OnInformantReadmitted(FParticipantId Participant)
 
 EPenaltyKillOutcome FPenaltyCore::OnPawnKilled(const FPenaltyKill& Kill)
 {
-	if (bFrozen || !Kill.Killer.IsValid())
+	if (bFrozen)
 	{
-		// Frozen at round end; or a killer with no participant (a bracing NPC's reversal): nothing, and no report.
+		return EPenaltyKillOutcome::NoStrike; // frozen at round end: nothing is counted, released or retired
+	}
+	const double SlotServerTime = Deps.Clock != nullptr ? Deps.Clock->GetServerTimeSeconds() : 0.0;
+	if (Kill.Cause == EKillCause::Strike && Kill.VictimKind == EVictimKind::Informant)
+	{
+		// PEN-R7 / ADR-0019 section 2.1 (story nkp-008): every informant kill retires its binding inline, whoever struck.
+		RetireInformant(Kill, SlotServerTime);
+	}
+	if (!Kill.Killer.IsValid())
+	{
+		// A killer with no participant (a bracing NPC's reversal): nothing, and no report.
 		return EPenaltyKillOutcome::NoStrike;
 	}
 	const TOptional<EParticipantState> KillerState = Deps.Roster != nullptr ? Deps.Roster->GetState(Kill.Killer) : TOptional<EParticipantState>();
@@ -124,7 +134,7 @@ EPenaltyKillOutcome FPenaltyCore::OnPawnKilled(const FPenaltyKill& Kill)
 	}
 
 	FPenaltyRecord& Record = FindOrAddRecord(Kill.Killer);
-	const bool bGraced = IsGraced(Kill.Victim, Deps.Clock != nullptr ? Deps.Clock->GetServerTimeSeconds() : 0.0);
+	const bool bGraced = IsGraced(Kill.Victim, SlotServerTime);
 	const FQueueKey SlotKey = CurrentSlotKey();
 	EPenaltyKillOutcome Outcome = EPenaltyKillOutcome::NoStrike;
 	if (Kill.VictimKind == EVictimKind::Npc)
@@ -140,24 +150,72 @@ EPenaltyKillOutcome FPenaltyCore::OnPawnKilled(const FPenaltyKill& Kill)
 			Outcome = EPenaltyKillOutcome::Strike;
 			if (static_cast<int32>(Record.StrikeCount) >= Latched.NpcKillStrikeLimit)
 			{
-				// F1 Exile = (k' >= L) AND (S = Active): bExiled of this Attack's result (slot-local). The exile sequence
-				// itself (RequestTransition, release, scheduling) is story nkp-005.
-				SlotExile = FSlotExile{ SlotKey, Kill.Killer };
+				// F1 Exile = (k' >= L) AND (S = Active), L the latched value (never the live knob).
 				Outcome = EPenaltyKillOutcome::StrikeAndExile;
 			}
 		}
 	}
-	// An informant victim (VictimKind = Informant) adds no strike; its inline retire and respawn are story nkp-008.
+	// An informant victim (VictimKind = Informant) adds no strike (its retire ran above).
 
 	// ADR-0019 section 2.1 / 7: one StrikeCounted row per NPC or informant kill, completed with TallyAfter at the result.
 	PendingStrikeRow = FPendingStrikeRow{ SlotKey, Kill.Killer, Record.StrikeCount, bGraced };
+	if (Outcome == EPenaltyKillOutcome::StrikeAndExile)
+	{
+		// Last: the exile's calls may dispatch Roster events (Round's elimination check) that reach other listeners;
+		// nothing above keeps a reference into the store across them.
+		RunExile(Kill, SlotKey, SlotServerTime);
+	}
 	return Outcome;
 }
 
-FStrikeTally FPenaltyCore::GetTallyForResult(FParticipantId Attacker, EStrikeResult Result, FClientCommandSeq Seq)
+bool FPenaltyCore::RunExile(const FPenaltyKill& Kill, FQueueKey SlotKey, double SlotServerTime)
+{
+	if (Deps.Bodies == nullptr)
+	{
+		// No gateway (the Logic tests of stories nkp-001..004): the decision only, bExiled of this Attack's result.
+		SlotExile = FSlotExile{ SlotKey, Kill.Killer, Kill.KillerPawn };
+		return false;
+	}
+	// Step 1: the Roster transition; the Roster releases the body inside it (D42), so it is Unbound from here on.
+	const ERosterResult Transition = Deps.Bodies->RequestStrikeLimit(Kill.Killer, RoundEpoch);
+	if (Transition != ERosterResult::Applied)
+	{
+		ReportFault(EStealthFault::InvariantViolation, PenaltyFaultDetail::ExileTransitionRejected);
+		return false;
+	}
+	// Steps 2-4, in this order, in this call stack (never a timer): the card, the crowd driver, the hand-over commit.
+	Deps.Bodies->ReleaseCard(Kill.KillerPawn);
+	Deps.Bodies->AdoptReleasedPawn(Kill.KillerPawn, Kill.KillerLockoutEndServerTime, /*bExitAtNextScheduledSlot*/ true);
+	Deps.Bodies->RequestHandOverToAi(Kill.KillerPawn, RoundEpoch, Kill.KillerLockoutEndServerTime);
+	// Step 5: the released body's grace clock (PEN-R5), the participant's own-body exclusion and this slot's bExiled.
+	RecordReleasedBody(Kill.KillerPawn, SlotServerTime);
+	FindOrAddRecord(Kill.Killer).ExcludePawn = Kill.KillerPawn;
+	SlotExile = FSlotExile{ SlotKey, Kill.Killer, Kill.KillerPawn };
+	return true;
+}
+
+void FPenaltyCore::RetireInformant(const FPenaltyKill& Kill, double SlotServerTime)
+{
+	if (Deps.Bodies != nullptr && Deps.Bodies->RetireBinding(Kill.Victim, Kill.VictimDeathServerTime) != ERosterResult::Applied)
+	{
+		// The body would stay BoundLive: a second strike would read Informant instead of AlreadyResolved.
+		ReportFault(EStealthFault::InvariantViolation, PenaltyFaultDetail::InformantRetireRejected);
+	}
+	if (Deps.Respawns != nullptr && Kill.VictimParticipant.IsValid())
+	{
+		Deps.Respawns->ScheduleRespawn(Kill.VictimParticipant, ERespawnCause::InformantKilled, SlotServerTime);
+	}
+}
+
+FStrikeTally FPenaltyCore::GetTallyForResult(FParticipantId Attacker, EStrikeResult Result, FClientCommandSeq Seq, FPenaltyPawnKey AttackerPawn)
 {
 	FStrikeTally Out;
 	const FQueueKey SlotKey = CurrentSlotKey();
+	if (!Attacker.IsValid() && AttackerPawn.IsSet() && SlotExile.IsSet() && SlotExile->Pawn == AttackerPawn && SlotExile->SlotKey == SlotKey)
+	{
+		// The exile released the attacker's body in this slot (Unbound): the result is still its participant's.
+		Attacker = SlotExile->Participant;
+	}
 
 	// bExiled: true only for the Attack whose slot exiled this attacker; consumed so no later result carries it.
 	if (SlotExile.IsSet())
@@ -224,6 +282,12 @@ bool FPenaltyCore::IsGraced(FPenaltyPawnKey Victim, double SlotServerTime) const
 	const double* Released = ReleasedBodies.Find(Victim);
 	// PEN-R5: inclusive boundary, double arithmetic on server time.
 	return Released != nullptr && SlotServerTime - *Released <= Latched.StrikeOutReleaseGraceSec;
+}
+
+TOptional<double> FPenaltyCore::FindReleaseTime(FPenaltyPawnKey Body) const
+{
+	const double* Released = ReleasedBodies.Find(Body);
+	return Released != nullptr ? TOptional<double>(*Released) : TOptional<double>();
 }
 
 uint8 FPenaltyCore::GetStrikeCount(FParticipantId Participant) const

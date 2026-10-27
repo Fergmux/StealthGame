@@ -19,6 +19,7 @@
 #include "Server/Core/StealthPawnFactory.h"
 #include "Server/Roster/StealthRosterStore.h"
 #include "Server/StealthCompositionRoot.h"
+#include "Server/StealthPenaltyService.h"
 
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
@@ -861,6 +862,15 @@ void AStealthGameMode::HandleEncounterPawnKilled(APawn* Victim, APawn* Killer, E
 	UE_LOG(LogStealth, Log, TEXT("[Encounter] %s %s %s in the slot (victim kind %d)."), Killer != nullptr ? *Killer->GetName() : TEXT("?"),
 		Cause == EKillCause::Reversal ? TEXT("reversed and eliminated") : TEXT("killed"), Victim != nullptr ? *Victim->GetName() : TEXT("?"), static_cast<int32>(Kind));
 
+	// NPC-Kill Penalty story nkp-005: the production UPenaltyService counts the strike, answers the tally and runs the exile
+	// in this same fan-out. The prototype penalty below runs only when the production service is not bound (a world the
+	// composition root did not wire), so a player is never exiled twice. Story nkp-021 deletes this block, ExilePlayer,
+	// FStealthPrototypeStrikeTally and the AStealthPlayerState counters (NpcKills, WrongTargetTally, bExiledByPendingResult).
+	const UPenaltyService* ProductionPenalty = GetWorld() != nullptr ? GetWorld()->GetSubsystem<UPenaltyService>() : nullptr;
+	if (ProductionPenalty != nullptr && ProductionPenalty->IsBound())
+	{
+		return;
+	}
 	// STAND-IN for the Penalty epic (story asn-015: FStealthPrototypeStrikeTally reads these after this fan-out, in the same
 	// slot): the owner's "Wrong targets" tally rises for every WrongTarget (an NPC and an informant kill alike, PEN-R14);
 	// the strike count (NpcKills, server only) only for an NPC, and the kill that reaches NpcKillLimit exiles (bExiled).
@@ -1034,6 +1044,27 @@ void AStealthGameMode::ExilePlayer(AStealthCharacter* Offender)
 	HandleInteractRequest(Offender, false);
 	// The exile beat is the owner's: bExiled rides the kill's FStrikeResult (story asn-015) and the controller shows it
 	// after the plate; a server message here would arrive in the slot, before contact.
+}
+
+void AStealthGameMode::HandleProductionExile(AStealthCharacter* Body, AController* FormerController)
+{
+	AStealthPlayerState* PS = FormerController != nullptr ? FormerController->GetPlayerState<AStealthPlayerState>() : nullptr;
+	if (PS == nullptr)
+	{
+		return;
+	}
+	// The Roster transition, the release, the card, the crowd adoption and the hand-over commit already ran in the slot
+	// (UPenaltyService); only the prototype's own mirrors follow here.
+	PS->LifeState = EStealthLifeState::Informant;
+	if (Body != nullptr)
+	{
+		HandleInteractRequest(Body, false);
+	}
+	// STAND-IN respawn: a fresh pawn for the participant after the prototype delay (stories nkp-009 / nkp-012 replace it
+	// with the due-time-heap item and the takeover of an unseen crowd pawn). The exiled body stays a crowd NPC.
+	FTimerHandle& Handle = PendingTimers.AddDefaulted_GetRef();
+	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateUObject(this, &AStealthGameMode::RespawnInformant, TWeakObjectPtr<AController>(FormerController),
+		TWeakObjectPtr<APawn>()), FMath::Max(0.1f, UStealthSettings::Get()->InformantRespawnDelay), false);
 }
 
 void AStealthGameMode::RespawnInformant(TWeakObjectPtr<AController> Controller, TWeakObjectPtr<APawn> ReleasedBody)

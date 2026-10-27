@@ -1,32 +1,34 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Server/StrikeTallySource.h"
+#include "Server/StealthPenaltySeams.h"
 #include "UObject/WeakObjectPtrTemplates.h"
 
-class UPenaltyService;
+class AStealthGameMode;
 
 /**
- * STAND-IN of the composition root while the prototype penalty still exiles (NPC-Kill Penalty stories nkp-001..004;
- * story nkp-005 moves the exile and nkp-021 retires the prototype): the encounter service's IStrikeTallySource.
+ * The composition root's IPenaltyPawnGateway (NPC-Kill Penalty story nkp-005; consumer-owned seam of UPenaltyService):
+ * the pawn-level half of the exile that other epics own.
  *
- * Every Attack's tally query also reaches the production UPenaltyService, so its tally, LastResultSeq and StrikeCounted
- * rows stay in step with the strikes it counts from OnPawnKilled (no k <= t fault); the answer the result carries is still
- * the prototype's (its exile sets bExiled), so nothing a player sees changes until the production exile lands. When story
- * nkp-005 lands, the root registers UPenaltyService itself as the tally source and this adapter goes.
+ *   ReleaseCard          STAND-IN: the Character Pool & Appearance epic (UAppearanceAllocator::ReleaseCard, BoundLive ->
+ *                        NpcLive with the same AppearanceId) is not built; the prototype pawn keeps its look and no card
+ *                        ledger exists, so nothing changes (the "same AppearanceId" property holds trivially).
+ *   RequestHandOverToAi  UStealthPawnFactory::RequestHandOver(Pawn, Ai, lockout end): the commit (epoch bump, the player's
+ *                        controller released with its view kept) now, the crowd controller's possession after the
+ *                        strike lockout; then the prototype follow-ons (AStealthGameMode::HandleProductionExile: life
+ *                        state mirror and the STAND-IN informant respawn until stories nkp-009..015).
+ *
+ * Replaces the shadow tally adapter of stories nkp-001..004: UPenaltyService is now the encounter service's
+ * IStrikeTallySource itself. Story nkp-021 retires the prototype follow-ons.
  */
-class FStealthShadowPenaltyTally final : public IStrikeTallySource
+class FStealthPenaltyPawnGateway final : public IPenaltyPawnGateway
 {
 public:
-	explicit FStealthShadowPenaltyTally(IStrikeTallySource* InPrototype) : Prototype(InPrototype) {}
+	explicit FStealthPenaltyPawnGateway(AStealthGameMode* InGameMode);
 
-	/** The production service that shadows every query (null: the prototype alone). */
-	void SetPenalty(UPenaltyService* InPenalty);
-
-	virtual FStrikeTally GetTallyForResult(const APawn* Attacker, EStrikeResult Result) override;
-	virtual FStrikeTally GetTallyForStrike(const APawn* Attacker, EStrikeResult Result, const FClientCommandSeq& Seq) override;
+	virtual void ReleaseCard(APawn* Pawn) override;
+	virtual void RequestHandOverToAi(APawn* Pawn, uint32 ExpectedRoundEpoch, double PossessNotBeforeServerTime) override;
 
 private:
-	IStrikeTallySource* Prototype = nullptr;
-	TWeakObjectPtr<UPenaltyService> Penalty;
+	TWeakObjectPtr<AStealthGameMode> GameMode;
 };

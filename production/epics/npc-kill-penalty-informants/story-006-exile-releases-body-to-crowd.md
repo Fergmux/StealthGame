@@ -1,12 +1,12 @@
 # Story 006: The exiled body becomes an ordinary NPC and leaves through a scheduled exit slot
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -68,12 +68,17 @@ Remember the tuning keys are data-driven: `AttackAttemptLockoutSec` (Assassinati
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story 2026-10-27.*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (`ExcludePawn` plumbing, lockout argument)
-- `Source/StealthTestHarness/Private/Penalty/ExileReleasesBodyTest.cpp` (CQTest, `StealthGame.Penalty.PIE.ExileReleasesBody.*`)
-- `Source/StealthTestHarness/Private/Penalty/ExileBodyExitsTest.cpp` (CQTest, `StealthGame.Penalty.PIE.ExileBodyExits.*`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyExileExitUsesSlotTest.cpp` (class `FPenaltyExileExitUsesSlotTest`, name `StealthGame.Penalty.ExileExitUsesSlot`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltySeams.h` (`IPenaltyBodyGateway`, `IPenaltyRespawnScheduler`, `IPenaltyPawnGateway`, fault details)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.h`, `StealthPenaltyCore.cpp` (`RunExile`, `RetireInformant`, `FPenaltyKill` body fields, released-body tally mapping, `FindReleaseTime`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltyService.h`, `Private/StealthPenaltyService.cpp` (`FBodies` adapter over URosterStore / ICrowdControl / IPenaltyPawnGateway, lockout and death-time reads)
+- `Source/StealthFoundation/Public/Server/Roster/StealthRosterCore.h` (`FRosterCore` exported for the headless integration tests)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyRealRosterRig.h` (Penalty on the real Roster core)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyCrowdSimRig.h` (Penalty driving the headless crowd simulation)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyExileReleasesBodyTest.cpp` (`StealthGame.Penalty.ExileReleasesBody`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyExileBodyExitsTest.cpp` (`StealthGame.Penalty.ExileBodyExits`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyExileExitUsesSlotTest.cpp` (`StealthGame.Penalty.ExileExitUsesSlot`)
 
 ---
 
@@ -109,7 +114,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Integration: the CQTest PIE tests under `Source/StealthTestHarness/Private/Penalty/` and the unit test under `Source/StealthGameplay/Private/Tests/Penalty/` OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.ExileReleasesBody, ExileBodyExits, ExileExitUsesSlot; evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/
 
 ---
 
@@ -117,3 +122,19 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-005-exile-sequence-in-attack-slot.md`; cross-epic: crowd-npc-behaviour (`AdoptReleasedPawn`, `AmbientExit` with the exile slot, `story-018-tell-sampler-and-calibration-counters.md`), level-socket-contract (`PickRespawnPawn` with `ExcludePawn`), character-pool-appearance (`ReleaseCard`), participant-state-roster (`ResolveVictimKind` binding state), tuning-data-config `story-019-cqtest-headless-proof.md`
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-019-takeover-and-exile-visual-continuity.md`
+
+## Dev Notes (2026-10-27)
+
+**Readiness**: READY (nkp-005 implemented in the same batch); LSC `PickRespawnPawn` and the Character Pool card ledger are not built.
+
+**Deviations**:
+- AC1 runs headless on the REAL Roster core (`StealthGame.Penalty.ExileReleasesBody`, not the planned PIE CQTest): `ResolveVictimKind` is Npc at the transition's event dispatch, right after the kill and 1.75 s later; no binding row (never Retired); the handle and `AssignedAppearanceId` unchanged; no pawn destroyed; a rival's kill of the body in the next slot and at + 1.75 s is an NPC kill and graced. The card's `NpcLive` state is DEFERRED to the Character Pool epic (no ledger; `ReleaseCard` is a stand-in, asserted called once); the PIE variant is left to nkp-019's visual run.
+- AC2 runs on the headless crowd simulation with the real `FCrowdAgent` and ambient schedule: promoted no earlier than the lockout end, the next leg is the AmbientExit from a scheduled slot, absorbed; `ExcludePawn` recorded. The `PickRespawnPawn` half (eligibility stubbed true, ExcludePawn honoured, cleared at embodiment) is DEFERRED to nkp-012 (LSC's pick is not built).
+- AC3 runs as specified on the headless crowd simulation (30 simulated minutes, fixed seed, 10 exiles with two in one slot interval vs none); for a like-for-like population the same ten bodies are released without the exile flag in the control run.
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing headless (card NpcLive DEFERRED to Character Pool; the PickRespawnPawn half DEFERRED to nkp-012; PIE variant left to nkp-019)
+**Deviations**: advisory, listed under Dev Notes (headless instead of PIE CQTest)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 408/409 StealthGame. tests Success (the one failure is asn-027's uncommitted PrototypeScenariosACF.F_BlindStrike, not this batch)); run-and-observe OBSERVED in 3-player PIE (screenshots 01-05)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; notes in the evidence)

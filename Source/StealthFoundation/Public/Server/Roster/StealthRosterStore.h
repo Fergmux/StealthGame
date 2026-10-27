@@ -126,6 +126,8 @@ public:
 	ERosterResult NotifyConnectionChanged(FParticipantId Id, ERosterConnection Projection, bool bKicked = false);
 	ERosterResult BindPawn(FParticipantId Id, APawn* Pawn, const TOptional<FRosterEpochToken>& ExpectedEpoch = {});
 	ERosterResult ReleaseToCrowd(APawn* Pawn);
+	/** FRosterCore::RetireBinding (story psr-020): the informant-kill retire, no lifecycle transition, no event. */
+	ERosterResult RetireBinding(APawn* Pawn, int64 RetireAtServerTimeMs, ERosterReason Reason = ERosterReason::InformantKilled);
 	ERosterResult ClearBinding(APawn* Pawn, EEndPlayReason::Type Reason);
 	ERosterResult InvalidateAllBindings();
 	ERosterResult RequestTransition(FParticipantId Id, EParticipantState NewState, ERosterReason Reason, const FRosterTransitionOptions& Options = {});

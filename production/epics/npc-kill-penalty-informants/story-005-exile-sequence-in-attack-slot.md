@@ -1,12 +1,12 @@
 # Story 005: Exile sequence inside the killing Attack's slot
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -77,14 +77,21 @@ Same-drain ordering is the queue's key order (ADR-0002 §4): do not add any orde
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story 2026-10-27.*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (`RunExile`)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyCore.cpp` (exile decision, `ReleasedBodies`, `ExcludePawn`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyExileOnLthNpcKillTest.cpp` (class `FPenaltyExileOnLthNpcKillTest`, name `StealthGame.Penalty.ExileOnLthNpcKill`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyCommandsAfterExileTest.cpp` (class `FPenaltyCommandsAfterExileTest`, name `StealthGame.Penalty.CommandsAfterExile`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltySameDrainRacesTest.cpp` (class `FPenaltySameDrainRacesTest`, name `StealthGame.Penalty.SameDrainRaces`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyStrikeLimitLatchedTest.cpp` (class `FPenaltyStrikeLimitLatchedTest`, name `StealthGame.Penalty.StrikeLimitLatched`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltySeams.h` (`IPenaltyBodyGateway`, `IPenaltyRespawnScheduler`, `IPenaltyPawnGateway`, fault details)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.h`, `StealthPenaltyCore.cpp` (`RunExile`, `RetireInformant`, `FPenaltyKill` body fields, released-body tally mapping, `FindReleaseTime`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltyService.h`, `Private/StealthPenaltyService.cpp` (`FBodies` adapter over URosterStore / ICrowdControl / IPenaltyPawnGateway, lockout and death-time reads)
+- `Source/StealthGameplay/Public/Server/Core/StealthPawnFactory.h`, `Private/Core/PawnFactory/StealthPawnFactory.cpp` (`RequestHandOver(Pawn, Ai, PossessNotBeforeServerTime)`)
+- `Source/StealthGame/Private/Composition/StealthPenaltyWiring.h`, `.cpp` (`FStealthPenaltyPawnGateway` replaces `FStealthShadowPenaltyTally`)
+- `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp`, `Public/Server/StealthCompositionRoot.h` (UPenaltyService is `FEncounterServiceInit::Tally`; Crowd Director and pawn gateway passed to Bind)
+- `Source/StealthGame/Public/StealthGameMode.h`, `Private/StealthGameMode.cpp` (prototype penalty stands down while the service is bound; `HandleProductionExile` stand-in)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTestRig.h` (recording body gateway and respawn scheduler)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyEncounterRig.h` (Penalty on the real queue, resolver and Round core)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyExileOnLthNpcKillTest.cpp` (`StealthGame.Penalty.ExileOnLthNpcKill`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyCommandsAfterExileTest.cpp` (`StealthGame.Penalty.CommandsAfterExile`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltySameDrainRacesTest.cpp` (`StealthGame.Penalty.SameDrainRaces`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyStrikeLimitLatchedTest.cpp` (`StealthGame.Penalty.StrikeLimitLatched`)
 
 ---
 
@@ -125,7 +132,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Logic: the four tests under `Source/StealthGameplay/Private/Tests/Penalty/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.ExileOnLthNpcKill, CommandsAfterExile, SameDrainRaces, StrikeLimitLatched; evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/
 
 ---
 
@@ -133,3 +140,25 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-001-penalty-core-store-and-service-shell.md`, `story-002-strike-rule-and-release-grace.md`, `story-003-tally-rule-and-strike-result-supply.md`, `story-004-event-log-rows.md`; cross-epic: participant-state-roster `story-014-transition-active-to-informant.md`, character-pool-appearance (`ReleaseCard`), crowd-npc-behaviour (`AdoptReleasedPawn`), shared-character-locomotion (`RequestHandOver`)
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-006-exile-releases-body-to-crowd.md`, `story-007-exile-latches-round-and-double-exile.md`, `story-009-respawn-due-time-scheduling-and-cancellation.md`
+
+## Dev Notes (2026-10-27)
+
+**Readiness**: READY with stand-ins. nkp-001..004 Complete; Roster StrikeLimit release exists (psr-014, D42); the Crowd Director's `AdoptReleasedPawn` exists (cnb-029). Not built: Character Pool `ReleaseCard`, the factory's `RequestHandOver`, Round's `OnInformantAwaitingBody` (nkp-009).
+
+**What runs**: `FPenaltyCore::RunExile` in the OnPawnKilled fan-out, one call stack: `RequestTransition(P, Informant, StrikeLimit, epoch)` -> `ReleaseCard` -> `AdoptReleasedPawn({lockout end, bExitAtNextScheduledSlot})` -> `RequestHandOver(Ai, epoch, lockout end)` -> `ReleasedBodies`, `ExcludePawn`, slot-local `bExiled`. A rejected transition faults once (`ExileTransitionRejected`) and runs nothing else. The lockout end is read from Assassination's defence state (`UDefenceStateComponent`), never recomputed. `UPenaltyService` is now the encounter service's `IStrikeTallySource` (the shadow tally adapter is gone); after the release the Roster no longer names the attacker's participant, so the core maps the released body's key to its participant for that slot's tally query.
+
+**Production wiring**: Crowd = `UCrowdDirector` (pending restricted adoption, applied when the crowd controller attaches); `ReleaseCard` = STAND-IN no-op (no card ledger yet; the pawn keeps its look); hand-over = new `UStealthPawnFactory::RequestHandOver`: the commit (epoch bump + the player's controller released with its view kept, as `ReleaseBody`) now, the crowd controller's possession at the lockout end through a world timer (STAND-IN for the SCL hand-over pass; amendment request to ADR-0010: never during a root-motion pose).
+
+**Prototype**: `AStealthGameMode::HandleEncounterPawnKilled` returns before the prototype tally / NpcKills / `ExilePlayer` while `UPenaltyService` is bound, so a player is never exiled twice. `AStealthGameMode::HandleProductionExile` (called by the pawn gateway) keeps the prototype follow-ons: life-state mirror, objective interaction dropped, and the STAND-IN informant respawn (a fresh factory pawn after `InformantRespawnDelay`) until nkp-009..015. **Story nkp-021 must still delete**: the gated block in `HandleEncounterPawnKilled`, `ExilePlayer`, `HandleProductionExile` (once nkp-009/012 respawn), `FStealthPrototypeStrikeTally` (now only a no-Penalty-subsystem fallback), `AStealthPlayerState::NpcKills / WrongTargetTally / bExiledByPendingResult`, `FStealthRules::ShouldRemoveForNpcKills` and `UStealthSettings::NpcKillLimit`, and the `npcKills=` field of the StealthBot `report` line.
+
+**Deviations**:
+- AC1: the `RespawnScheduled` half (after the stub Round's `OnInformantAwaitingBody`) is DEFERRED to nkp-009 (the provider call does not exist yet); the test asserts instead that the exile's own stack schedules nothing. L = 1 comes from TDC's F-1 with `bTestAllowsStrikeLimitOne` (the test asserts F-1 keeps 1 with the flag and clamps without it) fed through the fake tuning.
+- AC2: every command after the exile is voided and the released body receives none (0 deliveries, no second resolution) on the real resolver; inside the exile's frame the reject code is Busy (the strike lockout's slot rule, ASN-R14, precedes legality). NotNow for a pawnless participant is the IIF's stage 2 / possession-epoch gate (iif-027, iif-025, iif-057); in production the hand-over commit also leaves the player's controller pawnless, so ingress drops later commands (DroppedNoPawn).
+- AC3, AC4: as written (real round queue, strike resolver and Round core for AC3).
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 4/4 passing (AC1's RespawnScheduled half DEFERRED to nkp-009; AC2's reject code is Busy inside the lockout, NotNow is IIF stage 2)
+**Deviations**: advisory, listed under Dev Notes (stand-ins: ReleaseCard, the factory's deferred AI possession; prototype exile gated, nkp-021 deletes)
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 408/409 StealthGame. tests Success (the one failure is asn-027's uncommitted PrototypeScenariosACF.F_BlindStrike, not this batch)); run-and-observe OBSERVED in 3-player PIE (screenshots 01-05)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; notes in the evidence)

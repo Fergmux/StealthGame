@@ -100,10 +100,11 @@ bool FRosterClientCallsRejectedTest::RunTest(const FString& Parameters)
 				return Out.Num() == 0;
 			} },
 		{ ERosterCall::ResetAll, TEXT("ResetAll"), [](FRosterCore& C) { return C.ResetAll(1) == ERosterResult::Rejected_NotAuthority; } },
+		{ ERosterCall::RetireBinding, TEXT("RetireBinding"), [BoundPawn](FRosterCore& C) { return C.RetireBinding(BoundPawn, 0) == ERosterResult::Rejected_NotAuthority; } },
 	};
 
 	// Every ERosterCall has at least one row, so a call added later without a row fails here.
-	for (uint8 Call = 0; Call <= static_cast<uint8>(ERosterCall::ResetAll); ++Call)
+	for (uint8 Call = 0; Call <= static_cast<uint8>(ERosterCall::RetireBinding); ++Call)
 	{
 		TestTrue(FString::Printf(TEXT("call %d has a client row"), Call),
 			Rows.ContainsByPredicate([Call](const FClientCallRow& Row) { return static_cast<uint8>(Row.Call) == Call; }));

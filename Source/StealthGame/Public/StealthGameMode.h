@@ -77,6 +77,15 @@ public:
 	 * the informant respawn, the crouch brace tell, and the prototype NPC-kill exile (Penalty stand-in).
 	 */
 	void BindEncounterService(UEncounterService& Service);
+
+	/**
+	 * STAND-IN (NPC-Kill Penalty stories nkp-009..015 not built; story nkp-021 retires it): the prototype follow-ons of the
+	 * PRODUCTION exile (story nkp-005), called by the composition root's IPenaltyPawnGateway right after the factory's
+	 * hand-over commit released Body from FormerController: the prototype life state Informant, the objective interaction
+	 * dropped, and the prototype informant respawn (a fresh factory pawn after InformantRespawnDelay; the production
+	 * respawn is Round's OnInformantAwaitingBody and the takeover of an unseen crowd pawn, stories nkp-009 and nkp-012).
+	 */
+	void HandleProductionExile(AStealthCharacter* Body, AController* FormerController);
 	void HandlePing(AStealthCharacter* Sender, const FVector& Location);
 
 	/** Called by an objective when Completer finished interacting with it. */
@@ -161,7 +170,10 @@ protected:
 	void HandleHubActionCompleted(AStealthPawn* Pawn, EActionType Type);
 	void UnbindEncounters();
 
-	/** Removes a player from active play without killing their pawn (NPC-kill penalty). */
+	/**
+	 * Removes a player from active play without killing their pawn (the PROTOTYPE NPC-kill penalty). Reached only when the
+	 * production Penalty service is not bound (story nkp-005 made its exile live); story nkp-021 deletes it.
+	 */
 	void ExilePlayer(AStealthCharacter* Offender);
 
 	/** Respawns an informant at its team spawn; the released body (still lying until its removal) drops its binding first. */

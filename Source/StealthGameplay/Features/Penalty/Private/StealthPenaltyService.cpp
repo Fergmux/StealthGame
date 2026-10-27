@@ -2,6 +2,8 @@
 
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "Server/Core/Round/StealthCrowdControl.h"
+#include "Server/DefenceStateComponent.h"
 #include "Server/EncounterService.h"
 #include "Server/Queue/StealthResolutionQueueCore.h"
 #include "Server/Roster/StealthRosterCore.h"
@@ -9,8 +11,10 @@
 #include "Server/StealthServerTuning.h"
 #include "StealthPenaltyCore.h"
 #include "UObject/UObjectArray.h"
+#include "View/Core/StealthPawn.h"
 
-// Stories nkp-001 (shell, subscriptions, carry-over), nkp-002 (OnPawnKilled), nkp-003 (IStrikeTallySource, re-push).
+// Stories nkp-001 (shell, subscriptions, carry-over), nkp-002 (OnPawnKilled), nkp-003 (IStrikeTallySource, re-push),
+// nkp-005 (the exile's gateway), nkp-008 (the informant kill's RetireBinding).
 // ADR-0007 thin facade: every adapter below adapts one engine owner and adds no rule.
 
 /** The production adapters the service binds (one engine owner each). */
@@ -53,9 +57,84 @@ struct FPenaltyServiceAdapters
 		virtual FPenaltyParams ReadPenaltyParams() const override { return FPenaltyParams::FromTuning(FStealthServerTuning()); }
 	};
 
+	/**
+	 * IPenaltyBodyGateway over the Roster store, Round's ICrowdControl and the composition root's IPenaltyPawnGateway. The
+	 * core names pawns by key; the service registers the slot's two pawns (victim, killer) for the duration of one
+	 * OnPawnKilled, so a key resolves only to a pawn of the current kill.
+	 */
+	struct FBodies final : IPenaltyBodyGateway
+	{
+		TWeakObjectPtr<URosterStore> Store;
+		ICrowdControl* Crowd = nullptr;
+		IPenaltyPawnGateway* Pawns = nullptr;
+		TMap<FPenaltyPawnKey, TWeakObjectPtr<APawn>> SlotPawns;
+
+		APawn* Resolve(FPenaltyPawnKey Key) const
+		{
+			const TWeakObjectPtr<APawn>* Found = SlotPawns.Find(Key);
+			return Found != nullptr ? Found->Get() : nullptr;
+		}
+
+		virtual ERosterResult RequestStrikeLimit(FParticipantId Participant, uint32 ExpectedRoundEpoch) override
+		{
+			URosterStore* Roster = Store.Get();
+			if (Roster == nullptr || !Roster->IsStoreInitialized())
+			{
+				return ERosterResult::Rejected_UnknownParticipant;
+			}
+			FRosterTransitionOptions Options;
+			FRosterEpochToken Expected = Roster->GetEpochToken();
+			Expected.RoundEpoch = ExpectedRoundEpoch;
+			Options.ExpectedEpoch = Expected;
+			return Roster->RequestTransition(Participant, EParticipantState::Informant, ERosterReason::StrikeLimit, Options);
+		}
+
+		virtual void ReleaseCard(FPenaltyPawnKey Body) override
+		{
+			APawn* Pawn = Resolve(Body);
+			if (Pawn != nullptr && Pawns != nullptr)
+			{
+				Pawns->ReleaseCard(Pawn);
+			}
+		}
+
+		virtual void AdoptReleasedPawn(FPenaltyPawnKey Body, double RestrictedUntilServerTime, bool bExitAtNextScheduledSlot) override
+		{
+			AStealthPawn* Pawn = Cast<AStealthPawn>(Resolve(Body));
+			if (Pawn != nullptr && Crowd != nullptr)
+			{
+				FCrowdAdoptParams Params;
+				Params.RestrictedUntilServerTime = RestrictedUntilServerTime;
+				Params.bExitAtNextScheduledSlot = bExitAtNextScheduledSlot;
+				Crowd->AdoptReleasedPawn(Pawn, Params);
+			}
+		}
+
+		virtual void RequestHandOverToAi(FPenaltyPawnKey Body, uint32 ExpectedRoundEpoch, double PossessNotBeforeServerTime) override
+		{
+			APawn* Pawn = Resolve(Body);
+			if (Pawn != nullptr && Pawns != nullptr)
+			{
+				Pawns->RequestHandOverToAi(Pawn, ExpectedRoundEpoch, PossessNotBeforeServerTime);
+			}
+		}
+
+		virtual ERosterResult RetireBinding(FPenaltyPawnKey Body, double RetireAtServerTime) override
+		{
+			URosterStore* Roster = Store.Get();
+			APawn* Pawn = Resolve(Body);
+			if (Roster == nullptr || !Roster->IsStoreInitialized() || Pawn == nullptr)
+			{
+				return ERosterResult::NoOp_NotBound;
+			}
+			return Roster->RetireBinding(Pawn, static_cast<int64>(FMath::RoundToDouble(RetireAtServerTime * 1000.0)), ERosterReason::InformantKilled);
+		}
+	};
+
 	FRosterQuery RosterQuery;
 	FQueueSlot Slot;
 	FSchemaDefaultsTuning DefaultTuning;
+	FBodies Bodies;
 };
 
 bool UPenaltyService::ShouldCreateSubsystem(UObject* Outer) const
@@ -84,6 +163,9 @@ bool UPenaltyService::Bind(const FPenaltyServiceInit& Init)
 	Adapters = MakeShared<FPenaltyServiceAdapters>();
 	Adapters->RosterQuery.Store = Roster;
 	Adapters->Slot.Queue = Init.Queue;
+	Adapters->Bodies.Store = Roster;
+	Adapters->Bodies.Crowd = Init.Crowd;
+	Adapters->Bodies.Pawns = Init.Pawns;
 
 	FPenaltyCoreDeps Deps;
 	Deps.Clock = Init.Clock;
@@ -92,6 +174,8 @@ bool UPenaltyService::Bind(const FPenaltyServiceInit& Init)
 	Deps.Slot = &Adapters->Slot;
 	Deps.Log = Init.Log;
 	Deps.OwnerView = Init.OwnerView;
+	Deps.Bodies = &Adapters->Bodies;
+	Deps.Respawns = Init.Respawns;
 	Deps.Faults = Init.Faults;
 	Core = MakeShared<FPenaltyCore>(Deps);
 
@@ -157,7 +241,7 @@ FStrikeTally UPenaltyService::GetTallyForResult(const APawn* Attacker, EStrikeRe
 
 FStrikeTally UPenaltyService::GetTallyForStrike(const APawn* Attacker, EStrikeResult Result, const FClientCommandSeq& Seq)
 {
-	return Core.IsValid() ? Core->GetTallyForResult(ResolveParticipant(Attacker), Result, Seq) : FStrikeTally();
+	return Core.IsValid() ? Core->GetTallyForResult(ResolveParticipant(Attacker), Result, Seq, MakePawnKey(Attacker)) : FStrikeTally();
 }
 
 FPenaltyPawnKey UPenaltyService::MakePawnKey(const APawn* Pawn)
@@ -183,7 +267,26 @@ void UPenaltyService::HandlePawnKilled(APawn* Victim, APawn* Killer, EVictimKind
 	Kill.Killer = ResolveParticipant(Killer);
 	Kill.VictimKind = Kind;
 	Kill.Cause = Cause;
-	Core->OnPawnKilled(Kill);
+	Kill.KillerPawn = MakePawnKey(Killer);
+	Kill.KillerLockoutEndServerTime = ReadLockoutEnd(Killer);
+	Kill.VictimParticipant = ResolveParticipant(Victim);
+	const UEncounterService* Service = Encounters.Get();
+	const TOptional<double> Death = Service != nullptr ? Service->GetScheduledDeathServerTime(Victim) : TOptional<double>();
+	Kill.VictimDeathServerTime = Death.IsSet() ? Death.GetValue() : 0.0;
+	// The exile and the retire name these two pawns by key (FBodies resolves them for this call only).
+	Adapters->Bodies.SlotPawns.Reset();
+	Adapters->Bodies.SlotPawns.Add(Kill.Victim, Victim);
+	Adapters->Bodies.SlotPawns.Add(Kill.KillerPawn, Killer);
+	const TSharedPtr<FPenaltyServiceAdapters> KeepAdapters = Adapters; // a listener of the exile's Roster event may Unbind
+	const TSharedPtr<FPenaltyCore> KeepCore = Core;
+	KeepCore->OnPawnKilled(Kill);
+	KeepAdapters->Bodies.SlotPawns.Reset();
+}
+
+double UPenaltyService::ReadLockoutEnd(const APawn* Pawn)
+{
+	const UDefenceStateComponent* State = Pawn != nullptr ? UDefenceStateComponent::Find(*Pawn) : nullptr;
+	return State != nullptr ? State->GetCore().GetLockoutEnd() : -1.0;
 }
 
 void UPenaltyService::HandleRosterEvent(const FRosterEvent& Event)

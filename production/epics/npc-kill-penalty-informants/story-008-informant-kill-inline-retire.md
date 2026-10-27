@@ -1,12 +1,12 @@
 # Story 008: Informant kill retires the binding inline and looks exactly like an NPC kill
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -68,12 +68,16 @@ Provisional note: AC2 and AC3 were tagged against spikes S1/S14. Both reported (
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Changed by /dev-story 2026-10-27.*
 
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (informant branch of `OnPawnKilled`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyInformantKillRetiresInlineTest.cpp` (class `FPenaltyInformantKillRetiresInlineTest`, name `StealthGame.Penalty.InformantKillRetiresInline`)
-- `Source/StealthTestHarness/Private/Penalty/InformantKillParityTest.cpp` (CQTest, `StealthGame.Penalty.PIE.InformantKillParity.*`)
-- `Source/StealthTestHarness/Private/Penalty/CueInputsTest.cpp` (CQTest, `StealthGame.Penalty.PIE.CueInputs.*`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltySeams.h` (`IPenaltyBodyGateway`, `IPenaltyRespawnScheduler`, `IPenaltyPawnGateway`, fault details)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.h`, `StealthPenaltyCore.cpp` (`RunExile`, `RetireInformant`, `FPenaltyKill` body fields, released-body tally mapping, `FindReleaseTime`)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltyService.h`, `Private/StealthPenaltyService.cpp` (`FBodies` adapter over URosterStore / ICrowdControl / IPenaltyPawnGateway, lockout and death-time reads)
+- `Source/StealthFoundation/Public/Server/Roster/StealthRosterCore.h`, `Private/Roster/StealthRosterCore.cpp`, `Public/Server/Roster/StealthRosterStore.h`, `Private/Roster/StealthRosterStore.cpp` (`RetireBinding`, Roster story psr-020 landed here)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterInformantKillIsNotATransitionTest.cpp` (`StealthGame.Roster.InformantKillIsNotATransition`, psr-020 AC-PSR-21)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthClientCallsRejectedTest.cpp` (the RetireBinding client row)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyInformantKillRetiresInlineTest.cpp` (`StealthGame.Penalty.InformantKillRetiresInline`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyInformantKillParityTest.cpp` (`StealthGame.Penalty.InformantKillParity`, the server-side half of AC2)
 
 ---
 
@@ -109,7 +113,7 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Integration: the two CQTest PIE tests under `Source/StealthTestHarness/Private/Penalty/` and the unit test under `Source/StealthGameplay/Private/Tests/Penalty/` OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Penalty.InformantKillRetiresInline, InformantKillParity (+ StealthGame.Roster.InformantKillIsNotATransition); evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/
 
 ---
 
@@ -117,3 +121,21 @@ QL-STORY-READY: ADEQUATE
 
 - Depends on: `production/epics/npc-kill-penalty-informants/story-002-strike-rule-and-release-grace.md`, `story-003-tally-rule-and-strike-result-supply.md`; cross-epic: participant-state-roster `story-020-informant-kill-is-not-a-transition.md`, `story-021-retire-at-server-time-source.md`, `story-050-pie-informant-kill-looks-like-npc-kill.md`; assassination-defence-reversal (`VictimKind = Informant`, byte-identical `WrongTarget`); hud (cue selection reads `TallyAfter` only); tuning-data-config `story-019-cqtest-headless-proof.md`
 - Unlocks: `production/epics/npc-kill-penalty-informants/story-021-retire-prototype-penalty-code.md`
+
+## Dev Notes (2026-10-27)
+
+**Readiness**: READY with gaps: Roster psr-020 (`RetireBinding`) was backlog, so it is landed here with its own test (decision D10, confirmed by the user: InformantKilled is raised on RetireBinding, never as a transition). The HUD cue selector (`FKillCueInput`), HUD widget state and the PIE-3 3v3 capture do not exist.
+
+**What runs**: every informant kill (Cause = Strike, VictimKind = Informant) calls `RetireBinding(Victim, RetireAtServerTime = the death write's time, InformantKilled)` inline in the slot, then `ScheduleRespawn(VictimParticipant, InformantKilled, slot time)` through the nkp-009 seam (null in production until nkp-009: the prototype respawn after the body's release still runs). No strike is added; the tally follows WrongTarget. A retire that does not apply faults once (`InformantRetireRejected`).
+
+**Deviations**:
+- AC1: as written; the drain part uses the rig's Roster fake for the encounter side and a second part runs the retire on the REAL Roster core (state stays Informant, no event, no EventSeq, AlreadyResolved, the tombstone carries the death time).
+- AC2: the server-side half runs headless (`StealthGame.Penalty.InformantKillParity`: the attacker's FStrikeResult reply, FActionState writes and the victim's FDeathState compare equal between an informant kill and an NPC kill; the ally receives nothing). The PIE-3 capture of every RPC, replicated property, HUD widget state and cue id is DEFERRED (HUD epic; spike S1/S14 multi-process capture).
+- AC3: DEFERRED in full: no per-kill cue selector or `FKillCueInput` exists (HUD / audio epics). Penalty adds no cue input (it sends nothing but FStrikeResult's TallyAfter / bExiled).
+
+## Completion Notes
+**Completed**: 2026-10-27 (status In Review)
+**Criteria**: AC1 passing; AC2 server-side half passing (the PIE-3 capture DEFERRED); AC3 DEFERRED in full (no HUD cue selector / FKillCueInput yet)
+**Deviations**: the open halves need the HUD epic and the PIE-3 multi-process capture; reopen when they exist
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 408/409 StealthGame. tests Success (the one failure is asn-027's uncommitted PrototypeScenariosACF.F_BlindStrike, not this batch)); run-and-observe OBSERVED in 3-player PIE (screenshots 01-05)
+**Reviewed by**: self code review 2026-10-27 (APPROVED; notes in the evidence)

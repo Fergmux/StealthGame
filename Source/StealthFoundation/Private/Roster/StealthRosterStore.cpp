@@ -392,6 +392,11 @@ ERosterResult URosterStore::BindPawn(FParticipantId Id, APawn* Pawn, const TOpti
 
 ERosterResult URosterStore::ReleaseToCrowd(APawn* Pawn) { return CoreRef().ReleaseToCrowd(MakePawnHandle(Pawn)); }
 
+ERosterResult URosterStore::RetireBinding(APawn* Pawn, int64 RetireAtServerTimeMs, ERosterReason Reason)
+{
+	return CoreRef().RetireBinding(MakePawnHandle(Pawn), RetireAtServerTimeMs, Reason);
+}
+
 ERosterResult URosterStore::ClearBinding(APawn* Pawn, EEndPlayReason::Type Reason)
 {
 	ERosterEndPlayReason CoreReason = ERosterEndPlayReason::Destroyed;

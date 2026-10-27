@@ -5,6 +5,7 @@
 #include "EngineUtils.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerController.h"
+#include "TimerManager.h"
 #include "Server/Roster/StealthRosterStore.h"
 #include "View/Core/StealthPawn.h"
 
@@ -222,6 +223,48 @@ void UStealthPawnFactory::RequestTeardown(APawn* Pawn)
 	}
 	ReleaseBody(Pawn); // never destroy a possessed pawn (AController::PawnPendingDestroy would act on its controller)
 	Pawn->Destroy();
+}
+
+bool UStealthPawnFactory::RequestHandOver(APawn* Pawn, EStealthPawnControlKind Kind, double PossessNotBeforeServerTime)
+{
+	UWorld* World = GetWorld();
+	if (Pawn == nullptr || !IsValid(Pawn) || !Pawn->HasAuthority() || Kind != EStealthPawnControlKind::Ai || World == nullptr)
+	{
+		return false;
+	}
+	// The commit, now: the epoch bump and the former controller's release (ReleaseBody bumps first, then unpossesses).
+	if (ReleaseBody(Pawn) == nullptr)
+	{
+		BumpControlEpoch(Pawn); // nobody held it: the commit still makes every older-epoch command stale
+	}
+	TWeakObjectPtr<APawn> WeakPawn(Pawn);
+	auto Possess = [this, WeakPawn]()
+	{
+		PendingHandOvers = FMath::Max(PendingHandOvers - 1, 0);
+		APawn* Target = WeakPawn.Get();
+		AStealthPawn* Shared = Cast<AStealthPawn>(Target);
+		IStealthPawnFactoryHooks* ActiveHooks = GetHooks();
+		if (!IsValid(Target) || Target->IsActorBeingDestroyed() || Target->GetController() != nullptr || (Shared != nullptr && Shared->HasDeathWrite())
+			|| ActiveHooks == nullptr)
+		{
+			return;
+		}
+		if (AController* Controller = Shared != nullptr ? ActiveHooks->CreateAiController(Shared) : nullptr)
+		{
+			BumpControlEpoch(Target);
+			Controller->Possess(Target);
+		}
+	};
+	++PendingHandOvers;
+	const double Delay = PossessNotBeforeServerTime - World->GetTimeSeconds();
+	if (Delay <= 0.0)
+	{
+		Possess();
+		return true;
+	}
+	FTimerHandle Handle;
+	World->GetTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, Possess), static_cast<float>(Delay), false);
+	return true;
 }
 
 uint32 UStealthPawnFactory::GetSpawnOrdinal(const AActor* Pawn) const

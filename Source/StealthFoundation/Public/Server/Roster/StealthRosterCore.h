@@ -60,6 +60,8 @@ enum class ERosterCall : uint8
 	GetUnboundActiveParticipants,
 	/** Appended for ResetAll (story psr-022 function, landed early for the D53 integration batch). */
 	ResetAll,
+	/** Appended for RetireBinding (story psr-020, landed with NPC-Kill Penalty story nkp-008). */
+	RetireBinding,
 };
 
 /** Status of a row of the pawn-binding table; a pawn with no row is Unbound (an NPC, R9). */
@@ -349,7 +351,7 @@ inline FName RosterFaultSource() { return FName(TEXT("Roster")); }
  * State is written immediately; events are queued with their EventSeq at emission and dispatched FIFO after
  * the outermost mutating call (R12, I6). Rejections and no-ops emit nothing and consume no EventSeq.
  */
-class FRosterCore
+class STEALTHFOUNDATION_API FRosterCore
 {
 public:
 	/** Every dependency pointer must be non-null and outlive the core. */
@@ -425,6 +427,17 @@ public:
 	 * bound participant is Connected and not RoundEnded; NoOp_NotBound for an Unbound pawn. Emits no event.
 	 */
 	ERosterResult ReleaseToCrowd(const FRosterPawnHandle& Pawn);
+
+	/**
+	 * Retires a live binding without a lifecycle transition (R9, R10; story psr-020; decision D10): the informant-kill
+	 * call NPC-Kill Penalty makes inline in the killing Attack's slot. BoundLive -> Retired (a tombstone keyed by the
+	 * handle's object key and generation, so a recycled pawn never inherits it) with RetireAtServerTimeMs, and the
+	 * participant's live pawn is cleared, so AwaitingPawn(T) rises by one while the state, InformantCount(T) and EventSeq
+	 * are unchanged: no event is emitted (nothing observable differs from an NPC kill). Reason is accepted for the
+	 * ServerOnly log (InformantKilled for an informant kill) and stored nowhere else: no replicated field, no record field.
+	 * Wrong inputs (R9): an Unbound pawn -> NoOp_NotBound; a Retired pawn -> NoOp_AlreadyRetired; neither changes anything.
+	 */
+	ERosterResult RetireBinding(const FRosterPawnHandle& Pawn, int64 RetireAtServerTimeMs, ERosterReason Reason = ERosterReason::InformantKilled);
 
 	/**
 	 * Pawn EndPlay hook (R9). Ends a live binding or a tombstone. A live binding cleared with Destroyed during

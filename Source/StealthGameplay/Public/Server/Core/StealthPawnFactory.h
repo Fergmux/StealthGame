@@ -125,6 +125,21 @@ public:
 	/** Body teardown (story asn-019 BodyRemoval and Reset): released first when still possessed, then destroyed. */
 	void RequestTeardown(APawn* Pawn);
 
+	/**
+	 * RequestHandOver(Pawn, Ai) (ADR-0010 4.3; NPC-Kill Penalty story nkp-005, the exile's step 4): the commit runs now,
+	 * inside the caller's queue slot: the control epoch is bumped and the current controller lets go exactly as in
+	 * ReleaseBody (a PlayerController is left pawnless in its playing state with its view target kept, never Spectating),
+	 * so no command of the former owner reaches the body from here. The AI possession (the Crowd hook's controller)
+	 * executes at PossessNotBeforeServerTime, the end of the body's strike lockout (amendment request to ADR-0010: never
+	 * during a root-motion action pose); a body that has a death write or a controller by then is left alone. STAND-IN
+	 * for the SCL hand-over pass: the deferred possession is a world timer until the pass exists. Only Kind = Ai is
+	 * supported (a human takeover is Penalty story nkp-012's); returns false for anything else or without authority.
+	 */
+	bool RequestHandOver(APawn* Pawn, EStealthPawnControlKind Kind, double PossessNotBeforeServerTime);
+
+	/** Hand-overs requested by RequestHandOver whose AI possession has not executed yet (tests and dumps). */
+	int32 GetPendingHandOverCount() const { return PendingHandOvers; }
+
 	/** True while ReleaseBody runs its UnPossess (the controller's OnUnPossess keeps the view target then). */
 	static bool IsReleasingBody() { return ReleasingBodyDepth > 0; }
 
@@ -151,6 +166,7 @@ private:
 	TMap<FObjectKey, uint32> SpawnOrdinals;
 	uint32 NextSpawnOrdinal = 0;
 	int32 SpawnCount = 0;
+	int32 PendingHandOvers = 0;
 	FStealthLogFaultSink FaultSink;
 
 	/** Nesting of ReleaseBody (game thread only). */

@@ -744,6 +744,39 @@ ERosterResult FRosterCore::ReleaseToCrowd(const FRosterPawnHandle& Pawn)
 	return ERosterResult::Applied;
 }
 
+ERosterResult FRosterCore::RetireBinding(const FRosterPawnHandle& Pawn, int64 RetireAtServerTimeMs, ERosterReason Reason)
+{
+	const ERosterResult Pre = CheckCallPreconditions(ERosterCall::RetireBinding);
+	if (Pre != ERosterResult::Applied)
+	{
+		return Pre;
+	}
+	FCallScope Scope(*this);
+	FRosterBindingEntry* Entry = PawnTable.Find(Pawn);
+	if (!Entry)
+	{
+		return ERosterResult::NoOp_NotBound; // R9: an Unbound pawn (an NPC) changes nothing
+	}
+	if (Entry->Status == ERosterBindingStatus::Retired)
+	{
+		return ERosterResult::NoOp_AlreadyRetired; // R9: a second retire of the same body changes nothing
+	}
+	// R9 / D10: BoundLive -> Retired, the live pawn cleared. Not a transition: no state write, no event, no EventSeq.
+	// Reason (InformantKilled) belongs to the ServerOnly log only; no log structure exists for it yet (story psr-036's
+	// dev-only transition log is the nearest), so it is accepted and stored nowhere.
+	(void)Reason;
+	Entry->Status = ERosterBindingStatus::Retired;
+	Entry->RetireAtServerTimeMs = RetireAtServerTimeMs;
+	if (FParticipantRecord* Owner = FindRecordMutable(Entry->Participant))
+	{
+		if (Owner->PawnBinding == Pawn)
+		{
+			Owner->PawnBinding = FRosterPawnHandle();
+		}
+	}
+	return ERosterResult::Applied;
+}
+
 ERosterResult FRosterCore::ClearBinding(const FRosterPawnHandle& Pawn, ERosterEndPlayReason Reason)
 {
 	const ERosterResult Pre = CheckCallPreconditions(ERosterCall::ClearBinding);

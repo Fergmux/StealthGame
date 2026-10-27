@@ -1,12 +1,12 @@
 # Story 020: Killing an informant retires its binding without a state event
 
 > **Epic**: Participant State & Roster
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: — (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -108,7 +108,7 @@ checks scope against it.*
 **Required evidence**:
 - Logic: `Source/StealthFoundation/Private/Tests/Roster/StealthRosterInformantKillIsNotATransitionTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later). `qa.level` is `full`, so the test is required.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): StealthGame.Roster.InformantKillIsNotATransition; evidence production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/
 
 ---
 
@@ -117,3 +117,14 @@ checks scope against it.*
 - Depends on: `production/epics/participant-state-roster/story-014-transition-active-to-informant.md`
 - Cross-epic: none directly; the `StealthFoundation` module skeleton from `production/epics/tuning-data-config/EPIC.md` reaches this story through story 001.
 - Unlocks: None
+
+## Dev Notes (2026-10-27)
+
+Landed with NPC-Kill Penalty story nkp-008 (its caller). `FRosterCore::RetireBinding(Pawn, RetireAtServerTimeMs, Reason = InformantKilled)` and the `URosterStore` facade; `ERosterCall::RetireBinding` appended (and its row in `StealthGame.Roster.ClientCallsRejected`). Files: `Source/StealthFoundation/Public/Server/Roster/StealthRosterCore.h` (the core header is Public in this tree, not Private as planned), `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp`, `Source/StealthFoundation/Public/Server/Roster/StealthRosterStore.h`, `Source/StealthFoundation/Private/Roster/StealthRosterStore.cpp`, `Source/StealthFoundation/Private/Tests/Roster/StealthRosterInformantKillIsNotATransitionTest.cpp`. The Reason is accepted and stored nowhere (no ServerOnly log structure exists yet; story psr-036's dev-only log is the nearest), as the story allows. AwaitingPawn(T) is computed in the test from the records (no query exists).
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 1/1 passing (AC-PSR-21)
+**Deviations**: landed with nkp-008; the Reason is stored nowhere (no ServerOnly log yet), as the story allows
+**Test Evidence**: production/qa/evidence/npc-kill-penalty-informants-005-008-2026-10-27/ (`tools/dev/cycle.ps1 -Tests -NoLaunch`: Result: Succeeded; 408/409 StealthGame. tests Success (the one failure is asn-027's uncommitted PrototypeScenariosACF.F_BlindStrike, not this batch))
+**Reviewed by**: self code review 2026-10-27 (APPROVED)

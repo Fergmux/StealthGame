@@ -424,7 +424,7 @@ void UStealthCompositionRoot::Deinitialize()
 		PenaltyService->Unbind(); // NKP: before the encounter core it subscribed to goes
 	}
 	Penalty.Reset();
-	ShadowTally.Reset();
+	PenaltyPawns.Reset();
 	if (Encounters != nullptr)
 	{
 		Encounters->Shutdown(); // Round (a dependency) still holds its queue here
@@ -610,9 +610,10 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	Init.Log = MatchCore->GetRoundLogWriter();
 	Init.Bushes = PrototypeBushes.Get();
 	Init.Roster = GetRosterStore();
-	// NKP stories 001-004: the prototype tally answers; the shadow keeps the production Penalty store in step (nkp-005).
-	ShadowTally = MakeShared<FStealthShadowPenaltyTally>(PrototypeTally.Get());
-	Init.Tally = ShadowTally.Get();
+	// NKP story 005: the production Penalty service is the tally source (its exile sets bExiled); the prototype tally is
+	// only the fallback of a world with no Penalty subsystem (story nkp-021 deletes it).
+	UPenaltyService* PenaltyService = World->GetSubsystem<UPenaltyService>();
+	Init.Tally = PenaltyService != nullptr ? static_cast<IStrikeTallySource*>(PenaltyService) : static_cast<IStrikeTallySource*>(PrototypeTally.Get());
 	Init.BodyObserver = PrototypeBodyObserver.Get();
 	Init.Faults = &CommandFaults;
 	if (!Encounters->Initialize(Init))
@@ -629,18 +630,22 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	}
 	InGameMode->BindEncounterService(*Encounters);
 
-	// NPC-Kill Penalty (stories nkp-001..004): the production service, bound alongside the prototype penalty, which still
-	// exiles until story nkp-005 (nkp-021 retires it). It counts strikes from OnPawnKilled, keeps the tally through the
-	// shadow adapter and writes its Event Log rows; tuning: the schema defaults until the TDC store feeds features.
-	UPenaltyService* PenaltyService = World->GetSubsystem<UPenaltyService>();
+	// NPC-Kill Penalty (stories nkp-001..005, 008): the production service counts strikes from OnPawnKilled, answers the
+	// tally, runs the exile of the L-th ungraced NPC kill (Roster StrikeLimit, the Crowd Director's adoption, the factory
+	// hand-over through FStealthPenaltyPawnGateway) and the informant kill's RetireBinding, and writes its Event Log rows.
+	// The prototype penalty in AStealthGameMode::HandleEncounterPawnKilled stands down while it is bound (nkp-021 deletes
+	// it). Tuning: the schema defaults until the TDC store feeds features.
 	if (PenaltyService != nullptr)
 	{
+		PenaltyPawns = MakeShared<FStealthPenaltyPawnGateway>(InGameMode);
 		FPenaltyServiceInit PenaltyInit;
 		PenaltyInit.Clock = CommandClock.Get();
 		PenaltyInit.Queue = Queue;
 		PenaltyInit.Log = MatchCore->GetRoundLogWriter();
 		PenaltyInit.Roster = GetRosterStore();
 		PenaltyInit.Encounters = Encounters;
+		PenaltyInit.Crowd = UCrowdDirector::Get(World);
+		PenaltyInit.Pawns = PenaltyPawns.Get();
 		PenaltyInit.Faults = &CommandFaults;
 		if (!PenaltyService->Bind(PenaltyInit))
 		{
@@ -648,7 +653,6 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		}
 	}
 	Penalty = PenaltyService;
-	ShadowTally->SetPenalty(PenaltyService);
 }
 
 void UStealthCompositionRoot::HandleRoundPhaseChanged(ERoundPhase OldPhase, ERoundPhase NewPhase)

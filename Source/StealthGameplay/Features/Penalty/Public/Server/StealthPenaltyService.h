@@ -14,6 +14,7 @@
 class APawn;
 class FPenaltyCore;
 class FResolutionQueueCore;
+class ICrowdControl;
 class IRoundLogWriter;
 class IStealthClock;
 class IStealthFaultSink;
@@ -38,6 +39,12 @@ struct FPenaltyServiceInit
 	const IPenaltyTuningSource* Tuning = nullptr;
 	/** The Roster owner-view feed (null until roster story psr-038 builds SetOwnerTally: nothing is re-pushed). */
 	IPenaltyOwnerViewFeed* OwnerView = nullptr;
+	/** Crowd's adoption of the exile's released body (Round's ICrowdControl; null: step 3 is skipped). */
+	ICrowdControl* Crowd = nullptr;
+	/** Character Pool ReleaseCard and the factory's RequestHandOver (null: steps 2 and 4 are skipped). */
+	IPenaltyPawnGateway* Pawns = nullptr;
+	/** Story nkp-009's respawn scheduler (null until it lands). */
+	IPenaltyRespawnScheduler* Respawns = nullptr;
 	IStealthFaultSink* Faults = nullptr;
 };
 
@@ -49,8 +56,11 @@ struct FPenaltyServiceInit
  * FStrikeResult and the owner re-push.
  *
  * Seams: implements IStrikeTallySource (ADR-0018 section 2.1 step 8); subscribes to UEncounterService's OnPawnKilled and
- * to the Roster's events (OnRosterReset, OnRosterRoundEnded, reclaim and connection changes). IInformantBodyProvider and
- * the InformantRespawn resolver arrive with stories nkp-009 / nkp-010.
+ * to the Roster's events (OnRosterReset, OnRosterRoundEnded, reclaim and connection changes). In the OnPawnKilled fan-out
+ * it runs the exile of the L-th ungraced NPC kill (story nkp-005: Roster StrikeLimit, ReleaseCard, Crowd adoption, the
+ * factory hand-over) and the informant kill's inline RetireBinding (story nkp-008) through IPenaltyBodyGateway over the
+ * Roster store, Init.Crowd and Init.Pawns. IInformantBodyProvider and the InformantRespawn resolver arrive with stories
+ * nkp-009 / nkp-010.
  *
  * Usage (the composition root, after the encounter service is initialised on the round queue):
  *   UPenaltyService* Penalty = World->GetSubsystem<UPenaltyService>();
@@ -93,6 +103,9 @@ private:
 	void HandlePawnKilled(APawn* Victim, APawn* Killer, EVictimKind Kind, EKillCause Cause);
 	void HandleRosterEvent(const FRosterEvent& Event);
 	FParticipantId ResolveParticipant(const APawn* Pawn) const;
+
+	/** The attacker's lockout end from its action state (Assassination's defence state; -1 when it has none). */
+	static double ReadLockoutEnd(const APawn* Pawn);
 
 	TSharedPtr<FPenaltyServiceAdapters> Adapters;
 	TSharedPtr<FPenaltyCore> Core;
