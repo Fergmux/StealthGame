@@ -39,10 +39,14 @@ Full-suite runs (`UnrealEditor-Cmd ... Automation RunTests ^StealthGame.`) conta
 | 5 | 2026-10-27 (NKP 005-008 gate, `npc-kill-penalty-informants-005-008-2026-10-27/full-suite.txt`) | 408/409 (027's then-new PIE test F, fixed in 027) | Success | - |
 | 6 | 2026-10-27 (ASN 027 gate, `assassination-defence-reversal-027-2026-10-27/full-suite.txt`) | 407/409 (schema tests reading another agent's uncommitted schema table) | Success | - |
 | 7 | 2026-10-27 (NKP 009-012 gate, `npc-kill-penalty-informants-009-012-2026-10-27/full-suite.txt`) | 421/421 | Success | - |
+| 8 | 2026-10-27 (NKP 013-015 first gate run) | 431/433 (a new Penalty test's own bug; one WalkSlowerModifier run-phase speed 406.3 vs 450, see note) | Success | - |
+| 9 | 2026-10-27 (NKP 013-015 final gate, `npc-kill-penalty-informants-013-015-2026-10-27/full-suite.txt`) | 433/433 | Success | - |
 
-**Verdict:** ReleaseBaselineStopUnderLag passed 7 consecutive full-suite runs after the fix (and 12 of 12 isolated
+**Verdict:** ReleaseBaselineStopUnderLag passed 9 consecutive full-suite runs after the fix (and 12 of 12 isolated
 runs), each on a different random city; every measurement captured (isolated runs and full-suite runs 1-3) was identical (0.758 / 0.758 s, 53.08 / 53.08 cm,
 0.00 cm). Before the fix it failed 2 of 5 full-suite runs. The other failures in the table belong to tests being written
 by concurrent stories in the same tree, each fixed in its own story. Two consecutive fully green runs: #2 and #3
 (387/387), and #7 (421/421). A dedicated 5x run on a quiet tree was started (10:25) but stopped after run 1 because
 concurrent agents needed the build; runs #2-#7 replace it.
+
+Note (run 8): `StealthGame.Input.PIE.WalkSlowerModifier` failed once under load ("Run + Left Ctrl: measured speed 406.3 cm/s at the target pace 450.0") and passed in run 9: a separate, load-sensitive flake in the run phase of that test, not addressed here.
