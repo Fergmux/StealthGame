@@ -16,6 +16,9 @@
 #if WITH_DEV_AUTOMATION_TESTS && defined(ENABLE_PIE_NETWORK_TEST) && ENABLE_PIE_NETWORK_TEST && WITH_STEALTH_TEST_SEAMS
 
 #include "CQTest.h"
+#include "Components/CapsuleComponent.h"
+#include "EngineUtils.h"
+#include "Tests/PIE/StealthPIEOpenCircle.h"
 #include "HAL/IConsoleManager.h"
 #include "Server/EncounterService.h"
 #include "StealthGameMode.h"
@@ -107,8 +110,36 @@ NETWORK_TEST_CLASS(KillAtArmsLength, "StealthGame.Assassination.PIE")
 			})
 			.Then(TEXT("place the victim clear of the bushes and the attacker 230 cm from it, facing it"), [this]()
 			{
+				// The pair is placed on a clear, flat disc far from every bush (fix 2026-10-27): the spawn layout comes from OS
+				// entropy, and a 230 cm spot in front of the victim that encroached on an adobe piece or the third player was
+				// pushed aside by the teleport (231.9 cm in one full-suite run; the 1 cm precondition then failed).
 				MoveClearOfBushes(VictimPawn.Get());
-				PlaceFacing(AttackerPawn.Get(), VictimPawn.Get(), 230.0);
+				UWorld* Server = ServerWorld();
+				const float HalfHeight = VictimPawn->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+				StealthPIEOpenCircle::FParams Params;
+				Params.RadiusCm = 115.0;
+				Params.MarginCm = 60.0;
+				Params.AlsoIgnored.Add(AttackerPawn.Get());
+				Params.Accept = [Server](const FVector& Centre)
+				{
+					for (TActorIterator<AStealthBush> It(Server); It; ++It)
+					{
+						if (FVector::Dist2D(It->GetActorLocation(), Centre) <= 900.0)
+						{
+							return false;
+						}
+					}
+					return true;
+				};
+				const TOptional<FVector> Centre = StealthPIEOpenCircle::FindOpenCircle(Server, VictimPawn->GetActorLocation() - FVector(0.0, 0.0, HalfHeight), VictimPawn.Get(), Params);
+				ASSERT_THAT(IsTrue(Centre.IsSet(), TEXT("a clear, flat disc away from the bushes for the pair")));
+				const FVector Lift(0.0, 0.0, HalfHeight + 2.0);
+				// The striker keeps its own rotation (a remote owner's rotation comes back from its client, so a server-side turn
+				// does not stick): the victim goes 115 cm ahead of the centre along the striker's facing and the striker 230 cm
+				// behind the victim (PlaceStrikerFacing), so the target is straight ahead on the clear disc.
+				const FVector Forward = AttackerPawn->GetActorForwardVector().GetSafeNormal2D();
+				VictimPawn->TeleportTo(Centre.GetValue() + Forward * 115.0 + Lift, VictimPawn->GetActorRotation(), false, true);
+				PlaceStrikerFacing(AttackerPawn.Get(), VictimPawn.Get(), 230.0);
 				const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(ServerWorld());
 				UEncounterService* Service = Root != nullptr ? Root->GetEncounterService() : nullptr;
 				if (FOnPawnKilled* Killed = Service != nullptr ? Service->GetOnPawnKilled() : nullptr)

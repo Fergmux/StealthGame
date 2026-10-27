@@ -34,3 +34,4 @@ Full-suite runs (`UnrealEditor-Cmd ... Automation RunTests ^StealthGame.`) conta
 |---|------|-------|-----------------------------|-------------|
 | 1 | 2026-10-27 10:25-10:52 | 358/361 (failures unrelated: SchemaComplete / SchemaGenDeterministic read a schema table another agent was editing on disk; KillAtArmsLength placement 231.9 cm, fixed separately) | Success | 0.758 / 0.758 s, 53.08 / 53.08 cm, 0.00 cm |
 | 2 | 2026-10-27 ~13:09 (ASN 024/017 gate) | 387/387 | Success | 0.758 / 0.758 s, 53.08 / 53.08 cm, 0.00 cm |
+| 3 | 2026-10-27 ~13:52 (NKP 001-004 gate) | 387/387 | Success | 0.758 / 0.758 s, 53.08 / 53.08 cm, 0.00 cm (KillAtArmsLength with the open-disc placement: 230.0 cm) |
