@@ -1,12 +1,12 @@
 # Story 021: Brace and startle red herring: due clock, flinch triggers and Prepare cap
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` CNB-R7 (brace) and F2, scoped to this story:*
 
-- [ ] A brace made due by the T4 clock is performed at the next flinch trigger within 30 s (a runner within 2 m, a traversal landing within 3 m) else as an ambient startle; a trigger alone never causes a brace.
-- [ ] Braces use `Prepare(Begin/End)` through the sink after `CanBegin` with the same 60 s cooldown and planted stance; the share held to the Prepare hold cap (4 s, the IIF's Prepare cap key read from tuning) lies in the 99 % binomial interval of `CrowdBraceCapSharePct` (55 %) over at least 400 braces, and the rest are released at U(1.0, 3.8) s.
-- [ ] The accepted brace rate (ambient plus R8 startle counted in the same budget) is within the 99 % Poisson interval of `60 / CrowdBraceIntervalSec` per NPC over a 600-minute run.
+- [x] A brace made due by the T4 clock is performed at the next flinch trigger within 30 s (a runner within 2 m, a traversal landing within 3 m) else as an ambient startle; a trigger alone never causes a brace.
+- [x] Braces use `Prepare(Begin/End)` through the sink after `CanBegin` with the same 60 s cooldown and planted stance; the share held to the Prepare hold cap (4 s, the IIF's Prepare cap key read from tuning) lies in the 99 % binomial interval of `CrowdBraceCapSharePct` (55 %) over at least 400 braces, and the rest are released at U(1.0, 3.8) s.
+- [x] The accepted brace rate (ambient plus R8 startle counted in the same budget) is within the 99 % Poisson interval of `60 / CrowdBraceIntervalSec` per NPC over a 600-minute run.
 
 ---
 
@@ -99,7 +99,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdBraceTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Brace.DueWindowAndTriggers`, `StealthGame.Crowd.Brace.CapShareAndCooldown`; the accepted-rate criterion by `StealthGame.Crowd.TellCalibration.TellBaselineNonZero` (600 simulated minutes); 2026-10-27)
 
 ---
 
@@ -107,3 +107,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-018-tell-sampler-and-calibration-counters.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-023-tell-calibration-gate.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing
+**Deviations**: The Prepare hold cap and cooldown are read from Assassination DefenceDurationSec / DefenceCooldownSec (the IIF has no separate Prepare-cap key). In L_Prototype a brace is a real PrepareBegin through the sink; no Prepare predicate is registered yet, so the dry run passes and the prototype command queue ignores NPCs (no PlayerState).
+**Test Evidence**: `StealthGame.Crowd.Brace.DueWindowAndTriggers`, `StealthGame.Crowd.Brace.CapShareAndCooldown`; the accepted-rate criterion by `StealthGame.Crowd.TellCalibration.TellBaselineNonZero` (600 simulated minutes); full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

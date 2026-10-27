@@ -1,5 +1,7 @@
 #include "Server/StealthCrowdController.h"
 
+#include "Server/CrowdCostMeter.h"
+
 #include "Engine/World.h"
 #include "Server/CrowdDirector.h"
 #include "Server/CrowdStateTreeComponent.h"
@@ -148,14 +150,98 @@ void AStealthCrowdController::HaltBehaviour()
 	bTreeRunning = false;
 }
 
+void AStealthCrowdController::ReleaseForTakeover()
+{
+	FullSink.SetHalted(true);
+	MotionSink.SetHalted(true);
+	if (CrowdStateTree != nullptr && CrowdStateTree->IsRunning())
+	{
+		CrowdStateTree->StopLogic(TEXT("ReleasedForTakeover"));
+	}
+	bTreeRunning = false;
+	bReleasedForTakeover = true;
+}
+
+void AStealthCrowdController::ResumeAfterReversal(uint32 Epoch, UStateTree* Tree)
+{
+	AStealthPawn* Body = GetDrivenPawn();
+	FullSink = FCrowdCommandSink(DriverKind == ECrowdDriverKind::Full ? Body : nullptr, Epoch);
+	MotionSink = FCrowdMotionSink(DriverKind == ECrowdDriverKind::Restricted ? Body : nullptr, Epoch);
+	bReleasedForTakeover = false;
+	if (Tree != nullptr && CrowdStateTree != nullptr)
+	{
+		// From its current activity: the agent kept its state; the tree re-enters the mirrored state.
+		CrowdStateTree->SetCrowdStateTree(Tree);
+		CrowdStateTree->StartLogic();
+		bTreeRunning = CrowdStateTree->IsRunning();
+	}
+}
+
+void AStealthCrowdController::PromoteToFull(UStateTree* Tree)
+{
+	AStealthPawn* Body = GetDrivenPawn();
+	const uint32 Epoch = MotionSink.GetControlEpoch();
+	DriverKind = ECrowdDriverKind::Full;
+	FullSink = FCrowdCommandSink(Body, Epoch);
+	MotionSink = FCrowdMotionSink(nullptr, Epoch);
+	if (Tree != nullptr && CrowdStateTree != nullptr)
+	{
+		if (CrowdStateTree->IsRunning())
+		{
+			CrowdStateTree->StopLogic(TEXT("Promoted"));
+		}
+		CrowdStateTree->SetCrowdStateTree(Tree);
+		CrowdStateTree->StartLogic();
+		bTreeRunning = CrowdStateTree->IsRunning();
+	}
+}
+
 bool AStealthCrowdController::Move(FVector2D Direction, EGait Gait)
 {
+	CROWD_COST_SCOPE(Dispatch);
 	return DriverKind == ECrowdDriverKind::Full ? FullSink.Move(Direction, Gait) : MotionSink.Move(Direction, Gait);
 }
 
 bool AStealthCrowdController::Look(FRotator Rotation)
 {
+	CROWD_COST_SCOPE(Dispatch);
 	return DriverKind == ECrowdDriverKind::Full ? FullSink.Look(Rotation) : MotionSink.Look(Rotation);
+}
+
+// The discrete commands exist only on the full driver's sink: a restricted driver refuses every one (CNB-R10.1).
+bool AStealthCrowdController::DryRun(EActionType Type, const FCourtFixtureId* Target)
+{
+	return DriverKind == ECrowdDriverKind::Full && FullSink.DryRun(Type, Target);
+}
+
+bool AStealthCrowdController::Traverse(const FTraversalHint& Hint)
+{
+	return DriverKind == ECrowdDriverKind::Full && FullSink.Traverse(Hint);
+}
+
+bool AStealthCrowdController::InteractBegin(FCourtFixtureId Target)
+{
+	return DriverKind == ECrowdDriverKind::Full && FullSink.InteractBegin(Target);
+}
+
+bool AStealthCrowdController::InteractEnd()
+{
+	return DriverKind == ECrowdDriverKind::Full && FullSink.InteractEnd();
+}
+
+bool AStealthCrowdController::PrepareBegin()
+{
+	return DriverKind == ECrowdDriverKind::Full && FullSink.PrepareBegin();
+}
+
+bool AStealthCrowdController::PrepareEnd()
+{
+	return DriverKind == ECrowdDriverKind::Full && FullSink.PrepareEnd();
+}
+
+bool AStealthCrowdController::Hide(const FHideCommand& Command)
+{
+	return DriverKind == ECrowdDriverKind::Full && FullSink.Hide(Command);
 }
 
 const FCrowdSinkCounters& AStealthCrowdController::GetSinkCounters() const
@@ -183,8 +269,9 @@ void AStealthCrowdController::OnTreeStateEntered(uint8 TreeActivity)
 
 void AStealthCrowdController::Tick(float DeltaTime)
 {
+	CROWD_COST_SCOPE(Follower);
 	UCrowdDirector* Found = Director.Get();
-	if (Found != nullptr && bDriverBound && Agent.IsStarted())
+	if (Found != nullptr && bDriverBound && Agent.IsStarted() && !bReleasedForTakeover)
 	{
 		const double Now = GetWorld()->GetTimeSeconds();
 		// The due-time list and the follower step BEFORE Super::Tick, so UpdateControlRotation writes this frame's Look.

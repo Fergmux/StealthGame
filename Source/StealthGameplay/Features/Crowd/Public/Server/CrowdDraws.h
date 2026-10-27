@@ -76,8 +76,16 @@ enum class ECrowdDecision : uint16
 	HeadHoldLength = 45,
 	CameraLead = 46,
 	ConverseFaceGap = 47,
+	// Appended by the herring and reaction build (2026-10-27, stories cnb-019 to cnb-024).
+	RunBoutLength = 48,
+	BraceCap = 49,
+	BraceRelease = 50,
+	DecoyEarlyRelease = 51,
+	BushExitSide = 52,
+	ReactionLength = 53,
+	PanicRunLength = 54,
 	/** One past the last value (array sizing only; never drawn). */
-	Count = 48,
+	Count = 55,
 };
 
 /** The stream tag of the crowd behaviour stream (ADR-0016 section 9). */

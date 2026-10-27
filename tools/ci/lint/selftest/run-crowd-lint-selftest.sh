@@ -30,6 +30,12 @@ gate_case crowd-seeded "$fx/violation" 1 14 \
   "$v:10 crowd-identity names FSiteAssignment"
 gate_case crowd-clean "$fx/clean" 0 0 "GATE: PASS (1 file(s) scanned"
 gate_case crowd-transitive "$fx/transitive" 1 1   "Source/StealthGameplay/Features/Crowd/Private/CrowdTransitive.cpp:1 crowd-include transitively includes Source/StealthFoundation/Public/Server/Roster/StealthRosterStore.h"
+u="Source/StealthGameplay/Features/Crowd/Private/CrowdDraws.cpp"
+gate_case crowd-ui-seeded "$fx/ui" 1 4 \
+  "$u:1 crowd-ui includes the drawing/UI header" \
+  "$u:2 crowd-ui includes the drawing/UI header" \
+  "$u:3 crowd-ui draws DrawDebugSphere" \
+  "$u:4 crowd-ui draws AddOnScreenDebugMessage"
 gate_case real-tree-zero-findings "$lint/../../.." 0 0 "GATE: PASS"
 
 selftest_result

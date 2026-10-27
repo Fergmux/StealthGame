@@ -1,5 +1,6 @@
 #include "Server/CrowdTellSampler.h"
 
+#include "Server/CrowdHerringTypes.h"
 #include "Server/StealthTuningSubstructs.h"
 
 void FCrowdTellSampler::TargetRatesPerMin(const FCrowdTuning_Server& T, double OutRates[static_cast<int32>(ECrowdTell::Count)])
@@ -32,14 +33,26 @@ double FCrowdTellSampler::EffectiveRatePerMin(const FCrowdTuning_Server& Tuning,
 {
 	double Rates[static_cast<int32>(ECrowdTell::Count)];
 	TargetRatesPerMin(Tuning, Rates);
-	double Lambda = 0.0;
+	// F2 (amended 2026-10-27): the discard share of tell j is the time other tells hold the gap, sum over k != j of
+	// r_k (T_gap + d_k), with d_k the mean delay from a tell's acceptance to its visible moment when show-anchored.
+	double Blocked = 0.0;
 	for (int32 Index = 0; Index < static_cast<int32>(ECrowdTell::Count); ++Index)
 	{
-		Lambda += bEnabledTells[Index] ? Rates[Index] : 0.0;
+		if (!bEnabledTells[Index])
+		{
+			continue;
+		}
+		if (Index == static_cast<int32>(Tell))
+		{
+			// Show-anchored, a draw while the same tell is still on its way is not a second one: r_j d_j of its own time.
+			Blocked += bShowAnchored ? Rates[Index] * CrowdHerringConstants::ShowDelaySec[Index] / 60.0 : 0.0;
+			continue;
+		}
+		const double Delay = bShowAnchored ? CrowdHerringConstants::ShowDelaySec[Index] : 0.0;
+		Blocked += Rates[Index] * (Tuning.CrowdTellChainGapSec + Delay) / 60.0;
 	}
 	const double Rj = Rates[static_cast<int32>(Tell)];
-	const double Gap = Tuning.CrowdTellChainGapSec / 60.0;
-	return Rj / FMath::Max(1.0 - FMath::Max(Lambda - Rj, 0.0) * Gap, 0.5);
+	return Rj / FMath::Max(1.0 - Blocked, 0.5);
 }
 
 ECrowdDecision FCrowdTellSampler::ClockDecision(ECrowdTell Tell)
@@ -104,14 +117,21 @@ void FCrowdTellSampler::Advance(uint32 Ordinal, double Now, const FCrowdTuning_S
 		const double Fired = Clocks->NextDue[Index];
 		Count(0, Tell);
 		const double Rate = EffectiveRatePerMin(Tuning, Tell) / 60.0;
-		// The chain gap: the latest different tell of this NPC.
+		// The chain gap: the latest different tell of this NPC (a pending one holds the gap open until it is shown).
 		double LatestOther = -1.0e9;
 		for (int32 Other = 0; Other < static_cast<int32>(ECrowdTell::Count); ++Other)
 		{
 			if (Other != Index)
 			{
-				LatestOther = FMath::Max(LatestOther, Clocks->LastTell[Other]);
+				LatestOther = FMath::Max(LatestOther, bShowAnchored && Clocks->bPending[Other] ? Fired : Clocks->LastTell[Other]);
 			}
+		}
+		if (bShowAnchored && Clocks->bPending[Index])
+		{
+			// The same tell is still on its way: this draw is not a second one.
+			Count(1, Tell);
+			Clocks->NextDue[Index] = Fired + Draws.DrawExponential(Ordinal, ClockDecision(Tell), Rate);
+			continue;
 		}
 		if (Fired - LatestOther < Gap)
 		{
@@ -122,6 +142,7 @@ void FCrowdTellSampler::Advance(uint32 Ordinal, double Now, const FCrowdTuning_S
 		}
 		Count(2, Tell);
 		Clocks->LastTell[Index] = Fired;
+		Clocks->bPending[Index] = bShowAnchored;
 		Clocks->NextDue[Index] = Fired + Draws.DrawExponential(Ordinal, ClockDecision(Tell), Rate);
 		OutAccepted.Add(Tell);
 	}
@@ -144,13 +165,54 @@ bool FCrowdTellSampler::IsInChainGap(uint32 Ordinal, ECrowdTell Tell, double Now
 	return false;
 }
 
-void FCrowdTellSampler::NotePerformed(uint32 Ordinal, ECrowdTell Tell, double Now)
+void FCrowdTellSampler::NotePerformed(uint32 Ordinal, ECrowdTell Tell, double Now, bool bFromClock)
 {
 	Count(3, Tell);
+	FNpcClocks& Clocks = Npcs.FindOrAdd(Ordinal);
+	const int32 Index = static_cast<int32>(Tell);
+	Clocks.LastShown[Index] = FMath::Max(Clocks.LastShown[Index], Now);
+	if (!bFromClock || bShowAnchored)
+	{
+		// An R8 tell anchors the gap when it is shown; show-anchored, so does a clock tell.
+		Clocks.LastTell[Index] = FMath::Max(Clocks.LastTell[Index], Now);
+	}
+	Clocks.bPending[Index] = false;
+}
+
+void FCrowdTellSampler::NoteDropped(uint32 Ordinal, ECrowdTell Tell)
+{
+	++Counters.Dropped[static_cast<int32>(Tell)];
 	if (FNpcClocks* Clocks = Npcs.Find(Ordinal))
 	{
-		Clocks->LastTell[static_cast<int32>(Tell)] = FMath::Max(Clocks->LastTell[static_cast<int32>(Tell)], Now);
+		Clocks->bPending[static_cast<int32>(Tell)] = false;
 	}
+	if (Telemetry != nullptr)
+	{
+		Telemetry->AddCrowdCounter(Tell, 5, 1);
+	}
+}
+
+bool FCrowdTellSampler::IsPending(uint32 Ordinal, ECrowdTell Tell) const
+{
+	const FNpcClocks* Clocks = Npcs.Find(Ordinal);
+	return Clocks != nullptr && Clocks->bPending[static_cast<int32>(Tell)];
+}
+
+bool FCrowdTellSampler::IsInShownGap(uint32 Ordinal, ECrowdTell Tell, double Now, const FCrowdTuning_Server& Tuning) const
+{
+	const FNpcClocks* Clocks = Npcs.Find(Ordinal);
+	if (Clocks == nullptr)
+	{
+		return false;
+	}
+	for (int32 Other = 0; Other < static_cast<int32>(ECrowdTell::Count); ++Other)
+	{
+		if (Other != static_cast<int32>(Tell) && Now - Clocks->LastShown[Other] < Tuning.CrowdTellChainGapSec)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 double FCrowdTellSampler::GetNextDue(uint32 Ordinal, ECrowdTell Tell) const

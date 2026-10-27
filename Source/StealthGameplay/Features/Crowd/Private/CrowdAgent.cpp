@@ -58,8 +58,19 @@ void FCrowdAgent::Start(const FCrowdFirstActivity& First, double Now, const FCro
 	}
 	const FCrowdTuning_Server& Tuning = World.GetCrowdTuning();
 	bStarted = true;
-	World.GetTellSampler().StartNpc(Ordinal, Now, Tuning, World.GetDraws());
+	if (Driver == ECrowdDriverKind::Full)
+	{
+		// Only the full catalogue plays red herrings: a restricted driver's pawn runs no tell clock (CNB-R10.1).
+		World.GetTellSampler().StartNpc(Ordinal, Now, Tuning, World.GetDraws());
+	}
 	DueList.Schedule(ECrowdDueKind::GlanceDue, Now + World.GetDraws().DrawUniform(Ordinal, ECrowdDecision::GlanceInterval, Tuning.CrowdGlanceIntervalMinSec, Tuning.CrowdGlanceIntervalMaxSec));
+	if (Driver == ECrowdDriverKind::Restricted)
+	{
+		// A takeover (CNB-R10.1): the heading is held first; the restricted catalogue starts when the hold ends.
+		StartHandoverHold(Now, Self, World);
+		TickHandoverHold(Now, 0.0f, Self, World, Output);
+		return;
+	}
 	if (First.bPause)
 	{
 		BeginPause(Now, Self, World, First.PauseSec);
@@ -74,6 +85,8 @@ void FCrowdAgent::Start(const FCrowdFirstActivity& First, double Now, const FCro
 
 void FCrowdAgent::BeginLeg(double Now, const FCrowdPerceivedPawn& Self, ICrowdAgentWorld& World, double LegCm)
 {
+	// A released pawn joins the full catalogue at a leg boundary (story cnb-029): nothing changes before it.
+	TryPromote(Now, Self, World);
 	const FCrowdTuning_Server& Tuning = World.GetCrowdTuning();
 	FCrowdDraws& Draws = World.GetDraws();
 	if (LegCm <= 0.0)
@@ -87,6 +100,17 @@ void FCrowdAgent::BeginLeg(double Now, const FCrowdPerceivedPawn& Self, ICrowdAg
 		BeginPause(Now, Self, World, Tuning.CrowdShortPauseMinSec);
 		return;
 	}
+	BeginLegTo(Now, Self, World, Goal, false);
+	if (Observer != nullptr)
+	{
+		Observer->OnLegStarted(Ordinal, Now, Follower.GetPace(), LegCm);
+	}
+}
+
+void FCrowdAgent::BeginLegTo(double Now, const FCrowdPerceivedPawn& Self, ICrowdAgentWorld& World, const FVector& Goal, bool bKeepPace, EGait Gait, double ReleaseAt,
+	TConstArrayView<FVector> Tail)
+{
+	const FCrowdTuning_Server& Tuning = World.GetCrowdTuning();
 	const uint32 LegId = NextLegId++;
 	FCrowdPathRequest Request;
 	Request.Ordinal = Ordinal;
@@ -102,7 +126,8 @@ void FCrowdAgent::BeginLeg(double Now, const FCrowdPerceivedPawn& Self, ICrowdAg
 	{
 		Corners = { Goal };
 	}
-	Follower.StartLeg(LegId, Self.Location, Corners, Now, Tuning, Draws);
+	Corners.Append(Tail.GetData(), Tail.Num());
+	Follower.StartLeg(LegId, Self.Location, Corners, Now, Tuning, World.GetDraws(), bKeepPace, Gait, ReleaseAt);
 	if (!bInstant)
 	{
 		Follower.BeginWaitForPath(Now);
@@ -110,10 +135,6 @@ void FCrowdAgent::BeginLeg(double Now, const FCrowdPerceivedPawn& Self, ICrowdAg
 	bConversationChecked = false;
 	DecidedNeighbours.Reset();
 	SetActivity(ECrowdActivity::Routing, World);
-	if (Observer != nullptr)
-	{
-		Observer->OnLegStarted(Ordinal, Now, Follower.GetPace(), LegCm);
-	}
 }
 
 void FCrowdAgent::BeginPause(double Now, const FCrowdPerceivedPawn& Self, ICrowdAgentWorld& World, double ForcedLength)
@@ -396,6 +417,10 @@ void FCrowdAgent::ProcessDue(double Now, const FCrowdPerceivedPawn& Self, ICrowd
 				}
 			}
 			break;
+		case ECrowdDueKind::StrikeReaction:
+			// Started in TickHerrings (it needs the output for a startle brace).
+			bStrikeReactionDue = true;
+			break;
 		default:
 			break;
 		}
@@ -418,7 +443,7 @@ void FCrowdAgent::StartGlance(double Now, const FCrowdPerceivedPawn& Self, ICrow
 	for (const FCrowdPerceivedPawn* Other : Near)
 	{
 		// G2: the nearest MOVING pawn with line of sight; any kind, never a concealed one (the query excludes them).
-		if (Other->Speed2D() < MovingSpeedCm)
+		if (Other->Speed2D() < MovingSpeedCm || (Other->Key == AvoidGlanceKey && Now < AvoidGlanceUntil))
 		{
 			continue;
 		}
@@ -428,13 +453,13 @@ void FCrowdAgent::StartGlance(double Now, const FCrowdPerceivedPawn& Self, ICrow
 			continue;
 		}
 		double Hold;
-		if (bHeadHoldPending)
+		if (bHeadHoldPending && TryPerformTell(ECrowdTell::HeadHold, Now, World))
 		{
 			// G6: the T13 clock turns this glance into a long hold.
 			bHeadHoldPending = false;
+			PendingSince[static_cast<int32>(ECrowdTell::HeadHold)] = -1.0;
 			GlanceKind = ECrowdGlanceKind::LongHold;
 			Hold = Draws.DrawUniform(Ordinal, ECrowdDecision::HeadHoldLength, Tuning.CrowdHeadHoldMinSec, Tuning.CrowdHeadHoldMaxSec);
-			World.GetTellSampler().NotePerformed(Ordinal, ECrowdTell::HeadHold, Now);
 		}
 		else
 		{
@@ -544,6 +569,18 @@ FCrowdGazeIntent FCrowdAgent::ComputeGaze(double Now, const FCrowdPerceivedPawn&
 		Gaze.bActive = true;
 		Gaze.YawDeg = YawTo(Eye, PauseContextPoint);
 	}
+	else if (Mode == EHerringMode::ReactPause)
+	{
+		// R8: the reaction pause faces the strike point.
+		Gaze.bActive = true;
+		Gaze.YawDeg = YawTo(Eye, StrikePoint);
+	}
+	else if (Activity == ECrowdActivity::Tending && (Mode == EHerringMode::DecoyHold || Mode == EHerringMode::DecoyBeginCheck))
+	{
+		// T3: the two-handed pose faces the fixture.
+		Gaze.bActive = true;
+		Gaze.YawDeg = YawTo(Eye, DecoySite.LookPoint);
+	}
 	return Gaze;
 }
 
@@ -569,19 +606,29 @@ void FCrowdAgent::Tick(double Now, float Dt, const FCrowdPerceivedPawn& Self, IC
 	{
 		return;
 	}
+	if (bAbsorbed)
+	{
+		return; // absorbed into an alley: the world removes the pawn
+	}
 	const FCrowdTuning_Server& Tuning = World.GetCrowdTuning();
+	if (TickHandoverHold(Now, Dt, Self, World, Output))
+	{
+		return;
+	}
+	if (bAdoptPending && bReleasedConcealed)
+	{
+		TryPromote(Now, Self, World);
+	}
 	ProcessDue(Now, Self, World);
 
-	// Tell clocks (G6 only in this build).
+	// Tell clocks: every accepted tell is queued for its behaviour (CNB-R7), then the herrings advance.
 	TArray<ECrowdTell, TInlineAllocator<2>> Accepted;
 	World.GetTellSampler().Advance(Ordinal, Now, Tuning, World.GetDraws(), Accepted);
 	for (const ECrowdTell Tell : Accepted)
 	{
-		if (Tell == ECrowdTell::HeadHold)
-		{
-			bHeadHoldPending = true;
-		}
+		OnTellAccepted(Tell, Now, World);
 	}
+	TickHerrings(Now, Self, World, Output);
 
 	TArray<const FCrowdPerceivedPawn*> Neighbours;
 	World.GetHash().Query(Self.Location, CrowdAgentLocal::SteeringQueryCm, ECrowdQuery::Steering, Self.Key, Neighbours);
@@ -610,7 +657,12 @@ void FCrowdAgent::Tick(double Now, float Dt, const FCrowdPerceivedPawn& Self, IC
 	{
 		bLegAbandoned = true;
 	}
-	if (Motion.bArrived && Activity == ECrowdActivity::Routing && !bLegAbandoned)
+	if (Motion.bArrived && Mode != EHerringMode::None && OnHerringArrival(Now, Self, World, Output))
+	{
+		// A herring consumed the arrival (a reversal's pivot, a court or a bush reached).
+		Motion = Follower.Tick(Now, 0.0f, Self, Neighbours, Tuning, World.GetLocomotionTuning(), World.GetDraws());
+	}
+	else if (Motion.bArrived && Activity == ECrowdActivity::Routing && !bLegAbandoned)
 	{
 		// At rest at the leg's end: the pause starts in this tick (C2).
 		BeginPause(Now, Self, World);
@@ -640,6 +692,14 @@ void FCrowdAgent::Tick(double Now, float Dt, const FCrowdPerceivedPawn& Self, IC
 		ForceLeg(Now, Self, World, Output);
 		Motion = Follower.Tick(Now, 0.0f, Self, Neighbours, Tuning, World.GetLocomotionTuning(), World.GetDraws());
 	}
+	if (Mode == EHerringMode::Traversing)
+	{
+		// The shared SCL traversal moves the pawn; the held Move points over the coping, like a human's held key.
+		const FVector2D Over = FVector2D(TraversalSite.Far - TraversalSite.Near).GetSafeNormal();
+		Motion.WorldDirection = Over;
+		Motion.Magnitude = Follower.GetPace() > 0.0f ? Follower.GetPace() : 1.0f;
+		Motion.Gait = EGait::Walk;
+	}
 	EmitInput(Now, Dt, Motion, ComputeGaze(Now, Self, World), World, Output);
 }
 
@@ -650,10 +710,18 @@ bool FCrowdAgent::Decide(double Now, const FCrowdPerceivedPawn& Self, ICrowdAgen
 		return false;
 	}
 	const ECrowdActivity Before = Activity;
+	if (HoldUntil >= 0.0)
+	{
+		return false; // the takeover hold owns the pawn until HandoverHoldSec has passed
+	}
 	switch (Activity)
 	{
 	case ECrowdActivity::Routing:
-		if (bLegAbandoned && !Follower.IsOnLeg())
+		if (Mode != EHerringMode::None)
+		{
+			// A herring owns the leg (a run, a reversal, a walk to a court or a bush, a traversal).
+		}
+		else if (bLegAbandoned && !Follower.IsOnLeg())
 		{
 			// Abandoned (CNB-R3.3): draw a new destination at once.
 			BeginLeg(Now, Self, World, -1.0);
@@ -697,6 +765,14 @@ bool FCrowdAgent::OnPathResult(const FCrowdPathResult& Result, ICrowdAgentWorld&
 		bWake = true;
 		return true;
 	}
+	if (Mode == EHerringMode::TraverseApproach && TraversalTail.Num() > 0)
+	{
+		// The approach leg's path ends at the coping's near side; the crossing and the landing follow it.
+		TArray<FVector, TInlineAllocator<16>> WithTail(Result.Corners);
+		WithTail.Append(TraversalTail);
+		Follower.ReplacePath(PathFrom, WithTail);
+		return true;
+	}
 	Follower.ReplacePath(PathFrom, Result.Corners);
 	return true;
 }
@@ -706,6 +782,14 @@ void FCrowdAgent::Halt(ICrowdAgentOutput& Output)
 	bHalted = true;
 	DueList.Clear();
 	Follower.Stop();
+	// Holds are cancelled by Round's round-end step (ADR-0002 8.4 (g)); the crowd only stops its own herrings.
+	Mode = EHerringMode::None;
+	BraceDueUntil = -1.0;
+	bStrikeReactionDue = false;
+	for (double& Since : PendingSince)
+	{
+		Since = -1.0;
+	}
 	Activity = ECrowdActivity::Halted;
 	Output.Move(FVector2D::ZeroVector, EGait::Walk);
 	LastMove = FVector2D::ZeroVector;

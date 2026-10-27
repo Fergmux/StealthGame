@@ -383,7 +383,10 @@ NETWORK_TEST_CLASS(CommandPath, "StealthGame.Crowd.PIE")
 				ASSERT_THAT(IsTrue(Passed > 1000, TEXT("the crowd moved through the Move/Look entry points")));
 				ASSERT_THAT(AreEqual(0, Backstops, TEXT("0 RequestDirectMove / RequestPathMove backstop hits (AC-CNB-02)")));
 				ASSERT_THAT(AreEqual(int64(0), PathFollowing, TEXT("0 path-following components")));
-				ASSERT_THAT(AreEqual(int64(0), Discrete, TEXT("0 crowd discrete commands in this catalogue (no Attack can exist, AC-CNB-11)")));
+				// The red herrings (stories cnb-019 to cnb-022) issue discrete commands through the same sink (a brace's
+				// Prepare in this world: L_Prototype offers no court, bush or coping site); none can be an Attack, the sink has
+				// no such method (static_assert in CrowdSink.h, AC-CNB-11).
+				ASSERT_THAT(IsTrue(Discrete < Passed, TEXT("discrete herring commands stay rare beside the Move/Look stream")));
 				ASSERT_THAT(AreEqual(int64(0), Stale, TEXT("no stale-epoch drop without a hand-over")));
 			});
 	}

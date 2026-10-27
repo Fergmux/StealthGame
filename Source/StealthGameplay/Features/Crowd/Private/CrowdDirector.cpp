@@ -8,6 +8,8 @@
 #include "NavigationSystem.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Server/Core/StealthPawnControlQuery.h"
+#include "Server/ActionHub.h"
+#include "Server/CrowdCostMeter.h"
 #include "Server/CrowdMotionProfileData.h"
 #include "Server/CrowdStateTreeComponent.h"
 #include "Server/CrowdStateTreeSchema.h"
@@ -21,6 +23,12 @@
 #include "View/Core/StealthPawnMovementComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogStealthCrowd, Log, All);
+
+#if !UE_BUILD_SHIPPING
+/** Dev only (story cnb-025 evidence): log each R8 responder's drawn reaction to the server log (crowd facts only). */
+static TAutoConsoleVariable<int32> CVarCrowdLogStrikeReactions(TEXT("Crowd.LogStrikeReactions"), 0,
+	TEXT("1: log each strike's R8 responders (ordinal, distance, drawn reaction) to the server log. Development only."));
+#endif
 
 namespace CrowdDirectorLocal
 {
@@ -96,6 +104,97 @@ void UCrowdDirector::OnWorldBeginPlay(UWorld& InWorld)
 	{
 		Nav->OnNavigationGenerationFinishedDelegate.AddUniqueDynamic(this, &UCrowdDirector::HandleNavGenerationFinished);
 	}
+	if (UActionHub* Hub = UActionHub::Get(&InWorld))
+	{
+		ActionStartedHandle = Hub->OnActionStarted.AddUObject(this, &UCrowdDirector::HandleActionStarted);
+	}
+}
+
+void UCrowdDirector::HandleActionStarted(AStealthPawn* Pawn, EActionType Type)
+{
+	const uint32 Ordinal = StealthPawnControl::GetSpawnOrdinal(Pawn);
+	if (Ordinal != StealthPawnControl::NoSpawnOrdinal && FindController(Ordinal) != nullptr)
+	{
+		ActionStartedAt.Add((static_cast<uint64>(Ordinal) << 8) | static_cast<uint64>(Type), GetWorld()->GetTimeSeconds());
+	}
+	if (Type == EActionType::Attack && Pawn != nullptr)
+	{
+		// The strike point: the striker's reach in front of it (the stimulus is the start, never the outcome).
+		const FVector Point = Pawn->GetActorLocation() + Pawn->GetActorForwardVector() * 100.0;
+		NoteStrikeStarted(Point, KeyOf(Pawn), GetWorld()->GetTimeSeconds());
+	}
+}
+
+void UCrowdDirector::NoteStrikeStarted(const FVector& Point, uint64 SourceKey, double StimulusTime)
+{
+	CROWD_COST_SCOPE(Perception);
+	if (!Core.IsValid() || !Core->IsActive())
+	{
+		return; // dormant or halted: no reactions (CNB-R12)
+	}
+	StealthCrowdBlindness::FCrowdScope Scope;
+	const FCrowdTuning_Server& T = GetCrowdTuning();
+	TArray<FCrowdStrikeCandidate> Candidates;
+	for (const TPair<uint32, TWeakObjectPtr<AStealthCrowdController>>& Pair : Controllers)
+	{
+		const AStealthCrowdController* Controller = Pair.Value.Get();
+		const APawn* Pawn = Controller != nullptr ? Controller->GetPawn() : nullptr;
+		if (Pawn == nullptr || KeyOf(Pawn) == SourceKey || Controller->GetDriverKind() != ECrowdDriverKind::Full || !Controller->GetAgent().IsStarted()
+			|| Controller->GetAgent().IsStrikeRefractory(StimulusTime, T))
+		{
+			continue;
+		}
+		const double Distance = FVector::Dist2D(Pawn->GetActorLocation(), Point);
+		if (Distance <= T.CrowdStrikeReactRadiusCm)
+		{
+			Candidates.Add({ Pair.Key, Distance, 0.0 });
+		}
+	}
+	StrikeFanOut.Begin(StimulusTime, Point, SourceKey, MoveTemp(Candidates), GetDraws());
+}
+
+void UCrowdDirector::ProcessStrikes(double Now)
+{
+	CROWD_COST_SCOPE(Perception);
+	if (!StrikeFanOut.HasPending())
+	{
+		return;
+	}
+	const FCrowdTuning_Server& T = GetCrowdTuning();
+	const int32 Budget = FMath::Max(T.CrowdRaysPerFrameLimit - RaysThisFrame, 0);
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(CrowdStrikeSight), false);
+	const int32 Used = StrikeFanOut.Process(Budget, T.CrowdStrikeResponderLimit,
+		[this, &Params](const FCrowdPendingStrike& Strike, const FCrowdStrikeCandidate& Candidate)
+		{
+			const AStealthCrowdController* Controller = FindController(Candidate.Ordinal);
+			const APawn* Pawn = Controller != nullptr ? Controller->GetPawn() : nullptr;
+			if (Pawn == nullptr)
+			{
+				return false;
+			}
+			FHitResult Hit;
+			FCollisionQueryParams Query = Params;
+			Query.AddIgnoredActor(Pawn);
+			const FVector Eye = Pawn->GetActorLocation() + FVector(0.0, 0.0, CrowdDirectorLocal::EyeAboveCentreCm);
+			const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Eye, Strike.Point + FVector(0.0, 0.0, CrowdDirectorLocal::EyeAboveCentreCm), ECC_Visibility, Query);
+			return !bHit || Cast<APawn>(Hit.GetActor()) != nullptr;
+		},
+		[this, Now](const FCrowdPendingStrike& Strike, const FCrowdStrikeCandidate& Candidate)
+		{
+			if (AStealthCrowdController* Controller = FindController(Candidate.Ordinal))
+			{
+				Controller->GetAgent().OnStrikeStimulus(Strike.StimulusTime, Strike.Point, Strike.SourceKey, Candidate.DistanceCm, Now, *this);
+#if !UE_BUILD_SHIPPING
+				if (CVarCrowdLogStrikeReactions.GetValueOnGameThread() != 0)
+				{
+					UE_LOGF(LogStealthCrowd, Log, "R8 strike %llu responder %u at %.0f cm: %ls", Strike.StrikeIndex, Candidate.Ordinal, Candidate.DistanceCm,
+						LexToString(Controller->GetAgent().GetDrawnReaction()));
+				}
+#endif
+			}
+		});
+	RaysThisFrame += Used;
+	MaxRaysInAFrame = FMath::Max(MaxRaysInAFrame, RaysThisFrame);
 }
 
 void UCrowdDirector::HandleNavGenerationFinished(ANavigationData* NavData)
@@ -111,6 +210,10 @@ void UCrowdDirector::Deinitialize()
 	if (UNavigationSystemV1* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
 	{
 		Nav->OnNavigationGenerationFinishedDelegate.RemoveDynamic(this, &UCrowdDirector::HandleNavGenerationFinished);
+	}
+	if (UActionHub* Hub = UActionHub::Get(GetWorld()); Hub != nullptr && ActionStartedHandle.IsValid())
+	{
+		Hub->OnActionStarted.Remove(ActionStartedHandle);
 	}
 	if (bTickRegistered)
 	{
@@ -189,11 +292,27 @@ void UCrowdDirector::EnsureCore()
 	InFlight.Reset();
 	StartPlacements.Reset();
 	Tells = FCrowdTellSampler();
-	// G6 is the only tell behaviour of this build (stories cnb-019 onward enable the others).
-	Tells.SetEnabled(ECrowdTell::HeadHold, true);
+	ConfigureTells();
 	DecisionStats = FCrowdDecisionStats();
 	NavRebuildsDuringRound = 0;
 	RoundTuningHash = 0;
+}
+
+void UCrowdDirector::ConfigureTells()
+{
+	// Runs, reversals, braces and head holds need no site; the others only run where this world has their sites
+	// (an accepted tell that could never be performed would only be dropped). Bushes also need Concealment's filter.
+	// Show-anchored (F2 as amended 2026-10-27): a tell on its way holds the chain gap until it is shown.
+	Tells.SetShowAnchored(true);
+	Tells.SetEnabled(ECrowdTell::Run, true);
+	Tells.SetEnabled(ECrowdTell::Reversal, true);
+	Tells.SetEnabled(ECrowdTell::Brace, true);
+	Tells.SetEnabled(ECrowdTell::HeadHold, true);
+	const bool bTraversals = HerringSites != nullptr && HerringSites->HasTraversals();
+	Tells.SetEnabled(ECrowdTell::Vault, bTraversals);
+	Tells.SetEnabled(ECrowdTell::Climb, bTraversals);
+	Tells.SetEnabled(ECrowdTell::DecoyTend, HerringSites != nullptr && HerringSites->GetCourtCount() > 0);
+	Tells.SetEnabled(ECrowdTell::Bush, HerringSites != nullptr && HerringSites->HasBushes() && PerceptionFilter.IsValid());
 }
 
 void UCrowdDirector::ResetForNewRound()
@@ -250,6 +369,11 @@ void UCrowdDirector::AttachDriver(AStealthCrowdController* Controller, AStealthP
 	if (Core->IsActive())
 	{
 		Core->JoinActiveRound(Ordinal, GetWorld()->GetTimeSeconds(), *this);
+	}
+	FCrowdAdoptParams Adopt;
+	if (PendingAdoptions.RemoveAndCopyValue(FObjectKey(Pawn), Adopt))
+	{
+		Controller->GetAgent().ScheduleAdoption(GetWorld()->GetTimeSeconds(), Adopt.RestrictedUntilServerTime, Adopt.bExitAtNextScheduledSlot, false, 0.0, *this);
 	}
 	else if (Core->IsHalted())
 	{
@@ -341,7 +465,7 @@ bool UCrowdDirector::AdmitWakeDecision()
 
 void UCrowdDirector::StartRound()
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(Crowd.Director);
+	CROWD_COST_SCOPE(Director);
 	StealthCrowdBlindness::FCrowdScope Scope;
 	EnsureCore();
 	if (Core->IsHalted())
@@ -364,6 +488,7 @@ void UCrowdDirector::StartRound()
 		BuildRouteNodes();
 	}
 	BuildHash();
+	ConfigureTells();
 	Core->StartRound(GetWorld()->GetTimeSeconds(), IsNavReady(), *this);
 	if (Core->IsNavNotReady())
 	{
@@ -384,7 +509,7 @@ void UCrowdDirector::StartAgent(uint32 Ordinal, const FCrowdFirstActivity& First
 
 void UCrowdDirector::Halt()
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(Crowd.Director);
+	CROWD_COST_SCOPE(Director);
 	EnsureCore();
 	// Synchronously, in this call: latch every sink, clear Move, stop every tree (never by an event alone).
 	Core->Halt();
@@ -397,6 +522,8 @@ void UCrowdDirector::Halt()
 	}
 	PathBudget.Reset();
 	RayBudget.Reset();
+	// Reactions stop with the round (CNB-R12): no strike fanned out after Halt.
+	StrikeFanOut.Reset();
 }
 
 void UCrowdDirector::DriveBoundPawn(AStealthPawn* Pawn)
@@ -409,22 +536,69 @@ void UCrowdDirector::DriveBoundPawn(AStealthPawn* Pawn)
 
 void UCrowdDirector::ReleaseControl(AStealthPawn* Pawn)
 {
+	// Hand-back (CNB-R10.3): Move(0), the tree stopped and the driver detached at the start of the next Director frame,
+	// never during a traversal (the possession change itself is the factory's hand-over pass, ADR-0010). Idempotent.
 	const uint32 Ordinal = StealthPawnControl::GetSpawnOrdinal(Pawn);
-	if (AStealthCrowdController* Controller = FindController(Ordinal))
+	if (FindController(Ordinal) != nullptr)
 	{
-		Controller->HaltBehaviour();
+		PendingReleases.AddUnique(Ordinal);
 	}
 	PendingRestricted.Remove(FObjectKey(Pawn));
 }
 
 void UCrowdDirector::AdoptReleasedPawn(AStealthPawn* Pawn, const FCrowdAdoptParams& Params)
 {
-	// Story cnb-029 makes the adoption invisible (next leg boundary, lockout under the restricted driver); here the pawn
-	// is counted into the ledger and joins with the full driver at its next possession.
-	if (Pawn != nullptr && Core.IsValid())
+	if (Pawn == nullptr)
 	{
-		Core->NoteRelease();
+		return;
 	}
+	EnsureCore();
+	const uint32 Ordinal = StealthPawnControl::GetSpawnOrdinal(Pawn);
+	AStealthCrowdController* Controller = FindController(Ordinal);
+	if (ReleasedForTakeover.Remove(Ordinal) > 0)
+	{
+		// The reversal of a TryReleaseNpc that did not bind (story cnb-030): B - 1, sinks unlatched at the pawn's current
+		// epoch, the tree restarted from the agent's current activity.
+		Core->NoteTakeoverReversed();
+		if (Controller != nullptr)
+		{
+			const FCrowdAgentRecord* Record = Core->FindAgent(Ordinal);
+			Controller->ResumeAfterReversal(StealthPawnControl::GetControlEpoch(Pawn), LoadTree(Record != nullptr ? Record->Driver : ECrowdDriverKind::Full));
+		}
+		return;
+	}
+	// ReleaseToCrowd (CNB-R10.4): counted into the ledger; nothing visible changes now.
+	Core->NoteRelease();
+	if (Controller == nullptr)
+	{
+		// Not crowd-driven yet: the restricted driver attaches first (the lockout), then the adoption applies.
+		PendingRestricted.Add(FObjectKey(Pawn));
+		PendingAdoptions.Add(FObjectKey(Pawn), Params);
+		return;
+	}
+	const ICrowdPerceptionFilter* Filter = PerceptionFilter.Get();
+	const bool bConcealed = Filter != nullptr && !Filter->IsPerceivable(Pawn);
+	// The time already concealed is Concealment's to report (not built): 0 until it is (an unconditioned stay).
+	Controller->GetAgent().ScheduleAdoption(GetWorld()->GetTimeSeconds(), Params.RestrictedUntilServerTime, Params.bExitAtNextScheduledSlot, bConcealed, 0.0, *this);
+}
+
+void UCrowdDirector::OnAgentPromoted(uint32 Ordinal)
+{
+	if (FCrowdAgentRecord* Record = Core.IsValid() ? Core->FindAgent(Ordinal) : nullptr)
+	{
+		Record->Driver = ECrowdDriverKind::Full;
+	}
+	if (AStealthCrowdController* Controller = FindController(Ordinal))
+	{
+		Controller->PromoteToFull(LoadTree(ECrowdDriverKind::Full));
+	}
+}
+
+bool UCrowdDirector::ClaimExitSlot(uint32 Ordinal)
+{
+	// The ambient schedule gives its next exit slot to the first claimant (no schedule runs until LSC sockets exist).
+	ExitClaims.AddUnique(Ordinal);
+	return false;
 }
 
 void UCrowdDirector::RequestPawnStop(const FRoundLivePawn& LivePawn, double BoundSec)
@@ -444,9 +618,16 @@ ETakeoverEligibility UCrowdDirector::GetTakeoverEligibility(const AStealthPawn* 
 	{
 		return ETakeoverEligibility::Bound;
 	}
-	if (Record->Driver == ECrowdDriverKind::Restricted)
+	if (Record->Driver == ECrowdDriverKind::Restricted || ReleasedForTakeover.Contains(Ordinal))
 	{
 		return ETakeoverEligibility::Bound;
+	}
+	// AlleyExit: any pawn whose leg is an ambient exit, including an exile body waiting for its slot (CNB-R11): a
+	// participant can never re-adopt its own released body.
+	if (const AStealthCrowdController* Controller = FindController(Ordinal);
+		Controller != nullptr && (Controller->GetAgent().IsExiting() || Controller->GetAgent().IsAwaitingExitSlot() || ExitClaims.Contains(Ordinal)))
+	{
+		return ETakeoverEligibility::AlleyExit;
 	}
 	switch (Record->Activity)
 	{
@@ -463,8 +644,25 @@ ETakeoverEligibility UCrowdDirector::GetTakeoverEligibility(const AStealthPawn* 
 
 bool UCrowdDirector::TryReleaseNpc(AStealthPawn* Pawn, FEpochToken Expected)
 {
-	// Story cnb-030 (atomic release for informants) is not in this build: refuse, Penalty re-picks.
-	return false;
+	// Story cnb-030 (CNB-R11): called inside Penalty's commit slot on the pawn PickRespawnPawn returned. Atomic in this
+	// call: re-check eligibility, latch the sinks and stop the tree (no Move(0): the pawn keeps moving as it was), bump the
+	// control epoch (every older command, path callback or debounced End is dropped from now on), and take the pawn out of
+	// the crowd ledger (B + 1). The round epoch token is the caller's (Penalty validated it in its slot).
+	if (Pawn == nullptr || !Core.IsValid() || Core->IsHalted() || GetTakeoverEligibility(Pawn) != ETakeoverEligibility::Eligible)
+	{
+		return false;
+	}
+	const uint32 Ordinal = StealthPawnControl::GetSpawnOrdinal(Pawn);
+	AStealthCrowdController* Controller = FindController(Ordinal);
+	if (Controller == nullptr)
+	{
+		return false;
+	}
+	Controller->ReleaseForTakeover();
+	StealthPawnControl::BumpControlEpoch(Pawn);
+	Core->NoteTakeover();
+	ReleasedForTakeover.Add(Ordinal);
+	return true;
 }
 
 // ---- ICrowdAgentWorld ----------------------------------------------------------------------------------------------
@@ -545,7 +743,7 @@ bool UCrowdDirector::FindPauseContext(const FVector& At, double Radius, FVector&
 
 bool UCrowdDirector::HasLineOfSight(uint32 Ordinal, const FVector& Eye, const FVector& Target)
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(Crowd.Perception);
+	CROWD_COST_SCOPE(Perception);
 	if (RaysThisFrame >= GetCrowdTuning().CrowdRaysPerFrameLimit)
 	{
 		return false; // deferred: the caller tries again later (G2 retries; stimuli queue with their time)
@@ -576,6 +774,68 @@ uint32 UCrowdDirector::GetCurrentControlEpoch(uint32 Ordinal) const
 {
 	const AStealthCrowdController* Controller = FindController(Ordinal);
 	return Controller != nullptr ? StealthPawnControl::GetControlEpoch(Controller->GetPawn()) : 0u;
+}
+
+FCrowdActionTimings UCrowdDirector::GetActionTimings() const
+{
+	// Other owners' values (never copied into a Crowd key): the schema defaults until the runtime tuning store lands.
+	FCrowdActionTimings Timings;
+	Timings.ObjectiveInteractSec = FObjectivesTuning_Public().ObjectiveInteractSec;
+	Timings.PrepareCapSec = FAssassinationTuning_Public().DefenceDurationSec;
+	Timings.PrepareCooldownSec = FAssassinationTuning_Public().DefenceCooldownSec;
+	Timings.HandoverHoldSec = FLocomotionTuning_Server().HandoverHoldSec;
+	return Timings;
+}
+
+bool UCrowdDirector::IsOnNavigation(const FVector& Point) const
+{
+	const UNavigationSystemV1* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	FNavLocation OnNav;
+	return Nav == nullptr || Nav->ProjectPointToNavigation(Point, OnNav, FVector(50.0, 50.0, 250.0));
+}
+
+bool UCrowdDirector::FindTraversalNear(uint32 Ordinal, const FVector& From, double MaxCm, bool bClimb, FCrowdTraversalSite& Out)
+{
+	return HerringSites != nullptr && HerringSites->FindTraversalNear(From, MaxCm, bClimb, Out);
+}
+
+bool UCrowdDirector::IsTraversing(uint32 Ordinal) const
+{
+	const AStealthCrowdController* Controller = FindController(Ordinal);
+	const AStealthPawn* Pawn = Controller != nullptr ? Controller->GetDrivenPawn() : nullptr;
+	const UStealthMovementComponent* Movement = Pawn != nullptr ? Pawn->GetStealthMovement() : nullptr;
+	return Movement != nullptr && Movement->IsInTraversal();
+}
+
+int32 UCrowdDirector::GetCourtCount() const
+{
+	return HerringSites != nullptr ? HerringSites->GetCourtCount() : 0;
+}
+
+bool UCrowdDirector::GetCourtStandPoint(int32 Court, const FVector& From, FCrowdCourtSite& Out)
+{
+	return HerringSites != nullptr && HerringSites->GetCourtStandPoint(Court, From, Out);
+}
+
+bool UCrowdDirector::FindBush(const FVector& From, TConstArrayView<FVector> Path, double RadiusCm, FCrowdBushSite& Out)
+{
+	return HerringSites != nullptr && PerceptionFilter.IsValid() && HerringSites->FindBush(From, Path, RadiusCm, Out);
+}
+
+ECrowdBeginOutcome UCrowdDirector::GetBeginOutcome(uint32 Ordinal, EActionType Type, double SubmittedAt, double Now)
+{
+	const UActionHub* Hub = UActionHub::Get(GetWorld());
+	if (Hub == nullptr || !Hub->HasPredicate(Type))
+	{
+		// No legality owner for the action in this build: nothing can refuse it.
+		return ECrowdBeginOutcome::Accepted;
+	}
+	if (const double* Started = ActionStartedAt.Find((static_cast<uint64>(Ordinal) << 8) | static_cast<uint64>(Type)); Started != nullptr && *Started >= SubmittedAt)
+	{
+		return ECrowdBeginOutcome::Accepted;
+	}
+	// The command drains in the next queue slot: no start a few frames after the submit is a refusal (NotNow).
+	return Now - SubmittedAt > 0.1 ? ECrowdBeginOutcome::Refused : ECrowdBeginOutcome::Pending;
 }
 
 // ---- Start placement -----------------------------------------------------------------------------------------------
@@ -670,7 +930,7 @@ void UCrowdDirector::BuildRouteNodes()
 
 void UCrowdDirector::BuildHash()
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(Crowd.Perception);
+	CROWD_COST_SCOPE(Perception);
 	TArray<FCrowdPerceivedPawn> Pawns;
 	const ICrowdPerceptionFilter* Filter = PerceptionFilter.Get();
 	for (TActorIterator<AStealthPawn> It(GetWorld()); It; ++It)
@@ -693,20 +953,26 @@ void UCrowdDirector::BuildHash()
 		bool& bRunning = WasRunning.FindOrAdd(Facts.Key);
 		const bool bNowRunning = bRunning ? Speed > CrowdDirectorLocal::RunEndSpeedCm : Speed > CrowdDirectorLocal::RunStartSpeedCm;
 		Facts.bRunning = bNowRunning;
-		// The run start is the salient event (G4): marked for this frame's fan-out.
-		Facts.bTraversalLanding = bNowRunning && !bRunning;
+		// The run start is a salient event (G4): marked for this frame's fan-out.
+		Facts.bRunStart = bNowRunning && !bRunning;
 		bRunning = bNowRunning;
+		// A traversal that ended this frame is a landing (G4, and the T4 flinch trigger within 3 m).
+		const UStealthMovementComponent* Movement = Pawn->GetStealthMovement();
+		const bool bNowTraversing = Movement != nullptr && Movement->IsInTraversal();
+		bool& bWasTraversing = WasTraversing.FindOrAdd(Facts.Key);
+		Facts.bTraversalLanding = bWasTraversing && !bNowTraversing;
+		bWasTraversing = bNowTraversing;
 	}
 	Hash.Build(Pawns);
 }
 
 void UCrowdDirector::FanOutSalient(double Now)
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(Crowd.Perception);
+	CROWD_COST_SCOPE(Perception);
 	const FCrowdTuning_Server& T = GetCrowdTuning();
 	for (const FCrowdPerceivedPawn& Source : Hash.GetPawns())
 	{
-		if (!Source.bTraversalLanding || !Source.bPerceivable)
+		if (!(Source.bRunStart || Source.bTraversalLanding) || !Source.bPerceivable)
 		{
 			continue;
 		}
@@ -754,7 +1020,7 @@ void UCrowdDirector::FanOutSalient(double Now)
 
 void UCrowdDirector::StartPaths()
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(Crowd.NavQuery);
+	CROWD_COST_SCOPE(NavQuery);
 	UNavigationSystemV1* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	ANavigationData* NavData = Nav != nullptr ? Nav->GetDefaultNavDataInstance(FNavigationSystem::DontCreate) : nullptr;
 	if (NavData == nullptr || !IsNavReady())
@@ -778,6 +1044,7 @@ void UCrowdDirector::StartPaths()
 
 void UCrowdDirector::OnPathFound(uint32 QueryId, ENavigationQueryResult::Type Result, FNavPathSharedPtr Path)
 {
+	CROWD_COST_SCOPE(NavQuery);
 	FCrowdPathRequest Request;
 	if (!InFlight.RemoveAndCopyValue(QueryId, Request))
 	{
@@ -810,7 +1077,7 @@ void UCrowdDirector::OnPathFound(uint32 QueryId, ENavigationQueryResult::Type Re
 
 void UCrowdDirector::TickDirector(float DeltaTime)
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(Crowd.Director);
+	CROWD_COST_SCOPE(Director);
 	StealthCrowdBlindness::FCrowdScope Scope;
 	++DirectorFrame;
 	if (!Core.IsValid())
@@ -819,6 +1086,20 @@ void UCrowdDirector::TickDirector(float DeltaTime)
 	}
 	const double Now = GetWorld()->GetTimeSeconds();
 	RaysThisFrame = 0;
+	// Hand-backs at the frame start, never during a traversal (CNB-R10.3).
+	for (int32 Index = PendingReleases.Num() - 1; Index >= 0; --Index)
+	{
+		AStealthCrowdController* Controller = FindController(PendingReleases[Index]);
+		if (Controller == nullptr)
+		{
+			PendingReleases.RemoveAt(Index);
+		}
+		else if (!IsTraversing(PendingReleases[Index]))
+		{
+			Controller->HaltBehaviour();
+			PendingReleases.RemoveAt(Index);
+		}
+	}
 	if (Controllers.Num() == 0)
 	{
 		// Nothing to perceive for; pending path requests still wait on the navmesh gate.
@@ -840,6 +1121,7 @@ void UCrowdDirector::TickDirector(float DeltaTime)
 	}
 	if (Core->IsActive())
 	{
+		ProcessStrikes(Now);
 		FanOutSalient(Now);
 	}
 	StartPaths();

@@ -10,6 +10,9 @@
 #                  FSiteAssignment (the static half of AC-CNB-01's "0 calls"; the site-assignment sentinel is the runtime half)
 #   crowd-include  an include of a Roster, Objectives-assignment or Visibility Policy fact header, or the engine
 #                  perception header (identity blindness, CNB-R2, AC-CNB-01)
+#   crowd-ui       anything that draws: a DrawDebug* call, AddOnScreenDebugMessage, or an include of the debug-draw,
+#                  UMG widget, canvas, HUD or Presentation headers (no crowd UI, debug draw or indicator; AC-CNB-25,
+#                  story cnb-036)
 function crowd_find(path, ln, rule, msg) { lint_find(path, ln, rule, msg) }
 function rule_file(path,   rel, ln, code, raw, rest, m, inc, ctrl) {
   rel = path
@@ -28,6 +31,8 @@ function rule_file(path,   rel, ln, code, raw, rest, m, inc, ctrl) {
         crowd_find(path, ln, "crowd-include", "includes the Visibility Policy header " inc " (identity blindness, CNB-R2)")
       if (inc ~ /AIPerception/)
         crowd_find(path, ln, "crowd-include", "includes the engine perception header " inc " (ADR-0016 section 5)")
+      if (inc ~ /DrawDebugHelpers/ || inc ~ /Blueprint\/UserWidget/ || inc ~ /Components\/Widget/ || inc ~ /Engine\/Canvas/ || inc ~ /GameFramework\/HUD/ || inc ~ /(^|\/)Presentation\//)
+        crowd_find(path, ln, "crowd-ui", "includes the drawing/UI header " inc " (no crowd UI or debug draw, AC-CNB-25)")
       continue
     }
     rest = code
@@ -40,6 +45,12 @@ function rule_file(path,   rel, ln, code, raw, rest, m, inc, ctrl) {
     while (match(rest, /(^|[^A-Za-z0-9_])(IsPlayer|IsPlayerController|IsLocalPlayerController|GetPlayerState|GetTeam|GetTeamId|GetGenericTeamId|GetTeamAttitudeTowards|VictimKind|FSiteAssignment|SiteAssignment)([^A-Za-z0-9_]|$)/)) {
       m = substr(rest, RSTART, RLENGTH); gsub(/[^A-Za-z0-9_]/, "", m)
       crowd_find(path, ln, "crowd-identity", "names " m " (no crowd code reads player, binding, team, victim kind or site assignment; CNB-R2, AC-CNB-01)")
+      rest = substr(rest, RSTART + RLENGTH)
+    }
+    rest = code
+    while (match(rest, /(^|[^A-Za-z0-9_])(DrawDebug[A-Za-z0-9_]*|AddOnScreenDebugMessage)[ \t]*\(/)) {
+      m = substr(rest, RSTART, RLENGTH); sub(/^[^A-Za-z_]/, "", m); sub(/[ \t]*\($/, "", m)
+      crowd_find(path, ln, "crowd-ui", "draws " m " (no crowd UI, debug draw or indicator; AC-CNB-25)")
       rest = substr(rest, RSTART + RLENGTH)
     }
     rest = code

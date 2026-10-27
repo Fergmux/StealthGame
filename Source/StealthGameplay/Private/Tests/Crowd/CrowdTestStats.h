@@ -5,6 +5,8 @@
 
 #include "CoreMinimal.h"
 
+#include <cmath>
+
 namespace StealthCrowdStats
 {
 	/** The Kolmogorov distribution tail Q(lambda) = 2 sum (-1)^(k-1) exp(-2 k^2 lambda^2). */
@@ -70,6 +72,85 @@ namespace StealthCrowdStats
 		if (OutLow) { *OutLow = Low; }
 		if (OutHigh) { *OutHigh = High; }
 		return Count >= Low && Count <= High;
+	}
+
+	/** The regularized upper incomplete gamma Q(a, x) (series for x < a + 1, Lentz continued fraction otherwise). */
+	inline double GammaQ(double A, double X)
+	{
+		if (X <= 0.0)
+		{
+			return 1.0;
+		}
+		const double LogPrefix = -X + A * FMath::Loge(X) - std::lgamma(A);
+		if (X < A + 1.0)
+		{
+			double Sum = 1.0 / A;
+			double Term = Sum;
+			for (int32 N = 1; N < 1000; ++N)
+			{
+				Term *= X / (A + N);
+				Sum += Term;
+				if (FMath::Abs(Term) < FMath::Abs(Sum) * 1e-14)
+				{
+					break;
+				}
+			}
+			return FMath::Clamp(1.0 - Sum * FMath::Exp(LogPrefix), 0.0, 1.0);
+		}
+		double B = X + 1.0 - A;
+		double C = 1.0 / 1e-300;
+		double D = 1.0 / B;
+		double H = D;
+		for (int32 I = 1; I < 1000; ++I)
+		{
+			const double An = -I * (I - A);
+			B += 2.0;
+			D = An * D + B;
+			D = FMath::Abs(D) < 1e-300 ? 1e-300 : D;
+			C = B + An / C;
+			C = FMath::Abs(C) < 1e-300 ? 1e-300 : C;
+			D = 1.0 / D;
+			const double Delta = D * C;
+			H *= Delta;
+			if (FMath::Abs(Delta - 1.0) < 1e-14)
+			{
+				break;
+			}
+		}
+		return FMath::Clamp(FMath::Exp(LogPrefix) * H, 0.0, 1.0);
+	}
+
+	/** Chi-square goodness of fit: the statistic of Observed against Expected and its p-value with N - 1 - Fitted dof. */
+	inline double ChiSquarePValue(TConstArrayView<double> Observed, TConstArrayView<double> Expected, double* OutStat = nullptr, int32 Fitted = 0)
+	{
+		double Stat = 0.0;
+		int32 Cells = 0;
+		for (int32 Index = 0; Index < Observed.Num() && Index < Expected.Num(); ++Index)
+		{
+			if (Expected[Index] > 0.0)
+			{
+				Stat += FMath::Square(Observed[Index] - Expected[Index]) / Expected[Index];
+				++Cells;
+			}
+		}
+		if (OutStat != nullptr)
+		{
+			*OutStat = Stat;
+		}
+		const int32 Dof = FMath::Max(Cells - 1 - Fitted, 1);
+		return GammaQ(0.5 * Dof, 0.5 * Stat);
+	}
+
+	/** The p-quantile of a sorted sample (nearest rank). */
+	inline double Quantile(TArray<double> Samples, double P)
+	{
+		if (Samples.Num() == 0)
+		{
+			return 0.0;
+		}
+		Samples.Sort();
+		const int32 Rank = FMath::Clamp(FMath::CeilToInt32(P * Samples.Num()) - 1, 0, Samples.Num() - 1);
+		return Samples[Rank];
 	}
 
 	/** The uniform CDF on [A, B]. */

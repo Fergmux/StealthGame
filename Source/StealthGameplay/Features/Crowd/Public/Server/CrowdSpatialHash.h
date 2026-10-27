@@ -29,7 +29,10 @@ struct FCrowdPerceivedPawn
 	bool bStaticObstacle = false;
 	/** Public locomotion facts the gaze catalogue reads (IsRunning, a traversal landing this frame). */
 	bool bRunning = false;
+	/** A traversal ended this frame (the T4 flinch trigger within 3 m; a G4 salient event). */
 	bool bTraversalLanding = false;
+	/** The pawn started running this frame (the G4 salient event). */
+	bool bRunStart = false;
 
 	/** Horizontal speed. */
 	double Speed2D() const { return VelocityCmPerSec.Size2D(); }

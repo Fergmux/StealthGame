@@ -30,13 +30,13 @@ namespace CrowdFollowerLocal
 	}
 }
 
-double FCrowdFollower::StopDistanceCm(const FLocomotionTuning_Public& Locomotion, double Speed)
+double FCrowdFollower::StopDistanceCm(const FLocomotionTuning_Public& Locomotion, double Speed, EGait InGait)
 {
 	if (Speed <= 0.0)
 	{
 		return 0.0;
 	}
-	const double Decel = FMath::Max(static_cast<double>(StealthLocomotion::StopDeceleration(Locomotion, static_cast<float>(Speed), EGait::Walk)), 1.0);
+	const double Decel = FMath::Max(static_cast<double>(StealthLocomotion::StopDeceleration(Locomotion, static_cast<float>(Speed), InGait)), 1.0);
 	return Speed * Speed / (2.0 * Decel);
 }
 
@@ -71,9 +71,12 @@ void FCrowdFollower::ChoosePace(const FCrowdTuning_Server& Tuning, FCrowdDraws& 
 	LastPaceCause = Cause;
 }
 
-void FCrowdFollower::StartLeg(uint32 InLegId, const FVector& From, TConstArrayView<FVector> InCorners, double Now, const FCrowdTuning_Server& Tuning, FCrowdDraws& Draws, bool bKeepPace)
+void FCrowdFollower::StartLeg(uint32 InLegId, const FVector& From, TConstArrayView<FVector> InCorners, double Now, const FCrowdTuning_Server& Tuning, FCrowdDraws& Draws, bool bKeepPace,
+	EGait InGait, double InReleaseAt)
 {
 	LegId = InLegId;
+	Gait = InGait;
+	ReleaseAt = InReleaseAt;
 	bOnLeg = true;
 	bStopping = false;
 	bWaitingForPath = false;
@@ -218,7 +221,8 @@ FCrowdFollowerOutput FCrowdFollower::Tick(double Now, float Dt, const FCrowdPerc
 		if (Now - WaitStarted <= Tuning.CrowdPathInvalidHoldSec && !HeldDirection.IsNearlyZero())
 		{
 			Out.WorldDirection = HeldDirection;
-			Out.Magnitude = Pace;
+			Out.Magnitude = Gait == EGait::Run ? 1.0f : Pace;
+			Out.Gait = Gait;
 		}
 		return Out;
 	}
@@ -236,9 +240,11 @@ FCrowdFollowerOutput FCrowdFollower::Tick(double Now, float Dt, const FCrowdPerc
 	const double CarrotDistance = FMath::Max(static_cast<double>(Tuning.CrowdCarrotMinCm), Speed * Tuning.CrowdCarrotLeadSec);
 	FVector Carrot = AdvanceAlongPath(Segment, OnPath, CarrotDistance, Remaining, Tangent);
 
-	// Arrival: Move(0) at the F2 stop distance of the current speed, so the stop to rest ends at the leg's end.
-	const double StopDistance = StopDistanceCm(Locomotion, Speed);
-	if (Remaining <= FMath::Max(StopDistance, ReleaseFloorCm))
+	// Arrival: Move(0) at the F2 stop distance of the current speed, so the stop to rest ends at the leg's end. A run leg
+	// with a release time also ends there (the bout's end is ordinary braking; the leg ends where the braking ends).
+	const double StopDistance = StopDistanceCm(Locomotion, Speed, Gait);
+	const bool bReleaseByTime = ReleaseAt > 0.0 && Now >= ReleaseAt;
+	if (bReleaseByTime || Remaining <= FMath::Max(StopDistance, ReleaseFloorCm))
 	{
 		bOnLeg = false;
 		bStopping = true;
@@ -254,7 +260,7 @@ FCrowdFollowerOutput FCrowdFollower::Tick(double Now, float Dt, const FCrowdPerc
 	}
 
 	// The blocked ladder and the progress monitor (CNB-R3.3).
-	const double TargetSpeed = Locomotion.WalkSpeedCmPerSec * Pace;
+	const double TargetSpeed = Gait == EGait::Run ? static_cast<double>(Locomotion.RunSpeedCmPerSec) : Locomotion.WalkSpeedCmPerSec * Pace;
 	const bool bPastStart = Now - LegStartTime > StartGraceSec;
 	if (bPastStart && Speed < BlockedSpeedFrac * TargetSpeed)
 	{
@@ -294,7 +300,7 @@ FCrowdFollowerOutput FCrowdFollower::Tick(double Now, float Dt, const FCrowdPerc
 		Pace = LegPace;
 		LastPaceCause = ECrowdPaceCause::DriftEnd;
 	}
-	if (!bDriftUsedThisLeg && DriftUntil < 0.0 && Speed > 0.5 * TargetSpeed && Tuning.CrowdGroupDriftSec > 0.0f)
+	if (Gait == EGait::Walk && !bDriftUsedThisLeg && DriftUntil < 0.0 && Speed > 0.5 * TargetSpeed && Tuning.CrowdGroupDriftSec > 0.0f)
 	{
 		const FVector Heading = Self.VelocityCmPerSec.GetSafeNormal2D();
 		for (const FCrowdPerceivedPawn* Other : Neighbours)
@@ -352,7 +358,7 @@ FCrowdFollowerOutput FCrowdFollower::Tick(double Now, float Dt, const FCrowdPerc
 		HeldDirection = Direction;
 	}
 	Out.WorldDirection = HeldDirection;
-	Out.Magnitude = Pace;
-	Out.Gait = EGait::Walk;
+	Out.Magnitude = Gait == EGait::Run ? 1.0f : Pace;
+	Out.Gait = Gait;
 	return Out;
 }

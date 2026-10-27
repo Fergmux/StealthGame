@@ -202,6 +202,12 @@ uint32 StealthPawnControl::GetControlEpoch(const AActor* Pawn)
 	return Factory != nullptr ? Factory->GetControlEpoch(Pawn) : 0u;
 }
 
+uint32 StealthPawnControl::BumpControlEpoch(const AActor* Pawn)
+{
+	UStealthPawnFactory* Factory = Pawn != nullptr ? UStealthPawnFactory::Get(Pawn->GetWorld()) : nullptr;
+	return Factory != nullptr ? Factory->BumpControlEpoch(Pawn) : 0u;
+}
+
 uint32 StealthPawnControl::GetSpawnOrdinal(const AActor* Pawn)
 {
 	const UStealthPawnFactory* Factory = Pawn != nullptr ? UStealthPawnFactory::Get(Pawn->GetWorld()) : nullptr;

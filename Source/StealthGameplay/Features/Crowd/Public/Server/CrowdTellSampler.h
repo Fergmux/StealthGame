@@ -37,6 +37,8 @@ struct FCrowdCalibrationCounters
 	int64 Performed[static_cast<int32>(ECrowdTell::Count)] = {};
 	/** R8 reactions that would have been a tell inside the responder's gap and became a glance. */
 	int64 ReactionsDowngraded = 0;
+	/** Accepted tells not shown: a different tell was shown within the gap at the visible moment, or no chance came. */
+	int64 Dropped[static_cast<int32>(ECrowdTell::Count)] = {};
 };
 
 /**
@@ -94,11 +96,40 @@ public:
 	 */
 	void Advance(uint32 Ordinal, double Now, const FCrowdTuning_Server& Tuning, FCrowdDraws& Draws, TArray<ECrowdTell, TInlineAllocator<2>>& OutAccepted);
 
-	/** True when a different tell than Tell happened less than the chain gap before Now (an R8 tell becomes a glance). */
+	/**
+	 * True when a different tell than Tell was accepted (or shown by an R8 reaction) less than the chain gap before Now:
+	 * the anchor of the clocks' discard rule, F2's compensation assumes exactly this.
+	 */
 	bool IsInChainGap(uint32 Ordinal, ECrowdTell Tell, double Now, const FCrowdTuning_Server& Tuning) const;
 
-	/** Records a tell the NPC performed (an accepted clock tell or an R8 panic run / startle brace). */
-	void NotePerformed(uint32 Ordinal, ECrowdTell Tell, double Now);
+	/**
+	 * True when a different tell than Tell was SHOWN less than the chain gap before Now (the visible-moment rule of
+	 * AC-CNB-31: a tell whose behaviour takes time to reach its visible moment is shown later than it was accepted, and
+	 * another tell may not be shown inside the gap around it; the agent defers instead).
+	 */
+	bool IsInShownGap(uint32 Ordinal, ECrowdTell Tell, double Now, const FCrowdTuning_Server& Tuning) const;
+
+	/**
+	 * Records a tell the NPC showed. bFromClock: an accepted clock tell (its acceptance already anchored the gap, and the
+	 * anchor stays there so F2's compensation holds); false for an R8 panic run or startle brace, which anchors the
+	 * clocks' gap at Now.
+	 */
+	void NotePerformed(uint32 Ordinal, ECrowdTell Tell, double Now, bool bFromClock = false);
+
+	/** Records an accepted tell that was not shown (telemetry field 5); it is no longer pending. */
+	void NoteDropped(uint32 Ordinal, ECrowdTell Tell);
+
+	/**
+	 * Show-anchored mode (the crowd's worlds; GDD F2 as amended 2026-10-27): an accepted tell stays pending until it is
+	 * shown or dropped, and while one is pending every other clock's draw is discarded (restarting after the gap), so the
+	 * gap is anchored at the visible moment and no other tell piles up behind a tell on its way (AC-CNB-31). The
+	 * compensated draw rate then counts each other tell's mean show delay in its gap (ShowDelaySec). Off (the default),
+	 * the sampler is the acceptance-anchored clock set of story cnb-018.
+	 */
+	void SetShowAnchored(bool bInShowAnchored) { bShowAnchored = bInShowAnchored; }
+	bool IsShowAnchored() const { return bShowAnchored; }
+	/** True while Tell, accepted for Ordinal, waits for its visible moment. */
+	bool IsPending(uint32 Ordinal, ECrowdTell Tell) const;
 
 	/** Records an R8 reaction downgraded to a glance by the chain gap. */
 	void NoteReactionDowngraded() { ++Counters.ReactionsDowngraded; if (Telemetry) { Telemetry->AddCrowdCounter(ECrowdTell::Count, 4, 1); } }
@@ -114,12 +145,15 @@ private:
 	{
 		double NextDue[static_cast<int32>(ECrowdTell::Count)];
 		double LastTell[static_cast<int32>(ECrowdTell::Count)];
+		double LastShown[static_cast<int32>(ECrowdTell::Count)];
+		bool bPending[static_cast<int32>(ECrowdTell::Count)] = {};
 		FNpcClocks()
 		{
 			for (int32 Index = 0; Index < static_cast<int32>(ECrowdTell::Count); ++Index)
 			{
 				NextDue[Index] = -1.0;
 				LastTell[Index] = -1.0e9;
+				LastShown[Index] = -1.0e9;
 			}
 		}
 	};
@@ -127,6 +161,7 @@ private:
 
 	TMap<uint32, FNpcClocks> Npcs;
 	bool bEnabledTells[static_cast<int32>(ECrowdTell::Count)] = {};
+	bool bShowAnchored = false;
 	FCrowdCalibrationCounters Counters;
 	ICrowdTelemetrySink* Telemetry = nullptr;
 };

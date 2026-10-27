@@ -1,12 +1,12 @@
 # Story 022: Bush red herring: occupancy-blind shade-seeking with uncapped stays
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-15 and CNB-R7 (bush), scoped to this story:*
 
-- [ ] (AC-CNB-15a) GIVEN an NPC-only headless run of at least 120 simulated minutes with fixed seeds, WHEN accepted NPC bush entries (after the chain-gap guard) are counted from the Concealment entry log, THEN the configured accepted rate `60 / CrowdBushIntervalSec` is at least `r_N,req` (0.19/min at r_P 0.3 and 50 NPCs; a deterministic config check) and the measured per-NPC rate lies inside the two-sided 99 % Poisson interval of the configured rate.
-- [ ] (AC-CNB-15b) Every NPC entry uses the one Concealment call site, the bush chosen for a fixed seed is identical with the bush empty and occupied, NPC stays show no upper truncation (the empirical 99th percentile is within 15 % of the log-normal's), and no NPC re-enters within `BushReenterCooldownSec`.
-- [ ] The bush chosen is the nearest open-side bush within 10 m of the current leg and reads no occupancy; the stay is drawn at entry from the uncapped log-normal (`CrowdBushDwellMedianSec` 15, `CrowdBushDwellSigma` 0.8).
+- [x] (AC-CNB-15a) GIVEN an NPC-only headless run of at least 120 simulated minutes with fixed seeds, WHEN accepted NPC bush entries (after the chain-gap guard) are counted from the Concealment entry log, THEN the configured accepted rate `60 / CrowdBushIntervalSec` is at least `r_N,req` (0.19/min at r_P 0.3 and 50 NPCs; a deterministic config check) and the measured per-NPC rate lies inside the two-sided 99 % Poisson interval of the configured rate.
+- [x] (AC-CNB-15b) Every NPC entry uses the one Concealment call site, the bush chosen for a fixed seed is identical with the bush empty and occupied, NPC stays show no upper truncation (the empirical 99th percentile is within 15 % of the log-normal's), and no NPC re-enters within `BushReenterCooldownSec`.
+- [x] The bush chosen is the nearest open-side bush within 10 m of the current leg and reads no occupancy; the stay is drawn at entry from the uncapped log-normal (`CrowdBushDwellMedianSec` 15, `CrowdBushDwellSigma` 0.8).
 
 ---
 
@@ -100,7 +100,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdBushHerringTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Bush.RateAndStays`, `StealthGame.Crowd.Bush.OccupancyBlind`, `StealthGame.Crowd.Bush.NearestWithinTenM`; 2026-10-27)
 
 ---
 
@@ -108,3 +108,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-018-tell-sampler-and-calibration-counters.md`, `production/epics/crowd-npc-behaviour/story-008-spatial-hash-and-perception-filter.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-023-tell-calibration-gate.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing
+**Deviations**: The Concealment entry log and the one Hide call site are the sim stand-ins (the Concealment epic is not built); the production Director runs no bush clock until Concealment registers its filter and bushes (the GDD rule: bush herrings disabled without Concealment). BushReenterCooldownSec 6 s is read as a pending owner key.
+**Test Evidence**: `StealthGame.Crowd.Bush.RateAndStays`, `StealthGame.Crowd.Bush.OccupancyBlind`, `StealthGame.Crowd.Bush.NearestWithinTenM`; full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

@@ -58,8 +58,12 @@ class STEALTHGAMEPLAY_API FCrowdFollower
 public:
 	/** The share of 0.8 / 0.9 legs among the slower legs (equal). */
 	static constexpr double SlowPaceShareOfNonFull = 0.5;
-	/** Heading margin below ReversalAngleDeg the follower never commands while moving. */
-	static constexpr double ReversalMarginDeg = 15.0;
+	/**
+	 * Heading margin below ReversalAngleDeg the follower never commands while moving. It covers the virtual input
+	 * layer's keyboard quantisation (45 degree sectors: up to 22.5 degrees off the wish) with room to spare, so a leg
+	 * started while walking away from the current heading (a herring's leg, story cnb-019) never commands a reversal.
+	 */
+	static constexpr double ReversalMarginDeg = 40.0;
 
 	/** Draws the pawn's lane offset (once) and sets its steering phase. */
 	void Initialize(uint32 InOrdinal, double SteerPhaseSec, const FCrowdTuning_Server& Tuning, FCrowdDraws& Draws);
@@ -67,8 +71,12 @@ public:
 	/**
 	 * Starts a leg on Corners (start excluded, end last) with a new LegId. The pace is drawn here (a leg boundary) unless
 	 * bKeepPace (the reversal walks back at its pace). Lane offset applies to every corner but the end.
+	 * Gait Run (a T1 run leg or an R8 panic run, story cnb-019) moves at full input magnitude with no group drift; when
+	 * ReleaseAt is positive the leg releases Move(0) at that time (the bout ends by ordinary SCL braking, and the leg ends
+	 * where the braking ends), whichever of that and the path end comes first.
 	 */
-	void StartLeg(uint32 LegId, const FVector& From, TConstArrayView<FVector> Corners, double Now, const FCrowdTuning_Server& Tuning, FCrowdDraws& Draws, bool bKeepPace = false);
+	void StartLeg(uint32 LegId, const FVector& From, TConstArrayView<FVector> Corners, double Now, const FCrowdTuning_Server& Tuning, FCrowdDraws& Draws, bool bKeepPace = false,
+		EGait InGait = EGait::Walk, double InReleaseAt = -1.0);
 
 	/** Replaces the path of the current leg from From (a repath or the first async result); keeps the pace. */
 	void ReplacePath(const FVector& From, TConstArrayView<FVector> Corners);
@@ -99,8 +107,13 @@ public:
 	/** Repaths requested on this leg. */
 	int32 GetRepathCount() const { return Repaths; }
 
-	/** The F2 stop distance of a walker at Speed (v^2 / (2 d_eff), SCL StopDeceleration with the stop floor). */
-	static double StopDistanceCm(const FLocomotionTuning_Public& Locomotion, double Speed);
+	/** The F2 stop distance at Speed (v^2 / (2 d_eff), SCL StopDeceleration of the gait with the stop floor). */
+	static double StopDistanceCm(const FLocomotionTuning_Public& Locomotion, double Speed, EGait Gait = EGait::Walk);
+
+	/** The current leg's gait (Walk, or Run on a run leg). */
+	EGait GetGait() const { return Gait; }
+	/** When the current leg releases by time (negative: at the path end only). */
+	double GetReleaseAt() const { return ReleaseAt; }
 
 	/** The leg probability of pace 1.0 that gives a walking-time share of FullTimeShare (slower legs last longer). */
 	static double FullPaceLegProbability(double FullTimeShare);
@@ -128,6 +141,8 @@ private:
 	double WaitStarted = 0.0;
 	float Pace = 0.0f;
 	float LegPace = 0.0f;
+	EGait Gait = EGait::Walk;
+	double ReleaseAt = -1.0;
 	ECrowdPaceCause LastPaceCause = ECrowdPaceCause::None;
 	FVector2D HeldDirection = FVector2D::ZeroVector;
 	double NextSteerTime = 0.0;

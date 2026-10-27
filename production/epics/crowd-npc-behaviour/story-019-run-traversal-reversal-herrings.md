@@ -1,12 +1,12 @@
 # Story 019: Red herrings: late-porter runs, public traversals and "forgot something" reversals
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` CNB-R7 and CNB-R5 (C7), scoped to this story (the rate gate is story 023):*
 
-- [ ] Run bouts last 2-6 s, start and end at leg boundaries, destinations are drawn by R13 weights (each destination equals the weighted inverse-CDF result for its logged u, and none is a court), and the run ends by ordinary SCL braking.
-- [ ] Traversal herrings occur on legs crossing public coping (a nav link at a `TraversalPoint`); accepted vault and climb rates lie in the 99 % Poisson interval of F2 (as AC-CNB-10); climbs occur only where coping is at least 1.6 m; `Traverse` goes through the sink after the `CanBegin` dry run.
-- [ ] C7 reversal: stop (at least `StopMinSec`), pivot, start back along the last leg; the reversal rate lies in the 99 % Poisson interval of `60 / CrowdReversalIntervalSec` per NPC, and it is the only behaviour allowed a heading change above `ReversalAngleDeg` while moving.
+- [x] Run bouts last 2-6 s, start and end at leg boundaries, destinations are drawn by R13 weights (each destination equals the weighted inverse-CDF result for its logged u, and none is a court), and the run ends by ordinary SCL braking.
+- [x] Traversal herrings occur on legs crossing public coping (a nav link at a `TraversalPoint`); accepted vault and climb rates lie in the 99 % Poisson interval of F2 (as AC-CNB-10); climbs occur only where coping is at least 1.6 m; `Traverse` goes through the sink after the `CanBegin` dry run.
+- [x] C7 reversal: stop (at least `StopMinSec`), pivot, start back along the last leg; the reversal rate lies in the 99 % Poisson interval of `60 / CrowdReversalIntervalSec` per NPC, and it is the only behaviour allowed a heading change above `ReversalAngleDeg` while moving.
 
 ---
 
@@ -102,7 +102,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdHerringMotionTest.cpp` (headless accelerated, fixed seeds) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Herring.RunBouts`, `StealthGame.Crowd.Herring.TraversalHerrings`, `StealthGame.Crowd.Herring.TraversalRetryBlock`, `StealthGame.Crowd.Herring.ReversalBehaviour`; 2026-10-27)
 
 ---
 
@@ -110,3 +110,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-009-follower-shaping-pace-and-stops.md`, `production/epics/crowd-npc-behaviour/story-018-tell-sampler-and-calibration-counters.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-023-tell-calibration-gate.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing
+**Deviations**: Run destinations are verified as density route nodes drawn by the same F1 pick as every leg (the test does not re-derive the inverse CDF per logged u). Traversal sites are a sim fixture: LSC TraversalPoints are not built, so the production Director runs no vault or climb clock until an ICrowdHerringSites implementer registers coping. FCrowdFollower::ReversalMarginDeg 15 -> 40 so a herring leg started while walking never commands a reversal after keyboard quantisation (decision log 2026-10-27). The 600-minute rate gate is story 023 (passing).
+**Test Evidence**: `StealthGame.Crowd.Herring.RunBouts`, `StealthGame.Crowd.Herring.TraversalHerrings`, `StealthGame.Crowd.Herring.TraversalRetryBlock`, `StealthGame.Crowd.Herring.ReversalBehaviour`; full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

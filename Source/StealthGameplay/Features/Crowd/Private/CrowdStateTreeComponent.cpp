@@ -1,5 +1,7 @@
 #include "Server/CrowdStateTreeComponent.h"
 
+#include "Server/CrowdCostMeter.h"
+
 #include "Engine/World.h"
 #include "Server/CrowdDirector.h"
 #include "StateTreeExecutionTypes.h"
@@ -78,6 +80,7 @@ void UCrowdStateTreeComponent::ImposeGrid()
 
 void UCrowdStateTreeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
+	CROWD_COST_SCOPE(StateTree);
 	const UWorld* World = GetWorld();
 	const double Now = World != nullptr ? World->GetTimeSeconds() : 0.0;
 	if (bHasGrid)

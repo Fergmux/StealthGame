@@ -1,12 +1,12 @@
 # Story 027: Kill vacancy, victim-blind replacement delay and exit cancellation
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-08, AC-CNB-35 and CNB-R9 items 2 and 3, scoped to this story:*
 
-- [ ] (AC-CNB-08) GIVEN at least 1,236 simulated kills of player pawns and at least 1,236 of NPC pawns (and of informants), WHEN the kill-to-replacement-entry delay D is measured, THEN for each pair of classes |d| <= 0.1, variance ratio is in [0.8, 1.25] and KS D <= 0.1; the pooled mean is 16 +-2 s and p95 <= 32 s at defaults (F3); no replacement occurs earlier than `CrowdReplacementMinDelaySec`.
-- [ ] (AC-CNB-35) GIVEN 200 kills at random times, WHEN the ambient schedule is logged, THEN each kill cancels exactly one exit scheduled within the next 60 s (uniform over sockets, chi-square p > 0.01) within LSC R5.7's bounds, an exiting NPC killed inside an alley adds a vacancy without counting a cancel, and a cancelled item resolves `Voided(Revalidation)`.
-- [ ] `OnPawnKilled` runs inline in the Attack slot with `KillServerTime` equal to the scheduled death-write time; no effect of a kill (vacancy, exit cancellation, reaction) is observable before the death write, and an NPC victim keeps its driver and follower until then.
+- [x] (AC-CNB-08) GIVEN at least 1,236 simulated kills of player pawns and at least 1,236 of NPC pawns (and of informants), WHEN the kill-to-replacement-entry delay D is measured, THEN for each pair of classes |d| <= 0.1, variance ratio is in [0.8, 1.25] and KS D <= 0.1; the pooled mean is 16 +-2 s and p95 <= 32 s at defaults (F3); no replacement occurs earlier than `CrowdReplacementMinDelaySec`.
+- [x] (AC-CNB-35) GIVEN 200 kills at random times, WHEN the ambient schedule is logged, THEN each kill cancels exactly one exit scheduled within the next 60 s (uniform over sockets, chi-square p > 0.01) within LSC R5.7's bounds, an exiting NPC killed inside an alley adds a vacancy without counting a cancel, and a cancelled item resolves `Voided(Revalidation)`.
+- [x] `OnPawnKilled` runs inline in the Attack slot with `KillServerTime` equal to the scheduled death-write time; no effect of a kill (vacancy, exit cancellation, reaction) is observable before the death write, and an NPC victim keeps its driver and follower until then.
 
 ---
 
@@ -100,7 +100,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdReplacementDelayTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Replacement.VictimBlindDelay`, `StealthGame.Crowd.Replacement.ExitCancelOnKill`, `StealthGame.Crowd.Replacement.NothingBeforeDeathWrite`; 2026-10-27)
 
 ---
 
@@ -108,3 +108,12 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-026-ambient-schedule-and-emergence.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-038-performance-pass-50-60-character.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing headless
+**Deferred**: OnPawnKilled wiring in production (the Attack slot and GetScheduledDeathServerTime are the Assassination epic's); FCrowdAmbientSchedule::NoteKill takes the death-write time.
+**Deviations**: A cancelled exit keeps its cycle's entry (the kill vacancy takes the exit's place) so entries stay a Poisson process as F3 assumes: D mean 16.3 s, p95 29.1 s (decision log 2026-10-27). AC-CNB-08 kills are spaced about 2 minutes apart (F3's single-vacancy delay; the AC gives no kill rate).
+**Test Evidence**: `StealthGame.Crowd.Replacement.VictimBlindDelay`, `StealthGame.Crowd.Replacement.ExitCancelOnKill`, `StealthGame.Crowd.Replacement.NothingBeforeDeathWrite`; full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

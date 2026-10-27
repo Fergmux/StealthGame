@@ -27,6 +27,8 @@ enum class ECrowdDueKind : uint8
 	ContextLookEnd,
 	/** Group drift (C4) pace matching ends. */
 	DriftEnd,
+	/** An R8 strike reaction starts (StimulusTime + Delay; story cnb-024). */
+	StrikeReaction,
 };
 
 /** One entry: due server time, kind and a small payload (an ordinal, a tell index). */

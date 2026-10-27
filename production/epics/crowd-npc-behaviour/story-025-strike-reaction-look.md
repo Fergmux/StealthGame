@@ -1,12 +1,12 @@
 # Story 025: Strike reaction look: the graybox market reads calm, not a stampede
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: In Review — awaiting the lead sign-off (a human creative-director or art-director); the art-director review approved take 2 conditionally (2026-10-27)
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -90,7 +90,7 @@
 **Required evidence**:
 - Visual/Feel: retained screenshots in `production/qa/evidence/` plus sign-off in `production/qa/evidence/crowd-strike-reaction-look-evidence.md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Captures retained (`production/qa/evidence/crowd-strike-reaction-look-2026-10-27/`), evidence and sign-off table `production/qa/evidence/crowd-strike-reaction-look-evidence.md`; lead row pending
 
 ---
 
@@ -98,3 +98,8 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-024-strike-stimulus-and-reactions.md`
 - Unlocks: None
+
+## Review Notes
+**Status**: In Review (2026-10-27)
+**Criteria**: AC-CNB-19 thresholds pass on take 2 (no gathering, no flight, no run > 3 s; 4 glance/pause reactions in the server log, 1 visibly corroborated); the second criterion (retained screenshots + lead sign-off) waits for the lead row
+**What is missing**: the lead sign-off (creative-director or a human art-director) in `production/qa/evidence/crowd-strike-reaction-look-evidence.md`; if 3 visible reactions are required, a re-capture with 8-10 NPCs within 10 m of the strike

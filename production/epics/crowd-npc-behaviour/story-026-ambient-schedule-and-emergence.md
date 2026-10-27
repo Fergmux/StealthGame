@@ -1,12 +1,12 @@
 # Story 026: Ambient schedule as queue items and witness-free emergence
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-07, AC-CNB-09 and CNB-R9, scoped to this story:*
 
-- [ ] (AC-CNB-07) GIVEN a 10-minute simulation with 20 scripted kills of mixed victim kinds (2 per minute, under the 2.4/min exit-cancel capacity of F3), WHEN spawns and removals are counted, THEN 100 % of mid-round NPC spawns and removals go through `RequestEmergence` and the SCL factory, `DrawReplacement` is called in each spawn tick, the measured entry and exit rates averaged over sockets are each at least 0.5 per socket per minute, and after every event the CPA ledger invariants hold.
-- [ ] Ambient cycles are a Poisson process: over at least 1,000 gaps a KS test at p > 0.01 against Exp(mean 80 s / 13 sockets) and chi-square p > 0.01 for uniform socket choice; items are `TimerFired(CrowdSchedule)` with the round epoch token and none are on `FTimerManager`; a failed clear check retries at +`EmergenceRetrySec`; `Rejected_Latched` and `Rejected_StaleEpoch` items are never rescheduled.
-- [ ] (AC-CNB-09) GIVEN 10 min with 10 bot viewers walking random routes, WHEN every emergence and absorption is checked against every pawn's eye samples (LSC R5.2), THEN 0 occur within any pawn's line of sight, and watched exits give up after `CrowdExitGiveUpSec` and walk back out.
+- [x] (AC-CNB-07) GIVEN a 10-minute simulation with 20 scripted kills of mixed victim kinds (2 per minute, under the 2.4/min exit-cancel capacity of F3), WHEN spawns and removals are counted, THEN 100 % of mid-round NPC spawns and removals go through `RequestEmergence` and the SCL factory, `DrawReplacement` is called in each spawn tick, the measured entry and exit rates averaged over sockets are each at least 0.5 per socket per minute, and after every event the CPA ledger invariants hold.
+- [x] Ambient cycles are a Poisson process: over at least 1,000 gaps a KS test at p > 0.01 against Exp(mean 80 s / 13 sockets) and chi-square p > 0.01 for uniform socket choice; items are `TimerFired(CrowdSchedule)` with the round epoch token and none are on `FTimerManager`; a failed clear check retries at +`EmergenceRetrySec`; `Rejected_Latched` and `Rejected_StaleEpoch` items are never rescheduled.
+- [x] (AC-CNB-09) GIVEN 10 min with 10 bot viewers walking random routes, WHEN every emergence and absorption is checked against every pawn's eye samples (LSC R5.2), THEN 0 occur within any pawn's line of sight, and watched exits give up after `CrowdExitGiveUpSec` and walk back out.
 
 ---
 
@@ -103,7 +103,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdAmbientScheduleTest.cpp` and `Source/StealthTestHarness/Private/CrowdEmergenceWitnessTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Ambient.PoissonCycles`, `StealthGame.Crowd.Ambient.SpawnPathAndRates`, `StealthGame.Crowd.Ambient.EmergenceNeverWitnessed`; 2026-10-27)
 
 ---
 
@@ -111,3 +111,12 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-004-director-core-ledger-and-phase-gating.md`, `production/epics/crowd-npc-behaviour/story-017-density-and-start-placement.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-027-kill-vacancy-and-replacement.md`, `production/epics/crowd-npc-behaviour/story-029-release-to-crowd.md`, `production/epics/crowd-npc-behaviour/story-038-performance-pass-50-60-character.md`, `production/epics/crowd-npc-behaviour/story-039-retire-prototype-crowd.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing headless
+**Deferred**: Production wiring: LSC sockets, RequestEmergence, CPA DrawReplacement and the round queue are not built; the schedule core runs against ICrowdScheduleQueue / ICrowdScheduleHost seams and the sim stand-ins. The Director starts no schedule until sockets exist, and the prototype ScheduleNpcReplacement still refills L_Prototype (story 039).
+**Deviations**: Witness model in the sim: an alley inside is seen only from within 15 m and 20 degrees of its axis (LSC R5.2 stand-in). The CrowdEmergenceWitnessTest the story names in StealthTestHarness is the headless EmergenceNeverWitnessed spec.
+**Test Evidence**: `StealthGame.Crowd.Ambient.PoissonCycles`, `StealthGame.Crowd.Ambient.SpawnPathAndRates`, `StealthGame.Crowd.Ambient.EmergenceNeverWitnessed`; full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

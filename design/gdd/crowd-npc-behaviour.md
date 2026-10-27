@@ -198,7 +198,7 @@ The crowd_density formula is defined as:
 
 The red_herring_rate formula is defined as:
 
-`r_N = r_P · n_P · (1 − P*) / (P* · n_N)` ; `LR = r_P / r_N` ; posterior for one sighting `P = n_P · r_P / (n_P · r_P + n_N · r_N)` ; robustness: both band edges hold only if `r_P,hi / r_P,lo ≤ [P_hi (1 − P_lo)] / [P_lo (1 − P_hi)]` ; **chain-gap compensation** (R7): the sampler's draw rate for tell j is `a_j = r_N,j / (1 − (Λ − r_N,j) · T_gap)`, where `Λ = Σ r_N` over T1-T5, T12, T13 (accepted rates) and `T_gap` = `CrowdTellChainGapSec` / 60; valid only while `(Λ − r_N,j) · T_gap ≤ 0.5` (cross-field check)
+`r_N = r_P · n_P · (1 − P*) / (P* · n_N)` ; `LR = r_P / r_N` ; posterior for one sighting `P = n_P · r_P / (n_P · r_P + n_N · r_N)` ; robustness: both band edges hold only if `r_P,hi / r_P,lo ≤ [P_hi (1 − P_lo)] / [P_lo (1 − P_hi)]` ; **chain-gap compensation** (R7): the sampler's draw rate for tell j is `a_j = r_N,j / (1 − (Λ − r_N,j) · T_gap)`, where `Λ = Σ r_N` over T1-T5, T12, T13 (accepted rates) and `T_gap` = `CrowdTellChainGapSec` / 60; valid only while `(Λ − r_N,j) · T_gap ≤ 0.5` (cross-field check). **Show-anchored compensation (amended 2026-10-27):** a tell reaches its visible moment some time after its clock fires (a run starts at once; a vault walks to coping, a brace waits up to 30 s for a flinch trigger, a decoy tend walks to a court), so the gap is anchored at the visible moment: while one accepted tell is still on its way every other clock's draw is discarded and restarts after the gap, and a draw of the same tell is not a second one. The draw rate is then `a_j = r_N,j / (1 − Σ_{k≠j} r_N,k · (T_gap + d_k) − r_N,j · d_j)` with `d_k` the mean delay (min) from tell k's acceptance to its visible moment in the reference scene (derived offline per build with the rates, never adapted at runtime; reference values 2026-10-27: run 0.36 s, vault 12.2, climb 12.9, brace 28.9, decoy 21.3, bush 7.3, reversal 2.8, head hold 6.7 s). Without it a delayed tell let another tell be shown inside its gap or piled tells up just after it (AC-CNB-31b); with it the accepted rates of the 600-minute reference run all lie in their AC-CNB-10 intervals
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
@@ -247,7 +247,7 @@ The replacement_delay formula is defined as:
 
 The pause_share formula is defined as:
 
-`f = E[(P − P_th)⁺] / (W̄ + E[P])` (share of NPCs whose current stationary stretch is **already** ≥ P_th old, the cover a stalled player actually needs) ; regulator: while fewer than `ceil(f_min · N_live)` NPCs are in a stationary stretch already ≥ P_th old, the long-pause share is raised to `min(2 · p_long, 0.9)`
+`f = E[(P − P_th)⁺] / (W̄ + E[P])` (share of NPCs whose current stationary stretch is **already** ≥ P_th old, the cover a stalled player actually needs) ; regulator (amended 2026-10-27, decision cnb-014 of 2026-10-26): the trigger is `ceil(f_min · N_live) + m` with the margin m = 3 NPCs (an unkeyed constant, `CoverMarginNpcs`), and it looks P_th ahead: while fewer than the trigger NPCs are in a stationary stretch already ≥ P_th old, **or** fewer than the trigger NPCs have a current rest that still runs at `now + P_th` (read from the NPCs' own rest state only), the long-pause share is raised to `min(2 · p_long, 0.9)`. A long pause takes P_th to count, so a regulator that waited for the floor itself reacted P_th late (85.7 % of samples at the floor in the reference scene; 99.2 % with the look-ahead and margin)
 
 **Variables:**
 | Variable | Type | Range | Source | Description |

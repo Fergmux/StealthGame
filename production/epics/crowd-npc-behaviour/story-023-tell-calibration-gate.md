@@ -1,12 +1,12 @@
 # Story 023: Tell Matrix calibration gate: 600-minute rates and the evidence-compounds property test
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-10 and AC-CNB-31, scoped to this story:*
 
-- [ ] (AC-CNB-10) GIVEN 600 simulated minutes of the reference scene (headless, accelerated, fixed pre-registered seeds, no strikes so R8 adds nothing), WHEN accepted NPC runs, vaults, climbs, braces, decoy tends, bush entries, reversals and long head holds (after the chain-gap guard) are counted, THEN each count is above 0 and each city-wide rate lies within the two-sided 99 % Poisson interval of F2's accepted default (decoy tends: expected about 137 events).
-- [ ] (AC-CNB-31a) GIVEN 600 simulated minutes with scripted strikes every 30 s, WHEN every NPC's accepted tells (T1-T5, T12, T13, R8 panic runs and startle braces included) are logged, THEN no NPC shows two different tells within `CrowdTellChainGapSec`.
-- [ ] (AC-CNB-31b) The gap times between an NPC's consecutive different tells show no excess just after `CrowdTellChainGapSec` (the count in [gap, gap + 5 s] is within the 99 % Poisson interval of the count expected from the restarted exponential clocks); the resulting posterior for "two different tells within the gap" is reported as a playtest metric, not gated (it depends on the measured r_P, OQ6).
+- [x] (AC-CNB-10) GIVEN 600 simulated minutes of the reference scene (headless, accelerated, fixed pre-registered seeds, no strikes so R8 adds nothing), WHEN accepted NPC runs, vaults, climbs, braces, decoy tends, bush entries, reversals and long head holds (after the chain-gap guard) are counted, THEN each count is above 0 and each city-wide rate lies within the two-sided 99 % Poisson interval of F2's accepted default (decoy tends: expected about 137 events).
+- [x] (AC-CNB-31a) GIVEN 600 simulated minutes with scripted strikes every 30 s, WHEN every NPC's accepted tells (T1-T5, T12, T13, R8 panic runs and startle braces included) are logged, THEN no NPC shows two different tells within `CrowdTellChainGapSec`.
+- [x] (AC-CNB-31b) The gap times between an NPC's consecutive different tells show no excess just after `CrowdTellChainGapSec` (the count in [gap, gap + 5 s] is within the 99 % Poisson interval of the count expected from the restarted exponential clocks); the resulting posterior for "two different tells within the gap" is reported as a playtest metric, not gated (it depends on the measured r_P, OQ6).
 
 ---
 
@@ -102,7 +102,7 @@
 **Required evidence**:
 - Logic: `Source/StealthTestHarness/Private/CrowdTellCalibrationTest.cpp` and `CrowdEvidenceCompoundsTest.cpp` — must exist and pass; the evidence note `production/qa/evidence/crowd-tell-calibration-<date>.md` records seeds and the reported posterior
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.TellCalibration.TellBaselineNonZero`, `StealthGame.Crowd.TellCalibration.EvidenceCompounds`; 2026-10-27)
 
 ---
 
@@ -110,3 +110,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-016-gaze-catalogue.md`, `production/epics/crowd-npc-behaviour/story-019-run-traversal-reversal-herrings.md`, `production/epics/crowd-npc-behaviour/story-020-decoy-tending-herring.md`, `production/epics/crowd-npc-behaviour/story-021-brace-and-startle-herring.md`, `production/epics/crowd-npc-behaviour/story-022-bush-herring.md`, `production/epics/crowd-npc-behaviour/story-024-strike-stimulus-and-reactions.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-035-classifier-gate.md`, `production/epics/crowd-npc-behaviour/story-038-performance-pass-50-60-character.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing (AC-CNB-31b posterior reported, not gated)
+**Deviations**: The gate lives in `Source/StealthGameplay/Private/Tests/Crowd/CrowdTellCalibrationTest.cpp` (the headless crowd sim is private to that module) and the pre-registered seeds in `Fixtures/CrowdCalibrationSeeds.h` (a header, not JSON: unit tests read no files). GDD F2 amended 2026-10-27: show-anchored chain gap with the measured mean show delays in the compensation (decision log).
+**Test Evidence**: `StealthGame.Crowd.TellCalibration.TellBaselineNonZero`, `StealthGame.Crowd.TellCalibration.EvidenceCompounds`; full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

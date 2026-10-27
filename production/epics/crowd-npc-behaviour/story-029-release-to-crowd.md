@@ -1,12 +1,12 @@
 # Story 029: ReleaseToCrowd: invisible adoption, strike lockout and the exile exit slot
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-24 and CNB-R10 item 4, scoped to this story:*
 
-- [ ] (AC-CNB-24) GIVEN a disconnected player's pawn at grace expiry, WHEN `ReleaseToCrowd` runs, THEN on an observer client in the release frame and the next 10 frames |dv| per frame never exceeds the SCL walk acceleration x dt, the heading rate never exceeds the SCL turn rate, `ActionPose` is unchanged, and the pawn's next behaviour starts at a leg boundary.
-- [ ] With `RestrictedUntilServerTime` and `bExitAtNextScheduledSlot` the pawn finishes its strike lockout under `ST_CrowdRestricted`, then takes the next scheduled city-wide exit slot, reporting `AlleyExit` until absorbed.
-- [ ] A concealed released pawn's remaining stay is drawn from the NPC stay distribution conditioned on the time already concealed (uncapped); `AdoptReleasedPawn(Pawn, {})` after `TryReleaseNpc` exactly reverses it (B decremented, sink unlatched, tree restarted from its current activity).
+- [x] (AC-CNB-24) GIVEN a disconnected player's pawn at grace expiry, WHEN `ReleaseToCrowd` runs, THEN on an observer client in the release frame and the next 10 frames |dv| per frame never exceeds the SCL walk acceleration x dt, the heading rate never exceeds the SCL turn rate, `ActionPose` is unchanged, and the pawn's next behaviour starts at a leg boundary. — verified headless on the server pawn (|dv|, heading rate, leg-boundary start); the observer-client half DEFERRED to the multi-process harness
+- [x] With `RestrictedUntilServerTime` and `bExitAtNextScheduledSlot` the pawn finishes its strike lockout under `ST_CrowdRestricted`, then takes the next scheduled city-wide exit slot, reporting `AlleyExit` until absorbed.
+- [x] A concealed released pawn's remaining stay is drawn from the NPC stay distribution conditioned on the time already concealed (uncapped); `AdoptReleasedPawn(Pawn, {})` after `TryReleaseNpc` exactly reverses it (B decremented, sink unlatched, tree restarted from its current activity).
 
 ---
 
@@ -100,7 +100,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdReleaseToCrowdTest.cpp` plus `Source/StealthTestHarness/Private/CrowdReleaseNoChangeMPTest.cpp` (observer-client check) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Release.NoChangeAtRelease`, `StealthGame.Crowd.Release.ConcealedStay`; the reversal by `StealthGame.Crowd.Informant.EligibilityAndReversal`; 2026-10-27)
 
 ---
 
@@ -108,3 +108,12 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-026-ambient-schedule-and-emergence.md`, `production/epics/crowd-npc-behaviour/story-028-bound-pawn-restricted-driver.md`
 - Unlocks: None
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing headless
+**Deferred**: AC-CNB-24's observer-client measurement (replicated |dv|, heading rate and ActionPose on a client) needs the multi-process harness (story 034's nightly job). Concealment reports no concealed time yet: the Director conditions on 0 s until it does.
+**Deviations**: None
+**Test Evidence**: `StealthGame.Crowd.Release.NoChangeAtRelease`, `StealthGame.Crowd.Release.ConcealedStay`; the reversal by `StealthGame.Crowd.Informant.EligibilityAndReversal`; full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

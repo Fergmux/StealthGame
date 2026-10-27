@@ -6,6 +6,7 @@
 #include "StealthGameState.h"
 #include "StealthHUD.h"
 #include "StealthNpcController.h"
+#include "Server/ActionHub.h"
 #include "Server/CrowdDirector.h"
 #include "StealthObjective.h"
 #include "StealthPlayerController.h"
@@ -799,6 +800,14 @@ void AStealthGameMode::HandleAssassinationRequest(AStealthCharacter* Attacker, A
 	}
 	const float MaxReach = Settings->AssassinationRange * Settings->AssassinationServerTolerance;
 
+	// Crowd R8 stimulus bridge (stories cnb-024/025): the prototype strike does not run in an IIF queue slot yet, so it
+	// announces its start on the action hub itself (kill, whiff or reversal alike, before any outcome is known). The
+	// Assassination epic's slot replaces this line.
+	if (UActionHub* Hub = UActionHub::Get(GetWorld()))
+	{
+		Hub->OnActionStarted.Broadcast(Attacker, EActionType::Attack);
+	}
+
 	// Blind strike: find a concealed character at the strike point.
 	if (!Target)
 	{
@@ -1301,13 +1310,17 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 
 	if (Action.StartsWith(TEXT("watch"), ESearchCase::IgnoreCase))
 	{
-		const int32 WatchedIndex = FCString::Atoi(*Action.RightChop(5));
+		// "watch<N> [distance cm]": stand facing player N at that distance (default 5 m).
+		TArray<FString> WatchParts;
+		Action.RightChop(5).ParseIntoArrayWS(WatchParts);
+		const int32 WatchedIndex = WatchParts.Num() > 0 ? FCString::Atoi(*WatchParts[0]) : 0;
+		const float WatchDistance = WatchParts.Num() > 1 ? FCString::Atof(*WatchParts[1]) : 500.f;
 		int32 OtherIndex = 0;
 		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It, ++OtherIndex)
 		{
 			if (OtherIndex == WatchedIndex && It->Get() && It->Get()->GetPawn())
 			{
-				FaceAndApproach(It->Get()->GetPawn(), 500.f);
+				FaceAndApproach(It->Get()->GetPawn(), WatchDistance);
 				UE_LOG(LogStealth, Log, TEXT("[Bot] #%d watches #%d."), PlayerIndex, WatchedIndex);
 				return;
 			}

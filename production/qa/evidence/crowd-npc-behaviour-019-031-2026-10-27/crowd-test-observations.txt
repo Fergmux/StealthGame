@@ -1,0 +1,38 @@
+AMBIENT 1718 exit gaps over 13 sockets: mean 6.28 s (expected 6.15), KS D 0.0255 p 0.2125; sockets chi2 7.60 p 0.8159; blocked-entry retries 2; latched: 19 pending items rejected, 0 submitted after
+BRACECAP 643 braces (5.7 s wall): held to the 4.0 s cap 349 (share 0.5428, 99 % 0.4995-0.6005), bad cap holds 0, releases outside 1.0-3.8 s 0; PrepareBegin 643, PrepareEnd 643, without a dry run 0, inside the cooldown 0
+BRACEDUE 20 min x 50 NPCs, 12 runners (3.1 s wall): accepted 351, braces 273 (triggered 262, ambient 11), without a due clock 0, triggered after the window 0, ambient before the window ended 0, runner passes of undue NPCs 13945
+BUSH 6000 NPC-min (15.5 s wall): configured 0.2000 /min >= required 0.1900; entries 1247 (accepted 1250, dropped 2; 99 % 1110.8-1289.2), Hide(Enter) 1247, without a dry run 0, stays 1242 p99 94.4 s vs log-normal 96.5 s, re-entries inside the cooldown 0
+BUSHBLIND 229 entries with the bushes empty, 229 with three occupied, mismatches 0
+BUSHNEAREST 25 entries, bushes used 2, the bush 12 m off the leg chosen 0 times
+COMMANDPATH 45 s, 50 crowd controllers: 270400 Move/Look calls through the sinks, 0 discrete, 0 stale-epoch drops, 0 movement backstop faults, 0 path-following components
+CONCEALEDSTAY t0 0 s: KS D 0.0001 p 1.000, min total 0.80, max 280.9; t0 10 s: KS D 0.0001 p 1.000, min total 10.00, max 302.4; t0 30 s: KS D 0.0001 p 1.000, min total 30.00, max 387.3; t0 90 s: KS D 0.0001 p 1.000, min total 90.00, max 624.7;
+CORNERS 200 of 200 corners without speed below 0.8 x leg speed (100.0 %), max commanded turn while moving 48.3 deg (reversal 120)
+DEATHWRITE 100 kills with a future death write: exits cancelled before it 0, replacements before it + 10 s 0
+DECOY 8756 choices over 50 layouts (14.7 s wall): court chi2 12.73 p 0.4689; category observed live 1031 decoy 3047 used 3076 tended 1602 vs expected 1019.4 / 3041.3 / 3061.8 / 1633.5, chi2 0.82 p 0.8458; holds 7298, complete share 0.7425, bad complete 0, bad early 0, Begins without a dry run 0
+DECOYPOSTERIOR c 0.7544 over 627 holds, r_N 0.00457 /min, N 50, R_full 0.40: P_full 0.6988
+DECOYREFUSAL 24 NotNow refusals: followed by a different court 23, by the same court 0, given up 1; holds 167
+ENDEDHOLD Halt at 150.0 s with 2 running, 0 traversing, 0 tending, 0 braced, 1 hidden, 3 exiting: non-zero Move after the Halt call 0, slowest to rest 0.75 s (bound 2.17), never at rest 0, decelerations over the baseline 0; after the Halt: socket events 0, tells 0, commands 0
+EVIDENCE 30000 NPC-min, 1200 strikes (78.0 s wall): 20524 performed tells, 15040 consecutive different-tell pairs, within the 20 s gap 0, in [gap, gap + 5 s] 513 (expected 833.1, 99 % 758.7-907.4); reported posterior (two different tells within the gap): 0 NPC pairs, so any such pair is a player
+EXITCANCEL 200 kills: one exit cancelled for 193 (outside the 60 s window 0), none for 7 (LSC R5.7 bound 7), cancelled items not resolved Voided 0; sockets chi2 11.16 p 0.5152; alley kill: vacancy 200, cancels counted 0
+GAZE 3579 G2 glances, 60 G6 holds over 600 NPC-min (expected 60.0, 99 % 40.0-80.0), bad holds 0, concealed targets 0, HeadHold tells accepted 62 performed 60
+HALTSYNC 50 Halts: sinks not latched inside the call 0, non-Move(0) commands passed after Halt (or Move(0)/Look refused) 0
+HANDOVER 100 takeovers with late commands: reached the pawn 0; 100 hand-backs: applied before a frame start 0, during a traversal 0, detached 100
+INFORMANT 100 TryReleaseNpc calls: released 23 (ineligible at commit 0), eligible refused 0; per release: no epoch bump 0, no ledger change 0, tree still running 0, a command issued at the release 0; late commands injected after 5 commits, reached the pawn 0
+INFORMANT Run: peak 140.00 cm/s, effective gait Walk
+OUTCOMEBLIND 500 strikes x 4 classes (10.3 s wall): 14007 reactions, contingency chi2 8.38 p 0.9077
+RELEASE 10 releases: frames over the walk acceleration 0, over the turn rate 0, promotions before the lockout ended (or none) 0, not at a leg start 0, tells or discrete commands under the lockout 0, waited AlleyExit 10, absorbed through the next exit slot 10
+REPLACEMENT 3708 kills (1236 per class), served 3708, unserved 0, fallbacks 1: pooled mean 16.33 s, p95 29.12 s, earlier than 10 s 0; player-NPC d -0.023 var ratio 1.004 KS 0.032; player-informant d 0.057 var ratio 1.165 KS 0.032; NPC-informant d 0.081 var ratio 1.160 KS 0.043;
+REVERSAL 1500 NPC-min (3.9 s wall): 229 reversals (accepted 229; 99 % 189.0-266.7), stops measured 229, shortest 0.500 s (floor 0.50 s), commanded turns above 120 deg while moving 0
+RUNBOUTS 126 run legs, 125 run spans over 20 min x 50 NPCs (2.6 s wall): matched 125, not at a leg start 0, length outside 2-6 s 0, goals off the route nodes 0, at a court 0, braking faster than SCL 0
+SHOWDELAY mean seconds from acceptance to the visible moment: run 0.29 vault 14.92 climb 14.37 brace 28.68 decoy 22.43 bush 7.45 reversal 2.83 headhold 6.53
+SPAWNPATH 10 min, 13 sockets, 20 kills (18 NPC, 2 player): exit slots 78 (0.600 per socket-minute; exiters found 78), absorptions 62, entries 78 (0.600 per socket-minute), spawns 78 all via RequestEmergence 78; ledger 50 initial - 62 absorbed - 18 killed + 78 emerged = 48 alive
+STALLCOVER 598 of 600 samples with >= 5 NPCs in a 4 s+ stretch (99.67 %), lowest count 4, mean 9.26, highest regulated long share 90 %
+STRETCH longest visible stationary stretch over 60 min x 50 NPCs: 18.917 s (bound 20.0 s), activities mask 0x1c, trace 0.00:2 0.05:3 2.78:4 17.53:2
+STRIKESHARES 4000 strikes (10.0 s wall), 12872 reactions (near 2145, far 10727): None near 39.25% (target 40) far 39.69% (target 40); Glance near 29.18% (target 30) far 41.89% (target 41); Pause near 11.89% (target 12) far 11.51% (target 12); Reroute near 8.39% (target 7) far 6.90% (target 7); PanicRun near 3.45% (target 3) far 0.00% (target 0); StartleBrace near 7.83% (target 8) far 0.00% (target 0); early starts 0, max responders 8, refractory breaks 0, attacker glances after 0, panic runs 49 / startles 108 performed (T1 tells 510, T4 tells 176), non-glance downgrades 0
+TAKEOVER 20 takeovers from a run: max deceleration 600.0 cm/s^2 (CrowdStopDecel 600.0), steps over it 0, hold steps off the heading 0, hold steps not at walk 0, discrete commands 0, tells shown 0, restricted legs 168
+TAKEOVERSLOW hold steps with a non-zero Move: 0
+TELLBASELINE 30000 NPC-min over 6 seeds (77.6 s wall): run 4387 (accepted 4411) exp 4444.4 [4272.7-4616.2]; vault 1258 (accepted 1275) exp 1247.4 [1156.4-1338.4]; climb 478 (accepted 481) exp 528.0 [468.8-587.2]; brace 607 (accepted 618) exp 600.0 [536.9-663.1]; decoy 127 (accepted 127) exp 137.1 [107.0-167.3]; bush 6018 (accepted 6031) exp 6000.0 [5800.5-6199.5]; reversal 4606 (accepted 4629) exp 4557.0 [4383.1-4730.8]; headhold 2889 (accepted 2952) exp 3000.0 [2858.9-3141.1];
+TELLRATES accepted/target over 100000 NPC-min: 0:1.000 1:1.020 2:0.992 3:1.026 4:0.960 5:1.010 6:1.004 7:1.007
+TRAVERSAL 1500 NPC-min (3.9 s wall): vaults 57 (accepted 59; 99 % 42.0-82.7), climbs 21 (accepted 21; 99 % 13.2-39.6), Traverse commands 78, climbs below 1.6 m 0, vaults at 1.6 m+ 0, without a dry run 0, refusals 27
+TRAVERSALRETRY 41 dry runs of the refused point, shortest gap 10.02 s (block 10.0 s), Traverse sent 0
+WITNESS 10 min, 10 viewers: 74 emergences, 75 absorptions, witnessed 0; exits started 95, given up (watched) 15, shortest give-up 9.82 s after the exit started (CrowdExitGiveUpSec 8.0)

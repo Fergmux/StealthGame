@@ -1,12 +1,12 @@
 # Story 036: No crowd UI, debug draw or indicator in Shipping
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Blocked — BLOCKED (2026-10-27): AC-CNB-25's retained screenshots must come from a packaged Shipping listen server and client (each viewer class during a round with kills, emergences and a takeover); no Shipping package is built on this machine (the nightly packaging job needs the self-hosted runner) and emergences need LSC sockets. Done: the source scan (crowd lint rule crowd-ui, watched failing, real tree clean: StealthGame.Crowd.NoUi.SourceScan) and the compile-out evidence (the crowd cost meter, Look override and recording are !UE_BUILD_SHIPPING; the crowd debug sentinel STEALTH_TEST_SEAM_SENTINEL_CROWD_DEBUG for tools/ci/shipping-symbol-check.sh: StealthGame.Crowd.NoUi.DebugCompiledOut)
 > **Layer**: Feature
 > **Type**: UI
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -36,7 +36,7 @@
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-25 [UI/BLOCKING], scoped to this story:*
 
 - [ ] (AC-CNB-25) GIVEN a Shipping-configuration listen server and client, WHEN each viewer class's screen is captured during a round with kills, emergences and a takeover, THEN no crowd debug, NPC indicator or notice is drawn (retained screenshots).
-- [ ] Crowd debug draws, `FCrowdVirtualInputFrame` recording and the `Crowd.*` Insights scopes are compiled out of or disabled in Shipping (source scan and symbol check).
+- [x] Crowd debug draws, `FCrowdVirtualInputFrame` recording and the `Crowd.*` Insights scopes are compiled out of or disabled in Shipping (source scan and symbol check). — source scan: crowd-ui lint rule (StealthGame.Crowd.NoUi.SourceScan); compile-out: every crowd instrumentation is `!UE_BUILD_SHIPPING` and carries the debug sentinel the nightly Shipping-symbol check scans for (StealthGame.Crowd.NoUi.DebugCompiledOut); the trace scopes compile out with UE_TRACE in Shipping. The binary scan itself runs on the nightly packaged builds
 
 ---
 

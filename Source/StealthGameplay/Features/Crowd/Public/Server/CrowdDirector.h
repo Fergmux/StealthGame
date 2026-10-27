@@ -14,6 +14,7 @@
 #include "Server/CrowdPerceptionFilter.h"
 #include "Server/CrowdSpatialHash.h"
 #include "Server/CrowdStallRegulator.h"
+#include "Server/CrowdStrikeStimulus.h"
 #include "Server/CrowdTellSampler.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "UObject/WeakInterfacePtr.h"
@@ -80,6 +81,14 @@ public:
 
 	/** The perception filter (Concealment, ADR-0017); none means everything perceivable and bush herrings disabled. */
 	void SetPerceptionFilter(TWeakInterfacePtr<ICrowdPerceptionFilter> Filter) { PerceptionFilter = Filter; }
+	/**
+	 * The red-herring sites (LSC TraversalPoints, Objectives courts, Concealment bushes; stories cnb-019 to cnb-022). Plain
+	 * C++ and not owned: the composition root keeps the implementer alive for the world. None (this build) disables the
+	 * vault, climb, decoy and bush clocks; runs, reversals, braces and head holds need no site.
+	 */
+	void SetHerringSites(ICrowdHerringSites* Sites) { HerringSites = Sites; }
+	/** Which tells this world's crowd plays (the sampler's enabled set at round start). */
+	bool IsTellEnabled(ECrowdTell Tell) const { return Tells.IsEnabled(Tell); }
 	/** The graybox crowd area (until the layout service supplies the CrowdRoute graph and area types). */
 	void SetCrowdArea(const FVector& Center, float RadiusCm, float MarketRadiusCm);
 	/**
@@ -157,6 +166,22 @@ public:
 	virtual void ReportActivity(uint32 Ordinal, ECrowdActivity Activity) override;
 	virtual FCrowdTellSampler& GetTellSampler() override { return Tells; }
 	virtual uint32 GetCurrentControlEpoch(uint32 Ordinal) const override;
+	virtual FCrowdActionTimings GetActionTimings() const override;
+	virtual bool FindTraversalNear(uint32 Ordinal, const FVector& From, double MaxCm, bool bClimb, FCrowdTraversalSite& Out) override;
+	virtual bool IsTraversing(uint32 Ordinal) const override;
+	virtual int32 GetCourtCount() const override;
+	virtual bool GetCourtStandPoint(int32 Court, const FVector& From, FCrowdCourtSite& Out) override;
+	virtual bool FindBush(const FVector& From, TConstArrayView<FVector> Path, double RadiusCm, FCrowdBushSite& Out) override;
+	virtual ECrowdBeginOutcome GetBeginOutcome(uint32 Ordinal, EActionType Type, double SubmittedAt, double Now) override;
+	virtual bool IsOnNavigation(const FVector& Point) const override;
+	virtual void OnAgentPromoted(uint32 Ordinal) override;
+	virtual bool ClaimExitSlot(uint32 Ordinal) override;
+	/** Pawns released by TryReleaseNpc and not yet adopted back (story cnb-030; diagnostics). */
+	int32 GetReleasedForTakeoverCount() const { return ReleasedForTakeover.Num(); }
+	/** Exile bodies waiting for the next scheduled exit slot (story cnb-029). */
+	TConstArrayView<uint32> GetExitClaims() const { return ExitClaims; }
+	/** ReleaseControl requests waiting for a frame start outside a traversal (story cnb-028). */
+	int32 GetPendingReleaseCount() const { return PendingReleases.Num(); }
 
 	// ---- ICrowdAgentStarter -------------------------------------------------------------------------------------------
 
@@ -178,6 +203,14 @@ public:
 	/** The round's Crowd tuning hash (schema keys + asset keys, story cnb-003). */
 	uint64 GetRoundTuningHash() const { return RoundTuningHash; }
 
+	/**
+	 * R8 (story cnb-024): a strike started at Point by the pawn with SourceKey (OnActionStarted(Attack) only: kill, whiff
+	 * and reversal alike). Queues the fan-out; responders are picked over the next frames within the ray budget.
+	 */
+	void NoteStrikeStarted(const FVector& Point, uint64 SourceKey, double StimulusTime);
+	/** Strikes fanned out this round (diagnostics). */
+	uint64 GetStrikeCount() const { return StrikeFanOut.GetStrikeCount(); }
+
 	/** Engine frames between each FindPathAsync start and its delivery (spike cnb-001 AC-3; diagnostics). */
 	TConstArrayView<int32> GetPathLatencyFrames() const { return PathLatencyFrames; }
 
@@ -189,13 +222,20 @@ private:
 	UFUNCTION()
 	void HandleNavGenerationFinished(ANavigationData* NavData);
 
+	/** UActionHub::OnActionStarted (server, inside the queue slot): Begin outcomes and, for Attack, the strike stimulus. */
+	void HandleActionStarted(AStealthPawn* Pawn, EActionType Type);
+
 private:
 	void EnsureCore();
+	/** The sampler's enabled tells: a tell with no site in this world never runs its clock. */
+	void ConfigureTells();
 	void ResetForNewRound();
 	bool IsNavReady() const;
 	void BuildRouteNodes();
 	void BuildHash();
 	void FanOutSalient(double Now);
+	/** The strike fan-out's line-of-sight tests and responder calls within this frame's ray budget. */
+	void ProcessStrikes(double Now);
 	void StartPaths();
 	void OnPathFound(uint32 QueryId, ENavigationQueryResult::Type Result, FNavPathSharedPtr Path);
 	UStateTree* LoadTree(ECrowdDriverKind Kind) const;
@@ -211,9 +251,22 @@ private:
 	FCrowdStallRegulator Stall;
 	FCrowdTellSampler Tells;
 	FCrowdDensityModel Density;
+	FCrowdStrikeFanOut StrikeFanOut;
+	/** Bound pawns handed back by ReleaseControl: detached at the start of a Director frame, never during a traversal. */
+	TArray<uint32> PendingReleases;
+	/** TryReleaseNpc's released set (a later AdoptReleasedPawn(Pawn, {}) of one of them is the reversal). */
+	TSet<uint32> ReleasedForTakeover;
+	/** Adoptions of pawns not driven by a crowd controller yet (applied when the controller attaches). */
+	TMap<FObjectKey, FCrowdAdoptParams> PendingAdoptions;
+	TArray<uint32> ExitClaims;
 	FCrowdDirectorTickFunction TickFunction;
 	FCrowdDecisionStats DecisionStats;
 	TWeakInterfacePtr<ICrowdPerceptionFilter> PerceptionFilter;
+	ICrowdHerringSites* HerringSites = nullptr;
+	/** The last OnActionStarted time per (ordinal, action) of crowd-driven pawns (Begin outcomes). */
+	TMap<uint64, double> ActionStartedAt;
+	TMap<uint64, bool> WasTraversing;
+	FDelegateHandle ActionStartedHandle;
 	TMap<uint32, TWeakObjectPtr<AStealthCrowdController>> Controllers;
 	TSet<FObjectKey> PendingRestricted;
 	TMap<uint32, FCrowdPathRequest> InFlight;

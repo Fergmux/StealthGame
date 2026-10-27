@@ -1,12 +1,12 @@
 # Story 034: Pipeline parity: AIController versus bot-client input path, nightly
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Blocked — BLOCKED (2026-10-27): AC-CNB-27 needs a nightly multi-process run of at least 1,236 30 s windows per pipeline (about 10.3 h each, >= 10 bot clients) on the self-hosted CI runner, which is not registered (a human item), and the bot-client Enhanced Input replay of FCrowdVirtualInputFrame streams through the ADR-0008 T3 harness is not built; the recording side exists (story 010, CrowdVirtualInput Recording spec)
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 

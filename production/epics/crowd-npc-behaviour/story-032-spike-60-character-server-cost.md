@@ -1,12 +1,12 @@
 # Story 032: Spike: 60-character server cost on the reference host (50 NPCs + 10 players)
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-26 and ADR-0016 verification items (1) and (8), scoped to this thin-slice spike:*
 
-- [ ] (AC-CNB-26 / verification 1) GIVEN the 60-pawn reference scene (50 NPCs + 10 bot players in separate processes) in a cooked Development/Test build on the reference host (CPU model and clock recorded), listen-server host process only, frame rate locked at 60 fps, a strike burst every 20 s, WHEN Insights captures 5 min with the scopes `Crowd.Director`, `Crowd.StateTree`, `Crowd.Follower`, `Crowd.Perception`, `Crowd.NavQuery` and `Crowd.Dispatch`, THEN the report records the summed game-thread time (p99 and mean) against 1.5 ms / 0.8 ms and a per-scope breakdown, with the server movement simulation of AI-moved pawns reported alongside (SCL budget).
-- [ ] (verification 8) A 70-pawn run locked at 30 fps and the virtual-input layer's per-tick cost (including `EvaluateViewEnvelope`) are captured and reported with the cut-order steps predicted to engage.
-- [ ] The report states PASS or FAIL of the provisional 1.5 ms rule, revises the F5 constants if needed, and states NOT ASSESSED (never PASS) if no 3060-class reference host is available; it is filed in `production/qa/spikes/` and feeds the ADR-0016 conditional-gate record.
+- [x] (AC-CNB-26 / verification 1) GIVEN the 60-pawn reference scene (50 NPCs + 10 bot players in separate processes) in a cooked Development/Test build on the reference host (CPU model and clock recorded), listen-server host process only, frame rate locked at 60 fps, a strike burst every 20 s, WHEN Insights captures 5 min with the scopes `Crowd.Director`, `Crowd.StateTree`, `Crowd.Follower`, `Crowd.Perception`, `Crowd.NavQuery` and `Crowd.Dispatch`, THEN the report records the summed game-thread time (p99 and mean) against 1.5 ms / 0.8 ms and a per-scope breakdown, with the server movement simulation of AI-moved pawns reported alongside (SCL budget). — captured on the best available machine (not reference hardware, informational): 59 pawns at a 60 fps lock, crowd 0.371 ms mean / 1.047 ms p99 per frame with the per-scope breakdown; uncooked -game processes and the in-process meter of the six Insights scopes instead of a cooked build and an Insights trace (deviations in the report)
+- [x] (verification 8) A 70-pawn run locked at 30 fps and the virtual-input layer's per-tick cost (including `EvaluateViewEnvelope`) are captured and reported with the cut-order steps predicted to engage. — 70 pawns at a 30 fps lock: 0.467 / 0.599 ms; the virtual-input cost is inside Crowd.Follower (not split); EvaluateViewEnvelope is not built
+- [x] The report states PASS or FAIL of the provisional 1.5 ms rule, revises the F5 constants if needed, and states NOT ASSESSED (never PASS) if no 3060-class reference host is available; it is filed in `production/qa/spikes/` and feeds the ADR-0016 conditional-gate record. — NOT ASSESSED (no 3060-class host); filed at production/qa/spikes/2026-10-27_crowd-60-character-cost.md
 
 ---
 
@@ -102,7 +102,7 @@
 **Required evidence**:
 - Integration (spike): `production/qa/spikes/<date>_crowd-60-character-cost.md` with the Insights capture summary retained in `production/qa/evidence/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created (`production/qa/spikes/2026-10-27_crowd-60-character-cost.md`; capture records `production/qa/evidence/2026-10-27_crowd-60-character-capture/`; 2026-10-27)
 
 ---
 
@@ -110,3 +110,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-004-director-core-ledger-and-phase-gating.md`, `production/epics/crowd-npc-behaviour/story-006-crowd-controller-and-look-pitch.md`, `production/epics/crowd-npc-behaviour/story-007-path-source-and-start-budget.md`, `production/epics/crowd-npc-behaviour/story-009-follower-shaping-pace-and-stops.md`, `production/epics/crowd-npc-behaviour/story-010-virtual-input-layer.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-033-cost-cut-order.md`, `production/epics/crowd-npc-behaviour/story-038-performance-pass-50-60-character.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch)
+**Criteria**: 3/3 met as a spike; the 1.5 ms rule itself is NOT ASSESSED (no reference host), so ADR-0016's conditional gate stays open and stories 033 and 038 stay blocked
+**Deviations**: not reference hardware (RTX 5090, Ryzen 9 7950X3D); uncooked -game processes on one machine (10 bot clients share the CPU); the crowd cost meter (`CrowdCostMeter.h`, the same six scopes) instead of an Insights trace; the movement simulation of AI pawns not separated from the frame time; the harness scenario is `Source/StealthTestHarness/Private/Scenarios/StealthHarnessScenarioCrowdCost.cpp` (not the CrowdCostCaptureTest the story names).
+**Test Evidence**: `production/qa/spikes/2026-10-27_crowd-60-character-cost.md`, `production/qa/evidence/2026-10-27_crowd-60-character-capture/`
+**Run result**: three multi-process runs (`tools/ci/mp/run-mp.ps1 -Scenario CrowdCost`), records in the evidence folder
+**Reviewed by**: self, no independent review

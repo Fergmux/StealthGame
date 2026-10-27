@@ -1,0 +1,10 @@
+Reviewed-Content-Hash: production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/01-host-crowd-50-herrings.png 4a4d917c66d175151b96336733da7d5abadac63b
+Reviewed-Content-Hash: production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/02-client1-crowd.png dc8a18c6e8c6acbc1fd2a0ba3d13607b775d4475
+Reviewed-Content-Hash: production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/03-client2-crowd.png 2e28899ca9f4ae84475c9bac605728fb4f6d8101
+Reviewed-Content-Hash: production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/04-strike-reactions-1s.png 7a3dcb35cf6580a54e821b2a44eb05fce956b6ab
+Reviewed-Content-Hash: production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/05-strike-reactions-5s.png a9dc762c70523ffdbdd3f54c53e4c6553a5242e7
+Reviewed-Content-Hash: production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/06-host-after-strike.png a5a88cfbff2e022d7d592c336f9cd6347ff3ee45
+Reviewed-Content-Hash: Source/StealthGameplay/Features/Crowd/Private/CrowdAgent.cpp b9c9b68562b3c88d861755aa84ecc9fde30cf90d
+Reviewed-Content-Hash: Source/StealthGameplay/Features/Crowd/Private/CrowdDirector.cpp e0c3d213386c3b85b1ab1731f2bfe3fc9224f1b0
+Reviewed-Content-Hash: Source/StealthGameplay/Features/Crowd/Private/CrowdHerringRunTasks.cpp 6774802e9d7ebf21e6592890fa0a327a98976739
+Reviewed-Content-Hash: Source/StealthGameplay/Features/Crowd/Private/CrowdReactionTasks.cpp efa47002b35cca0bdb33c7b060a7e65fe8474901

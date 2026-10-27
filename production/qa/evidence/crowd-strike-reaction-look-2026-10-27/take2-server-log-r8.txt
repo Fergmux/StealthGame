@@ -1,0 +1,11 @@
+[2026.10.27-02.03.49:201][132]LogStealth: Round started (seed 209190993, 50 NPCs).
+[2026.10.27-02.04.13:944][207]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_44 (npc, prepared=0).
+[2026.10.27-02.04.14:226][208]LogStealthCrowd: R8 strike 0 responder 43 at 746 cm: Pause
+[2026.10.27-02.04.14:226][208]LogStealthCrowd: R8 strike 0 responder 25 at 1301 cm: Glance
+[2026.10.27-02.04.14:226][208]LogStealthCrowd: R8 strike 0 responder 7 at 294 cm: None
+[2026.10.27-02.04.15:558][212]LogStealth: [Bot] #1 watches #0.
+[2026.10.27-02.04.38:559][281]LogStealth: [Bot] #2 strikes BP_CrowdCharacter_C_49 (npc, prepared=0).
+[2026.10.27-02.04.38:560][281]LogStealthCrowd: R8 strike 1 responder 38 at 1095 cm: None
+[2026.10.27-02.04.38:560][281]LogStealthCrowd: R8 strike 1 responder 7 at 1383 cm: Glance
+[2026.10.27-02.04.38:560][281]LogStealthCrowd: R8 strike 1 responder 18 at 159 cm: Glance
+[2026.10.27-02.04.39:559][284]LogStealth: [Bot] #1 watches #2.

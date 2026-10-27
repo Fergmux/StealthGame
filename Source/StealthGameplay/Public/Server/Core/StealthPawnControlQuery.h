@@ -21,4 +21,10 @@ namespace StealthPawnControl
 
 	/** The pawn's spawn ordinal, or NoSpawnOrdinal. */
 	STEALTHGAMEPLAY_API uint32 GetSpawnOrdinal(const AActor* Pawn);
+
+	/**
+	 * Bumps the pawn's control epoch (UStealthPawnFactory::BumpControlEpoch): every command carrying the older epoch is
+	 * dropped from now on. Crowd's TryReleaseNpc commits through it (story cnb-030; GDD CNB-R11). Returns the new epoch.
+	 */
+	STEALTHGAMEPLAY_API uint32 BumpControlEpoch(const AActor* Pawn);
 }

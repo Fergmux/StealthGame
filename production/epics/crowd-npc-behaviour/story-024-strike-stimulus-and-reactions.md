@@ -1,12 +1,12 @@
 # Story 024: Strike stimulus fan-out and outcome-blind reactions (R8)
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-18 and CNB-R8, scoped to this story (the visual check is story 025):*
 
-- [ ] (AC-CNB-18a) GIVEN 500 scripted strikes each of kill-NPC, kill-player, whiff and reversal in a fixed crowd, WHEN the reactions of NPCs within 15 m with line of sight are logged, THEN the reaction distribution does not differ by outcome (chi-square p > 0.01).
-- [ ] (AC-CNB-18b) Stratified by distance (<= 6 m, > 6 m), each R8 share is within +-20 % relative of its target (panic runs and startle braces only <= 6 m, glances in their place beyond), no reaction starts earlier than the reaction-time distribution's minimum after the stimulus, at most `CrowdStrikeResponderLimit` (8) NPCs respond per strike, no NPC reacts twice within `CrowdReactRefractorySec`, and no responder's gaze tracks the attacker after its glance ends.
-- [ ] Strike stimuli come only from `OnActionStarted(Attack)`, never `OnPawnKilled`; the Director never reads the outcome or `VictimKind`; an NPC victim keeps its driver and behaviour as if the strike had whiffed until its death write.
+- [x] (AC-CNB-18a) GIVEN 500 scripted strikes each of kill-NPC, kill-player, whiff and reversal in a fixed crowd, WHEN the reactions of NPCs within 15 m with line of sight are logged, THEN the reaction distribution does not differ by outcome (chi-square p > 0.01).
+- [x] (AC-CNB-18b) Stratified by distance (<= 6 m, > 6 m), each R8 share is within +-20 % relative of its target (panic runs and startle braces only <= 6 m, glances in their place beyond), no reaction starts earlier than the reaction-time distribution's minimum after the stimulus, at most `CrowdStrikeResponderLimit` (8) NPCs respond per strike, no NPC reacts twice within `CrowdReactRefractorySec`, and no responder's gaze tracks the attacker after its glance ends.
+- [x] Strike stimuli come only from `OnActionStarted(Attack)`, never `OnPawnKilled`; the Director never reads the outcome or `VictimKind`; an NPC victim keeps its driver and behaviour as if the strike had whiffed until its death write.
 
 ---
 
@@ -102,7 +102,7 @@
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Crowd/CrowdStrikeReactionTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Strike.OutcomeBlind`, `StealthGame.Crowd.Strike.SharesAndLimits`, `StealthGame.Crowd.Strike.PriorityKeyed`; 2026-10-27)
 
 ---
 
@@ -110,3 +110,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-008-spatial-hash-and-perception-filter.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`, `production/epics/crowd-npc-behaviour/story-018-tell-sampler-and-calibration-counters.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-023-tell-calibration-gate.md`, `production/epics/crowd-npc-behaviour/story-025-strike-reaction-look.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing
+**Deviations**: The Director listens to UActionHub::OnActionStarted(Attack) only; the prototype strike in L_Prototype announces its start on the hub (a bridge in AStealthGameMode::HandleAssassinationRequest until the Assassination slot exists). Responders are picked by the counter-based priority keyed by (ordinal, strike index), read without advancing any counter.
+**Test Evidence**: `StealthGame.Crowd.Strike.OutcomeBlind`, `StealthGame.Crowd.Strike.SharesAndLimits`, `StealthGame.Crowd.Strike.PriorityKeyed`; full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

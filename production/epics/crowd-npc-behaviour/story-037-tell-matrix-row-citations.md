@@ -1,12 +1,12 @@
 # Story 037: Tell Matrix row citations across the dependent GDDs (advisory check)
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Config/Data
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -34,8 +34,8 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-30 [Review/ADVISORY, at the cross-GDD review], scoped to this story:*
 
-- [ ] (AC-CNB-30) GIVEN CNB-R16, WHEN SCL (AC-SCL-32), IIF (AC 50), LSC (AC-61), Concealment (AC-CON-15), Assassination, Objectives (AC-OC-24), IVP (AC-IVP-34) and Penalty & Informants are reviewed, THEN each named GDD contains an acceptance criterion that cites its row(s) (T1-T18) by number, and a list of (GDD, row, AC id) has no missing entry.
-- [ ] T17 and T18 are recorded in the list as no-deviation rows (camera toggle and ping), with the GDD sections that argue them.
+- [ ] (AC-CNB-30) GIVEN CNB-R16, WHEN SCL (AC-SCL-32), IIF (AC 50), LSC (AC-61), Concealment (AC-CON-15), Assassination, Objectives (AC-OC-24), IVP (AC-IVP-34) and Penalty & Informants are reviewed, THEN each named GDD contains an acceptance criterion that cites its row(s) (T1-T18) by number, and a list of (GDD, row, AC id) has no missing entry. — ADVISORY, NOT MET: the list is written; 5 of 17 pairs are cited, 12 are missing and raised as change requests to the SCL (7), IIF (3), LSC (1) and Concealment (1) authors (never fixed here)
+- [x] T17 and T18 are recorded in the list as no-deviation rows (camera toggle and ping), with the GDD sections that argue them.
 
 ---
 
@@ -87,7 +87,7 @@
 **Required evidence**:
 - Config/Data: smoke check pass in `production/qa/smoke-<date>-crowd-tell-matrix-rows.md` (advisory)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created (`production/qa/smoke-2026-10-27-crowd-tell-matrix-rows.md`, advisory; 2026-10-27)
 
 ---
 
@@ -95,3 +95,11 @@
 
 - Depends on: None
 - Unlocks: None
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..039)
+**Criteria**: 1/2 met; AC-CNB-30 is ADVISORY and reports 12 missing (GDD, row) citations as change requests (the story forbids fixing them here)
+**Deviations**: AC-CNB-30 names "LSC (AC-61)" but no AC-61 exists in the LSC GDD (its Tell Matrix AC is AC-54): a correction for the Crowd GDD at the next cross-GDD review.
+**Test Evidence**: `production/qa/smoke-2026-10-27-crowd-tell-matrix-rows.md`
+**Run result**: N/A — a documentation check across GDDs; nothing in the game changes
+**Reviewed by**: self, no independent review (the table was produced by a delegated read of the GDD AC sections)

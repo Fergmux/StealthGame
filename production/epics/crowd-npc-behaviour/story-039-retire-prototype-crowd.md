@@ -1,12 +1,12 @@
 # Story 039: Retire the prototype crowd: swap to the Director and one pawn class
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Blocked — BLOCKED (2026-10-27): the prototype ScheduleNpcReplacement / FindCrowdPoint path is still the only mid-round refill in L_Prototype, because the Level Socket Contract emergence sockets (and CPA DrawReplacement) the Director's ambient schedule needs are not built (story 026 built the schedule against seams); removing it would leave killed NPCs unreplaced, and the AC's 5-minute PIE needs ambient exit and entry, which need sockets. Round's spawn list already places the round's NPCs through the Director (AStealthGameMode::SpawnStartPawn -> SpawnNpc -> RequestStartPlacement) and no AStealthNpcController is possessed (D53, batch 18); SpawnCrowd has no caller
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 

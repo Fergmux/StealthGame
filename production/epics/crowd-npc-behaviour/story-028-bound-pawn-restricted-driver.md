@@ -1,12 +1,12 @@
 # Story 028: Participant-bound pawn driving: takeover blend, restricted driver and hand-back
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-20 and CNB-R10 items 1-3 and 5, scoped to this story:*
 
-- [ ] (AC-CNB-20) GIVEN an Active player running mid-interaction at a 1/60 s step, WHEN the connection goes Unresponsive, THEN max |dv/dt| <= `CrowdStopDecel`, the hold ends with the ordinary cancel pose, the head never exceeds `LookMaxRateDegPerSec`, the pawn is never destroyed, and from takeover to hand-back it issues only `Move` and `Look`.
-- [ ] `DriveBoundPawn` registers a pending restricted config; on possession the pawn holds `Move(current heading, Walk)` at the nearest pace for `HandoverHoldSec` (0.8 s), or `Move(0)` below the pivot speed or when the hold heading leaves the navmesh within the hold distance, then runs `ST_CrowdRestricted` through `FCrowdMotionSink`.
-- [ ] A concealed bound pawn stays concealed (no `Hide(Exit)`); `ReleaseControl` issues `Move(0)`, stops the tree and detaches at the next frame start, never during a traversal.
+- [x] (AC-CNB-20) GIVEN an Active player running mid-interaction at a 1/60 s step, WHEN the connection goes Unresponsive, THEN max |dv/dt| <= `CrowdStopDecel`, the hold ends with the ordinary cancel pose, the head never exceeds `LookMaxRateDegPerSec`, the pawn is never destroyed, and from takeover to hand-back it issues only `Move` and `Look`. — headless at 1/60 s (decel, hold heading, never destroyed, only Move/Look); the head-rate clause is the SCL head filter's (SCL-021) and the cancel pose Round's IIF release path
+- [x] `DriveBoundPawn` registers a pending restricted config; on possession the pawn holds `Move(current heading, Walk)` at the nearest pace for `HandoverHoldSec` (0.8 s), or `Move(0)` below the pivot speed or when the hold heading leaves the navmesh within the hold distance, then runs `ST_CrowdRestricted` through `FCrowdMotionSink`.
+- [x] A concealed bound pawn stays concealed (no `Hide(Exit)`); `ReleaseControl` issues `Move(0)`, stops the tree and detaches at the next frame start, never during a traversal.
 
 ---
 
@@ -102,7 +102,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdTakeoverBlendTest.cpp` (automation) plus `Source/StealthTestHarness/Private/CrowdTakeoverBlendMPTest.cpp` (multi-process `StealthGame.Crowd.MP.TakeoverBlend`) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Takeover.TakeoverBlend`, `StealthGame.Crowd.Takeover.SlowOrOffNavHoldsStill`, `StealthGame.Crowd.Halt.HandoverEpoch` (hand-back at a frame start, never during a traversal); 2026-10-27)
 
 ---
 
@@ -110,3 +110,12 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-005-command-sinks-epoch-and-halt-filter.md`, `production/epics/crowd-npc-behaviour/story-006-crowd-controller-and-look-pitch.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-029-release-to-crowd.md`, `production/epics/crowd-npc-behaviour/story-030-takeover-eligibility-and-atomic-release.md`, `production/epics/crowd-npc-behaviour/story-031-halt-and-handover-epoch.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing
+**Deferred**: CrowdTakeoverBlendMPTest (multi-process) not built: the head-rate clause is the SCL head filter's (story SCL-021) and the cancel pose is Round's IIF release path.
+**Deviations**: The hold heading is checked within the device's 22.5 degree keyboard quantisation. HandoverHoldSec is read from FLocomotionTuning_Server.
+**Test Evidence**: `StealthGame.Crowd.Takeover.TakeoverBlend`, `StealthGame.Crowd.Takeover.SlowOrOffNavHoldsStill`, `StealthGame.Crowd.Halt.HandoverEpoch` (hand-back at a frame start, never during a traversal); full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

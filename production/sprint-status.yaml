@@ -25,7 +25,7 @@ goal: "Production Foundation + Core spine: TDC Exit B pipeline, Participant Stat
 start: "2026-11-09"
 end: "2026-11-20"
 generated: "2026-10-25"
-updated: "2026-10-26"
+updated: "2026-10-27"
 
 stories:
   - id: "tdc-001"
@@ -3100,3 +3100,234 @@ stories:
     completed: "2026-10-26"
     sprint: 2
     note: "Added 2026-10-26 (Crowd epic start, D53: production crowd drives L_Prototype); evidence production/qa/evidence/crowd-npc-behaviour-001-018-2026-10-26/"
+  - id: "cnb-019"
+    name: "Red herrings: late-porter runs, public traversals and reversals"
+    file: "production/epics/crowd-npc-behaviour/story-019-run-traversal-reversal-herrings.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-020"
+    name: "Decoy tending: uniform court choice, early releases and the T3 posterior"
+    file: "production/epics/crowd-npc-behaviour/story-020-decoy-tending-herring.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-021"
+    name: "Brace and startle red herring: due clock, flinch triggers and Prepare cap"
+    file: "production/epics/crowd-npc-behaviour/story-021-brace-and-startle-herring.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-022"
+    name: "Bush red herring: occupancy-blind shade-seeking with uncapped stays"
+    file: "production/epics/crowd-npc-behaviour/story-022-bush-herring.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-023"
+    name: "Tell Matrix calibration gate: 600-minute rates and evidence-compounds test"
+    file: "production/epics/crowd-npc-behaviour/story-023-tell-calibration-gate.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-024"
+    name: "Strike stimulus fan-out and outcome-blind reactions (R8)"
+    file: "production/epics/crowd-npc-behaviour/story-024-strike-stimulus-and-reactions.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-025"
+    name: "Strike reaction look: the graybox market reads calm, not a stampede"
+    file: "production/epics/crowd-npc-behaviour/story-025-strike-reaction-look.md"
+    priority: must-have
+    status: review
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: ""
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/; awaiting the lead sign-off (art-director agent approved take 2 conditionally)"
+  - id: "cnb-026"
+    name: "Ambient schedule as queue items and witness-free emergence"
+    file: "production/epics/crowd-npc-behaviour/story-026-ambient-schedule-and-emergence.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/; production wiring waits for LSC sockets / CPA DrawReplacement (seams built)"
+  - id: "cnb-027"
+    name: "Kill vacancy, victim-blind replacement delay and exit cancellation"
+    file: "production/epics/crowd-npc-behaviour/story-027-kill-vacancy-and-replacement.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/; OnPawnKilled wiring waits for the Assassination slot"
+  - id: "cnb-028"
+    name: "Participant-bound pawn driving: takeover blend, restricted driver and hand-back"
+    file: "production/epics/crowd-npc-behaviour/story-028-bound-pawn-restricted-driver.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-029"
+    name: "ReleaseToCrowd: invisible adoption, strike lockout and the exile exit slot"
+    file: "production/epics/crowd-npc-behaviour/story-029-release-to-crowd.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/; observer-client half of AC-CNB-24 deferred to the MP harness"
+  - id: "cnb-030"
+    name: "Takeover eligibility supply and atomic NPC release for informants"
+    file: "production/epics/crowd-npc-behaviour/story-030-takeover-eligibility-and-atomic-release.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/; AC-CNB-23c (MP, 100 ms RTT) deferred"
+  - id: "cnb-031"
+    name: "Halt at the round-end step and handover epoch discipline"
+    file: "production/epics/crowd-npc-behaviour/story-031-halt-and-handover-epoch.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-032"
+    name: "Spike: 60-character server cost on the reference host (50 NPCs + 10 players)"
+    file: "production/epics/crowd-npc-behaviour/story-032-spike-60-character-server-cost.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/; report production/qa/spikes/2026-10-27_crowd-60-character-cost.md: NOT ASSESSED on the reference host (RTX 5090 / Ryzen 9 7950X3D, informational)"
+  - id: "cnb-033"
+    name: "Global cost-cut order with behaviour invariance"
+    file: "production/epics/crowd-npc-behaviour/story-033-cost-cut-order.md"
+    priority: must-have
+    status: blocked
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: "the spike is not assessed on a 3060-class host and story 034 (parity per step) is blocked"
+    completed: ""
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-034"
+    name: "Pipeline parity: AIController versus bot-client input path, nightly"
+    file: "production/epics/crowd-npc-behaviour/story-034-pipeline-parity.md"
+    priority: must-have
+    status: blocked
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: "needs the self-hosted CI runner (10.3 h per pipeline nightly) and the bot-client Enhanced Input replay harness"
+    completed: ""
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-035"
+    name: "Classifier gate: NPC motion features cannot identify NPCs (playtest)"
+    file: "production/epics/crowd-npc-behaviour/story-035-classifier-gate.md"
+    priority: must-have
+    status: blocked
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: "evidence pending playtest (offline gate script written, selftest passes)"
+    completed: ""
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-036"
+    name: "No crowd UI, debug draw or indicator in Shipping"
+    file: "production/epics/crowd-npc-behaviour/story-036-no-crowd-ui.md"
+    priority: must-have
+    status: blocked
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: "Shipping screenshots need a packaged Shipping build; source scan and compile-out evidence done"
+    completed: ""
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-037"
+    name: "Tell Matrix row citations across the dependent GDDs (advisory check)"
+    file: "production/epics/crowd-npc-behaviour/story-037-tell-matrix-row-citations.md"
+    priority: must-have
+    status: done
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/; advisory: 12 of 17 citations missing, raised as change requests"
+  - id: "cnb-038"
+    name: "Performance pass: 50/60-character server cost on the full catalogue (exit criterion)"
+    file: "production/epics/crowd-npc-behaviour/story-038-performance-pass-50-60-character.md"
+    priority: must-have
+    status: blocked
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: "story 032 not assessed on the reference host; story 033 blocked"
+    completed: ""
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "cnb-039"
+    name: "Retire the prototype crowd: swap to the Director and one pawn class"
+    file: "production/epics/crowd-npc-behaviour/story-039-retire-prototype-crowd.md"
+    priority: must-have
+    status: blocked
+    owner: "ai-programmer"
+    estimate_days: 1.0
+    blocker: "ambient exit/entry and replacement need LSC emergence sockets"
+    completed: ""
+    sprint: 2
+    note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"

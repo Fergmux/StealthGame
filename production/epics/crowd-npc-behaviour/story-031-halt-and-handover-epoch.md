@@ -1,12 +1,12 @@
 # Story 031: Halt at the round-end step and handover epoch discipline
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-22 and AC-CNB-38 and ADR-0016 section 7, scoped to this story:*
 
-- [ ] (AC-CNB-22) GIVEN 50 pawns moving, running, tending and traversing, WHEN `Ended` latches, THEN in Round's round-end step (for a strike win, the deciding strike's death write; before it no AI-driven pawn changes speed or ends a hold because of the latch) every AI-driven pawn's sink is latched and `Move(0)` issued, every pawn reaches idle within `RunStopSec` plus the traversal remainder with no deceleration above the baseline (holds are cancelled by Round's step and braking is ADR-0010's; Crowd's Halt only latches), and no emergence, absorption or reaction occurs afterwards.
-- [ ] (AC-CNB-38a) GIVEN 100 takeovers and 100 hand-backs with injected late path callbacks and debounced Ends, THEN 0 old-epoch commands reach any pawn and every possession change happens at a frame start, never during a traversal.
-- [ ] (AC-CNB-38b) GIVEN 50 Halts with commands pending, THEN 0 non-`Move(0)` motion commands reach any pawn after Halt, and Halt latches every sink synchronously inside the round-end step before any further crowd tick.
+- [x] (AC-CNB-22) GIVEN 50 pawns moving, running, tending and traversing, WHEN `Ended` latches, THEN in Round's round-end step (for a strike win, the deciding strike's death write; before it no AI-driven pawn changes speed or ends a hold because of the latch) every AI-driven pawn's sink is latched and `Move(0)` issued, every pawn reaches idle within `RunStopSec` plus the traversal remainder with no deceleration above the baseline (holds are cancelled by Round's step and braking is ADR-0010's; Crowd's Halt only latches), and no emergence, absorption or reaction occurs afterwards.
+- [x] (AC-CNB-38a) GIVEN 100 takeovers and 100 hand-backs with injected late path callbacks and debounced Ends, THEN 0 old-epoch commands reach any pawn and every possession change happens at a frame start, never during a traversal.
+- [x] (AC-CNB-38b) GIVEN 50 Halts with commands pending, THEN 0 non-`Move(0)` motion commands reach any pawn after Halt, and Halt latches every sink synchronously inside the round-end step before any further crowd tick.
 
 ---
 
@@ -100,7 +100,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdHaltTest.cpp` plus `Source/StealthTestHarness/Private/CrowdHandoverEpochTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Halt.EndedHold`, `StealthGame.Crowd.Halt.HandoverEpoch`, `StealthGame.Crowd.Halt.HaltSynchronous`; 2026-10-27)
 
 ---
 
@@ -108,3 +108,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-005-command-sinks-epoch-and-halt-filter.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`, `production/epics/crowd-npc-behaviour/story-028-bound-pawn-restricted-driver.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-038-performance-pass-50-60-character.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing
+**Deviations**: EndedHold is headless (the SCL model at 1/60 s; the traversal remainder is the sim's); the possession change itself is the factory hand-over pass (ADR-0010).
+**Test Evidence**: `StealthGame.Crowd.Halt.EndedHold`, `StealthGame.Crowd.Halt.HandoverEpoch`, `StealthGame.Crowd.Halt.HaltSynchronous`; full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

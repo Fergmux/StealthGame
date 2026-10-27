@@ -1,12 +1,12 @@
 # Story 020: Decoy tending: uniform court choice, early releases and the T3 posterior
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,9 +35,9 @@
 
 *From GDD `design/gdd/crowd-npc-behaviour.md` AC-CNB-14, scoped to this story:*
 
-- [ ] (AC-CNB-14a) GIVEN 2,000 decoy tends over 50 layouts (headless accelerated, about 8,750 simulated minutes at r_N 0.0046), WHEN court choice is tabulated, THEN a chi-square goodness-of-fit test against the uniform distribution over all courts shows p > 0.01, and so does a test of live versus decoy versus unused versus currently-tended courts.
-- [ ] (AC-CNB-14b) 75 +-5 % of decoy holds complete at exactly `ObjectiveInteractSec`, every early release lies in [`CrowdDecoyEarlyReleaseMinSec`, `CrowdDecoyEarlyReleaseMaxSec`], and every decoy Begin refused `NotNow` at a full fixture is followed by a different court choice.
-- [ ] (AC-CNB-14c) With Objectives' `R_full` 0.40 (F3 at `T_round` 9 min) the full-length T3 posterior `P_full` computed from the measured NPC rate lies in 0.65-0.75 (AC-OC-21).
+- [x] (AC-CNB-14a) GIVEN 2,000 decoy tends over 50 layouts (headless accelerated, about 8,750 simulated minutes at r_N 0.0046), WHEN court choice is tabulated, THEN a chi-square goodness-of-fit test against the uniform distribution over all courts shows p > 0.01, and so does a test of live versus decoy versus unused versus currently-tended courts.
+- [x] (AC-CNB-14b) 75 +-5 % of decoy holds complete at exactly `ObjectiveInteractSec`, every early release lies in [`CrowdDecoyEarlyReleaseMinSec`, `CrowdDecoyEarlyReleaseMaxSec`], and every decoy Begin refused `NotNow` at a full fixture is followed by a different court choice.
+- [x] (AC-CNB-14c) With Objectives' `R_full` 0.40 (F3 at `T_round` 9 min) the full-length T3 posterior `P_full` computed from the measured NPC rate lies in 0.65-0.75 (AC-OC-21).
 
 ---
 
@@ -99,7 +99,7 @@
 **Required evidence**:
 - Integration: `Source/StealthGameplay/Private/Tests/Crowd/CrowdDecoyTendTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (`StealthGame.Crowd.Decoy.CourtChoiceUniform`, `StealthGame.Crowd.Decoy.NotNowChoosesAnotherCourt`, `StealthGame.Crowd.Decoy.FullLengthPosterior`; 2026-10-27)
 
 ---
 
@@ -107,3 +107,11 @@
 
 - Depends on: `production/epics/crowd-npc-behaviour/story-018-tell-sampler-and-calibration-counters.md`, `production/epics/crowd-npc-behaviour/story-012-statetree-schema-and-decision-grid.md`
 - Unlocks: `production/epics/crowd-npc-behaviour/story-023-tell-calibration-gate.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (Crowd & NPC Behaviour batch, stories cnb-019..031)
+**Criteria**: 3/3 passing
+**Deviations**: Built against a fixture court set (the GDD allows it until the objectives-chain epic provides fixtures and AllowNoEffect); the decoy clock is accelerated for the choice and hold statistics (the rule does not depend on the rate; the 600-minute rate at the default is story 023). P_full uses the GDD F2 decoy-row formula with Objectives R_full 0.40 until Objectives F3 exists in code. The production Director runs no decoy clock until courts are registered.
+**Test Evidence**: `StealthGame.Crowd.Decoy.CourtChoiceUniform`, `StealthGame.Crowd.Decoy.NotNowChoosesAnotherCourt`, `StealthGame.Crowd.Decoy.FullLengthPosterior`; full suite and measured lines: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/`
+**Run result**: 3-player PIE on L_Prototype with 50 NPCs: `production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/evidence.md`
+**Reviewed by**: self-review against the code-review skill (findings in the evidence note)

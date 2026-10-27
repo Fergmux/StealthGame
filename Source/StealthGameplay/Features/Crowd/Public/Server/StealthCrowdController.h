@@ -44,6 +44,13 @@ public:
 	// ICrowdAgentOutput (the sink of the current driver).
 	virtual bool Move(FVector2D Direction, EGait Gait) override;
 	virtual bool Look(FRotator Rotation) override;
+	virtual bool DryRun(EActionType Type, const FCourtFixtureId* Target) override;
+	virtual bool Traverse(const FTraversalHint& Hint) override;
+	virtual bool InteractBegin(FCourtFixtureId Target) override;
+	virtual bool InteractEnd() override;
+	virtual bool PrepareBegin() override;
+	virtual bool PrepareEnd() override;
+	virtual bool Hide(const FHideCommand& Command) override;
 
 	/** Binds the agent and the sink of a driver (called by the Director in OnPossess / adoption). */
 	void BindDriver(AStealthPawn* InPawn, ECrowdDriverKind Kind, uint32 Ordinal, uint32 ControlEpoch, UCrowdDirector* InDirector);
@@ -53,6 +60,16 @@ public:
 
 	/** Halt: latches the sink, clears Move, stops the tree directly (never by an event alone). */
 	void HaltBehaviour();
+	/**
+	 * TryReleaseNpc (story cnb-030): latches the sinks and stops the tree WITHOUT Move(0) (the pawn keeps moving as it
+	 * was for the SCL AI-to-player handover); the agent no longer ticks.
+	 */
+	void ReleaseForTakeover();
+	/** AdoptReleasedPawn(Pawn, {}) after TryReleaseNpc (story cnb-029): sinks rebound at Epoch, tree restarted. */
+	void ResumeAfterReversal(uint32 Epoch, UStateTree* Tree);
+	/** A released pawn's promotion to the full catalogue (story cnb-029): the full sink at the same epoch, the full tree. */
+	void PromoteToFull(UStateTree* Tree);
+	bool IsReleasedForTakeover() const { return bReleasedForTakeover; }
 
 	/** A decision from the tree's activity task (the grid tick or a wake). */
 	void DecideFromTree();
@@ -99,6 +116,7 @@ private:
 	uint32 Ordinal = MAX_uint32;
 	bool bDriverBound = false;
 	bool bTreeRunning = false;
+	bool bReleasedForTakeover = false;
 	FRotator LastLook = FRotator::ZeroRotator;
 	bool bHasLook = false;
 	double FallbackGridOrigin = 0.0;

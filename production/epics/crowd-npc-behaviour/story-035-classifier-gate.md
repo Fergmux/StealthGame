@@ -1,12 +1,12 @@
 # Story 035: Classifier gate: NPC motion features cannot identify NPCs (playtest)
 
 > **Epic**: Crowd & NPC Behaviour
-> **Status**: Ready
+> **Status**: Blocked — evidence pending playtest (2026-10-27): the offline gate `tools/analysis/crowd_classifier_gate.py` is written and its selftest passes (identical distributions PASS, a 1 SD shift FAILS, < 600 human windows reports INSUFFICIENT DATA); AC-CNB-28 needs >= 600 human 30 s windows from >= 30 playtest participants (no playtest has run) and >= 2,400 NPC windows from the nightly recording of story 034 (blocked). Not met, not waived
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet started (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -91,7 +91,7 @@
 **Required evidence**:
 - Integration (playtest): `production/qa/evidence/crowd-classifier-gate-<date>.md` — documented playtest analysis
 
-**Status**: [ ] Not yet created
+**Status**: [ ] Script and evidence header created (`tools/analysis/crowd_classifier_gate.py`, `production/qa/evidence/crowd-classifier-gate-2026-10-27.md`); the gate itself is not met until playtest data exists
 
 ---
 
