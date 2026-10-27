@@ -41,7 +41,7 @@ Full-suite runs (`UnrealEditor-Cmd ... Automation RunTests ^StealthGame.`) conta
 | 7 | 2026-10-27 (NKP 009-012 gate, `npc-kill-penalty-informants-009-012-2026-10-27/full-suite.txt`) | 421/421 | Success | - |
 
 **Verdict:** ReleaseBaselineStopUnderLag passed 7 consecutive full-suite runs after the fix (and 12 of 12 isolated
-runs), each on a different random city; every logged measurement was identical (0.758 / 0.758 s, 53.08 / 53.08 cm,
+runs), each on a different random city; every measurement captured (isolated runs and full-suite runs 1-3) was identical (0.758 / 0.758 s, 53.08 / 53.08 cm,
 0.00 cm). Before the fix it failed 2 of 5 full-suite runs. The other failures in the table belong to tests being written
 by concurrent stories in the same tree, each fixed in its own story. Two consecutive fully green runs: #2 and #3
 (387/387), and #7 (421/421). A dedicated 5x run on a quiet tree was started (10:25) but stopped after run 1 because
