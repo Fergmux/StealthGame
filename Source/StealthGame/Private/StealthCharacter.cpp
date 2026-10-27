@@ -518,7 +518,26 @@ void AStealthCharacter::HandleActionStateChanged()
 	// character's replicated crouch state.
 	if (IsLocallyControlled() && !HasAuthority())
 	{
-		const bool bBraced = GetActionState().Pose == EActionPose::Brace;
+		// Story asn-017 (ASN-R6, UI-ASN-3): a reversal's Counter arrives with the staged death write, before its contact; the
+		// stance holds until that ContactServerTime, so the defender's own view changes nothing before contact.
+		const FActionState& State = GetActionState();
+		const double Now = StealthServerNow(GetWorld());
+		if (State.Pose == EActionPose::Counter && State.ContactServerTime > Now && bIsCrouched)
+		{
+			TWeakObjectPtr<AStealthCharacter> WeakThis(this);
+			const uint16 CounterSeq = State.Seq;
+			FTimerHandle Handle;
+			GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakThis, CounterSeq]()
+			{
+				AStealthCharacter* Self = WeakThis.Get();
+				if (Self != nullptr && Self->GetActionState().Seq == CounterSeq && Self->bIsCrouched)
+				{
+					Self->SetDefenceStance(false);
+				}
+			}), static_cast<float>(State.ContactServerTime - Now), false);
+			return;
+		}
+		const bool bBraced = State.Pose == EActionPose::Brace;
 		if (bBraced != bIsCrouched)
 		{
 			SetDefenceStance(bBraced);

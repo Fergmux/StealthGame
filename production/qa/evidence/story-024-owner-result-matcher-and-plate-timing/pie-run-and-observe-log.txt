@@ -1,0 +1,17 @@
+[2026.10.27-13.13.04:914][412]LogStealth: [Bot] #1 strikes BP_CrowdCharacter_C_15 (npc, 150 cm, bearing 0, prepared=0).
+[2026.10.27-13.13.05:541][414]LogStealth: [HUD] StealthPlayerController_0 plate WrongTarget at 91.149 (contact 90.885, arrival 90.816, ResultContact)
+[2026.10.27-13.13.30:246][488]LogStealth: [Bot] #1 strikes the spot 150 cm at bearing 90.
+[2026.10.27-13.13.30:874][490]LogStealth: [HUD] StealthPlayerController_0 plate NoContact at 116.485 (contact 116.218, arrival 116.151, ResultContact)
+[2026.10.27-13.13.51:582][552]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_43 (enemy, 150 cm, bearing 0, prepared=1).
+[2026.10.27-13.13.51:901][553]LogStealth: [Encounter] BP_CrowdCharacter_C_43 reversed and eliminated BP_CrowdCharacter_C_47 in the slot (victim kind 0).
+[2026.10.27-13.13.52:259][555]LogStealth: [HUD] StealthPlayerController_0 plate StrikeReversed at 137.871 (contact 137.551, arrival 137.485, MatchedActionState)
+[2026.10.27-13.13.52:592][556]LogStealthGameplay: [EncounterView] role change ReversedAgainst presented at 137.871 (DeathServerTime 137.551)
+[2026.10.27-13.13.52:592][556]LogStealth: [HUD] StealthPlayerController_0 plate Reversed at 137.871 (contact 137.551, arrival 137.151, ResultContact, in role change)
+[2026.10.27-13.14.33:976][680]LogStealth: [Bot] #1 strikes BP_CrowdCharacter_C_54 (informant, 150 cm, bearing 0, prepared=0).
+[2026.10.27-13.14.34:594][682]LogStealth: [HUD] StealthPlayerController_0 plate WrongTarget at 180.204 (contact 179.938, arrival 179.871, ResultContact)
+[2026.10.27-13.14.34:927][683]LogStealthGameplay: [EncounterView] role change InformantKilled presented at 180.204 (DeathServerTime 179.938)
+[2026.10.27-13.14.53:295][738]LogStealth: [Bot] #1 strikes BP_CrowdCharacter_C_36 (enemy, 150 cm, bearing 0, prepared=0).
+[2026.10.27-13.14.53:928][740]LogStealth: [HUD] StealthPlayerController_0 plate TargetEliminated at 199.538 (contact 199.271, arrival 199.204, ResultContact)
+[2026.10.27-13.14.54:271][741]LogStealthGameplay: [EncounterView] role change Assassinated presented at 199.538 (DeathServerTime 199.271)
+[2026.10.27-13.15.59:966][938]LogStealth: [Bot] #0 hides in StealthBush_1.
+[2026.10.27-13.16.25:632][ 15]LogStealth: [Bot] #0 hides in StealthBush_0.

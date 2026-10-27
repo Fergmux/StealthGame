@@ -949,10 +949,30 @@ void AStealthGameMode::HandleEncounterBodyReleased(APawn* Body, AController* For
 
 void AStealthGameMode::HandleEncounterCounterPose(APawn* Defender, double ContactServerTime)
 {
-	if (AStealthCharacter* Character = Cast<AStealthCharacter>(Defender))
+	AStealthCharacter* Character = Cast<AStealthCharacter>(Defender);
+	if (Character == nullptr)
 	{
-		Character->StopDefence(); // the crouch tell ends with the counter (the defender is never changed before this write)
+		return;
 	}
+	// The prototype crouch tell ends with the counter AT ITS CONTACT, never at this staged write (StrikeNetLeadSec earlier):
+	// a tell that dropped at the write would reach the defender and every observer before contact (story asn-017).
+	const AGameStateBase* State = GetWorld() != nullptr ? GetWorld()->GetGameState() : nullptr;
+	const double Now = State != nullptr ? State->GetServerWorldTimeSeconds() : 0.0;
+	const float Delay = static_cast<float>(FMath::Max(ContactServerTime - Now, 0.0));
+	if (Delay <= 0.f)
+	{
+		Character->StopDefence();
+		return;
+	}
+	FTimerHandle Handle;
+	TWeakObjectPtr<AStealthCharacter> Weak(Character);
+	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, [Weak]()
+	{
+		if (AStealthCharacter* Target = Weak.Get())
+		{
+			Target->StopDefence();
+		}
+	}), Delay, false);
 }
 
 void AStealthGameMode::HandleHubActionStarted(AStealthPawn* Pawn, EActionType Type)

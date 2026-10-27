@@ -1,12 +1,12 @@
 # Story 024: Result plates and the brace square are shown at the local contact frame, never on receipt
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: UI
 > **Estimate**: L
-> **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Manifest Version**: 2026-10-25g (was 2026-10-25f; the g changes amend ADR-0002/0003/0013/0017 S10 items, none of this story's rules)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,10 +35,10 @@ One entrance and one timing for every plate: `RivalEliminated` = "Target elimina
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-16, AC-ASN-40, AC-ASN-49), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-16 UI clause, [UI/BLOCKING] `StealthGame.Assassination.KillPlateTellsOneThing`): **GIVEN** strikes that kill an Active rival, an NPC and an informant, a whiff and a reversed strike **THEN** the attacker sees "Target eliminated", "Wrong target", "Wrong target", "No contact" and "Reversed" respectively, each on its local contact frame with the same entrance and timing; evidence `asn-16-{rival,npc,informant,whiff,reversed}.png`.
-- [ ] **AC2** (AC-ASN-49, [UI/BLOCKING] `StealthGame.Assassination.OutcomePresentedAtContact`, ASN-R23, UI-ASN-3/4/5): **GIVEN** PktLag 75 ms per direction and a defender that reverses a strike **THEN** its brace square is removed and the "Strike reversed" plate appears at its local `ContactServerTime` (± 1 frame), never at the arrival of `FHoldStatus` or `FDefenceResult`; **AND** a struck player's removal card and camera `Dying` start at its own `DeathServerTime` (± 1 frame), never at the arrival of its Roster state; evidence `asn-49-{defender,victim}-*.png` captured at receipt time and at contact.
-- [ ] **AC4** (ADR-0018 §5.3 and Verification Required (3), added from the QA review, [Logic/BLOCKING] `OwnResultMatcherTest`): **GIVEN** a result and its `FActionState` write arriving in either order, a dropped strike write, a duplicate result, and an RTT beyond 300 ms **THEN** `t_show = min(max(t_c,local, t_arrival), t_arrival + HudResultPlateMaxHoldBackSec)` with `HudResultPlateMaxHoldBackSec ≥ 1.25 s`, the duplicate is dropped by `(PossessionEpoch, Seq)`, and a late result shows on arrival and never before contact.
-- [ ] **AC3** (AC-ASN-40, [UI/BLOCKING] `StealthGame.Assassination.NoBushTargetingUI`, ASN-R8, IIF UI-4): **GIVEN** the attacker's camera ray on an occupied bush and on an empty bush **THEN** no Strike hint, prompt, highlight or reticle appears in either case, before or after a strike; evidence `asn-40-{occupied,empty}.png`.
+- [x] **AC1** (AC-ASN-16 UI clause, [UI/BLOCKING] `StealthGame.Assassination.PIE.KillPlateTellsOneThing`): **GIVEN** strikes that kill an Active rival, an NPC and an informant, a whiff and a reversed strike **THEN** the attacker sees "Target eliminated", "Wrong target", "Wrong target", "No contact" and "Reversed" respectively, each beginning at the attacker's local `ContactServerTime` (never before it, at most one frame after) and stepping in over 250 ms (four steps), holding `HudResultPlateHoldSec` (3.0 s) and going out over 600 ms, the same timeline for all five outcomes; the two "Wrong target" strings are byte-identical; the reversed attacker's plate enters on the same frame as its removal card, the plate first (art bible 7.6 rule 7); evidence `asn-16-{rival,npc,informant,whiff,reversed}.png`. *(Rewritten 2026-10-27 from the qa-lead proposal, decision log.)*
+- [x] **AC2** (AC-ASN-49, [UI/BLOCKING] `StealthGame.Assassination.PIE.OutcomePresentedAtContact`, ASN-R23, UI-ASN-3/4/5): **GIVEN** PktLag 75 ms per direction and a defender that reverses a strike **THEN** at the arrival of the Counter write and of the `FDefenceResult` (both before contact) the brace square is still up and no plate is shown, and the square is removed and the "Strike reversed" plate appears at the defender's local `ContactServerTime` (± 1 frame); **AND** a struck player's removal card and the role-change dispatch that camera `Dying` subscribes to start at its own `DeathServerTime` (± 1 frame), never at the arrival of its Roster state; **AND** (negative control) with the on-receipt test seam the plate is up before contact and the check fails; evidence `asn-49-{defender,victim}-{receipt,contact}.png`. *(Rewritten 2026-10-27 from the qa-lead proposal. The server sends no `FHoldStatus` for a Prepare yet (IIF story 074), so the square's end is the consumed brace's Counter `ContactServerTime`, the same value the `FHoldStatus.ServerEndTime` will carry.)*
+- [x] **AC4** (ADR-0018 §5.3 and Verification Required (3), added from the QA review, [Logic/BLOCKING] `StealthGame.Assassination.OwnResultMatcher`): **GIVEN** a result and its `FActionState` write arriving in either order, a dropped strike write, a duplicate result, and an RTT beyond 300 ms **THEN** `t_show = min(max(t_c,local, t_arrival), t_arrival + HudResultPlateMaxHoldBackSec)` with `HudResultPlateMaxHoldBackSec ≥ 1.25 s`, the duplicate is dropped by `(PossessionEpoch, Seq)`, and a late result shows on arrival and never before contact.
+- [x] **AC3** (AC-ASN-40, [UI/BLOCKING] `StealthGame.Assassination.PIE.NoBushTargetingUi`, ASN-R8, IIF UI-4): **GIVEN** the attacker's camera ray on an occupied bush and on an empty bush **THEN** no Strike hint, prompt, highlight or reticle appears in either case, before or after a strike: the HUD element list (`AStealthHUD::CollectOwnerElements`) is identical for the occupied and the empty bush and equal to an unaimed baseline, and the HUD region of the captures matches the baseline; evidence `asn-40-{occupied,empty}.png`. *(Rewritten 2026-10-27 from the qa-lead proposal.)*
 
 ---
 
@@ -53,6 +53,29 @@ Plate timeline (HUD-R6, F3): 250 ms stepped in, `HudResultPlateHoldSec` 3.0 s ho
 The plates' widget implementations are in the HUD epic (stories not yet created); until they exist this story uses the HUD's view-model seam and a test widget. Screens and evidence follow `design/ux/hud.md`; the UX flag on this GDD asks that `/ux-design` for the HUD is run before the HUD epic.
 
 **Prototype replaced:** the prototype's on-receipt `MessagePlayer` HUD messages ("Reversal!", "Your target was ready…") are replaced; evidence `production/qa/evidence/2026-10-24_client1-hud-message-npc-kill.png` and `…client1-npc-kill-confirmation.png` are the before-state for comparison.
+
+### Implementation record (2026-10-27, /dev-story)
+
+- `FOwnResultMatcher` (`Features/Assassination/Public/View/OwnResultMatcher.h`, the module's Features layout rather than the
+  `Public/View/Features/...` path the Files list guessed): presses (`OnCommandSent`), results, sampled `FActionState`
+  writes in either order, `OnRejected`, `OnReversedAgainstPresented`, `PopDue`; F2 with the 1.25 s hard floor; the
+  `(Kind, PossessionEpoch, Seq)` order drop and last-8 ring; the attacker's time from `FStrikeResult.ContactServerTime`
+  only; the defender's from the Counter write on the pressed pawn (fallback: the possessed pawn when the press was not
+  recorded, as for server-side test drivers). `FOwnResultPlateTimeline` (F3) and `FOwnBraceIndicator` (UI-ASN-3) live
+  with it.
+- `AStealthPlayerController` replaces the `PresentOwnerResult` stand-in (the on-receipt "Reversal!" line and the timers):
+  replies only feed the matcher; `PlayerTick` samples and pops on the local contact frame (`EstimatedServerNow()`), the
+  same clock and value the presentation's clip contact frame uses; the tally ticks and the attacker grade fires on the
+  plate frame; the exile card at plate + `ExileBeatSec`; a reversed attacker's plate is released inside its own
+  `OnRoleChangePresented(ReversedAgainst)` before the removal card. The Result-slot view-model (`GetResultPlate`) and the
+  owner presentation log (`GetOwnPresentationLog`) are the HUD seam; the canvas `AStealthHUD` draws the plate (300 x 64,
+  glyph slot, F3 opacity) as the stand-in widget until the HUD epic's UMG plates (hud stories 015/016/022).
+- Tuning: `UOwnResultPlateSettings` (Config/DefaultGame.ini) carries the registry HUD keys as a stand-in for hud
+  story 001's schema keys.
+- The brace square follows `FOwnBraceIndicator` (a Counter keeps it up until its contact); a server line and the round
+  banner arriving while an own outcome is unpresented are held (ASN-R23 hold buffer, story 017 relies on it).
+- Negative control: `StealthOwnerPresentationTestSeams::SetPresentResultsOnReceipt` restores the on-receipt behaviour;
+  `OutcomePresentedAtContact.ReceiptSeamPutsThePlateUpBeforeContact` asserts the contact-frame check fails under it.
 
 ---
 
@@ -69,10 +92,16 @@ The plates' widget implementations are in the HUD epic (stories not yet created)
 
 ## Files
 
-- `Source/StealthGameplay/Public/View/Features/Assassination/OwnResultMatcher.h` (`FOwnResultMatcher`, plain C++, client-safe)
-- `Source/StealthGameplay/Private/Features/Assassination/OwnResultMatcher.cpp`
-- `Source/StealthGameplay/Private/Tests/Assassination/OwnResultMatcherTest.cpp` (class `FAssassinationOwnResultMatcherTest`: both arrival orders, dropped strike write, duplicates, late result, cap; headless)
-- `Source/StealthTestHarness/Private/Assassination/OutcomePresentedAtContactTest.cpp` (`StealthGame.Assassination.PIE.OutcomePresentedAtContact`)
+- `Source/StealthGameplay/Features/Assassination/Public/View/OwnResultMatcher.h` (`FOwnResultMatcher`, `FOwnResultPlateTimeline`, `FOwnBraceIndicator`; plain C++, client-safe)
+- `Source/StealthGameplay/Features/Assassination/Private/OwnResultMatcher.cpp`
+- `Source/StealthGameplay/Features/Assassination/Public/View/OwnResultPlateSettings.h`, `Private/OwnResultPlateSettings.cpp` (HUD key stand-in), `Config/DefaultGame.ini` section
+- `Source/StealthGame/Public/StealthPlayerController.h`, `Private/StealthPlayerController.cpp` (the stand-in replaced: matcher, Result-slot view-model, owner presentation log, hold buffer, presented role, test seams)
+- `Source/StealthGame/Public/StealthHUD.h`, `Private/StealthHUD.cpp` (the plate, the brace square, the gated banner, `CollectOwnerElements`)
+- `Source/StealthGameplay/Private/Tests/Assassination/OwnResultMatcherTest.cpp` (class `FAssassinationOwnResultMatcherTest`, `StealthGame.Assassination.OwnResultMatcher`: both arrival orders, dropped strike write, duplicates, late result, cap; headless)
+- `Source/StealthTestHarness/Private/Tests/PIE/Assassination/OwnPresentationPieSupport.h`
+- `Source/StealthTestHarness/Private/Tests/PIE/Assassination/KillPlateTellsOneThingPieTest.cpp` (`StealthGame.Assassination.PIE.KillPlateTellsOneThing`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Assassination/OutcomePresentedAtContactPieTest.cpp` (`StealthGame.Assassination.PIE.OutcomePresentedAtContact`, PktLag 75 ms, with the negative control)
+- `Source/StealthTestHarness/Private/Tests/PIE/Assassination/NoBushTargetingUiPieTest.cpp` (`StealthGame.Assassination.PIE.NoBushTargetingUi`)
 - `production/qa/evidence/asn-16-*.png`, `production/qa/evidence/asn-40-*.png`, `production/qa/evidence/asn-49-*.png` and sign-off `production/qa/evidence/asn-24-evidence.md`
 
 ---
@@ -111,7 +140,7 @@ QL-STORY-READY: GAPS
 - UI: a retained screenshot of each screen touched in `production/qa/evidence/` (`asn-16-*`, `asn-40-*`, `asn-49-*`), none discarded
 - Supporting: `OwnResultMatcherTest.cpp` and `OutcomePresentedAtContactTest.cpp`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27): `OwnResultMatcherTest.cpp`, `KillPlateTellsOneThingPieTest.cpp`, `OutcomePresentedAtContactPieTest.cpp`, `NoBushTargetingUiPieTest.cpp`; screenshots `production/qa/evidence/story-024-owner-result-matcher-and-plate-timing/`
 
 ---
 
@@ -119,3 +148,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-015-owner-results-reply-entries-and-tally.md`, `story-016-defence-owner-cooldown-component.md`, `story-018-strike-clip-variants-warp-and-contact-scheduling.md`, `story-021-role-change-dispatch-and-transient-grade.md`; cross-epic HUD epic `production/epics/hud/EPIC.md` (no stories yet); `production/epics/input-interaction-framework/story-073-strike-hint-parity.md`, `story-076-rejection-plate.md`, `story-074-brace-protected-only-on-confirm.md`
 - Unlocks: `story-017-no-warning-and-no-observer-cue.md`, HUD epic plate stories
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 4/4 passing. AC1 `StealthGame.Assassination.PIE.KillPlateTellsOneThing.FivePlatesOnTheirContactFrameWithOneTimeline`: "Wrong target", "No contact", "Strike reversed", "Wrong target", "Target eliminated" on S's machine 3-5 ms after each contact (frame 20 ms), and "Reversed" on P2's contact frame with its removal card on the same frame, plate first; one F3 timeline; the two "Wrong target" strings are byte-identical. AC2 `StealthGame.Assassination.PIE.OutcomePresentedAtContact` (PktLag 75 ms): the FDefenceResult arrived 426 ms and the Counter 177 ms before contact with the square up and no plate; square removed and "Strike reversed" at +7 ms; the victim's removal card and role dispatch (Camera Dying's clock) at +0 ms, its Roster state 150 ms earlier with no card; negative control `ReceiptSeamPutsThePlateUpBeforeContact` (on-receipt seam): plate 433 ms before contact, check fails as it must (the "Reversal!" regression, seen failing). AC3 `StealthGame.Assassination.PIE.NoBushTargetingUi`: identical element lists occupied / empty / baseline before and after a strike. AC4 `StealthGame.Assassination.OwnResultMatcher`.
+**Deviations**: (1) The plate widget is the canvas `AStealthHUD` stand-in (300 x 64 Result slot, glyph slot, F3 opacity); the HUD epic's UMG plates (hud 015/016/022) replace it and can reuse `FOwnResultMatcher` / `FOwnResultPlateTimeline` / `FOwnBraceIndicator`. (2) HUD keys are `UOwnResultPlateSettings` (Config/DefaultGame.ini) until hud story 001 adds them to the tuning schema. (3) No FHoldStatus is sent for a Prepare yet (IIF 074): the square ends on the Counter's ContactServerTime, the value the FHoldStatus.ServerEndTime will carry. (4) Camera Dying is not built (Camera epic): the role-change dispatch it subscribes to is asserted. (5) Files: the module's Features/Assassination layout; PIE tests under Tests/PIE/Assassination with `.PIE.` names. (6) Shared harness helper `PlaceStrikerFacing` (AssassinationPieSupport.h): a striker placed with `PlaceFacing` can be left facing away (its owning client owns its rotation), which made the reversal step whiff in KillPlateTellsOneThing and once in OwnerResultShape (bearing 170 deg measured); both now place the striker along its own facing. Other tests still using `PlaceFacing` for a striker (OneBodySequence, PossessionThroughFall, TransientGradeAtContact, RoleChangeGate, KillAtArmsLength) carry the same latent flake. (7) Dependencies proceeded: 018 In Progress (bone bound only), IIF 073/074/076 and HUD epic Ready.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Assassination/OwnResultMatcherTest.cpp`, `Source/StealthTestHarness/Private/Tests/PIE/Assassination/KillPlateTellsOneThingPieTest.cpp`, `OutcomePresentedAtContactPieTest.cpp`, `NoBushTargetingUiPieTest.cpp`; `production/qa/evidence/story-024-owner-result-matcher-and-plate-timing-evidence.md`
+**Run result**: OBSERVED - 3-player PIE: every plate in the lower-centre Result slot on its owner's screen only, one size and entrance, glyph per outcome, tally ticking with the plate, the reversed attacker's plate with its removal card, the defender's square up before contact and gone with the plate, the victim's card at its fall; occupied and empty bush show the same HUD (`production/qa/evidence/story-024-owner-result-matcher-and-plate-timing/asn-*.png`)
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

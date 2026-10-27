@@ -157,7 +157,7 @@ NETWORK_TEST_CLASS(OwnerResultShape, "StealthGame.Assassination.PIE")
 			.Then(TEXT("3a S braces, P2 comes in front"), [this]()
 			{
 				AsOwner(SoloPawn.Get(), Seq, [](UPawnCommandComponent& Command) { Command.PrepareBegin(); });
-				PlaceFacing(PawnOf(Pair[1]), SoloPawn.Get(), 150.0);
+				PlaceStrikerFacing(PawnOf(Pair[1]), SoloPawn.Get(), 150.0); // P2 strikes: its own facing (story asn-024 de-flake)
 				Mark = StealthAssassinationPie::ServerNow(StealthAssassinationPie::ServerWorld());
 			})
 			.Until(TEXT("3a: settle (0.4 s, inside the 4 s window)"), [this]() { return StealthAssassinationPie::ServerNow(StealthAssassinationPie::ServerWorld()) >= Mark + 0.4; });

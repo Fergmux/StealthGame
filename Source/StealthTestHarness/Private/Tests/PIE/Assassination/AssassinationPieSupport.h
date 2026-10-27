@@ -196,6 +196,18 @@ namespace StealthAssassinationPie
 		}
 	}
 
+	/**
+	 * Places Striker DistanceCm behind Target along the striker's OWN current facing, keeping its rotation, so Target is
+	 * straight ahead of it (story asn-024). Unlike PlaceFacing it changes no rotation: a remote player's pawn rotation is
+	 * its owning client's, and a server-side turn can be overwritten by that client's next move (a striker left facing
+	 * away from its target whiffs).
+	 */
+	inline void PlaceStrikerFacing(APawn* Striker, const APawn* Target, double DistanceCm)
+	{
+		const FVector Forward = Striker->GetActorForwardVector().GetSafeNormal2D();
+		Striker->TeleportTo(Target->GetActorLocation() - Forward * DistanceCm, Striker->GetActorRotation());
+	}
+
 	/** Runs Submit on Pawn's command component inside its controller's own origin (as ingress does for that client). */
 	inline void AsOwner(AStealthPawn* Pawn, uint32& SeqCounter, TFunctionRef<void(UPawnCommandComponent&)> Submit)
 	{

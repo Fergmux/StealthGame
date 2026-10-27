@@ -1,0 +1,45 @@
+5 1 whiff observer AA (machine 2): cues []; other replicated changes []
+5 1 whiff observer V (machine 1): cues []; other replicated changes []
+5 1 whiff observer VA (machine 3): cues []; other replicated changes []
+5 2 kill observer AA (machine 2): cues []; other replicated changes []
+5 2 kill observer VA (machine 3): cues []; other replicated changes []
+5 3 reversal observer AA (machine 2): cues []; other replicated changes []
+5 3 reversal observer V (machine 1): cues []; other replicated changes []
+5 4 deciding strike observer A (machine 0, listen host): cues []; other replicated changes []
+5 4 deciding strike observer V (machine 1): cues []; other replicated changes []
+5 round end on A (machine 0): presented 31.641, line 31.641; DeathServerTime 31.783 (death write at 31.633), own plate -1.000; floor 31.561 (the deciding death write)
+5 round end on AA (machine 2): presented 31.783, line 31.783; DeathServerTime 31.783 (death write at 31.633), own plate -1.000; floor 31.782 (own fall at DeathServerTime)
+5 round end on V (machine 1): presented 31.609, line 31.609; DeathServerTime 31.783 (death write at 31.633), own plate -1.000; floor 31.561 (the deciding death write)
+5 round end on VA (machine 3): presented 31.783, line 31.783; DeathServerTime 31.783 (death write at 31.633), own plate 31.783; floor 31.782 (own plate)
+5 braced from behind: exec +0.300 contact +0.700 death write +0.550 (struck leg); frames: victim 0.0197 s; victim machine 1, bystander 3
+5 entries the control lacks before contact: (none)
+5 displacement at the last consumed move before the death write: struck X=0.000 Y=0.000 Z=0.000, control X=0.000 Y=0.000 Z=0.000, 0.000 cm apart (struck at X=-2850.000 Y=2600.000 Z=62.275)
+5 victim machine copy: 3 change(s) in the window; control movement fields []; violations []
+5 bystander machine copy: 4 change(s) in the window; control movement fields []; violations []
+5 braced from the front: exec +0.300 contact +0.700 death write +0.550 (struck leg); frames: victim 0.0197 s; victim machine 1, bystander 3
+5 entries the control lacks before contact: (none)
+5 displacement at the last consumed move before the death write: struck X=0.000 Y=0.000 Z=0.000, control X=0.000 Y=0.000 Z=0.000, 0.000 cm apart (struck at X=-2400.000 Y=2600.000 Z=62.275)
+5 victim machine copy: 3 change(s) in the window; control movement fields []; violations []
+5 bystander machine copy: 4 change(s) in the window; control movement fields []; violations []
+5 standing from behind [NEGATIVE CONTROL]: exec +0.300 contact +0.700 death write +0.550 (struck leg); frames: victim 0.0197 s; victim machine 1, bystander 3
+5 entries the control lacks before contact: +0.566 Widget.+ Message:[seam] outcome state received; +0.566 Hud.HudMessage [seam] outcome state received:1
+5 moving from behind: exec +0.650 contact +1.050 death write +0.900 (struck leg); frames: victim 0.0197 s; victim machine 1, bystander 3
+5 entries the control lacks before contact: (none)
+5 displacement at the last consumed move before the death write: struck X=92.168 Y=0.000 Z=0.000, control X=92.167 Y=0.000 Z=0.000, 0.002 cm apart (struck at X=-3039.223 Y=2882.843 Z=88.275)
+5 victim machine copy: 2 change(s) in the window; control movement fields []; violations []
+5 bystander machine copy: 66 change(s) in the window; control movement fields [BP_CrowdCharacter_C.ReplicatedBasedMovement]; violations []
+5 moving from the front: exec +0.650 contact +1.050 death write +0.900 (struck leg); frames: victim 0.0197 s; victim machine 1, bystander 3
+5 entries the control lacks before contact: (none)
+5 displacement at the last consumed move before the death write: struck X=92.168 Y=0.000 Z=0.000, control X=92.167 Y=0.000 Z=0.000, 0.002 cm apart (struck at X=-2906.380 Y=2600.000 Z=88.275)
+5 victim machine copy: 2 change(s) in the window; control movement fields []; violations []
+5 bystander machine copy: 64 change(s) in the window; control movement fields [BP_CrowdCharacter_C.ReplicatedBasedMovement]; violations []
+5 standing from behind: exec +0.300 contact +0.700 death write +0.550 (struck leg); frames: victim 0.0197 s; victim machine 1, bystander 3
+5 entries the control lacks before contact: (none)
+5 displacement at the last consumed move before the death write: struck X=0.000 Y=0.000 Z=0.000, control X=0.000 Y=0.000 Z=0.000, 0.000 cm apart (struck at X=-2850.000 Y=2600.000 Z=88.275)
+5 victim machine copy: 2 change(s) in the window; control movement fields []; violations []
+5 bystander machine copy: 2 change(s) in the window; control movement fields []; violations []
+5 standing from the front: exec +0.300 contact +0.700 death write +0.550 (struck leg); frames: victim 0.0197 s; victim machine 1, bystander 3
+5 entries the control lacks before contact: (none)
+5 displacement at the last consumed move before the death write: struck X=0.000 Y=0.000 Z=0.000, control X=0.000 Y=0.000 Z=0.000, 0.000 cm apart (struck at X=-2400.000 Y=2600.000 Z=88.275)
+5 victim machine copy: 2 change(s) in the window; control movement fields []; violations []
+5 bystander machine copy: 2 change(s) in the window; control movement fields []; violations []

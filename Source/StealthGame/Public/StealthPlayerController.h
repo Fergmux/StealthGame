@@ -6,6 +6,7 @@
 #include "View/CommandReplyTypes.h"
 #include "View/Input/PawnCommandClient.h"
 #include "View/NetPawnCommand.h"
+#include "View/OwnResultMatcher.h"
 #include "StealthPlayerController.generated.h"
 
 enum class ERoleChangeReason : uint8;
@@ -13,6 +14,7 @@ enum class ERoleChangeReason : uint8;
 class URosterTeamViewComponent;
 class UPawnCommandClient;
 class UDefenceOwnerComponent;
+class AStealthPawn;
 
 /** A message shown on the HUD (kill confirmation, removal notice, stage progress...). */
 USTRUCT()
@@ -42,6 +44,54 @@ struct FStealthPing
 	FString SenderName;
 
 	double ExpireTime = 0.0;
+};
+
+/** The owner HUD's view-model changes (story asn-024; the presentation-log hook of story asn-017). */
+enum class EOwnPresentationEvent : uint8
+{
+	/** A result or defence plate entered the Result slot (Value: EOwnResultPlate). */
+	ResultPlate,
+	/** The "Wrong targets" tally changed with its plate (Value: the tally). */
+	TallyTick,
+	/** The exile card (the plate + ExileBeatSec). */
+	ExileCard,
+	/** The own-role removal card (OnRoleChangePresented; Value: ERoleChangeReason). */
+	RemovalCard,
+	/** The brace square appeared (Value 1) or was removed (Value 0). */
+	BraceSquare,
+	/** A HUD message line was shown (server or local). */
+	HudMessage,
+	/** The round-end presentation (banner) was released. */
+	RoundEnd,
+};
+
+/** Log name of an owner presentation event. */
+STEALTHGAME_API const TCHAR* LexOwnPresentationEvent(EOwnPresentationEvent Event);
+
+/** One owner presentation change, stamped with this machine's EstimatedServerNow(). */
+struct FOwnPresentationRecord
+{
+	EOwnPresentationEvent Event = EOwnPresentationEvent::HudMessage;
+	/** The shown text (plates, cards, messages); empty otherwise. */
+	FString Text;
+	int32 Value = 0;
+	double ServerNow = 0.0;
+	/** The time the change answers (the contact, the DeathServerTime); -1 when none. */
+	double DueServerTime = -1.0;
+	/** When the data behind it was processed (a result's arrival; a held message's receipt); -1 when none. */
+	double ArrivalServerTime = -1.0;
+	bool bLate = false;
+};
+
+/** The Result slot (HUD E07 / E08 stand-in view-model): one plate, the newest preempts. */
+struct FOwnResultPlateView
+{
+	bool bActive = false;
+	EOwnResultPlate Plate = EOwnResultPlate::NoContact;
+	FText Text;
+	/** The F3 timeline origin (EstimatedServerNow() at the show). */
+	double ShowServerTime = 0.0;
+	double ContactServerTime = -1.0;
 };
 
 #if !UE_BUILD_SHIPPING
@@ -131,9 +181,37 @@ public:
 
 	/**
 	 * Owner: the "Wrong targets" tally the HUD shows: FStrikeResult.TallyAfter of the latest result plate, changed only at
-	 * that plate's show time (HUD-R7; story asn-015 stand-in until story asn-024).
+	 * that plate's show time (HUD-R7, story asn-024).
 	 */
 	int32 GetShownWrongTargetTally() const;
+
+	// ---- Owner result presentation (story asn-024; ADR-0018 sections 5.3 / 5.4) ---------------------------------------
+
+	/** Owner: the Result slot's plate (the HUD draws it with FOwnResultPlateTimeline from its ShowServerTime). */
+	const FOwnResultPlateView& GetResultPlate() const { return ResultPlate; }
+
+	/** Owner: true while the brace square is shown (FOwnBraceIndicator on the possessed pawn, sampled each frame). */
+	bool IsBraceSquareShown() const { return bBraceSquareShown; }
+
+	/**
+	 * Owner: the role the HUD presents (ASN-R23): informant only from this player's OnRoleChangePresented, its exile card
+	 * or a possession made as an informant, never at the Roster state's arrival; Active again when the Roster returns to
+	 * Active (a Reset is no outcome). A Roster informant state that no presentation follows within
+	 * HudResultPlateMaxHoldBackSec is presented then (the lost-data cap).
+	 */
+	bool IsPresentedInformant() const { return bInformantPresented; }
+
+	/** Owner: the round-end presentation is released (never before this owner's own plate or own fall, HUD F10). */
+	bool IsRoundEndPresented() const { return bRoundEndPresented; }
+
+	/** Owner: every HUD view-model change of this session (bounded; tests and the asn-017 presentation log). */
+	const TArray<FOwnPresentationRecord>& GetOwnPresentationLog() const { return OwnPresentationLog; }
+
+	/** Owner: the matcher (tests read its counters). */
+	const FOwnResultMatcher& GetResultMatcher() const { return ResultMatcher; }
+
+	/** Owner: an own outcome is still to be presented at ServerNow (a pending result, or the own pawn's fall not begun). */
+	bool IsOwnOutcomeUnpresented(double ServerNow) const;
 
 	/** The owner-only cooldown end (story asn-016): the only defence datum a client holds. */
 	UDefenceOwnerComponent* GetDefenceOwner() const { return DefenceOwner; }
@@ -162,6 +240,8 @@ public:
 	virtual void OnRep_Pawn() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	/** Owner: samples the result presentation every frame (story asn-024). */
+	virtual void PlayerTick(float DeltaTime) override;
 	/** Server: forwards to a non-Shipping spike hook (THROWAWAY, IVP S10 re-run story-056, ADR-0003 S10-R4); otherwise the engine default (nothing). */
 	virtual void NotifyActorChannelFailure(UActorChannel* ActorChan) override;
 
@@ -232,8 +312,46 @@ protected:
 	/** The round (FRoundPublicState::RoundIndex) of the shown tally: a new round shows 0 (HUD-R7). */
 	uint32 ShownTallyRoundIndex = 0;
 
-	/** Owner, STAND-IN for story asn-024's plates: the result's HUD message at its contact time (DefenceResult at once). */
-	void PresentOwnerResult(const FCommandReply& Reply);
+	/** Owner (story asn-024): one frame of the result presentation at ServerNow (sample, pop, show, release). */
+	void TickOwnPresentation(double ServerNow);
+
+	/** Owner: shows a due result in the Result slot (the tally, the attacker's grade and the exile beat with it). */
+	void ShowResultPlate(const FOwnResultDue& Due, double ServerNow);
+
+	/** Adds a HUD message line now and logs it. */
+	void AddHudMessage(const FText& Text, bool bDanger, float Duration, double ArrivalServerTime = -1.0);
+
+	/** Appends one owner presentation record (bounded). */
+	void LogOwnPresentation(EOwnPresentationEvent Event, const FString& Text, int32 Value, double ServerNow, double Due = -1.0, double Arrival = -1.0, bool bLate = false);
+
+	/** The pawn handles the matcher may need sampled (the commanded pawns), by key. */
+	TMap<const void*, TWeakObjectPtr<AStealthPawn>> WatchedPawns;
+
+	FOwnResultMatcher ResultMatcher;
+	FOwnResultPlateView ResultPlate;
+	TArray<FOwnPresentationRecord> OwnPresentationLog;
+	bool bBraceSquareShown = false;
+	bool bInformantPresented = false;
+	/** The Roster state read informant on the last frame. */
+	bool bRosterWasInformant = false;
+	/** EstimatedServerNow() when the Roster state first read informant without a presentation (-1: none). */
+	double UnpresentedInformantSince = -1.0;
+	bool bRoundEndPresented = false;
+	/** EstimatedServerNow() when the round-end phase was first seen (-1: not over). */
+	double RoundEndSeenAt = -1.0;
+	/** The exile card's due time (-1: none). */
+	double ExileCardAt = -1.0;
+	/** Server messages that arrived while an own outcome was unpresented (released at its presentation or the cap). */
+	struct FHeldMessage
+	{
+		FText Text;
+		bool bDanger = false;
+		float Duration = 0.f;
+		double ArrivalServerTime = 0.0;
+	};
+	TArray<FHeldMessage> HeldMessages;
+	/** The owner's outcome state was seen on the last frame (the asn-017 negative-control seam only). */
+	bool bSeamSawInformant = false;
 
 	/**
 	 * Owner (story asn-021): binds this local player's UEncounterViewSubsystem once: the own-role message follows
@@ -264,3 +382,23 @@ protected:
 	TArray<FStealthHudMessage> Messages;
 	TArray<FStealthPing> Pings;
 };
+
+#if WITH_STEALTH_TEST_SEAMS
+namespace StealthOwnerPresentationTestSeams
+{
+	/**
+	 * Test seam (ADR-0008 section 3; story asn-017 negative control): when on, every local AStealthPlayerController shows a
+	 * HUD line the moment its player's outcome state arrives (the Roster informant state or the own pawn's FDeathState,
+	 * whichever first), the forbidden on-receipt presentation. Off by default; compiled only with WITH_STEALTH_TEST_SEAMS
+	 * (never Shipping).
+	 */
+	STEALTHGAME_API void SetPresentOnRosterReceipt(bool bOn);
+	STEALTHGAME_API bool IsPresentOnRosterReceipt();
+
+	/**
+	 * Test seam (story asn-024 negative control): when on, every result plate is shown the moment its reply entry is
+	 * processed (the prototype's on-receipt behaviour), so the timing tests are seen to fail against it. Off by default.
+	 */
+	STEALTHGAME_API void SetPresentResultsOnReceipt(bool bOn);
+}
+#endif

@@ -11,6 +11,8 @@
 #include "View/StealthRosterTeamView.h"
 #include "View/StealthRoundPublicState.h"
 #include "View/DefenceOwnerComponent.h"
+#include "View/OwnResultMatcher.h"
+#include "View/OwnResultPlateSettings.h"
 
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
@@ -54,8 +56,9 @@ void AStealthHUD::DrawHUD()
 	DrawObjectiveMarkers(PS, GS);
 	DrawPings(PC);
 	DrawStatusPanel(PS, GS, Pawn, ServerNow);
-	DrawRoundBanner(GS, ServerNow);
+	DrawRoundBanner(PC, GS, ServerNow);
 	DrawMessages(PC);
+	DrawResultPlate(PC, ServerNow);
 	DrawInteractBar(Pawn);
 	DrawControls();
 	DrawProductionLine(PC, GS);
@@ -128,11 +131,14 @@ void AStealthHUD::DrawStatusPanel(const AStealthPlayerState* PS, const AStealthG
 	float Y = 24.f;
 	const float X = 24.f;
 	const float Line = 22.f;
+	// Story asn-017 / ASN-R23: the presented role (OnRoleChangePresented), never the Roster state's arrival.
+	const AStealthPlayerController* PresentingController = Cast<AStealthPlayerController>(GetOwningPlayerController());
+	const bool bInformant = PresentingController != nullptr ? PresentingController->IsPresentedInformant() : PS->IsInformant();
 
 	DrawShadowedText(FString::Printf(TEXT("%s"), *TeamName(PS->Team)), X, Y, AlliedTurquoise, 1.3f);
 	Y += Line * 1.4f;
 
-	if (PS->IsInformant())
+	if (bInformant)
 	{
 		DrawShadowedText(TEXT("INFORMANT: watch, ping sightings [T]. No attacks, tasks or parkour."), X, Y, DangerCochineal);
 	}
@@ -142,15 +148,16 @@ void AStealthHUD::DrawStatusPanel(const AStealthPlayerState* PS, const AStealthG
 	}
 	Y += Line;
 
-	if (PS->IsActivePlayer())
+	if (!bInformant)
 	{
 		FString Defence;
 		FLinearColor DefenceColor = Neutral;
-		// Story asn-016: the brace reads the replicated FActionState pose (public anyway: the brace is a readable tell) and
-		// the cooldown the owner-only UDefenceOwnerComponent on this controller; the pawn's defence state never replicates.
+		// Story asn-016: the cooldown is the owner-only UDefenceOwnerComponent on this controller (the pawn's defence state
+		// never replicates). Story asn-024 (UI-ASN-3): the brace square is the controller's sampled FOwnBraceIndicator, so a
+		// reversal removes it at the contact, never at the Counter write's or the FDefenceResult's arrival.
 		const AStealthPlayerController* OwnerController = Cast<AStealthPlayerController>(GetOwningPlayerController());
 		const UDefenceOwnerComponent* DefenceOwner = OwnerController ? OwnerController->GetDefenceOwner() : nullptr;
-		if (Pawn && Pawn->GetActionState().Pose == EActionPose::Brace)
+		if (OwnerController && OwnerController->IsBraceSquareShown())
 		{
 			Defence = TEXT("Defence: PREPARED");
 			DefenceColor = AlliedTurquoise;
@@ -242,7 +249,12 @@ void AStealthHUD::DrawTeammateMarkers(const AStealthPlayerState* PS)
 
 void AStealthHUD::DrawObjectiveMarkers(const AStealthPlayerState* PS, const AStealthGameState* GS)
 {
-	if (PS->Team >= STEALTH_NUM_TEAMS || !PS->IsActivePlayer() || GS->RoundPhase != EStealthRoundPhase::InProgress)
+	const AStealthPlayerController* PresentingController = Cast<AStealthPlayerController>(GetOwningPlayerController());
+	const bool bInformant = PresentingController != nullptr ? PresentingController->IsPresentedInformant() : !PS->IsActivePlayer();
+	// The markers go with the round-end presentation, released by the controller (never at the Phase's arrival, HUD F10).
+	const bool bRoundOn = GS->RoundPhase == EStealthRoundPhase::InProgress
+		|| (GS->RoundPhase == EStealthRoundPhase::RoundOver && PresentingController != nullptr && !PresentingController->IsRoundEndPresented());
+	if (PS->Team >= STEALTH_NUM_TEAMS || bInformant || !bRoundOn)
 	{
 		return;
 	}
@@ -290,8 +302,14 @@ void AStealthHUD::DrawMessages(AStealthPlayerController* PC)
 	}
 }
 
-void AStealthHUD::DrawRoundBanner(const AStealthGameState* GS, double ServerNow)
+void AStealthHUD::DrawRoundBanner(const AStealthPlayerController* PC, const AStealthGameState* GS, double ServerNow)
 {
+	// Story asn-024 (HUD F10 stand-in): the round end is released by the controller's hold buffer, never before this
+	// owner's own plate or own fall.
+	if (GS->RoundPhase == EStealthRoundPhase::RoundOver && (PC == nullptr || !PC->IsRoundEndPresented()))
+	{
+		return;
+	}
 	const float CX = Canvas->ClipX * 0.5f;
 	const float Remaining = FMath::Max(0.f, static_cast<float>(GS->PhaseEndServerTime - ServerNow));
 	switch (GS->RoundPhase)
@@ -328,4 +346,137 @@ void AStealthHUD::DrawControls()
 	// The IIF R15 default bindings (IMC_Common / IMC_Active, story iif-015).
 	DrawShadowedText(TEXT("WASD move (walk)  Ctrl/Alt walk slower  Shift run  Space climb  LMB assassinate  hold Q defend  hold E task  F hide  G ping  V camera  X shoulder  C crouch"),
 		24.f, Canvas->ClipY - 34.f, Muted, 0.8f);
+}
+
+void AStealthHUD::DrawResultPlate(const AStealthPlayerController* PC, double ServerNow)
+{
+	const FOwnResultPlateView& Plate = PC->GetResultPlate();
+	if (!Plate.bActive)
+	{
+		return;
+	}
+	const FOwnResultPlateSample Sample = FOwnResultPlateTimeline::Sample(UOwnResultPlateSettings::Get()->TimelineParams(), ServerNow - Plate.ShowServerTime);
+	if (Sample.Opacity <= 0.f)
+	{
+		return;
+	}
+	// Z4 Result slot (design/ux/hud.md): one 300 x 64 plate at the lower centre, the same size for every outcome (HUD-R3), a
+	// 40 x 40 glyph slot that is always reserved and the text in Bone. Only the text and the glyph differ.
+	const float Scale = Canvas->ClipY / 1080.f;
+	const float W = 300.f * Scale, H = 64.f * Scale, G = 40.f * Scale;
+	const float X = Canvas->ClipX * 0.5f - W * 0.5f;
+	const float Y = 724.f * Scale;
+	const float A = Sample.Opacity;
+	DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.65f * A), X, Y, W, H);
+	const float GX = X + 12.f * Scale;
+	const float GY = Y + (H - G) * 0.5f;
+	switch (Plate.Plate)
+	{
+	case EOwnResultPlate::TargetEliminated:
+	case EOwnResultPlate::StrikeReversed:
+		// The Bone stepped-square stamp with one bar.
+		DrawRect(FLinearColor(Neutral.R, Neutral.G, Neutral.B, A), GX + 6.f * Scale, GY + 6.f * Scale, G - 12.f * Scale, G - 12.f * Scale);
+		DrawRect(FLinearColor(0.f, 0.f, 0.f, A), GX + 6.f * Scale, GY + G * 0.5f - 2.f * Scale, G - 12.f * Scale, 4.f * Scale);
+		break;
+	case EOwnResultPlate::WrongTarget:
+	case EOwnResultPlate::Reversed:
+	{
+		// The Cochineal upward triangle.
+		const FLinearColor C(DangerCochineal.R, DangerCochineal.G, DangerCochineal.B, A);
+		DrawLine(GX + G * 0.5f, GY + 4.f * Scale, GX + 4.f * Scale, GY + G - 4.f * Scale, C, 3.f);
+		DrawLine(GX + 4.f * Scale, GY + G - 4.f * Scale, GX + G - 4.f * Scale, GY + G - 4.f * Scale, C, 3.f);
+		DrawLine(GX + G - 4.f * Scale, GY + G - 4.f * Scale, GX + G * 0.5f, GY + 4.f * Scale, C, 3.f);
+		break;
+	}
+	default:
+		// NoContact: the slot stays empty (a miss is not finality; no Cochineal).
+		break;
+	}
+	const float TextCentre = X + G + 12.f * Scale + (W - G - 12.f * Scale) * 0.5f;
+	DrawShadowedText(Plate.Text.ToString(), TextCentre, Y + H * 0.5f - 12.f * Scale, FLinearColor(Neutral.R, Neutral.G, Neutral.B, A), 1.2f * Scale, true);
+}
+
+void AStealthHUD::CollectOwnerElements(const AStealthPlayerController& PC, TArray<FString>& Out)
+{
+	Out.Reset();
+	UWorld* World = PC.GetWorld();
+	const AStealthPlayerState* PS = PC.GetPlayerState<AStealthPlayerState>();
+	const AStealthGameState* GS = World != nullptr ? World->GetGameState<AStealthGameState>() : nullptr;
+	const AStealthCharacter* Pawn = Cast<AStealthCharacter>(PC.GetPawn());
+	if (PS == nullptr || GS == nullptr)
+	{
+		return;
+	}
+	const double ServerNow = GS->GetServerWorldTimeSeconds();
+	// The status panel.
+	Out.Add(FString::Printf(TEXT("Team:%d"), PS->Team));
+	const bool bInformant = PC.IsPresentedInformant();
+	Out.Add(bInformant ? TEXT("Role:Informant") : TEXT("Role:Active"));
+	if (!bInformant)
+	{
+		const UDefenceOwnerComponent* DefenceOwner = PC.GetDefenceOwner();
+		const double Remaining = DefenceOwner != nullptr ? DefenceOwner->GetCooldownRemaining(ServerNow) : 0.0;
+		const TCHAR* Defence = PC.IsBraceSquareShown() ? TEXT("Defence:Prepared")
+			: (Remaining > 0.0 ? TEXT("Defence:Recovering")
+				: (Pawn && (Pawn->IsRunning() || Pawn->IsInTraversal()) ? TEXT("Defence:Unavailable") : TEXT("Defence:Ready")));
+		Out.Add(Defence);
+		Out.Add(FString::Printf(TEXT("Tally:%d"), PC.GetShownWrongTargetTally()));
+		if (Pawn && Pawn->IsConcealed())
+		{
+			Out.Add(TEXT("Concealed"));
+		}
+	}
+	if (PS->Team < STEALTH_NUM_TEAMS)
+	{
+		Out.Add(FString::Printf(TEXT("Stage:%d"), GS->GetTeamStage(PS->Team)));
+		Out.Add(FString::Printf(TEXT("EnemyStage:%d"), GS->GetTeamStage(PS->Team == 0 ? 1 : 0)));
+		// Teammate markers, by state (DrawTeammateMarkers also skips the off-screen ones).
+		for (TActorIterator<AStealthCharacter> It(World); It; ++It)
+		{
+			const AStealthCharacter* Character = *It;
+			if (Character != Pawn && !Character->IsDying() && !Character->IsNpc() && Character->GetTeam() == PS->Team)
+			{
+				const AStealthPlayerState* MatePS = Character->GetStealthPlayerState();
+				Out.Add(FString::Printf(TEXT("TeammateMarker:%s%s"), MatePS ? *MatePS->GetPlayerName() : TEXT("?"), Character->IsInformant() ? TEXT(":informant") : TEXT("")));
+			}
+		}
+		const bool bRoundOn = GS->RoundPhase == EStealthRoundPhase::InProgress || (GS->RoundPhase == EStealthRoundPhase::RoundOver && !PC.IsRoundEndPresented());
+		if (!bInformant && bRoundOn)
+		{
+			const int32 Stage = GS->GetTeamStage(PS->Team);
+			for (TActorIterator<AStealthObjective> It(World); It; ++It)
+			{
+				if (!It->IsCompleted() && FStealthRules::CanCompleteObjective(PS->Team, Stage, It->OwningTeam, It->Stage))
+				{
+					Out.Add(FString::Printf(TEXT("ObjectiveMarker:%s"), *It->DisplayName.ToString()));
+				}
+			}
+		}
+	}
+	for (const FStealthPing& Ping : PC.GetPings())
+	{
+		Out.Add(FString::Printf(TEXT("Ping:%s"), *Ping.SenderName));
+	}
+	if (GS->RoundPhase == EStealthRoundPhase::WaitingToStart || (GS->RoundPhase == EStealthRoundPhase::RoundOver && PC.IsRoundEndPresented()))
+	{
+		Out.Add(FString::Printf(TEXT("RoundBanner:%d"), static_cast<int32>(GS->RoundPhase)));
+	}
+	const double WorldNow = World->GetTimeSeconds();
+	for (const FStealthHudMessage& Message : PC.GetMessages())
+	{
+		if (Message.ExpireTime > WorldNow)
+		{
+			Out.Add(FString::Printf(TEXT("Message:%s"), *Message.Text.ToString()));
+		}
+	}
+	const FOwnResultPlateView& Plate = PC.GetResultPlate();
+	if (Plate.bActive && FOwnResultPlateTimeline::Sample(UOwnResultPlateSettings::Get()->TimelineParams(), ServerNow - Plate.ShowServerTime).Opacity > 0.f)
+	{
+		Out.Add(FString::Printf(TEXT("ResultPlate:%s"), *Plate.Text.ToString()));
+	}
+	if (Pawn && Pawn->GetLocalInteractProgress() >= 0.f)
+	{
+		Out.Add(TEXT("InteractBar"));
+	}
+	Out.Add(TEXT("Controls"));
 }

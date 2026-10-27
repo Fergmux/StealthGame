@@ -23,7 +23,9 @@
 #include "Server/Core/StealthPawnCommandComponent.h"
 #include "Server/Core/StealthPawnFactory.h"
 #include "View/DefenceOwnerComponent.h"
+#include "View/EncounterPresentation.h"
 #include "View/EncounterViewSubsystem.h"
+#include "View/OwnResultPlateSettings.h"
 #include "StealthPlayerState.h"
 #include "View/StealthTuningPublicSubstructs.h"
 #include "GameFramework/GameStateBase.h"
@@ -36,8 +38,37 @@ namespace
 	constexpr float MinHudMessageSeconds = 6.f;
 	/** Received reply entries kept for the owner-side readers (tests, the story asn-024 matcher). */
 	constexpr int32 MaxKeptReplies = 64;
-	/** STAND-IN for Penalty's ExileBeatSec (0.8 s): the exile line follows the WrongTarget plate. */
-	constexpr float ExileBeatSec = 0.8f;
+	/** Owner presentation records kept (story asn-024 / asn-017 observation). */
+	constexpr int32 MaxOwnPresentationRecords = 512;
+	/** The exile card's line stays up this long (STAND-IN for Penalty's exile card). */
+	constexpr float ExileCardSeconds = 8.f;
+	/** A time counts as reached one millisecond early (the presentation's contact-frame tolerance). */
+	constexpr double ReachedEpsilonSec = 0.001;
+
+#if WITH_STEALTH_TEST_SEAMS
+	bool GPresentOnRosterReceipt = false;
+	bool GPresentResultsOnReceipt = false;
+#endif
+}
+
+#if WITH_STEALTH_TEST_SEAMS
+void StealthOwnerPresentationTestSeams::SetPresentOnRosterReceipt(bool bOn) { GPresentOnRosterReceipt = bOn; }
+bool StealthOwnerPresentationTestSeams::IsPresentOnRosterReceipt() { return GPresentOnRosterReceipt; }
+void StealthOwnerPresentationTestSeams::SetPresentResultsOnReceipt(bool bOn) { GPresentResultsOnReceipt = bOn; }
+#endif
+
+const TCHAR* LexOwnPresentationEvent(EOwnPresentationEvent Event)
+{
+	switch (Event)
+	{
+	case EOwnPresentationEvent::ResultPlate: return TEXT("ResultPlate");
+	case EOwnPresentationEvent::TallyTick: return TEXT("TallyTick");
+	case EOwnPresentationEvent::ExileCard: return TEXT("ExileCard");
+	case EOwnPresentationEvent::RemovalCard: return TEXT("RemovalCard");
+	case EOwnPresentationEvent::BraceSquare: return TEXT("BraceSquare");
+	case EOwnPresentationEvent::HudMessage: return TEXT("HudMessage");
+	default: return TEXT("RoundEnd");
+	}
 }
 
 AStealthPlayerController::AStealthPlayerController()
@@ -226,6 +257,8 @@ void AStealthPlayerController::ClientRestart_Implementation(APawn* NewPawn)
 	// C-TeamView own State: an informant's pawn is always a fresh respawn, possessed after the informant state replicated).
 	const AStealthPlayerState* PS = GetPlayerState<AStealthPlayerState>();
 	PossessedAsInformantPawn = PS != nullptr && PS->IsInformant() ? NewPawn : nullptr;
+	// Story asn-017 / ASN-R23: a pawn possessed as an informant presents the informant role at once (its death already did).
+	bInformantPresented = bInformantPresented || PossessedAsInformantPawn.IsValid();
 	BindEncounterView();
 }
 
@@ -252,13 +285,28 @@ void AStealthPlayerController::BindEncounterView()
 
 void AStealthPlayerController::HandleRoleChangePresented(ERoleChangeReason Reason, double LocalTime)
 {
-	// STAND-IN for the HUD epic's removal card: shown at the dispatch (the pawn's own DeathServerTime), never on receipt.
-	if (Reason == ERoleChangeReason::InformantKilled)
+	const double ServerNow = UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld());
+	const UEncounterViewSubsystem* View = GetLocalPlayer() != nullptr ? GetLocalPlayer()->GetSubsystem<UEncounterViewSubsystem>() : nullptr;
+	const FRoleChangeRecord* Record = View != nullptr && !View->GetRoleChanges().IsEmpty() ? &View->GetRoleChanges().Last() : nullptr;
+	const double DeathServerTime = Record != nullptr ? Record->DeathServerTime : -1.0;
+	// Story asn-024 (art bible 7.6 rule 7): a reversed attacker's "Reversed" plate is released inside this sequence, so the
+	// grade, the plate and the removal card enter as one at the shared contact (= its DeathServerTime).
+	if (Reason == ERoleChangeReason::ReversedAgainst)
 	{
-		ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "InformantDied", "You were silenced. Returning to your team's spawn."), true, 5.f);
-		return;
+		const void* DyingPawn = Record != nullptr ? static_cast<const void*>(Record->PawnKey) : static_cast<const void*>(GetPawn());
+		ResultMatcher.OnReversedAgainstPresented(DyingPawn, ServerNow);
+		for (const FOwnResultDue& Due : ResultMatcher.PopDue(ServerNow))
+		{
+			ShowResultPlate(Due, ServerNow);
+		}
 	}
-	ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "YouWereEliminated", "You have been eliminated. You are now an informant."), true, 6.f);
+	// STAND-IN for the HUD epic's removal card: shown at the dispatch (the pawn's own DeathServerTime), never on receipt.
+	const FText Card = Reason == ERoleChangeReason::InformantKilled
+		? NSLOCTEXT("StealthOwnerResults", "InformantDied", "You were silenced. Returning to your team's spawn.")
+		: NSLOCTEXT("StealthOwnerResults", "YouWereEliminated", "You have been eliminated. You are now an informant.");
+	LogOwnPresentation(EOwnPresentationEvent::RemovalCard, Card.ToString(), static_cast<int32>(Reason), ServerNow, DeathServerTime);
+	bInformantPresented = true;
+	AddHudMessage(Card, true, Reason == ERoleChangeReason::InformantKilled ? 5.f : 6.f);
 }
 
 void AStealthPlayerController::OnRep_Pawn()
@@ -293,6 +341,15 @@ void AStealthPlayerController::ServerPawnCommand_Implementation(const FNetPawnCo
 
 void AStealthPlayerController::SendPawnCommand(const FNetPawnCommand& Cmd, APawn* HostLocalPawnRef)
 {
+	// Story asn-024: the press is recorded with the commanded pawn (an exile releases it later) and its state now.
+	if (IsLocalController() && (Cmd.Kind == ECommandKind::Attack || Cmd.Kind == ECommandKind::PrepareBegin))
+	{
+		if (AStealthPawn* Commanded = Cast<AStealthPawn>(GetPawn()))
+		{
+			WatchedPawns.Add(Commanded, Commanded);
+			ResultMatcher.OnCommandSent(Cmd.Kind, Cmd.Seq, Commanded, Commanded->GetActionState());
+		}
+	}
 	if (HasAuthority())
 	{
 		// The listen host: IngestCommand(HostLocal) with the same checks and the same reply flush (ADR-0011 section 2).
@@ -323,14 +380,37 @@ void AStealthPlayerController::ClientCommandReplies_Implementation(const TArray<
 {
 	ReceivedReplyCount += Replies.Num();
 	UE_LOGF(LogStealth, Verbose, "[cmd] %ls received %d reply(ies)", *GetName(), Replies.Num());
+	// Story asn-024: results enter the matcher with their processing time and nothing is presented here (on receipt): the
+	// per-frame TickOwnPresentation shows each at its local contact frame.
+	const double ServerNow = UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld());
 	for (const FCommandReply& Reply : Replies)
 	{
 		ReceivedReplies.Add(Reply);
-		if (Reply.Kind == ECommandReplyKind::StrikeResult || Reply.Kind == ECommandReplyKind::DefenceResult)
+		switch (Reply.Kind)
 		{
-			PresentOwnerResult(Reply);
+		case ECommandReplyKind::StrikeResult:
+			ResultMatcher.OnStrikeResult(Reply.Strike, ServerNow, GetPawn());
+			break;
+		case ECommandReplyKind::DefenceResult:
+			ResultMatcher.OnDefenceResult(Reply.Seq, Reply.Defence, ServerNow, GetPawn());
+			break;
+		case ECommandReplyKind::Rejected:
+			ResultMatcher.OnRejected(Reply.Seq);
+			break;
+		default:
+			break;
 		}
 	}
+#if WITH_STEALTH_TEST_SEAMS
+	if (GPresentResultsOnReceipt)
+	{
+		// The negative control: every pending result now, on receipt (the forbidden behaviour).
+		for (const FOwnResultDue& Due : ResultMatcher.PopDue(ServerNow + 1000.0))
+		{
+			ShowResultPlate(Due, ServerNow);
+		}
+	}
+#endif
 	if (ReceivedReplies.Num() > MaxKeptReplies)
 	{
 		ReceivedReplies.RemoveAt(0, ReceivedReplies.Num() - MaxKeptReplies);
@@ -344,79 +424,218 @@ int32 AStealthPlayerController::GetShownWrongTargetTally() const
 	return RoundState != nullptr && RoundState->GetRoundPublicState().RoundIndex != ShownTallyRoundIndex ? 0 : ShownWrongTargetTally;
 }
 
-void AStealthPlayerController::PresentOwnerResult(const FCommandReply& Reply)
+void AStealthPlayerController::PlayerTick(float DeltaTime)
 {
-	// STAND-IN for story asn-024 (the owner result matcher and the HUD plates): one HUD message per result, the strike's
-	// shown at its own ContactServerTime (never earlier, UI-ASN-1), the tally line changing with it (HUD-R7).
-	UWorld* World = GetWorld();
-	if (World == nullptr)
-	{
-		return;
-	}
-	if (Reply.Kind == ECommandReplyKind::DefenceResult)
-	{
-		ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "Reversal", "Reversal! Your attacker is eliminated."), false, 5.f);
-		return;
-	}
-	const FStrikeResult Strike = Reply.Strike;
-	const AGameStateBase* State = World->GetGameState();
-	const double Now = State != nullptr ? State->GetServerWorldTimeSeconds() : World->GetTimeSeconds();
-	const float Delay = static_cast<float>(FMath::Max(Strike.ContactServerTime - Now, 0.0));
-	TWeakObjectPtr<AStealthPlayerController> WeakThis(this);
-	auto Show = [WeakThis, Strike]()
-	{
-		AStealthPlayerController* Self = WeakThis.Get();
-		if (Self == nullptr)
-		{
-			return;
-		}
-		Self->ShownWrongTargetTally = Strike.TallyAfter;
-		// Story asn-021: the attacker's transient grade on its local contact frame for a kill or a reversal (a body met a
-		// body); a whiff (NoContact) plays none. STAND-IN call site until story asn-024's matcher owns the plate frame.
-		if (Strike.Result != EStrikeResult::NoContact && Self->GetLocalPlayer() != nullptr)
-		{
-			if (UEncounterViewSubsystem* View = Self->GetLocalPlayer()->GetSubsystem<UEncounterViewSubsystem>())
-			{
-				const AGameStateBase* GradeState = Self->GetWorld() != nullptr ? Self->GetWorld()->GetGameState() : nullptr;
-				View->ApplyTransientGrade(ETransientGradeCause::AttackerContact, GradeState != nullptr ? GradeState->GetServerWorldTimeSeconds() : 0.0, Strike.ContactServerTime);
-			}
-		}
-		const AStealthGameState* RoundState = Self->GetWorld() != nullptr ? Self->GetWorld()->GetGameState<AStealthGameState>() : nullptr;
-		Self->ShownTallyRoundIndex = RoundState != nullptr ? RoundState->GetRoundPublicState().RoundIndex : 0;
-		switch (Strike.Result)
-		{
-		case EStrikeResult::RivalEliminated:
-			Self->ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "TargetEliminated", "Target eliminated"), false, 4.f);
-			break;
-		case EStrikeResult::WrongTarget:
-			Self->ClientStealthMessage_Implementation(FText::Format(NSLOCTEXT("StealthOwnerResults", "WrongTarget", "Wrong target. Wrong targets: {0}"), Strike.TallyAfter), true, 4.f);
-			break;
-		case EStrikeResult::NoContact:
-			Self->ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "NoContact", "No contact"), false, 4.f);
-			break;
-		case EStrikeResult::Reversed:
-			Self->ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "Reversed", "Reversed"), true, 4.f);
-			break;
-		}
-		if (Strike.bExiled)
-		{
-			FTimerHandle ExileHandle;
-			Self->GetWorldTimerManager().SetTimer(ExileHandle, FTimerDelegate::CreateWeakLambda(Self, [Self]()
-			{
-				Self->ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "Exiled",
-					"Exiled: too many wrong targets. You are now an informant: watch, and report to your team."), true, 8.f);
-			}), ExileBeatSec, false);
-		}
-	};
-	if (Delay <= 0.f)
-	{
-		Show();
-		return;
-	}
-	FTimerHandle Handle;
-	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, Show), Delay, false);
+	Super::PlayerTick(DeltaTime);
+	TickOwnPresentation(UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld()));
 }
 
+bool AStealthPlayerController::IsOwnOutcomeUnpresented(double ServerNow) const
+{
+	if (ResultMatcher.HasPending())
+	{
+		return true;
+	}
+	const AStealthPawn* Own = Cast<AStealthPawn>(GetPawn());
+	return Own != nullptr && Own->HasDeathWrite() && ServerNow + ReachedEpsilonSec < Own->GetDeathState().DeathServerTime;
+}
+
+void AStealthPlayerController::TickOwnPresentation(double ServerNow)
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr || !IsLocalController())
+	{
+		return;
+	}
+	const UOwnResultPlateSettings* PlateSettings = UOwnResultPlateSettings::Get();
+	ResultMatcher.SetParams(PlateSettings->MatcherParams());
+
+	// 1 Sample the commanded pawns' FActionState: the matcher's write side, in either order against the results (E6).
+	if (AStealthPawn* Own = Cast<AStealthPawn>(GetPawn()))
+	{
+		WatchedPawns.Add(Own, Own);
+	}
+	const TArray<const void*> Watched = ResultMatcher.GetWatchedPawns();
+	for (auto It = WatchedPawns.CreateIterator(); It; ++It)
+	{
+		AStealthPawn* WatchedPawn = It.Value().Get();
+		if (WatchedPawn == nullptr || (WatchedPawn != GetPawn() && !Watched.Contains(It.Key())))
+		{
+			It.RemoveCurrent();
+			continue;
+		}
+		ResultMatcher.OnActionStateObserved(WatchedPawn, WatchedPawn->GetActionState(), ServerNow);
+	}
+
+	// 2 Results due on this frame: the local contact frame, or on processing when late.
+	for (const FOwnResultDue& Due : ResultMatcher.PopDue(ServerNow))
+	{
+		ShowResultPlate(Due, ServerNow);
+	}
+	if (ResultPlate.bActive
+		&& FOwnResultPlateTimeline::Sample(PlateSettings->TimelineParams(), ServerNow - ResultPlate.ShowServerTime).Phase == EOwnResultPlatePhase::Gone)
+	{
+		ResultPlate.bActive = false;
+	}
+
+	// 3 The exile card, ExileBeatSec after its plate.
+	if (ExileCardAt >= 0.0 && ServerNow + ReachedEpsilonSec >= ExileCardAt)
+	{
+		ExileCardAt = -1.0;
+		const FText Card = NSLOCTEXT("StealthOwnerResults", "Exiled", "Exiled: too many wrong targets. You are now an informant: watch, and report to your team.");
+		LogOwnPresentation(EOwnPresentationEvent::ExileCard, Card.ToString(), 0, ServerNow);
+		bInformantPresented = true;
+		AddHudMessage(Card, true, ExileCardSeconds);
+	}
+
+	// 4 The brace square (UI-ASN-3): a reversal ends it at contact, never at the Counter's or a result's arrival.
+	const AStealthPawn* OwnPawn = Cast<AStealthPawn>(GetPawn());
+	const bool bSquare = OwnPawn != nullptr && FOwnBraceIndicator::IsShown(OwnPawn->GetActionState(), ServerNow);
+	if (bSquare != bBraceSquareShown)
+	{
+		bBraceSquareShown = bSquare;
+		const bool bCounter = OwnPawn != nullptr && OwnPawn->GetActionState().Pose == EActionPose::Counter;
+		LogOwnPresentation(EOwnPresentationEvent::BraceSquare, FString(), bSquare ? 1 : 0, ServerNow, bCounter ? OwnPawn->GetActionState().ContactServerTime : -1.0);
+	}
+
+	// 5 The presented role (ASN-R23): the Roster's informant state is shown only through the presentation above (which may
+	// come before or after the Roster state), Active again at the Roster's own return to Active (a Reset is no outcome); an
+	// informant state no presentation follows within the cap is shown then (lost data).
+	const AStealthPlayerState* OwnState = GetPlayerState<AStealthPlayerState>();
+	const bool bRosterInformant = OwnState != nullptr && OwnState->IsInformant();
+	if (!bRosterInformant)
+	{
+		if (bRosterWasInformant)
+		{
+			bInformantPresented = false;
+		}
+		UnpresentedInformantSince = -1.0;
+	}
+	else if (!bInformantPresented)
+	{
+		UnpresentedInformantSince = UnpresentedInformantSince < 0.0 ? ServerNow : UnpresentedInformantSince;
+		if (ServerNow >= UnpresentedInformantSince + ResultMatcher.GetParams().HoldBackSec())
+		{
+			bInformantPresented = true;
+		}
+	}
+	else
+	{
+		UnpresentedInformantSince = -1.0;
+	}
+	bRosterWasInformant = bRosterInformant;
+
+	// 6 The hold buffer (ASN-R23, HUD F10): server lines and the round end that arrived while an own outcome was unpresented
+	// are released at its presentation (never before the owner's own plate or own fall), or at the lost-data cap.
+	const bool bHold = IsOwnOutcomeUnpresented(ServerNow);
+	const double Cap = ResultMatcher.GetParams().HoldBackSec();
+	for (int32 Index = 0; Index < HeldMessages.Num();)
+	{
+		if (!bHold || ServerNow >= HeldMessages[Index].ArrivalServerTime + Cap)
+		{
+			const FHeldMessage Held = HeldMessages[Index];
+			HeldMessages.RemoveAt(Index);
+			AddHudMessage(Held.Text, Held.bDanger, Held.Duration, Held.ArrivalServerTime);
+			continue;
+		}
+		++Index;
+	}
+	const AStealthGameState* RoundState = World->GetGameState<AStealthGameState>();
+	const bool bRoundOver = RoundState != nullptr && RoundState->RoundPhase == EStealthRoundPhase::RoundOver;
+	if (!bRoundOver)
+	{
+		RoundEndSeenAt = -1.0;
+		bRoundEndPresented = false;
+	}
+	else if (!bRoundEndPresented)
+	{
+		RoundEndSeenAt = RoundEndSeenAt < 0.0 ? ServerNow : RoundEndSeenAt;
+		if (!bHold || ServerNow >= RoundEndSeenAt + Cap)
+		{
+			bRoundEndPresented = true;
+			LogOwnPresentation(EOwnPresentationEvent::RoundEnd, FString(), 0, ServerNow, -1.0, RoundEndSeenAt);
+		}
+	}
+
+#if WITH_STEALTH_TEST_SEAMS
+	// The asn-017 negative control: the forbidden presentation on the receipt of the owner's outcome state (the Roster
+	// informant state, or the own pawn's FDeathState, whichever arrives first; both arrive before the local contact frame).
+	const AStealthPlayerState* SeamState = GetPlayerState<AStealthPlayerState>();
+	const bool bOutcomeState = (SeamState != nullptr && SeamState->IsInformant()) || (OwnPawn != nullptr && OwnPawn->HasDeathWrite());
+	if (GPresentOnRosterReceipt && bOutcomeState && !bSeamSawInformant)
+	{
+		AddHudMessage(NSLOCTEXT("StealthOwnerResults", "SeamRosterReceipt", "[seam] outcome state received"), true, 4.f, ServerNow);
+	}
+	bSeamSawInformant = bOutcomeState;
+#endif
+}
+
+void AStealthPlayerController::ShowResultPlate(const FOwnResultDue& Due, double ServerNow)
+{
+	// One entrance and one timing for every plate (HUD E07 / E08): the newest takes the Result slot.
+	ResultPlate.bActive = true;
+	ResultPlate.Plate = Due.Plate;
+	ResultPlate.Text = OwnResultPlateText(Due.Plate);
+	ResultPlate.ShowServerTime = ServerNow;
+	ResultPlate.ContactServerTime = Due.ContactServerTime;
+	LogOwnPresentation(EOwnPresentationEvent::ResultPlate, ResultPlate.Text.ToString(), static_cast<int32>(Due.Plate), ServerNow, Due.ContactServerTime,
+		Due.ArrivalServerTime, Due.bLate);
+	UE_LOGF(LogStealth, Log, "[HUD] %ls plate %ls at %.3f (contact %.3f, arrival %.3f, %ls%ls%ls)", *GetName(), LexOwnResultPlate(Due.Plate), ServerNow,
+		Due.ContactServerTime, Due.ArrivalServerTime, LexOwnResultTimeSource(Due.Source), Due.bLate ? TEXT(", late") : TEXT(""),
+		Due.bInRoleChange ? TEXT(", in role change") : TEXT(""));
+	if (Due.Kind != ECommandReplyKind::StrikeResult)
+	{
+		return;
+	}
+	// The tally ticks with the plate (HUD-R7, UI-ASN-2).
+	ShownWrongTargetTally = Due.Strike.TallyAfter;
+	const AStealthGameState* RoundState = GetWorld() != nullptr ? GetWorld()->GetGameState<AStealthGameState>() : nullptr;
+	ShownTallyRoundIndex = RoundState != nullptr ? RoundState->GetRoundPublicState().RoundIndex : 0;
+	LogOwnPresentation(EOwnPresentationEvent::TallyTick, FString(), Due.Strike.TallyAfter, ServerNow, Due.ContactServerTime);
+	// Story asn-021: the attacker's transient grade on the plate frame for a kill or a reversal (a body met a body); a whiff
+	// (NoContact) plays none.
+	if (Due.Strike.Result != EStrikeResult::NoContact && GetLocalPlayer() != nullptr)
+	{
+		if (UEncounterViewSubsystem* View = GetLocalPlayer()->GetSubsystem<UEncounterViewSubsystem>())
+		{
+			View->ApplyTransientGrade(ETransientGradeCause::AttackerContact, ServerNow, Due.ContactServerTime >= 0.0 ? Due.ContactServerTime : ServerNow);
+		}
+	}
+	if (Due.Strike.bExiled)
+	{
+		ExileCardAt = ServerNow + UOwnResultPlateSettings::Get()->ExileBeatSec;
+	}
+}
+
+void AStealthPlayerController::AddHudMessage(const FText& Text, bool bDanger, float Duration, double ArrivalServerTime)
+{
+	FStealthHudMessage& Message = Messages.AddDefaulted_GetRef();
+	Message.Text = Text;
+	Message.bDanger = bDanger;
+	Message.ExpireTime = GetWorld()->GetTimeSeconds() + FMath::Max(Duration, MinHudMessageSeconds);
+	if (Messages.Num() > MaxHudMessages)
+	{
+		Messages.RemoveAt(0);
+	}
+	LogOwnPresentation(EOwnPresentationEvent::HudMessage, Text.ToString(), bDanger ? 1 : 0, UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld()), -1.0, ArrivalServerTime);
+	UE_LOG(LogStealth, Log, TEXT("[HUD] %s (netmode %d) message: %s"), *GetName(), (int32)GetNetMode(), *Text.ToString());
+}
+
+void AStealthPlayerController::LogOwnPresentation(EOwnPresentationEvent Event, const FString& Text, int32 Value, double ServerNow, double Due, double Arrival, bool bLate)
+{
+	if (OwnPresentationLog.Num() >= MaxOwnPresentationRecords)
+	{
+		OwnPresentationLog.RemoveAt(0, OwnPresentationLog.Num() / 2);
+	}
+	FOwnPresentationRecord& Record = OwnPresentationLog.AddDefaulted_GetRef();
+	Record.Event = Event;
+	Record.Text = Text;
+	Record.Value = Value;
+	Record.ServerNow = ServerNow;
+	Record.DueServerTime = Due;
+	Record.ArrivalServerTime = Arrival;
+	Record.bLate = bLate;
+}
 void AStealthPlayerController::SendTeamPing(const FVector& Location)
 {
 	ServerTeamPing(Location);
@@ -435,15 +654,19 @@ void AStealthPlayerController::ServerTeamPing_Implementation(FVector_NetQuantize
 
 void AStealthPlayerController::ClientStealthMessage_Implementation(const FText& Text, bool bDanger, float Duration)
 {
-	FStealthHudMessage& Message = Messages.AddDefaulted_GetRef();
-	Message.Text = Text;
-	Message.bDanger = bDanger;
-	Message.ExpireTime = GetWorld()->GetTimeSeconds() + FMath::Max(Duration, MinHudMessageSeconds);
-	if (Messages.Num() > MaxHudMessages)
+	// ASN-R23 hold buffer (stories asn-024 / asn-017): a server line is never shown in this RPC handler. It is queued and the
+	// per-frame TickOwnPresentation releases it once no own outcome is unpresented (a pending plate, the own fall not begun),
+	// so a line sent with a death write (a round end) waits for the FDeathState that arrives in the same frame.
+	const double ServerNow = UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld());
+	if (!IsLocalController())
 	{
-		Messages.RemoveAt(0);
+		return;
 	}
-	UE_LOG(LogStealth, Log, TEXT("[HUD] %s (netmode %d) message: %s"), *GetName(), (int32)GetNetMode(), *Text.ToString());
+	FHeldMessage& Held = HeldMessages.AddDefaulted_GetRef();
+	Held.Text = Text;
+	Held.bDanger = bDanger;
+	Held.Duration = Duration;
+	Held.ArrivalServerTime = ServerNow;
 }
 
 void AStealthPlayerController::ClientReceivePing_Implementation(FVector_NetQuantize Location, const FString& SenderName)

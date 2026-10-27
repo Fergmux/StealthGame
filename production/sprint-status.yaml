@@ -3551,3 +3551,25 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "ASN batch 2026-10-27; UEncounterViewSubsystem (LocalPlayer) OnRoleChangePresented once per FDeathState at DeathServerTime, ApplyTransientGrade stand-in (camera modifier, Reduce screen effects CVar) for Camera 019; victim message moved to the client dispatch"
+  - id: "asn-024"
+    name: "Result plates and the brace square at the local contact frame, never on receipt"
+    file: "production/epics/assassination-defence-reversal/story-024-owner-result-matcher-and-plate-timing.md"
+    priority: must-have
+    status: done
+    owner: "ui-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; FOwnResultMatcher (F2, both arrival orders, dup ring, 1.25 s cap) + F3 timeline + FOwnBraceIndicator; PresentOwnerResult stand-in (on-receipt Reversal!) replaced; reversed attacker plate inside its role-change sequence; canvas Result-slot stand-in for the HUD epic; PlaceStrikerFacing de-flakes striker placement"
+  - id: "asn-017"
+    name: "The target gets no warning and no observer gets a cue"
+    file: "production/epics/assassination-defence-reversal/story-017-no-warning-and-no-observer-cue.md"
+    priority: must-have
+    status: done
+    owner: "network-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; harness presentation log + replicated-property watcher; NoWarningToVictim (6 cases + negative control, 2v2, fixed 60 Hz) and NoObserverCue (4 players); fixes: server HUD lines held per frame, HUD role follows the presented role, brace crouch ends at the Counter's contact"
