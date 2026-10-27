@@ -35,3 +35,14 @@ Full-suite runs (`UnrealEditor-Cmd ... Automation RunTests ^StealthGame.`) conta
 | 1 | 2026-10-27 10:25-10:52 | 358/361 (failures unrelated: SchemaComplete / SchemaGenDeterministic read a schema table another agent was editing on disk; KillAtArmsLength placement 231.9 cm, fixed separately) | Success | 0.758 / 0.758 s, 53.08 / 53.08 cm, 0.00 cm |
 | 2 | 2026-10-27 ~13:09 (ASN 024/017 gate) | 387/387 | Success | 0.758 / 0.758 s, 53.08 / 53.08 cm, 0.00 cm |
 | 3 | 2026-10-27 ~13:52 (NKP 001-004 gate) | 387/387 | Success | 0.758 / 0.758 s, 53.08 / 53.08 cm, 0.00 cm (KillAtArmsLength with the open-disc placement: 230.0 cm) |
+| 4 | 2026-10-27 (ASN 022/026 gate, `story-022-.../cycle-tests-first-run.txt`) | 391/393 (the two new 022 PIE tests, fixed in that story) | Success | - |
+| 5 | 2026-10-27 (NKP 005-008 gate, `npc-kill-penalty-informants-005-008-2026-10-27/full-suite.txt`) | 408/409 (027's then-new PIE test F, fixed in 027) | Success | - |
+| 6 | 2026-10-27 (ASN 027 gate, `assassination-defence-reversal-027-2026-10-27/full-suite.txt`) | 407/409 (schema tests reading another agent's uncommitted schema table) | Success | - |
+| 7 | 2026-10-27 (NKP 009-012 gate, `npc-kill-penalty-informants-009-012-2026-10-27/full-suite.txt`) | 421/421 | Success | - |
+
+**Verdict:** ReleaseBaselineStopUnderLag passed 7 consecutive full-suite runs after the fix (and 12 of 12 isolated
+runs), each on a different random city; every logged measurement was identical (0.758 / 0.758 s, 53.08 / 53.08 cm,
+0.00 cm). Before the fix it failed 2 of 5 full-suite runs. The other failures in the table belong to tests being written
+by concurrent stories in the same tree, each fixed in its own story. Two consecutive fully green runs: #2 and #3
+(387/387), and #7 (421/421). A dedicated 5x run on a quiet tree was started (10:25) but stopped after run 1 because
+concurrent agents needed the build; runs #2-#7 replace it.
