@@ -37,6 +37,9 @@ struct STEALTHFOUNDATION_API FStealthServerTuning
 	UPROPERTY(EditAnywhere, Category = "Assassination")
 	FAssassinationTuning_Public Assassination_Public;
 
+	UPROPERTY(EditAnywhere, Category = "Assassination")
+	FAssassinationTuning_Server Assassination_Server;
+
 	UPROPERTY(EditAnywhere, Category = "Penalty")
 	FPenaltyTuning_Public Penalty_Public;
 

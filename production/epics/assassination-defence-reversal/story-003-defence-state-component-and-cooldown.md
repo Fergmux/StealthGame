@@ -1,12 +1,12 @@
 # Story 003: Server-only defence state, cooldown from activation, and its lifecycle across possession
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -68,15 +68,17 @@ Possession rules (ASN-R18): rejoin into the same pawn keeps the component; a tak
 
 ## Files
 
-- `Source/StealthGameplay/Public/Server/Features/Assassination/DefenceStateComponent.h` (`UDefenceStateComponent`, non-replicated)
-- `Source/StealthGameplay/Private/Features/Assassination/DefenceStateCore.h` and `.cpp` (`FDefenceStateCore`, plain C++)
-- `Source/StealthGameplay/Private/Features/Assassination/DefenceStateComponent.cpp`
-- `Source/StealthGameplay/Private/Features/Assassination/PreparePredicate.cpp` (`CanBegin` for `Prepare`)
-- `Source/StealthGameplay/Private/Tests/Assassination/CooldownFromActivationTest.cpp` (class `FAssassinationCooldownFromActivationTest`)
-- `Source/StealthGameplay/Private/Tests/Assassination/DefenceStateSurvivesPossessionTest.cpp` (class `FAssassinationDefenceStateSurvivesPossessionTest`)
-- `Source/StealthGameplay/Private/Tests/Assassination/DisconnectKeepsTimersTest.cpp` (class `FAssassinationDisconnectKeepsTimersTest`)
-
----
+- `Source/StealthGameplay/Features/Assassination/Public/Server/DefenceStateCore.h` (new; FDefenceStateCore, public so later stories include it)
+- `Source/StealthGameplay/Features/Assassination/Private/DefenceStateCore.cpp` (new)
+- `Source/StealthGameplay/Features/Assassination/Public/Server/DefenceStateComponent.h` (new; UDefenceStateComponent)
+- `Source/StealthGameplay/Features/Assassination/Private/DefenceStateComponent.cpp` (new)
+- `Source/StealthGameplay/Features/Assassination/Public/Server/AssassinationPreparePredicate.h` (new)
+- `Source/StealthGameplay/Features/Assassination/Private/PreparePredicate.cpp` (new)
+- `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp`, `Source/StealthGame/Public/Server/StealthCompositionRoot.h` (Prepare predicate registered)
+- `Source/StealthGameplay/Private/Tests/Assassination/AssassinationTestWorld.h` (new test fixture)
+- `Source/StealthGameplay/Private/Tests/Assassination/CooldownFromActivationTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Assassination/DefenceStateSurvivesPossessionTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Assassination/DisconnectKeepsTimersTest.cpp`
 
 ## QA Test Cases
 
@@ -113,7 +115,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: the three test files above under `Source/StealthGameplay/Private/Tests/Assassination/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -121,3 +123,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/assassination-defence-reversal/story-001-assassination-tuning-keys-and-invariants.md`; cross-epic `production/epics/input-interaction-framework/story-003-action-hub-and-predicate-registry.md`, `story-042-prepare-cooldown-stamped.md`, `story-050-hold-timer-key-order.md`; `production/epics/round-match-framework/story-008-resolver-contract.md`, `story-007-intake-ordering-rules.md`
 - Unlocks: `story-009-same-drain-ordering-and-braced-key-compare.md`, `story-010-reversal-counter-and-chained-strikes.md`, `story-011-npc-brace-parity-never-strike-planted.md`, `story-016-defence-owner-cooldown-component.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing, one clause partly deferred (AC1 tap at 100.0: 159.9 and one tick before 160.0 reply Cooldown, 160.0 and one tick after execute; held-to-cap and 0.5 s release both stamp 100.0; 20 presses in a live window all reply Cooldown with stamp, window keys and CapEnd due time unchanged; the predicate object on a spawned pawn with a fake clock. AC2 rejoin, ReleaseToCrowd and PawnRecovery each keep the stamp (Prepare at 140 replies Cooldown); unknown-stamp recovery stamps 130 (189.9 Cooldown, 190.0 executes); Reset clears. AC3 disconnect at +1.0 leaves the window to CapEnd: an Attack keyed before CapEnd reads braced, one after reads not braced; a disconnecting attacker's lockout ends at t_exec + 1.75 (1.74 locked, 1.75 free); replies to the released sink and the null sink are discarded. DEFERRED to story 015: "the null-sink spy receives exactly one FStrikeResult", which needs the result builder) — `StealthGame.Assassination.CooldownFromActivation`, `...DefenceStateSurvivesPossession`, `...DisconnectKeepsTimers`
+**Deviations**: ADVISORY — `DefenceStateCore.h` is public (`Features/Assassination/Public/Server/`) rather than Private, because the component exposes it and stories 008/009/016 include it; files live under `Features/Assassination/` (Crowd layout). ADVISORY — the component is created server-side on the first defence write (`UDefenceStateComponent::FindOrAdd`) instead of being a default subobject of `AStealthPawn` (Core may not include a Feature header, ADR-0007); a pawn without it reads as T_act none, identically for every pawn kind. ADVISORY (stand-in) — the IIF hold machinery (IIF 042-048) is not built: `FDefenceStateCore` keeps a minimal window record (Begin key, first End key) with `IsWindowOpenAt(k_A)` implementing F2's key clauses; story 009 adds Slot(V) = Bracing and the IIF later owns the debounce/CapEnd items. ADVISORY — `UAssassinationPreparePredicate` is registered for `EActionType::Prepare` from `UStealthCompositionRoot`; until the in-slot resolver stamps (stories 007-011) it always answers Allow, so play is unchanged. Tuning stand-in: schema defaults until the TDC store feeds features. `UEncounterService`'s strike-role table is not part of this story's ACs and is left to stories 007-009. Cross-epic IIF 003/042/050 and RMF 007/008 proceeded with risk accepted.
+**Test Evidence**: the three test files above under `Source/StealthGameplay/Private/Tests/Assassination/`; run in `production/qa/evidence/assassination-defence-reversal-001-004-2026-10-27/full-suite.txt`
+**Run result**: N/A — no production path stamps a Prepare yet, so the registered predicate answers Allow exactly as the absent predicate did; nothing a player sees changes
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

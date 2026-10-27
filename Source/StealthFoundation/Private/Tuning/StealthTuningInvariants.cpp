@@ -5,6 +5,7 @@
 
 #include "Server/StealthTuningInvariants.h"
 
+#include "Server/StealthAssassinationInvariants.h"
 #include "Server/StealthServerTuning.h"
 #include "Server/StealthTuningConstants.h"
 #include "Server/StealthTuningDerived.h"
@@ -272,6 +273,19 @@ namespace
 		{ "I-CNB-4", "Crowd", &CheckICNB4 },
 		{ "I-CNB-5", "Crowd", &CheckICNB5 },
 		{ "I-CNB-6", "Crowd", &CheckICNB6 },
+		// Assassination & Defence Reversal rows (story asn-001; checks in AssassinationInvariants.cpp).
+		{ "I-ASN-1", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckIAsn1> },
+		{ "I-ASN-2", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckIAsn2> },
+		{ "I-ASN-3", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckIAsn3> },
+		{ "I-ASN-4", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckIAsn4> },
+		{ "I-ASN-5", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckIAsn5> },
+		{ "I-ASN-5w", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckIAsn5w> },
+		{ "I-ASN-6", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckIAsn6> },
+		{ "I-ASN-7", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckIAsn7> },
+		{ "I-ASN-8", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckIAsn8> },
+		{ "W-ASN-9", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckWAsn9> },
+		{ "W-ASN-10", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckWAsn10> },
+		{ "W-ASN-11", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckWAsn11> },
 	};
 
 	/**

@@ -27,6 +27,7 @@
 #include "Server/StealthTuningData.h"
 #include "Server/StealthTuningSchema.h"
 #include "Server/Testing/StealthNegativeControl.h"
+#include "Server/Testing/StealthAssassinationTuningKnobs.h"
 #include "Server/Testing/StealthCrowdTuningKnobs.h"
 #include "Server/Testing/StealthSclTuningKnobs.h"
 #include "Tuning/StealthTuningSchemaGen.h"
@@ -265,6 +266,19 @@ bool FTuningSchemaCompleteTest::RunTest(const FString& Parameters)
 	for (const StealthCrowdTuningKnobs::FKnob& Knob : StealthCrowdTuningKnobs::Knobs)
 	{
 		if (FCStringAnsi::Strcmp(Knob.Key, "NpcCount") != 0)
+		{
+			Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
+		}
+	}
+	// The Assassination Tuning Knobs table (story asn-001); its three canonical keys are already TDC canonical pins.
+	for (const StealthAssassinationTuningKnobs::FKnob& Knob : StealthAssassinationTuningKnobs::Knobs)
+	{
+		bool bCanonical = false;
+		for (const ANSICHAR* Canonical : StealthAssassinationTuningKnobs::CanonicalKeys)
+		{
+			bCanonical |= FCStringAnsi::Strcmp(Knob.Key, Canonical) == 0;
+		}
+		if (!bCanonical)
 		{
 			Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
 		}

@@ -29,23 +29,68 @@ struct STEALTHFOUNDATION_API FRoundTuning_Public
 	int32 TeamSize = 5;
 };
 
-/** Assassination & Defence Reversal keys a client needs. */
+/**
+ * Assassination & Defence Reversal keys a client needs (GDD assassination-defence-reversal.md Tuning Knobs, audience All;
+ * story asn-001). Presentation timings and limits every client needs to play the clips or show its own owner feedback;
+ * one value for every pawn, no per-kind variant. The ServerOnly keys are FAssassinationTuning_Server. Cross-field
+ * invariants I-ASN-1 to I-ASN-8, I-ASN-5w, W-ASN-9 to W-ASN-11: Server/StealthAssassinationInvariants.h.
+ */
 USTRUCT()
 struct STEALTHFOUNDATION_API FAssassinationTuning_Public
 {
 	GENERATED_BODY()
 
-	/** Strike reach in cm (capped at 250 by I-ASN-1). */
+	/** F1 R: reach from the attacker's capsule axis to the victim's capsule surface, cm (hard max 250 by I-ASN-1). */
 	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "100", ClampMax = "250", SafeMin = "150", SafeMax = "250", Latch = "Use", Owner = "Assassination", Unit = "Cm"))
 	float AssassinationRangeCm = 200.0f;
 
-	/** Hold-to-prepare time of the defence in seconds. */
+	/** F1 Theta: widest bearing from the attacker's body facing a strike reaches (the 60 degree side variant plus the warp turn, I-ASN-8). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "60", ClampMax = "105", SafeMin = "80", SafeMax = "90", Latch = "Use", Owner = "Assassination", Unit = "Deg"))
+	float StrikeBearingLimitDeg = 90.0f;
+
+	/** Cap of the defence's protected window: a held Prepare protects for at most this long (F2, TDC I-1). */
 	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "3.0", ClampMax = "5.0", SafeMin = "3.0", SafeMax = "5.0", Latch = "Action", Owner = "Assassination", Unit = "Sec"))
 	float DefenceDurationSec = 4.0f;
 
-	/** Defence cooldown from activation, used or unused, in seconds. */
+	/** Defence cooldown measured from activation (Prepare Begin execution), used or unused (F3 C). */
 	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "30", ClampMax = "120", SafeMin = "45", SafeMax = "75", Latch = "Action", Owner = "Assassination", Unit = "Sec"))
 	float DefenceCooldownSec = 60.0f;
+
+	/** F1 T_v: execution-to-contact time of the standard strike (I-ASN-2, 3, 4, 6, 7). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "0.25", ClampMax = "0.80", SafeMin = "0.30", SafeMax = "0.50", Latch = "Action", Owner = "Assassination", Unit = "Sec"))
+	float StrikeContactSec = 0.40f;
+
+	/** F1 X_max: maximum warp translation of the lunge (warp-scale cap 1.6 x about 150 cm of authored root motion; I-ASN-1, I-ASN-7). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "150", ClampMax = "240", SafeMin = "200", SafeMax = "240", Latch = "Use", Owner = "Assassination", Unit = "Cm"))
+	float StrikeWarpLimitCm = 240.0f;
+
+	/** F1 g: authored capsule gap at contact. */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "5", ClampMax = "40", SafeMin = "10", SafeMax = "25", Latch = "Use", Owner = "Assassination", Unit = "Cm"))
+	float StrikeContactGapCm = 15.0f;
+
+	/** Presentation cap on the lunge's warp turn (I-ASN-8). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "10", ClampMax = "45", SafeMin = "20", SafeMax = "35", Latch = "Use", Owner = "Assassination", Unit = "Deg"))
+	float StrikeWarpYawLimitDeg = 30.0f;
+
+	/** F3 Lambda: attacker lockout after any executed Attack (I-ASN-2, I-ASN-6, W-ASN-10). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "1.2", ClampMax = "3.0", SafeMin = "1.5", SafeMax = "2.0", Latch = "Action", Owner = "Assassination", Unit = "Sec"))
+	float AttackAttemptLockoutSec = 1.75f;
+
+	/** Length of the defender's counter after a reversal; not protection (I-ASN-2). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "0.8", ClampMax = "2.0", SafeMin = "1.0", SafeMax = "1.5", Latch = "Action", Owner = "Assassination", Unit = "Sec"))
+	float CounterDurationSec = 1.2f;
+
+	/** Fall length of every victim kind; earliest informant takeover is DeathServerTime + this (I-ASN-5, I-ASN-5w, W-ASN-11). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "0.8", ClampMax = "2.0", SafeMin = "1.1", SafeMax = "1.6", Latch = "Action", Owner = "Assassination", Unit = "Sec"))
+	float DeathFallSec = 1.2f;
+
+	/** How long a body lingers after its fall, one value for every victim kind (I-ASN-5w, W-ASN-11). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "2", ClampMax = "12", SafeMin = "4", SafeMax = "8", Latch = "Action", Owner = "Assassination", Unit = "Sec"))
+	float BodyLingerSec = 6.0f;
+
+	/** Client wait for a body to leave view before a one-frame cut (VA-ASN-2; I-ASN-5w, W-ASN-11). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "0", ClampMax = "2.5", SafeMin = "1.5", SafeMax = "2.5", Latch = "Action", Owner = "Assassination", Unit = "Sec"))
+	float BodyRemovalGraceSec = 2.0f;
 };
 
 /** NPC-Kill Penalty & Informants keys a client needs. */

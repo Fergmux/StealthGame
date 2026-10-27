@@ -23,6 +23,28 @@ struct STEALTHFOUNDATION_API FRoundTuning_Server
 	float TargetRoundMinutes = 12.0f;
 };
 
+/**
+ * Assassination & Defence Reversal ServerOnly keys (GDD Tuning Knobs, audience ServerOnly; story asn-001): never
+ * replicated, read only by the server resolver. The All keys are FAssassinationTuning_Public.
+ */
+USTRUCT()
+struct STEALTHFOUNDATION_API FAssassinationTuning_Server
+{
+	GENERATED_BODY()
+
+	/** F1 Z: capsule-centre height difference limit of a strike, on server positions. */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "30", ClampMax = "120", SafeMin = "50", SafeMax = "100", Latch = "Use", Owner = "Assassination", Unit = "Cm"))
+	float StrikeVerticalReachCm = 75.0f;
+
+	/** Open-ground spot strike tolerance around the WorldPoint (equal to BushSpotToleranceCm and PawnRefAgreementCm; W-ASN-9). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "20", ClampMax = "200", SafeMin = "40", SafeMax = "120", Latch = "Round", Owner = "Assassination", Unit = "Cm"))
+	float OpenSpotToleranceCm = 75.0f;
+
+	/** F1 lambda: death-write lead before contact; t_d = T_v - lambda is the victim's free-motion time (I-ASN-4). */
+	UPROPERTY(EditAnywhere, Category = "Assassination", meta = (ClampMin = "0.05", ClampMax = "0.30", SafeMin = "0.10", SafeMax = "0.15", Latch = "Round", Owner = "Assassination", Unit = "Sec"))
+	float StrikeNetLeadSec = 0.15f;
+};
+
 /** Crowd & NPC Behaviour ServerOnly keys (the owner has no public key yet, so no _Public struct). */
 USTRUCT()
 struct STEALTHFOUNDATION_API FCrowdTuning_Server

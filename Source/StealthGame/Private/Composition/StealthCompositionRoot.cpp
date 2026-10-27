@@ -1,6 +1,7 @@
 #include "Server/StealthCompositionRoot.h"
 
 #include "Server/ActionHub.h"
+#include "Server/AssassinationPreparePredicate.h"
 #include "StealthPrototypeCommandQueue.h"
 
 #include "Engine/GameInstance.h"
@@ -406,6 +407,10 @@ void UStealthCompositionRoot::Initialize(FSubsystemCollectionBase& Collection)
 
 void UStealthCompositionRoot::Deinitialize()
 {
+	if (PreparePredicate != nullptr)
+	{
+		PreparePredicate->Initialize(nullptr, FAssassinationTuning_Public()); // the clock below is released
+	}
 	CommandQueue.Reset();
 	CommandClock.Reset();
 	if (URosterStore* Roster = GetRosterStore())
@@ -511,6 +516,16 @@ void UStealthCompositionRoot::OnServerWorldStarting(AStealthGameMode* InGameMode
 		Deps.Queue = CommandQueue.Get();
 		Deps.FaultSink = &CommandFaults;
 		Hub->SetCommandWiring(Deps);
+
+		// ADR-0011 section 6 / story asn-003: Assassination's Prepare predicate (Reject(Cooldown) while F3's cooldown runs),
+		// registered weakly; this root keeps it alive. Tuning stand-in: the schema defaults (as the Crowd director) until
+		// the TDC tuning store feeds features the frozen set.
+		if (PreparePredicate == nullptr)
+		{
+			PreparePredicate = NewObject<UAssassinationPreparePredicate>(this);
+		}
+		PreparePredicate->Initialize(CommandClock.Get(), FAssassinationTuning_Public());
+		Hub->RegisterPredicate(EActionType::Prepare, TWeakInterfacePtr<ICommandPredicate>(PreparePredicate));
 	}
 }
 

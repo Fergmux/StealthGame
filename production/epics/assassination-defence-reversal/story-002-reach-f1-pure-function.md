@@ -1,12 +1,12 @@
 # Story 002: Reach and warp (F1) as a pure function, standard and bush strike
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -66,12 +66,11 @@ For a spot-rule strike the same test is applied to each candidate; `WarpPoint` i
 
 ## Files
 
-- `Source/StealthGameplay/Public/Server/Features/Assassination/StrikeReachCore.h` (`FStrikeReachCore`, plain C++; guard header first)
-- `Source/StealthGameplay/Private/Features/Assassination/StrikeReachCore.cpp`
-- `Source/StealthGameplay/Private/Tests/Assassination/ReachF1Test.cpp` (class `FAssassinationReachF1Test`, name `StealthGame.Assassination.ReachF1`)
-- `Source/StealthGameplay/Private/Tests/Assassination/ReachBushStrikeTest.cpp` (class `FAssassinationReachBushStrikeTest`, name `StealthGame.Assassination.ReachBushStrike`)
-
----
+- `Source/StealthGameplay/StealthGameplay.Build.cs` (Features/Assassination include paths)
+- `Source/StealthGameplay/Features/Assassination/Public/Server/StrikeReachCore.h` (new)
+- `Source/StealthGameplay/Features/Assassination/Private/StrikeReachCore.cpp` (new)
+- `Source/StealthGameplay/Private/Tests/Assassination/ReachF1Test.cpp` (FAssassinationReachF1Test)
+- `Source/StealthGameplay/Private/Tests/Assassination/ReachBushStrikeTest.cpp` (FAssassinationReachBushStrikeTest)
 
 ## QA Test Cases
 
@@ -108,7 +107,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `ReachF1Test.cpp` and `ReachBushStrikeTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -116,3 +115,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/assassination-defence-reversal/story-001-assassination-tuning-keys-and-invariants.md`; cross-epic `production/epics/shared-character-locomotion/story-002-body-constants-published.md` (capsule radius, gait speeds and braking)
 - Unlocks: `story-005-victim-resolution-order.md`, `story-006-bush-spot-rule-and-victim-pick.md`, `story-007-attack-outcomes-resolved-in-slot.md`, `story-012-slot-write-outcome-blind-and-warp-point.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC1 range 235.4 in / 235.6 out with the epsilon on the range clause only, dz +-75 in / +-76 out, bearing +-89 in / +-91 out, toward-walker X_eff 0; AC2 walk-away D 53.9 X 203.9 in, run-away D 173.25 X 323.25 out, run-across X 207.0 bearing 36.4 in, runner 151.5 in / 152.0 out; AC3 bush T_v 0.75 from tuning, walker D 102.9 in at 222.0 / out at 222.3, runner D 330.75 out for every integer d0 in [70, 235]) — `StealthGame.Assassination.ReachF1`, `StealthGame.Assassination.ReachBushStrike`
+**Deviations**: ADVISORY — header placed at `Source/StealthGameplay/Features/Assassination/Public/Server/StrikeReachCore.h` (include "Server/StrikeReachCore.h") and the .cpp under `Features/Assassination/Private/`, mirroring Features/Crowd (ADR-0007, batch brief), instead of `Public/Server/Features/Assassination/`. The capsule radius and BushStrikeEmergeSec are injected parameters (SCL constant / Concealment key). Cross-epic SCL-002 proceeded with risk accepted.
+**Test Evidence**: `ReachF1Test.cpp`, `ReachBushStrikeTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/`; run in `production/qa/evidence/assassination-defence-reversal-001-004-2026-10-27/full-suite.txt`
+**Run result**: N/A — a pure function with no caller in play yet (the strike resolver, stories 005-007, calls it); the prototype strike path still decides strikes
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

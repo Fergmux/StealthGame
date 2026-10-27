@@ -106,6 +106,15 @@ namespace StealthTuningPendingOwnerKeys
 	inline constexpr double EmergenceExitCancelMaxPct = 25.0;
 	inline constexpr double AmbientEmergencePerSocketMinPerMin = 0.5;
 	inline constexpr double EmergenceSocketCooldownSec = 20.0;
+	/**
+	 * The keys the Assassination invariants read from owners that have not registered them yet (story asn-001; the TD-TDC-I3
+	 * pattern): Concealment's BushStrikeEmergeSec 0.35 (I-ASN-3, W-ASN-10), Penalty's InformantRespawnDelaySec 15 (W-ASN-11)
+	 * and the IIF's PawnRefAgreementCm 75 (W-ASN-9), each the owner GDD's default. When the owner registers the key, the
+	 * invariant reads it from the value set (FAssassinationInvariantInputs::FromValues) and the constant is deleted.
+	 */
+	inline constexpr double BushStrikeEmergeSec = 0.35;
+	inline constexpr double InformantRespawnDelaySec = 15.0;
+	inline constexpr double PawnRefAgreementCm = 75.0;
 }
 
 /**

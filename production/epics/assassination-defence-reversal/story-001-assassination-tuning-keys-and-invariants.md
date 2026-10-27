@@ -1,12 +1,12 @@
 # Story 001: Assassination tuning keys and cross-field invariants I-ASN-1 to I-ASN-8
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -71,14 +71,18 @@ Keys owned elsewhere (`BushStrikeEmergeSec`, `BushSpotToleranceCm`, `NpcKillStri
 
 ## Files
 
-*The code and test files this story creates or changes. `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
-- `Source/StealthFoundation/Public/View/StealthTuningAssassination.h` (the `_Public` sub-struct)
-- `Source/StealthFoundation/Public/Server/StealthTuningAssassinationServer.h` (the `_Server` sub-struct; guard header first)
-- `Source/StealthFoundation/Private/Tuning/AssassinationInvariants.cpp` (I-ASN-1 to I-ASN-8, W-ASN-10, W-ASN-11)
-- `Source/StealthGameplay/Private/Tests/Assassination/TuningInvariantsTest.cpp` (class `FAssassinationTuningInvariantsTest`, name `StealthGame.Assassination.TuningInvariants`)
-
----
+- `Source/StealthFoundation/Public/View/StealthTuningPublicSubstructs.h` (FAssassinationTuning_Public: 13 All keys)
+- `Source/StealthFoundation/Public/Server/StealthTuningSubstructs.h` (new FAssassinationTuning_Server: 3 ServerOnly keys)
+- `Source/StealthFoundation/Public/Server/StealthServerTuning.h`, `Source/StealthFoundation/Public/Server/StealthTuningData.h` (Assassination_Server member)
+- `Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl` (regenerated, 13 rows)
+- `Source/StealthFoundation/Public/Server/StealthTuningVersion.h` (TuningSchemaVersion 4)
+- `Source/StealthFoundation/Public/Server/StealthTuningInvariants.h` (pending owner keys)
+- `Source/StealthFoundation/Public/Server/StealthAssassinationInvariants.h` (new)
+- `Source/StealthFoundation/Private/Tuning/AssassinationInvariants.cpp` (new; I-ASN-1..8, I-ASN-5w, W-ASN-9..11)
+- `Source/StealthFoundation/Private/Tuning/StealthTuningInvariants.cpp` (12 rows registered)
+- `Source/StealthFoundation/Public/Server/Testing/StealthAssassinationTuningKnobs.h` (new fixture AssassinationKeyTable)
+- `Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp` (Assassination default pins)
+- `Source/StealthGameplay/Private/Tests/Assassination/TuningInvariantsTest.cpp` (FAssassinationTuningInvariantsTest)
 
 ## QA Test Cases
 
@@ -115,7 +119,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Assassination/TuningInvariantsTest.cpp` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -123,3 +127,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: cross-epic `production/epics/tuning-data-config/story-040-canonical-keys-and-faces.md`, `story-041-schema-generator-commandlet.md`, `story-048-invariants-i1-i5.md`, `story-097-invariants-reject-whole-preset.md`; `production/epics/shared-character-locomotion/story-002-body-constants-published.md` (capsule radius for I-ASN-1)
 - Unlocks: every other story in this epic (all read these keys); notably `story-002-reach-f1-pure-function.md`, `story-003-defence-state-component-and-cooldown.md`, `story-008-attacker-lockout-and-attack-lifecycle.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC1 schema rows equal the fixture field for field, 13 All / 3 ServerOnly, range hard 100-250; AC2 six rejections each naming exactly one invariant, only (c) warns I-ASN-6; AC3 (e), (g), (h), (j) accepted with exactly I-ASN-5w, I-ASN-5w, I-ASN-7, I-ASN-6, default preset clean also through the production TDC table) — `StealthGame.Assassination.TuningInvariants`
+**Deviations**: ADVISORY — keys added to the existing `FAssassinationTuning_Public` (View/StealthTuningPublicSubstructs.h) and a new `FAssassinationTuning_Server` (Server/StealthTuningSubstructs.h) instead of the two per-owner headers the story listed (the generator, CanonicalKeys and SchemaComplete reflect those files; SCL-003/cnb-003 precedent). ADVISORY — externally owned keys not in the schema (BushStrikeEmergeSec 0.35, InformantRespawnDelaySec 15, PawnRefAgreementCm 75) are read as `StealthTuningPendingOwnerKeys` at their owner GDD defaults (TD-TDC-I3 pattern) rather than reporting `NotEvaluated`; tests inject them through `FAssassinationInvariantInputs`. ADVISORY — invariant comparisons use a 1e-4 tolerance (widened float sums). ADVISORY (GDD issue, for game-designer) — the safe-range lint finds `StrikeWarpYawLimitDeg` safe minimum 20 rejected by I-ASN-8 at `StrikeBearingLimitDeg` 90; pinned in the test as the one known conflict (the lint fails if it disappears or another appears); warnings inside safe ranges are the documented bands I-ASN-7, I-ASN-5w (BodyLingerSec 8) and W-ASN-9 (any OpenSpotToleranceCm other than 75). Cross-epic dependencies (TDC 040/041/048/097 machinery exists in code; SCL-002) proceeded with risk accepted. TuningSchemaVersion bumped 3 -> 4. TR-asn-014 (tuning registration) still to be requested at the next /architecture-review.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Assassination/TuningInvariantsTest.cpp`; run in `production/qa/evidence/assassination-defence-reversal-001-004-2026-10-27/full-suite.txt` (317/317)
+**Run result**: N/A — tuning registration only: no production reader of the new keys exists yet (the resolver is stories 005-013), so nothing on screen can differ
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

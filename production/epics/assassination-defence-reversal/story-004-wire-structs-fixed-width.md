@@ -1,12 +1,12 @@
 # Story 004: Wire structs `FActionState` (208 bits) and `FDeathState` (65 bits), fixed width for every value
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -66,12 +66,10 @@ The `EStrikeResult { RivalEliminated, WrongTarget, NoContact, Reversed }`, `EDef
 
 ## Files
 
-- `Source/StealthFoundation/Public/View/StealthEncounterWire.h` (`EActionPose`, `FFixedWarpOffset`, `FActionState`, `FDeathState`, result enums and structs, `TStructOpsTypeTraits`)
-- `Source/StealthFoundation/Private/Net/StealthEncounterWire.cpp` (`NetSerialize`, `Identical`)
-- `Source/StealthGameplay/Private/Tests/Assassination/WireWidthTest.cpp` (class `FAssassinationWireWidthTest`, name `StealthGame.Assassination.WireWidth`)
-- `Source/StealthGameplay/Private/Tests/Assassination/WireShapeTest.cpp` (class `FAssassinationWireShapeTest`)
-
----
+- `Source/StealthFoundation/Public/View/StealthEncounterWire.h` (new)
+- `Source/StealthFoundation/Private/Net/StealthEncounterWire.cpp` (new)
+- `Source/StealthGameplay/Private/Tests/Assassination/WireWidthTest.cpp` (FAssassinationWireWidthTest)
+- `Source/StealthGameplay/Private/Tests/Assassination/WireShapeTest.cpp` (FAssassinationWireShapeTest)
 
 ## QA Test Cases
 
@@ -108,7 +106,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Logic: `WireWidthTest.cpp` and `WireShapeTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -116,3 +114,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: cross-epic `production/epics/tuning-data-config/story-001-foundation-module-skeleton.md`, `story-008-fault-sink-and-test-seams-define.md`, `story-010-negative-control-helper.md`; `production/epics/input-interaction-framework/story-001-command-reply-types.md` (`FClientCommandSeq`, `EActionPose` list ownership)
 - Unlocks: `story-012-slot-write-outcome-blind-and-warp-point.md`, `story-013-death-write-staging-and-after-latch.md`, `story-015-owner-results-reply-entries-and-tally.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: 3/3 passing (AC1 sweep of defaults, zero, int16 extremes, Seq 1/65535, time patterns 0, -1, -0, DBL_MIN, DBL_MAX, denormal, +-inf, NaNs, every pose and 1000 values from constant seed WireSweepSeed: every FActionState 208 bits, every FDeathState 65, NetSerialize true, bit-for-bit round trip on FNetBitWriter/FNetBitReader; AC2 no object/actor/pawn/FName/delegate property in FActionState, FFixedWarpOffset, FDeathState, Identical false for each single-field difference incl. Seq and bDiedConcealed, true for equal values; AC3 the WITH_STEALTH_TEST_SEAMS magnitude-packing serialiser is caught ("control detected"), production restored, sweep passes) — `StealthGame.Assassination.WireWidth`, `StealthGame.Assassination.WireShape`
+**Deviations**: ADVISORY — `FActionState.StartServerTime` defaults to -1 (ADR-0018 Key Interfaces) and `WithNetSharedSerialization` is set (no object references). `EActionPose` is the ADR's list; SCL's view enum `EStealthActionPose` (StealthLocomotionModel.h) has a different order and must be mapped by its owner (SCL) when story 012 writes the replicated property. `FFixedWarpOffset::FromOffsetCm` (0.1 cm quantise, int16 saturation) is provided for story 012. Cross-epic TDC 001/008/010 and IIF-001 exist in code; proceeded.
+**Test Evidence**: `WireWidthTest.cpp`, `WireShapeTest.cpp` under `Source/StealthGameplay/Private/Tests/Assassination/`; run in `production/qa/evidence/assassination-defence-reversal-001-004-2026-10-27/full-suite.txt`
+**Run result**: N/A — types and serialisers only; no replicated property uses them until story 012, so nothing reaches the wire or the screen
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

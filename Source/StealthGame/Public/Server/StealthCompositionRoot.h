@@ -176,6 +176,10 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<URoundRosterStoreGateway> RosterGateway;
 
+	/** Assassination's Prepare predicate (story asn-003), registered weakly on the server world's action hub. */
+	UPROPERTY(Transient)
+	TObjectPtr<class UAssassinationPreparePredicate> PreparePredicate;
+
 	TWeakObjectPtr<AStealthGameMode> GameMode;
 	TMap<TWeakObjectPtr<APlayerController>, FParticipantId> ParticipantByController;
 

@@ -3331,3 +3331,47 @@ stories:
     completed: ""
     sprint: 2
     note: "Crowd batch 2026-10-27 (cnb-019..039); evidence production/qa/evidence/crowd-npc-behaviour-019-031-2026-10-27/"
+  - id: "asn-001"
+    name: "Assassination tuning keys and cross-field invariants I-ASN-1 to I-ASN-8"
+    file: "production/epics/assassination-defence-reversal/story-001-assassination-tuning-keys-and-invariants.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-001..004); evidence production/qa/evidence/assassination-defence-reversal-001-004-2026-10-27/; 16 keys, TuningSchemaVersion 4; GDD conflict StrikeWarpYawLimitDeg safe min 20 vs I-ASN-8 flagged"
+  - id: "asn-002"
+    name: "Reach and warp (F1) as a pure function, standard and bush strike"
+    file: "production/epics/assassination-defence-reversal/story-002-reach-f1-pure-function.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-001..004); FStrikeReachCore in Features/Assassination"
+  - id: "asn-003"
+    name: "Server-only defence state, cooldown from activation, and its lifecycle across possession"
+    file: "production/epics/assassination-defence-reversal/story-003-defence-state-component-and-cooldown.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-001..004); FDefenceStateCore + UDefenceStateComponent + Prepare predicate registered; null-sink FStrikeResult clause deferred to asn-015"
+  - id: "asn-004"
+    name: "Wire structs FActionState (208 bits) and FDeathState (65 bits), fixed width for every value"
+    file: "production/epics/assassination-defence-reversal/story-004-wire-structs-fixed-width.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27 (asn-001..004); View/StealthEncounterWire.h, negative control watched failing"

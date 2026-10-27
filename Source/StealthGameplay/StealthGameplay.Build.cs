@@ -29,6 +29,11 @@ public class StealthGameplay : ModuleRules
 		PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Crowd", "Public"));
 		PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Crowd", "Private"));
 
+		// ADR-0007 / ADR-0018 (Assassination epic, stories asn-002 and asn-003): the Assassination feature folder
+		// Features/Assassination/, laid out like Crowd ("Server/StrikeReachCore.h", "Server/DefenceStateComponent.h").
+		PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Assassination", "Public"));
+		PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Assassination", "Private"));
+
 		// ADR-0016 sections 1, 3, 4 (stories cnb-004, cnb-007, cnb-012): the crowd's StateTree (the StateTree and
 		// GameplayStateTree plugins are enabled in the .uproject), its native gameplay-tag events and the async path
 		// queries. The StateTree types sit in public Crowd headers (the schema, the component, the task), so the two
