@@ -1,0 +1,16 @@
+[2026.10.27-08.55.54:675][542]LogStealth: [Encounter] BP_CrowdCharacter_C_0 reversed and eliminated BP_CrowdCharacter_C_42 in the slot (victim kind 0).
+[2026.10.27-08.55.55:319][544]LogStealthGameplay: [EncounterView] transient grade cause 2 at 146.503 (due 146.237, reduced 0)
+[2026.10.27-08.55.55:332][544]LogStealthGameplay: [EncounterView] role change ReversedAgainst presented at 146.503 (DeathServerTime 146.237)
+[2026.10.27-08.55.55:332][544]LogStealthGameplay: [EncounterView] transient grade cause 1 at 146.503 (due 146.237, reduced 0)
+[2026.10.27-08.56.45:070][694]LogStealth: [Encounter] BP_CrowdCharacter_C_0 killed BP_CrowdCharacter_C_53 in the slot (victim kind 2).
+[2026.10.27-08.56.45:724][696]LogStealthGameplay: [EncounterView] transient grade cause 0 at 197.230 (due 196.630, reduced 0)
+[2026.10.27-08.56.45:724][696]LogStealthGameplay: [EncounterView] role change InformantKilled presented at 196.897 (DeathServerTime 196.630)
+[2026.10.27-08.56.45:724][696]LogStealthGameplay: [EncounterView] transient grade cause 1 at 196.897 (due 196.630, reduced 0)
+[2026.10.27-08.57.35:432][845]LogStealth: [Encounter] BP_CrowdCharacter_C_0 killed BP_CrowdCharacter_C_54 in the slot (victim kind 2).
+[2026.10.27-08.57.36:056][847]LogStealthGameplay: [EncounterView] transient grade cause 0 at 247.563 (due 246.963, reduced 0)
+[2026.10.27-08.57.36:056][847]LogStealthGameplay: [EncounterView] role change InformantKilled presented at 247.230 (DeathServerTime 246.963)
+[2026.10.27-08.57.36:056][847]LogStealthGameplay: [EncounterView] transient grade cause 1 at 247.230 (due 246.963, reduced 0)
+[2026.10.27-08.58.09:069][946]LogStealth: [Encounter] BP_CrowdCharacter_C_26 killed BP_CrowdCharacter_C_0 in the slot (victim kind 0).
+[2026.10.27-08.58.09:708][948]LogStealthGameplay: [EncounterView] transient grade cause 0 at 280.897 (due 280.630, reduced 0)
+[2026.10.27-08.58.09:709][948]LogStealthGameplay: [EncounterView] role change Assassinated presented at 280.897 (DeathServerTime 280.630)
+[2026.10.27-08.58.09:709][948]LogStealthGameplay: [EncounterView] transient grade cause 1 at 280.897 (due 280.630, reduced 0)

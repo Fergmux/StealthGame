@@ -165,6 +165,13 @@ public:
 	/** Fired on every machine after the FDeathState write is presented. */
 	FOnEncounterStateChanged OnDeathStateChanged;
 
+	/**
+	 * Fired on every machine, for every pawn, after OnActionStateChanged / OnDeathStateChanged (story asn-018): the one
+	 * subscription the Assassination presentation (UEncounterPresentationSubsystem, Features/Assassination) needs, so this
+	 * Core class never includes a Feature header. Game thread only; subscribers filter by world.
+	 */
+	static FOnEncounterStateChanged& OnAnyEncounterStateChanged();
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	/** Turns off the WarpTargets replication of any non-Shared motion warping component (ADR-0018 section 7.2, story asn-014). */
 	virtual void PostInitializeComponents() override;

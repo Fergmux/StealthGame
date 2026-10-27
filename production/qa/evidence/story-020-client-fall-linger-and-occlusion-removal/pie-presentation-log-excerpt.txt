@@ -1,0 +1,161 @@
+[2026.10.27-08.53.53:685][179]LogStealth: [Bot] #0 strikes the spot 200 cm at bearing 29.
+[2026.10.27-08.53.54:020][180]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_26 Strike_F now 25.170 value 0.000 due 25.570 late 0 (net mode 2)
+[2026.10.27-08.53.54:020][180]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_26 Strike_F now 25.170 value 0.900 due 25.570 late 0 (net mode 2)
+[2026.10.27-08.53.54:321][181]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_52 Strike_F now 25.494 value 0.730 due 25.570 late 1 (net mode 3)
+[2026.10.27-08.53.54:321][181]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_52 Strike_F now 25.494 value 0.900 due 25.570 late 0 (net mode 3)
+[2026.10.27-08.53.54:333][181]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_25 Strike_F now 25.494 value 0.730 due 25.570 late 1 (net mode 3)
+[2026.10.27-08.53.54:333][181]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_25 Strike_F now 25.494 value 0.900 due 25.570 late 0 (net mode 3)
+[2026.10.27-08.54.24:699][272]LogStealth: [Bot] #0 strikes the spot 200 cm at bearing 30.
+[2026.10.27-08.54.25:007][273]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_26 Strike_F now 56.170 value 0.000 due 56.570 late 0 (net mode 2)
+[2026.10.27-08.54.25:007][273]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_26 Strike_F now 56.170 value 0.900 due 56.570 late 0 (net mode 2)
+[2026.10.27-08.54.25:319][274]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_52 Strike_F now 56.499 value 0.741 due 56.570 late 1 (net mode 3)
+[2026.10.27-08.54.25:319][274]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_52 Strike_F now 56.499 value 0.900 due 56.570 late 0 (net mode 3)
+[2026.10.27-08.54.25:336][274]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_25 Strike_F now 56.499 value 0.741 due 56.570 late 1 (net mode 3)
+[2026.10.27-08.54.25:336][274]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_25 Strike_F now 56.499 value 0.900 due 56.570 late 0 (net mode 3)
+[2026.10.27-08.54.42:353][325]LogStealth: [Bot] #0 strikes the spot 200 cm at bearing 75.
+[2026.10.27-08.54.42:680][326]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_26 Strike_R60 now 73.836 value 0.000 due 74.236 late 0 (net mode 2)
+[2026.10.27-08.54.42:680][326]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_26 Strike_R60 now 73.836 value 0.900 due 74.236 late 0 (net mode 2)
+[2026.10.27-08.54.42:985][327]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_52 Strike_R60 now 74.166 value 0.743 due 74.236 late 1 (net mode 3)
+[2026.10.27-08.54.42:985][327]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_52 Strike_R60 now 74.166 value 0.900 due 74.236 late 0 (net mode 3)
+[2026.10.27-08.54.42:997][327]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_25 Strike_R60 now 74.166 value 0.743 due 74.236 late 1 (net mode 3)
+[2026.10.27-08.54.42:997][327]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_25 Strike_R60 now 74.166 value 0.900 due 74.236 late 0 (net mode 3)
+[2026.10.27-08.54.57:030][369]LogStealth: [Bot] #0 strikes the spot 200 cm at bearing 31.
+[2026.10.27-08.54.57:348][370]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_26 Strike_R60 now 88.503 value 0.000 due 88.903 late 0 (net mode 2)
+[2026.10.27-08.54.57:348][370]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_26 Strike_R60 now 88.503 value 0.900 due 88.903 late 0 (net mode 2)
+[2026.10.27-08.54.57:652][371]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_52 Strike_R60 now 88.834 value 0.744 due 88.903 late 1 (net mode 3)
+[2026.10.27-08.54.57:652][371]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_52 Strike_R60 now 88.834 value 0.900 due 88.903 late 0 (net mode 3)
+[2026.10.27-08.54.57:666][371]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_25 Strike_R60 now 88.834 value 0.744 due 88.903 late 1 (net mode 3)
+[2026.10.27-08.54.57:666][371]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_25 Strike_R60 now 88.834 value 0.900 due 88.903 late 0 (net mode 3)
+[2026.10.27-08.55.10:029][408]LogStealth: [Bot] #0 strikes the spot 200 cm at bearing -29.
+[2026.10.27-08.55.10:345][409]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_26 Strike_F now 101.503 value 0.000 due 101.903 late 0 (net mode 2)
+[2026.10.27-08.55.10:345][409]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_26 Strike_F now 101.503 value 0.900 due 101.903 late 0 (net mode 2)
+[2026.10.27-08.55.10:653][410]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_52 Strike_F now 101.834 value 0.745 due 101.903 late 1 (net mode 3)
+[2026.10.27-08.55.10:653][410]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_52 Strike_F now 101.834 value 0.900 due 101.903 late 0 (net mode 3)
+[2026.10.27-08.55.10:665][410]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_25 Strike_F now 101.834 value 0.745 due 101.903 late 1 (net mode 3)
+[2026.10.27-08.55.10:665][410]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_25 Strike_F now 101.834 value 0.900 due 101.903 late 0 (net mode 3)
+[2026.10.27-08.55.23:357][448]LogStealth: [Bot] #0 strikes the spot 200 cm at bearing -31.
+[2026.10.27-08.55.23:673][449]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_26 Strike_L60 now 114.837 value 0.000 due 115.237 late 0 (net mode 2)
+[2026.10.27-08.55.23:673][449]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_26 Strike_L60 now 114.837 value 0.900 due 115.237 late 0 (net mode 2)
+[2026.10.27-08.55.23:986][450]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_52 Strike_L60 now 115.169 value 0.748 due 115.237 late 1 (net mode 3)
+[2026.10.27-08.55.23:986][450]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_52 Strike_L60 now 115.169 value 0.900 due 115.237 late 0 (net mode 3)
+[2026.10.27-08.55.23:999][450]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_25 Strike_L60 now 115.169 value 0.748 due 115.237 late 1 (net mode 3)
+[2026.10.27-08.55.23:999][450]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_25 Strike_L60 now 115.169 value 0.900 due 115.237 late 0 (net mode 3)
+[2026.10.27-08.55.36:692][488]LogStealth: [Bot] #0 strikes the spot 200 cm at bearing -75.
+[2026.10.27-08.55.37:009][489]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_26 Strike_L60 now 128.170 value 0.000 due 128.570 late 0 (net mode 2)
+[2026.10.27-08.55.37:009][489]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_26 Strike_L60 now 128.170 value 0.900 due 128.570 late 0 (net mode 2)
+[2026.10.27-08.55.37:319][490]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_52 Strike_L60 now 128.503 value 0.750 due 128.570 late 1 (net mode 3)
+[2026.10.27-08.55.37:319][490]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_52 Strike_L60 now 128.503 value 0.900 due 128.570 late 0 (net mode 3)
+[2026.10.27-08.55.37:334][490]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_25 Strike_L60 now 128.503 value 0.750 due 128.570 late 1 (net mode 3)
+[2026.10.27-08.55.37:335][490]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_25 Strike_L60 now 128.503 value 0.900 due 128.570 late 0 (net mode 3)
+[2026.10.27-08.55.54:302][541]LogStealth: [Bot] #1 defend: PrepareBegin submitted
+[2026.10.27-08.55.54:636][542]LogStealth: [Bot] #2 strikes BP_CrowdCharacter_C_0 (enemy, 120 cm, bearing 0, prepared=1).
+[2026.10.27-08.55.54:675][542]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_42 Strike_F now 145.837 value 0.000 due 146.237 late 0 (net mode 2)
+[2026.10.27-08.55.54:675][542]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_42 Strike_F now 145.837 value 0.900 due 146.237 late 0 (net mode 2)
+[2026.10.27-08.55.54:675][542]LogStealth: [Encounter] BP_CrowdCharacter_C_0 reversed and eliminated BP_CrowdCharacter_C_42 in the slot (victim kind 0).
+[2026.10.27-08.55.54:986][543]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_50 Strike_F now 146.170 value 0.750 due 146.237 late 1 (net mode 3)
+[2026.10.27-08.55.54:986][543]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_50 Strike_F now 146.170 value 0.900 due 146.237 late 0 (net mode 3)
+[2026.10.27-08.55.54:998][543]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Strike_F now 146.170 value 0.750 due 146.237 late 1 (net mode 3)
+[2026.10.27-08.55.54:998][543]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_0 Strike_F now 146.170 value 0.900 due 146.237 late 0 (net mode 3)
+[2026.10.27-08.55.55:012][543]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_42 at 146.170 (DeathServerTime 146.237, concealed 0).
+[2026.10.27-08.55.55:318][544]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_42 Death_Fall now 146.503 value 0.481 due 146.237 late 0 (net mode 2)
+[2026.10.27-08.55.55:318][544]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Counter now 146.503 value 0.770 due 146.237 late 0 (net mode 2)
+[2026.10.27-08.55.55:319][544]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Counter now 146.503 value 0.770 due 146.237 late 1 (net mode 3)
+[2026.10.27-08.55.55:319][544]LogStealthGameplay: [EncounterView] transient grade cause 2 at 146.503 (due 146.237, reduced 0)
+[2026.10.27-08.55.55:319][544]LogStealthGameplay: Verbose: [EncounterPresentation] Grade BP_CrowdCharacter_C_0 Counter now 146.503 value 2.000 due 146.237 late 0 (net mode 3)
+[2026.10.27-08.55.55:319][544]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_50 Death_Fall now 146.503 value 0.481 due 146.237 late 1 (net mode 3)
+[2026.10.27-08.55.55:332][544]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Death_Fall now 146.503 value 0.481 due 146.237 late 1 (net mode 3)
+[2026.10.27-08.55.55:332][544]LogStealthGameplay: [EncounterView] role change ReversedAgainst presented at 146.503 (DeathServerTime 146.237)
+[2026.10.27-08.55.55:332][544]LogStealthGameplay: Verbose: [EncounterPresentation] RoleChange BP_CrowdCharacter_C_0 Death_Fall now 146.503 value 1.000 due 146.237 late 0 (net mode 3)
+[2026.10.27-08.55.55:332][544]LogStealthGameplay: [EncounterView] transient grade cause 1 at 146.503 (due 146.237, reduced 0)
+[2026.10.27-08.55.55:332][544]LogStealthGameplay: Verbose: [EncounterPresentation] Grade BP_CrowdCharacter_C_0 Death_Fall now 146.503 value 1.000 due 146.237 late 0 (net mode 3)
+[2026.10.27-08.55.55:332][544]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_50 Counter now 146.503 value 0.770 due 146.237 late 1 (net mode 3)
+[2026.10.27-08.55.56:057][547]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_50 Death_Fall now 147.563 value 0.000 due 147.437 late 0 (net mode 3)
+[2026.10.27-08.55.56:068][547]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_0 Death_Fall now 147.563 value 0.000 due 147.437 late 0 (net mode 3)
+[2026.10.27-08.55.56:379][548]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_42 Death_Fall now 147.563 value 0.000 due 147.437 late 0 (net mode 2)
+[2026.10.27-08.55.56:407][548]LogStealth: [Encounter] body BP_CrowdCharacter_C_42 released at 147.563 (controller StealthPlayerController_2).
+[2026.10.27-08.56.02:070][565]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_0 Death_Fall now 153.563 value 2.000 due 153.437 late 0 (net mode 3)
+[2026.10.27-08.56.02:070][565]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_0 hidden (HideOutOfFrustum) at 153.563, DeathServerTime 146.237
+[2026.10.27-08.56.02:377][566]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_42 Death_Fall now 153.563 value 2.000 due 153.437 late 0 (net mode 2)
+[2026.10.27-08.56.02:377][566]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_42 hidden (HideOutOfFrustum) at 153.563, DeathServerTime 146.237
+[2026.10.27-08.56.04:056][571]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_50 Death_Fall now 155.563 value 3.000 due 153.437 late 0 (net mode 3)
+[2026.10.27-08.56.04:056][571]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_50 hidden (CutAtGrace) at 155.563, DeathServerTime 146.237
+[2026.10.27-08.56.45:028][694]LogStealth: [Bot] #1 strikes BP_CrowdCharacter_C_53 (informant, 120 cm, bearing 0, prepared=0).
+[2026.10.27-08.56.45:070][694]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Strike_F now 196.230 value 0.000 due 196.630 late 0 (net mode 2)
+[2026.10.27-08.56.45:070][694]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_0 Strike_F now 196.230 value 0.900 due 196.630 late 0 (net mode 2)
+[2026.10.27-08.56.45:070][694]LogStealth: [Encounter] BP_CrowdCharacter_C_0 killed BP_CrowdCharacter_C_53 in the slot (victim kind 2).
+[2026.10.27-08.56.45:375][695]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Strike_F now 196.563 value 0.750 due 196.630 late 1 (net mode 3)
+[2026.10.27-08.56.45:375][695]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_0 Strike_F now 196.563 value 0.900 due 196.630 late 0 (net mode 3)
+[2026.10.27-08.56.45:386][695]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_50 Strike_F now 196.563 value 0.750 due 196.630 late 1 (net mode 3)
+[2026.10.27-08.56.45:387][695]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_50 Strike_F now 196.563 value 0.900 due 196.630 late 0 (net mode 3)
+[2026.10.27-08.56.45:397][695]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_53 at 196.563 (DeathServerTime 196.630, concealed 0).
+[2026.10.27-08.56.45:710][696]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_53 Death_Fall now 196.897 value 0.481 due 196.630 late 0 (net mode 2)
+[2026.10.27-08.56.45:710][696]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_53 Death_Fall now 196.897 value 0.481 due 196.630 late 1 (net mode 3)
+[2026.10.27-08.56.45:724][696]LogStealthGameplay: [EncounterView] transient grade cause 0 at 197.230 (due 196.630, reduced 0)
+[2026.10.27-08.56.45:724][696]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_53 Death_Fall now 196.897 value 0.481 due 196.630 late 1 (net mode 3)
+[2026.10.27-08.56.45:724][696]LogStealthGameplay: [EncounterView] role change InformantKilled presented at 196.897 (DeathServerTime 196.630)
+[2026.10.27-08.56.45:724][696]LogStealthGameplay: Verbose: [EncounterPresentation] RoleChange BP_CrowdCharacter_C_53 Death_Fall now 196.897 value 2.000 due 196.630 late 0 (net mode 3)
+[2026.10.27-08.56.45:724][696]LogStealthGameplay: [EncounterView] transient grade cause 1 at 196.897 (due 196.630, reduced 0)
+[2026.10.27-08.56.45:724][696]LogStealthGameplay: Verbose: [EncounterPresentation] Grade BP_CrowdCharacter_C_53 Death_Fall now 196.897 value 1.000 due 196.630 late 0 (net mode 3)
+[2026.10.27-08.56.46:390][698]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_53 Death_Fall now 197.897 value 0.000 due 197.830 late 0 (net mode 3)
+[2026.10.27-08.56.46:403][698]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_53 Death_Fall now 197.897 value 0.000 due 197.830 late 0 (net mode 3)
+[2026.10.27-08.56.46:708][699]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_53 Death_Fall now 197.897 value 0.000 due 197.830 late 0 (net mode 2)
+[2026.10.27-08.56.46:731][699]LogStealth: [Encounter] body BP_CrowdCharacter_C_53 released at 197.897 (controller StealthPlayerController_2).
+[2026.10.27-08.56.52:708][717]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_53 Death_Fall now 203.897 value 1.000 due 203.830 late 0 (net mode 2)
+[2026.10.27-08.56.52:708][717]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_53 hidden (HideOccluded) at 203.897, DeathServerTime 196.630
+[2026.10.27-08.56.54:386][722]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_53 Death_Fall now 205.897 value 3.000 due 203.830 late 0 (net mode 3)
+[2026.10.27-08.56.54:386][722]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_53 hidden (CutAtGrace) at 205.897, DeathServerTime 196.630
+[2026.10.27-08.56.54:399][722]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_53 Death_Fall now 205.897 value 3.000 due 203.830 late 0 (net mode 3)
+[2026.10.27-08.56.54:399][722]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_53 hidden (CutAtGrace) at 205.897, DeathServerTime 196.630
+[2026.10.27-08.57.35:393][845]LogStealth: [Bot] #1 strikes BP_CrowdCharacter_C_54 (informant, 120 cm, bearing 0, prepared=0).
+[2026.10.27-08.57.35:432][845]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Strike_F now 246.563 value 0.000 due 246.963 late 0 (net mode 2)
+[2026.10.27-08.57.35:432][845]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_0 Strike_F now 246.563 value 0.900 due 246.963 late 0 (net mode 2)
+[2026.10.27-08.57.35:432][845]LogStealth: [Encounter] BP_CrowdCharacter_C_0 killed BP_CrowdCharacter_C_54 in the slot (victim kind 2).
+[2026.10.27-08.57.35:710][846]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Strike_F now 246.897 value 0.750 due 246.963 late 1 (net mode 3)
+[2026.10.27-08.57.35:710][846]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_0 Strike_F now 246.897 value 0.900 due 246.963 late 0 (net mode 3)
+[2026.10.27-08.57.35:721][846]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_50 Strike_F now 246.897 value 0.750 due 246.963 late 1 (net mode 3)
+[2026.10.27-08.57.35:723][846]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_50 Strike_F now 246.897 value 0.900 due 246.963 late 0 (net mode 3)
+[2026.10.27-08.57.35:736][846]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_54 at 246.897 (DeathServerTime 246.963, concealed 0).
+[2026.10.27-08.57.36:043][847]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_54 Death_Fall now 247.230 value 0.481 due 246.963 late 0 (net mode 2)
+[2026.10.27-08.57.36:044][847]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_54 Death_Fall now 247.230 value 0.481 due 246.963 late 1 (net mode 3)
+[2026.10.27-08.57.36:056][847]LogStealthGameplay: [EncounterView] transient grade cause 0 at 247.563 (due 246.963, reduced 0)
+[2026.10.27-08.57.36:056][847]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_54 Death_Fall now 247.230 value 0.481 due 246.963 late 1 (net mode 3)
+[2026.10.27-08.57.36:056][847]LogStealthGameplay: [EncounterView] role change InformantKilled presented at 247.230 (DeathServerTime 246.963)
+[2026.10.27-08.57.36:056][847]LogStealthGameplay: Verbose: [EncounterPresentation] RoleChange BP_CrowdCharacter_C_54 Death_Fall now 247.230 value 2.000 due 246.963 late 0 (net mode 3)
+[2026.10.27-08.57.36:056][847]LogStealthGameplay: [EncounterView] transient grade cause 1 at 247.230 (due 246.963, reduced 0)
+[2026.10.27-08.57.36:056][847]LogStealthGameplay: Verbose: [EncounterPresentation] Grade BP_CrowdCharacter_C_54 Death_Fall now 247.230 value 1.000 due 246.963 late 0 (net mode 3)
+[2026.10.27-08.57.36:719][849]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_54 Death_Fall now 248.230 value 0.000 due 248.163 late 0 (net mode 3)
+[2026.10.27-08.57.36:732][849]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_54 Death_Fall now 248.230 value 0.000 due 248.163 late 0 (net mode 3)
+[2026.10.27-08.57.37:041][850]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_54 Death_Fall now 248.230 value 0.000 due 248.163 late 0 (net mode 2)
+[2026.10.27-08.57.37:068][850]LogStealth: [Encounter] body BP_CrowdCharacter_C_54 released at 248.230 (controller StealthPlayerController_2).
+[2026.10.27-08.57.44:718][873]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_54 Death_Fall now 256.230 value 3.000 due 254.163 late 0 (net mode 3)
+[2026.10.27-08.57.44:718][873]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_54 hidden (CutAtGrace) at 256.230, DeathServerTime 246.963
+[2026.10.27-08.57.44:729][873]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_54 Death_Fall now 256.230 value 3.000 due 254.163 late 0 (net mode 3)
+[2026.10.27-08.57.44:729][873]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_54 hidden (CutAtGrace) at 256.230, DeathServerTime 246.963
+[2026.10.27-08.57.45:042][874]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_54 Death_Fall now 256.230 value 3.000 due 254.163 late 0 (net mode 2)
+[2026.10.27-08.57.45:042][874]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_54 hidden (CutAtGrace) at 256.230, DeathServerTime 246.963
+[2026.10.27-08.58.08:748][945]LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_0 (enemy, 230 cm, bearing 0, prepared=0).
+[2026.10.27-08.58.09:069][946]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_26 Strike_F now 280.230 value 0.000 due 280.630 late 0 (net mode 2)
+[2026.10.27-08.58.09:069][946]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_26 Strike_F now 280.230 value 0.900 due 280.630 late 0 (net mode 2)
+[2026.10.27-08.58.09:069][946]LogStealth: [Encounter] BP_CrowdCharacter_C_26 killed BP_CrowdCharacter_C_0 in the slot (victim kind 0).
+[2026.10.27-08.58.09:375][947]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_52 Strike_F now 280.563 value 0.750 due 280.630 late 1 (net mode 3)
+[2026.10.27-08.58.09:375][947]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_52 Strike_F now 280.563 value 0.900 due 280.630 late 0 (net mode 3)
+[2026.10.27-08.58.09:385][947]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_25 Strike_F now 280.563 value 0.750 due 280.630 late 1 (net mode 3)
+[2026.10.27-08.58.09:385][947]LogStealthGameplay: Verbose: [EncounterPresentation] WarpBegin BP_CrowdCharacter_C_25 Strike_F now 280.563 value 0.900 due 280.630 late 0 (net mode 3)
+[2026.10.27-08.58.09:399][947]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_0 at 280.563 (DeathServerTime 280.630, concealed 0).
+[2026.10.27-08.58.09:708][948]LogStealthGameplay: [EncounterView] transient grade cause 0 at 280.897 (due 280.630, reduced 0)
+[2026.10.27-08.58.09:708][948]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Death_Fall now 280.897 value 0.481 due 280.630 late 0 (net mode 2)
+[2026.10.27-08.58.09:709][948]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_0 Death_Fall now 280.897 value 0.481 due 280.630 late 1 (net mode 3)
+[2026.10.27-08.58.09:709][948]LogStealthGameplay: [EncounterView] role change Assassinated presented at 280.897 (DeathServerTime 280.630)
+[2026.10.27-08.58.09:709][948]LogStealthGameplay: Verbose: [EncounterPresentation] RoleChange BP_CrowdCharacter_C_0 Death_Fall now 280.897 value 0.000 due 280.630 late 0 (net mode 3)
+[2026.10.27-08.58.09:709][948]LogStealthGameplay: [EncounterView] transient grade cause 1 at 280.897 (due 280.630, reduced 0)
+[2026.10.27-08.58.09:709][948]LogStealthGameplay: Verbose: [EncounterPresentation] Grade BP_CrowdCharacter_C_0 Death_Fall now 280.897 value 1.000 due 280.630 late 0 (net mode 3)
+[2026.10.27-08.58.09:720][948]LogStealthGameplay: Verbose: [EncounterPresentation] ClipStart BP_CrowdCharacter_C_50 Death_Fall now 280.897 value 0.481 due 280.630 late 1 (net mode 3)
+[2026.10.27-08.58.10:378][950]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_0 Death_Fall now 281.897 value 0.000 due 281.830 late 0 (net mode 3)
+[2026.10.27-08.58.10:388][950]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_50 Death_Fall now 281.897 value 0.000 due 281.830 late 0 (net mode 3)
+[2026.10.27-08.58.10:702][951]LogStealthGameplay: Verbose: [EncounterPresentation] CollisionOff BP_CrowdCharacter_C_0 Death_Fall now 281.897 value 0.000 due 281.830 late 0 (net mode 2)
+[2026.10.27-08.58.18:375][974]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_0 Death_Fall now 289.897 value 3.000 due 287.830 late 0 (net mode 3)
+[2026.10.27-08.58.18:375][974]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_0 hidden (CutAtGrace) at 289.897, DeathServerTime 280.630
+[2026.10.27-08.58.18:383][974]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_50 Death_Fall now 289.897 value 3.000 due 287.830 late 0 (net mode 3)
+[2026.10.27-08.58.18:383][974]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_50 hidden (CutAtGrace) at 289.897, DeathServerTime 280.630
+[2026.10.27-08.58.18:702][975]LogStealthGameplay: Verbose: [EncounterPresentation] BodyHidden BP_CrowdCharacter_C_0 Death_Fall now 289.897 value 3.000 due 287.830 late 0 (net mode 2)
+[2026.10.27-08.58.18:702][975]LogStealthGameplay: [EncounterPresentation] BP_CrowdCharacter_C_0 hidden (CutAtGrace) at 289.897, DeathServerTime 280.630

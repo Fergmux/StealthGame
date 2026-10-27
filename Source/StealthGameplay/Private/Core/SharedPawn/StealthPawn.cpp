@@ -231,6 +231,7 @@ void AStealthPawn::HandleActionStateChanged()
 		}
 	}
 	OnActionStateChanged.Broadcast(this);
+	OnAnyEncounterStateChanged().Broadcast(this);
 }
 
 void AStealthPawn::HandleDeathStateChanged()
@@ -243,6 +244,13 @@ void AStealthPawn::HandleDeathStateChanged()
 		}
 	}
 	OnDeathStateChanged.Broadcast(this);
+	OnAnyEncounterStateChanged().Broadcast(this);
+}
+
+AStealthPawn::FOnEncounterStateChanged& AStealthPawn::OnAnyEncounterStateChanged()
+{
+	static FOnEncounterStateChanged Delegate;
+	return Delegate;
 }
 
 void AStealthPawn::OnRep_ActionState()

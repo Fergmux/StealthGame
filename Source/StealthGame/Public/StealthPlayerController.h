@@ -8,6 +8,8 @@
 #include "View/NetPawnCommand.h"
 #include "StealthPlayerController.generated.h"
 
+enum class ERoleChangeReason : uint8;
+
 class URosterTeamViewComponent;
 class UPawnCommandClient;
 class UDefenceOwnerComponent;
@@ -232,6 +234,20 @@ protected:
 
 	/** Owner, STAND-IN for story asn-024's plates: the result's HUD message at its contact time (DefenceResult at once). */
 	void PresentOwnerResult(const FCommandReply& Reply);
+
+	/**
+	 * Owner (story asn-021): binds this local player's UEncounterViewSubsystem once: the own-role message follows
+	 * OnRoleChangePresented (never the server's message or the Roster state's arrival), and the informant query answers
+	 * from the pawn recorded at possession.
+	 */
+	void BindEncounterView();
+
+	/** OnRoleChangePresented consumer (STAND-IN for the HUD removal card, HUD epic): the own-role message. */
+	void HandleRoleChangePresented(ERoleChangeReason Reason, double LocalTime);
+
+	/** The pawn this local controller last acknowledged while its player was an informant (the InformantKilled reason). */
+	TWeakObjectPtr<APawn> PossessedAsInformantPawn;
+	bool bEncounterViewBound = false;
 
 	/** The owner-only cooldown end (story asn-016), replicated to the owning connection only. */
 	UPROPERTY(VisibleAnywhere, Category = "Stealth")

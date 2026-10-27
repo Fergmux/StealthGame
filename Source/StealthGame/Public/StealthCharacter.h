@@ -100,12 +100,11 @@ public:
 	void KillCharacter();
 
 	/**
-	 * Server, STAND-IN fall (until stories asn-018 / asn-020 own the strike clips and the client fall and linger): the
-	 * prototype ragdoll on every machine at the death write's DeathServerTime. Unlike KillCharacter it neither unpossesses
-	 * nor schedules a removal, and the server keeps the capsule's collision: the body sequence (story asn-019) releases the
-	 * body from its controller at DeathServerTime + DeathFallSec and removes it through the round queue.
+	 * Server, at the death write's DeathServerTime: the prototype's dying flags only (bDying, the brace tell ends). The fall,
+	 * linger and removal are the encounter presentation's (UEncounterPresentationSubsystem, stories asn-018 / asn-020:
+	 * Death_Fall from FDeathState on every machine, no ragdoll); the body sequence (story asn-019) releases and removes it.
 	 */
-	void BeginDeathFallPresentation();
+	void BeginEncounterDeath();
 
 	/** Server: ends any defensive preparation. */
 	void StopDefence();

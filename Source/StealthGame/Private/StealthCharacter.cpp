@@ -276,7 +276,7 @@ void AStealthCharacter::KillCharacter()
 	ForceNetUpdate();
 }
 
-void AStealthCharacter::BeginDeathFallPresentation()
+void AStealthCharacter::BeginEncounterDeath()
 {
 	if (!HasAuthority() || bDying)
 	{
@@ -284,7 +284,6 @@ void AStealthCharacter::BeginDeathFallPresentation()
 	}
 	bDying = true;
 	StopDefence();
-	ApplyDeathPresentation(/*bDisableCapsule*/ false);
 	ForceNetUpdate();
 }
 
@@ -479,7 +478,9 @@ void AStealthCharacter::SetDefenceStance(bool bPrepared)
 
 void AStealthCharacter::UpdateConcealmentVisibility()
 {
-	if (bDying)
+	// A body keeps the visibility it had at the death write (story asn-023 owns the killed-concealed body's hide); the
+	// encounter presentation's removal hides it afterwards (story asn-020).
+	if (bDying || HasDeathWrite())
 	{
 		return;
 	}
@@ -501,7 +502,9 @@ void AStealthCharacter::OnRep_AppearanceIndex()
 
 void AStealthCharacter::OnRep_Dying()
 {
-	if (bDying)
+	// The ragdoll is only the S10 harness's immediate KillCharacter (no FDeathState); an encounter death is presented
+	// from FDeathState by UEncounterPresentationSubsystem (Death_Fall, story asn-020).
+	if (bDying && !HasDeathWrite())
 	{
 		ApplyDeathPresentation();
 	}

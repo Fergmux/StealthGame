@@ -4,6 +4,7 @@
 #include "Server/StrikeWarpPointCore.h"
 
 #include "Server/EncounterTypes.h"
+#include "StrikeVariantCore.h"
 
 FStrikeWarpPointParams FStrikeWarpPointParams::FromEncounter(const FEncounterParams& Params)
 {
@@ -17,11 +18,8 @@ FStrikeWarpPointParams FStrikeWarpPointParams::FromEncounter(const FEncounterPar
 
 uint8 FStrikeWarpPointCore::EntryVariantForBearing(double BearingDeg, double FrontHalfAngleDeg)
 {
-	if (FMath::Abs(BearingDeg) < FrontHalfAngleDeg)
-	{
-		return StrikeVariant::Strike_F;
-	}
-	return BearingDeg > 0.0 ? StrikeVariant::Strike_R60 : StrikeVariant::Strike_L60;
+	// One rule for the slot and every client's presentation (story asn-018).
+	return FStrikeVariantCore::EntryForBearing(BearingDeg, FrontHalfAngleDeg);
 }
 
 FVector2D FStrikeWarpPointCore::ClampToAttackerSideEdge(const FBox2D& Box, const FVector2D& From, const FVector2D& To)

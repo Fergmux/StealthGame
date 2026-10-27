@@ -3518,3 +3518,36 @@ stories:
     completed: "2026-10-27"
     sprint: 2
     note: "ASN batch 2026-10-27; BodyRelease/BodyRemoval TimerFired items (+1.2 s / +9.2 s), minimal UStealthPawnFactory::ReleaseBody, informant respawn after release, encounter Reset on Round's Reset phase; Concealment observer and fall presentation are stand-ins"
+  - id: "asn-018"
+    name: "Strike clip variants, local warp and contact scheduling from the server clock"
+    file: "production/epics/assassination-defence-reversal/story-018-strike-clip-variants-warp-and-contact-scheduling.md"
+    priority: must-have
+    status: in-progress
+    owner: "gameplay-programmer"
+    estimate_days: 2.5
+    blocker: "AC2 per-bone parity <= 0.5 cm needs SCL-041's parity AnimBP (sample AnimBP foot placement differs per machine: 6.6-21 cm at the legs)"
+    completed: ""
+    sprint: 2
+    note: "ASN batch 2026-10-27; UEncounterPresentationSubsystem::Refresh (one idempotent handler), strike clip contact at ContactServerTime (seek, cross-fade <= 0.1 s), runtime StrikeContact skew warp, FStrikeVariantCore; D54 placeholder clips (Stealth.Animations.ImportEncounterClips); AC1, AC3 and AC2 plan parity pass"
+  - id: "asn-020"
+    name: "One fall, one linger, one cut-at-occlusion removal for every victim"
+    file: "production/epics/assassination-defence-reversal/story-020-client-fall-linger-and-occlusion-removal.md"
+    priority: must-have
+    status: in-progress
+    owner: "gameplay-programmer"
+    estimate_days: 2.5
+    blocker: "Visual/Feel lead sign-off pending (production/qa/evidence/story-020-client-fall-linger-and-occlusion-removal-evidence.md)"
+    completed: ""
+    sprint: 2
+    note: "ASN batch 2026-10-27; Death_Fall from FDeathState on every machine (placeholder D54 clip, no ragdoll), collision off at +1.2 s, FBodyRemovalEvaluator (out of frustum / occluded from +7.2 s, one-frame cut at +9.2 s); PIE.OneBodySequence passes; captures retained"
+  - id: "asn-021"
+    name: "OnRoleChangePresented dispatch and the transient grade at the contact frame"
+    file: "production/epics/assassination-defence-reversal/story-021-role-change-dispatch-and-transient-grade.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-27"
+    sprint: 2
+    note: "ASN batch 2026-10-27; UEncounterViewSubsystem (LocalPlayer) OnRoleChangePresented once per FDeathState at DeathServerTime, ApplyTransientGrade stand-in (camera modifier, Reduce screen effects CVar) for Camera 019; victim message moved to the client dispatch"

@@ -893,16 +893,8 @@ void AStealthGameMode::HandleEncounterDeathWrite(APawn* Victim, double DeathServ
 		return;
 	}
 	// The attacker's and the defender's owner results travel as FStrikeResult / FDefenceResult entries of their own
-	// ClientCommandReplies (story asn-015; the plates are the controller's stand-in until story asn-024). Only the fallen
-	// player's own removal message remains here, one text for an assassination and a reversal alike.
-	if (Kill.Cause == EKillCause::Reversal || Kill.Kind == EVictimKind::Player)
-	{
-		MessagePlayer(Body, LOCTEXT("YouWereEliminated", "You have been eliminated. You are now an informant."), true, 6.f);
-	}
-	else if (Kill.Kind == EVictimKind::Informant)
-	{
-		MessagePlayer(Body, LOCTEXT("InformantDied", "You were silenced. Returning to your team's spawn."), true);
-	}
+	// ClientCommandReplies (story asn-015; the plates are the controller's stand-in until story asn-024). The fallen
+	// player's own removal message is its client's, at its OnRoleChangePresented dispatch (story asn-021), never sent here.
 
 	// A player's body (Active or informant): the prototype life state. The Roster transition already ran in the slot; the
 	// informant respawn waits for the body's release (story asn-019, HandleEncounterBodyReleased).
@@ -916,13 +908,13 @@ void AStealthGameMode::HandleEncounterDeathWrite(APawn* Victim, double DeathServ
 		ScheduleNpcReplacement();
 	}
 
-	// STAND-IN presentation (until stories asn-018 / asn-020: strike clips, client fall montage and linger): the prototype
-	// ragdoll, started at DeathServerTime (the strike's contact) so every client sees the body fall at contact. The body
-	// keeps its controller and capsule here: the release and removal are the queue's BodyRelease / BodyRemoval items.
+	// The fall is the encounter presentation's (Death_Fall from FDeathState on every machine, stories asn-018 / asn-020);
+	// the prototype's dying flags follow at DeathServerTime. The body keeps its controller and capsule here: the release
+	// and removal are the queue's BodyRelease / BodyRemoval items (story asn-019).
 	const double Delay = DeathServerTime - GetWorld()->GetTimeSeconds();
 	if (Delay <= 0.0)
 	{
-		Body->BeginDeathFallPresentation();
+		Body->BeginEncounterDeath();
 		return;
 	}
 	TWeakObjectPtr<AStealthCharacter> WeakBody(Body);
@@ -931,7 +923,7 @@ void AStealthGameMode::HandleEncounterDeathWrite(APawn* Victim, double DeathServ
 	{
 		if (AStealthCharacter* Pending = WeakBody.Get())
 		{
-			Pending->BeginDeathFallPresentation();
+			Pending->BeginEncounterDeath();
 		}
 	}), static_cast<float>(Delay), false);
 }
@@ -1305,9 +1297,30 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 		}
 	};
 
+	if (Action.StartsWith(TEXT("strikespot"), ESearchCase::IgnoreCase))
+	{
+		// "strikespot [distance cm] [bearing deg]": an Attack at the open spot at that distance and bearing from the body
+		// facing, where the pawn stands (no approach): the clip-variant evidence (a whiff picks its variant by the WorldPoint).
+		TArray<FString> SpotParts;
+		Action.RightChop(10).ParseIntoArrayWS(SpotParts);
+		const float SpotDistance = SpotParts.Num() > 0 ? FCString::Atof(*SpotParts[0]) : 150.f;
+		const float SpotBearing = SpotParts.Num() > 1 ? FCString::Atof(*SpotParts[1]) : 0.f;
+		FAttackPayload Spot;
+		Spot.WorldPoint = Pawn->GetActorLocation() + FRotator(0.f, Pawn->GetActorRotation().Yaw + SpotBearing, 0.f).RotateVector(FVector(SpotDistance, 0.f, 0.f));
+		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d strikes the spot %.0f cm at bearing %.0f."), PlayerIndex, SpotDistance, SpotBearing);
+		AsOwner([&Spot](UPawnCommandComponent& Command) { Command.Attack(Spot); });
+		return;
+	}
+
 	if (Action.StartsWith(TEXT("strike_"), ESearchCase::IgnoreCase))
 	{
-		const FString Kind = Action.RightChop(7).ToLower();
+		// "strike_<npc|enemy|informant> [distance cm] [bearing deg]": approach to the distance (default 120 cm) with the
+		// target at that bearing from the body facing (default 0; positive to the right), for the clip-variant evidence.
+		TArray<FString> StrikeParts;
+		Action.RightChop(7).ToLower().ParseIntoArrayWS(StrikeParts);
+		const FString Kind = StrikeParts.Num() > 0 ? StrikeParts[0] : FString();
+		const float StrikeDistance = StrikeParts.Num() > 1 ? FCString::Atof(*StrikeParts[1]) : 120.f;
+		const float StrikeBearing = StrikeParts.Num() > 2 ? FCString::Atof(*StrikeParts[2]) : 0.f;
 		AStealthCharacter* Best = nullptr;
 		float BestDistance = TNumericLimits<float>::Max();
 		for (TActorIterator<AStealthCharacter> It(GetWorld()); It; ++It)
@@ -1342,8 +1355,23 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 			UE_LOG(LogStealth, Warning, TEXT("[Bot] #%d strike_%s: no target found."), PlayerIndex, *Kind);
 			return;
 		}
-		FaceAndApproach(Best, 120.f);
-		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d strikes %s (%s, prepared=%d)."), PlayerIndex, *Best->GetName(), *Kind, Best->IsPreparingDefence());
+		FaceAndApproach(Best, StrikeDistance);
+		if (!FMath::IsNearlyZero(StrikeBearing))
+		{
+			const FRotator Turned(0.f, Pawn->GetActorRotation().Yaw - StrikeBearing, 0.f);
+			Pawn->SetActorRotation(Turned);
+			if (AController* C = Pawn->GetController())
+			{
+				const FRotator Facing(-12.f, Turned.Yaw, 0.f);
+				C->SetControlRotation(Facing);
+				if (APlayerController* PC = Cast<APlayerController>(C))
+				{
+					PC->ClientSetRotation(Facing, true);
+				}
+			}
+		}
+		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d strikes %s (%s, %.0f cm, bearing %.0f, prepared=%d)."), PlayerIndex, *Best->GetName(), *Kind, StrikeDistance, StrikeBearing,
+			Best->IsPreparingDefence());
 		// The production path (story asn-012 integration): an Attack command into Round's queue, resolved in its slot.
 		FAttackPayload Strike;
 		Strike.WorldPoint = Best->GetActorLocation();

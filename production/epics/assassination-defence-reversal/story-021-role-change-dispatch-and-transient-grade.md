@@ -1,12 +1,12 @@
 # Story 021: `OnRoleChangePresented` dispatch and the transient grade at the contact frame
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,8 +35,8 @@ Dispatch reasons: `Assassinated`, `ReversedAgainst`, `InformantKilled` (the owne
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-23) and ADR-0018 Validation Criteria `RoleChangeGate`, scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-23, [Integration/BLOCKING] `StealthGame.Assassination.TransientGradeAtContact`): **GIVEN** a kill of a player, a reversal of a player attacker by a player defender, and a whiff **THEN** `ApplyTransientGrade` is called on the attacker's and victim's (or defender's) cameras on their local contact frames and never earlier, not on any bystander's or ally's camera, and not at all for the whiff; the server tick rate and every pawn's simulation are unaffected (no time dilation).
-- [ ] **AC2** (ADR-0018 `RoleChangeGate`, [Integration/BLOCKING]): **GIVEN** a struck player on a remote client and on the listen host **THEN** own HUD, Camera and input-context changes occur no earlier than the pawn's own `DeathServerTime`; **AND WHEN** `FDeathState` arrives after `DeathServerTime` **THEN** the dispatch fires on arrival, exactly once per `FDeathState`, with the reason matching the owner's transition.
+- [x] **AC1** (AC-ASN-23, [Integration/BLOCKING] `StealthGame.Assassination.TransientGradeAtContact`): **GIVEN** a kill of a player, a reversal of a player attacker by a player defender, and a whiff **THEN** `ApplyTransientGrade` is called on the attacker's and victim's (or defender's) cameras on their local contact frames and never earlier, not on any bystander's or ally's camera, and not at all for the whiff; the server tick rate and every pawn's simulation are unaffected (no time dilation).
+- [x] **AC2** (ADR-0018 `RoleChangeGate`, [Integration/BLOCKING]): **GIVEN** a struck player on a remote client and on the listen host **THEN** own HUD, Camera and input-context changes occur no earlier than the pawn's own `DeathServerTime`; **AND WHEN** `FDeathState` arrives after `DeathServerTime` **THEN** the dispatch fires on arrival, exactly once per `FDeathState`, with the reason matching the owner's transition.
 
 ---
 
@@ -102,7 +102,7 @@ QL-STORY-READY: GAPS
 **Required evidence**:
 - Integration: `TransientGradeAtContactTest.cpp` and `RoleChangeGateTest.cpp` (PIE, remote client and listen host) — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27)
 
 ---
 
@@ -110,3 +110,11 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-013-death-write-staging-and-after-latch.md`, `story-018-strike-clip-variants-warp-and-contact-scheduling.md`; cross-epic `production/epics/camera-system/story-018-dying-hold-and-view-release.md`, `story-019-grade-hooks.md`; `production/epics/input-interaction-framework/story-071-context-swap-on-state-and-possession.md`
 - Unlocks: `story-017-no-warning-and-no-observer-cue.md`, `story-024-owner-result-matcher-and-plate-timing.md`
+
+## Completion Notes
+**Completed**: 2026-10-27
+**Criteria**: AC1 `StealthGame.Assassination.PIE.TransientGradeAtContact.OnlyParticipantsGradeOnTheirContactFrameAndNeverForAWhiff`: a whiff grades no camera; a reversal grades the reversed attacker's camera once (its AttackerContact and VictimDeath calls answer one contact) at its contact (+0.000 s) and the bound defender's at its Counter's contact (+0.002 s), not the bystander's; a player kill grades the attacker's camera (+0.011 s) and the victim's (+0.002 s), not the victim's ally's; time dilation 1.0 at every call and on every machine. AC2 `StealthGame.Assassination.PIE.RoleChangeGate.OwnRoleDispatchFiresOnceAtDeathOnRemoteClientAndListenHost`: the listen host's player and a remote client's player each get exactly one OnRoleChangePresented for their FDeathState at their DeathServerTime (+0.000 / +0.004 s), reason Assassinated, on their own machine only; the own-role message never shows before the dispatch, although the host's Roster-mirror informant state arrived before its DeathServerTime. `StealthGame.Assassination.RoleChangeDispatchOnce` (headless, controlled clock): no dispatch while the death write is not due, once at DeathServerTime however often Refresh runs (tick, re-open), an FDeathState first seen 300 ms late dispatches on arrival once, reasons Assassinated / InformantKilled / ReversedAgainst, nothing for a pawn not locally viewed, the defender's grade at its Counter's contact and not on receipt.
+**Deviations**: (1) STAND-IN `ApplyTransientGrade` (Camera story 019 not built): `UEncounterGradeCameraModifier` post-process beat 0.12 / 0.20 / 0.80 s with the art bible 2.7 values; QA's proposed AC3 (Reduce screen effects, unconfirmed): implemented per art bible 7.6 rule 8 behind the CVar `Stealth.Accessibility.ReduceScreenEffects` (no settings menu yet), not covered by a test. (2) STAND-IN reason source: InformantKilled from the pawn the controller acknowledged while its PlayerState was an informant (owner C-TeamView own State not built); ReversedAgainst from the pawn's own strike contact equal to its death. (3) The attacker's grade call site is the owner-plate stand-in's contact-time callback (story 024 owns the plate frame). (4) Consumers: only the stand-in own-role message subscribes today (HUD card, Camera Dying, IMC_Informant swap and owner audio are their epics'); the server's victim MessagePlayer was removed. (5) One grade beat per contact per camera (a reversed attacker is attacker and victim of one contact). Cross-epic Camera 018/019, IIF 071: proceeded.
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Assassination/RoleChangeDispatchOnceTest.cpp`, `Source/StealthTestHarness/Private/Tests/PIE/Assassination/TransientGradeAtContactPieTest.cpp`, `RoleChangeGatePieTest.cpp`
+**Run result**: OBSERVED - 3-player PIE: the attacker's camera drains at contact (grade) and is normal 7 s later; ReversedAgainst / InformantKilled / Assassinated dispatches logged at each victim's DeathServerTime (`production/qa/evidence/story-021-role-change-dispatch-and-transient-grade/`)
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

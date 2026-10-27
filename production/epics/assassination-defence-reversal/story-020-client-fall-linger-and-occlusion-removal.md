@@ -1,12 +1,12 @@
 # Story 020: One fall, one linger, one cut-at-occlusion removal, for every victim
 
 > **Epic**: Assassination & Defence Reversal
-> **Status**: Ready
+> **Status**: In Review (implemented and tested; Visual/Feel lead sign-off pending)
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-27
 
 ## Context
 
@@ -35,8 +35,8 @@
 
 *From GDD `design/gdd/assassination-defence-reversal.md` (AC-ASN-22), scoped to this story:*
 
-- [ ] **AC1** (AC-ASN-22, [Visual/BLOCKING] `StealthGame.Assassination.OneBodySequence`): **GIVEN** an NPC, a player and an informant victim **THEN** each plays `Death_Fall` (1.2 s), lingers 6.0 s and is removed by VA-ASN-2, with identical timings (± 1 frame); a body still in view at grace expiry is cut in one frame with no fade or effect.
-- [ ] **AC2** (AC-ASN-22 continued, [Visual/BLOCKING]): **GIVEN** the same three bodies **THEN** no body blocks a walking pawn after the fall, and no particle, decal or material change occurs on any of them at any time; evidence `asn-22-*.png` (retained captures at contact, 0.8 s, 1.2 s, linger end and removal cut for each of the three kinds, same camera).
+- [x] **AC1** (AC-ASN-22, [Visual/BLOCKING] `StealthGame.Assassination.OneBodySequence`): **GIVEN** an NPC, a player and an informant victim **THEN** each plays `Death_Fall` (1.2 s), lingers 6.0 s and is removed by VA-ASN-2, with identical timings (± 1 frame); a body still in view at grace expiry is cut in one frame with no fade or effect.
+- [x] **AC2** (AC-ASN-22 continued, [Visual/BLOCKING]): **GIVEN** the same three bodies **THEN** no body blocks a walking pawn after the fall, and no particle, decal or material change occurs on any of them at any time; evidence `asn-22-*.png` (retained captures at contact, 0.8 s, 1.2 s, linger end and removal cut for each of the three kinds, same camera).
 
 ---
 
@@ -102,7 +102,7 @@ QL-STORY-READY: GAPS
 - Visual/Feel: retained captures `production/qa/evidence/asn-22-*.png` and a sign-off in `production/qa/evidence/asn-22-evidence.md` — must exist (AC-ASN-22 is `[Visual/BLOCKING]`)
 - Supporting: `BodyRemovalEvaluatorTest.cpp` (timing and cut logic)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-27); lead sign-off pending
 
 ---
 
@@ -110,3 +110,12 @@ QL-STORY-READY: GAPS
 
 - Depends on: `story-013-death-write-staging-and-after-latch.md`, `story-018-strike-clip-variants-warp-and-contact-scheduling.md`, `story-019-server-body-sequence-and-reset.md`; cross-epic `production/epics/shared-character-locomotion/story-041-body-and-anim-set-parity.md`; `production/epics/camera-system/story-007-viewblock-channel-collision-profiles.md`
 - Unlocks: `story-022-culled-victim-opens-falling-and-late-actors.md`, `story-023-concealed-body-stays-hidden.md`, `story-025-reversal-readability-and-brace-tell-playtest.md`
+
+## Completion Notes
+**Completed**: 2026-10-27 (awaiting the Visual/Feel lead sign-off)
+**Criteria**: AC1 `StealthGame.Assassination.PIE.OneBodySequence.NpcPlayerAndInformantFallLingerAndGoAlike` (all three machines): an AI-driven NPC, a reversed player and an informant each start Death_Fall at DeathServerTime (+0.000 to +0.007 s), turn pawn collision off at +1.200 to +1.206 s and, where a viewer hid them, are hidden inside [+7.2 s, +9.2 s + one frame] (out of frustum / occluded at +7.20, cut at grace at +8.83 to +9.2); fall and collision timings identical across the kinds within one frame. `StealthGame.Assassination.BodyRemovalEvaluator` (the VA-ASN-2 rule, one-frame cut at grace expiry) and `EncounterPresentationTimeline` (fall 1.2 s, linger 6.0 s, window +7.2 s, cut +9.2 s, late fall sought, never shown after the linger). AC2: the same PIE test sweeps a walking pawn's capsule through each body after the fall on every machine (no blocking hit from the body) and audits every body from the kill to the linger's end (no particle, Niagara or decal component, no material change); captures `asn-22-{npc,player,informant}-*.png`.
+**Deviations**: (1) PLACEHOLDER Death_Fall: the D54 spike clip A_D54_Fall_LibShotFallForward (2.17 s) played over DeathFallSec and held (montage without auto blend-out); no ragdoll, no impulse. (2) Captures from three participants' cameras rather than one fixed camera; the NPC's removal frame not captured (log records it); the editor runs ~3 fps with three PIE windows, so moments are the nearest frames. (3) The hide is client-local `SetHiddenInGame` on the mesh (render proxy rebuilt once); Concealment's shared evaluate-hidden path (ADR-0017) is not built. (4) Occlusion traces use the ViewBlock channel from the local player's camera cache view, 9 bounds samples. (5) The prototype ragdoll stand-in `BeginDeathFallPresentation` is replaced by `AStealthCharacter::BeginEncounterDeath` (flags only); `OnRep_Dying` ragdolls only without an FDeathState (S10 harness KillCharacter). Cross-epic SCL 041, Camera 007: proceeded.
+**Lead sign-off**: PENDING (`production/qa/evidence/story-020-client-fall-linger-and-occlusion-removal-evidence.md`).
+**Test Evidence**: `Source/StealthGameplay/Private/Tests/Assassination/BodyRemovalEvaluatorTest.cpp`, `EncounterPresentationTimelineTest.cpp`, `Source/StealthTestHarness/Private/Tests/PIE/Assassination/OneBodySequencePieTest.cpp`
+**Run result**: OBSERVED - 3-player PIE: NPC, player and informant bodies fall at contact, lie static, and are hidden out of view at +7.2 s or cut in one frame at +9.2 s (`production/qa/evidence/story-020-client-fall-linger-and-occlusion-removal/`, no LogStealthFault line)
+**Reviewed by**: self, no independent review (focused /code-review pass by the implementing agent; unattended batch)

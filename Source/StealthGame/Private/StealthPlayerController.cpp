@@ -23,6 +23,8 @@
 #include "Server/Core/StealthPawnCommandComponent.h"
 #include "Server/Core/StealthPawnFactory.h"
 #include "View/DefenceOwnerComponent.h"
+#include "View/EncounterViewSubsystem.h"
+#include "StealthPlayerState.h"
 #include "View/StealthTuningPublicSubstructs.h"
 #include "GameFramework/GameStateBase.h"
 #include "TimerManager.h"
@@ -220,6 +222,43 @@ void AStealthPlayerController::ClientRestart_Implementation(APawn* NewPawn)
 		CommandClient->NotifyPossessionChanged(NewPawn);
 	}
 	Super::ClientRestart_Implementation(NewPawn);
+	// Story asn-021: the own-role clock's consumer, and the role this pawn was possessed in (STAND-IN for the owner's
+	// C-TeamView own State: an informant's pawn is always a fresh respawn, possessed after the informant state replicated).
+	const AStealthPlayerState* PS = GetPlayerState<AStealthPlayerState>();
+	PossessedAsInformantPawn = PS != nullptr && PS->IsInformant() ? NewPawn : nullptr;
+	BindEncounterView();
+}
+
+void AStealthPlayerController::BindEncounterView()
+{
+	if (bEncounterViewBound || !IsLocalController())
+	{
+		return;
+	}
+	ULocalPlayer* Local = GetLocalPlayer();
+	UEncounterViewSubsystem* View = Local != nullptr ? Local->GetSubsystem<UEncounterViewSubsystem>() : nullptr;
+	if (View == nullptr)
+	{
+		return;
+	}
+	bEncounterViewBound = true;
+	TWeakObjectPtr<AStealthPlayerController> WeakThis(this);
+	View->SetPossessedAsInformantQuery([WeakThis](const APawn* Candidate)
+	{
+		return WeakThis.IsValid() && Candidate != nullptr && WeakThis->PossessedAsInformantPawn.Get() == Candidate;
+	});
+	View->OnRoleChangePresented.AddUObject(this, &AStealthPlayerController::HandleRoleChangePresented);
+}
+
+void AStealthPlayerController::HandleRoleChangePresented(ERoleChangeReason Reason, double LocalTime)
+{
+	// STAND-IN for the HUD epic's removal card: shown at the dispatch (the pawn's own DeathServerTime), never on receipt.
+	if (Reason == ERoleChangeReason::InformantKilled)
+	{
+		ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "InformantDied", "You were silenced. Returning to your team's spawn."), true, 5.f);
+		return;
+	}
+	ClientStealthMessage_Implementation(NSLOCTEXT("StealthOwnerResults", "YouWereEliminated", "You have been eliminated. You are now an informant."), true, 6.f);
 }
 
 void AStealthPlayerController::OnRep_Pawn()
@@ -332,6 +371,16 @@ void AStealthPlayerController::PresentOwnerResult(const FCommandReply& Reply)
 			return;
 		}
 		Self->ShownWrongTargetTally = Strike.TallyAfter;
+		// Story asn-021: the attacker's transient grade on its local contact frame for a kill or a reversal (a body met a
+		// body); a whiff (NoContact) plays none. STAND-IN call site until story asn-024's matcher owns the plate frame.
+		if (Strike.Result != EStrikeResult::NoContact && Self->GetLocalPlayer() != nullptr)
+		{
+			if (UEncounterViewSubsystem* View = Self->GetLocalPlayer()->GetSubsystem<UEncounterViewSubsystem>())
+			{
+				const AGameStateBase* GradeState = Self->GetWorld() != nullptr ? Self->GetWorld()->GetGameState() : nullptr;
+				View->ApplyTransientGrade(ETransientGradeCause::AttackerContact, GradeState != nullptr ? GradeState->GetServerWorldTimeSeconds() : 0.0, Strike.ContactServerTime);
+			}
+		}
 		const AStealthGameState* RoundState = Self->GetWorld() != nullptr ? Self->GetWorld()->GetGameState<AStealthGameState>() : nullptr;
 		Self->ShownTallyRoundIndex = RoundState != nullptr ? RoundState->GetRoundPublicState().RoundIndex : 0;
 		switch (Strike.Result)
