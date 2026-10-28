@@ -1,0 +1,26 @@
+{
+ "SchemaVersion": 1,
+ "MatchId": "match-d",
+ "RoundIndex": 1,
+ "EndReason": "Active",
+ "StrikeLimit": 3,
+ "NpcCount": 50,
+ "InformantCountMean": 1.0,
+ "EventLogRows": [
+  {
+   "ServerTime": 10,
+   "Type": "StrikeCounted",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "StrikeAfter": 3,
+   "TallyAfter": 3,
+   "Graced": false
+  },
+  {
+   "ServerTime": 10,
+   "Type": "StrikeLimit",
+   "Participant": 1,
+   "PostRoundEligible": true
+  }
+ ]
+}

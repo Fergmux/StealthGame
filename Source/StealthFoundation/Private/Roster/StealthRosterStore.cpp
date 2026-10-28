@@ -477,6 +477,11 @@ ERosterResult URosterStore::SetOwnerRespawnDue(FParticipantId Id, double DueServ
 	return PushStep ? PushStep->SetOwnerRespawnDue(Id, DueServerTime, ExpectedEpoch) : ERosterResult::Rejected_NotAuthority;
 }
 
+ERosterResult URosterStore::SetOwnerTally(FParticipantId Id, uint8 WrongTargetTally, uint32 LastResultSeq, uint32 ExpectedEpoch)
+{
+	return PushStep ? PushStep->SetOwnerTally(Id, WrongTargetTally, LastResultSeq, ExpectedEpoch) : ERosterResult::Rejected_NotAuthority;
+}
+
 double URosterStore::GetOwnerRespawnDue(FParticipantId Id) const
 {
 	return PushStep ? PushStep->GetOwnerRespawnDue(Id) : 0.0;

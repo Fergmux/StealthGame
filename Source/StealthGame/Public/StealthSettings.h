@@ -52,7 +52,7 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Round", meta = (ClampMin = "1"))
 	float RoundRestartDelay = 12.f;
 
-	/** Seconds before an eliminated player re-enters the world as an informant. */
+	/** UNUSED since NPC-Kill Penalty story nkp-021 (the respawn delay is the tuning key InformantRespawnDelaySec); tuning-data-config story 095 removes the field. */
 	UPROPERTY(Config, EditAnywhere, Category = "Round", meta = (ClampMin = "0"))
 	float InformantRespawnDelay = 4.f;
 
@@ -73,7 +73,7 @@ public:
 	// rules are ASN-R8, the lockout is AttackAttemptLockoutSec and the body times are DeathFallSec / BodyLingerSec /
 	// BodyRemovalGraceSec, all in the Assassination tuning.
 
-	/** NPC kills that remove a player from active play (removal ON this kill). */
+	/** UNUSED since NPC-Kill Penalty story nkp-021 (L is the tuning key NpcKillStrikeLimit, latched by UPenaltyService); tuning-data-config story 095 removes the field. */
 	UPROPERTY(Config, EditAnywhere, Category = "NPC Penalty", meta = (ClampMin = "1"))
 	int32 NpcKillLimit = 3;
 

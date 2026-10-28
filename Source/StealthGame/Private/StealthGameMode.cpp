@@ -855,33 +855,8 @@ void AStealthGameMode::HandleEncounterPawnKilled(APawn* Victim, APawn* Killer, E
 	UE_LOG(LogStealth, Log, TEXT("[Encounter] %s %s %s in the slot (victim kind %d)."), Killer != nullptr ? *Killer->GetName() : TEXT("?"),
 		Cause == EKillCause::Reversal ? TEXT("reversed and eliminated") : TEXT("killed"), Victim != nullptr ? *Victim->GetName() : TEXT("?"), static_cast<int32>(Kind));
 
-	// NPC-Kill Penalty story nkp-005: the production UPenaltyService counts the strike, answers the tally and runs the exile
-	// in this same fan-out. The prototype penalty below runs only when the production service is not bound (a world the
-	// composition root did not wire), so a player is never exiled twice. Story nkp-021 deletes this block, ExilePlayer,
-	// FStealthPrototypeStrikeTally and the AStealthPlayerState counters (NpcKills, WrongTargetTally, bExiledByPendingResult).
-	const UPenaltyService* ProductionPenalty = GetWorld() != nullptr ? GetWorld()->GetSubsystem<UPenaltyService>() : nullptr;
-	if (ProductionPenalty != nullptr && ProductionPenalty->IsBound())
-	{
-		return;
-	}
-	// STAND-IN for the Penalty epic (story asn-015: FStealthPrototypeStrikeTally reads these after this fan-out, in the same
-	// slot): the owner's "Wrong targets" tally rises for every WrongTarget (an NPC and an informant kill alike, PEN-R14);
-	// the strike count (NpcKills, server only) only for an NPC, and the kill that reaches NpcKillLimit exiles (bExiled).
-	AStealthCharacter* Attacker = Cast<AStealthCharacter>(Killer);
-	AStealthPlayerState* AttackerPS = Attacker != nullptr ? Attacker->GetStealthPlayerState() : nullptr;
-	if (Cause == EKillCause::Strike && (Kind == EVictimKind::Npc || Kind == EVictimKind::Informant) && AttackerPS != nullptr)
-	{
-		++AttackerPS->WrongTargetTally;
-	}
-	if (Cause == EKillCause::Strike && Kind == EVictimKind::Npc && AttackerPS != nullptr)
-	{
-		++AttackerPS->NpcKills;
-		if (FStealthRules::ShouldRemoveForNpcKills(AttackerPS->NpcKills, UStealthSettings::Get()->NpcKillLimit))
-		{
-			ExilePlayer(Attacker);
-			AttackerPS->bExiledByPendingResult = true;
-		}
-	}
+	// NPC-Kill Penalty: the production UPenaltyService counts the strike, answers the tally and runs the exile in this same
+	// fan-out (stories nkp-001..008; the prototype penalty was retired by story nkp-021).
 }
 
 void AStealthGameMode::HandleEncounterDeathWrite(APawn* Victim, double DeathServerTime, bool bDiedConcealed)
@@ -918,28 +893,10 @@ void AStealthGameMode::HandleEncounterDeathWrite(APawn* Victim, double DeathServ
 
 void AStealthGameMode::HandleEncounterBodyReleased(APawn* Body, AController* FormerController)
 {
-	APlayerController* Player = Cast<APlayerController>(FormerController);
-	const AStealthPlayerState* PS = Player != nullptr ? Player->GetPlayerState<AStealthPlayerState>() : nullptr;
 	UE_LOG(LogStealth, Log, TEXT("[Encounter] body %s released at %.3f (controller %s)."), Body != nullptr ? *Body->GetName() : TEXT("?"), GetWorld()->GetTimeSeconds(),
 		FormerController != nullptr ? *FormerController->GetName() : TEXT("none"));
-	if (PS == nullptr || !PS->IsInformant())
-	{
-		return;
-	}
-	// NPC-Kill Penalty stories nkp-009 / nkp-012: the production service owns the respawn (the InformantRespawn item at
-	// F2's T_due and the takeover of an unseen crowd pawn); the prototype respawn below runs only in a world it is not bound in.
-	const UPenaltyService* ProductionPenalty = GetWorld() != nullptr ? GetWorld()->GetSubsystem<UPenaltyService>() : nullptr;
-	if (ProductionPenalty != nullptr && ProductionPenalty->IsBound())
-	{
-		return;
-	}
-	// The informant respawn takeover follows the visible fall (story asn-019 AC1; Penalty rule C1's T_due floor): the
-	// prototype delay counts from the death, so the wait left after the release is the delay minus the fall.
-	const float Fall = FEncounterParams::Defaults().Public.DeathFallSec;
-	const float Wait = FMath::Max(0.1f, UStealthSettings::Get()->InformantRespawnDelay - Fall);
-	FTimerHandle& Handle = PendingTimers.AddDefaulted_GetRef();
-	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateUObject(this, &AStealthGameMode::RespawnInformant, TWeakObjectPtr<AController>(Player),
-		TWeakObjectPtr<APawn>(Body)), Wait, false);
+	// NPC-Kill Penalty stories nkp-009 / nkp-012: the production service owns every informant respawn (the InformantRespawn
+	// item at F2's T_due and the takeover of an unseen crowd pawn); the prototype respawn was retired by story nkp-021.
 }
 
 void AStealthGameMode::HandleHubActionStarted(AStealthPawn* Pawn, EActionType Type)
@@ -951,26 +908,6 @@ void AStealthGameMode::HandleHubActionStarted(AStealthPawn* Pawn, EActionType Ty
 	{
 		Character->RevealFromConcealment();
 	}
-}
-
-void AStealthGameMode::ExilePlayer(AStealthCharacter* Offender)
-{
-	AStealthPlayerState* PS = Offender ? Offender->GetStealthPlayerState() : nullptr;
-	if (!PS)
-	{
-		return;
-	}
-	PS->LifeState = EStealthLifeState::Informant;
-	// Production Roster: StrikeLimit releases the pawn (decision D42: it now resolves as an NPC).
-	URosterStore* Roster = URosterStore::Get(GetWorld());
-	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld());
-	if (Roster && Root && Roster->IsMatchOpen())
-	{
-		Roster->RequestTransition(Root->GetParticipant(Cast<APlayerController>(Offender->GetController())), EParticipantState::Informant, ERosterReason::StrikeLimit);
-	}
-	HandleInteractRequest(Offender, false);
-	// The exile beat is the owner's: bExiled rides the kill's FStrikeResult (story asn-015) and the controller shows it
-	// after the plate; a server message here would arrive in the slot, before contact.
 }
 
 void AStealthGameMode::HandleProductionExile(AStealthCharacter* Body, AController* FormerController)
@@ -989,38 +926,6 @@ void AStealthGameMode::HandleProductionExile(AStealthCharacter* Body, AControlle
 	}
 	// The respawn is Penalty's (stories nkp-009 / nkp-012): Round's OnInformantAwaitingBody(StrikeLimit) schedules the
 	// InformantRespawn item and its commit takes over an unseen crowd pawn. The exiled body stays a crowd NPC.
-}
-
-void AStealthGameMode::RespawnInformant(TWeakObjectPtr<AController> Controller, TWeakObjectPtr<APawn> ReleasedBody)
-{
-	AController* Resolved = Controller.Get();
-	if (!Resolved || !IsRoundInProgress())
-	{
-		return;
-	}
-	if (APawn* Body = ReleasedBody.Get())
-	{
-		// The released body lies until its BodyRemoval; its Roster row goes now so the participant binds its new pawn (the
-		// informant-kill RetireBinding is story psr-020).
-		URosterStore* Roster = URosterStore::Get(GetWorld());
-		if (Roster && Roster->IsMatchOpen())
-		{
-			Roster->ClearBinding(Body, EEndPlayReason::RemovedFromWorld);
-		}
-	}
-	if (APawn* Old = Resolved->GetPawn())
-	{
-		// The old body's Roster row is dropped as a teardown (the informant-kill RetireBinding is story psr-020).
-		URosterStore* Roster = URosterStore::Get(GetWorld());
-		if (Roster && Roster->IsMatchOpen())
-		{
-			Roster->ClearBinding(Old, EEndPlayReason::RemovedFromWorld);
-		}
-		Resolved->UnPossess();
-		Old->Destroy();
-	}
-	// Prototype respawn through the factory (the production takeover of an unseen crowd pawn is story SCL-028).
-	SpawnPlayerPawn(Cast<APlayerController>(Resolved));
 }
 
 // ---- Defence & objectives -------------------------------------------------------------------------
@@ -1213,8 +1118,8 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 			const AStealthCharacter* P = It->Get() ? Cast<AStealthCharacter>(It->Get()->GetPawn()) : nullptr;
 			if (PS)
 			{
-				UE_LOG(LogStealth, Log, TEXT("[Bot] #%d %s team=%d state=%s npcKills=%d pawn=%s braced=%d concealed=%d"), Index, *PS->GetPlayerName(), PS->Team,
-					PS->IsInformant() ? TEXT("Informant") : TEXT("Active"), PS->NpcKills, P ? *P->GetActorLocation().ToCompactString() : TEXT("none"),
+				UE_LOG(LogStealth, Log, TEXT("[Bot] #%d %s team=%d state=%s pawn=%s braced=%d concealed=%d"), Index, *PS->GetPlayerName(), PS->Team,
+					PS->IsInformant() ? TEXT("Informant") : TEXT("Active"), P ? *P->GetActorLocation().ToCompactString() : TEXT("none"),
 					P ? (P->GetActionState().Pose == EActionPose::Brace ? 1 : 0) : 0, P ? P->IsConcealed() : 0);
 			}
 		}

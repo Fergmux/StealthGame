@@ -58,13 +58,14 @@ private:
 };
 
 /**
- * The Roster owner-view feed as Penalty's T_due carrier adapter uses it (story nkp-011; ADR-0019 section 6 option (a)):
+ * The Roster owner-view feed (stories nkp-011, nkp-017; ADR-0019 section 6 option (a); Roster R6): UPenaltyService's
+ * OwnerView and the T_due carrier adapter's sink.
  *
  *   SetOwnerRespawnDue  URosterStore::SetOwnerRespawnDue: the C-TeamView owner part's T_due (owner audience only), the
  *                       respawn-due half of roster story psr-038 built early by nkp-011.
- *   SetOwnerTally       STAND-IN no-op: the tally half of psr-038 (SetOwnerTally) is not built; the tally still reaches
- *                       its owner through FStrikeResult.TallyAfter. This feed is therefore NOT passed to UPenaltyService as
- *                       its OwnerView (the re-push stays off until psr-038), only to the carrier adapter.
+ *   SetOwnerTally       URosterStore::SetOwnerTally: the owner part's {WrongTargetTally, LastResultSeq} re-push (the tally
+ *                       half of psr-038, built by nkp-017), written only on reclaim, rejoin and reset (PEN-R3); the per-strike
+ *                       tally still reaches its owner only through FStrikeResult.TallyAfter.
  */
 class FStealthRosterOwnerViewFeed final : public IPenaltyOwnerViewFeed
 {
@@ -95,9 +96,9 @@ private:
  *                            nkp-013). One pick per server frame (Deferred after the first). No eligible unseen pawn: None,
  *                            and the participant keeps waiting (the unseen test is never relaxed and no pawn is ever spawned,
  *                            story nkp-014). The one exception is HARNESS-ONLY: in a test-seam build whose PIE harness round
- *                            switched StealthPenaltyHarnessSeams' crowd-less respawn on, a world with NO crowd agent at all
- *                            (the 0-NPC harness rounds) gets a reserved key whose takeover spawns the participant's pawn at
- *                            its team start (AStealthGameMode::SpawnHarnessCrowdlessRespawnPawn). Off by default, compiled
+ *                            switched StealthPenaltyHarnessSeams' crowd-less respawn on, a pick that finds no eligible unseen
+ *                            crowd pawn (the 0-NPC harness rounds) gets a reserved key whose takeover spawns the participant's
+ *                            pawn at its team start (AStealthGameMode::SpawnHarnessCrowdlessRespawnPawn). Off by default, compiled
  *                            out of Shipping; story nkp-014's OneRespawnPath shows a production round never spawns.
  *   CheckTakeOverEligibility STAND-IN for Shared Character story 028's predicate: alive (no death write), not being
  *                            destroyed, unbound, crowd-driven (no PlayerController) and Crowd-Eligible.

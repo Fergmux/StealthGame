@@ -10,6 +10,11 @@
 #include "StealthPlayerController.generated.h"
 
 enum class ERoleChangeReason : uint8;
+struct FPenaltyHudFrame;
+struct FPenaltyExileCardView;
+struct FPenaltyCountdownView;
+struct FPenaltyTallyView;
+enum class EPenaltyCardPhase : uint8;
 
 class URosterTeamViewComponent;
 class UPawnCommandClient;
@@ -63,6 +68,10 @@ enum class EOwnPresentationEvent : uint8
 	HudMessage,
 	/** The round-end presentation (banner) was released. */
 	RoundEnd,
+	/** The returning countdown's shown text changed (Value: the whole seconds; Text empty when hidden; story nkp-018). */
+	Countdown,
+	/** A result plate was pushed off the Result slot by the removal card (HUD-R9; story nkp-018). */
+	PlatePreempted,
 };
 
 /** Log name of an owner presentation event. */
@@ -92,7 +101,12 @@ struct FOwnResultPlateView
 	/** The F3 timeline origin (EstimatedServerNow() at the show). */
 	double ShowServerTime = 0.0;
 	double ContactServerTime = -1.0;
+	/** EstimatedServerNow() when the removal card pushed the plate off (-1: not preempted; HUD-R9, story nkp-018). */
+	double PreemptServerTime = -1.0;
 };
+
+/** The client-local card-entrance event (HUD CR-12 a, OnRemovalCardEntered; Camera's ViewRelease(StrikeLimit) and the exile cue consume it). */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnOwnRemovalCardEntered, double /*ServerNow*/);
 
 #if !UE_BUILD_SHIPPING
 /** One possession event, recorded for spike V2 (story iif-009). Development builds only. */
@@ -190,6 +204,29 @@ public:
 	/** Owner: the Result slot's plate (the HUD draws it with FOwnResultPlateTimeline from its ShowServerTime). */
 	const FOwnResultPlateView& GetResultPlate() const { return ResultPlate; }
 
+	/**
+	 * Owner (story nkp-018): this frame's Penalty HUD elements (UI-NKP-1 tally, UI-NKP-3 exile card, UI-NKP-4 countdown) for the
+	 * Presentation overlay and the tests: the shown tally with the public L, frozen while informant; the card from its
+	 * client-local entrance; the countdown from the owner part's T_due once the neutral view is reached.
+	 */
+	FPenaltyHudFrame BuildPenaltyHudFrame(double ServerNow) const;
+
+	/** Owner: EstimatedServerNow() at the exile card's entrance (-1: none yet this life; the card shows once). */
+	double GetExileCardEnteredAt() const { return ExileCardEnteredAt; }
+
+	/** Owner: the card-entrance event (fires once per exile on the card's entrance frame; story nkp-017). */
+	FOnOwnRemovalCardEntered OnRemovalCardEntered;
+
+	/**
+	 * Owner: when the returning countdown may show (the neutral view is reached): the own fall plus NoPawnFadeSec after an
+	 * own death, the card entrance plus NoPawnFadeSec after an exile (Camera's ViewRelease fade); -1 when no own removal
+	 * is being presented (a rebuild shows it at once).
+	 */
+	double GetCountdownGateAt() const { return CountdownGateAt; }
+
+	/** Owner: the ClientCommandSeq.Seq of the last result plate shown (or of the re-push applied; HUD-R7 gate). */
+	uint32 GetLastShownTallySeq() const { return LastShownTallySeq; }
+
 	/** Owner: true while the brace square is shown (FOwnBraceIndicator on the possessed pawn, sampled each frame). */
 	bool IsBraceSquareShown() const { return bBraceSquareShown; }
 
@@ -238,6 +275,13 @@ public:
 	virtual void ClientRestart_Implementation(APawn* NewPawn) override;
 	/** Owner: an unpossession or a new pawn arrived by replication; outstanding Begins are ended first (story iif-013 d). */
 	virtual void OnRep_Pawn() override;
+	/**
+	 * ADR-0019 section 4.4 (story nkp-017): an exile's hand-over of the LIVE body to the crowd never cuts the owner's view
+	 * (on the server and on the owning client): the engine's auto-managed camera target would move the view to this
+	 * controller in SetPawn(nullptr); it is skipped then, so the view stays on the released body until Camera's ViewRelease
+	 * (or the next possession) moves it. A dead body's release (a death write) keeps the engine's behaviour.
+	 */
+	virtual void SetPawn(APawn* InPawn) override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	/** Owner: samples the result presentation every frame (story asn-024). */
@@ -311,6 +355,24 @@ protected:
 	int32 ShownWrongTargetTally = 0;
 	/** The round (FRoundPublicState::RoundIndex) of the shown tally: a new round shows 0 (HUD-R7). */
 	uint32 ShownTallyRoundIndex = 0;
+	/** The ClientCommandSeq.Seq of the last shown plate's result, or of the applied re-push (HUD-R7 gate, story nkp-017). */
+	uint32 LastShownTallySeq = 0;
+
+	/** Owner (HUD-R7, story nkp-017): applies the C-TeamView owner re-push only with no plate pending, a seq >= the last shown, and never lower. */
+	void ApplyOwnerTallyRepush(double ServerNow);
+	/** Owner: writes the shown tally to the client-local display cache (UStealthOwnerTallyCache). */
+	void StoreShownTally();
+	/** Owner: the current round's index (FRoundPublicState::RoundIndex; 0 without a game state). */
+	uint32 CurrentRoundIndex() const;
+	/** Owner: processes one batch of owner replies (the matcher; story asn-024), now. */
+	void ProcessCommandReplies(const TArray<FCommandReply>& Replies, double ServerNow);
+	/** Owner (story nkp-018): the exile card at ServerNow (UI-NKP-3). */
+	FPenaltyExileCardView BuildPenaltyCard(double ServerNow) const;
+	/** Owner (story nkp-018): the returning countdown at ServerNow given the card's phase (UI-NKP-4). */
+	FPenaltyCountdownView BuildPenaltyCountdown(double ServerNow, EPenaltyCardPhase CardPhase) const;
+	/** The tally view of the last BuildPenaltyHudFrame and its inputs (rebuilt only when they change). */
+	mutable int64 CachedTallyKey = -1;
+	mutable TSharedPtr<FPenaltyTallyView> CachedTallyView;
 
 	/** Owner (story asn-024): one frame of the result presentation at ServerNow (sample, pop, show, release). */
 	void TickOwnPresentation(double ServerNow);
@@ -341,6 +403,21 @@ protected:
 	double RoundEndSeenAt = -1.0;
 	/** The exile card's due time (-1: none). */
 	double ExileCardAt = -1.0;
+	/** The exile card's client-local entrance (-1: none; story nkp-018). */
+	double ExileCardEnteredAt = -1.0;
+	/** When the countdown may show (-1: at once; story nkp-018). */
+	double CountdownGateAt = -1.0;
+	/** The countdown's last logged seconds (-1: hidden). */
+	int32 LoggedCountdownSeconds = -1;
+#if WITH_STEALTH_TEST_SEAMS
+	/** Reply batches held by the lateness seam, with their release time (story nkp-017). */
+	struct FHeldReplyBatch
+	{
+		double ReleaseServerTime = 0.0;
+		TArray<FCommandReply> Replies;
+	};
+	TArray<FHeldReplyBatch> HeldReplyBatches;
+#endif
 	/** Server messages that arrived while an own outcome was unpresented (released at its presentation or the cap). */
 	struct FHeldMessage
 	{
@@ -400,5 +477,19 @@ namespace StealthOwnerPresentationTestSeams
 	 * processed (the prototype's on-receipt behaviour), so the timing tests are seen to fail against it. Off by default.
 	 */
 	STEALTHGAME_API void SetPresentResultsOnReceipt(bool bOn);
+
+	/**
+	 * Test seam (story nkp-017, the injected FStrikeResult RPC lateness of AC-NKP-38 / AC-NKP-46): every ClientCommandReplies
+	 * batch a local controller receives is held this long (EstimatedServerNow) before it is processed, as if the RPC
+	 * arrived that much later. 0 (the default) processes on receipt.
+	 */
+	STEALTHGAME_API void SetReplyLatenessSec(double Sec);
+
+	/**
+	 * Test seam (story nkp-017, AC-NKP-38 run 4): when on, a StrikeResult reply that carries bExiled is dropped on receipt
+	 * (the lost-RPC case); the count dropped so far is returned by GetDroppedExilingResults. Off by default.
+	 */
+	STEALTHGAME_API void SetDropExilingStrikeResults(bool bOn);
+	STEALTHGAME_API int32 GetDroppedExilingResults();
 }
 #endif

@@ -244,6 +244,20 @@ public:
 	uint8 GetStrikeCount(FParticipantId Participant) const;
 	uint8 GetWrongTargetTally(FParticipantId Participant) const;
 	int32 GetReleasedBodyCount() const { return ReleasedBodies.Num(); }
+
+#if WITH_STEALTH_TEST_SEAMS
+	/**
+	 * Test seam (story nkp-016 AC1, the live sentinel probe; never in Shipping): sets the participant's StrikeCount k and
+	 * WrongTargetTally t directly, so StealthGame.Penalty.StrikeCountNeverLeaves can serialise every client-bound carrier
+	 * under two strike-count sentinels (7 and 200, values no legal round reaches) and compare the bytes.
+	 */
+	void SetCountersForTest(FParticipantId Participant, uint8 StrikeCount, uint8 WrongTargetTally)
+	{
+		FPenaltyRecord& Record = FindOrAddRecord(Participant);
+		Record.StrikeCount = StrikeCount;
+		Record.WrongTargetTally = WrongTargetTally;
+	}
+#endif
 	/** The release server time of a released body (unset when Body was never released this round). */
 	TOptional<double> FindReleaseTime(FPenaltyPawnKey Body) const;
 

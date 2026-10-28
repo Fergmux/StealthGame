@@ -126,6 +126,13 @@ public:
 	/** The core (valid between Bind and Unbind; server-only reads for tests and dumps). */
 	FPenaltyCore* GetCore() const { return Core.Get(); }
 
+#if WITH_STEALTH_TEST_SEAMS
+	/** Test seam (story nkp-021's PIE tests; never Shipping): the server-only strike count k of Participant (0 unbound). */
+	uint8 GetStrikeCountForTest(FParticipantId Participant) const;
+	/** Test seam: the server-side wrong-target tally t of Participant (0 unbound). */
+	uint8 GetWrongTargetTallyForTest(FParticipantId Participant) const;
+#endif
+
 	/** The opaque, stable key of a pawn (its object index and serial number); unset for null. */
 	static FPenaltyPawnKey MakePawnKey(const APawn* Pawn);
 

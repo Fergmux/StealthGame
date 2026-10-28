@@ -64,4 +64,23 @@ public:
 	 */
 	UPROPERTY(Config, EditAnywhere, Category = "Exile", meta = (ClampMin = "0.0", ClampMax = "2.0", Units = "s"))
 	float ExileBeatSec = 0.8f;
+
+	/**
+	 * STAND-IN for the HUD key HudPreemptExitSec (HUD GDD F3; NPC-Kill Penalty story nkp-018): a plate still in the Result
+	 * slot is pushed off over this long when the removal card enters (HUD-R9: a push-off, never a cross-fade). Hard 0.1-0.4 s.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Exile", meta = (ClampMin = "0.1", ClampMax = "0.4", Units = "s"))
+	float HudPreemptExitSec = 0.25f;
+
+	/** STAND-IN for HudRemovalCardInSec (HUD F3): the removal card's eased entrance. Hard 0.3-1.0 s. */
+	UPROPERTY(Config, EditAnywhere, Category = "Exile", meta = (ClampMin = "0.3", ClampMax = "1.0", Units = "s"))
+	float HudRemovalCardInSec = 0.6f;
+
+	/** STAND-IN for HudRemovalCardHoldSec (HUD F3). Hard 2.0-6.0 s. */
+	UPROPERTY(Config, EditAnywhere, Category = "Exile", meta = (ClampMin = "2.0", ClampMax = "6.0", Units = "s"))
+	float HudRemovalCardHoldSec = 4.0f;
+
+	/** STAND-IN for HudRemovalCardOutSec (HUD F3): the collapse into the informant brackets. Hard 0.4-1.2 s. */
+	UPROPERTY(Config, EditAnywhere, Category = "Exile", meta = (ClampMin = "0.4", ClampMax = "1.2", Units = "s"))
+	float HudRemovalCardOutSec = 0.8f;
 };

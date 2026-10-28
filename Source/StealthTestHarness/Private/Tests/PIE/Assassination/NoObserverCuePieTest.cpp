@@ -186,6 +186,12 @@ NETWORK_TEST_CLASS(NoObserverCue, "StealthGame.Assassination.PIE")
 		{
 			return true;
 		}
+		// An awaiting informant observer's own returning countdown (NPC-Kill Penalty story nkp-018, UI-NKP-4) ticks every second
+		// from its own owner-only T_due and the clock alone: a time-driven element, never caused by the observed event.
+		if ((Entry.Source.StartsWith(TEXT("Widget.")) && Entry.Key.StartsWith(TEXT("Countdown:"))) || Entry.Source == TEXT("Hud.Countdown"))
+		{
+			return true;
+		}
 		// A HUD line that expires during the window was shown before it (not caused by the strike).
 		return Entry.Source == TEXT("Widget.-") && Entry.Key.StartsWith(TEXT("Message:"));
 	}

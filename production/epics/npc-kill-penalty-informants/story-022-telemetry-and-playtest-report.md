@@ -1,12 +1,12 @@
 # Story 022: Downtime and residual telemetry report from internal matches
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -37,7 +37,7 @@ This is the playtest calibration story: the GDD's balance questions (OQ-NKP-3: i
 *From GDD `design/gdd/npc-kill-penalty-informants.md` (AC-NKP-23) and ADR-0019 §7 / ADR-0023 (derived item marked), scoped to this story:*
 
 - [ ] **AC1** (AC-NKP-23, [Playtest/ADVISORY, report-only] downtime and residual telemetry): **GIVEN** internal matches until at least 200 informant respawns and 30 exiles are logged, or a match cap (proposed: 40 matches; the first checkpoint at about 10 matches is reported but not judged) is reached, whichever comes first **WHEN** Event Log rows are aggregated **THEN** the report gives median and p95 `T_black` against the F3 budget (≤ 30 s, ≤ 40 s), the share of Active players with tally ≥ L and no exile against F4 (to estimate `b`), the informant share of `WrongTarget` victims against 2 × q (F5), graced versus after-grace kills of released bodies, and body-blocking incidents (OQ-NKP-3; a body-blocking incident is an observer-form entry, with the form defined in the playtest protocol, for an informant or released pawn standing in a passage of one pawn width or less and obstructing a player's path), saved as a retained file under `production/qa/`.
-- [ ] **AC2** (derived, ADR-0019 §7 and ADR-0023): **GIVEN** a finished internal match **WHEN** the aggregation reads the Event Log rows through the ADR-0023 export **THEN** every report field except body-blocking incidents is computed from `PostRoundEligible` rows (`T_black` from `RespawnScheduled` and `InformantRespawn`; tally ≥ L without exile from `StrikeCounted`; the informant share from `KillResolved`; graced from `StrikeCounted.Graced`), body-blocking incidents come from the observer log or questionnaire, the report is report-only and gates nothing.
+- [x] **AC2** (derived, ADR-0019 §7 and ADR-0023): **GIVEN** a finished internal match **WHEN** the aggregation reads the Event Log rows through the ADR-0023 export **THEN** every report field except body-blocking incidents is computed from `PostRoundEligible` rows (`T_black` from `RespawnScheduled` and `InformantRespawn`; tally ≥ L without exile from `StrikeCounted`; the informant share from `KillResolved`; graced from `StrikeCounted.Graced`), body-blocking incidents come from the observer log or questionnaire, the report is report-only and gates nothing.
 
 ---
 
@@ -69,11 +69,11 @@ This story's deliverable is the tool, a dry-run on synthetic rows (so it is veri
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-27). The aggregation is Python, so its own synthetic-row self-test is the AC2 evidence (no C++ test). Path: `tools/analysis/` (where the project's analysis tools live), not `tools/telemetry/`.*
 
-- `tools/telemetry/penalty_report.py` (or the commandlet named by the ADR-0023 stories)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTelemetryReportTest.cpp` (class `FPenaltyTelemetryReportTest`, name `StealthGame.Penalty.TelemetryReport`, only if the aggregation is C++; otherwise the script's own synthetic-row self-test)
-- `production/qa/penalty-telemetry-[date].md`
+- `tools/analysis/penalty_telemetry_report.py` (`--self-test`: 37 checks)
+- `tests/fixtures/nkp/telemetry/*.json` (synthetic finished-match exports, an empty export, a zero-respawn match, two rounds with different L, a seeded non-PostRoundEligible row, an observer log)
+- `production/qa/penalty-telemetry-2026-10-27.md` (the report slot: dry run over the synthetic fixtures; the first checkpoint and the full report "not yet run")
 
 ---
 
@@ -104,7 +104,9 @@ QL-STORY-READY: ADEQUATE after the AC1 rewrite (body-blocking definition) was ap
 **Required evidence**:
 - Integration: a documented playtest: the retained report `production/qa/penalty-telemetry-[date].md` and the tool's synthetic-row self-test
 
-**Status**: [ ] Not yet created
+**Status**: AC2 created and passing 2026-10-27: `python tools/analysis/penalty_telemetry_report.py --self-test` -> `self-test: 37 checks passed (4 rounds, 3 matches, 1 skipped, 3 rows ignored)`. AC1 (advisory, report-only) recorded: the report slot `production/qa/penalty-telemetry-2026-10-27.md` waits for internal playtests (not yet run). Export gaps for ADR-0023's exporter: `InformantCountMean`, `Regions` and a joined `VictimReleased` field (documented in the tool). Evidence: `production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/evidence.md`.
+
+Run result: N/A — an offline report tool over exported Event Log rows has no in-game surface; its dry run over synthetic rows is in the report file.
 
 ---
 

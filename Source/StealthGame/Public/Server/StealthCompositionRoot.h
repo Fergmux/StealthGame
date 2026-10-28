@@ -210,7 +210,6 @@ private:
 	TSharedPtr<class FStealthPrototypeBushSpotQuery> PrototypeBushes;
 	TSharedPtr<class FStealthPrototypeCommandFallback> PrototypeFallback;
 	/** Stand-ins of the Penalty tally and the Concealment removal observer (stories asn-015, asn-019). */
-	TSharedPtr<class FStealthPrototypeStrikeTally> PrototypeTally;
 	TSharedPtr<class FStealthPrototypeBodyRemovalObserver> PrototypeBodyObserver;
 	/** NPC-Kill Penalty (stories nkp-001..005): the production service of the current server world (the encounter
 	 *  service's tally source and the exile), and its pawn-level gateway (StealthPenaltyWiring.h; nkp-021 retires the

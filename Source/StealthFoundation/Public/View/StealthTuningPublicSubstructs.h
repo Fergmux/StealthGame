@@ -106,6 +106,14 @@ struct STEALTHFOUNDATION_API FPenaltyTuning_Public
 	/** F2 D: time from the loss (kill, exile, disconnect release) to the takeover attempt; the same for every cause (PEN-R8, story nkp-009). */
 	UPROPERTY(EditAnywhere, Category = "Penalty", meta = (ClampMin = "5", ClampMax = "60", SafeMin = "10", SafeMax = "20", Latch = "Round", Owner = "Penalty", Unit = "Sec"))
 	float InformantRespawnDelaySec = 15.0f;
+
+	/** Pause between the WrongTarget plate and the exile card entrance, the exile's one clock (PEN-R16, W-NKP-5; story nkp-020 registered it, the HUD and Camera read it from story 017). */
+	UPROPERTY(EditAnywhere, Category = "Penalty", meta = (ClampMin = "0.0", ClampMax = "2.0", SafeMin = "0.75", SafeMax = "0.95", Latch = "Action", Owner = "Penalty", Unit = "Sec"))
+	float ExileBeatSec = 0.8f;
+
+	/** Fallback for the exile clock: Camera fades anyway when the card has not entered this long after the StrikeLimit state arrived (PEN-R16, W-NKP-5; story nkp-020). */
+	UPROPERTY(EditAnywhere, Category = "Penalty", meta = (ClampMin = "1.0", ClampMax = "4.0", SafeMin = "2.0", SafeMax = "2.5", Latch = "Action", Owner = "Penalty", Unit = "Sec"))
+	float ExileCardTimeoutSec = 2.0f;
 };
 
 /** Objectives Chain keys a client needs. */

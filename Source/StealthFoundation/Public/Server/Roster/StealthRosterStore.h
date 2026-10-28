@@ -172,6 +172,15 @@ public:
 	/** The owner part's T_due of Id as the push step holds it (0 = none; tests and dumps). */
 	double GetOwnerRespawnDue(FParticipantId Id) const;
 
+	/**
+	 * The owner-view feed's tally re-push (Roster R6, Penalty CR-19; the tally half of story psr-038, built by NPC-Kill Penalty
+	 * story nkp-017; Penalty's reclaim / rejoin / reset re-push is the only caller): Id's C-TeamView owner part carries
+	 * {WrongTargetTally, LastResultSeq} from the next push, owner audience only. Rejected_StaleEpoch for an ExpectedEpoch that
+	 * is not the current RoundEpoch; Rejected_NotAuthority before the match opens.
+	 *   Store->SetOwnerTally(Participant, 2, LastSeq, Store->GetEpochToken().RoundEpoch);
+	 */
+	ERosterResult SetOwnerTally(FParticipantId Id, uint8 WrongTargetTally, uint32 LastResultSeq, uint32 ExpectedEpoch);
+
 	// --- FTickableGameObject ------------------------------------------------------------------------------------------
 
 	virtual void Tick(float DeltaTime) override;

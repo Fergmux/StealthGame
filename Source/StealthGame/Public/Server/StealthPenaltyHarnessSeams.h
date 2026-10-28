@@ -20,8 +20,9 @@ class APawn;
  *    no eligible unseen crowd pawn the informant keeps waiting, whether or not the world has a crowd. The PIE harness rounds
  *    that run with NpcCount 0 (Assassination's OwnerResultShape, PossessionThroughFall, KillPlateTellsOneThing,
  *    CulledVictimOpensFalling, OneBodySequence, StrikeClipParity) have no crowd pawn to take over and still need a respawn,
- *    so they switch SetCrowdlessTeamStartRespawn on for their run: then, and only in a world with NO crowd agent at all, the
- *    gateway's pick names a reserved key and its takeover spawns the participant's pawn at its team start
+ *    so they switch SetCrowdlessTeamStartRespawn on for their run: then a pick that finds no eligible unseen crowd pawn (the
+ *    prototype's replacement NPC may exist and be seen) names a reserved key and its takeover spawns the participant's pawn
+ *    at its team start
  *    (AStealthGameMode::SpawnHarnessCrowdlessRespawnPawn). Every such spawn is recorded as a HarnessSpawn probe event.
  *
  * 2. The respawn probe (StealthGame.Penalty.PIE.OneRespawnPath): while on, every gateway call of the commit (ADR-0019

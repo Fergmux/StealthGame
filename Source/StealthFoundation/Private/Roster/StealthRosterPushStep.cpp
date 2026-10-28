@@ -25,6 +25,7 @@ void FRosterPushStep::Reset()
 	Views.Reset();
 	Reconnect.Reset();
 	OwnerRespawnDue.Reset();
+	OwnerTally.Reset();
 	OwnerDirty.Reset();
 	RetiringThisFrame.Reset();
 	RetiringClearNextFrame.Reset();
@@ -98,6 +99,7 @@ void FRosterPushStep::OnRosterEvent(const FRosterEvent& Event)
 		if (Event.Type == ERosterEventType::RosterReset)
 		{
 			OwnerRespawnDue.Reset(); // the new epoch starts with no countdown (Penalty also writes 0 before the latch)
+			OwnerTally.Reset(); // and with a 0 tally (Penalty's reset re-push writes 0 under the new epoch)
 		}
 		for (TPair<FParticipantId, FReconnectState>& Pair : Reconnect)
 		{
@@ -128,6 +130,11 @@ FTeamView FRosterPushStep::BuildView(const FParticipantRecord& Owner) const
 	{
 		View.Owner.T_due = *Due;
 	}
+	if (const TPair<uint8, uint32>* Tally = OwnerTally.Find(Owner.ParticipantId))
+	{
+		View.Owner.WrongTargetTally = Tally->Key;
+		View.Owner.LastResultSeq = Tally->Value;
+	}
 	if (Owner.Team == ERosterTeam::None)
 	{
 		return View;
@@ -149,7 +156,7 @@ FTeamView FRosterPushStep::BuildView(const FParticipantRecord& Owner) const
 		if (RetiringThisFrame.Contains(Id))
 		{
 			int64 RetireAtMs = 0;
-			if (Core.FindLatestRetiredPawn(Id, Pawn, RetireAtMs))
+			if (Core.FindLatestRemovedPawn(Id, Pawn, RetireAtMs))
 			{
 				Entry.RetireAtServerTime = static_cast<double>(RetireAtMs) / 1000.0;
 			}
@@ -236,6 +243,39 @@ ERosterResult FRosterPushStep::SetOwnerRespawnDue(FParticipantId Id, double DueS
 	}
 	OwnerDirty.Add(Id); // the owner's own view only: teammates' views carry no T_due
 	return ERosterResult::Applied;
+}
+
+ERosterResult FRosterPushStep::SetOwnerTally(FParticipantId Id, uint8 WrongTargetTally, uint32 LastResultSeq, uint32 ExpectedEpoch)
+{
+	if (ExpectedEpoch != Core.GetRoundEpoch())
+	{
+		return ERosterResult::Rejected_StaleEpoch;
+	}
+	if (Core.FindRecord(Id) == nullptr)
+	{
+		return ERosterResult::Rejected_UnknownParticipant;
+	}
+	const TPair<uint8, uint32> Value(WrongTargetTally, LastResultSeq);
+	if (GetOwnerTally(Id) == Value)
+	{
+		return ERosterResult::NoOp_Unchanged;
+	}
+	if (WrongTargetTally == 0 && LastResultSeq == 0)
+	{
+		OwnerTally.Remove(Id);
+	}
+	else
+	{
+		OwnerTally.Add(Id, Value);
+	}
+	OwnerDirty.Add(Id); // the owner's own view only: teammates' views carry no tally
+	return ERosterResult::Applied;
+}
+
+TPair<uint8, uint32> FRosterPushStep::GetOwnerTally(FParticipantId Id) const
+{
+	const TPair<uint8, uint32>* Tally = OwnerTally.Find(Id);
+	return Tally != nullptr ? *Tally : TPair<uint8, uint32>(0, 0);
 }
 
 double FRosterPushStep::GetOwnerRespawnDue(FParticipantId Id) const

@@ -1,12 +1,12 @@
 # Story 017: Owner-side exile, informant-killed and tally timing
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Blocked — BLOCKED on the Camera epic for the clauses Camera owns: `ViewRelease(StrikeLimit)` from the card-entrance event, the `ExileCardTimeoutSec` fallback fade (AC1 run 4) and the killed informant's NoPawnFadeSec fade (AC2) (camera-system stories 017 and 018 are not built; the card-entrance event `OnRemovalCardEntered` they consume now exists). Every HUD / Penalty clause passes: AC1 runs 1-3 and 4's held view, AC2 (view on the falling body, no card, countdown after the fade time), AC3.
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -38,7 +38,7 @@ These are the three timing contracts of the owner's own view: the exile beat (pl
 
 - [ ] **AC1** (AC-NKP-38, [I][PIE-3][Dep:Camera CR-10] `StealthGame.Penalty.PIE.ExileBeatTiming`): **GIVEN** an exiling kill with injected `FStrikeResult` RPC lateness of +0, +300 and +900 ms (three runs), and a fourth run where the RPC is dropped **WHEN** the owner client's presentation timestamps are logged **THEN** in the first three runs the plate appears at its show time `s` (HUD F2), the card enters at `s + ExileBeatSec` (± 1 frame), the view stays on the released body without control until the card-entrance event, `ViewRelease` fires from that event, and no frame is black before the card has entered; in the fourth run the camera fades at `ExileCardTimeoutSec` after the owner's `StrikeLimit` state arrives (± 1 frame) (PEN-R16).
 - [ ] **AC2** (AC-NKP-44, [I][PIE-3][Dep:Camera CR-18][Dep:HUD CR-12] `StealthGame.Penalty.PIE.InformantKilledView`): **GIVEN** an embodied informant that is killed **WHEN** its own client's presentation timestamps are logged **THEN** the view stays on its falling body without control, fades over `NoPawnFadeSec` starting at `DeathServerTime + DeathFallSec` (± 1 frame), no frame is black before that, no removal card and no exile cue are shown, and the countdown appears only after the fade completes (PEN-R16).
-- [ ] **AC3** (AC-NKP-46, [I][PIE-3][the never-before-plate and never-decreasing checks also apply to the client-local display cache] `StealthGame.Penalty.PIE.TallyRepushGate`): **GIVEN** an attacker whose `FStrikeResult` RPC is delayed by 500 ms while a reclaim re-push with an older `LastResultSeq` arrives first **WHEN** the HUD tally is sampled every frame **THEN** it never changes before the plate's show time, never decreases within the round, and equals `TallyAfter` from the plate's show time on (PEN-R3, PEN-R15, CR-12).
+- [x] **AC3** (AC-NKP-46, [I][PIE-3][the never-before-plate and never-decreasing checks also apply to the client-local display cache] `StealthGame.Penalty.PIE.TallyRepushGate`): **GIVEN** an attacker whose `FStrikeResult` RPC is delayed by 500 ms while a reclaim re-push with an older `LastResultSeq` arrives first **WHEN** the HUD tally is sampled every frame **THEN** it never changes before the plate's show time, never decreases within the round, and equals `TallyAfter` from the plate's show time on (PEN-R3, PEN-R15, CR-12).
 
 ---
 
@@ -66,12 +66,17 @@ Cross-epic dependencies are real: the card-entrance event and ViewRelease reason
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-27). Tests under `Source/StealthTestHarness/Private/Tests/PIE/Penalty/`.*
 
-- `Source/StealthTestHarness/Private/Penalty/ExileBeatTimingTest.cpp` (CQTest, `StealthGame.Penalty.PIE.ExileBeatTiming.*`)
-- `Source/StealthTestHarness/Private/Penalty/InformantKilledViewTest.cpp` (CQTest, `StealthGame.Penalty.PIE.InformantKilledView.*`)
-- `Source/StealthTestHarness/Private/Penalty/TallyRepushGateTest.cpp` (CQTest, `StealthGame.Penalty.PIE.TallyRepushGate.*`)
-- `Source/StealthGameplay/Private/Features/Penalty/StealthPenaltyService.cpp` (only for defects the tests expose in the data Penalty supplies)
+- `Source/StealthGame/Public/StealthPlayerController.h`, `Source/StealthGame/Private/StealthPlayerController.cpp` (the reply lateness / drop test seams; the card-entrance event `OnRemovalCardEntered`; no removal card for a killed informant; the HUD-R7 re-push gate `ApplyOwnerTallyRepush` and the never-lower tally; `SetPawn` keeps the view on a LIVE released body (the exile hand-over), ADR-0019 section 4.4: defect found by AC1; a first version that also held dead bodies raised an intermittent MotionWarping NIL-matrix ensure, fixed)
+- `Source/StealthGame/Public/View/StealthOwnerTallyCache.h` (the client-local display cache keyed by round)
+- `Source/StealthFoundation/Private/Roster/StealthRosterPushStep.h/.cpp`, `Source/StealthFoundation/Public/Server/Roster/StealthRosterStore.h`, `Source/StealthFoundation/Private/Roster/StealthRosterStore.cpp` (the tally half of roster psr-038: `SetOwnerTally`)
+- `Source/StealthGame/Private/Composition/StealthPenaltyWiring.h/.cpp`, `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp` (the owner-view feed forwards SetOwnerTally and is UPenaltyService's OwnerView)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/ExileBeatTimingPieTest.cpp` (`StealthGame.Penalty.PIE.ExileBeatTiming.{OnTime,Late300Ms,Late900Ms}CardEntersAtPlatePlusBeat`, `.DroppedResultHoldsTheViewWithoutACard`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/InformantKilledViewPieTest.cpp` (`StealthGame.Penalty.PIE.InformantKilledView.NoCardViewOnFallingBodyCountdownAfterFade`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/TallyRepushGatePieTest.cpp` (`StealthGame.Penalty.PIE.TallyRepushGate.OlderRepushFirstNeverMovesTheTallyBeforeThePlate`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/PenaltyPresentationPieSupport.h` (shared helpers)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterOwnerTallyAndExileRetireTest.cpp` (`StealthGame.Roster.OwnerTallyOwnerOnly`)
 
 ---
 
@@ -107,7 +112,9 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Integration: the three CQTest PIE tests under `Source/StealthTestHarness/Private/Penalty/` OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: Created and passing 2026-10-27: `StealthGame.Penalty.PIE.ExileBeatTiming.*` (4), `StealthGame.Penalty.PIE.InformantKilledView.*`, `StealthGame.Penalty.PIE.TallyRepushGate.*`, `StealthGame.Roster.OwnerTallyOwnerOnly`. Camera-owned assertions logged as PENDING in the tests. Evidence: `production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/evidence.md`.
+
+Run result: OBSERVED — the exile beat (plate, held view on the released body, card, collapse) and a killed informant's falling body with no card were seen on the owner's PIE window (`nkp-20-*.png`, `nkp-44-*.png` in the evidence folder).
 
 ---
 

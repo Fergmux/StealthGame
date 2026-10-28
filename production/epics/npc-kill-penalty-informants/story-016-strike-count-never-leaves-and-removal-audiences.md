@@ -1,12 +1,12 @@
 # Story 016: StrikeCount never leaves the server and removal audiences match an NPC kill
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Blocked — BLOCKED: AC2 (the two-run differential wire capture) is DEFERRED until the ADR-0008 section 6 capture harness can diff two deterministic runs; AC3's opponent clause is blocked on information-visibility-policy story 018 (the released pawn's `Actor.PlayerState` changes on the opponent, the engine-default identity leak story nkp-014 measured too) and its cadence half on the multi-process raw-bunch capture. AC1 passes; AC3's owner and ally clauses pass.
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,7 +36,7 @@
 
 *From GDD `design/gdd/npc-kill-penalty-informants.md` (AC-NKP-04 split into two criteria at QL-STORY-READY, AC-NKP-21), scoped to this story:*
 
-- [ ] **AC1** (AC-NKP-04 part (a), [L] `StealthGame.Penalty.StrikeCountNeverLeaves`): **GIVEN** the reflected replicated properties and RPC signatures of every class **WHEN** they are scanned (with `StrikeCount` set to a sentinel value in a live probe and the serialized `FStrikeResult`, `FDefenceResult`, owner part and public carriers scanned for it) **THEN** no property or parameter carries `StrikeCount`, and only `TallyAfter` (in `FStrikeResult`) and the owner C-TeamView tally exist, both Owner-only (PEN-R2, CR-1).
+- [x] **AC1** (AC-NKP-04 part (a), [L] `StealthGame.Penalty.StrikeCountNeverLeaves`): **GIVEN** the reflected replicated properties and RPC signatures of every class **WHEN** they are scanned (with `StrikeCount` set to a sentinel value in a live probe and the serialized `FStrikeResult`, `FDefenceResult`, owner part and public carriers scanned for it) **THEN** no property or parameter carries `StrikeCount`, and only `TallyAfter` (in `FStrikeResult`) and the owner C-TeamView tally exist, both Owner-only (PEN-R2, CR-1).
 - [ ] **AC2** (AC-NKP-04 part (b), [I] `StealthGame.Penalty.PIE.StrikeCountDifferential`, needs the wire-capture harness): **GIVEN** a differential wire capture of every client connection over two scripted 3v3 rounds with identical seeds that differ only in the attacker's pre-set `StrikeCount` (for example run A: two informant kills, k = 0, t = 2; run B: two NPC kills, k = 2, t = 2; L >= k + 2 so the identical kill sequence that follows, an NPC kill, an informant kill and a graced kill, does not exile in run B) **WHEN** the captures are diffed **THEN** no connection receives any byte that differs between the two rounds apart from normalised timestamps, until an exile actually fires (PEN-R2, CR-1).
 - [ ] **AC3** (AC-NKP-21, [I][PIE-3] `StealthGame.Penalty.PIE.RemovalAudiences`): **GIVEN** an exile **WHEN** every client's received data are logged **THEN** only the exiled player's connection receives `bExiled`; allies receive only the Roster Team-audience state change, identical in shape to an `Assassinated` removal; each opponent's received property set for the released pawn has the same classes, replication conditions and update cadence as in an NPC-kill run by the same attacker, and only pawn movement differs (PEN-R15; the witness-side residual PEN-R14.2 is accepted, not tested away).
 
@@ -68,11 +68,13 @@ Failures that originate in carriers owned by other epics (information-visibility
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-27; the batch commit of stories 016-018 and 020-022). The PIE tests live under `Source/StealthTestHarness/Private/Tests/PIE/Penalty/` (the harness test root used by stories 014-015), not `Private/Penalty/`; AC2's test was not written (Deferred).*
 
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyStrikeCountNeverLeavesTest.cpp` (class `FPenaltyStrikeCountNeverLeavesTest`, name `StealthGame.Penalty.StrikeCountNeverLeaves`: the reflection scan)
-- `Source/StealthTestHarness/Private/Penalty/StrikeCountDifferentialTest.cpp` (CQTest, `StealthGame.Penalty.PIE.StrikeCountDifferential.*`)
-- `Source/StealthTestHarness/Private/Penalty/RemovalAudiencesTest.cpp` (CQTest, `StealthGame.Penalty.PIE.RemovalAudiences.*`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyStrikeCountNeverLeavesTest.cpp` (class `FPenaltyStrikeCountNeverLeavesTest`, `StealthGame.Penalty.StrikeCountNeverLeaves`: reflection over the four runtime packages, the owner-only check of every tally root, the two-sentinel live probe, a seeded negative control)
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.h` (`SetCountersForTest`, test seam)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/RemovalAudiencesPieTest.cpp` (CQTest, `StealthGame.Penalty.PIE.RemovalAudiences.ExileReachesEachAudienceAsAnNpcKillOrAnAssassination`, 2v2)
+- `Source/StealthFoundation/Public/Server/Roster/StealthRosterCore.h`, `Source/StealthFoundation/Private/Roster/StealthRosterCore.cpp`, `Source/StealthFoundation/Private/Roster/StealthRosterPushStep.cpp` (defect found by AC3, routed and fixed here: an exile's ally update lacked the retiring update an Assassinated removal has; `FindLatestRemovedPawn` gives the StrikeLimit release the same RetireAtServerTime update, Roster R8 / AC-PSR-57)
+- `Source/StealthFoundation/Private/Tests/Roster/StealthRosterOwnerTallyAndExileRetireTest.cpp` (`StealthGame.Roster.ExileRetiringUpdateMatchesAssassinated`)
 
 ---
 
@@ -108,7 +110,9 @@ QL-STORY-READY: ADEQUATE (AC2 DEFERRED until the wire-capture harness exists)
 **Required evidence**:
 - Integration: the CQTest PIE tests under `Source/StealthTestHarness/Private/Penalty/` and the reflection test under `Source/StealthGameplay/Private/Tests/Penalty/` OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: AC1 created and passing 2026-10-27: `StealthGame.Penalty.StrikeCountNeverLeaves`. AC3 partial: `StealthGame.Penalty.PIE.RemovalAudiences.ExileReachesEachAudienceAsAnNpcKillOrAnAssassination` passes (owner-only bExiled, ally shape equal to an Assassinated removal, same actor / channel / NetGUID / component classes, property changes equal to an NPC kill apart from the logged IVP-018 field `Actor.PlayerState`); AC2 DEFERRED (no two-run capture harness). Evidence: `production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/evidence.md`.
+
+Run result: N/A — the strike count's absence from the wire has no screen of its own; the removal audiences were measured in 4-player PIE by the test above and the exile was observed on screen for stories 018 and 019 (same evidence folder).
 
 ---
 

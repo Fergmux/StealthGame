@@ -125,6 +125,12 @@ namespace StealthTuningPendingOwnerKeys
 	inline constexpr double NoPawnFadeSec = 0.5;
 	inline constexpr double EmergenceRetrySec = 1.0;
 	inline constexpr double InformantRespawnPathCm = 4500.0;
+	/**
+	 * The Level Socket Contract's RespawnStarvationSec (default 10, hard 5-30), read by Penalty's W-NKP-2 until the LSC epic
+	 * registers it as a schema row (story nkp-020; the TD-TDC-I3 pattern). When the owner registers the key,
+	 * FPenaltyInvariantInputs::FromValues reads it from the value set and the constant is deleted.
+	 */
+	inline constexpr double RespawnStarvationSec = 10.0;
 }
 
 /**

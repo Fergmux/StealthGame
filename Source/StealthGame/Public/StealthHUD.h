@@ -8,6 +8,7 @@ class AStealthCharacter;
 class AStealthGameState;
 class AStealthPlayerController;
 class AStealthPlayerState;
+class SWidget;
 
 /**
  * Prototype HUD drawn on the canvas (a UMG version is a later UI story).
@@ -22,6 +23,9 @@ class STEALTHGAME_API AStealthHUD : public AHUD
 
 public:
 	virtual void DrawHUD() override;
+	/** Owner: adds the Penalty HUD overlay (story nkp-018: tally, returning countdown, exile card) to this player's viewport. */
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/**
 	 * The owner HUD's element list for PC's current state (story asn-024 AC3 / story asn-017): one entry per element
@@ -54,4 +58,7 @@ protected:
 	bool ProjectToScreen(const FVector& World, FVector2D& OutScreen) const;
 
 	void DrawShadowedText(const FString& Text, float X, float Y, const FLinearColor& Color, float Scale = 1.f, bool bCentered = false);
+
+	/** The minimal production Penalty overlay (StealthPresentation MakePenaltyHudOverlay), while it is in the viewport. */
+	TSharedPtr<SWidget> PenaltyOverlay;
 };

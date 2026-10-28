@@ -1,0 +1,114 @@
+{
+ "SchemaVersion": 1,
+ "MatchId": "match-a",
+ "RoundIndex": 2,
+ "EndReason": "Elimination",
+ "StrikeLimit": 2,
+ "NpcCount": 50,
+ "InformantCountMean": 4.0,
+ "Regions": {
+  "RespawnRegion": {
+   "Informants": 2,
+   "Pawns": 8
+  },
+  "CityWide": {
+   "Informants": 4,
+   "Pawns": 54
+  }
+ },
+ "EventLogRows": [
+  {
+   "ServerTime": 10,
+   "Type": "StrikeCounted",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 1,
+   "Graced": false
+  },
+  {
+   "ServerTime": 20,
+   "Type": "StrikeCounted",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "StrikeAfter": 2,
+   "TallyAfter": 2,
+   "Graced": false
+  },
+  {
+   "ServerTime": 20,
+   "Type": "StrikeLimit",
+   "Participant": 1,
+   "PostRoundEligible": true
+  },
+  {
+   "ServerTime": 12,
+   "Type": "StrikeCounted",
+   "Participant": 2,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 1,
+   "Graced": false
+  },
+  {
+   "ServerTime": 22,
+   "Type": "StrikeCounted",
+   "Participant": 2,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 2,
+   "Graced": true,
+   "VictimReleased": true
+  },
+  {
+   "ServerTime": 15,
+   "Type": "StrikeCounted",
+   "Participant": 3,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 1,
+   "Graced": false
+  },
+  {
+   "ServerTime": 20,
+   "Type": "RespawnScheduled",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Cause": "StrikeLimit",
+   "LostServerTime": 20.0,
+   "DueServerTime": 35.0
+  },
+  {
+   "ServerTime": 35.25,
+   "Type": "InformantRespawn",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "PickLatencySec": 0.25,
+   "WideningLevel": 0
+  },
+  {
+   "ServerTime": 11,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "WrongTarget",
+   "VictimKind": "Informant"
+  },
+  {
+   "ServerTime": 21,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "WrongTarget",
+   "VictimKind": "Npc"
+  },
+  {
+   "ServerTime": 31,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "WrongTarget",
+   "VictimKind": "Npc"
+  }
+ ]
+}

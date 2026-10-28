@@ -1,9 +1,5 @@
 #include "StealthRules.h"
 
-bool FStealthRules::ShouldRemoveForNpcKills(int32 NpcKillCount, int32 NpcKillLimit)
-{
-	return NpcKillLimit > 0 && NpcKillCount >= NpcKillLimit;
-}
 
 bool FStealthRules::CanCompleteObjective(uint8 Team, int32 CurrentStage, uint8 ObjectiveTeam, int32 ObjectiveStage)
 {

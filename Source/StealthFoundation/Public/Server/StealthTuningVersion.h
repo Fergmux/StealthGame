@@ -19,7 +19,7 @@
  * increase TuningSchemaVersion by one and APPEND {new version, new fingerprint} below. Never edit or
  * remove an old entry (append-only; removal is not detected by the test, a known limit).
  */
-inline constexpr int32 TuningSchemaVersion = 6;
+inline constexpr int32 TuningSchemaVersion = 7;
 
 /** One bumped schema version and the fingerprint it was bumped for. */
 struct FTuningSchemaHistoryEntry
@@ -36,4 +36,5 @@ inline constexpr FTuningSchemaHistoryEntry TuningSchemaHistory[] = {
 	{ 4, 0x1aa42c9205920326ull }, // 2026-10-27, story asn-001: the 13 new Assassination keys (16 with the three canonical)
 	{ 5, 0xf5fec5bd72bd634eull }, // 2026-10-27, story nkp-002: Penalty's ServerOnly StrikeOutReleaseGraceSec
 	{ 6, 0x020f2efe6081516bull }, // 2026-10-27, story nkp-009: Penalty's public InformantRespawnDelaySec (F2 D)
+	{ 7, 0x3a54113f358da039ull }, // 2026-10-27, story nkp-020: Penalty's public ExileBeatSec and ExileCardTimeoutSec (W-NKP-5)
 };

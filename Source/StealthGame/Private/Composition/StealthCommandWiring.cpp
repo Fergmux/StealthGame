@@ -170,23 +170,6 @@ EResolveResult FStealthPrototypeCommandFallback::Resolve(const FQueueItem& Item,
 	}
 }
 
-// ---- FStealthPrototypeStrikeTally (stand-in until the Penalty epic) ------------------------------------------------
-
-FStrikeTally FStealthPrototypeStrikeTally::GetTallyForResult(const APawn* Attacker, EStrikeResult Result)
-{
-	const AStealthCharacter* Character = Cast<AStealthCharacter>(Attacker);
-	AStealthPlayerState* State = Character != nullptr ? Character->GetStealthPlayerState() : nullptr;
-	FStrikeTally Tally;
-	if (State == nullptr)
-	{
-		return Tally;
-	}
-	Tally.TallyAfter = static_cast<uint8>(FMath::Clamp(State->WrongTargetTally, 0, 255));
-	Tally.bExiled = State->bExiledByPendingResult;
-	State->bExiledByPendingResult = false;
-	return Tally;
-}
-
 // ---- FStealthPrototypeBodyRemovalObserver (stand-in until Concealment) --------------------------------------------
 
 void FStealthPrototypeBodyRemovalObserver::OnBodyRemovalCommitted(APawn* Body)

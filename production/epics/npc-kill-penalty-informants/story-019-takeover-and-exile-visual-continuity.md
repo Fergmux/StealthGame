@@ -1,12 +1,12 @@
 # Story 019: Takeover return, exile body and exiled owner's view stay visually continuous
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Blocked — BLOCKED: the art-lead sign-off is PENDING (no human art lead in the unattended run); AC1's informant grade and fade-in are Camera's (camera-system stories 017 and 019, not built); AC2's opponent per-frame continuity log was not captured; AC3's per-frame bounds were not measured. Evidence captured: `production/qa/evidence/penalty-visual-evidence.md`.
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -69,11 +69,10 @@ The `[Provisional: spikes S1/S14]` tag on AC2 and AC3 is read as "re-baseline on
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-27). No production source was planned; the one defect found while observing (the owner's view jumped off the released body when the pawn replicated null) was fixed in `AStealthPlayerController::SetPawn` under story 017.*
 
-- `production/qa/evidence/nkp-12-*.png`, `nkp-36-*.png`, `nkp-43-*.png`
-- `production/qa/evidence/penalty-visual-evidence.md` (sign-off)
-- No production source is planned: defects found are routed to the owning epic (shared-character-locomotion, camera-system, crowd-npc-behaviour)
+- `production/qa/evidence/penalty-visual-evidence.md` (sign-off: PENDING)
+- `production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/nkp-12-*.png`, `nkp-43-*.png`
 
 ---
 
@@ -106,7 +105,9 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Visual/Feel: a retained screenshot in `production/qa/evidence/` (`nkp-12-*`, `nkp-36-*`, `nkp-43-*`) + sign-off in `production/qa/evidence/penalty-visual-evidence.md` (art-lead sign-off)
 
-**Status**: [ ] Not yet created
+**Status**: Partial 2026-10-27: `nkp-12-*` (cut to the new body, ally marker) and `nkp-43-*` (the owner's held view on the released body) retained; `nkp-36-*` not captured; art-lead sign-off PENDING. Evidence: `production/qa/evidence/penalty-visual-evidence.md`.
+
+Run result: OBSERVED — the takeover cut and the exiled owner's held view in 3-player PIE (`production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/nkp-12-2-after-cut-new-body.png`, `nkp-43-1-released-body-held-view.png`); the feel half (blend, snaps) is not shown by stills and awaits the art lead.
 
 ---
 

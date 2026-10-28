@@ -114,19 +114,6 @@ private:
 };
 
 /**
- * STAND-IN (NPC-Kill Penalty epic not built; its IStrikeTallySource replaces it; story asn-015): the attacker's
- * AStealthPlayerState counters the prototype game mode keeps in the OnPawnKilled fan-out (AStealthGameMode::
- * HandleEncounterPawnKilled): WrongTargetTally (+1 for every WrongTarget kill, an NPC and an informant alike, PEN-R14)
- * and the exile flag set when an NPC kill reached NpcKillLimit in the same slot (consumed here, so bExiled is true only on
- * the triggering kill's result). An NPC attacker (no player state): {0, false}.
- */
-class FStealthPrototypeStrikeTally final : public IStrikeTallySource
-{
-public:
-	virtual FStrikeTally GetTallyForResult(const APawn* Attacker, EStrikeResult Result) override;
-};
-
-/**
  * STAND-IN (Concealment epic not built; its FBushRuntime observer replaces it; story asn-019): the prototype keeps no
  * killed-concealed owner / team flags, so a committed body removal changes nothing here (it is logged at Verbose).
  */

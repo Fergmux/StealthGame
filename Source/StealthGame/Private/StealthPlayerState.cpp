@@ -15,7 +15,7 @@ void AStealthPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME(AStealthPlayerState, Team);
 	DOREPLIFETIME(AStealthPlayerState, LifeState);
-	// NpcKills is server only (story asn-015); the defence stamp is the pawn's server-only UDefenceStateComponent (asn-016).
+	// No strike count or tally here (UPenaltyService, server only); the defence stamp is the pawn's UDefenceStateComponent (asn-016).
 
 #if !UE_BUILD_SHIPPING
 	StealthSpike::ApplyPlayerStateTrims(StaticClass(), OutLifetimeProps); // SPIKE: no-op unless stealth.Spike.IdentityTrims is set
@@ -31,8 +31,5 @@ void AStealthPlayerState::Reset()
 void AStealthPlayerState::ResetForRound()
 {
 	LifeState = EStealthLifeState::Active;
-	NpcKills = 0;
-	WrongTargetTally = 0;
-	bExiledByPendingResult = false;
 	LastPingTime = -1000.0;
 }

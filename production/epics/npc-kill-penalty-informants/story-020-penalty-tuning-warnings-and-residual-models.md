@@ -1,12 +1,12 @@
 # Story 020: Penalty tuning warnings and the residual and hunt model checks
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Config/Data
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,8 +36,8 @@ TDC owns the registry and the validator; this story proves the Penalty-specific 
 
 *From GDD `design/gdd/npc-kill-penalty-informants.md` (AC-NKP-18, AC-NKP-35), scoped to this story:*
 
-- [ ] **AC1** (AC-NKP-18, [Config/ADVISORY][Dep:TDC CR-11] `StealthGame.Tuning.StrikeLimitOneWarning`): **GIVEN** presets with `NpcKillStrikeLimit` 1 **WHEN** validated **THEN** a non-selectable test preset loads with a warning and a host-selectable preset or `Default` is rejected; **AND** `InformantRespawnDelaySec` 25 with `RespawnStarvationSec` 10 logs the downtime warning; **AND** `StrikeOutReleaseGraceSec` 1.5 with `AttackAttemptLockoutSec` 1.75 logs the grace warning; **AND** `InformantRespawnDelaySec` 5 with `DeathFallSec` 2.0 and `NoPawnFadeSec` 1.5 (the hard maxima, floor 4.7 s) loads with no floor warning, while the TDC predicate `1.2 + DeathFallSec + NoPawnFadeSec ≤ InformantRespawnDelaySec` called directly with the injected out-of-range value D = 4.0 returns the warning (the guard cannot fire through the clamped hard ranges); **AND** `ExileCardTimeoutSec` 1.0 with `ExileBeatSec` 0.8 logs the card-timeout warning (Penalty CR-11).
-- [ ] **AC2** (AC-NKP-35, [Config/ADVISORY] residual and hunt model, F4 and F5): **GIVEN** the formulas **WHEN** evaluated from unrounded inputs **THEN** `P_res` = 0.111 (I = 2, b = 1), 0.288 (I = 2, b = 3), 0.476 (I = 4, b = 3) and 0.659 (L = 5, I = 4, b = 3), and with `c_N` 0.6, `c_I` 0.3, D 15, `L_pick` 0.5, `d_back` 6,000 cm, `T_deny` = 58.36 s and R = 29.18 s per strike, each ± 0.01; AC-NKP-23 (story 022) calibrates `b`. *(The GDD formula tables also use `NpcCount` 50 and walk speed 140 cm/s: list them as inputs in the test.)*
+- [x] **AC1** (AC-NKP-18, [Config/ADVISORY][Dep:TDC CR-11] `StealthGame.Tuning.StrikeLimitOneWarning`): **GIVEN** presets with `NpcKillStrikeLimit` 1 **WHEN** validated **THEN** a non-selectable test preset loads with a warning and a host-selectable preset or `Default` is rejected; **AND** `InformantRespawnDelaySec` 25 with `RespawnStarvationSec` 10 logs the downtime warning; **AND** `StrikeOutReleaseGraceSec` 1.5 with `AttackAttemptLockoutSec` 1.75 logs the grace warning; **AND** `InformantRespawnDelaySec` 5 with `DeathFallSec` 2.0 and `NoPawnFadeSec` 1.5 (the hard maxima, floor 4.7 s) loads with no floor warning, while the TDC predicate `1.2 + DeathFallSec + NoPawnFadeSec ≤ InformantRespawnDelaySec` called directly with the injected out-of-range value D = 4.0 returns the warning (the guard cannot fire through the clamped hard ranges); **AND** `ExileCardTimeoutSec` 1.0 with `ExileBeatSec` 0.8 logs the card-timeout warning (Penalty CR-11).
+- [x] **AC2** (AC-NKP-35, [Config/ADVISORY] residual and hunt model, F4 and F5): **GIVEN** the formulas **WHEN** evaluated from unrounded inputs **THEN** `P_res` = 0.111 (I = 2, b = 1), 0.288 (I = 2, b = 3), 0.476 (I = 4, b = 3) and 0.659 (L = 5, I = 4, b = 3), and with `c_N` 0.6, `c_I` 0.3, D 15, `L_pick` 0.5, `d_back` 6,000 cm, `T_deny` = 58.36 s and R = 29.18 s per strike, each ± 0.01; AC-NKP-23 (story 022) calibrates `b`. *(The GDD formula tables also use `NpcCount` 50 and walk speed 140 cm/s: list them as inputs in the test.)*
 
 ---
 
@@ -67,12 +67,15 @@ Smoke evidence: a `production/qa/smoke-[date].md` entry with the test names and 
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-27). Test presets are built in code through a test-local preset source and the real pipeline (the project has no checked-in test preset data).*
 
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTuningWarningsTest.cpp` (class `FPenaltyTuningWarningsTest`, name `StealthGame.Tuning.StrikeLimitOneWarning`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyResidualHuntModelTest.cpp` (class `FPenaltyResidualHuntModelTest`, name `StealthGame.Tuning.ResidualHuntModel`)
-- Test preset data assets under the project's test-preset folder (authored through the tuning pipeline; no `Content/*.uasset` edits are made by this story's authors outside the editor workflow)
-- `production/qa/smoke-[date].md`
+- `Source/StealthFoundation/Private/Tuning/PenaltyInvariants.cpp`, `Source/StealthFoundation/Public/Server/StealthPenaltyInvariants.h` (I-NKP-1, W-NKP-2..5; the W-NKP-4 floor predicate as a pure function)
+- `Source/StealthFoundation/Private/Tuning/StealthTuningInvariants.cpp` (the five rows registered, owner Penalty)
+- `Source/StealthFoundation/Public/Server/StealthTuningInvariants.h` (pending-owner `RespawnStarvationSec` 10)
+- `Source/StealthFoundation/Public/View/StealthTuningPublicSubstructs.h`, `Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl`, `Source/StealthFoundation/Public/Server/StealthTuningVersion.h`, `Source/StealthFoundation/Public/Server/Testing/StealthPenaltyTuningKnobs.h` (ExileBeatSec and ExileCardTimeoutSec registered; TuningSchemaVersion 7; `Stealth.Tuning.SchemaGen` reports UNCHANGED)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyTuningWarningsTest.cpp` (`StealthGame.Tuning.StrikeLimitOneWarning`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyResidualHuntModelTest.cpp` (`StealthGame.Tuning.ResidualHuntModel`)
+- `production/qa/smoke-2026-10-27-penalty-tuning.md`
 
 ---
 
@@ -103,7 +106,9 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Config/Data: smoke check pass (`production/qa/smoke-*.md`)
 
-**Status**: [ ] Not yet created
+**Status**: Created and passing 2026-10-27 (smoke `production/qa/smoke-2026-10-27-penalty-tuning.md`): `StealthGame.Tuning.StrikeLimitOneWarning`, `StealthGame.Tuning.ResidualHuntModel`. Evidence: `production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/evidence.md`.
+
+Run result: N/A — tuning validation warnings and an offline balance model have no in-game surface (the warnings are log lines at preset load, captured by the test).
 
 ---
 

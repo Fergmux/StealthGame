@@ -1,0 +1,10 @@
+{
+ "SchemaVersion": 1,
+ "MatchId": "match-c",
+ "RoundIndex": 1,
+ "EndReason": "Aborted",
+ "StrikeLimit": 3,
+ "NpcCount": 50,
+ "InformantCountMean": 0.0,
+ "EventLogRows": []
+}

@@ -4,19 +4,16 @@
 #include "StealthTypes.h"
 
 /**
- * Pure, engine-independent PROTOTYPE game rules still used until their epics retire them (NPC-kill removal: Penalty;
- * objective stages and the elimination winner: Objectives and Round; team choice and the run threshold: Session and
- * SCL), unit-tested without a world in Private/Tests/StealthRulesTests.cpp. The assassination and defence rules were
- * retired by story asn-027: they are re-expressed on Assassination's production cores (FAttackResolverCore,
- * FDefenceStateCore) and their reference tests ported to StealthGame.Assassination.PrototypeParity.
+ * Pure, engine-independent PROTOTYPE game rules still used until their epics retire them (objective stages and the
+ * elimination winner: Objectives and Round; team choice and the run threshold: Session and SCL), unit-tested without a
+ * world in Private/Tests/StealthRulesTests.cpp. The assassination and defence rules were retired by story asn-027 (ported
+ * to StealthGame.Assassination.PrototypeParity); the NPC-kill removal rule by story nkp-021 (the production FPenaltyCore
+ * strike rule, StealthGame.Penalty.StrikeRuleMatrix / ExileOnLthNpcKill and StealthGame.Penalty.PIE.PrototypeParityExile).
  * Source of the rules: GAME_BUILD_HANDOFF.md "Confirmed game rules" and the user's decisions recorded in
  * production/session-state/active.md (2026-10-24).
  */
 struct STEALTHGAME_API FStealthRules
 {
-	/** True when this NPC-kill count removes the player (removal ON the limit-th kill). */
-	static bool ShouldRemoveForNpcKills(int32 NpcKillCount, int32 NpcKillLimit);
-
 	/** Whether a team at CurrentStage may complete an objective of ObjectiveStage owned by ObjectiveTeam. */
 	static bool CanCompleteObjective(uint8 Team, int32 CurrentStage, uint8 ObjectiveTeam, int32 ObjectiveStage);
 

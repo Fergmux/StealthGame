@@ -1,0 +1,36 @@
+{
+ "SchemaVersion": 1,
+ "MatchId": "match-b",
+ "RoundIndex": 1,
+ "EndReason": "ObjectiveWin",
+ "StrikeLimit": 3,
+ "NpcCount": 50,
+ "InformantCountMean": 0.0,
+ "EventLogRows": [
+  {
+   "ServerTime": 10,
+   "Type": "StrikeCounted",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 1,
+   "Graced": false
+  },
+  {
+   "ServerTime": 11,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "WrongTarget",
+   "VictimKind": "Npc"
+  },
+  {
+   "ServerTime": 50,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "ParticipantKilled",
+   "VictimKind": "Player"
+  }
+ ]
+}

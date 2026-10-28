@@ -526,6 +526,15 @@ public:
 	 */
 	bool FindLatestRetiredPawn(FParticipantId Id, FRosterPawnHandle& OutPawn, int64& OutRetireAtServerTimeMs) const;
 
+	/**
+	 * The pawn Id's latest removal left behind, for the C-TeamView retiring update (R6, R8, AC-PSR-57): its latest Retired row,
+	 * or the live pawn a StrikeLimit transition released to the crowd (the exile releases, not retires, decision D42), with
+	 * the time the teammates' entry carries as RetireAtServerTime (the call's RetireAtServerTime, else its server time), so an
+	 * exile reaches the allies in the same shape as an Assassinated removal (NPC-Kill Penalty story nkp-016, AC-NKP-21).
+	 * Whichever is later wins. False when Id has neither.
+	 */
+	bool FindLatestRemovedPawn(FParticipantId Id, FRosterPawnHandle& OutPawn, int64& OutRetireAtServerTimeMs) const;
+
 	uint64 GetMatchId() const { return MatchId; }
 	uint32 GetRoundEpoch() const { return RoundEpoch; }
 	uint64 GetEventSeq() const { return EventSeq; }
@@ -617,6 +626,8 @@ private:
 	TSet<uint32> IssuedHandles;
 	/** The pawn-binding table (R9): one row per BoundLive or Retired pawn, keyed by object identity plus generation. */
 	TMap<FRosterPawnHandle, FRosterBindingEntry> PawnTable;
+	/** Per participant: the pawn its latest StrikeLimit transition released, and that release's time (ms). Round-scoped. */
+	TMap<FParticipantId, TPair<FRosterPawnHandle, int64>> ExileReleases;
 
 	uint64 MatchId = 0;
 	uint32 RoundEpoch = 0;

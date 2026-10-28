@@ -56,6 +56,17 @@ public:
 	/** The owner part's current T_due of Id (0 = none; tests and dumps). */
 	double GetOwnerRespawnDue(FParticipantId Id) const;
 
+	/**
+	 * The owner-view feed's tally re-push (Roster R6, Penalty CR-19; the tally half of roster story psr-038, built by NPC-Kill
+	 * Penalty story nkp-017): Id's owner part carries {WrongTargetTally, LastResultSeq} from the next flush, owner audience
+	 * only. Penalty calls it only on reclaim, rejoin and OnRosterReset (PEN-R3), never per strike. Rejected_StaleEpoch when
+	 * ExpectedEpoch is not the current RoundEpoch; NoOp_Unchanged when both values are already in place. Cleared for
+	 * everyone by OnRosterReset and EndMatch.
+	 */
+	ERosterResult SetOwnerTally(FParticipantId Id, uint8 WrongTargetTally, uint32 LastResultSeq, uint32 ExpectedEpoch);
+	/** The owner part's current {tally, LastResultSeq} of Id ({0, 0} = none; tests and dumps). */
+	TPair<uint8, uint32> GetOwnerTally(FParticipantId Id) const;
+
 	/** Forgets every view, flag and dirty mark (EndMatch). */
 	void Reset();
 
@@ -80,6 +91,8 @@ private:
 	TSet<FParticipantId> RetiringThisFrame;
 	/** Owner-part T_due per participant (absent = 0; SetOwnerRespawnDue). */
 	TMap<FParticipantId, double> OwnerRespawnDue;
+	/** Owner-part {WrongTargetTally, LastResultSeq} per participant (absent = {0, 0}; SetOwnerTally). */
+	TMap<FParticipantId, TPair<uint8, uint32>> OwnerTally;
 	/** Participants whose own view must be rebuilt at the next flush (an owner-part write). */
 	TSet<FParticipantId> OwnerDirty;
 	/** Participants whose retiring fields must be cleared by the following flush. */

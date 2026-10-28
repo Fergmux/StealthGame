@@ -73,18 +73,17 @@ public:
 	/**
 	 * Binds this world's prototype presentation to Assassination's production slot (the composition root calls it once
 	 * the service is registered on Round's queue). Strikes and braces resolve only there; this side keeps the prototype
-	 * follow-ons: the life state and NPC replacement at the applied death write, the informant respawn after the body's
-	 * release, the reveal of a strike from a bush, and the prototype NPC-kill exile (Penalty stand-in). The fall and the
-	 * brace tell are presentation of FDeathState / FActionState (UEncounterPresentationSubsystem, AStealthCharacter).
+	 * follow-ons: the life state and NPC replacement at the applied death write and the reveal of a strike from a bush (the
+	 * NPC-kill penalty and every informant respawn are UPenaltyService's). The fall and the brace tell are presentation of
+	 * FDeathState / FActionState (UEncounterPresentationSubsystem, AStealthCharacter).
 	 */
 	void BindEncounterService(UEncounterService& Service);
 
 	/**
-	 * STAND-IN (NPC-Kill Penalty stories nkp-009..015 not built; story nkp-021 retires it): the prototype follow-ons of the
-	 * PRODUCTION exile (story nkp-005), called by the composition root's IPenaltyPawnGateway right after the factory's
-	 * hand-over commit released Body from FormerController: the prototype life state Informant and the objective interaction
-	 * dropped. The respawn is Penalty's own (Round's OnInformantAwaitingBody and the takeover of an unseen crowd pawn,
-	 * stories nkp-009 and nkp-012); the prototype RespawnInformant runs only in a world with no bound Penalty service.
+	 * The prototype follow-ons of the PRODUCTION exile (story nkp-005), called by the composition root's IPenaltyPawnGateway
+	 * right after the factory's hand-over commit released Body from FormerController: the prototype life state Informant
+	 * (a mirror the prototype HUD and pawn still read) and the objective interaction dropped. The respawn is Penalty's own
+	 * (Round's OnInformantAwaitingBody and the takeover of an unseen crowd pawn, stories nkp-009 and nkp-012).
 	 */
 	void HandleProductionExile(AStealthCharacter* Body, AController* FormerController);
 	void HandlePing(AStealthCharacter* Sender, const FVector& Location);
@@ -97,7 +96,7 @@ public:
 
 	/**
 	 * HARNESS-ONLY (NPC-Kill Penalty story nkp-014; called only by FStealthPenaltyRespawnGateway while the PIE harness has
-	 * switched StealthPenaltyHarnessSeams' crowd-less team-start respawn on, in a world with NO crowd agent at all): a fresh
+	 * switched StealthPenaltyHarnessSeams' crowd-less team-start respawn on and no eligible unseen crowd pawn exists): a fresh
 	 * factory pawn at the informant's team start, bound to its participant and possessed, so the 0-NPC harness rounds can
 	 * still respawn an informant. A production respawn never spawns (ADR-0019 section 4): it takes over an unseen crowd pawn
 	 * or keeps waiting. Null when nothing spawned (no live round, or the seam is off / compiled out).
@@ -175,15 +174,6 @@ protected:
 	/** Hub OnActionStarted: an Attack reveals a striker concealed in a bush (the prototype concealment rule). */
 	void HandleHubActionStarted(AStealthPawn* Pawn, EActionType Type);
 	void UnbindEncounters();
-
-	/**
-	 * Removes a player from active play without killing their pawn (the PROTOTYPE NPC-kill penalty). Reached only when the
-	 * production Penalty service is not bound (story nkp-005 made its exile live); story nkp-021 deletes it.
-	 */
-	void ExilePlayer(AStealthCharacter* Offender);
-
-	/** Respawns an informant at its team spawn; the released body (still lying until its removal) drops its binding first. */
-	void RespawnInformant(TWeakObjectPtr<AController> Controller, TWeakObjectPtr<APawn> ReleasedBody);
 
 	void MessagePlayer(const AStealthCharacter* Character, const FText& Text, bool bDanger = false, float Duration = 4.f) const;
 	void MessageController(AController* Controller, const FText& Text, bool bDanger = false, float Duration = 4.f) const;

@@ -131,7 +131,13 @@ FStealthRosterOwnerViewFeed::FStealthRosterOwnerViewFeed(UStealthCompositionRoot
 
 void FStealthRosterOwnerViewFeed::SetOwnerTally(FParticipantId Participant, uint8 WrongTargetTally, FClientCommandSeq LastResultSeq, uint32 ExpectedEpoch)
 {
-	// STAND-IN: roster story psr-038's SetOwnerTally is not built (the tally reaches its owner through FStrikeResult).
+	// NKP story 017: the tally half of roster psr-038 (Roster R6, Penalty CR-19): the reclaim / rejoin / reset re-push.
+	const UStealthCompositionRoot* Owner = Root.Get();
+	URosterStore* Store = Owner != nullptr ? Owner->GetRosterStore() : nullptr;
+	if (Store != nullptr && Store->IsStoreInitialized())
+	{
+		Store->SetOwnerTally(Participant, WrongTargetTally, LastResultSeq.Seq, ExpectedEpoch);
+	}
 }
 
 void FStealthRosterOwnerViewFeed::SetOwnerRespawnDue(FParticipantId Participant, double DueServerTime, uint32 ExpectedEpoch)
@@ -286,16 +292,9 @@ FPenaltyRespawnPick FStealthPenaltyRespawnGateway::Pick(ERosterTeam Team, uint32
 		double DistanceToEnemyAnchor = 0.0;
 	};
 	TArray<FCandidate> All;
-	bool bAnyCrowdAgent = false;
-	const UCrowdDirector* Crowd = UCrowdDirector::Get(Resolved);
-	const UStealthCompositionRoot* Owner = Root.Get();
-	URosterStore* Store = Owner != nullptr ? Owner->GetRosterStore() : nullptr;
 	for (TActorIterator<AStealthPawn> It(Resolved); It; ++It)
 	{
 		AStealthPawn* Pawn = *It;
-		// Any live, unbound pawn the Crowd Director drives (its eligibility is not Bound) means the city has a crowd.
-		bAnyCrowdAgent |= Crowd != nullptr && Store != nullptr && Store->IsStoreInitialized() && IsValid(Pawn) && !Pawn->HasDeathWrite()
-			&& !Store->IsPawnBound(Pawn) && Crowd->GetTakeoverEligibility(Pawn) != ETakeoverEligibility::Bound;
 		const FPenaltyPawnKey Key = UPenaltyService::MakePawnKey(Pawn);
 		if (Exclude.Contains(Key) || !IsTakeoverEligible(Pawn) || !IsUnseenByOpponents(Team, Pawn))
 		{
@@ -327,11 +326,14 @@ FPenaltyRespawnPick FStealthPenaltyRespawnGateway::Pick(ERosterTeam Team, uint32
 	if (Pool.Num() == 0)
 	{
 		Out.WideningLevel = 2;
-		if (!bAnyCrowdAgent && StealthPenaltyWiringLocal::IsHarnessCrowdlessRespawnOn())
+		if (StealthPenaltyWiringLocal::IsHarnessCrowdlessRespawnOn())
 		{
-			// HARNESS-ONLY (story nkp-014; StealthPenaltyHarnessSeams, compiled out of Shipping and off unless a PIE harness
-			// round switches it on): a world with no crowd at all has nothing to take over, so the harness round's
-			// TakeOverCrowdPawn spawns the participant's pawn at its team start. Production never reaches this branch.
+			// HARNESS-ONLY (stories nkp-014, nkp-021; StealthPenaltyHarnessSeams, compiled out of Shipping and off unless a PIE
+			// harness round switches it on): with no eligible unseen crowd pawn the harness round's TakeOverCrowdPawn spawns the
+			// participant's pawn at its team start. Story nkp-014 required a world with NO crowd agent at all; the 0-NPC rounds
+			// that kill an NPC get the prototype game mode's replacement NPC a few seconds later, and when that one replacement
+			// stood where an opponent could see it the informant waited forever (an intermittent timeout of OneBodySequence,
+			// PossessionThroughFall, CulledVictimOpensFalling, OwnerResultShape). Production never reaches this branch.
 			Out.Status = EPenaltyPickStatus::Picked;
 			Out.Pawn = FPenaltyPawnKey(StealthPenaltyWiringLocal::TeamStartFallbackKey);
 		}

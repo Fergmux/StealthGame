@@ -13,9 +13,13 @@
 #include "View/DefenceOwnerComponent.h"
 #include "View/OwnResultMatcher.h"
 #include "View/OwnResultPlateSettings.h"
+#include "View/PenaltyHudViewModel.h"
+#include "View/EncounterPresentation.h"
 
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
+#include "Engine/LocalPlayer.h"
 #include "Engine/Font.h"
 #include "EngineUtils.h"
 
@@ -31,6 +35,42 @@ namespace
 		const TArray<FText>& Names = UStealthSettings::Get()->TeamNames;
 		return Names.IsValidIndex(Team) ? Names[Team].ToString() : TEXT("Unassigned");
 	}
+}
+
+void AStealthHUD::BeginPlay()
+{
+	Super::BeginPlay();
+	// Story nkp-018: the Penalty elements are the minimal production Slate overlay (StealthPresentation), fed every frame from
+	// this owner's controller; the HUD epic restyles them. No viewport (headless -nullrhi): nothing is added.
+	AStealthPlayerController* PC = Cast<AStealthPlayerController>(GetOwningPlayerController());
+	ULocalPlayer* Local = PC != nullptr ? PC->GetLocalPlayer() : nullptr;
+	UGameViewportClient* Viewport = Local != nullptr ? Local->ViewportClient.Get() : nullptr;
+	if (Viewport == nullptr || PenaltyOverlay.IsValid())
+	{
+		return;
+	}
+	TWeakObjectPtr<AStealthPlayerController> WeakPC(PC);
+	PenaltyOverlay = MakePenaltyHudOverlay([WeakPC]()
+	{
+		const AStealthPlayerController* OwnerPC = WeakPC.Get();
+		return OwnerPC != nullptr ? OwnerPC->BuildPenaltyHudFrame(UEncounterPresentationSubsystem::EstimatedServerNow(OwnerPC->GetWorld())) : FPenaltyHudFrame();
+	});
+	Viewport->AddViewportWidgetForPlayer(Local, PenaltyOverlay.ToSharedRef(), 10);
+}
+
+void AStealthHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (PenaltyOverlay.IsValid())
+	{
+		const AStealthPlayerController* PC = Cast<AStealthPlayerController>(GetOwningPlayerController());
+		ULocalPlayer* Local = PC != nullptr ? PC->GetLocalPlayer() : nullptr;
+		if (UGameViewportClient* Viewport = Local != nullptr ? Local->ViewportClient.Get() : nullptr)
+		{
+			Viewport->RemoveViewportWidgetForPlayer(Local, PenaltyOverlay.ToSharedRef());
+		}
+		PenaltyOverlay.Reset();
+	}
+	Super::EndPlay(EndPlayReason);
 }
 
 void AStealthHUD::DrawHUD()
@@ -183,11 +223,8 @@ void AStealthHUD::DrawStatusPanel(const AStealthPlayerState* PS, const AStealthG
 		DrawShadowedText(Defence, X, Y, DefenceColor);
 		Y += Line;
 
-		// Story asn-015: the owner's "Wrong targets" tally (UI-ASN-2), from the latest result plate's TallyAfter; the true
-		// strike count stays on the server.
-		const int32 WrongTargets = OwnerController ? OwnerController->GetShownWrongTargetTally() : 0;
-		DrawShadowedText(FString::Printf(TEXT("Wrong targets: %d"), WrongTargets), X, Y, WrongTargets > 0 ? DangerCochineal : Muted);
-		Y += Line;
+		// Story nkp-018: the "Wrong targets" tally (UI-NKP-1) is painted by the Penalty overlay (squares, numeral, triangle),
+		// below this panel, Active and frozen alike; the true strike count stays on the server.
 
 		if (Pawn && Pawn->IsConcealed())
 		{
@@ -365,7 +402,19 @@ void AStealthHUD::DrawResultPlate(const AStealthPlayerController* PC, double Ser
 	const float Scale = Canvas->ClipY / 1080.f;
 	const float W = 300.f * Scale, H = 64.f * Scale, G = 40.f * Scale;
 	const float X = Canvas->ClipX * 0.5f - W * 0.5f;
-	const float Y = 724.f * Scale;
+	float Y = 724.f * Scale;
+	if (Plate.PreemptServerTime >= 0.0)
+	{
+		// HUD-R9 (story nkp-018): the removal card pushes the plate off the Result slot over HudPreemptExitSec in four steps at
+		// full opacity (a push-off, never a cross-fade: no frame shows the plate and the card both semi-transparent).
+		const double Exit = FMath::Max(0.01, static_cast<double>(UOwnResultPlateSettings::Get()->HudPreemptExitSec));
+		const double Step = FMath::Floor(4.0 * FMath::Clamp((ServerNow - Plate.PreemptServerTime) / Exit, 0.0, 1.0)) / 4.0;
+		if (Step >= 1.0)
+		{
+			return;
+		}
+		Y += static_cast<float>(Step) * (Canvas->ClipY - Y);
+	}
 	const float A = Sample.Opacity;
 	DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.65f * A), X, Y, W, H);
 	const float GX = X + 12.f * Scale;
@@ -420,7 +469,6 @@ void AStealthHUD::CollectOwnerElements(const AStealthPlayerController& PC, TArra
 			: (Remaining > 0.0 ? TEXT("Defence:Recovering")
 				: (Pawn && (Pawn->IsRunning() || Pawn->IsInTraversal()) ? TEXT("Defence:Unavailable") : TEXT("Defence:Ready")));
 		Out.Add(Defence);
-		Out.Add(FString::Printf(TEXT("Tally:%d"), PC.GetShownWrongTargetTally()));
 		if (Pawn && Pawn->IsConcealed())
 		{
 			Out.Add(TEXT("Concealed"));
@@ -477,6 +525,17 @@ void AStealthHUD::CollectOwnerElements(const AStealthPlayerController& PC, TArra
 	if (Pawn && Pawn->GetLocalInteractProgress() >= 0.f)
 	{
 		Out.Add(TEXT("InteractBar"));
+	}
+	// Story nkp-018: the Penalty overlay's elements (the tally Active and frozen, the exile card, the returning countdown).
+	const FPenaltyHudFrame Penalty = PC.BuildPenaltyHudFrame(UEncounterPresentationSubsystem::EstimatedServerNow(World));
+	Out.Add(FString::Printf(TEXT("Tally:%d%s"), Penalty.Tally.Tally, Penalty.Tally.bFrozen ? TEXT(":frozen") : (Penalty.Tally.bTriangle ? TEXT(":triangle") : TEXT(""))));
+	if (Penalty.Card.Phase != EPenaltyCardPhase::Hidden)
+	{
+		Out.Add(FString::Printf(TEXT("ExileCard:%d"), static_cast<int32>(Penalty.Card.Phase)));
+	}
+	if (Penalty.Countdown.bVisible)
+	{
+		Out.Add(FString::Printf(TEXT("Countdown:%s"), *Penalty.Countdown.Text.ToString()));
 	}
 	Out.Add(TEXT("Controls"));
 }

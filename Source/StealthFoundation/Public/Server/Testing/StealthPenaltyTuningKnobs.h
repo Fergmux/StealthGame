@@ -10,7 +10,7 @@
  * design/gdd/npc-kill-penalty-informants.md, Tuning Knobs, read 2026-10-27; story nkp-002). StealthGame.Tuning.SchemaComplete
  * pins their defaults. NpcKillStrikeLimit is a TDC canonical key (already pinned there); InformantRespawnDelaySec,
  * ExileBeatSec and ExileCardTimeoutSec are registered by the stories that first read them (story 009 registered
- * InformantRespawnDelaySec; 017 the other two).
+ * InformantRespawnDelaySec; story 020 registered the other two, because W-NKP-5 reads both).
  */
 namespace StealthPenaltyTuningKnobs
 {
@@ -33,6 +33,8 @@ namespace StealthPenaltyTuningKnobs
 
 	/** The registered Penalty rows that are not TDC canonical keys. */
 	inline constexpr FKnob Knobs[] = {
+		{ "ExileBeatSec", 0.8f, 0.0f, 2.0f, 0.75f, 0.95f, true, ETuningLatch::Action, "Sec" },
+		{ "ExileCardTimeoutSec", 2.0f, 1.0f, 4.0f, 2.0f, 2.5f, true, ETuningLatch::Action, "Sec" },
 		{ "InformantRespawnDelaySec", 15.0f, 5.0f, 60.0f, 10.0f, 20.0f, true, ETuningLatch::Round, "Sec" },
 		{ "StrikeOutReleaseGraceSec", 2.0f, 0.0f, 5.0f, 1.75f, 2.5f, false, ETuningLatch::Round, "Sec" },
 	};

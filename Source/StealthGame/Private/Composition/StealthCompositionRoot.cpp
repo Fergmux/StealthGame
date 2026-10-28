@@ -451,7 +451,6 @@ void UStealthCompositionRoot::Deinitialize()
 	}
 	PrototypeFallback.Reset();
 	PrototypeBushes.Reset();
-	PrototypeTally.Reset();
 	PrototypeBodyObserver.Reset();
 	ReplyTransport.Reset();
 	CommandEpoch.Reset();
@@ -614,7 +613,6 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	const FEncounterParams Params = FEncounterParams::Defaults();
 	PrototypeBushes = MakeShared<FStealthPrototypeBushSpotQuery>(World, Params.Server.OpenSpotToleranceCm); // = BushSpotToleranceCm (W-ASN-9)
 	PrototypeFallback = MakeShared<FStealthPrototypeCommandFallback>(InGameMode);
-	PrototypeTally = MakeShared<FStealthPrototypeStrikeTally>();               // STAND-IN: the Penalty epic's tally source
 	PrototypeBodyObserver = MakeShared<FStealthPrototypeBodyRemovalObserver>(); // STAND-IN: Concealment's removal observer
 	ReplyTransport = MakeShared<FStealthControllerReplyTransport>(World);
 	ReplyWorld = World;
@@ -629,10 +627,10 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	Init.Log = MatchCore->GetRoundLogWriter();
 	Init.Bushes = PrototypeBushes.Get();
 	Init.Roster = GetRosterStore();
-	// NKP story 005: the production Penalty service is the tally source (its exile sets bExiled); the prototype tally is
-	// only the fallback of a world with no Penalty subsystem (story nkp-021 deletes it).
+	// NKP story 005: the production Penalty service is the tally source (its exile sets bExiled); story nkp-021 retired the
+	// prototype fallback, so a world with no Penalty subsystem answers every result with tally 0 and no exile.
 	UPenaltyService* PenaltyService = World->GetSubsystem<UPenaltyService>();
-	Init.Tally = PenaltyService != nullptr ? static_cast<IStrikeTallySource*>(PenaltyService) : static_cast<IStrikeTallySource*>(PrototypeTally.Get());
+	Init.Tally = PenaltyService;
 	Init.BodyObserver = PrototypeBodyObserver.Get();
 	Init.Faults = &CommandFaults;
 	if (!Encounters->Initialize(Init))
@@ -669,6 +667,10 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		PenaltyInit.Crowd = UCrowdDirector::Get(World);
 		PenaltyInit.Pawns = PenaltyPawns.Get();
 		PenaltyInit.RespawnGateway = PenaltyRespawns.Get();
+		// NKP story 017 (the tally half of roster psr-038): the owner-view feed is now also the service's OwnerView, so the
+		// reclaim / rejoin / reset re-push {WrongTargetTally, LastResultSeq} reaches the C-TeamView owner part (PEN-R3).
+		OwnerViewFeed = MakeShared<FStealthRosterOwnerViewFeed>(this);
+		PenaltyInit.OwnerView = OwnerViewFeed.Get();
 		PenaltyInit.Faults = &CommandFaults;
 		if (!PenaltyService->Bind(PenaltyInit))
 		{
@@ -684,7 +686,6 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	// owner-view feed, never while Round's queue is latched.
 	if (PenaltyService != nullptr)
 	{
-		OwnerViewFeed = MakeShared<FStealthRosterOwnerViewFeed>(this);
 		DueAdapter = MakeShared<FPenaltyDueAdapter>(OwnerViewFeed.Get(), [this]()
 		{
 			const URoundMatchStore* RoundStore = GetRoundStore();

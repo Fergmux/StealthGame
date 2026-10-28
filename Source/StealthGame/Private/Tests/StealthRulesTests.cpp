@@ -3,7 +3,9 @@
 // Values below are boundary values from the confirmed rules (that exact number IS the point).
 // StealthGame.Rules.Assassination and StealthGame.Rules.Defence were ported to the production cores by story asn-027
 // (StealthGame.Assassination.PrototypeParity, Source/StealthGameplay/Private/Tests/Assassination/PrototypeParityTest.cpp)
-// and removed here with the prototype resolver; the four tests below belong to the Penalty, Objectives and Round epics.
+// and removed here with the prototype resolver; the NPC-kill removal test was replaced by the production Penalty tests
+// (StealthGame.Penalty.StrikeRuleMatrix, ExileOnLthNpcKill and the PIE PrototypeParityExile) and removed by story nkp-021.
+// The tests below belong to the Objectives, Round, Session and SCL epics.
 
 #include "Misc/AutomationTest.h"
 #include "StealthRules.h"
@@ -12,21 +14,7 @@
 
 namespace StealthRulesTestValues
 {
-	constexpr int32 NpcLimit = 3;
 	constexpr float RunThreshold = 300.f;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FStealthRulesNpcPenaltyTest, "StealthGame.Rules.NpcKillRemoval",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
-
-bool FStealthRulesNpcPenaltyTest::RunTest(const FString& Parameters)
-{
-	using namespace StealthRulesTestValues;
-	TestFalse(TEXT("Second NPC kill keeps the player active"), FStealthRules::ShouldRemoveForNpcKills(2, NpcLimit));
-	TestTrue(TEXT("Removal happens ON the third NPC kill"), FStealthRules::ShouldRemoveForNpcKills(3, NpcLimit));
-	TestTrue(TEXT("Beyond the limit is still removed"), FStealthRules::ShouldRemoveForNpcKills(4, NpcLimit));
-	TestFalse(TEXT("A zero limit disables the penalty"), FStealthRules::ShouldRemoveForNpcKills(10, 0));
-	return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FStealthRulesObjectiveTest, "StealthGame.Rules.ObjectiveStages",

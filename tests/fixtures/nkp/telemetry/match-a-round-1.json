@@ -1,0 +1,228 @@
+{
+ "SchemaVersion": 1,
+ "MatchId": "match-a",
+ "RoundIndex": 1,
+ "EndReason": "Elimination",
+ "StrikeLimit": 3,
+ "NpcCount": 50,
+ "InformantCountMean": 2.0,
+ "Regions": {
+  "RespawnRegion": {
+   "Informants": 3,
+   "Pawns": 10
+  },
+  "CityWide": {
+   "Informants": 2,
+   "Pawns": 52
+  }
+ },
+ "EventLogRows": [
+  {
+   "ServerTime": 10,
+   "Type": "StrikeCounted",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 1,
+   "Graced": false
+  },
+  {
+   "ServerTime": 20,
+   "Type": "StrikeCounted",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "StrikeAfter": 2,
+   "TallyAfter": 2,
+   "Graced": false
+  },
+  {
+   "ServerTime": 30,
+   "Type": "StrikeCounted",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "StrikeAfter": 3,
+   "TallyAfter": 3,
+   "Graced": false
+  },
+  {
+   "ServerTime": 30,
+   "Type": "StrikeLimit",
+   "Participant": 1,
+   "PostRoundEligible": true
+  },
+  {
+   "ServerTime": 12,
+   "Type": "StrikeCounted",
+   "Participant": 2,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 1,
+   "Graced": false
+  },
+  {
+   "ServerTime": 22,
+   "Type": "StrikeCounted",
+   "Participant": 2,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 2,
+   "Graced": true,
+   "VictimReleased": true
+  },
+  {
+   "ServerTime": 32,
+   "Type": "StrikeCounted",
+   "Participant": 2,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 3,
+   "Graced": false,
+   "VictimReleased": true
+  },
+  {
+   "ServerTime": 15,
+   "Type": "StrikeCounted",
+   "Participant": 3,
+   "PostRoundEligible": true,
+   "StrikeAfter": 1,
+   "TallyAfter": 1,
+   "Graced": false
+  },
+  {
+   "ServerTime": 30,
+   "Type": "RespawnScheduled",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Cause": "StrikeLimit",
+   "LostServerTime": 30.0,
+   "DueServerTime": 45.0
+  },
+  {
+   "ServerTime": 45.5,
+   "Type": "InformantRespawn",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "PickLatencySec": 0.5,
+   "WideningLevel": 0
+  },
+  {
+   "ServerTime": 100,
+   "Type": "RespawnScheduled",
+   "Participant": 4,
+   "PostRoundEligible": true,
+   "Cause": "InformantKilled",
+   "LostServerTime": 100.0,
+   "DueServerTime": 115.0
+  },
+  {
+   "ServerTime": 135,
+   "Type": "InformantRespawn",
+   "Participant": 4,
+   "PostRoundEligible": true,
+   "PickLatencySec": 20.0,
+   "WideningLevel": 2
+  },
+  {
+   "ServerTime": 120,
+   "Type": "RespawnScheduled",
+   "Participant": 5,
+   "PostRoundEligible": true,
+   "Cause": "Assassinated",
+   "LostServerTime": 120.0,
+   "DueServerTime": 135.0
+  },
+  {
+   "ServerTime": 125,
+   "Type": "RespawnCancelled",
+   "Participant": 5,
+   "PostRoundEligible": true,
+   "Reason": "Disconnect"
+  },
+  {
+   "ServerTime": 140,
+   "Type": "PawnLost",
+   "Participant": 6,
+   "PostRoundEligible": true,
+   "Cause": "KillZ"
+  },
+  {
+   "ServerTime": 141,
+   "Type": "RespawnStarved",
+   "Participant": 7,
+   "PostRoundEligible": true
+  },
+  {
+   "ServerTime": 11,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "WrongTarget",
+   "VictimKind": "Npc"
+  },
+  {
+   "ServerTime": 21,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "WrongTarget",
+   "VictimKind": "Npc"
+  },
+  {
+   "ServerTime": 31,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "WrongTarget",
+   "VictimKind": "Informant"
+  },
+  {
+   "ServerTime": 41,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "WrongTarget",
+   "VictimKind": "Npc"
+  },
+  {
+   "ServerTime": 51,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "ParticipantKilled",
+   "VictimKind": "Player"
+  },
+  {
+   "ServerTime": 52,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": true,
+   "Result": "Other",
+   "VictimKind": "Npc"
+  },
+  {
+   "ServerTime": 16,
+   "Type": "StrikeCounted",
+   "Participant": 3,
+   "PostRoundEligible": false,
+   "StrikeAfter": 3,
+   "TallyAfter": 3,
+   "Graced": false
+  },
+  {
+   "ServerTime": 60,
+   "Type": "KillResolved",
+   "Participant": 1,
+   "PostRoundEligible": false,
+   "Result": "WrongTarget",
+   "VictimKind": "Informant"
+  },
+  {
+   "ServerTime": 61,
+   "Type": "InformantRespawn",
+   "Participant": 8,
+   "PostRoundEligible": false,
+   "PickLatencySec": 99.0,
+   "WideningLevel": 2
+  }
+ ]
+}

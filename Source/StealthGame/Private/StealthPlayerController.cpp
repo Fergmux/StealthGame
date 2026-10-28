@@ -10,6 +10,7 @@
 #include "View/StealthRosterTeamView.h"
 
 #include "Camera/CameraActor.h"
+#include "Camera/PlayerCameraManager.h"
 #include "EngineUtils.h"
 #include "InputKeyEventArgs.h"
 #include "Engine/NetDriver.h"
@@ -27,7 +28,11 @@
 #include "View/EncounterViewSubsystem.h"
 #include "View/OwnResultPlateSettings.h"
 #include "StealthPlayerState.h"
+#include "View/StealthOwnerTallyCache.h"
 #include "View/StealthTuningPublicSubstructs.h"
+#include "View/PenaltyHudViewModel.h"
+#include "Server/StealthTuningInvariants.h"
+#include "Engine/LocalPlayer.h"
 #include "GameFramework/GameStateBase.h"
 #include "TimerManager.h"
 
@@ -40,14 +45,21 @@ namespace
 	constexpr int32 MaxKeptReplies = 64;
 	/** Owner presentation records kept (story asn-024 / asn-017 observation). */
 	constexpr int32 MaxOwnPresentationRecords = 512;
-	/** The exile card's line stays up this long (STAND-IN for Penalty's exile card). */
-	constexpr float ExileCardSeconds = 8.f;
 	/** A time counts as reached one millisecond early (the presentation's contact-frame tolerance). */
 	constexpr double ReachedEpsilonSec = 0.001;
+
+	/**
+	 * Camera's NoPawnFadeSec (the fade to the neutral view, CS-R12.1): a pending-owner constant until Camera registers the
+	 * key (TD-TDC-I3); the countdown shows only after this fade completes (UI-NKP-4, story nkp-018).
+	 */
+	constexpr double NoPawnFadeSec = StealthTuningPendingOwnerKeys::NoPawnFadeSec;
 
 #if WITH_STEALTH_TEST_SEAMS
 	bool GPresentOnRosterReceipt = false;
 	bool GPresentResultsOnReceipt = false;
+	double GReplyLatenessSec = 0.0;
+	bool GDropExilingStrikeResults = false;
+	int32 GDroppedExilingResults = 0;
 #endif
 }
 
@@ -55,6 +67,13 @@ namespace
 void StealthOwnerPresentationTestSeams::SetPresentOnRosterReceipt(bool bOn) { GPresentOnRosterReceipt = bOn; }
 bool StealthOwnerPresentationTestSeams::IsPresentOnRosterReceipt() { return GPresentOnRosterReceipt; }
 void StealthOwnerPresentationTestSeams::SetPresentResultsOnReceipt(bool bOn) { GPresentResultsOnReceipt = bOn; }
+void StealthOwnerPresentationTestSeams::SetReplyLatenessSec(double Sec) { GReplyLatenessSec = FMath::Max(0.0, Sec); }
+void StealthOwnerPresentationTestSeams::SetDropExilingStrikeResults(bool bOn)
+{
+	GDropExilingStrikeResults = bOn;
+	GDroppedExilingResults = 0;
+}
+int32 StealthOwnerPresentationTestSeams::GetDroppedExilingResults() { return GDroppedExilingResults; }
 #endif
 
 const TCHAR* LexOwnPresentationEvent(EOwnPresentationEvent Event)
@@ -67,6 +86,8 @@ const TCHAR* LexOwnPresentationEvent(EOwnPresentationEvent Event)
 	case EOwnPresentationEvent::RemovalCard: return TEXT("RemovalCard");
 	case EOwnPresentationEvent::BraceSquare: return TEXT("BraceSquare");
 	case EOwnPresentationEvent::HudMessage: return TEXT("HudMessage");
+	case EOwnPresentationEvent::Countdown: return TEXT("Countdown");
+	case EOwnPresentationEvent::PlatePreempted: return TEXT("PlatePreempted");
 	default: return TEXT("RoundEnd");
 	}
 }
@@ -128,6 +149,21 @@ void AStealthPlayerController::BeginPlay()
 				Character->HandleOwnerCommandPredicted(Kind);
 			}
 		});
+	}
+	// HUD-R7 display cache (story nkp-017): a rebuilt controller starts from the last tally shown in this round until the
+	// owner re-push lands (it never overrides a re-push that passes the gate: the gate only ever raises the value).
+	if (IsLocalController())
+	{
+		const ULocalPlayer* Local = GetLocalPlayer();
+		const UStealthOwnerTallyCache* Cache = Local != nullptr ? Local->GetSubsystem<UStealthOwnerTallyCache>() : nullptr;
+		int32 CachedTally = 0;
+		uint32 CachedSeq = 0;
+		if (Cache != nullptr && Cache->Find(CurrentRoundIndex(), CachedTally, CachedSeq))
+		{
+			ShownWrongTargetTally = CachedTally;
+			ShownTallyRoundIndex = CurrentRoundIndex();
+			LastShownTallySeq = CachedSeq;
+		}
 	}
 }
 
@@ -300,13 +336,42 @@ void AStealthPlayerController::HandleRoleChangePresented(ERoleChangeReason Reaso
 			ShowResultPlate(Due, ServerNow);
 		}
 	}
-	// STAND-IN for the HUD epic's removal card: shown at the dispatch (the pawn's own DeathServerTime), never on receipt.
-	const FText Card = Reason == ERoleChangeReason::InformantKilled
-		? NSLOCTEXT("StealthOwnerResults", "InformantDied", "You were silenced. Returning to your team's spawn.")
-		: NSLOCTEXT("StealthOwnerResults", "YouWereEliminated", "You have been eliminated. You are now an informant.");
-	LogOwnPresentation(EOwnPresentationEvent::RemovalCard, Card.ToString(), static_cast<int32>(Reason), ServerNow, DeathServerTime);
+	// Story nkp-018 (UI-NKP-4, HUD-E11): the returning countdown shows only once the neutral view is reached: the own fall
+	// (DeathFallSec from the death write) plus Camera's NoPawnFadeSec.
+	const double FallStart = DeathServerTime >= 0.0 ? DeathServerTime : ServerNow;
+	CountdownGateAt = FallStart + static_cast<double>(FAssassinationTuning_Public().DeathFallSec) + NoPawnFadeSec;
 	bInformantPresented = true;
-	AddHudMessage(Card, true, Reason == ERoleChangeReason::InformantKilled ? 5.f : 6.f);
+	// Story nkp-017 (PEN-R16, HUD-R9, Penalty CR-18): a killed informant has no State change, so it gets NO removal card and
+	// no exile cue: its view stays on the falling body and the countdown follows the fade.
+	if (Reason == ERoleChangeReason::InformantKilled)
+	{
+		return;
+	}
+	// STAND-IN for the HUD epic's removal card: shown at the dispatch (the pawn's own DeathServerTime), never on receipt.
+	const FText Card = NSLOCTEXT("StealthOwnerResults", "YouWereEliminated", "You have been eliminated. You are now an informant.");
+	LogOwnPresentation(EOwnPresentationEvent::RemovalCard, Card.ToString(), static_cast<int32>(Reason), ServerNow, DeathServerTime);
+	AddHudMessage(Card, true, 6.f);
+}
+
+void AStealthPlayerController::SetPawn(APawn* InPawn)
+{
+	// The body being let go: the current pawn (server), or, on the owning client, where the replicated Pawn is already null
+	// when AController::OnRep_Pawn calls SetPawn(nullptr), the current view target. Only a LIVE released body (the exile's
+	// hand-over to the crowd) keeps the view; a dead body's release keeps the engine's behaviour (Camera's Dying -> NoPawn
+	// fade owns that view, and holding a hidden dead body as the view target let its pose evaluation produce NaNs).
+	const APawn* Released = GetPawn() != nullptr ? static_cast<const APawn*>(GetPawn()) : (PlayerCameraManager != nullptr ? Cast<APawn>(PlayerCameraManager->GetViewTarget()) : nullptr);
+	const AStealthPawn* ReleasedShared = Cast<AStealthPawn>(Released);
+	const bool bKeepView = InPawn == nullptr && bAutoManageActiveCameraTarget && IsValid(Released) && !Released->IsActorBeingDestroyed()
+		&& (ReleasedShared == nullptr || !ReleasedShared->HasDeathWrite());
+	if (bKeepView)
+	{
+		bAutoManageActiveCameraTarget = false;
+	}
+	Super::SetPawn(InPawn);
+	if (bKeepView)
+	{
+		bAutoManageActiveCameraTarget = true;
+	}
 }
 
 void AStealthPlayerController::OnRep_Pawn()
@@ -378,11 +443,41 @@ void AStealthPlayerController::IngestOwnCommand(const FNetPawnCommand& Cmd, APaw
 
 void AStealthPlayerController::ClientCommandReplies_Implementation(const TArray<FCommandReply>& Replies)
 {
+	const double ReceivedAt = UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld());
+#if WITH_STEALTH_TEST_SEAMS
+	// Story nkp-017 seams: drop the exiling result (the lost RPC) and / or hold the batch (the injected RPC lateness).
+	if (IsLocalController() && (GDropExilingStrikeResults || GReplyLatenessSec > 0.0))
+	{
+		TArray<FCommandReply> Kept;
+		for (const FCommandReply& Reply : Replies)
+		{
+			if (GDropExilingStrikeResults && Reply.Kind == ECommandReplyKind::StrikeResult && Reply.Strike.bExiled)
+			{
+				++GDroppedExilingResults;
+				continue;
+			}
+			Kept.Add(Reply);
+		}
+		if (GReplyLatenessSec > 0.0)
+		{
+			FHeldReplyBatch& Held = HeldReplyBatches.AddDefaulted_GetRef();
+			Held.ReleaseServerTime = ReceivedAt + GReplyLatenessSec;
+			Held.Replies = MoveTemp(Kept);
+			return;
+		}
+		ProcessCommandReplies(Kept, ReceivedAt);
+		return;
+	}
+#endif
+	ProcessCommandReplies(Replies, ReceivedAt);
+}
+
+void AStealthPlayerController::ProcessCommandReplies(const TArray<FCommandReply>& Replies, double ServerNow)
+{
 	ReceivedReplyCount += Replies.Num();
 	UE_LOGF(LogStealth, Verbose, "[cmd] %ls received %d reply(ies)", *GetName(), Replies.Num());
 	// Story asn-024: results enter the matcher with their processing time and nothing is presented here (on receipt): the
 	// per-frame TickOwnPresentation shows each at its local contact frame.
-	const double ServerNow = UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld());
 	for (const FCommandReply& Reply : Replies)
 	{
 		ReceivedReplies.Add(Reply);
@@ -427,7 +522,105 @@ int32 AStealthPlayerController::GetShownWrongTargetTally() const
 void AStealthPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
-	TickOwnPresentation(UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld()));
+	const double ServerNow = UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld());
+#if WITH_STEALTH_TEST_SEAMS
+	// Story nkp-017: the lateness seam's held batches arrive now (their processing time is the simulated late arrival).
+	for (int32 Index = 0; Index < HeldReplyBatches.Num();)
+	{
+		if (ServerNow + ReachedEpsilonSec >= HeldReplyBatches[Index].ReleaseServerTime)
+		{
+			const TArray<FCommandReply> Batch = MoveTemp(HeldReplyBatches[Index].Replies);
+			HeldReplyBatches.RemoveAt(Index);
+			ProcessCommandReplies(Batch, ServerNow);
+			continue;
+		}
+		++Index;
+	}
+#endif
+	TickOwnPresentation(ServerNow);
+}
+
+uint32 AStealthPlayerController::CurrentRoundIndex() const
+{
+	const AStealthGameState* RoundState = GetWorld() != nullptr ? GetWorld()->GetGameState<AStealthGameState>() : nullptr;
+	return RoundState != nullptr ? RoundState->GetRoundPublicState().RoundIndex : 0;
+}
+
+void AStealthPlayerController::StoreShownTally()
+{
+	if (ULocalPlayer* Local = GetLocalPlayer())
+	{
+		if (UStealthOwnerTallyCache* Cache = Local->GetSubsystem<UStealthOwnerTallyCache>())
+		{
+			Cache->Store(ShownTallyRoundIndex, ShownWrongTargetTally, LastShownTallySeq);
+		}
+	}
+}
+
+void AStealthPlayerController::ApplyOwnerTallyRepush(double ServerNow)
+{
+	// HUD-R7 / Penalty CR-12 (b): the C-TeamView owner re-push {WrongTargetTally, LastResultSeq} (written by Penalty only on
+	// reclaim, rejoin and reset) is used only when no result plate is pending, only if its LastResultSeq is at least the
+	// sequence of the last plate shown, and never lowers the shown tally within a round.
+	if (!TeamView || ResultMatcher.HasPending())
+	{
+		return;
+	}
+	const FTeamViewOwnerPart& Part = TeamView->GetView().Owner;
+	const uint32 Round = CurrentRoundIndex();
+	const int32 Shown = Round != ShownTallyRoundIndex ? 0 : ShownWrongTargetTally;
+	if (Part.LastResultSeq == 0 || Part.LastResultSeq < LastShownTallySeq || static_cast<int32>(Part.WrongTargetTally) <= Shown)
+	{
+		return;
+	}
+	ShownWrongTargetTally = Part.WrongTargetTally;
+	ShownTallyRoundIndex = Round;
+	LastShownTallySeq = Part.LastResultSeq;
+	StoreShownTally();
+	LogOwnPresentation(EOwnPresentationEvent::TallyTick, TEXT("repush"), ShownWrongTargetTally, ServerNow);
+}
+
+FPenaltyHudFrame AStealthPlayerController::BuildPenaltyHudFrame(double ServerNow) const
+{
+	FPenaltyHudFrame Frame;
+	// UI-NKP-1: the shown tally (HUD-R7) with the public L (the schema default until the TDC client store feeds the HUD;
+	// STAND-IN as the cooldown's DefenceCooldownSec above), frozen without the triangle while informant (ruling D4). The view
+	// (its formatted text) is rebuilt only when one of its inputs changes.
+	const int32 Tally = GetShownWrongTargetTally();
+	const int32 Limit = FPenaltyTuning_Public().NpcKillStrikeLimit;
+	const bool bFrozen = IsPresentedInformant();
+	const int64 TallyKey = (static_cast<int64>(Tally) << 32) | (static_cast<int64>(Limit) << 1) | (bFrozen ? 1 : 0);
+	if (TallyKey != CachedTallyKey || !CachedTallyView.IsValid())
+	{
+		CachedTallyKey = TallyKey;
+		CachedTallyView = MakeShared<FPenaltyTallyView>(FPenaltyTallyView::Make(Tally, Limit, bFrozen));
+	}
+	Frame.Tally = *CachedTallyView;
+	Frame.Card = BuildPenaltyCard(ServerNow);
+	Frame.Countdown = BuildPenaltyCountdown(ServerNow, Frame.Card.Phase);
+	return Frame;
+}
+
+FPenaltyExileCardView AStealthPlayerController::BuildPenaltyCard(double ServerNow) const
+{
+	// UI-NKP-3: the card from its client-local entrance (Hidden at once when it never entered).
+	const UOwnResultPlateSettings* Settings = UOwnResultPlateSettings::Get();
+	FPenaltyCardTiming Timing;
+	Timing.InSec = Settings->HudRemovalCardInSec;
+	Timing.HoldSec = Settings->HudRemovalCardHoldSec * Settings->HudReadHoldMult;
+	Timing.OutSec = Settings->HudRemovalCardOutSec;
+	return FPenaltyExileCardView::Make(ExileCardEnteredAt, ServerNow, Timing);
+}
+
+FPenaltyCountdownView AStealthPlayerController::BuildPenaltyCountdown(double ServerNow, EPenaltyCardPhase CardPhase) const
+{
+	// UI-NKP-4: the owner's own T_due (owner part only), for an awaiting informant, once the neutral view is reached. The
+	// countdown waits for the neutral view (the fade) and for the removal card to have collapsed: the HUD never shows two
+	// text blocks at once (HUD panel rule; the card's Notice-band neighbour).
+	const double Due = TeamView ? TeamView->GetView().Owner.T_due : 0.0;
+	const bool bAwaiting = IsPresentedInformant() && GetPawn() == nullptr;
+	const bool bFadeComplete = (CountdownGateAt < 0.0 || ServerNow + ReachedEpsilonSec >= CountdownGateAt) && CardPhase == EPenaltyCardPhase::Hidden;
+	return FPenaltyCountdownView::Make(bAwaiting, Due, ServerNow, bFadeComplete);
 }
 
 bool AStealthPlayerController::IsOwnOutcomeUnpresented(double ServerNow) const
@@ -477,15 +670,44 @@ void AStealthPlayerController::TickOwnPresentation(double ServerNow)
 	{
 		ResultPlate.bActive = false;
 	}
+	if (ResultPlate.bActive && ResultPlate.PreemptServerTime >= 0.0 && ServerNow >= ResultPlate.PreemptServerTime + PlateSettings->HudPreemptExitSec)
+	{
+		ResultPlate.bActive = false; // pushed off by the card (HUD-R9)
+	}
 
-	// 3 The exile card, ExileBeatSec after its plate.
+	// 3 The exile card, ExileBeatSec after its plate (UI-NKP-3, HUD-R9; stories nkp-017 / nkp-018): the card-entrance event
+	// is the exile's one clock. The plate still in the Result slot is pushed off (never cross-faded), the card shows once,
+	// the countdown may show after Camera's view-release fade, and OnRemovalCardEntered fires for Camera and the exile cue.
 	if (ExileCardAt >= 0.0 && ServerNow + ReachedEpsilonSec >= ExileCardAt)
 	{
 		ExileCardAt = -1.0;
-		const FText Card = NSLOCTEXT("StealthOwnerResults", "Exiled", "Exiled: too many wrong targets. You are now an informant: watch, and report to your team.");
-		LogOwnPresentation(EOwnPresentationEvent::ExileCard, Card.ToString(), 0, ServerNow);
-		bInformantPresented = true;
-		AddHudMessage(Card, true, ExileCardSeconds);
+		if (ExileCardEnteredAt < 0.0)
+		{
+			ExileCardEnteredAt = ServerNow;
+			if (ResultPlate.bActive && ResultPlate.PreemptServerTime < 0.0)
+			{
+				ResultPlate.PreemptServerTime = ServerNow;
+				LogOwnPresentation(EOwnPresentationEvent::PlatePreempted, ResultPlate.Text.ToString(), static_cast<int32>(ResultPlate.Plate), ServerNow);
+			}
+			const FPenaltyExileCardView Card = FPenaltyExileCardView::Make(ServerNow, ServerNow, FPenaltyCardTiming());
+			LogOwnPresentation(EOwnPresentationEvent::ExileCard, FString::Printf(TEXT("%s / %s / %s"), *Card.Title.ToString(), *Card.Subtitle.ToString(),
+				*Card.Line2.ToString()), 0, ServerNow);
+			bInformantPresented = true;
+			CountdownGateAt = ServerNow + NoPawnFadeSec;
+			OnRemovalCardEntered.Broadcast(ServerNow);
+		}
+	}
+
+	// 3b The owner tally re-push (HUD-R7 gate) and the returning countdown's shown seconds (logged on change).
+	ApplyOwnerTallyRepush(ServerNow);
+	{
+		const FPenaltyCountdownView Countdown = BuildPenaltyCountdown(ServerNow, BuildPenaltyCard(ServerNow).Phase);
+		const int32 Seconds = Countdown.bVisible ? Countdown.Seconds : -1;
+		if (Seconds != LoggedCountdownSeconds)
+		{
+			LoggedCountdownSeconds = Seconds;
+			LogOwnPresentation(EOwnPresentationEvent::Countdown, Countdown.bVisible ? Countdown.Text.ToString() : FString(), Seconds, ServerNow);
+		}
 	}
 
 	// 4 The brace square (UI-ASN-3): a reversal ends it at contact, never at the Counter's or a result's arrival.
@@ -508,6 +730,9 @@ void AStealthPlayerController::TickOwnPresentation(double ServerNow)
 		if (bRosterWasInformant)
 		{
 			bInformantPresented = false;
+			// Active again (a new round): the next exile gets its own card, and no countdown gate is carried over.
+			ExileCardEnteredAt = -1.0;
+			CountdownGateAt = -1.0;
 		}
 		UnpresentedInformantSince = -1.0;
 	}
@@ -587,11 +812,16 @@ void AStealthPlayerController::ShowResultPlate(const FOwnResultDue& Due, double 
 	{
 		return;
 	}
-	// The tally ticks with the plate (HUD-R7, UI-ASN-2).
-	ShownWrongTargetTally = Due.Strike.TallyAfter;
-	const AStealthGameState* RoundState = GetWorld() != nullptr ? GetWorld()->GetGameState<AStealthGameState>() : nullptr;
-	ShownTallyRoundIndex = RoundState != nullptr ? RoundState->GetRoundPublicState().RoundIndex : 0;
-	LogOwnPresentation(EOwnPresentationEvent::TallyTick, FString(), Due.Strike.TallyAfter, ServerNow, Due.ContactServerTime);
+	// The tally ticks with the plate (HUD-R7, UI-ASN-2), never lower within a round (a re-push may already show more).
+	const uint32 Round = CurrentRoundIndex();
+	if (Round != ShownTallyRoundIndex || static_cast<int32>(Due.Strike.TallyAfter) >= ShownWrongTargetTally)
+	{
+		ShownWrongTargetTally = Due.Strike.TallyAfter;
+		ShownTallyRoundIndex = Round;
+		LastShownTallySeq = FMath::Max(LastShownTallySeq, Due.Strike.ClientCommandSeq.Seq);
+		StoreShownTally();
+	}
+	LogOwnPresentation(EOwnPresentationEvent::TallyTick, FString(), ShownWrongTargetTally, ServerNow, Due.ContactServerTime);
 	// Story asn-021: the attacker's transient grade on the plate frame for a kill or a reversal (a body met a body); a whiff
 	// (NoContact) plays none.
 	if (Due.Strike.Result != EStrikeResult::NoContact && GetLocalPlayer() != nullptr)

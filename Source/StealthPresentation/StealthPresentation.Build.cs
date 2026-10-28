@@ -10,8 +10,9 @@ public class StealthPresentation : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine" });
-		PrivateDependencyModuleNames.AddRange(new string[] { "StealthFoundation", "StealthGameplay" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "SlateCore" });
+		// NKP story 018: the Penalty HUD overlay (Slate) paints the tally line, the returning countdown and the exile card.
+		PrivateDependencyModuleNames.AddRange(new string[] { "StealthFoundation", "StealthGameplay", "Slate" });
 
 		PrivateDefinitions.Add("STEALTH_PRESENTATION_MODULE=1");
 	}

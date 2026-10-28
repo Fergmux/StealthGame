@@ -3778,3 +3778,76 @@ stories:
     blocker: "Traverse/Interact/Hide NotNow (IIF story 057); no x-ray (IVP viewer class OpponentInformant, AC-CON-04); concealed ally marker (Teammate Markers AC-TMK-16a)"
     sprint: 2
     note: "NKP batch 2026-10-27; InformantPawnParity + InformantContract.EveryBuiltRowHolds pass for every built row; AC3 trace production/qa/evidence/penalty-informant-contract-trace.md; evidence production/qa/evidence/npc-kill-penalty-informants-013-015-2026-10-27/"
+  - id: "nkp-016"
+    name: "StrikeCount never leaves the server and removal audiences match an NPC kill"
+    file: "production/epics/npc-kill-penalty-informants/story-016-strike-count-never-leaves-and-removal-audiences.md"
+    priority: must-have
+    status: blocked
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: "AC2 two-run differential wire capture DEFERRED (no ADR-0008 s6 two-run capture harness); AC3 opponent clause: Actor.PlayerState changes on the released pawn (IVP story 018), cadence needs the multi-process raw-bunch capture"
+    sprint: 2
+    note: "NKP batch 2026-10-28 (016-018, 020-022); StrikeCountNeverLeaves passes (reflection + two-sentinel probe); RemovalAudiences passes owner/ally/channel/NetGUID; Roster fix: exile retiring update = Assassinated shape (AC-PSR-57); evidence production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/"
+  - id: "nkp-017"
+    name: "Owner-side exile, informant-killed and tally timing"
+    file: "production/epics/npc-kill-penalty-informants/story-017-owner-presentation-timing.md"
+    priority: must-have
+    status: blocked
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: "Camera epic (camera-system 017/018): ViewRelease(StrikeLimit) from OnRemovalCardEntered, ExileCardTimeoutSec fallback fade, killed informant's NoPawnFadeSec fade"
+    sprint: 2
+    note: "NKP batch 2026-10-28; ExileBeatTiming x4, InformantKilledView, TallyRepushGate pass; SetOwnerTally (psr-038 tally half) built; SetPawn keeps the view on the released body; evidence production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/"
+  - id: "nkp-018"
+    name: "Tally line, returning countdown and exile card"
+    file: "production/epics/npc-kill-penalty-informants/story-018-tally-countdown-and-exile-card-ui.md"
+    priority: must-have
+    status: blocked
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: "AC2 reconnect-during-card clause not observable (Session PIE rejoin, session-travel 026-027); UX/HUD lead review pending"
+    sprint: 2
+    note: "NKP batch 2026-10-28; minimal Slate overlay (StealthPresentation PenaltyHudViewModel); nkp-19/20/31 screenshots; HudViewModel + TallyWidgetParity pass; sign-off production/qa/evidence/penalty-ui-evidence.md; evidence production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/"
+  - id: "nkp-019"
+    name: "Takeover return, exile body and exiled owner's view stay visually continuous"
+    file: "production/epics/npc-kill-penalty-informants/story-019-takeover-and-exile-visual-continuity.md"
+    priority: must-have
+    status: blocked
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: "art-lead sign-off PENDING; informant grade and fade-in are Camera's (camera-system 017/019); AC2 opponent per-frame log not captured; AC3 bounds not measured"
+    sprint: 2
+    note: "NKP batch 2026-10-28; nkp-12 and nkp-43 captures; production/qa/evidence/penalty-visual-evidence.md; evidence production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/"
+  - id: "nkp-020"
+    name: "Penalty tuning warnings and the residual and hunt model checks"
+    file: "production/epics/npc-kill-penalty-informants/story-020-penalty-tuning-warnings-and-residual-models.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "NKP batch 2026-10-28; I-NKP-1, W-NKP-2..5 rows; ExileBeatSec + ExileCardTimeoutSec registered (TuningSchemaVersion 7); StrikeLimitOneWarning + ResidualHuntModel; smoke production/qa/smoke-2026-10-27-penalty-tuning.md"
+  - id: "nkp-021"
+    name: "Retire the prototype penalty code behind the production path"
+    file: "production/epics/npc-kill-penalty-informants/story-021-retire-prototype-penalty-code.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "NKP batch 2026-10-28; PrototypeParityExile + PrototypeParityInformantKill PIE ports pass; prototype exile/respawn/counters/strike tally/ShouldRemoveForNpcKills deleted; PrototypeRetired lint; evidence production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/"
+  - id: "nkp-022"
+    name: "Downtime and residual telemetry report from internal matches"
+    file: "production/epics/npc-kill-penalty-informants/story-022-telemetry-and-playtest-report.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "NKP batch 2026-10-28; tools/analysis/penalty_telemetry_report.py --self-test (37 checks); report slot production/qa/penalty-telemetry-2026-10-27.md (playtests not yet run, advisory)"

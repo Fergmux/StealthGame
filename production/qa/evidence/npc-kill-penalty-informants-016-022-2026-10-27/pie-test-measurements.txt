@@ -1,0 +1,35 @@
+NKP016 B's machine StealthPlayerController_0 (netmode 3) mates now: {handle 2880022942 state 1 pawn None retire 0.000}; roster states A 1 D 1
+NKP016 C's machine StealthPlayerController_0 (netmode 3) mates now: {handle 2026683568 state 1 pawn None retire 0.000}; roster states A 1 D 1
+NKP016 NOT MEASURED in process: the bunch cadence (ADR-0008 section 6 multi-process raw-bunch capture)
+NKP016 ally shape: Assassinated (C sees D) [State+PawnRef+RetireAtServerTime | PawnRef+RetireAtServerTime]; exile (B sees A) [State+PawnRef+RetireAtServerTime | PawnRef+RetireAtServerTime]
+NKP016 bExiled replies received: A 1, B 0, C 0, D 0
+NKP016 lifetime of URosterTeamViewComponent::View (replicated): replicated-property index 2, entries: [1 cond 0] [0 cond 0] [2 cond 2]
+NKP016 opponent C, A's body BP_CrowdCharacter_C_28 guid 42 ch 45 -> BP_CrowdCharacter_C_28 guid 42 ch 45; components [] -> []
+NKP016 opponent C, non-movement changes: NPC-kill window [Actor.ActionState]; exile window [Actor.ActionState, Actor.PlayerState]; of which IVP-018 identity fields (logged, Blocked) [Actor.PlayerState]
+NKP016 probe: k 8 vs 201 after the kills; reply bytes 19, owner part bytes 23
+NKP016 tally FStrikeResult.TallyAfter reaches the client through AStealthPlayerController::ClientCommandReplies() (RPC, owner-only client)
+NKP016 tally FTeamViewOwnerPart.WrongTargetTally reaches the client through URosterTeamViewComponent::View (replicated), condition 2
+NKP017 PENDING (camera-system stories 017/018 not built): ViewRelease(StrikeLimit) from the card-entrance event, and the ExileCardTimeoutSec fallback fade
+NKP017 PENDING (camera-system story 018 not built): the NoPawnFadeSec fade starting at DeathServerTime + DeathFallSec
+NKP017 beat (lateness 0 ms): plate 'Wrong target' at 13.197 (contact 13.175, arrival 12.750)
+NKP017 beat (lateness 300 ms): plate 'Wrong target' at 13.193 (contact 13.174, arrival 13.070)
+NKP017 beat (lateness 900 ms): plate 'Wrong target' at 13.663 (contact 13.167, arrival 13.663, late)
+NKP017 beat: body BP_CrowdCharacter_C_0; first sample view BP_CrowdCharacter_C_0 (possessed BP_CrowdCharacter_C_0); first frame off the body none
+NKP017 beat: card Informant / Too many wrong targets / You watch for your team now. at 14.005, event x1 at 14.005; 51 frames sampled, 0 off the body, 0 black, 0 controlled after the plate; roster informant 13.785, presented 14.005; frame 0.0326
+NKP017 beat: card Informant / Too many wrong targets / You watch for your team now. at 14.013, event x1 at 14.013; 50 frames sampled, 0 off the body, 0 black, 0 controlled after the plate; roster informant 13.678, presented 14.013; frame 0.0317
+NKP017 beat: card Informant / Too many wrong targets / You watch for your team now. at 14.481, event x1 at 14.481; 67 frames sampled, 0 off the body, 0 black, 0 controlled after the plate; roster informant 13.663, presented 14.481; frame 0.0329
+NKP017 beat: card none at -1.000, event x0 at -1.000; 176 frames sampled, 0 off the body, 0 black, 0 controlled after the plate; roster informant 12.782, presented 14.053; frame 0.0338
+NKP017 killed: death 24.409, fade start 25.609, fade end 26.109, released 25.647, first countdown 'Returning in 13' at 26.117 (gate 26.109); 86 frames, 0 off the body and 0 black before the fade start; removal cards 0, exile cards 0, card events 0
+NKP017 repush: kill 1 seq 1392508929; re-push {1, 1392508929} seen at 10.285 (1); kill 2 plate at 10.774 with tally 2; 57 frames; before the plate changed 0 (cache 0), after the plate wrong 0 (cache 0), decreases 0
+NKP018 parity: NPC kill (P2) visible=1|text=Wrong targets: 1|filled=1/3|triangle=0|frozen=0|fill=(0.850,0.120,0.220,1.000)|outline=(0.920,0.890,0.820,1.000)|textc=(0.920,0.890,0.820,1.000)|tri=(0.850,0.120,0.220,1.000) [Tally:1]
+NKP018 parity: informant kill (S) visible=1|text=Wrong targets: 1|filled=1/3|triangle=0|frozen=0|fill=(0.850,0.120,0.220,1.000)|outline=(0.920,0.890,0.820,1.000)|textc=(0.920,0.890,0.820,1.000)|tri=(0.850,0.120,0.220,1.000) [Tally:1]
+NKP018 tally 0: visible=1|text=Wrong targets: 0|filled=0/3|triangle=0|frozen=0|fill=(0.850,0.120,0.220,1.000)|outline=(0.920,0.890,0.820,1.000)|textc=(0.920,0.890,0.820,1.000)|tri=(0.850,0.120,0.220,1.000)
+NKP018 tally 1: visible=1|text=Wrong targets: 1|filled=1/3|triangle=0|frozen=0|fill=(0.850,0.120,0.220,1.000)|outline=(0.920,0.890,0.820,1.000)|textc=(0.920,0.890,0.820,1.000)|tri=(0.850,0.120,0.220,1.000)
+NKP018 tally 2: visible=1|text=Wrong targets: 2|filled=2/3|triangle=1|frozen=0|fill=(0.850,0.120,0.220,1.000)|outline=(0.920,0.890,0.820,1.000)|textc=(0.920,0.890,0.820,1.000)|tri=(0.850,0.120,0.220,1.000)
+NKP018 tally 3: visible=1|text=Wrong targets: 3|filled=3/3|triangle=1|frozen=0|fill=(0.850,0.120,0.220,1.000)|outline=(0.920,0.890,0.820,1.000)|textc=(0.920,0.890,0.820,1.000)|tri=(0.850,0.120,0.220,1.000)
+NKP018 tally 4: visible=1|text=Wrong targets: 4|filled=3/3|triangle=1|frozen=0|fill=(0.850,0.120,0.220,1.000)|outline=(0.920,0.890,0.820,1.000)|textc=(0.920,0.890,0.820,1.000)|tri=(0.850,0.120,0.220,1.000)
+NKP021 A kill 1: state 0 strikes 1 tally 1 teammate 0 round active 1
+NKP021 A kill 2: state 0 strikes 2 tally 2 teammate 0 round active 1
+NKP021 A kill 3: state 1 strikes 3 tally 3 teammate 0 round active 1
+NKP021 B: S tally 0 -> 1, strikes 0 -> 0; kill 23.871, T_due 38.895 (D 15.0), body BP_CrowdCharacter_C_3 (existed before T_due 1, bound spawns 0)
+ROSTER exile shape: Assassinated [State+RetireAtServerTime+BodyRef | RetireAtServerTime]; StrikeLimit [State+RetireAtServerTime+BodyRef | RetireAtServerTime]

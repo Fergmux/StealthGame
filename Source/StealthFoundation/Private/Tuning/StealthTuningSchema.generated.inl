@@ -142,6 +142,8 @@ namespace StealthTuningGenerated
 		{ "DeathFallSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::DeathFallSec>, &Set<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::DeathFallSec>, 1.2f, 0.8f, 2.0f, 1.1f, 1.6f, true, ETuningLatch::Action, "Assassination", "Sec", false, 0.0 },
 		{ "DefenceCooldownSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::DefenceCooldownSec>, &Set<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::DefenceCooldownSec>, 60.0f, 30.0f, 120.0f, 45.0f, 75.0f, true, ETuningLatch::Action, "Assassination", "Sec", false, 0.0 },
 		{ "DefenceDurationSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::DefenceDurationSec>, &Set<&FStealthServerTuning::Assassination_Public, &FAssassinationTuning_Public::DefenceDurationSec>, 4.0f, 3.0f, 5.0f, 3.0f, 5.0f, true, ETuningLatch::Action, "Assassination", "Sec", false, 0.0 },
+		{ "ExileBeatSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Penalty_Public, &FPenaltyTuning_Public::ExileBeatSec>, &Set<&FStealthServerTuning::Penalty_Public, &FPenaltyTuning_Public::ExileBeatSec>, 0.8f, 0.0f, 2.0f, 0.75f, 0.95f, true, ETuningLatch::Action, "Penalty", "Sec", false, 0.0 },
+		{ "ExileCardTimeoutSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Penalty_Public, &FPenaltyTuning_Public::ExileCardTimeoutSec>, &Set<&FStealthServerTuning::Penalty_Public, &FPenaltyTuning_Public::ExileCardTimeoutSec>, 2.0f, 1.0f, 4.0f, 2.0f, 2.5f, true, ETuningLatch::Action, "Penalty", "Sec", false, 0.0 },
 		{ "FootstepCadenceFullPerSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::FootstepCadenceFullPerSec>, &Set<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::FootstepCadenceFullPerSec>, 2.0f, 1.8f, 2.2f, 1.9f, 2.05f, true, ETuningLatch::Round, "SCL", "PerSec", false, 0.0 },
 		{ "FootstepCadenceSlowPerSec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::FootstepCadenceSlowPerSec>, &Set<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::FootstepCadenceSlowPerSec>, 1.8f, 1.6f, 2.0f, 1.75f, 1.9f, true, ETuningLatch::Round, "SCL", "PerSec", false, 0.0 },
 		{ "FootstepStartDelaySec", StealthTuningTypeTag::Float, &Get<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::FootstepStartDelaySec>, &Set<&FStealthServerTuning::Locomotion_Public, &FLocomotionTuning_Public::FootstepStartDelaySec>, 0.3f, 0.2f, 0.5f, 0.25f, 0.4f, true, ETuningLatch::Round, "SCL", "Sec", false, 0.0 },
@@ -203,5 +205,5 @@ namespace StealthTuningGenerated
 	};
 
 	/** Schema fingerprint over names, types, audiences, latches and enum values (story tdc-043). */
-	inline constexpr uint64 SchemaFingerprint = 0x020f2efe6081516bull;
+	inline constexpr uint64 SchemaFingerprint = 0x3a54113f358da039ull;
 }

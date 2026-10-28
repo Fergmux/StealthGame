@@ -1,12 +1,12 @@
 # Story 021: Retire the prototype penalty code behind the production path
 
 > **Epic**: NPC-Kill Penalty & Informants
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ This is the last story of the epic. It removes the prototype penalty path only a
 
 *From the GDD's Prototype Disposition (prototype tests A and B as the behavioural reference) and the first-playable report; all three derived:*
 
-- [ ] **AC1** (derived, GDD Prototype Disposition, prototype test A): **GIVEN** the production Penalty build with L = 3 **WHEN** prototype networked test A (a third civilian kill exiles the player while a teammate is Active; `production/first-playable-report.md`) is ported as a CQTest PIE test **THEN** it passes: the exile happens exactly on the third ungraced NPC kill, kills 1 and 2 do not exile, the teammate stays Active and the round continues.
-- [ ] **AC2** (derived, GDD Prototype Disposition, prototype test B): **GIVEN** the production build **WHEN** prototype test B (killing an enemy informant respawns them as an informant and does not count as an NPC kill) is ported as a CQTest PIE test **THEN** it passes: the victim is re-bodied by takeover of an existing crowd pawn after the test preset's delay, the attacker's tally is +1, `StrikeCount` is unchanged and the attacker is not exiled (the prototype spawned a pawn: the intent is kept, the mechanism is not).
-- [ ] **AC3** (derived, ADR-0019 migration): **GIVEN** the migration is complete **WHEN** `Source/StealthGame` is searched for `EliminatePlayer`, `ExilePlayer`, `RespawnInformant`, the `NpcKills` counter, `ShouldRemoveForNpcKills` and the test name `StealthGame.Rules.NpcKillRemoval` **THEN** there are no matches and the project builds; the HUD and PlayerState uses migrated first (the tally now comes from `FStrikeResult`, story 003 and 018).
+- [x] **AC1** (derived, GDD Prototype Disposition, prototype test A): **GIVEN** the production Penalty build with L = 3 **WHEN** prototype networked test A (a third civilian kill exiles the player while a teammate is Active; `production/first-playable-report.md`) is ported as a CQTest PIE test **THEN** it passes: the exile happens exactly on the third ungraced NPC kill, kills 1 and 2 do not exile, the teammate stays Active and the round continues.
+- [x] **AC2** (derived, GDD Prototype Disposition, prototype test B): **GIVEN** the production build **WHEN** prototype test B (killing an enemy informant respawns them as an informant and does not count as an NPC kill) is ported as a CQTest PIE test **THEN** it passes: the victim is re-bodied by takeover of an existing crowd pawn after the test preset's delay, the attacker's tally is +1, `StrikeCount` is unchanged and the attacker is not exiled (the prototype spawned a pawn: the intent is kept, the mechanism is not).
+- [x] **AC3** (derived, ADR-0019 migration): **GIVEN** the migration is complete **WHEN** `Source/StealthGame` is searched for `EliminatePlayer`, `ExilePlayer`, `RespawnInformant`, the `NpcKills` counter, `ShouldRemoveForNpcKills` and the test name `StealthGame.Rules.NpcKillRemoval` **THEN** there are no matches and the project builds; the HUD and PlayerState uses migrated first (the tally now comes from `FStrikeResult`, story 003 and 018).
 
 ---
 
@@ -68,15 +68,19 @@ Commits reference the story id in the body (`Story: NKP-S021` or the project's i
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-27). The PIE tests are under `Source/StealthTestHarness/Private/Tests/PIE/Penalty/`. `EliminatePlayer` did not exist in the prototype. The prototype settings `NpcKillLimit` and `InformantRespawnDelay` are marked UNUSED and left to tuning-data-config story 095.*
 
-- `Source/StealthGame/Private/StealthGameMode.cpp` and `Source/StealthGame/Public/StealthGameMode.h` (remove the prototype penalty paths)
-- `Source/StealthGame/Private/StealthRules.cpp` and `Source/StealthGame/Public/StealthRules.h` (`ShouldRemoveForNpcKills`)
-- `Source/StealthGame/Private/Tests/StealthRulesTests.cpp` (the `NpcKillRemoval` test)
-- `Source/StealthGame/Private/StealthHUD.cpp`, `Source/StealthGame/Private/StealthPlayerState.cpp` and its header (the `NpcKills` readers and field)
-- `Source/StealthTestHarness/Private/Penalty/PrototypeParityExileTest.cpp` (CQTest, `StealthGame.Penalty.PIE.PrototypeParityExile.*`)
-- `Source/StealthTestHarness/Private/Penalty/PrototypeParityInformantKillTest.cpp` (CQTest, `StealthGame.Penalty.PIE.PrototypeParityInformantKill.*`)
-- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyPrototypeRetiredTest.cpp` (class `FPenaltyPrototypeRetiredTest`, name `StealthGame.Penalty.PrototypeRetired`, the search lint)
+- `Source/StealthGame/Private/StealthGameMode.cpp`, `Source/StealthGame/Public/StealthGameMode.h` (the prototype penalty block, `ExilePlayer`, `RespawnInformant` and its scheduling deleted)
+- `Source/StealthGame/Private/StealthRules.cpp`, `Source/StealthGame/Public/StealthRules.h` (`ShouldRemoveForNpcKills` deleted)
+- `Source/StealthGame/Private/Tests/StealthRulesTests.cpp` (`StealthGame.Rules.NpcKillRemoval` deleted: replaced by StrikeRuleMatrix / ExileOnLthNpcKill and PrototypeParityExile)
+- `Source/StealthGame/Public/StealthPlayerState.h`, `Source/StealthGame/Private/StealthPlayerState.cpp` (`NpcKills`, `WrongTargetTally`, `bExiledByPendingResult` deleted)
+- `Source/StealthGame/Private/Composition/StealthCommandWiring.h/.cpp`, `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp`, `Source/StealthGame/Public/Server/StealthCompositionRoot.h` (`FStealthPrototypeStrikeTally` deleted; the encounter tally source is UPenaltyService)
+- `Source/StealthGame/Public/StealthSettings.h` (two prototype fields marked UNUSED)
+- `Source/StealthGameplay/Features/Penalty/Public/Server/StealthPenaltyService.h`, `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyService.cpp` (test seams `GetStrikeCountForTest` / `GetWrongTargetTallyForTest`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/PrototypeParityExilePieTest.cpp` (`StealthGame.Penalty.PIE.PrototypeParityExile.ThirdUngracedNpcKillExilesTeammateStaysActive`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/PrototypeParityInformantKillPieTest.cpp` (`StealthGame.Penalty.PIE.PrototypeParityInformantKill.InformantKillRebodiesByTakeoverNoStrike`)
+- `Source/StealthGameplay/Private/Tests/Penalty/PenaltyPrototypeRetiredTest.cpp` (`StealthGame.Penalty.PrototypeRetired`)
+- `Source/StealthGame/Private/Composition/StealthPenaltyWiring.h/.cpp`, `Source/StealthGame/Public/Server/StealthPenaltyHarnessSeams.h`, `Source/StealthGame/Public/StealthGameMode.h` (harness-only: the 0-NPC rounds' crowd-less team-start respawn now fires whenever the pick finds no eligible unseen crowd pawn, not only in a world with no crowd agent: the prototype's replacement NPC made OneBodySequence / PossessionThroughFall / CulledVictimOpensFalling / OwnerResultShape time out intermittently in this batch's gate)
 
 ---
 
@@ -112,7 +116,9 @@ QL-STORY-READY: ADEQUATE
 **Required evidence**:
 - Integration: the two CQTest PIE tests under `Source/StealthTestHarness/Private/Penalty/` and the search lint under `Source/StealthGameplay/Private/Tests/Penalty/` OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: Created and passing 2026-10-27: `StealthGame.Penalty.PIE.PrototypeParityExile.*`, `StealthGame.Penalty.PIE.PrototypeParityInformantKill.*`, `StealthGame.Penalty.PrototypeRetired`; the project builds without the prototype symbols. Evidence: `production/qa/evidence/npc-kill-penalty-informants-016-022-2026-10-27/evidence.md`.
+
+Run result: OBSERVED — the production exile and informant respawn (the only path now) were played in 3-player PIE for stories 018 / 019 (same evidence folder: `nkp-20-*.png`, `nkp-12-*.png`).
 
 ---
 

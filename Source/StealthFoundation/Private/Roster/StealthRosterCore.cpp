@@ -133,6 +133,21 @@ bool FRosterCore::FindLatestRetiredPawn(FParticipantId Id, FRosterPawnHandle& Ou
 	return bFound;
 }
 
+bool FRosterCore::FindLatestRemovedPawn(FParticipantId Id, FRosterPawnHandle& OutPawn, int64& OutRetireAtServerTimeMs) const
+{
+	bool bFound = FindLatestRetiredPawn(Id, OutPawn, OutRetireAtServerTimeMs);
+	if (const TPair<FRosterPawnHandle, int64>* Released = ExileReleases.Find(Id))
+	{
+		if (!bFound || Released->Value > OutRetireAtServerTimeMs)
+		{
+			OutPawn = Released->Key;
+			OutRetireAtServerTimeMs = Released->Value;
+			bFound = true;
+		}
+	}
+	return bFound;
+}
+
 FParticipantId FRosterCore::FindIdByKey(const FIdentityKey& Key) const
 {
 	const FParticipantId* Found = IdByKey.Find(Key);
@@ -249,6 +264,7 @@ void FRosterCore::ClearState()
 	IdByKey.Reset();
 	IssuedHandles.Reset();
 	PawnTable.Reset();
+	ExileReleases.Reset();
 	RoundEpoch = 0;
 	EventSeq = 0;
 	bTeamsLocked = false;
@@ -824,6 +840,7 @@ ERosterResult FRosterCore::InvalidateAllBindings()
 	}
 	FCallScope Scope(*this);
 	PawnTable.Reset();
+	ExileReleases.Reset();
 	for (TOptional<FParticipantRecord>& Slot : Records)
 	{
 		if (Slot.IsSet())
@@ -868,6 +885,7 @@ ERosterResult FRosterCore::ResetAll(uint32 RoundIndex)
 		Slot->PawnBinding = FRosterPawnHandle();
 	}
 	PawnTable.Reset();
+	ExileReleases.Reset();
 	++RoundEpoch;
 	LastResetRoundIndex = RoundIndex;
 	bRoundScopeReset = true;
@@ -931,7 +949,10 @@ void FRosterCore::DisposeLivePawnOnElimination(FParticipantRecord& Record, ERost
 	if (Reason == ERosterReason::StrikeLimit)
 	{
 		// ADR-0005 section 2 and decision D42: the exile releases, not retires; the pawn is Unbound (Npc) and
-		// the Rejected_NotDisconnected rule of ReleaseToCrowd does not apply on this internal path.
+		// the Rejected_NotDisconnected rule of ReleaseToCrowd does not apply on this internal path. The released pawn and
+		// the call's time are kept for the teammates' retiring update (R8, AC-PSR-57; story nkp-016).
+		ExileReleases.Add(Record.ParticipantId, TPair<FRosterPawnHandle, int64>(Record.PawnBinding,
+			RetireAtServerTimeMs.IsSet() ? RetireAtServerTimeMs.GetValue() : NowMs()));
 		ReleaseBindingInternal(Record.PawnBinding);
 		return;
 	}

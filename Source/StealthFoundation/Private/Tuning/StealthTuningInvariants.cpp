@@ -6,6 +6,7 @@
 #include "Server/StealthTuningInvariants.h"
 
 #include "Server/StealthAssassinationInvariants.h"
+#include "Server/StealthPenaltyInvariants.h"
 #include "Server/StealthServerTuning.h"
 #include "Server/StealthTuningConstants.h"
 #include "Server/StealthTuningDerived.h"
@@ -286,6 +287,12 @@ namespace
 		{ "W-ASN-9", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckWAsn9> },
 		{ "W-ASN-10", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckWAsn10> },
 		{ "W-ASN-11", "Assassination", &StealthAssassinationInvariants::TableCheck<&StealthAssassinationInvariants::CheckWAsn11> },
+		// Penalty CR-11 rows (story nkp-020; checks in PenaltyInvariants.cpp).
+		{ "I-NKP-1", "Penalty", &StealthPenaltyInvariants::TableCheck<&StealthPenaltyInvariants::CheckINkp1> },
+		{ "W-NKP-2", "Penalty", &StealthPenaltyInvariants::TableCheck<&StealthPenaltyInvariants::CheckWNkp2> },
+		{ "W-NKP-3", "Penalty", &StealthPenaltyInvariants::TableCheck<&StealthPenaltyInvariants::CheckWNkp3> },
+		{ "W-NKP-4", "Penalty", &StealthPenaltyInvariants::TableCheck<&StealthPenaltyInvariants::CheckWNkp4> },
+		{ "W-NKP-5", "Penalty", &StealthPenaltyInvariants::TableCheck<&StealthPenaltyInvariants::CheckWNkp5> },
 	};
 
 	/**

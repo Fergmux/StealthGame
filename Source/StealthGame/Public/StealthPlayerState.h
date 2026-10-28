@@ -34,21 +34,8 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Stealth")
 	EStealthLifeState LifeState = EStealthLifeState::Active;
 
-	/**
-	 * Civilians this player has killed this round: the prototype strike count (Penalty stand-in). Server only since story
-	 * asn-015: the true strike count never reaches a client (the owner sees FStrikeResult.TallyAfter at its plate).
-	 */
-	UPROPERTY(BlueprintReadOnly, Category = "Stealth")
-	int32 NpcKills = 0;
-
-	/**
-	 * STAND-IN for the Penalty epic (story asn-015), server only: the owner's "Wrong targets" tally (+1 for every
-	 * WrongTarget strike, an NPC and an informant kill alike, PEN-R14) that FStrikeResult.TallyAfter carries.
-	 */
-	int32 WrongTargetTally = 0;
-
-	/** STAND-IN (Penalty), server only: an NPC kill reached the limit in the current slot; the tally source consumes it. */
-	bool bExiledByPendingResult = false;
+	// The strike count and the wrong-target tally are UPenaltyService's (server-only; story nkp-021 retired the prototype
+	// counters that lived here): the owner sees its tally only through FStrikeResult.TallyAfter and the owner re-push.
 
 	/** Server time of this player's last ping (server-side spam guard). */
 	double LastPingTime = -1000.0;

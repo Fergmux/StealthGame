@@ -338,6 +338,18 @@ void UPenaltyService::OnInformantPawnLost(FParticipantId Participant)
 	}
 }
 
+#if WITH_STEALTH_TEST_SEAMS
+uint8 UPenaltyService::GetStrikeCountForTest(FParticipantId Participant) const
+{
+	return Core.IsValid() ? Core->GetStrikeCount(Participant) : 0;
+}
+
+uint8 UPenaltyService::GetWrongTargetTallyForTest(FParticipantId Participant) const
+{
+	return Core.IsValid() ? Core->GetWrongTargetTally(Participant) : 0;
+}
+#endif
+
 EInformantLifeState UPenaltyService::GetLifeState(FParticipantId Participant) const
 {
 	return Core.IsValid() ? Core->GetLifeState(Participant) : EInformantLifeState::Active;

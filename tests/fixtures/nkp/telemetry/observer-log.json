@@ -1,0 +1,57 @@
+{
+ "SchemaVersion": 1,
+ "Kind": "ObserverLog",
+ "Groups": [
+  {
+   "GroupId": "g1",
+   "MatchIds": [
+    "match-a"
+   ],
+   "Voice": true
+  },
+  {
+   "GroupId": "g2",
+   "MatchIds": [
+    "match-b"
+   ],
+   "Voice": false
+  },
+  {
+   "GroupId": "g3",
+   "MatchIds": [
+    "match-c"
+   ],
+   "Voice": true
+  }
+ ],
+ "BodyBlocking": [
+  {
+   "MatchId": "match-a",
+   "GroupId": "g1",
+   "PawnKind": "Informant",
+   "PassageWidthPawns": 1,
+   "ObstructedPlayerPath": true
+  },
+  {
+   "MatchId": "match-a",
+   "GroupId": "g1",
+   "PawnKind": "Released",
+   "PassageWidthPawns": 1,
+   "ObstructedPlayerPath": true
+  },
+  {
+   "MatchId": "match-b",
+   "GroupId": "g2",
+   "PawnKind": "Informant",
+   "PassageWidthPawns": 2,
+   "ObstructedPlayerPath": true
+  },
+  {
+   "MatchId": "match-b",
+   "GroupId": "g2",
+   "PawnKind": "Informant",
+   "PassageWidthPawns": 1,
+   "ObstructedPlayerPath": false
+  }
+ ]
+}
