@@ -1,0 +1,17 @@
+# Watch-fail: the unguarded engine skew on the degenerate step (temporary test StealthGame.TmpWatchFail.EngineSkewDegenerateStep, 2026-10-28 12:05, deleted after the run)
+tests exit=255
+Fail  StealthGame.TmpWatchFail.EngineSkewDegenerateStep
+(lines copied from the run's log, %TEMP%/stealth_filtered_tests.log, before the next run overwrote it)
+[2026.10.28-12.05.46:022][588]LogUnrealMath: Error: TMatrix<T>::InverseFast(), trying to invert a NIL matrix, this results in NaNs! Use Inverse() instead.
+[2026.10.28-12.05.46:125][588]LogOutputDevice: Error: Ensure condition failed: false  [File:D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Math\Matrix.h] [Line: 468]
+[2026.10.28-12.05.46:125][588]LogOutputDevice: Error: TMatrix<T>::InverseFast(), trying to invert a NIL matrix, this results in NaNs! Use Inverse() instead.
+[2026.10.28-12.05.47:329][588]EnsureFailed: Error: Ensure condition failed: false  [File:D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Math\Matrix.h] [Line: 468]
+Same state: the strike montage (AM_ASN_Strike_D54Placeholder), window [0, 0.9], PreviousPosition 0.9, CurrentPosition 0.45,
+TotalRootMotionWithinWindow from the clip; the engine URootMotionModifier_SkewWarp::ProcessRootMotion raises the exact ensure of
+the flaky PIE runs (Matrix.h line 468, from MotionWarping). The ensure text and line match the full-suite failures.
+
+# The guarded modifier on the same state (StealthGame.Assassination.StrikeWarpGuard, 12:06)
+tests exit=0
+Success  StealthGame.Assassination.StrikeWarpGuard
+[2026.10.28-12.06.14:126][588]LogStealthGameplay: [StrikeWarp] StealthPawn_0: degenerate skew step passed through unwarped (window [0.0000 0.9000], previous 0.9000, current 0.4500, rate 1.000, weight 0.000, step X=0.000 Y=-32.408 Z=0.000, remaining X=0.000 Y=0.000 Z=0.000, role 3, net mode 0, replaying 0)
+StrikeWarpGuard: window [0, 0.900] root translation X=0.000 Y=62.872 Z=0.000

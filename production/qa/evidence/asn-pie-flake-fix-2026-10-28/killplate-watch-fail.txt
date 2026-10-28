@@ -1,0 +1,21 @@
+# KillPlateTellsOneThing watch-fail, 2026-10-28 (temporary methods, deleted after this run)
+# TempWatchFailOld: the old step 3a when the blind 500 cm side-step lands S in a bush (S teleported onto the nearest bush), PrepareBegin on the teleport frame.
+# TempWatchFailNew: the same bush landing, then the new 3a (MoveSoloToOpenStand: a clear disc > 900 cm from every bush) and 3b (brace, wait for Brace).
+
+Display: Test Completed. Result={Success} Name={TempWatchFailNewBraceAfterSettle} Path={StealthGame.Assassination.PIE.KillPlateTellsOneThing.TempWatchFailNewBraceAfterSettle}
+Error: TEMPWF old: the brace is up 0.4 s after the teleport-frame PrepareBegin [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\PIE\Assassination\KillPlateTellsOneThingPieTest.cpp(384)]
+Error: Test Completed. Result={Fail} Name={TempWatchFailOldBraceOnTeleportFrame} Path={StealthGame.Assassination.PIE.KillPlateTellsOneThing.TempWatchFailOldBraceOnTeleportFrame}
+TEMPWF into bush StealthBush_3 at 0 cm (half height 86)
+TEMPWF into bush StealthBush_5 at 0 cm (half height 86)
+TEMPWF new: S pose 2
+TEMPWF old: S pose 0 at the press time, concealed 1
+
+# Failing full-gate run (2026-10-28 run 2, seed 1637189918, 12 adobe pieces, 6 garden spots): the press diagnostic
+ASN16 reversal press: distance 159.6 cm, bearing 0.0 deg, dz 0.0 cm, S pose 0
+Error: four S results, P2's result and S's Counter were seen [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\PIE\Assassination\KillPlateTellsOneThingPieTest.cpp(231)]
+LogStealth: City built for seed 1637189918: 0 walls, 0 stone, 12 adobe pieces, 6 garden spots, 25 open spots.
+LogStealth: [HUD] StealthPlayerController_0 plate NoContact at 10.454 (contact 10.452, arrival 10.012, ResultContact)
+LogStealth: [HUD] StealthPlayerController_0 plate NoContact at 13.620 (contact 13.619, arrival 12.829, ResultContact)
+LogStealth: [HUD] StealthPlayerController_0 plate NoContact at 20.285 (contact 20.284, arrival 19.851, ResultContact)
+LogStealth: [HUD] StealthPlayerController_0 plate TargetEliminated at 22.694 (contact 22.692, arrival 22.252, ResultContact)
+LogStealth: [HUD] StealthPlayerController_0 plate WrongTarget at 8.046 (contact 8.044, arrival 7.613, ResultContact)

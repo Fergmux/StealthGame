@@ -1,0 +1,17 @@
+# Input.PIE.ContextSwapOnStateAndPossession watch-fail, 2026-10-28 (temporary method, deleted after this run)
+# TempWatchFail: the old step (2) when the host stands 80 cm above the client's floor: strike_enemy's approach keeps the bot's own Z.
+
+LogAutomationController: Error: TEMPWF: the owner's C-TeamView reported Informant [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\Input\ContextSwapOnStateAndPossessionPieTest.cpp(370)]
+LogAutomationController: Error: Test Completed. Result={Fail} Name={TempWatchFailApproachSpotOccupied} Path={StealthGame.Input.PIE.ContextSwapOnStateAndPossession.TempWatchFailApproachSpotOccupied}
+LogAutomationController: TEMPWF after the approach: host 120 cm from the client, dz 80
+LogAutomationController: TEMPWF host raised 80 cm; host 5202 cm from the client
+LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_0 (enemy, 120 cm, bearing 0, braced=0).
+LogStealth: [HUD] StealthPlayerController_0 plate NoContact at 7.535 (contact 7.533, arrival 7.133, ResultContact)
+
+# The failing full-gate run (2026-10-28 gate 2 run 4, seed 1699684516, 6 adobe pieces, 50 NPCs, the strike 0.75 s after Active):
+CTXSWAP (1) restart frame 66856, ends 1 at 66856, active 1 informant 0
+CTXSWAP (2) view informant frame 0, swap frame 0, ends 0 at 0, active 1 informant 0
+Error: the owner's C-TeamView reported Informant [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\Input\ContextSwapOnStateAndPossessionPieTest.cpp(243)]
+LogStealth: City built for seed 1699684516: 0 walls, 0 stone, 6 adobe pieces, 8 garden spots, 25 open spots.
+LogStealth: [Bot] #0 strikes BP_CrowdCharacter_C_46 (enemy, 120 cm, bearing 0, braced=0).
+LogStealth: [HUD] StealthPlayerController_0 plate NoContact at 8.259 (contact 8.248, arrival 7.848, ResultContact)

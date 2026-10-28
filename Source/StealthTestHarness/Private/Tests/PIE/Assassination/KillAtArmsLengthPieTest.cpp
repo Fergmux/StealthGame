@@ -4,7 +4,11 @@
 // the production path, with its own origin) resolves in Round's slot:
 //   - exactly one OnPawnKilled(Victim, Attacker, Player, Strike) fires, in the Attack's slot, and the victim's Roster-mirror
 //     life state becomes Informant;
-//   - on the server and on every client the victim's Death_Fall starts at ContactServerTime (+- one frame of that machine);
+//   - on the server and on every client the victim's Death_Fall starts at ContactServerTime (+- one frame of that machine):
+//     on the first frame of that machine whose estimated server time reached ContactServerTime. Every machine's time is
+//     sampled once per engine frame (after the world ticks, as the presentation rows are stamped) from the press, so the
+//     check is the machine's own frame, whatever its length (fix 2026-10-28: the earlier bound used the delta of the frame
+//     the assertion ran in, 1.5 s later, and failed whenever a full-gate load hitch hit the contact frame);
 //   - the attacker's own machine: the game applies no camera rotation from the press to contact (its control rotation is
 //     unchanged on every frame), and the attacker's own strike clip starts on server confirmation (never predicted before
 //     the slot's ContactServerTime - StrikeContactSec). The reticle / lock-on / outline half is judged on the retained
@@ -16,6 +20,7 @@
 #if WITH_DEV_AUTOMATION_TESTS && defined(ENABLE_PIE_NETWORK_TEST) && ENABLE_PIE_NETWORK_TEST && WITH_STEALTH_TEST_SEAMS
 
 #include "CQTest.h"
+#include "HAL/PlatformProcess.h"
 #include "Components/CapsuleComponent.h"
 #include "EngineUtils.h"
 #include "Tests/PIE/StealthPIEOpenCircle.h"
@@ -47,6 +52,41 @@ NETWORK_TEST_CLASS(KillAtArmsLength, "StealthGame.Assassination.PIE")
 	double AxisDistanceCm = 0.0;
 	uint32 Seq = 0x31800000u;
 	double Mark = 0.0;
+	/** Per machine (StealthAssassinationPie::Worlds() order): (GFrameCounter, estimated server time) once per engine frame. */
+	TArray<TArray<TPair<uint64, double>>> MachineTimes;
+	/** The hitch variant: one 150 ms stall in the last frame before contact (the full gate's load, made deterministic). */
+	bool bInjectHitch = false;
+	bool bHitched = false;
+	double HitchFrameServerTime = -1.0;
+
+	void SampleMachineTimes()
+	{
+		const TArray<UWorld*> All = StealthAssassinationPie::Worlds();
+		MachineTimes.SetNum(All.Num());
+		for (int32 Machine = 0; Machine < All.Num(); ++Machine)
+		{
+			MachineTimes[Machine].Add(TPair<uint64, double>(GFrameCounter, UEncounterPresentationSubsystem::EstimatedServerNow(All[Machine])));
+		}
+	}
+
+	/** The machine's sampled time of the last frame before Frame (-1 when none was sampled). */
+	double TimeBeforeFrame(int32 Machine, uint64 Frame) const
+	{
+		double Out = -1.0;
+		uint64 Best = 0;
+		if (MachineTimes.IsValidIndex(Machine))
+		{
+			for (const TPair<uint64, double>& Sample : MachineTimes[Machine])
+			{
+				if (Sample.Key < Frame && Sample.Key >= Best)
+				{
+					Best = Sample.Key;
+					Out = Sample.Value;
+				}
+			}
+		}
+		return Out;
+	}
 
 	BEFORE_ALL()
 	{
@@ -89,6 +129,17 @@ NETWORK_TEST_CLASS(KillAtArmsLength, "StealthGame.Assassination.PIE")
 	}
 
 	TEST_METHOD(RivalAt230cmIsAssassinatedAndFallsAtContactWithNoGameCameraRotation)
+	{
+		RunScenario();
+	}
+
+	TEST_METHOD(RivalAt230cmFallsOnTheFirstFrameAtContactUnderAHitch)
+	{
+		bInjectHitch = true;
+		RunScenario();
+	}
+
+	void RunScenario()
 	{
 		using namespace StealthAssassinationPie;
 		using namespace StealthPresentationPie;
@@ -169,7 +220,16 @@ NETWORK_TEST_CLASS(KillAtArmsLength, "StealthGame.Assassination.PIE")
 			.Until(TEXT("contact + 1.5 s, sampling the attacker's own camera every frame to contact"), [this]()
 			{
 				const AStealthPlayerController* Owner = OwnerMachineController(Attacker.Get());
+				SampleMachineTimes();
 				const double Now = ServerNow(ServerWorld());
+				if (bInjectHitch && !bHitched && ContactServerTime > 0.0 && Now < ContactServerTime && Now >= ContactServerTime - 0.05)
+				{
+					// After this frame's world ticks (latent commands run after GEngine->Tick): the next frame is ~150 ms long
+					// and is the first one at or past contact on every machine.
+					bHitched = true;
+					HitchFrameServerTime = Now;
+					FPlatformProcess::Sleep(0.15f);
+				}
 				if (AttackerPawn.IsValid() && AttackerPawn->GetActionState().Pose == EActionPose::Strike)
 				{
 					ContactServerTime = AttackerPawn->GetActionState().ContactServerTime;
@@ -199,10 +259,22 @@ NETWORK_TEST_CLASS(KillAtArmsLength, "StealthGame.Assassination.PIE")
 				{
 					const AStealthPawn* Copy = VictimCopies.IsValidIndex(Machine) ? VictimCopies[Machine].Get() : nullptr;
 					const FEncounterPresentationLogRow* Fall = StealthPresentationPie::FirstRow(All[Machine], Copy, EEncounterPresentationEvent::ClipStart, EEncounterClip::DeathFall);
-					const double FrameSec = FMath::Max(1.0 / 60.0, static_cast<double>(All[Machine]->GetDeltaSeconds())) + 0.002;
-					TestRunner->AddInfo(FString::Printf(TEXT("ASN01 machine %d: Death_Fall starts at %.3f (late %d)"), Machine, Fall != nullptr ? Fall->ServerNow : -1.0, Fall != nullptr && Fall->bLate ? 1 : 0));
-					ASSERT_THAT(IsTrue(Fall != nullptr && Fall->ServerNow + 0.001 >= ContactServerTime && Fall->ServerNow <= ContactServerTime + FrameSec,
+					// "+- one frame" of this machine: the fall's frame is at or after contact and the machine's previous frame was
+					// before it (the first frame that reached contact), however long that frame was.
+					const double Previous = Fall != nullptr ? TimeBeforeFrame(Machine, Fall->Frame) : -1.0;
+					TestRunner->AddInfo(FString::Printf(TEXT("ASN01 machine %d: Death_Fall starts at %.3f (late %d), previous frame %.3f, frame step %.1f ms"), Machine,
+						Fall != nullptr ? Fall->ServerNow : -1.0, Fall != nullptr && Fall->bLate ? 1 : 0, Previous, Fall != nullptr && Previous >= 0.0 ? (Fall->ServerNow - Previous) * 1000.0 : -1.0));
+					// The pre-2026-10-28 bound, reported only (the watch-fail record): one frame = this machine's delta at the assert.
+					const double OldFrameSec = FMath::Max(1.0 / 60.0, static_cast<double>(All[Machine]->GetDeltaSeconds())) + 0.002;
+					TestRunner->AddInfo(FString::Printf(TEXT("ASN01 machine %d: the old bound (contact + %.1f ms) %s"), Machine, OldFrameSec * 1000.0,
+						Fall != nullptr && Fall->ServerNow <= ContactServerTime + OldFrameSec ? TEXT("holds") : TEXT("FAILS")));
+					ASSERT_THAT(IsTrue(Fall != nullptr && Fall->ServerNow + 0.001 >= ContactServerTime && Previous >= 0.0 && Previous < ContactServerTime + 0.001,
 						*FString::Printf(TEXT("machine %d: Death_Fall starts at ContactServerTime (+- one frame)"), Machine)));
+				}
+				if (bInjectHitch)
+				{
+					TestRunner->AddInfo(FString::Printf(TEXT("ASN01 hitch injected in the frame at %.3f (contact %.3f)"), HitchFrameServerTime, ContactServerTime));
+					ASSERT_THAT(IsTrue(bHitched, TEXT("the hitch was injected in the last frame before contact")));
 				}
 				ASSERT_THAT(IsTrue(MaxOwnerRotationDeltaDeg <= 0.01, TEXT("no game-applied camera rotation on the attacker's machine from the press to contact")));
 				const int32 OwnerMachine = StealthPresentationPie::MachineOf(Attacker.Get());

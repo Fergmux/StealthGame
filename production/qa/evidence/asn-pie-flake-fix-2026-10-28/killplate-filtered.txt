@@ -1,0 +1,31 @@
+# KillPlateTellsOneThing after the fix, 3 filtered runs 2026-10-28 (fresh layouts each)
+Result={Success} Name={FivePlatesOnTheirContactFrameWithOneT
+ASN16 P2 plate 'Reversed' at 14.072 for contact 14.069; removal card at 14.072
+ASN16 S plate 'No contact' at 10.629 for contact 10.625 (arrival 10.188, late 0), frame 0.051
+ASN16 S plate 'Strike reversed' at 14.072 for contact 14.069 (arrival 13.631, late 0), frame 0.051
+ASN16 S plate 'Target eliminated' at 32.498 for contact 32.498 (arrival 32.059, late 0), frame 0.051
+ASN16 S plate 'Wrong target' at 30.096 for contact 30.089 (arrival 29.650, late 0), frame 0.051
+ASN16 S plate 'Wrong target' at 8.217 for contact 8.213 (arrival 7.777, late 0), frame 0.051
+ASN16 reversal press: distance 159.6 cm, bearing 0.0 deg, dz -26.0 cm, S pose 2
+City built for seed 1277574231: 0 walls, 0 stone, 4 adobe pieces, 8 garden spots, 25 open spots.
+
+Result={Success} Name={FivePlatesOnTheirContactFrameWithOneT
+ASN16 P2 plate 'Reversed' at 14.069 for contact 14.065; removal card at 14.069
+ASN16 S plate 'No contact' at 10.628 for contact 10.623 (arrival 10.187, late 0), frame 0.055
+ASN16 S plate 'Strike reversed' at 14.069 for contact 14.065 (arrival 13.627, late 0), frame 0.055
+ASN16 S plate 'Target eliminated' at 32.501 for contact 32.498 (arrival 32.059, late 0), frame 0.055
+ASN16 S plate 'Wrong target' at 30.093 for contact 30.090 (arrival 29.662, late 0), frame 0.055
+ASN16 S plate 'Wrong target' at 8.217 for contact 8.210 (arrival 7.775, late 0), frame 0.055
+ASN16 reversal press: distance 150.0 cm, bearing 0.0 deg, dz -26.0 cm, S pose 2
+City built for seed 497557762: 0 walls, 0 stone, 4 adobe pieces, 8 garden spots, 25 open spots.
+
+Result={Success} Name={FivePlatesOnTheirContactFrameWithOneT
+ASN16 P2 plate 'Reversed' at 14.078 for contact 14.073; removal card at 14.078
+ASN16 S plate 'No contact' at 10.636 for contact 10.631 (arrival 10.196, late 0), frame 0.054
+ASN16 S plate 'Strike reversed' at 14.078 for contact 14.073 (arrival 13.636, late 0), frame 0.054
+ASN16 S plate 'Target eliminated' at 32.516 for contact 32.511 (arrival 32.074, late 0), frame 0.054
+ASN16 S plate 'Wrong target' at 30.106 for contact 30.103 (arrival 29.668, late 0), frame 0.054
+ASN16 S plate 'Wrong target' at 8.225 for contact 8.219 (arrival 7.785, late 0), frame 0.054
+ASN16 reversal press: distance 159.2 cm, bearing 0.0 deg, dz -26.0 cm, S pose 2
+City built for seed 589168775: 0 walls, 0 stone, 8 adobe pieces, 8 garden spots, 25 open spots.
+

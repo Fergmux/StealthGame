@@ -17,11 +17,13 @@
 #if WITH_DEV_AUTOMATION_TESTS && defined(ENABLE_PIE_NETWORK_TEST) && ENABLE_PIE_NETWORK_TEST && WITH_STEALTH_TEST_SEAMS
 
 #include "CQTest.h"
+#include "Components/CapsuleComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "Server/StealthPenaltyHarnessSeams.h"
 #include "StealthGameMode.h"
 #include "StealthSettings.h"
 #include "Tests/PIE/Assassination/OwnPresentationPieSupport.h"
+#include "Tests/PIE/StealthPIEOpenCircle.h"
 
 namespace KillPlateTellsOneThingPieData
 {
@@ -30,6 +32,17 @@ namespace KillPlateTellsOneThingPieData
 	constexpr double StepSec = 2.4;
 	/** The reversed attacker's respawn as an informant. */
 	constexpr double RespawnWaitSec = 6.0;
+	/**
+	 * S's stands (steps 1-2 and 3-5) are discs this wide with nothing standing on them: every strike partner is placed 150 cm
+	 * from S in its own direction, so the disc holds it whichever way it faces. 2026-10-28 full-gate flake (seed 1637189918, 12
+	 * adobe pieces, 6 garden spots): the blind 500 cm side-step left S unbraced at the press (pose None) and the reversal
+	 * NoContact; a side-step into a bush does exactly that (concealed: PrepareBegin is NotNow), watched failing in
+	 * production/qa/evidence/asn-pie-flake-fix-2026-10-28/killplate-watch-fail.txt.
+	 */
+	constexpr double StandRadiusCm = 160.0;
+	constexpr double StandMarginCm = 60.0;
+	/** The second stand keeps this far from the NPC's body (a dead body in reach is NoContact, never a reversal). */
+	constexpr double ClearOfBodyCm = 450.0;
 }
 
 NETWORK_TEST_CLASS(KillPlateTellsOneThing, "StealthGame.Assassination.PIE")
@@ -53,6 +66,47 @@ NETWORK_TEST_CLASS(KillPlateTellsOneThing, "StealthGame.Assassination.PIE")
 	double Mark = 0.0;
 	/** Server time the respawned P2 pawn was first seen (-1: not yet); it settles before step 4 strikes it. */
 	double RespawnSeenAt = -1.0;
+	/** Where the NPC of step 1 was spawned (its body stays there). */
+	FVector NpcSpot = FVector::ZeroVector;
+
+	/**
+	 * Teleports S onto the nearest clear, flat disc round Origin away from every bush and, when AwayFrom is set, at least
+	 * ClearOfBodyCm from it; keeps S's yaw. False when no disc is clear.
+	 */
+	bool MoveSoloToOpenStand(const FVector& Origin, TOptional<FVector> AwayFrom)
+	{
+		using namespace KillPlateTellsOneThingPieData;
+		UWorld* Server = StealthAssassinationPie::ServerWorld();
+		AStealthPawn* S = SoloPawn.Get();
+		const float HalfHeight = S->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		StealthPIEOpenCircle::FParams Params;
+		Params.RadiusCm = StandRadiusCm;
+		Params.MarginCm = StandMarginCm;
+		Params.AlsoIgnored.Add(PawnOf(Pair[0]));
+		Params.AlsoIgnored.Add(PawnOf(Pair[1]));
+		Params.Accept = [Server, AwayFrom](const FVector& Centre)
+		{
+			if (AwayFrom.IsSet() && FVector::Dist2D(AwayFrom.GetValue(), Centre) < ClearOfBodyCm)
+			{
+				return false;
+			}
+			for (TActorIterator<AStealthBush> It(Server); It; ++It)
+			{
+				if (FVector::Dist2D(It->GetActorLocation(), Centre) <= 900.0)
+				{
+					return false;
+				}
+			}
+			return true;
+		};
+		const TOptional<FVector> Centre = StealthPIEOpenCircle::FindOpenCircle(Server, Origin - FVector(0.0, 0.0, HalfHeight), S, Params);
+		if (!Centre.IsSet())
+		{
+			return false;
+		}
+		S->TeleportTo(Centre.GetValue() + FVector(0.0, 0.0, HalfHeight + 2.0), FRotator(0.0, S->GetActorRotation().Yaw, 0.0), false, true);
+		return true;
+	}
 
 	BEFORE_ALL()
 	{
@@ -139,6 +193,7 @@ NETWORK_TEST_CLASS(KillPlateTellsOneThing, "StealthGame.Assassination.PIE")
 			.Then(TEXT("place S clear of the bushes, the pair aside"), [this]()
 			{
 				MoveClearOfBushes(SoloPawn.Get());
+				ASSERT_THAT(IsTrue(MoveSoloToOpenStand(SoloPawn->GetActorLocation(), TOptional<FVector>()), TEXT("a clear, flat disc away from the bushes for steps 1-2")));
 				const FVector Right = FVector::CrossProduct(FVector::UpVector, SoloPawn->GetActorForwardVector().GetSafeNormal2D());
 				PawnOf(Pair[0])->TeleportTo(SoloPawn->GetActorLocation() + Right * 1200.0, PawnOf(Pair[0])->GetActorRotation());
 				PawnOf(Pair[1])->TeleportTo(SoloPawn->GetActorLocation() - Right * 1200.0, PawnOf(Pair[1])->GetActorRotation());
@@ -151,6 +206,7 @@ NETWORK_TEST_CLASS(KillPlateTellsOneThing, "StealthGame.Assassination.PIE")
 		Step(TEXT("1 S kills an NPC"), [this]()
 		{
 			Npc = SpawnUnboundPawn(ServerWorld(), SoloPawn.Get(), 150.0);
+			NpcSpot = Npc->GetActorLocation();
 			StrikeAt(SoloPawn.Get(), Npc.Get(), Seq);
 		});
 		Step(TEXT("2 S whiffs"), [this]()
@@ -160,15 +216,21 @@ NETWORK_TEST_CLASS(KillPlateTellsOneThing, "StealthGame.Assassination.PIE")
 			Payload.WorldPoint = SoloPawn->GetActorLocation() + Right * 600.0; // nobody there
 			AsOwner(SoloPawn.Get(), Seq, [&Payload](UPawnCommandComponent& Command) { Command.Attack(Payload); });
 		});
-		Step(TEXT("3a S moves off the NPC's body, braces, P2 comes in front"), [this]()
+		Step(TEXT("3a S moves to a clear disc off the NPC's body"), [this]()
 		{
-			// Away from the NPC body lying 150 cm ahead (a dead body in reach is NoContact, never a reversal).
 			const FVector Right = FVector::CrossProduct(FVector::UpVector, SoloPawn->GetActorForwardVector().GetSafeNormal2D());
-			SoloPawn->TeleportTo(SoloPawn->GetActorLocation() - Right * 500.0, SoloPawn->GetActorRotation());
+			ASSERT_THAT(IsTrue(MoveSoloToOpenStand(SoloPawn->GetActorLocation() - Right * 500.0, NpcSpot), TEXT("a clear, flat disc off the NPC's body for steps 3-5")));
+		}, KillPlateTellsOneThingPieData::SettleSec);
+		// The brace is up before P2 is placed (the press diagnostic below reads S pose 2 = Brace).
+		Step(TEXT("3b S braces"), [this]()
+		{
 			AsOwner(SoloPawn.Get(), Seq, [](UPawnCommandComponent& Command) { Command.PrepareBegin(); });
+		}, 0.0, [this]() { return SoloPawn.IsValid() && SoloPawn->GetActionState().Pose == EActionPose::Brace; });
+		Step(TEXT("3c P2 comes in front"), [this]()
+		{
 			PlaceStrikerFacing(PawnOf(Pair[1]), SoloPawn.Get(), 150.0);
 		}, 0.4);
-		Step(TEXT("3b P2 strikes S (reversed)"), [this]()
+		Step(TEXT("3d P2 strikes S (reversed)"), [this]()
 		{
 			// The geometry the resolver sees at the press (diagnostics: a NoContact here is a placement, not a plate, fault).
 			const AStealthPawn* Striker = PawnOf(Pair[1]);

@@ -1,0 +1,18 @@
+tests exit=0
+Success  StealthGame.Assassination.PIE.KillAtArmsLength.RivalAt230cmFallsOnTheFirstFrameAtContactUnderAHitch
+Success  StealthGame.Assassination.PIE.KillAtArmsLength.RivalAt230cmIsAssassinatedAndFallsAtContactWithNoGameCameraRotation
+ASN01 axis distance 230.0 cm, press 7.836, contact 8.244, death 8.244, kills 1, max owner rotation delta 0.0000 deg
+ASN01 axis distance 230.0 cm, press 8.014, contact 8.422, death 8.422, kills 1, max owner rotation delta 0.0000 deg
+ASN01 hitch injected in the frame at 8.372 (contact 8.422)
+ASN01 machine 0: Death_Fall starts at 8.244 (late 0), previous frame 8.236, frame step 8.3 ms
+ASN01 machine 0: Death_Fall starts at 8.527 (late 0), previous frame 8.372, frame step 155.0 ms
+ASN01 machine 0: the old bound (contact + 18.7 ms) FAILS
+ASN01 machine 0: the old bound (contact + 18.7 ms) holds
+ASN01 machine 1: Death_Fall starts at 8.248 (late 0), previous frame 8.240, frame step 8.3 ms
+ASN01 machine 1: Death_Fall starts at 8.490 (late 0), previous frame 8.334, frame step 156.4 ms
+ASN01 machine 1: the old bound (contact + 18.7 ms) FAILS
+ASN01 machine 1: the old bound (contact + 18.7 ms) holds
+ASN01 machine 2: Death_Fall starts at 8.248 (late 0), previous frame 8.240, frame step 8.3 ms
+ASN01 machine 2: Death_Fall starts at 8.490 (late 0), previous frame 8.334, frame step 156.4 ms
+ASN01 machine 2: the old bound (contact + 18.7 ms) FAILS
+ASN01 machine 2: the old bound (contact + 18.7 ms) holds

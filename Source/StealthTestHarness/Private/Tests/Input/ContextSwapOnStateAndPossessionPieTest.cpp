@@ -2,21 +2,25 @@
 // AC 55 (R13, Integration, P ContextSwapOnStateAndPossession): GIVEN an Active player WHEN Roster's Owner-audience
 // state changes to Informant, and separately WHEN the pawn is re-possessed THEN IMC_Informant (resp. the
 // class-appropriate context) is active within one frame; AND all held inputs are flushed.
-// How: listen server + 1 client on the fixture map. (1) Re-possession while Active with Interact held: the server
-// UnPossesses and re-possesses the client's pawn; on the owner the Interact End goes out at the ClientRestart and
-// IMC_Active stays the context. (2) The state change: with Interact held, the host's development bot strikes the client
-// (the production Roster records Active -> Informant through the D53 adapters); the owner's C-TeamView update swaps
-// IMC_Active for IMC_Informant in the same frame the view arrives (frame delta <= 1) and the held Interact is ended by
-// that swap. No HUD presenter is bound (MVP), so the raw state decides at once (StealthOwnerContext gate).
+// How: listen server + 1 client on the fixture map, crowd-less, the pair staged on one clear disc before any input. (1)
+// Re-possession while Active with Interact held: the server UnPossesses and re-possesses the client's pawn; on the
+// owner the Interact End goes out at the ClientRestart and IMC_Active stays the context. (2) The state change: with
+// Interact held, the host's development bot strikes the client (the production Roster records Active -> Informant
+// through the D53 adapters); the owner's C-TeamView update swaps IMC_Active for IMC_Informant in the same frame the
+// view arrives (frame delta <= 1) and the held Interact is ended by that swap. No HUD presenter is bound (MVP), so the
+// raw state decides at once (StealthOwnerContext gate).
 
 #include "CoreMinimal.h"
 #include "Tests/PIE/StealthPIENetworkComponent.h"
+#include "Tests/PIE/StealthPIEOpenCircle.h"
 
 #if WITH_DEV_AUTOMATION_TESTS && defined(ENABLE_PIE_NETWORK_TEST) && ENABLE_PIE_NETWORK_TEST
 
 #include "CQTest.h"
+#include "Components/CapsuleComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
+#include "EngineUtils.h"
 #include "GameFramework/PlayerState.h"
 #include "HAL/IConsoleManager.h"
 #include "InputKeyEventArgs.h"
@@ -24,6 +28,8 @@
 #include "StealthGameMode.h"
 #include "StealthPlayerController.h"
 #include "StealthGameState.h"
+#include "StealthBush.h"
+#include "StealthSettings.h"
 #include "View/Core/StealthPawn.h"
 #include "View/Input/PawnCommandClient.h"
 #include "View/StealthRosterTeamView.h"
@@ -45,12 +51,25 @@ namespace ContextSwapTestData
 	const TCHAR* const NetworkTimeoutCeilingSeconds = TEXT("300");
 	constexpr uint64 SettleFrames = 12;
 	constexpr uint64 StrikeCeilingFrames = 900;
+	/**
+	 * The strike pair's stand. 2026-10-28 full-gate flake (seed 1699684516, 50 NPCs): the host's bot struck NoContact 0.75 s
+	 * into the round, so the client never became an Informant. strike_enemy's approach teleports at the bot's own Z and
+	 * through whatever stands there: a host on higher ground than the client strikes NoContact (watched failing,
+	 * production/qa/evidence/asn-pie-flake-fix-2026-10-28/contextswap-watch-fail.txt). The round is crowd-less and both pawns
+	 * stand on one clear, flat disc this far apart before any input, so the approach spot is the host's own stand.
+	 */
+	constexpr double StrikeDistanceCm = 120.0;
+	constexpr double StandRadiusCm = 90.0;
+	constexpr double StandMarginCm = 60.0;
+	constexpr uint64 StageSettleFrames = 30;
 }
 
 NETWORK_TEST_CLASS(ContextSwapOnStateAndPossession, "StealthGame.Input.PIE")
 {
 	TStealthPIENetworkComponent<FBasePIENetworkComponentState> Network{ TestRunner, TestCommandBuilder };
 	inline static FString PreviousNetworkTimeout;
+
+	inline static int32 PreviousNpcCount = -1;
 
 	TArray<TPair<ECommandKind, uint64>> Sent;
 	uint64 Mark = 0;
@@ -65,6 +84,9 @@ NETWORK_TEST_CLASS(ContextSwapOnStateAndPossession, "StealthGame.Input.PIE")
 			PreviousNetworkTimeout = Timeout->GetString();
 			Timeout->Set(ContextSwapTestData::NetworkTimeoutCeilingSeconds, ECVF_SetByCode);
 		}
+		UStealthSettings* Settings = GetMutableDefault<UStealthSettings>();
+		PreviousNpcCount = Settings->NpcCount;
+		Settings->NpcCount = 0;
 	}
 
 	AFTER_ALL()
@@ -75,6 +97,10 @@ NETWORK_TEST_CLASS(ContextSwapOnStateAndPossession, "StealthGame.Input.PIE")
 			{
 				Timeout->Set(*PreviousNetworkTimeout, ECVF_SetByCode);
 			}
+		}
+		if (PreviousNpcCount >= 0)
+		{
+			GetMutableDefault<UStealthSettings>()->NpcCount = PreviousNpcCount;
 		}
 	}
 
@@ -147,6 +173,58 @@ NETWORK_TEST_CLASS(ContextSwapOnStateAndPossession, "StealthGame.Input.PIE")
 		}
 	}
 
+	/** The host's own pawn on the server. */
+	static APawn* HostPawn()
+	{
+		UWorld* Server = ServerWorld();
+		const APlayerController* Host = Server ? Server->GetFirstPlayerController() : nullptr;
+		return Host && Host->IsLocalController() ? Host->GetPawn() : nullptr;
+	}
+
+	/**
+	 * Stages the strike pair before any input: the client's pawn and the host's on a clear, flat disc (nothing standing on it,
+	 * > 900 cm from every bush), StrikeDistanceCm apart, the host facing the client. False when no disc is clear.
+	 */
+	static bool StageStrikePair()
+	{
+		using namespace ContextSwapTestData;
+		UWorld* Server = ServerWorld();
+		APlayerController* ServerOwner = ServerSideOwner();
+		APawn* Target = ServerOwner ? ServerOwner->GetPawn() : nullptr;
+		APawn* Striker = HostPawn();
+		const ACharacter* TargetCharacter = Cast<ACharacter>(Target);
+		if (!Server || !TargetCharacter || !Striker)
+		{
+			return false;
+		}
+		const float HalfHeight = TargetCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		StealthPIEOpenCircle::FParams Params;
+		Params.RadiusCm = StandRadiusCm;
+		Params.MarginCm = StandMarginCm;
+		Params.AlsoIgnored.Add(Striker);
+		Params.Accept = [Server](const FVector& Centre)
+		{
+			for (TActorIterator<AStealthBush> It(Server); It; ++It)
+			{
+				if (FVector::Dist2D(It->GetActorLocation(), Centre) <= 900.0)
+				{
+					return false;
+				}
+			}
+			return true;
+		};
+		const TOptional<FVector> Centre = StealthPIEOpenCircle::FindOpenCircle(Server, Target->GetActorLocation() - FVector(0.0, 0.0, HalfHeight), Target, Params);
+		if (!Centre.IsSet())
+		{
+			return false;
+		}
+		const FVector Floor = Centre.GetValue() + FVector(0.0, 0.0, HalfHeight + 2.0);
+		const FVector Axis(1.0, 0.0, 0.0);
+		Target->TeleportTo(Floor - Axis * (StrikeDistanceCm * 0.5), Target->GetActorRotation(), false, true);
+		Striker->TeleportTo(Floor + Axis * (StrikeDistanceCm * 0.5), (-Axis).Rotation(), false, true);
+		return true;
+	}
+
 	int32 Count(ECommandKind Kind, uint64 Since) const
 	{
 		return Sent.FilterByPredicate([Kind, Since](const TPair<ECommandKind, uint64>& S) { return S.Key == Kind && S.Value >= Since; }).Num();
@@ -162,6 +240,12 @@ NETWORK_TEST_CLASS(ContextSwapOnStateAndPossession, "StealthGame.Input.PIE")
 				return PC && Cast<AStealthPawn>(PC->GetPawn()) && ContextSwapRoundGate::IsClientRoundActive(PC) && PC->GetTeamView() && PC->GetTeamView()->GetView().Owner.State == static_cast<uint8>(EParticipantState::Active)
 					&& HasContext(TEXT("IMC_Active"));
 			})
+			.Then(TEXT("stage the strike pair on a clear disc"), [this]()
+			{
+				ASSERT_THAT(IsTrue(StageStrikePair(), TEXT("a clear, flat disc away from the bushes for the strike pair")));
+				Mark = GFrameCounter;
+			})
+			.Until(TEXT("the pair settles"), [this]() { return GFrameCounter >= Mark + ContextSwapTestData::StageSettleFrames; })
 			.Then(TEXT("observe the owner"), [this]()
 			{
 				Owner()->GetCommandClient()->OnOwnerCommandPredicted.AddLambda([this](ECommandKind Kind, FClientCommandSeq) { Sent.Add({ Kind, GFrameCounter }); });

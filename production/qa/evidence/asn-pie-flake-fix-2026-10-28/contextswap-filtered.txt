@@ -1,0 +1,16 @@
+# Input.PIE.ContextSwapOnStateAndPossession after the fix, 3 filtered runs 2026-10-28 (fresh layouts each)
+Result={Success} Name={StateChangeAndRepossessionSwapContextAndFlush} Path={Stea
+CTXSWAP (1) restart frame 1438, ends 1 at 1438, active 1 informant 0
+CTXSWAP (2) view informant frame 1469, swap frame 1469, ends 1 at 1469, active 0 informant 1
+LogStealth: City built for seed 1177159978: 0 walls, 0 stone, 4 adobe pieces, 10 garden spots, 25 open spots.
+
+Result={Success} Name={StateChangeAndRepossessionSwapContextAndFlush} Path={Stea
+CTXSWAP (1) restart frame 1438, ends 1 at 1438, active 1 informant 0
+CTXSWAP (2) view informant frame 1469, swap frame 1469, ends 1 at 1469, active 0 informant 1
+LogStealth: City built for seed 194322971: 0 walls, 0 stone, 12 adobe pieces, 6 garden spots, 25 open spots.
+
+Result={Success} Name={StateChangeAndRepossessionSwapContextAndFlush} Path={Stea
+CTXSWAP (1) restart frame 1439, ends 1 at 1439, active 1 informant 0
+CTXSWAP (2) view informant frame 1470, swap frame 1470, ends 1 at 1470, active 0 informant 1
+LogStealth: City built for seed 517069089: 0 walls, 0 stone, 0 adobe pieces, 8 garden spots, 25 open spots.
+

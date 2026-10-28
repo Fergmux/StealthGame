@@ -1,0 +1,15 @@
+tests exit=0
+Success  StealthGame.Assassination.PIE.StrikeClipParity.FiveTargetsAtOneBearingPoseAlikeOnServerAndBystander
+ng: informant: server and bystander bones within 0.5 cm (max 15.925 cm) [advisory until SCL-041's shared AnimBP] [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\PIE\Assassination\StrikeClipParityPieTest.cpp(451)]
+ng: informant: bones within 0.5 cm of the NPC strike's (max 6.173 cm) [advisory until SCL-041's shared AnimBP] [C:\Users\fergm\Documents\Unreal Projects\StealthGame\Source\StealthTestHarness\Private\Tests\PIE\Assassination\StrikeClipParityPieTest.cpp(455)]
+ASN21 NPC: variant 0 warp (1500,0,0) samples 55/55 from clip 0.239; server vs bystander max 13.742 cm (34 pairs, at clip 0.263 bone 73); vs NPC max 0.000 cm (0 pairs, at clip 0.263 bone 73)
+ASN21 NPC: worst bones ball_l / ball_l (82 of 89 bones compared)
+ASN21 attacker AnimBP ABP_SandboxCharacter_C (UStealthAnimInstance child: 1; SCL-041 parity graph: 0)
+ASN21 braced defender: variant 0 warp (1500,0,-260) samples 55/55 from clip 0.230; server vs bystander max 8.630 cm (35 pairs, at clip 0.244 bone 79); vs NPC max 9.023 cm (35 pairs, at clip 0.244 bone 72)
+ASN21 braced defender: worst bones foot_r / foot_l (82 of 89 bones compared)
+ASN21 empty spot: variant 0 warp (1500,0,0) samples 55/55 from clip 0.236; server vs bystander max 13.871 cm (35 pairs, at clip 0.244 bone 80); vs NPC max 9.804 cm (36 pairs, at clip 0.225 bone 79)
+ASN21 empty spot: worst bones ball_r / foot_r (82 of 89 bones compared)
+ASN21 informant: variant 0 warp (1500,0,0) samples 55/55 from clip 0.235; server vs bystander max 15.925 cm (35 pairs, at clip 0.252 bone 72); vs NPC max 6.173 cm (36 pairs, at clip 0.861 bone 69)
+ASN21 informant: worst bones foot_l / calf_l (82 of 89 bones compared)
+ASN21 rival: variant 0 warp (1500,0,0) samples 55/55 from clip 0.233; server vs bystander max 8.214 cm (34 pairs, at clip 0.263 bone 79); vs NPC max 5.367 cm (36 pairs, at clip 0.225 bone 79)
+ASN21 rival: worst bones foot_r / foot_r (82 of 89 bones compared)

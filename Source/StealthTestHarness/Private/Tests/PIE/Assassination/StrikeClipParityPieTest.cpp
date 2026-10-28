@@ -23,13 +23,16 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "CQTest.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
 #include "Server/StealthPenaltyHarnessSeams.h"
 #include "StealthGameMode.h"
 #include "StealthSettings.h"
 #include "View/Animation/StealthAnimInstance.h"
 #include "Tests/PIE/Assassination/PresentationPieSupport.h"
+#include "Tests/PIE/StealthPIEOpenCircle.h"
 
 namespace StrikeClipParityPieData
 {
@@ -315,11 +318,36 @@ NETWORK_TEST_CLASS(StrikeClipParity, "StealthGame.Assassination.PIE")
 				SoloPawn = Cast<AStealthPawn>(S->GetPawn());
 				return SoloPawn.IsValid();
 			})
-			.Then(TEXT("anchor S clear of the bushes, the pair aside"), [this]()
+			.Then(TEXT("anchor S on a clear, flat disc away from the bushes, the pair aside"), [this]()
 			{
+				// Fix 2026-10-28 (as KillAtArmsLength 32cb760): the spawn layout comes from OS entropy, and a target spot 150 cm
+				// ahead of an anchor next to an adobe piece was pushed aside by the teleport's encroachment check, the same way
+				// for every pawn target (WarpPoint (1441,-48) against the empty spot's (1500,0) in one full-suite run). The pair's
+				// stand and its target spot now sit on a disc with nothing standing on it.
 				MoveClearOfBushes(SoloPawn.Get());
-				Anchor = SoloPawn->GetActorLocation();
+				UWorld* Server = ServerWorld();
+				const float HalfHeight = SoloPawn->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 				AnchorFacing = FRotator(0.0, SoloPawn->GetActorRotation().Yaw, 0.0);
+				StealthPIEOpenCircle::FParams Params;
+				Params.RadiusCm = 75.0;
+				Params.MarginCm = 60.0;
+				Params.AlsoIgnored.Add(PawnOf(Pair[0]));
+				Params.AlsoIgnored.Add(PawnOf(Pair[1]));
+				Params.Accept = [Server](const FVector& Centre)
+				{
+					for (TActorIterator<AStealthBush> It(Server); It; ++It)
+					{
+						if (FVector::Dist2D(It->GetActorLocation(), Centre) <= 900.0)
+						{
+							return false;
+						}
+					}
+					return true;
+				};
+				const TOptional<FVector> Centre = StealthPIEOpenCircle::FindOpenCircle(Server, SoloPawn->GetActorLocation() - FVector(0.0, 0.0, HalfHeight), SoloPawn.Get(), Params);
+				ASSERT_THAT(IsTrue(Centre.IsSet(), TEXT("a clear, flat disc away from the bushes for the strikes")));
+				Anchor = Centre.GetValue() - AnchorFacing.Vector() * 75.0 + FVector(0.0, 0.0, HalfHeight + 2.0);
+				SoloPawn->TeleportTo(Anchor, AnchorFacing, false, true);
 				const FVector Right = FVector::CrossProduct(FVector::UpVector, AnchorFacing.Vector());
 				PawnOf(Pair[0])->TeleportTo(Anchor + Right * 1200.0, PawnOf(Pair[0])->GetActorRotation());
 				PawnOf(Pair[1])->TeleportTo(Anchor - Right * 1200.0, PawnOf(Pair[1])->GetActorRotation());

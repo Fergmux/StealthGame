@@ -18,6 +18,7 @@
 #include "StrikeVariantCore.h"
 #include "View/Core/StealthPawn.h"
 #include "View/EncounterPresentationSettings.h"
+#include "View/StealthStrikeSkewWarp.h"
 #include "View/StealthTuningPublicSubstructs.h"
 
 namespace EncounterPresentationLocal
@@ -117,8 +118,9 @@ namespace EncounterPresentationLocal
 			const FTransform RootAtContact = UMotionWarpingUtilities::ExtractRootTransformFromAnimation(Montage, WindowEnd);
 			const FVector MeshForward = Pawn.GetBaseRotationOffset().Inverse().RotateVector(FVector::XAxisVector);
 			const FTransform WarpPoint(FQuat::Identity, RootAtContact.GetLocation() + MeshForward * Separation);
-			URootMotionModifier_SkewWarp::AddRootMotionModifierSkewWarp(Warping, Montage, 0.0f, WindowEnd, AStealthPawn::StrikeWarpTargetName,
-				EWarpPointAnimProvider::Static, WarpPoint, NAME_None, /*bWarpTranslation*/ true, /*bIgnoreZ*/ true, /*bWarpRotation*/ false);
+			// The guarded skew warp (2026-10-28): a step with no root motion left in the window passes through unwarped instead
+			// of reaching the engine skew's NIL-matrix inverse (View/StealthStrikeSkewWarp.h).
+			UStealthStrikeSkewWarp::AddStrikeSkewWarp(Warping, Montage, 0.0f, WindowEnd, AStealthPawn::StrikeWarpTargetName, WarpPoint, /*bIgnoreZAxis*/ true);
 		}
 
 		virtual void SetPawnCollisionOff(AStealthPawn& Pawn) override
