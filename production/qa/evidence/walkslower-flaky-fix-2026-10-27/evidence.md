@@ -57,6 +57,11 @@ measured values are identical across frame rates (140.0 / 112.0 / 126.0 / 112.0 
 | # | When | Suite | WalkSlowerModifier | ReleaseBaselineStopUnderLag |
 |---|---|---|---|---|
 | 1 | 2026-10-27 22:03-22:44 (this fix's gate, `full-suite-1.txt`, measurements `full-suite-1-measurements.txt`) | 429/433 | Success (450.0 cm/s run, max radial error 0.6 cm) | Success (0.758 / 0.758 s, 53.08 / 53.08 cm) |
+| 2-6 | 2026-10-28, NKP 016-022 gate runs 1-5 (`../npc-kill-penalty-informants-016-022-2026-10-27/full-suite-run1..5.txt`) | 446-448/449 (failures belong to that batch's tests and the load-sensitive Assassination PIE timing, see its evidence) | Success x5 | Success x5 |
+| 7 | 2026-10-28, NKP 016-022 final gate (`../npc-kill-penalty-informants-016-022-2026-10-27/full-suite.txt`) | 449/449 | Success | Success |
+
+**Verdict:** WalkSlowerModifier passed 7 of 7 complete full-suite runs after the fix (and 5 of 5 isolated runs at three frame
+caps); its measured values were identical in every run. NKP run 6 was stopped at test 102, before it.
 
 Run 1's four failures are not this change's: `StealthGame.Tuning.SchemaComplete`, `StealthGame.Tuning.SchemaGenDeterministic`
 and `StealthGame.Build.LintSeededControls` read source files from disk, and a concurrent agent (NKP 016-022) was editing the
