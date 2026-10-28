@@ -1,0 +1,120 @@
+tests exit=255
+Success  StealthGame.Objectives.PIE.CompletionNoWorldSignature.CountedAndNoEffectCompletionsLookTheSameToTheOpponent
+Success  StealthGame.Objectives.PIE.EndToEndCacaoChain.BothTeamsTendTheirPreliminariesAndTeamZeroWinsTheFinal
+Success  StealthGame.Objectives.PIE.HiddenSiteOracle.FiveCourtsAnswerTheOwnerByteForByteAndOnlyTheLiveOneGoesMarigold
+Success  StealthGame.Objectives.PIE.InformantsShareTeamView.ActiveAndInformantGetTheSameViewInOneUpdate
+Success  StealthGame.Objectives.PIE.IngressAcceptsAnyCourt.EveryCourtReachesTheQueueAndResolvesIdenticallyUnknownIdsDrop
+Fail  StealthGame.Objectives.PIE.OneVersusZeroDevRound.OneTeamRunsTheChainWithoutARivalSignalAndOutOfTheStallMetrics
+Success  StealthGame.Objectives.PIE.RivalCountOneUpdate.OneChangePerFrame_PushModelOff
+Success  StealthGame.Objectives.PIE.RivalCountOneUpdate.OneChangePerFrame_PushModelOn
+Success  StealthGame.Objectives.PIE.ServiceBoots.ServerOnlyServiceRegisteredWithNoFaultAtActive
+Success  StealthGame.Objectives.PIE.TeamViewContents.EachClientHoldsOnlyItsOwnLiveSites
+Success  StealthGame.Objectives.PIE.TeamViewOwnerOnly.EachTeamsViewReachesOnlyItsOwnClients
+Success  StealthGame.Objectives.AssignmentServerOnly
+Success  StealthGame.Objectives.CacaoChainContent
+Success  StealthGame.Objectives.ChainAssetId
+Success  StealthGame.Objectives.ChainBindAndValidate
+Success  StealthGame.Objectives.ChainDefShape
+Success  StealthGame.Objectives.ChainTextLocalisable
+Success  StealthGame.Objectives.ClaimConsistencyCheck
+Success  StealthGame.Objectives.ClaimLifecycle
+Success  StealthGame.Objectives.ClaimReleaseOutsideSlot
+Success  StealthGame.Objectives.ClueBoundAndRoleBlind
+Success  StealthGame.Objectives.ClueFallbackAreaOnly
+Success  StealthGame.Objectives.ClueTooBroadLogged
+Success  StealthGame.Objectives.CompletionGate
+Success  StealthGame.Objectives.CompletionGateControlEpoch
+Success  StealthGame.Objectives.CompletionGateFinal
+Success  StealthGame.Objectives.CompositionRootRegistrations
+Success  StealthGame.Objectives.DebugCompleteStage
+Success  StealthGame.Objectives.DecoyIncludesTendedCourts
+Success  StealthGame.Objectives.FeintMatchesDecoy
+Success  StealthGame.Objectives.FinalNeedsOwnUnlock
+Success  StealthGame.Objectives.FinalSameFrameOrdering
+Success  StealthGame.Objectives.FollowOnInSlot
+Success  StealthGame.Objectives.HidingNeverWins
+Success  StealthGame.Objectives.InteractHoldSecOneValue
+Success  StealthGame.Objectives.InteractSecFloor
+Success  StealthGame.Objectives.NoStackNoCancel
+Success  StealthGame.Objectives.NoTeamViewBeforeActive
+Success  StealthGame.Objectives.ObjectivesAllowlistRow
+Success  StealthGame.Objectives.ObjectivesIncludeLint
+Success  StealthGame.Objectives.ObjectivesStaticScan
+Success  StealthGame.Objectives.ObjectivesTuningRows
+Success  StealthGame.Objectives.PlaytestAnalyserFixture
+Success  StealthGame.Objectives.PredicateSiteAndClassOnly
+Success  StealthGame.Objectives.PreparingFailsOnBadChain
+Success  StealthGame.Objectives.ProgressOnlyByCompletion
+Success  StealthGame.Objectives.RejectedFinalNotCounted
+Success  StealthGame.Objectives.RejoinHoldDoesNotResume
+Success  StealthGame.Objectives.ResetAndRejoin
+Success  StealthGame.Objectives.RivalSignalBound
+Success  StealthGame.Objectives.RivalSignalDistribution
+Success  StealthGame.Objectives.RivalSignalGolden
+Success  StealthGame.Objectives.RivalSignalReleaseBehaviour
+Success  StealthGame.Objectives.RivalSignalReleaseGrid
+Success  StealthGame.Objectives.ServiceHasNoTickTimerActor
+Success  StealthGame.Objectives.StageCompletionEffects
+Success  StealthGame.Objectives.StageLifecycle
+Success  StealthGame.Objectives.StageSignalPayloadAndLatch
+Success  StealthGame.Objectives.StallMetrics
+Success  StealthGame.Objectives.TeamViewContentsCore
+Success  StealthGame.Objectives.TeamViewWidthAndChangeOnly
+Success  StealthGame.Objectives.TendCueDelay
+Success  StealthGame.Objectives.TendCueDelayInvariant
+Success  StealthGame.Objectives.TendPosteriorBand
+Success  StealthGame.Objectives.ViewHelpersPure
+Success  StealthGame.Objectives.ViewReboundWritesTeamView
+Success  StealthGame.Objectives.WaitingEarnsNothing
+# OneVersusZeroDevRound failed above on the pre-fix binary (2v0 start refused as an imbalance); after the fix (remove the client from the Lobby roster):
+Success  StealthGame.Objectives.PIE.OneVersusZeroDevRound.OneTeamRunsTheChainWithoutARivalSignalAndOutOfTheStallMetrics
+# measured lines
+OC13 assignments=1000 sites=10000 violations=0 role-perturbation changes=0 (ClueMatchMaxCount 3)
+OC14 k=1 subseed=0xD7705C629EA0163C delta_ms=44172 release_ms=250000
+OC14 k=2 subseed=0xAAEB13360113B229 delta_ms=66957 release_ms=280000
+OC14 k=3 subseed=0xFDFEC78088411212 delta_ms=112399 release_ms=340000
+OC14 releases=8000 team0 n=4000 D=0.0188 p=0.1166; team1 n=4000 D=0.0188 p=0.1166; ordinal mismatches=0 off-grid=0
+OC14 seed 0x690ED476743AAE49 step 0.0167: Delta 110.013 s, t_rel 240.000 s from Active, resolved at 240.0000 s
+OC14 seed 0x690ED476743AAE49 step 0.1000: Delta 110.013 s, t_rel 240.000 s from Active, resolved at 240.0000 s
+OC14 seed 0xD7705C629EA0163C step 0.0167: Delta 44.172 s, t_rel 150.000 s from Active, resolved at 150.0000 s
+OC14 seed 0xD7705C629EA0163C step 0.1000: Delta 44.172 s, t_rel 150.000 s from Active, resolved at 150.0000 s
+OC15 coarse: 7200 s of waiting in 1.0000 s frames, Objectives timers 0
+OC15 fine: 7200 s of waiting in 0.0167 s frames, Objectives timers 0
+OC15 pinned pairs: A (0xC2D326E0055BDEF6, 0xE220A8397B1DCDAF), B (0xF88BB8A8724C81EC, 0xF88BB8A8724C81EC)
+OC16 include scan of StealthGameplay/Features/Objectives/Public/View/ObjectiveViewHelpers.h: 0 finding(s) 
+OC16 own live site at 30 fps: Marigold from 1.0000 s after Begin
+OC16 own live site at 60 fps: Marigold from 1.0000 s after Begin
+OC17 T_round 11 min: R_full 0.327, P_full 0.6548
+OC17 T_round 7 min: R_full 0.514, P_full 0.7488
+OC17 T_round 9 min: R_full 0.400, P_full 0.6987
+OC17 fixture: G_mutual 95.0, G_team 165.0 / 180.0, FinalDwell 160.0, defect 0
+OC17 latched finals: t_end 420.0, FinalDwell 160.0, G_mutual 95.0
+OC17 registered CrowdDecoyTendIntervalSec 13125 s: r_N 0.00457 per NPC-minute, P_full 0.7000
+OC19 FRoundPublicState fields: Phase, RoundIndex, PhaseChangeCount, PhaseEnteredServerTime, MatchScore, bCalledOff, ExpectedPawnCount, ActiveAtServerTime, LastResult, LastResult.WinningTeam, LastResult.PublicReason, LastResult.RoundIndex, LastResult.TeamSummary
+OC19 TeamViewContents samples=8 violations=0 team1-held-final=0 extra-components=0
+OC19 informant share: host count 1 stage 1 sites 1; X count 1 stage 1 sites 1; X changes +1; Y changes +0
+OC19 ingress completed P1[1] (court 3): queue submits 1, replies 2, bytes 50, duration 3.0010 s, state changed 0
+OC19 ingress locked final (court 5): queue submits 1, replies 2, bytes 50, duration 3.0009 s, state changed 0
+OC19 ingress malformed 0xFFFF (court 65535): queue submits 0, replies 0, bytes 0, duration -1.0000 s, state changed 0
+OC19 ingress non-fixture 999 (court 999): queue submits 0, replies 0, bytes 0, duration -1.0000 s, state changed 0
+OC19 ingress opponent live P1[0] (court 1): queue submits 1, replies 2, bytes 50, duration 3.0006 s, state changed 0
+OC19 ingress own live P2[1] (court 4): queue submits 1, replies 2, bytes 50, duration 3.0001 s, state changed 1
+OC19 team 0 client at Active: live 1 (P1 1, P2 2, final 5)
+OC19 team 1 client at Active: live 3 (P1 3, P2 4, final 5)
+OC20 counted window: 2 field(s) received on the opponent: StealthGameState.ReplicatedWorldTimeSecondsDouble, StealthPlayerState.CompressedPing
+OC20 field-name difference: counted-only {}, no-effect-only {}
+OC20 no-effect window: 2 field(s) received on the opponent: StealthGameState.ReplicatedWorldTimeSecondsDouble, StealthPlayerState.CompressedPing
+OC20 oracle completed (court 1): replies 2, bytes 50, duration 3.0025 s, ring Bone -> Bone, state changed 0
+OC20 oracle hidden (court 5): replies 2, bytes 50, duration 3.0013 s, ring Bone -> Bone, state changed 0
+OC20 oracle live (court 3): replies 2, bytes 50, duration 3.0000 s, ring Bone -> Marigold, state changed 1
+OC20 oracle locked (court 4): replies 2, bytes 50, duration 3.0034 s, ring Bone -> Bone, state changed 0
+OC20 oracle opponent (court 2): replies 2, bytes 50, duration 3.0001 s, ring Bone -> Bone, state changed 0
+OC21 1v0 log: ObjectivePacing exclusion entries 1, StageSignalReleased 0
+OC21 1v0: team 0, excluded 1, rival signal tuning on 1
+OC21 log: ObjectiveStage(team 0), ObjectiveStage(team 1), ObjectiveStage(team 0), ObjectiveStage(team 1), FinalCompleted(team 0); early final sightings on team 1's client 0
+OC21 result: winner 0, public reason 1, steps 3 / 2
+OC22 include lint: 161 scanned of 752 project sources, 0 finding(s) 
+OC22 static scan: 349 production sources, 0 violation(s) 
+OC23 tell case 3.00 s: mean 3.000 s, in band 1, rounds used 10
+OC23 tell case 5.00 s: mean 5.000 s, in band 1, rounds used 10
+OC23 tell case 5.01 s: mean 5.010 s, in band 0, rounds used 10

@@ -46,7 +46,15 @@ struct FObjectivesServiceInit
 	 * OnRosterEvent's RosterReset (the clear). Null: no subscription (headless rigs call the handlers directly).
 	 */
 	URosterStore* RosterEvents = nullptr;
+	/**
+	 * Where a drawn rival release is scheduled. Null (production): the service itself schedules its TimerFired(StageSignal)
+	 * on Queue (story oc-015); a test may record the requests instead.
+	 */
 	IObjectivesRivalRelease* RivalRelease = nullptr;
+	/** Story oc-013: every court's public ClueTag record (null: no clue). */
+	const IObjectivesCourtClues* Clues = nullptr;
+	/** Story oc-014: the StageSignal sub-seed per ordinal (null: no rival release is drawn). */
+	const IObjectivesSecretDraw* SecretDraw = nullptr;
 	/** The round queue the TimerFired(StageSignal) resolver registers on (null: not registered). */
 	FResolutionQueueCore* Queue = nullptr;
 	IStealthFaultSink* Faults = nullptr;
@@ -95,7 +103,7 @@ struct FObjectivesSelection
  */
 UCLASS(NotBlueprintType, NotBlueprintable)
 class STEALTHGAMEPLAY_API UObjectivesService : public UWorldSubsystem, public ICommandPredicate, public IInteractTargetOwner, public IQueueResolver,
-	public IObjectivesViewSink
+	public IObjectivesViewSink, public IObjectivesRivalRelease
 {
 	GENERATED_BODY()
 
@@ -132,14 +140,26 @@ public:
 	 */
 	FObjectivesSelection ValidateSelectedChain(const FStealthServerTuning& Tuning);
 
-	/** OnLayoutReady: binds the selected chain to the assignment (story oc-003). False when not selected or the bind failed. */
+	/**
+	 * OnLayoutReady: binds the selected chain to the assignment (story oc-003) and computes the clues (story oc-013; LayoutId is
+	 * the layout hash of the once-per-hash ClueTooBroad entry). False when not selected or the bind failed.
+	 */
 	bool HandleLayoutReady(uint64 LayoutId, int32 Seed);
 
 	/**
 	 * OnRoundActive (inside Round's Active-entry step): stores t0, both teams' Prelim1 sites Live, views pushed. A call before
 	 * HandleLayoutReady reports one fault and changes nothing; a second call for the same epoch is ignored.
+	 * A 1v0 dev round (one team has members and the other none, bAllowEmptyTeamDev): the rival signal is forced off (nothing
+	 * drawn, scheduled or published) and the round is flagged bExcludeFromStallMetrics (an ObjectivePacing entry, Code
+	 * ObjectivePacingExcludeFromStallMetrics, that the F5 calculator filters; stories oc-015, oc-021).
 	 */
 	bool HandleRoundActive(FEpochToken Epoch, double ActivePhaseStart);
+
+	/** The ObjectivePacing entry Code that flags a round out of the F5 stall metrics (story oc-021). */
+	static constexpr uint16 ObjectivePacingExcludeFromStallMetrics = 1;
+
+	/** True for a 1v0 dev round of this Active entry (story oc-021 AC3). */
+	bool IsExcludedFromStallMetrics() const { return bExcludeFromStallMetrics; }
 
 	/** Round reached Ended: Objectives state is frozen. */
 	void HandleRoundEnded();
@@ -201,10 +221,33 @@ public:
 	virtual void OnInteractEnded(const AStealthPawn& Pawn, FCourtFixtureId Court, EInteractEnd End, FQueueKey Key) override;
 	virtual void OnInteractCompleteLatched(const AStealthPawn& Pawn, FCourtFixtureId Court, FQueueKey Key) override;
 
-	// --- IQueueResolver (TimerFired(StageSignal); stories oc-014/015 fill it) ------------------------------------------
+	// --- IQueueResolver (TimerFired(StageSignal); story oc-015) ---------------------------------------------------------
 
-	/** No release is ever scheduled before story oc-015: every StageSignal item is Voided (nothing published). */
+	/**
+	 * TimerFired(StageSignal): Phase is the viewing team and Seq the ordinal k; the core raises that team's RivalPrelimCount,
+	 * logs StageSignalReleased and writes its view (Executed). A release no longer pending (a reset cleared it) is Voided. The
+	 * queue itself returns Rejected_Latched after the latch and drops a stale epoch; such an item is never rescheduled.
+	 */
 	virtual EResolveResult Resolve(const FQueueItem& Item, FQueueKey Key) override;
+
+	// --- IObjectivesRivalRelease (story oc-015; the production scheduler) -----------------------------------------------
+
+	/**
+	 * One ScheduleAt(Release.DueServerTime(), TimerFired{StageSignal, Subject none, Generation 0, Seq k, Phase viewing team},
+	 * Expected = this Active entry's epoch) on the round queue. No other Objectives timer exists.
+	 */
+	virtual void ScheduleRivalRelease(const FObjectivesRivalRelease& Release) override;
+
+	/** TimerFired(StageSignal) items this service scheduled on the queue (tests: no timer exists while nothing is pending). */
+	int32 GetScheduledStageSignalCount() const { return ScheduledStageSignals; }
+
+#if WITH_STEALTH_TEST_SEAMS
+	/**
+	 * Test seam (story oc-019 AC3): a release for ViewingTeam due DelaySec from now, scheduled and resolved through the real
+	 * queue and resolver (so a PIE test does not wait for a grid tick up to 195 s away). False when not Active or unwired.
+	 */
+	bool ScheduleRivalReleaseNowForTest(uint8 ViewingTeam, double DelaySec);
+#endif
 
 	// --- Reads (Round's TeamSummary, the composition root's stand-ins, tests) ------------------------------------------
 
@@ -217,6 +260,9 @@ public:
 #if !UE_BUILD_SHIPPING
 	/** DEV ONLY (the StealthBot driver): the court of Team's first Live row, or an unset id. Never reaches a client. */
 	FCourtFixtureId GetLiveCourtForDev(int32 Team) const;
+
+	/** DEV / TEST ONLY: the court each role is bound to (unset before OnLayoutReady). Server-only; never reaches a client. */
+	FSiteAssignment GetBoundSitesForDev() const;
 #endif
 
 	/** The last interact end's treatment (tests and dumps). */
@@ -256,6 +302,11 @@ private:
 #endif
 	uint64 LayoutId = 0;
 	uint32 ActiveEpoch = 0;
+	/** The full epoch of the Active entry (the StageSignal items' Expected token). */
+	FEpochToken ActiveEpochToken;
+	int32 ScheduledStageSignals = 0;
+	bool bExcludeFromStallMetrics = false;
+	IRoundObjectiveHooks* RoundHooks = nullptr;
 	EObjectivesCompletion LastCompletion;
 	bool bBound = false;
 	bool bChainSelected = false;

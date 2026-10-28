@@ -103,6 +103,8 @@ namespace StealthObjectivesTest
 		FStubViews Views;
 		FStubViewTargets ViewTargets;
 		FStubRival Rival;
+		FStubSecretDraw SecretDraw;
+		FStubClues Clues;
 		FStubChains Chains;
 		/** The Init the service was bound with (tests may change it and Bind again). */
 		FObjectivesServiceInit Init;
@@ -139,6 +141,8 @@ namespace StealthObjectivesTest
 			Init.Views = &Views;
 			Init.ViewTargets = &ViewTargets;
 			Init.RivalRelease = &Rival;
+			Init.SecretDraw = &SecretDraw;
+			Init.Clues = &Clues;
 			Init.Queue = Q.Queue.Get();
 			Init.Faults = &Q.Faults;
 			Init.SubmitDebugStage = [this](uint8 Team)

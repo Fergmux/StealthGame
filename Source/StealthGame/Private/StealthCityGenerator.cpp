@@ -1,7 +1,7 @@
 #include "StealthCityGenerator.h"
 #include "StealthBush.h"
 #include "StealthGame.h"
-#include "StealthObjective.h"
+#include "View/StealthCourtSocket.h"
 #include "StealthTypes.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
@@ -329,7 +329,7 @@ void AStealthCityGenerator::PlaceObjectivesAndBushes(const TArray<FVector>& Gard
 		return Spot;
 	};
 
-	for (AStealthObjective* Objective : SortedLevelActors<AStealthObjective>(GetWorld()))
+	for (AStealthCourtSocket* Objective : SortedLevelActors<AStealthCourtSocket>(GetWorld()))
 	{
 		TOptional<FVector> Spot;
 		if (Objective->Stage == STEALTH_FINAL_STAGE)
@@ -397,13 +397,13 @@ bool AStealthCityGenerator::ValidateReachability() const
 	// Starts float above the floor and objectives carve the nav mesh, so both ends are projected first.
 	const FVector QueryExtent(300.f, 300.f, 500.f);
 	bool bAllReachable = true;
-	for (TActorIterator<AStealthObjective> It(GetWorld()); It; ++It)
+	for (TActorIterator<AStealthCourtSocket> It(GetWorld()); It; ++It)
 	{
 		FNavLocation Goal;
 		if (!NavSystem->ProjectPointToNavigation(It->GetActorLocation(), Goal, QueryExtent))
 		{
 			bAllReachable = false;
-			UE_LOG(LogStealth, Warning, TEXT("Seed %d: objective '%s' is off the nav mesh."), BuiltSeed, *It->DisplayName.ToString());
+			UE_LOG(LogStealth, Warning, TEXT("Seed %d: court socket '%s' is off the nav mesh."), BuiltSeed, *It->GetName());
 			continue;
 		}
 		for (const APlayerStart* Start : TeamStarts)
@@ -419,7 +419,7 @@ bool AStealthCityGenerator::ValidateReachability() const
 			if (!Path || !Path->IsValid() || Path->IsPartial())
 			{
 				bAllReachable = false;
-				UE_LOG(LogStealth, Warning, TEXT("Seed %d: objective '%s' unreachable from %s."), BuiltSeed, *It->DisplayName.ToString(), *Start->PlayerStartTag.ToString());
+				UE_LOG(LogStealth, Warning, TEXT("Seed %d: court socket '%s' unreachable from %s."), BuiltSeed, *It->GetName(), *Start->PlayerStartTag.ToString());
 			}
 		}
 	}

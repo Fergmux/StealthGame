@@ -150,6 +150,14 @@ struct FStealthPossessionTraceEvent
  * stealth.round.* commands on the game instance (stories rmf-026/027): StealthStartRound, StealthEndRound and
  * StealthSwitchTeam and their Server RPCs are retired, and no Round command lives on this class.
  */
+/** The own tend's ring colour (Objectives OC-6; story oc-016). */
+enum class EStealthTendRing : uint8
+{
+	None,
+	Bone,
+	Marigold,
+};
+
 UCLASS()
 class STEALTHGAME_API AStealthPlayerController : public APlayerController, public IPawnCommandUplink
 {
@@ -194,6 +202,20 @@ public:
 
 	/** Owner: the latest received reply entries (at most MaxKeptReplies, oldest first; tests and story asn-024's matcher). */
 	const TArray<FCommandReply>& GetReceivedReplies() const { return ReceivedReplies; }
+
+	/**
+	 * Owner (Objectives story oc-016, OC-6): the own tend's ring. None without an own Interact hold (from the server's
+	 * FHoldStatus replies); otherwise Marigold when ObjectiveViewHelpers::RingIsMarigold holds for the court the hold
+	 * targets (the nearest court socket in reach when the hold started; public geometry), the hold's server start time, the
+	 * estimated server time and the TendCueDelaySec read at Begin; Bone otherwise. Never Marigold for an informant.
+	 */
+	EStealthTendRing GetOwnTendRing(double ServerNow) const;
+
+	/** Owner: the own Interact hold's progress 0..1 from its FHoldStatus start (negative without a hold). */
+	float GetOwnTendProgress(double ServerNow) const;
+
+	/** Owner: the court the own Interact hold targets (unset without a hold). */
+	FCourtFixtureId GetOwnTendTarget() const { return bOwnTend ? OwnTendTarget : FCourtFixtureId(); }
 
 	/**
 	 * Owner: the "Wrong targets" tally the HUD shows: FStrikeResult.TallyAfter of the latest result plate, changed only at
@@ -344,6 +366,9 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerStealthBot(int32 PlayerIndex, const FString& Action);
 
+	/** Story oc-016: an own Interact FHoldStatus (Active starts the ring's hold; an end clears it). */
+	void HandleOwnTendStatus(const FHoldStatus& Status);
+
 	/** Builds the stage-1 context (mailbox, reply sink, recorded control epoch) and runs IngestCommand. Server. */
 	void IngestOwnCommand(const FNetPawnCommand& Cmd, APawn* HostLocalPawnRef);
 
@@ -357,6 +382,12 @@ protected:
 	FReplySinkId ReplySink;
 	int32 ReceivedReplyCount = 0;
 	TArray<FCommandReply> ReceivedReplies;
+	/** Story oc-016: the own Interact hold (its latest Active FHoldStatus) and the court it targets. */
+	FHoldStatus OwnTendStatus;
+	FCourtFixtureId OwnTendTarget;
+	double OwnTendCueDelaySec = 1.0;
+	double OwnTendHoldSec = 3.0;
+	bool bOwnTend = false;
 	int32 ShownWrongTargetTally = 0;
 	/** The round (FRoundPublicState::RoundIndex) of the shown tally: a new round shows 0 (HUD-R7). */
 	uint32 ShownTallyRoundIndex = 0;

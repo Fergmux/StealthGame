@@ -6,7 +6,6 @@
 
 AStealthGameState::AStealthGameState()
 {
-	TeamStage.Init(1, STEALTH_NUM_TEAMS);
 }
 
 void AStealthGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -14,7 +13,6 @@ void AStealthGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AStealthGameState, RoundPhase);
-	DOREPLIFETIME(AStealthGameState, TeamStage);
 	DOREPLIFETIME(AStealthGameState, WinningTeam);
 	DOREPLIFETIME(AStealthGameState, WinReason);
 	DOREPLIFETIME(AStealthGameState, PhaseEndServerTime);
@@ -58,7 +56,6 @@ void AStealthGameState::HandleRoundPublicState()
 
 void AStealthGameState::ResetRoundState(int32 NewSeed)
 {
-	TeamStage.Init(1, STEALTH_NUM_TEAMS);
 	WinningTeam = STEALTH_NO_TEAM;
 	WinReason = EStealthWinReason::None;
 	RoundSeed = NewSeed;

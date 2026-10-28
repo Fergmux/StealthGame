@@ -3983,3 +3983,124 @@ stories:
     completed: "2026-10-28"
     sprint: 2
     note: "OC batch 2026-10-28b; URosterStore::OnParticipantViewRebound (raised from RegisterTeamView until psr-041), service subscribes to it and RosterReset (reset writes the empty default to every member); ResetAndRejoin, ViewReboundWritesTeamView (real URosterStore), RejoinHoldDoesNotResume; evidence production/qa/evidence/objectives-chain-010-012-2026-10-28/"
+  - id: "oc-013"
+    name: "Clue function and the too-broad clue log"
+    file: "production/epics/objectives-chain/story-013-clue-function-and-too-broad-log.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; role-blind ClueOf / CountMatches, ClueTooBroad once per layout hash, phrase table; stand-in clue records over the court sockets; ClueBoundAndRoleBlind, ClueTooBroadLogged, ClueFallbackAreaOnly; graybox half waits for LSC ClueTag; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-014"
+    name: "Rival signal delay draw and release grid"
+    file: "production/epics/objectives-chain/story-014-rival-signal-draw-and-grid.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; integer-ms draw keyed by ordinal, grid ceiling; golden vectors re-derived by tools/analysis/oc_rival_signal_golden.py; RivalSignalReleaseGrid, RivalSignalDistribution, RivalSignalGolden; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-015"
+    name: "Rival signal release scheduling and idle behaviour"
+    file: "production/epics/objectives-chain/story-015-rival-signal-release-scheduling.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; service schedules/resolves TimerFired(StageSignal); RivalPrelimCount written for real; 1v0 suppression; RivalSignalReleaseBehaviour, WaitingEarnsNothing, StageSignalPayloadAndLatch; run-and-observe rival steps 1 and 2 of 2; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-016"
+    name: "Presentation view helpers and the tend-cue ring rule"
+    file: "production/epics/objectives-chain/story-016-presentation-view-helpers-and-ring-rule.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; ObjectiveViewHelpers; FHoldStatus from the IIF stand-in; HUD tend bar Bone/Marigold + clue; TendCueDelay, ViewHelpersPure; oc-tend-*.png; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-017"
+    name: "Stall metrics (F5) and the tend posterior band (F3)"
+    file: "production/epics/objectives-chain/story-017-stall-metrics-and-tend-posterior.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; FObjectivesMetrics; StallMetrics, TendPosteriorBand, RejectedFinalNotCounted; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-018"
+    name: "Stall-pressure and cross-system checks"
+    file: "production/epics/objectives-chain/story-018-stall-pressure-and-cross-system-checks.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; HidingNeverWins (Concealment stub predicate); oc-stall-review.md 185 hits 0 FAIL (human sign-off PENDING); AC3 DEFERRED to Crowd (AC-CNB-14); evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-019"
+    name: "PIE-2 team view contents, ingress and informant parity"
+    file: "production/epics/objectives-chain/story-019-pie2-team-view-ingress-and-informant-parity.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; ingress drops unknown court ids; PIE.TeamViewContents, PIE.IngressAcceptsAnyCourt, PIE.InformantsShareTeamView; 011 seamless-travel case NOT RUN (single-process PIE cannot travel; Session MP harness); evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-020"
+    name: "PIE-2 hidden-site oracle and completion world signature"
+    file: "production/epics/objectives-chain/story-020-pie2-hidden-site-oracle-and-world-signature.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; PIE.HiddenSiteOracle (byte-exact FHoldStatus x5), PIE.CompletionNoWorldSignature; oc-tend-*.png; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-021"
+    name: "PIE-2 end-to-end Cacao chain"
+    file: "production/epics/objectives-chain/story-021-pie2-end-to-end-cacao-chain.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; PIE.EndToEndCacaoChain, PIE.OneVersusZeroDevRound (F5 exclusion via ObjectivePacing Code 1); oc-e2e-*.png; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-022"
+    name: "Prototype retirement and static scans"
+    file: "production/epics/objectives-chain/story-022-prototype-retirement-and-static-scan.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; AStealthObjective deleted -> AStealthCourtSocket (ClassRedirect); prototype objective paths, CanCompleteObjective, TeamStage, HUD markers removed; StealthGame.Rules.ObjectiveStages retired (mapped); ObjectivesStaticScan, ObjectivesIncludeLint; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "oc-023"
+    name: "Playtest advisory metrics (pacing, exposure, tend share)"
+    file: "production/epics/objectives-chain/story-023-playtest-advisory-metrics.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28c; FObjectivesPlaytestAnalyser + PlaytestAnalyserFixture; oc-playtest-metrics.md NOT ENOUGH DATA (record only; human playtests); evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"

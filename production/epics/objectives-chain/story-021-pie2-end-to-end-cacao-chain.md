@@ -1,12 +1,12 @@
 # Story 021: PIE-2 end-to-end Cacao chain
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ This is the epic's end-to-end proof: two players, one per team, play the shipped
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-14, Edge Cases 1v0 dev round), scoped to this story. QL-STORY-READY revised AC2 (enumerated evidence) and AC3 (the F5 exclusion mechanism named):*
 
-- [ ] **AC1** (AC-OC-14 [Integration/BLOCKING, PIE-2] `StealthGame.Objectives.PIE.EndToEndCacaoChain`): **GIVEN** the graybox, 1v1, **WHEN** each player completes its two preliminaries and team 0 completes the final **THEN** `FRoundResult{ObjectiveWin, Winner 0}` (team 1 finishing its preliminaries after team 0 starts the final does not change the result; team 1 cannot complete the final).
-- [ ] **AC2** (AC-OC-14, log and evidence): the Round Event Log holds exactly 4 `ObjectiveStage` and 1 `FinalCompleted` entries in key order, and team 1's client never held the final id; evidence screenshots are retained as `production/qa/evidence/oc-e2e-card-p1.png`, `oc-e2e-card-p2.png`, `oc-e2e-final-card.png` and `oc-e2e-result.png` (team 0 client at each moment, plus the team 1 client at the result), each showing the Cacao row text of the OC-16 table for that stage.
-- [ ] **AC3** (GDD Edge Cases [PIE-2] `StealthGame.Objectives.PIE.OneVersusZeroDevRound`): **GIVEN** a 1v0 dev round (`bAllowEmptyTeamDev`) **THEN** the chain runs for the one team, `bRivalSignalEnabled` is forced false (no `RivalPrelimCount` is published, even if the preset sets it true) and the round is excluded from F5 metrics through a flag on the round record that the F5 calculator filters (a round without the flag counts as normal).
+- [x] **AC1** (AC-OC-14 [Integration/BLOCKING, PIE-2] `StealthGame.Objectives.PIE.EndToEndCacaoChain`): **GIVEN** the graybox, 1v1, **WHEN** each player completes its two preliminaries and team 0 completes the final **THEN** `FRoundResult{ObjectiveWin, Winner 0}` (team 1 finishing its preliminaries after team 0 starts the final does not change the result; team 1 cannot complete the final).
+- [x] **AC2** (AC-OC-14, log and evidence): the Round Event Log holds exactly 4 `ObjectiveStage` and 1 `FinalCompleted` entries in key order, and team 1's client never held the final id; evidence screenshots are retained as `production/qa/evidence/oc-e2e-card-p1.png`, `oc-e2e-card-p2.png`, `oc-e2e-final-card.png` and `oc-e2e-result.png` (team 0 client at each moment, plus the team 1 client at the result), each showing the Cacao row text of the OC-16 table for that stage.
+- [x] **AC3** (GDD Edge Cases [PIE-2] `StealthGame.Objectives.PIE.OneVersusZeroDevRound`): **GIVEN** a 1v0 dev round (`bAllowEmptyTeamDev`) **THEN** the chain runs for the one team, `bRivalSignalEnabled` is forced false (no `RivalPrelimCount` is published, even if the preset sets it true) and the round is excluded from F5 metrics through a flag on the round record that the F5 calculator filters (a round without the flag counts as normal).
 
 ---
 
@@ -71,11 +71,9 @@ Prototype replaced: the prototype's networked tests D and D2 and the host consol
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/EndToEndCacaoChainTest.cpp` (`NETWORK_TEST_CLASS(EndToEndCacaoChain, "StealthGame.Objectives.PIE")`)
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/OneVersusZeroDevRoundTest.cpp` (`NETWORK_TEST_CLASS(OneVersusZeroDevRound, "StealthGame.Objectives.PIE")`)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesService.cpp` (1v0 handling, F5 exclusion flag)
-- `production/qa/evidence/oc-e2e-card-p1.png`, `oc-e2e-card-p2.png`, `oc-e2e-final-card.png`, `oc-e2e-result.png`
-- `production/qa/evidence/oc-e2e-evidence.md` (sign-off record)
+- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/EndToEndCacaoChainTest.cpp, OneVersusZeroDevRoundTest.cpp`
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesService.cpp` (1v0: signal off, ObjectivePacing exclusion entry)
+- `production/qa/evidence/oc-e2e-card-p1.png, oc-e2e-card-p2.png, oc-e2e-final-card.png, oc-e2e-result.png, production/qa/evidence/oc-e2e-evidence.md`
 
 ---
 
@@ -114,7 +112,9 @@ Prototype replaced: the prototype's networked tests D and D2 and the host consol
 - Integration: the two T2 PIE tests under `Source/StealthTestHarness/Private/Tests/PIE/Objectives/` — must exist and pass (BLOCKING)
 - Retained screenshots: `production/qa/evidence/oc-e2e-{card-p1,card-p2,final-card,result}.png` and `production/qa/evidence/oc-e2e-evidence.md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.PIE.EndToEndCacaoChain, OneVersusZeroDevRound; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/
+
+Run result: OBSERVED - the Cacao chain to an objective win in 3-player PIE (oc-e2e-*.png)
 
 ---
 
@@ -122,3 +122,10 @@ Prototype replaced: the prototype's networked tests D and D2 and the host consol
 
 - Depends on: `production/epics/objectives-chain/story-009-final-completion-and-win-declaration.md`, `production/epics/objectives-chain/story-011-team-view-component-and-replication.md`, `production/epics/objectives-chain/story-017-stall-metrics-and-tend-posterior.md`, `production/epics/objectives-chain/story-019-pie2-team-view-ingress-and-informant-parity.md`, `production/epics/objectives-chain/story-020-pie2-hidden-site-oracle-and-world-signature.md`; cross-epic: round-match-framework (result and latch), level-socket-contract (graybox layout and `FSiteAssignment`), hud (stage card), input-interaction-framework (real holds)
 - Unlocks: `production/epics/objectives-chain/story-022-prototype-retirement-and-static-scan.md`, `production/epics/objectives-chain/story-023-playtest-advisory-metrics.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing.
+**Deviations**: AC2's "team 1's client never held the final id" is asserted as SP-1 (never before team 1's own preliminaries completed): with team 1 counting its P2 before the latch (needed for the 4 ObjectiveStage entries) it legitimately learns its own final (decision logged). The 1v0 round is set up by removing the client from the Lobby roster (CQTest needs a client; 2v0 is refused as an imbalance); the F5 exclusion flag is the ObjectivePacing(Code 1) entry on the round record.
+**Test Evidence**: production/qa/evidence/objectives-chain-013-023-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

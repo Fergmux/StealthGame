@@ -96,6 +96,16 @@ public:
 	void SetCommandWiring(const FPawnCommandCoreDeps& InDeps) { CommandWiring = InDeps; bHasCommandWiring = true; }
 	const FPawnCommandCoreDeps* GetCommandWiring() const { return bHasCommandWiring ? &CommandWiring : nullptr; }
 
+	/**
+	 * The world's court fixtures for ingress (IIF R5; Objectives story oc-019 AC2, AC-OC-26): an Interact Begin naming an id
+	 * that is not a court fixture is dropped at ingress as an unknown id (no reply). Any real court is accepted whatever its
+	 * role (public geometry names a court, never a role). Unset (headless rigs): every id is accepted.
+	 */
+	void SetCourtFixtureValidator(TFunction<bool(FCourtFixtureId)> InValidator) { CourtFixtureValidator = MoveTemp(InValidator); }
+
+	/** True when Court names a court fixture of this world (or no validator is installed). */
+	bool IsKnownCourtFixture(FCourtFixtureId Court) const { return !CourtFixtureValidator || CourtFixtureValidator(Court); }
+
 	/** The world's reply-sink table (ADR-0011 section 8): controllers allocate a sink per connection; the drain end flushes it. */
 	FReplySinkTable& GetReplySinks() { return ReplySinks; }
 
@@ -122,4 +132,6 @@ private:
 	bool bHasCommandWiring = false;
 
 	FReplySinkTable ReplySinks;
+
+	TFunction<bool(FCourtFixtureId)> CourtFixtureValidator;
 };

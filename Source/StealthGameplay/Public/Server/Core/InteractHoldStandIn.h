@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Server/Queue/StealthQueueResolver.h"
+#include "Server/StealthQueuePayloads.h"
+#include "View/CommandReplyTypes.h"
 #include "UObject/WeakObjectPtrTemplates.h"
 #include "View/CourtFixtureId.h"
 
@@ -16,7 +18,7 @@ class UActionHub;
 /**
  * STAND-IN for the IIF stage-2 Interact hold (ADR-0011 sections 4-5, IIF R8; the IIF slot resolver, stories iif-020..iif-055,
  * is not built). Added by Objectives story oc-005 so the production chain runs end to end: it replaces the prototype
- * fallback's InteractBegin / InteractEnd (AStealthGameMode::HandleInteractRequest) on the production path. It follows the
+ * fallback's InteractBegin / InteractEnd (the prototype objective handler, retired by story oc-022) on the production path. It follows the
  * interact-target owner contract of ADR-0020 5.1 exactly:
  *   InteractBegin slot   the court is the command's target (FSubjectRef CourtSocket) or, when the client sent none, the nearest
  *                        court in reach (the IIF's prompt target; FindCourtInReach); none in reach: Voided (OutOfReach). The
@@ -28,9 +30,13 @@ class UActionHub;
  *                        round ended) cancels Illegal; otherwise OnInteractEnded(Completed, Key) before OnActionCompleted.
  *   latched Complete     the queue's OnRejectedLatched: the hold ends and OnInteractCompleteLatched logs the attempt.
  *   CancelAll            the round-end staging pass: every hold ends with an invalid key (claim release only).
- * Not covered (IIF stage 2): the release debounce (ReleaseDebounceSec), condition cancels (moving, running), the owner's
- * reply batch and FHoldStatus. A second Begin while holding is Voided (the slot is Interacting). Kind-blind: an NPC decoy and
- * a player run the same path (no caller identity).
+ * Owner replies (ADR-0011 section 7; added 2026-10-28 for Objectives stories oc-016 / oc-019 / oc-020): the Begin's reply sink
+ * receives FHoldStatus {Seq, Interact, Active, ServerStartTime} when the hold executes and {Completed | Cancelled,
+ * ServerStartTime, ServerEndTime} when it ends (no cancel reason). The status is the same at every court, live or not: a
+ * no-effect completion reads Completed exactly as a counted one (the court's role never reaches the owner's replies).
+ * Not covered (IIF stage 2): the release debounce (ReleaseDebounceSec), condition cancels (moving, running). A second Begin
+ * while holding is Voided (the slot is Interacting). Kind-blind: an NPC decoy and a player run the same path (no caller
+ * identity); an NPC's null sink discards its statuses.
  */
 class STEALTHGAMEPLAY_API FInteractHoldStandIn final : public IQueueResolver
 {
@@ -55,6 +61,11 @@ public:
 		uint32 ActionEpoch = 0;
 		FQueueKey BeginKey;
 		double DueServerTime = 0.0;
+		/** Server time the hold executed (FHoldStatus.ServerStartTime). */
+		double StartServerTime = 0.0;
+		/** The Begin's owner reply sink and sequence (the FHoldStatus address). */
+		FReplySinkId Sink;
+		FClientCommandSeq Seq;
 	};
 
 	explicit FInteractHoldStandIn(const FDeps& InDeps) : Deps(InDeps) {}
@@ -78,6 +89,8 @@ private:
 	EResolveResult ResolveBegin(const FQueueItem& Item, AStealthPawn& Pawn, FQueueKey Key);
 	EResolveResult ResolveEnd(AStealthPawn& Pawn, FQueueKey Key);
 	EResolveResult ResolveComplete(const FQueueItem& Item, FQueueKey Key);
+	/** Appends Hold's FHoldStatus with Outcome to its owner's reply sink (the null sink discards). */
+	void AppendStatus(const FHold& Hold, FQueueKey Key, EHoldOutcome Outcome, double EndServerTime) const;
 
 	FDeps Deps;
 	TMap<TWeakObjectPtr<APawn>, FHold> Holds;

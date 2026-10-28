@@ -1,12 +1,12 @@
 # Story 014: Rival signal delay draw and release grid
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ The rival signal is the only pressure a stalled team feels ("they are ahead") wi
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-09 grid clause, AC-OC-10) and ADR-0020 section 7 steps 1-2, scoped to this story:*
 
-- [ ] **AC1** (AC-OC-09 [U] `RivalSignalReleaseGrid`, math): **GIVEN** a pinned `StageSignal` sub-seed and team 1 completing `Prelim1` at `t_c` = 100 s (`Active` at t = 0) **THEN** team 0's `RivalPrelimCount` becomes 1 exactly at `t_rel` = 30 * ceil((100 + Delta_1) / 30) s with `Delta_1` in [30, 165], never earlier, and only at a multiple of 30 s from `Active`.
-- [ ] **AC2** (AC-OC-10 [U] `RivalSignalDistribution`): **GIVEN** 1,000 pinned sub-seeds and scripted rounds that vary which team, completer and court produce the k-th preliminary completion **THEN** `Delta` is uniform on [30, 165] (Kolmogorov-Smirnov p > 0.01, per team), `Delta` for ordinal k is identical whichever team, completer or court produced it (the draw is keyed by ordinal only), and every release time of both teams lies on the one 30 s grid from `Active`. (Satisfies AC-IVP-40.)
-- [ ] **AC3** (ADR section 7 steps 1-2 [U] `RivalSignalGolden`): all arithmetic is integer milliseconds (bounds converted once at tuning freeze); the draw is `UniformInRange(FSecretStream(GetServerSubSeed(StageSignal, k), Tag("OC_STAGE")), MinMs, MaxMs)`; the ceiling-division numerator is asserted positive (`t_c >= t0` and `Delta_ms >= 30,000`); results for `k` = 1..3 equal pinned golden vectors.
+- [x] **AC1** (AC-OC-09 [U] `RivalSignalReleaseGrid`, math): **GIVEN** a pinned `StageSignal` sub-seed and team 1 completing `Prelim1` at `t_c` = 100 s (`Active` at t = 0) **THEN** team 0's `RivalPrelimCount` becomes 1 exactly at `t_rel` = 30 * ceil((100 + Delta_1) / 30) s with `Delta_1` in [30, 165], never earlier, and only at a multiple of 30 s from `Active`.
+- [x] **AC2** (AC-OC-10 [U] `RivalSignalDistribution`): **GIVEN** 1,000 pinned sub-seeds and scripted rounds that vary which team, completer and court produce the k-th preliminary completion **THEN** `Delta` is uniform on [30, 165] (Kolmogorov-Smirnov p > 0.01, per team), `Delta` for ordinal k is identical whichever team, completer or court produced it (the draw is keyed by ordinal only), and every release time of both teams lies on the one 30 s grid from `Active`. (Satisfies AC-IVP-40.)
+- [x] **AC3** (ADR section 7 steps 1-2 [U] `RivalSignalGolden`): all arithmetic is integer milliseconds (bounds converted once at tuning freeze); the draw is `UniformInRange(FSecretStream(GetServerSubSeed(StageSignal, k), Tag("OC_STAGE")), MinMs, MaxMs)`; the ceiling-division numerator is asserted positive (`t_c >= t0` and `Delta_ms >= 30,000`); results for `k` = 1..3 equal pinned golden vectors.
 
 ---
 
@@ -70,11 +70,12 @@ Prototype replaced: none (the prototype had no rival signal; the GDD notes the e
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesRivalSignal.h` and `ObjectivesRivalSignal.cpp` (`DrawRivalDelayMs`, `ComputeReleaseMs`)
-- `Source/StealthGameplay/Private/Tests/Objectives/RivalSignalReleaseGridTest.cpp` (class `FObjectivesRivalSignalReleaseGridTest`, name `StealthGame.Objectives.RivalSignalReleaseGrid`)
-- `Source/StealthGameplay/Private/Tests/Objectives/RivalSignalDistributionTest.cpp` (`StealthGame.Objectives.RivalSignalDistribution`)
-- `Source/StealthGameplay/Private/Tests/Objectives/RivalSignalGoldenTest.cpp` (`StealthGame.Objectives.RivalSignalGolden`)
-- `Source/StealthGameplay/Private/Tests/Data/ObjectivesRivalSeeds.h` (constant pinned seed list)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesRivalSignal.h / .cpp` (DrawRivalDelayMs, ComputeReleaseMs, ToMs)
+- `Source/StealthGameplay/Features/Objectives/Public/Server/ObjectivesSeams.h` (IObjectivesSecretDraw keyed by ordinal only, FObjectivesRivalRelease)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesCore.cpp` (bounds to ms at SetTuning, ScheduleRivalSignal)
+- `Source/StealthGame/Private/Composition/StealthObjectivesWiring.cpp` (GetServerSubSeed(StageSignal, k) over Session)
+- `tools/analysis/oc_rival_signal_golden.py` (independent re-derivation of the golden vectors)
+- `Source/StealthGameplay/Private/Tests/Objectives/RivalSignalReleaseGridTest.cpp, RivalSignalDistributionTest.cpp, RivalSignalGoldenTest.cpp, ObjectivesRivalRig.h`
 
 ---
 
@@ -108,7 +109,9 @@ Prototype replaced: none (the prototype had no rival signal; the GDD notes the e
 **Required evidence**:
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.RivalSignalReleaseGrid, RivalSignalDistribution, RivalSignalGolden; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/
+
+Run result: N/A - pure draw and grid arithmetic (the released count is observed in story 015 / the run-and-observe of this batch)
 
 ---
 
@@ -116,3 +119,10 @@ Prototype replaced: none (the prototype had no rival signal; the GDD notes the e
 
 - Depends on: `production/epics/objectives-chain/story-001-objectives-tuning-rows-and-invariants.md`; cross-epic: `production/epics/session-travel/story-011-server-sub-seed-server-only.md`, `production/epics/session-travel/story-008-secret-stream-counter-independence.md`, `production/epics/session-travel/story-005-siphash24-reference-vectors.md`; `production/epics/information-visibility-policy/story-050-rival-signal-shape.md`
 - Unlocks: `production/epics/objectives-chain/story-015-rival-signal-release-scheduling.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing. Golden vectors k = 1..3 at the fixed test secret (0x10..0x27) re-derived by tools/analysis/oc_rival_signal_golden.py (own SipHash-2-4 with the reference vector check, own sub-seed derivation and Lemire draw): 44 172 / 66 957 / 112 399 ms. KS p = 0.117 per team over 4 000 draws; 0 ordinal mismatches between mirrored scripts; 0 off-grid releases.
+**Deviations**: the AC1 boundary case pins a sub-seed whose t_c + Delta lands 1-100 ms past a tick (the exact-tick case is pinned arithmetically in RivalSignalGolden).
+**Test Evidence**: production/qa/evidence/objectives-chain-013-023-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

@@ -10,7 +10,6 @@ Source/StealthGame/Public/StealthGameState.h
 Source/StealthGame/Public/StealthHUD.h
 Source/StealthGame/Public/StealthMovementComponent.h
 Source/StealthGame/Public/StealthNpcController.h
-Source/StealthGame/Public/StealthObjective.h
 Source/StealthGame/Public/StealthPlayerController.h
 Source/StealthGame/Public/StealthPlayerState.h
 Source/StealthGame/Public/StealthRules.h

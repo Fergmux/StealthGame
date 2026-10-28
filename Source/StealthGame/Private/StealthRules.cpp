@@ -1,21 +1,6 @@
 #include "StealthRules.h"
 
 
-bool FStealthRules::CanCompleteObjective(uint8 Team, int32 CurrentStage, uint8 ObjectiveTeam, int32 ObjectiveStage)
-{
-	if (Team >= STEALTH_NUM_TEAMS || ObjectiveStage != CurrentStage)
-	{
-		return false;
-	}
-	if (ObjectiveStage == STEALTH_FINAL_STAGE)
-	{
-		// The final objective is shared by both teams.
-		return ObjectiveTeam == STEALTH_NO_TEAM || ObjectiveTeam == Team;
-	}
-	// Preliminary objectives belong to one team only.
-	return ObjectiveTeam == Team;
-}
-
 uint8 FStealthRules::EvaluateEliminationWinner(const int32 PlayersPerTeam[STEALTH_NUM_TEAMS], const int32 ActivePerTeam[STEALTH_NUM_TEAMS])
 {
 	for (int32 Loser = 0; Loser < STEALTH_NUM_TEAMS; ++Loser)

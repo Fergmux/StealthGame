@@ -1,12 +1,12 @@
 # Story 020: PIE-2 hidden-site oracle and completion world signature
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,8 +36,8 @@ These are the two pillar-1 oracle checks of the epic. If a player tending the hi
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-08, AC-OC-12), scoped to this story. QL-STORY-READY revised AC1 (trace format) and AC2 (operational definition of "Objectives-related"):*
 
-- [ ] **AC1** (AC-OC-08 [PIE-2] `StealthGame.Objectives.PIE.HiddenSiteOracle`): **GIVEN** a human tending its hidden final, a locked P2, a completed P1, an opponent site and its own live site **WHEN** each tend runs to `D` and a server/owner trace is recorded **THEN** the owner's replies and `FHoldStatus` messages are byte-exact across all five cases (full serialised reply and `FHoldStatus` payload bytes with the pawn id and timestamp fields normalised out), Begin-to-Complete timing agrees within +- 1 server tick, the four non-live cases change no state, and the ring is Bone for all five until `TendCueDelaySec` then Marigold only at the own live site; screenshots (ring only) `production/qa/evidence/oc-tend-{hidden,locked,completed,opponent,live}.png`.
-- [ ] **AC2** (AC-OC-12 [PIE-2] `StealthGame.Objectives.PIE.CompletionNoWorldSignature`): **GIVEN** a counted completion and a no-effect completion at two courts **WHEN** an opponent client's received replication (properties, RPCs, spawned actors and components) is traced over the 2 s around each **THEN** the opponent receives **zero properties or RPCs whose owning class or struct is on the Objectives list** (`UObjectiveTeamViewComponent`, `FObjectiveTeamView`, any RPC declared in an Objectives header, and any property listed in the ADR-0003 Objectives allowlist rows) in both cases, the remaining traffic (pawn pose and movement) is the same set of **field names** in both (values ignored), and no court, fixture or pawn property changes.
+- [x] **AC1** (AC-OC-08 [PIE-2] `StealthGame.Objectives.PIE.HiddenSiteOracle`): **GIVEN** a human tending its hidden final, a locked P2, a completed P1, an opponent site and its own live site **WHEN** each tend runs to `D` and a server/owner trace is recorded **THEN** the owner's replies and `FHoldStatus` messages are byte-exact across all five cases (full serialised reply and `FHoldStatus` payload bytes with the pawn id and timestamp fields normalised out), Begin-to-Complete timing agrees within +- 1 server tick, the four non-live cases change no state, and the ring is Bone for all five until `TendCueDelaySec` then Marigold only at the own live site; screenshots (ring only) `production/qa/evidence/oc-tend-{hidden,locked,completed,opponent,live}.png`.
+- [x] **AC2** (AC-OC-12 [PIE-2] `StealthGame.Objectives.PIE.CompletionNoWorldSignature`): **GIVEN** a counted completion and a no-effect completion at two courts **WHEN** an opponent client's received replication (properties, RPCs, spawned actors and components) is traced over the 2 s around each **THEN** the opponent receives **zero properties or RPCs whose owning class or struct is on the Objectives list** (`UObjectiveTeamViewComponent`, `FObjectiveTeamView`, any RPC declared in an Objectives header, and any property listed in the ADR-0003 Objectives allowlist rows) in both cases, the remaining traffic (pawn pose and movement) is the same set of **field names** in both (values ignored), and no court, fixture or pawn property changes.
 
 ---
 
@@ -69,10 +69,9 @@ Prototype replaced: the prototype replicated each site's `bCompleted`, `Interact
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/HiddenSiteOracleTest.cpp` (`NETWORK_TEST_CLASS(HiddenSiteOracle, "StealthGame.Objectives.PIE")`)
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/CompletionNoWorldSignatureTest.cpp` (`NETWORK_TEST_CLASS(CompletionNoWorldSignature, "StealthGame.Objectives.PIE")`)
-- `production/qa/evidence/oc-tend-hidden.png`, `oc-tend-locked.png`, `oc-tend-completed.png`, `oc-tend-opponent.png`, `oc-tend-live.png` (and the `-early` frames)
-- `production/qa/evidence/oc-tend-evidence.md` (sign-off record)
+- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/HiddenSiteOracleTest.cpp, CompletionNoWorldSignatureTest.cpp`
+- `Source/StealthGameplay/Private/Core/InteractHoldStandIn.cpp` (FHoldStatus to the owner, identical at every court)
+- `production/qa/evidence/oc-tend-{hidden,locked,completed,opponent,live}.png and the -early frames, production/qa/evidence/oc-tend-evidence.md`
 
 ---
 
@@ -106,7 +105,9 @@ Prototype replaced: the prototype replicated each site's `bCompleted`, `Interact
 - Integration: the two T2 PIE tests under `Source/StealthTestHarness/Private/Tests/PIE/Objectives/` — must exist and pass
 - Retained screenshots (ring only): `production/qa/evidence/oc-tend-{hidden,locked,completed,opponent,live}.png` plus the `-early` frames, and the sign-off record `production/qa/evidence/oc-tend-evidence.md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.PIE.HiddenSiteOracle, CompletionNoWorldSignature; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/
+
+Run result: OBSERVED - oc-tend-*.png (Bone at 0.3 s for all five, Marigold at 1.5 s only at the own live court)
 
 ---
 
@@ -114,3 +115,10 @@ Prototype replaced: the prototype replicated each site's `bCompleted`, `Interact
 
 - Depends on: `production/epics/objectives-chain/story-007-interact-predicate-and-feint-parity.md`, `production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md`, `production/epics/objectives-chain/story-016-presentation-view-helpers-and-ring-rule.md`, `production/epics/objectives-chain/story-019-pie2-team-view-ingress-and-informant-parity.md`; cross-epic: `production/epics/input-interaction-framework/story-082-action-pose-parity-observed.md`, `production/epics/input-interaction-framework/story-083-rejection-timing-identity-blind.md`; hud epic (the ring drawing the screenshots capture)
 - Unlocks: `production/epics/objectives-chain/story-021-pie2-end-to-end-cacao-chain.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC2 passing. The wire trace of AC2 is the in-process replicated-field recorder (every replicated property of every replicated actor and component on the opponent client, per frame) since the raw-bunch capture is multi-process only; RPCs: no Objectives header declares one.
+**Deviations**: court sockets are not replicated (AStealthCourtSocket), so "no court or fixture property changes" holds structurally.
+**Test Evidence**: production/qa/evidence/objectives-chain-013-023-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

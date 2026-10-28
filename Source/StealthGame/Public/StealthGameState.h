@@ -47,10 +47,6 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Stealth")
 	EStealthRoundPhase RoundPhase = EStealthRoundPhase::WaitingToStart;
 
-	/** Current objective stage per team: 1, 2, then STEALTH_FINAL_STAGE. */
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Stealth")
-	TArray<int32> TeamStage;
-
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Stealth")
 	uint8 WinningTeam = STEALTH_NO_TEAM;
 
@@ -64,9 +60,6 @@ public:
 	/** Seed of the current round; every machine builds the city layout from it. */
 	UPROPERTY(ReplicatedUsing = OnRep_RoundSeed, BlueprintReadOnly, Category = "Stealth")
 	int32 RoundSeed = 0;
-
-	UFUNCTION(BlueprintPure, Category = "Stealth")
-	int32 GetTeamStage(uint8 Team) const { return TeamStage.IsValidIndex(Team) ? TeamStage[Team] : 0; }
 
 	/** Server: puts both teams back at stage 1 and clears the result. */
 	void ResetRoundState(int32 NewSeed);

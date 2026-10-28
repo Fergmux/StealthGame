@@ -5,7 +5,7 @@
 #include "UObject/WeakObjectPtrTemplates.h"
 
 class AStealthGameMode;
-class AStealthObjective;
+class AStealthCourtSocket;
 class IStealthClock;
 class URosterStore;
 class URoundMatchStore;
@@ -24,7 +24,7 @@ class UWorld;
  *   IRoundObjectiveHooks         URoundMatchStore: phase Active, the queue's latch and CurrentKey, FRoundMatchCore::
  *                                DeclareObjectiveWin, the Round Event Log writer, the command clock.
  *   IObjectivesAssignmentSource  STAND-IN for the Level Socket Contract's UStealthLayoutService::GetSiteAssignment_Server
- *   IObjectivesCourtGeometry     (ADR-0014 section 7.4; the LSC epic is not built): L_Prototype's five AStealthObjective actors
+ *   IObjectivesCourtGeometry     (ADR-0014 section 7.4; the LSC epic is not built): L_Prototype's five AStealthCourtSocket actors
  *                                are the courts. A court's id is the 1-based index of the world's objective actors sorted by
  *                                name; the actor's (OwningTeam, Stage) is its role (stage 1 team T -> P1[T], stage 2 -> P2[T],
  *                                the stage-3 shared actor -> Final), read at OnLayoutReady after the prototype layout moved
@@ -36,11 +36,17 @@ class UWorld;
  *                                alike); a member's view is the UObjectiveTeamViewComponent of its current controller (the
  *                                composition root's controller map, Session's connection table stand-in). The prototype
  *                                HUD's replicated AStealthGameState::TeamStage is no longer written on the production path.
- *   IObjectivesRivalRelease      STAND-IN until stories oc-014 / oc-015: no release is scheduled (RivalPrelimCount stays 0).
+ *   IObjectivesSecretDraw        story oc-014: USessionService's sub-seed source, GetServerSubSeed(StageSignal, k) (ADR-0006).
+ *                                The releases themselves are scheduled by UObjectivesService on the round queue (oc-015).
+ *   IObjectivesCourtClues        STAND-IN for the LSC court rows' ClueTag (story oc-013; the LSC epic is not built): a
+ *                                role-blind function of the stand-in courts' positions only. Area type = the court's quadrant
+ *                                round the courts' centroid (+X,+Y Market; -X,+Y Temple; -X,-Y Residential; +X,-Y Causeway);
+ *                                feature = WaterSteps beyond the median distance from the centroid, Shrine within it. The
+ *                                assignment is never read by it.
  */
 class FStealthObjectivesAdapters final : public IObjectivesRosterView, public IObjectivesSessionView, public IObjectivesPawnControlView,
 	public IRoundObjectiveHooks, public IObjectivesAssignmentSource, public IObjectivesCourtGeometry, public IObjectivesViewTargets,
-	public IObjectivesRivalRelease
+	public IObjectivesSecretDraw, public IObjectivesCourtClues
 {
 public:
 	/** The face stand points' distance from a prototype objective actor (the LSC fixture's 1.2 m clear floor per face). */
@@ -77,20 +83,23 @@ public:
 	virtual void GetTeamMembers(uint8 Team, TArray<FParticipantId>& OutMembers) const override;
 	virtual UObjectiveTeamViewComponent* FindTeamView(FParticipantId Participant) const override;
 
-	// IObjectivesRivalRelease (stand-in)
-	virtual void ScheduleRivalRelease(uint8 CompletingTeam, uint32 PrelimOrdinal) override {}
+	// IObjectivesSecretDraw (story oc-014)
+	virtual uint64 GetStageSignalSubSeed(uint32 Ordinal) const override;
+
+	// IObjectivesCourtClues (story oc-013; the L_Prototype stand-in)
+	virtual void GetCourtClueRecords(TArray<FCourtClueRecord>& OutRecords) const override;
 
 	/** The nearest court within the interact range of Pawn, or an unset id (the IIF target stand-in). */
 	FCourtFixtureId FindCourtInReach(const APawn& Pawn) const;
 
 	/** The court actor of an id (the stand-in courts; dev tools and the bot driver), or null. */
-	const AStealthObjective* FindCourtActor(FCourtFixtureId Court) const;
+	const AStealthCourtSocket* FindCourtActor(FCourtFixtureId Court) const;
 
 	/** True while Pawn's legality class is Active (the hold stand-in's Illegal cancel). */
 	bool IsLegalityActive(const APawn& Pawn) const;
 
 private:
-	void GetCourts(TArray<const AStealthObjective*>& Out) const;
+	void GetCourts(TArray<const AStealthCourtSocket*>& Out) const;
 	URosterStore* GetRoster() const;
 	URoundMatchStore* GetRound() const;
 

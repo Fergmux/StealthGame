@@ -69,6 +69,10 @@ EResolveResult FInteractHoldStandIn::ResolveBegin(const FQueueItem& Item, ASteal
 	Hold.ActionEpoch = NextActionEpoch++;
 	Hold.BeginKey = Key;
 	Hold.DueServerTime = Due;
+	Hold.StartServerTime = Deps.Clock->GetServerTimeSeconds();
+	Hold.Sink = Cmd.Sink;
+	Hold.Seq = Cmd.ClientSeq;
+	AppendStatus(Hold, Key, EHoldOutcome::Active, 0.0);
 	Owner->OnInteractExecuted(Pawn, Court, Key);
 	Deps.Hub->OnActionStarted.Broadcast(&Pawn, EActionType::Interact);
 
@@ -89,6 +93,7 @@ EResolveResult FInteractHoldStandIn::ResolveEnd(AStealthPawn& Pawn, FQueueKey Ke
 	{
 		return EResolveResult::Voided; // no hold to end
 	}
+	AppendStatus(Hold, Key, EHoldOutcome::Cancelled, Deps.Clock != nullptr ? Deps.Clock->GetServerTimeSeconds() : 0.0);
 	if (IInteractTargetOwner* Owner = Deps.Hub != nullptr ? Deps.Hub->ResolveInteractTargetOwner() : nullptr)
 	{
 		Owner->OnInteractEnded(Pawn, Hold.Court, EInteractEnd::Cancelled, Key);
@@ -112,6 +117,8 @@ EResolveResult FInteractHoldStandIn::ResolveComplete(const FQueueItem& Item, FQu
 	const FHold Hold = *Found;
 	Holds.Remove(Pawn);
 	const bool bLegal = !Deps.IsLegalityActive || Deps.IsLegalityActive(*Pawn);
+	// The same Completed at every court: a no-effect completion and a counted one are identical to the owner.
+	AppendStatus(Hold, Key, bLegal ? EHoldOutcome::Completed : EHoldOutcome::Cancelled, Deps.Clock != nullptr ? Deps.Clock->GetServerTimeSeconds() : 0.0);
 	IInteractTargetOwner* Owner = Deps.Hub != nullptr ? Deps.Hub->ResolveInteractTargetOwner() : nullptr;
 	if (Owner != nullptr)
 	{
@@ -149,6 +156,7 @@ void FInteractHoldStandIn::OnRejectedLatched(const FQueueItem& Item, FQueueKey K
 		return;
 	}
 	const FCourtFixtureId Court = Found->Court;
+	AppendStatus(*Found, Key, EHoldOutcome::Cancelled, Deps.Clock != nullptr ? Deps.Clock->GetServerTimeSeconds() : 0.0);
 	Holds.Remove(Pawn);
 	if (IInteractTargetOwner* Owner = Deps.Hub != nullptr ? Deps.Hub->ResolveInteractTargetOwner() : nullptr)
 	{
@@ -164,11 +172,27 @@ void FInteractHoldStandIn::CancelAll()
 	for (const TPair<TWeakObjectPtr<APawn>, FHold>& Pair : Ending)
 	{
 		const AStealthPawn* Pawn = Cast<AStealthPawn>(Pair.Key.Get());
+		AppendStatus(Pair.Value, FQueueKey(), EHoldOutcome::Cancelled, Deps.Clock != nullptr ? Deps.Clock->GetServerTimeSeconds() : 0.0);
 		if (Owner != nullptr && Pawn != nullptr)
 		{
 			Owner->OnInteractEnded(*Pawn, Pair.Value.Court, EInteractEnd::Cancelled, FQueueKey()); // outside a slot: claim release only
 		}
 	}
+}
+
+void FInteractHoldStandIn::AppendStatus(const FHold& Hold, FQueueKey Key, EHoldOutcome Outcome, double EndServerTime) const
+{
+	if (Deps.Hub == nullptr)
+	{
+		return;
+	}
+	FHoldStatus Status;
+	Status.Seq = Hold.Seq;
+	Status.ActionType = EActionType::Interact;
+	Status.Outcome = Outcome;
+	Status.ServerStartTime = Hold.StartServerTime;
+	Status.ServerEndTime = Outcome == EHoldOutcome::Active ? 0.0 : EndServerTime;
+	Deps.Hub->GetReplySinks().Append(Hold.Sink, Key, FCommandReply::MakeHoldStatus(Status)); // the null sink discards
 }
 
 const FInteractHoldStandIn::FHold* FInteractHoldStandIn::FindHold(const APawn* Pawn) const

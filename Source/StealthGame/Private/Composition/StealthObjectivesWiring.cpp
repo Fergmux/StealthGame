@@ -9,11 +9,13 @@
 #include "Server/Core/Round/StealthRoundMatchStore.h"
 #include "Server/Core/StealthPawnFactory.h"
 #include "Server/Queue/StealthResolutionQueueCore.h"
+#include "Server/Random/StealthServerSeeds.h"
 #include "Server/Roster/StealthRosterStore.h"
+#include "Server/Session/StealthSessionService.h"
 #include "Server/StealthClock.h"
 #include "Server/StealthCompositionRoot.h"
 #include "StealthGameMode.h"
-#include "StealthObjective.h"
+#include "View/StealthCourtSocket.h"
 #include "StealthSettings.h"
 #include "StealthTypes.h"
 #include "View/ObjectiveTeamViewComponent.h"
@@ -157,24 +159,24 @@ double FStealthObjectivesAdapters::ServerNow() const
 
 // --- The L_Prototype court stand-in --------------------------------------------------------------------------------
 
-void FStealthObjectivesAdapters::GetCourts(TArray<const AStealthObjective*>& Out) const
+void FStealthObjectivesAdapters::GetCourts(TArray<const AStealthCourtSocket*>& Out) const
 {
-	AStealthObjective::GetStandInCourts(World.Get(), Out);
+	AStealthCourtSocket::GetCourts(World.Get(), Out);
 }
 
-const AStealthObjective* FStealthObjectivesAdapters::FindCourtActor(FCourtFixtureId Court) const
+const AStealthCourtSocket* FStealthObjectivesAdapters::FindCourtActor(FCourtFixtureId Court) const
 {
-	return AStealthObjective::FindStandInCourt(World.Get(), Court);
+	return AStealthCourtSocket::FindCourt(World.Get(), Court);
 }
 
 bool FStealthObjectivesAdapters::GetSiteAssignment_Server(FSiteAssignment& OutAssignment) const
 {
-	TArray<const AStealthObjective*> Courts;
+	TArray<const AStealthCourtSocket*> Courts;
 	GetCourts(Courts);
 	OutAssignment = FSiteAssignment();
 	for (int32 Index = 0; Index < Courts.Num(); ++Index)
 	{
-		const AStealthObjective* Court = Courts[Index];
+		const AStealthCourtSocket* Court = Courts[Index];
 		const FCourtFixtureId Id(static_cast<uint16>(Index + 1));
 		if (Court->Stage >= STEALTH_FINAL_STAGE)
 		{
@@ -192,7 +194,7 @@ bool FStealthObjectivesAdapters::GetSiteAssignment_Server(FSiteAssignment& OutAs
 bool FStealthObjectivesAdapters::GetFixtureFaces(FCourtFixtureId Court, TArray<FVector, TInlineAllocator<4>>& OutFaces) const
 {
 	OutFaces.Reset();
-	const AStealthObjective* Actor = FindCourtActor(Court);
+	const AStealthCourtSocket* Actor = FindCourtActor(Court);
 	if (Actor == nullptr)
 	{
 		return false;
@@ -207,21 +209,8 @@ bool FStealthObjectivesAdapters::GetFixtureFaces(FCourtFixtureId Court, TArray<F
 
 FCourtFixtureId FStealthObjectivesAdapters::FindCourtInReach(const APawn& Pawn) const
 {
-	TArray<const AStealthObjective*> Courts;
-	GetCourts(Courts);
-	const double Reach = UStealthSettings::Get()->ObjectiveInteractRange;
-	FCourtFixtureId Best;
-	double BestDistance = TNumericLimits<double>::Max();
-	for (int32 Index = 0; Index < Courts.Num(); ++Index)
-	{
-		const double Distance = FVector::Dist2D(Courts[Index]->GetActorLocation(), Pawn.GetActorLocation());
-		if (Distance <= Reach && Distance < BestDistance)
-		{
-			BestDistance = Distance;
-			Best = FCourtFixtureId(static_cast<uint16>(Index + 1));
-		}
-	}
-	return Best;
+	// The same public-geometry rule a client uses for its own hold's ring (AStealthCourtSocket::FindCourtInReach).
+	return AStealthCourtSocket::FindCourtInReach(World.Get(), Pawn.GetActorLocation(), UStealthSettings::Get()->ObjectiveInteractRange);
 }
 
 bool FStealthObjectivesAdapters::IsLegalityActive(const APawn& Pawn) const
@@ -257,4 +246,61 @@ UObjectiveTeamViewComponent* FStealthObjectivesAdapters::FindTeamView(FParticipa
 	const UStealthCompositionRoot* Composition = Root.Get();
 	const APlayerController* Controller = Composition != nullptr ? Composition->GetController(Participant) : nullptr;
 	return Controller != nullptr ? Controller->FindComponentByClass<UObjectiveTeamViewComponent>() : nullptr;
+}
+
+// --- IObjectivesSecretDraw (story oc-014) ---------------------------------------------------------------------------
+
+uint64 FStealthObjectivesAdapters::GetStageSignalSubSeed(uint32 Ordinal) const
+{
+	const USessionService* Session = USessionService::Get(World.Get());
+	return Session != nullptr ? Session->GetSubSeedSource().GetServerSubSeed(ESeedDomain::StageSignal, Ordinal) : 0;
+}
+
+// --- IObjectivesCourtClues (story oc-013; the L_Prototype stand-in) -------------------------------------------------
+
+void FStealthObjectivesAdapters::GetCourtClueRecords(TArray<FCourtClueRecord>& OutRecords) const
+{
+	OutRecords.Reset();
+	TArray<const AStealthCourtSocket*> Courts;
+	GetCourts(Courts);
+	if (Courts.Num() == 0)
+	{
+		return;
+	}
+	// Public geometry only: the courts' positions (never the assignment or an actor's stage or team).
+	FVector Centroid = FVector::ZeroVector;
+	for (const AStealthCourtSocket* Court : Courts)
+	{
+		Centroid += Court->GetActorLocation();
+	}
+	Centroid /= static_cast<double>(Courts.Num());
+	TArray<double> Distances;
+	for (const AStealthCourtSocket* Court : Courts)
+	{
+		Distances.Add(FVector::Dist2D(Court->GetActorLocation(), Centroid));
+	}
+	TArray<double> Sorted = Distances;
+	Sorted.Sort();
+	const double Median = Sorted[Sorted.Num() / 2];
+	for (int32 Index = 0; Index < Courts.Num(); ++Index)
+	{
+		const FVector Offset = Courts[Index]->GetActorLocation() - Centroid;
+		EClueAreaType Area = EClueAreaType::Causeway;
+		if (Offset.X >= 0.0 && Offset.Y >= 0.0)
+		{
+			Area = EClueAreaType::Market;
+		}
+		else if (Offset.X < 0.0 && Offset.Y >= 0.0)
+		{
+			Area = EClueAreaType::Temple;
+		}
+		else if (Offset.X < 0.0)
+		{
+			Area = EClueAreaType::Residential;
+		}
+		FCourtClueRecord& Record = OutRecords.AddDefaulted_GetRef();
+		Record.Court = FCourtFixtureId(static_cast<uint16>(Index + 1));
+		Record.AreaTypeId = static_cast<uint8>(Area);
+		Record.NearestFeatureKind = static_cast<uint8>(Distances[Index] > Median ? EClueFeatureKind::WaterSteps : EClueFeatureKind::Shrine);
+	}
 }

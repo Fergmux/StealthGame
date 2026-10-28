@@ -287,11 +287,52 @@ namespace StealthObjectivesTest
 		virtual UObjectiveTeamViewComponent* FindTeamView(FParticipantId Participant) const override { return ViewOf(Participant.Value); }
 	};
 
+	/** Records every release request: Calls holds (completing team, ordinal); Requests the full drawn release. */
 	class FStubRival : public IObjectivesRivalRelease
 	{
 	public:
 		TArray<TPair<uint8, uint32>> Calls;
-		virtual void ScheduleRivalRelease(uint8 Team, uint32 Ordinal) override { Calls.Emplace(Team, Ordinal); }
+		TArray<FObjectivesRivalRelease> Requests;
+		virtual void ScheduleRivalRelease(const FObjectivesRivalRelease& Release) override
+		{
+			Calls.Emplace(Release.CompletingTeam, Release.Ordinal);
+			Requests.Add(Release);
+		}
+	};
+
+	/** Fixed StageSignal sub-seeds: SubSeedBase + ordinal (or the explicit per-ordinal map); counts the reads. */
+	class FStubSecretDraw : public IObjectivesSecretDraw
+	{
+	public:
+		uint64 SubSeedBase = 0x5EED5EED00000000ull;
+		TMap<uint32, uint64> PerOrdinal;
+		mutable TArray<uint32> Reads;
+		virtual uint64 GetStageSignalSubSeed(uint32 Ordinal) const override
+		{
+			Reads.Add(Ordinal);
+			const uint64* Fixed = PerOrdinal.Find(Ordinal);
+			return Fixed != nullptr ? *Fixed : SubSeedBase + Ordinal;
+		}
+	};
+
+	/** Public ClueTag records per court (story oc-013); empty: no clue. */
+	class FStubClues : public IObjectivesCourtClues
+	{
+	public:
+		TArray<FCourtClueRecord> Records;
+		mutable int32 Reads = 0;
+		void Add(uint16 Court, EClueAreaType Area, EClueFeatureKind Feature = EClueFeatureKind::None)
+		{
+			FCourtClueRecord& Record = Records.AddDefaulted_GetRef();
+			Record.Court = FCourtFixtureId(Court);
+			Record.AreaTypeId = static_cast<uint8>(Area);
+			Record.NearestFeatureKind = static_cast<uint8>(Feature);
+		}
+		virtual void GetCourtClueRecords(TArray<FCourtClueRecord>& Out) const override
+		{
+			++Reads;
+			Out = Records;
+		}
 	};
 
 	class FStubChains : public IObjectivesChainSource
@@ -314,6 +355,8 @@ namespace StealthObjectivesTest
 		FStubCourts Courts;
 		FStubViews Views;
 		FStubRival Rival;
+		FStubSecretDraw SecretDraw;
+		FStubClues Clues;
 		FObjectivesCore Core;
 		TStrongObjectPtr<UObjectiveChainData> Chain;
 
@@ -327,6 +370,8 @@ namespace StealthObjectivesTest
 			Deps.Courts = &Courts;
 			Deps.Views = &Views;
 			Deps.RivalRelease = &Rival;
+			Deps.SecretDraw = &SecretDraw;
+			Deps.Clues = &Clues;
 			Core.Initialize(Deps);
 			Core.SetTuning(FObjectivesTuning_Public(), FObjectivesTuning_Server());
 			Chain.Reset(MakeCacaoChain());
@@ -354,6 +399,20 @@ namespace StealthObjectivesTest
 			Core.OnInteractExecuted(Pawn, FCourtFixtureId(Court), FQueueKey(1, 1));
 			Round.Key = Key;
 			return Core.OnInteractEnded(Pawn, FCourtFixtureId(Court), EObjectivesInteractEnd::Completed, Key);
+		}
+
+		/** Every site state of both teams of Core (a snapshot for "nothing changed"). */
+		static TArray<EObjectiveSiteState> SnapshotOf(const FObjectivesCore& Core)
+		{
+			TArray<EObjectiveSiteState> Out;
+			for (int32 Team = 0; Team < 2; ++Team)
+			{
+				for (int32 Def = 0; Def < Core.GetDefinitionCount(); ++Def)
+				{
+					Out.Add(Core.GetSiteState(Team, Def));
+				}
+			}
+			return Out;
 		}
 
 		/** Every site state of both teams (a snapshot for "nothing changed"). */

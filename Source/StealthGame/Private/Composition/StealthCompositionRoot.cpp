@@ -11,7 +11,7 @@
 #include "Server/ObjectivesService.h"
 #include "Server/StealthServerTuning.h"
 #include "StealthCommandWiring.h"
-#include "StealthObjective.h"
+#include "View/StealthCourtSocket.h"
 #include "StealthObjectivesWiring.h"
 #include "StealthPenaltyWiring.h"
 #include "View/ObjectivesChainRegistry.h"
@@ -651,6 +651,16 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		const TSharedPtr<FStealthObjectivesAdapters> Pinned = WeakObjectivesAdapters.Pin();
 		return Pinned.IsValid() && Pinned->IsLegalityActive(Pawn);
 	};
+	// Story oc-019 (AC-OC-26, IIF R5): ingress accepts any court fixture of this world, live or not; an id naming no court is
+	// an unknown id and is dropped (the stand-in courts are the fixtures until the LSC layout service publishes them).
+	if (UActionHub* IngressHub = UActionHub::Get(World))
+	{
+		IngressHub->SetCourtFixtureValidator([WeakObjectivesAdapters](FCourtFixtureId Court)
+		{
+			const TSharedPtr<FStealthObjectivesAdapters> Pinned = WeakObjectivesAdapters.Pin();
+			return Pinned.IsValid() && Pinned->FindCourtActor(Court) != nullptr;
+		});
+	}
 	InteractHolds = MakeShared<FInteractHoldStandIn>(HoldDeps);
 	PrototypeFallback = MakeShared<FStealthPrototypeCommandFallback>(InGameMode, InteractHolds.Get());
 	PrototypeBodyObserver = MakeShared<FStealthPrototypeBodyRemovalObserver>(); // STAND-IN: Concealment's removal observer
@@ -767,7 +777,10 @@ void UStealthCompositionRoot::WireObjectives(AStealthGameMode* InGameMode)
 	// oc-012: the service subscribes to the Roster's rebind and reset events itself.
 	Init.ViewTargets = &A;
 	Init.RosterEvents = GetRosterStore();
-	Init.RivalRelease = &A;
+	// Stories oc-013 / oc-014 / oc-015: the stand-in clue records, Session's StageSignal sub-seeds; the service schedules its
+	// own TimerFired(StageSignal) on the round queue (RivalRelease left null).
+	Init.Clues = &A;
+	Init.SecretDraw = &A;
 	Init.Queue = Queue;
 	Init.Faults = &CommandFaults;
 	// Tuning stand-in: the schema defaults (as the Crowd director and Assassination) until the TDC store feeds features.

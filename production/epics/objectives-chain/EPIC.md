@@ -80,16 +80,16 @@ Written by `/create-stories objectives-chain` (story_granularity `balanced`, 2-4
 | 010 | Team view struct and builder | Logic | Complete | ADR-0020 |
 | 011 | Team view component and replication | Integration | Complete | ADR-0020 |
 | 012 | Rejoin, view rebind and round reset | Logic | Complete | ADR-0020 |
-| 013 | Clue function and the too-broad clue log | Logic | Ready | ADR-0020 |
-| 014 | Rival signal delay draw and release grid | Logic | Ready | ADR-0020 |
-| 015 | Rival signal release scheduling and idle behaviour | Logic | Ready | ADR-0020 |
-| 016 | Presentation view helpers and the tend-cue ring rule | Logic | Ready | ADR-0020 |
-| 017 | Stall metrics (F5) and the tend posterior band (F3) | Logic | Ready | ADR-0020 |
-| 018 | Stall-pressure and cross-system checks | Integration | Ready | ADR-0020 |
-| 019 | PIE-2 team view contents, ingress and informant parity | Integration | Ready | ADR-0020 |
-| 020 | PIE-2 hidden-site oracle and completion world signature | Integration | Ready | ADR-0020 |
-| 021 | PIE-2 end-to-end Cacao chain | Integration | Ready | ADR-0020 |
-| 022 | Prototype retirement and static scans | Logic | Ready | ADR-0020 |
-| 023 | Playtest advisory metrics (pacing, exposure, tend share) | Integration | Ready | ADR-0020 |
+| 013 | Clue function and the too-broad clue log | Logic | Complete | ADR-0020 |
+| 014 | Rival signal delay draw and release grid | Logic | Complete | ADR-0020 |
+| 015 | Rival signal release scheduling and idle behaviour | Logic | Complete | ADR-0020 |
+| 016 | Presentation view helpers and the tend-cue ring rule | Logic | Complete | ADR-0020 |
+| 017 | Stall metrics (F5) and the tend posterior band (F3) | Logic | Complete | ADR-0020 |
+| 018 | Stall-pressure and cross-system checks | Integration | Complete | ADR-0020 |
+| 019 | PIE-2 team view contents, ingress and informant parity | Integration | Complete | ADR-0020 |
+| 020 | PIE-2 hidden-site oracle and completion world signature | Integration | Complete | ADR-0020 |
+| 021 | PIE-2 end-to-end Cacao chain | Integration | Complete | ADR-0020 |
+| 022 | Prototype retirement and static scans | Logic | Complete | ADR-0020 |
+| 023 | Playtest advisory metrics (pacing, exposure, tend share) | Integration | Complete | ADR-0020 |
 
 Story files: `production/epics/objectives-chain/story-NNN-<slug>.md`. ADR-0002 (queue, `TimerFired`, latch) and ADR-0006 (secret stream, integer draws) are secondary ADRs of stories 005, 008, 009, 014 and 015.

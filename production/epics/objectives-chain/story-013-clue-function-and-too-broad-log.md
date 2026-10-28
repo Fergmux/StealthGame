@@ -1,12 +1,12 @@
 # Story 013: Clue function and the too-broad clue log
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -35,9 +35,9 @@ A team finds its live court from the stage card: a title, one line and a clue bu
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-13, AC-OC-28, OC-15) and ADR-0020 section 4, scoped to this story:*
 
-- [ ] **AC1** (AC-OC-13 [U] `ClueBoundAndRoleBlind`): **GIVEN** the graybox layout and 1,000 pinned assignments **THEN** every live site's clue matches 1 to `ClueMatchMaxCount` courts and the clue string is a function of public `ClueTag` data only (no role input; perturbing role inputs leaves the string unchanged).
-- [ ] **AC2** (AC-OC-28 [U] `ClueTooBroadLogged`): **GIVEN** a fixture layout in which a live site's clue matches 4 courts with `ClueMatchMaxCount` 3 **THEN** the round proceeds, the stage card shows the same clue string (never a sharper one), and exactly one `ClueTooBroad` entry is logged per layout hash (a second preparation with the same hash logs nothing; a different hash logs a new entry; a match count of exactly 3 logs nothing).
-- [ ] **AC3** (ADR-0020 section 4 [U] `ClueFallbackAreaOnly`): `FClueTag` is `{uint8 AreaType, uint8 FeatureKind}`; a court record with no feature has `FeatureKind` None and the clue is area type only; the phrase is built client-side from a localised phrase table (a missing key returns a safe fallback and a warning); no string member exists in the replicated view.
+- [x] **AC1** (AC-OC-13 [U] `ClueBoundAndRoleBlind`): **GIVEN** the graybox layout and 1,000 pinned assignments **THEN** every live site's clue matches 1 to `ClueMatchMaxCount` courts and the clue string is a function of public `ClueTag` data only (no role input; perturbing role inputs leaves the string unchanged).
+- [x] **AC2** (AC-OC-28 [U] `ClueTooBroadLogged`): **GIVEN** a fixture layout in which a live site's clue matches 4 courts with `ClueMatchMaxCount` 3 **THEN** the round proceeds, the stage card shows the same clue string (never a sharper one), and exactly one `ClueTooBroad` entry is logged per layout hash (a second preparation with the same hash logs nothing; a different hash logs a new entry; a match count of exactly 3 logs nothing).
+- [x] **AC3** (ADR-0020 section 4 [U] `ClueFallbackAreaOnly`): `FClueTag` is `{uint8 AreaType, uint8 FeatureKind}`; a court record with no feature has `FeatureKind` None and the clue is area type only; the phrase is built client-side from a localised phrase table (a missing key returns a safe fallback and a warning); no string member exists in the replicated view.
 
 ---
 
@@ -69,11 +69,13 @@ Prototype replaced: nothing. The prototype had no clue; objectives were visible 
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Public/View/Core/ClueTag.h` (`FClueTag`; coordinate with the ADR-0014 owner story)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesClue.cpp` (role-blind clue function, match count, `ClueTooBroad` once-per-hash)
-- `Source/StealthGameplay/Private/Tests/Objectives/ClueBoundAndRoleBlindTest.cpp` (class `FObjectivesClueBoundAndRoleBlindTest`, name `StealthGame.Objectives.ClueBoundAndRoleBlind`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ClueTooBroadLoggedTest.cpp` (`StealthGame.Objectives.ClueTooBroadLogged`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ClueFallbackAreaOnlyTest.cpp` (`StealthGame.Objectives.ClueFallbackAreaOnly`)
+- `Source/StealthGameplay/Public/View/Core/ClueTag.h` (key set EClueAreaType x EClueFeatureKind)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesClue.h / .cpp` (ClueOf, CountMatches, FindRecord)
+- `Source/StealthGameplay/Features/Objectives/Public/Server/ObjectivesSeams.h` (FCourtClueRecord, IObjectivesCourtClues)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesCore.h / .cpp` (BindClues, ClueTooBroad once per LayoutHash, view clue)
+- `Source/StealthGameplay/Features/Objectives/Public/View/ObjectiveViewHelpers.h, Private/ObjectiveViewHelpers.cpp` (BuildClueText phrase table)
+- `Source/StealthGame/Private/Composition/StealthObjectivesWiring.h / .cpp` (role-blind clue stand-in over the court sockets)
+- `Source/StealthGameplay/Private/Tests/Objectives/ClueBoundAndRoleBlindTest.cpp, ClueTooBroadLoggedTest.cpp, ClueFallbackAreaOnlyTest.cpp, ObjectivesClueFixture.h`
 
 ---
 
@@ -107,7 +109,9 @@ Prototype replaced: nothing. The prototype had no clue; objectives were visible 
 **Required evidence**:
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.ClueBoundAndRoleBlind, ClueTooBroadLogged, ClueFallbackAreaOnly; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/
+
+Run result: OBSERVED - the stage card shows the clue line on the team clients (run-and-observe captures in production/qa/evidence/objectives-chain-013-023-2026-10-28/)
 
 ---
 
@@ -115,3 +119,10 @@ Prototype replaced: nothing. The prototype had no clue; objectives were visible 
 
 - Depends on: `production/epics/objectives-chain/story-001-objectives-tuning-rows-and-invariants.md`, `production/epics/objectives-chain/story-003-core-chain-validation-and-court-binding.md`; cross-epic: level-socket-contract (`ClueTag` court records and V-CLUE; stories not yet written)
 - Unlocks: `production/epics/objectives-chain/story-010-team-view-struct-and-builder.md`, `production/epics/objectives-chain/story-016-presentation-view-helpers-and-ring-rule.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing. AC1 runs on a 12-court fixture layout (1,000 pinned assignments, 0 violations, 0 role-perturbation changes); the graybox half waits for the Level Socket Contract's ClueTag records (LSC epic, not built) - until then the composition root's role-blind stand-in (quadrant round the courts' centroid + water steps / shrine by distance) fills the L_Prototype clues.
+**Deviations**: the phrase table is a C++ LOCTEXT table (namespace ObjectiveClues), gathered by the Game target; the ClueTooBroad entry carries the hash and the worst / maximum counts only.
+**Test Evidence**: production/qa/evidence/objectives-chain-013-023-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

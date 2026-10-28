@@ -1,0 +1,31 @@
+[2026.10.28-13.34.35:329][111]LogStealthRound: Round phase Unknown -> Lobby (change 1, round 0)
+[2026.10.28-13.34.35:496][111]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: You are Jaguar. Blend in. Watch for who doesn't.
+[2026.10.28-13.34.36:222][115]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: You are Eagle. Blend in. Watch for who doesn't.
+[2026.10.28-13.34.36:223][115]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: You are Jaguar. Blend in. Watch for who doesn't.
+[2026.10.28-13.34.40:586][129]LogStealthRound: Round phase Lobby -> Preparing (change 2, round 1)
+[2026.10.28-13.34.43:752][140]LogStealthRound: Round phase Preparing -> Active (change 3, round 1)
+[2026.10.28-13.34.43:752][140]LogStealth: Round started (seed 984533889, 50 NPCs).
+[2026.10.28-13.34.43:774][141]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.28-13.34.43:784][141]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.28-13.34.43:792][141]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.28-13.35.12:494][227]LogStealth: [Bot] #2 tends court 1: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-13.35.15:809][237]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: Task complete. The next task is ready.
+[2026.10.28-13.35.16:130][238]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Task complete. The next task is ready.
+[2026.10.28-13.35.24:495][263]LogStealth: [Bot] #1 tends court 1: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-13.35.55:826][357]LogStealth: [Bot] #1 tends court 5: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-13.36.09:171][397]LogStealth: [Bot] #1 tends court 2: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-13.36.22:494][437]LogStealth: [Bot] #1 tends court 4: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-13.36.35:161][475]LogStealth: [Bot] #1 tends court 3: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-13.36.38:787][486]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Task complete. The next task is ready.
+[2026.10.28-13.37.54:167][712]LogStealth: [Bot] #2 tends court 2: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-13.37.57:472][722]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: Your house's preparations are done. Find the ruler's cup.
+[2026.10.28-13.37.57:799][723]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Your house's preparations are done. Find the ruler's cup.
+[2026.10.28-13.41.05:820][287]LogStealth: [Bot] #2 tends court 5: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-13.41.09:146][297]LogStealthRound: Round phase Active -> Ended (change 4, round 1)
+[2026.10.28-13.41.09:146][297]LogStealthRound: Round 1 decided by the production rules: team 0 wins (public reason 1, end reason 0); latched at 393.844 s, round-end step at 393.844 s (+0.000 s).
+[2026.10.28-13.41.09:146][297]LogStealth: Round over: team 0 wins (objective).
+[2026.10.28-13.41.09:437][298]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: Jaguar win: completed the final objective.
+[2026.10.28-13.41.09:451][298]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Jaguar win: completed the final objective.
+[2026.10.28-13.41.09:461][298]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Jaguar win: completed the final objective.
+[2026.10.28-13.41.21:110][333]LogStealthRound: Round phase Ended -> Reset (change 5, round 1)
+[2026.10.28-13.41.21:454][334]LogStealthRound: Round phase Reset -> Lobby (change 6, round 1)

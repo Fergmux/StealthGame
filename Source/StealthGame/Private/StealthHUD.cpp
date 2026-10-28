@@ -2,7 +2,7 @@
 #include "View/Input/PawnCommandClient.h"
 #include "StealthCharacter.h"
 #include "StealthGameState.h"
-#include "StealthObjective.h"
+#include "View/StealthCourtSocket.h"
 #include "StealthPlayerController.h"
 #include "StealthPlayerState.h"
 #include "StealthRules.h"
@@ -18,6 +18,7 @@
 #include "View/ObjectiveChainData.h"
 #include "View/ObjectiveTeamViewComponent.h"
 #include "View/ObjectivesChainRegistry.h"
+#include "View/ObjectiveViewHelpers.h"
 
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
@@ -32,6 +33,9 @@ namespace
 	const FLinearColor DangerCochineal(0.85f, 0.12f, 0.22f);
 	const FLinearColor Neutral(0.92f, 0.89f, 0.82f);
 	const FLinearColor Muted(0.65f, 0.62f, 0.56f);
+	/** The tend-cue ring (art bible: Bone until the cue, Marigold at an own live site after TendCueDelaySec; OC-6). */
+	const FLinearColor RingBone(0.89f, 0.85f, 0.76f);
+	const FLinearColor RingMarigold(0.93f, 0.62f, 0.13f);
 
 	FString TeamName(uint8 Team)
 	{
@@ -141,7 +145,6 @@ void AStealthHUD::DrawHUD()
 	PC->PruneExpired(GetWorld()->GetTimeSeconds());
 
 	DrawTeammateMarkers(PS);
-	DrawObjectiveMarkers(PS, GS);
 	DrawPings(PC);
 	DrawStatusPanel(PS, GS, Pawn, ServerNow);
 	DrawRoundBanner(PC, GS, ServerNow);
@@ -296,7 +299,11 @@ void AStealthHUD::DrawStatusPanel(const AStealthPlayerState* PS, const AStealthG
 		else
 		{
 			const FString Current = View.LiveSites.Num() > 0 ? CardTitleOf(Chain, View.LiveSites[0]) : FString(TEXT("-"));
-			DrawShadowedText(FString::Printf(TEXT("Stage %d/%d: %s  [hold E]"), Stage, STEALTH_FINAL_STAGE, *Current), X, Y, Neutral);
+			// Story oc-013 / oc-016: the card's clue "A court [phrase]" from the live site's role-blind ClueTag (client-side text),
+			// on the card line itself so the panel keeps its height (the Penalty tally overlay sits below it).
+			const FText Clue = View.LiveSites.Num() > 0 ? ObjectiveViewHelpers::BuildClueText(View.LiveSites[0].Clue) : FText::GetEmpty();
+			const FString ClueSuffix = Clue.IsEmpty() ? FString() : FString::Printf(TEXT(" - %s"), *Clue.ToString());
+			DrawShadowedText(FString::Printf(TEXT("Stage %d/%d: %s%s  [hold E]"), Stage, STEALTH_FINAL_STAGE, *Current, *ClueSuffix), X, Y, Neutral);
 			Y += Line;
 			DrawShadowedText(FString::Printf(TEXT("Rival steps: %d of %d"), FMath::Min<int32>(View.RivalPrelimCount, RivalStepCount), RivalStepCount), X, Y, Muted);
 		}
@@ -330,32 +337,6 @@ void AStealthHUD::DrawTeammateMarkers(const AStealthPlayerState* PS)
 		const AStealthPlayerState* MatePS = Character->GetStealthPlayerState();
 		const FString Label = MatePS ? MatePS->GetPlayerName() + (Character->IsInformant() ? TEXT(" (informant)") : TEXT("")) : FString();
 		DrawShadowedText(Label, Screen.X, Screen.Y - S - 20.f, Color, 0.8f, true);
-	}
-}
-
-void AStealthHUD::DrawObjectiveMarkers(const AStealthPlayerState* PS, const AStealthGameState* GS)
-{
-	const AStealthPlayerController* PresentingController = Cast<AStealthPlayerController>(GetOwningPlayerController());
-	const bool bInformant = PresentingController != nullptr ? PresentingController->IsPresentedInformant() : !PS->IsActivePlayer();
-	// The markers go with the round-end presentation, released by the controller (never at the Phase's arrival, HUD F10).
-	const bool bRoundOn = GS->RoundPhase == EStealthRoundPhase::InProgress
-		|| (GS->RoundPhase == EStealthRoundPhase::RoundOver && PresentingController != nullptr && !PresentingController->IsRoundEndPresented());
-	if (PS->Team >= STEALTH_NUM_TEAMS || bInformant || !bRoundOn)
-	{
-		return;
-	}
-	// Story oc-011: a marker only at the own team's live sites from its view (the final only once the view holds it, SP-1).
-	const FObjectiveTeamView& View = ObjectiveViewOf(PresentingController);
-	const UObjectiveChainData* Chain = ChainOf(GetWorld(), View);
-	for (const FObjectiveLiveSite& Site : View.LiveSites)
-	{
-		const AStealthObjective* Court = AStealthObjective::FindStandInCourt(GetWorld(), Site.Court);
-		FVector2D Screen;
-		if (Court != nullptr && ProjectToScreen(Court->GetActorLocation() + FVector(0.f, 0.f, 150.f), Screen))
-		{
-			DrawRect(AlliedTurquoise, Screen.X - 5.f, Screen.Y - 5.f, 10.f, 10.f);
-			DrawShadowedText(CardTitleOf(Chain, Site), Screen.X, Screen.Y - 28.f, AlliedTurquoise, 0.85f, true);
-		}
 	}
 }
 
@@ -413,7 +394,12 @@ void AStealthHUD::DrawRoundBanner(const AStealthPlayerController* PC, const ASte
 
 void AStealthHUD::DrawInteractBar(const AStealthCharacter* Pawn)
 {
-	const float Progress = Pawn ? Pawn->GetLocalInteractProgress() : -1.f;
+	// The tend ring stand-in (story oc-016): progress from the server's FHoldStatus when the own hold is known (else the
+	// local press), coloured Bone until RingIsMarigold, Marigold only at an own live site after TendCueDelaySec.
+	const AStealthPlayerController* PC = Cast<AStealthPlayerController>(GetOwningPlayerController());
+	const double ServerNow = UEncounterPresentationSubsystem::EstimatedServerNow(GetWorld());
+	const EStealthTendRing Ring = PC != nullptr ? PC->GetOwnTendRing(ServerNow) : EStealthTendRing::None;
+	const float Progress = Ring != EStealthTendRing::None ? PC->GetOwnTendProgress(ServerNow) : (Pawn ? Pawn->GetLocalInteractProgress() : -1.f);
 	if (Progress < 0.f)
 	{
 		return;
@@ -422,7 +408,7 @@ void AStealthHUD::DrawInteractBar(const AStealthCharacter* Pawn)
 	const float X = Canvas->ClipX * 0.5f - W * 0.5f;
 	const float Y = Canvas->ClipY * 0.62f;
 	DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.6f), X - 2.f, Y - 2.f, W + 4.f, H + 4.f);
-	DrawRect(AlliedTurquoise, X, Y, W * Progress, H);
+	DrawRect(Ring == EStealthTendRing::Marigold ? RingMarigold : RingBone, X, Y, W * Progress, H);
 }
 
 void AStealthHUD::DrawControls()
@@ -536,13 +522,13 @@ void AStealthHUD::CollectOwnerElements(const AStealthPlayerController& PC, TArra
 				Out.Add(FString::Printf(TEXT("TeammateMarker:%s%s"), MatePS ? *MatePS->GetPlayerName() : TEXT("?"), Character->IsInformant() ? TEXT(":informant") : TEXT("")));
 			}
 		}
-		const bool bRoundOn = GS->RoundPhase == EStealthRoundPhase::InProgress || (GS->RoundPhase == EStealthRoundPhase::RoundOver && !PC.IsRoundEndPresented());
-		if (!bInformant && bRoundOn)
+		// Story oc-022: no objective world marker exists any more (OC-15); the stage card's clue line is listed instead.
+		if (ObjectiveView.LiveSites.Num() > 0)
 		{
-			const UObjectiveChainData* Chain = ChainOf(World, ObjectiveView);
-			for (const FObjectiveLiveSite& Site : ObjectiveView.LiveSites)
+			const FText Clue = ObjectiveViewHelpers::BuildClueText(ObjectiveView.LiveSites[0].Clue);
+			if (!Clue.IsEmpty())
 			{
-				Out.Add(FString::Printf(TEXT("ObjectiveMarker:%s"), *CardTitleOf(Chain, Site)));
+				Out.Add(FString::Printf(TEXT("Clue:%s"), *Clue.ToString()));
 			}
 		}
 	}
@@ -567,9 +553,10 @@ void AStealthHUD::CollectOwnerElements(const AStealthPlayerController& PC, TArra
 	{
 		Out.Add(FString::Printf(TEXT("ResultPlate:%s"), *Plate.Text.ToString()));
 	}
-	if (Pawn && Pawn->GetLocalInteractProgress() >= 0.f)
+	const EStealthTendRing Ring = PC.GetOwnTendRing(ServerNow);
+	if (Ring != EStealthTendRing::None || (Pawn && Pawn->GetLocalInteractProgress() >= 0.f))
 	{
-		Out.Add(TEXT("InteractBar"));
+		Out.Add(Ring == EStealthTendRing::Marigold ? TEXT("InteractBar:Marigold") : TEXT("InteractBar:Bone"));
 	}
 	// Story nkp-018: the Penalty overlay's elements (the tally Active and frozen, the exile card, the returning countdown).
 	const FPenaltyHudFrame Penalty = PC.BuildPenaltyHudFrame(UEncounterPresentationSubsystem::EstimatedServerNow(World));

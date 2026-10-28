@@ -1,12 +1,12 @@
 # Story 022: Prototype retirement and static scans
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ The production path is complete once stories 001-021 land, so this story closes 
 
 *From ADR-0020 Guidelines and Migration Plan, GDD AC-OC-25 and the epic's Prototype Disposition, scoped to this story. QL-STORY-READY revised AC1 (allowlist until removal), AC2 (one lint owner) and AC3 (mapping table, approval is a process step):*
 
-- [ ] **AC1** (ADR Guidelines [U] `ObjectivesStaticScan`): **GIVEN** a source scan of the production module sources with the class-name patterns `AObjective*`, `ACourt*`, `ASite*` and any `AActor` subclass in the Objectives namespace, and a replicated `bCompleted`/`InteractorCount` pattern, **THEN** the real tree reports 0 violations; before the prototype is removed the scan allowlists `AStealthObjective` and the listed prototype symbols by name and nothing else; a seeded `AObjectiveCourt` actor and a seeded replicated `bCompleted` each fail the scan; after removal the scan runs again with **no** allowlist.
-- [ ] **AC2** (AC-OC-25, ADR Guidelines [U] `ObjectivesIncludeLint`, the single owner of this lint): **GIVEN** an include scan over client modules, Crowd, IIF and Presentation **THEN** none includes an Objectives `Public/Server/` header, directly or transitively through another header (the `View/Features/Objectives/` helper and struct headers are allowed); a seeded include fails the scan. Stories 001, 003, 005 and 016 cite this test rather than duplicating it.
-- [ ] **AC3** (epic Prototype Disposition [U] mapped tests, then removal): the seven assertions of `FStealthRulesObjectiveTest` (`StealthGame.Rules.ObjectiveStages`: own stage-1 objective at stage 1; other team's preliminary; locked stage-2 at stage 1; final locked before preliminaries; shared final for team 0; shared final for team 1; no team) have equivalent `StealthGame.Objectives.*` tests mapped one-to-one in a table in this story's Implementation Notes (a case with no equivalent blocks the deletion); **after the user approves the deletion**, `AStealthObjective`, `AStealthGameMode::OnObjectiveCompleted`/`HandleInteractRequest` objective paths, `FStealthRules::CanCompleteObjective` and the HUD's objective-marker reads are removed or replaced, the project builds and the full `StealthGame.` suite passes; a leftover reference fails the build.
+- [x] **AC1** (ADR Guidelines [U] `ObjectivesStaticScan`): **GIVEN** a source scan of the production module sources with the class-name patterns `AObjective*`, `ACourt*`, `ASite*` and any `AActor` subclass in the Objectives namespace, and a replicated `bCompleted`/`InteractorCount` pattern, **THEN** the real tree reports 0 violations; before the prototype is removed the scan allowlists `AStealthObjective` and the listed prototype symbols by name and nothing else; a seeded `AObjectiveCourt` actor and a seeded replicated `bCompleted` each fail the scan; after removal the scan runs again with **no** allowlist.
+- [x] **AC2** (AC-OC-25, ADR Guidelines [U] `ObjectivesIncludeLint`, the single owner of this lint): **GIVEN** an include scan over client modules, Crowd, IIF and Presentation **THEN** none includes an Objectives `Public/Server/` header, directly or transitively through another header (the `View/Features/Objectives/` helper and struct headers are allowed); a seeded include fails the scan. Stories 001, 003, 005 and 016 cite this test rather than duplicating it.
+- [x] **AC3** (epic Prototype Disposition [U] mapped tests, then removal): the seven assertions of `FStealthRulesObjectiveTest` (`StealthGame.Rules.ObjectiveStages`: own stage-1 objective at stage 1; other team's preliminary; locked stage-2 at stage 1; final locked before preliminaries; shared final for team 0; shared final for team 1; no team) have equivalent `StealthGame.Objectives.*` tests mapped one-to-one in a table in this story's Implementation Notes (a case with no equivalent blocks the deletion); **after the user approves the deletion**, `AStealthObjective`, `AStealthGameMode::OnObjectiveCompleted`/`HandleInteractRequest` objective paths, `FStealthRules::CanCompleteObjective` and the HUD's objective-marker reads are removed or replaced, the project builds and the full `StealthGame.` suite passes; a leftover reference fails the build.
 
 ---
 
@@ -71,13 +71,14 @@ Scans: reuse the TDC include-lint framework and seeded-violation control helper 
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Private/Tests/Objectives/ObjectivesStaticScanTest.cpp` (class `FObjectivesStaticScanTest`, name `StealthGame.Objectives.ObjectivesStaticScan`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ObjectivesIncludeLintTest.cpp` (`StealthGame.Objectives.ObjectivesIncludeLint`)
-- `Source/StealthGame/Public/StealthObjective.h` and `Source/StealthGame/Private/StealthObjective.cpp` (delete, with user approval)
-- `Source/StealthGame/Private/StealthGameMode.cpp` and `Public/StealthGameMode.h` (remove the objective paths)
-- `Source/StealthGame/Private/StealthRules.cpp` and `Public/StealthRules.h` (`CanCompleteObjective`)
-- `Source/StealthGame/Private/StealthHUD.cpp`, `StealthCharacter.cpp`, `StealthCityGenerator.cpp` (objective references)
-- `Source/StealthGame/Private/Tests/StealthRulesTests.cpp` (`FStealthRulesObjectiveTest`, after mapping)
+- `DELETED Source/StealthGame/Public/StealthObjective.h, Source/StealthGame/Private/StealthObjective.cpp` (deletion authorised by the user for this batch)
+- `Source/StealthGame/Public/View/StealthCourtSocket.h, Private/StealthCourtSocket.cpp` (placement-only LSC court-socket stand-in), Config/DefaultEngine.ini (ClassRedirect StealthObjective -> StealthCourtSocket)
+- `Source/StealthGame/Private/StealthGameMode.cpp / Public/StealthGameMode.h` (HandleInteractRequest, OnObjectiveCompleted removed)
+- `Source/StealthGame/Private/StealthRules.cpp / Public/StealthRules.h` (CanCompleteObjective removed), Private/Tests/StealthRulesTests.cpp (FStealthRulesObjectiveTest retired)
+- `Source/StealthGame/Public/StealthGameState.h / Private/StealthGameState.cpp` (replicated TeamStage removed)
+- `Source/StealthGame/Private/StealthHUD.cpp / Public/StealthHUD.h` (objective world markers removed), StealthCityGenerator.cpp, Composition/StealthObjectivesWiring.*, StealthCompositionRoot.cpp
+- `tools/ci/lint/prototype-exempt.txt` (StealthObjective.h entry removed: the list shrinks)
+- `Source/StealthGameplay/Private/Tests/Objectives/ObjectivesStaticScanTest.cpp, ObjectivesIncludeLintTest.cpp`
 
 ---
 
@@ -112,7 +113,9 @@ Scans: reuse the TDC include-lint framework and seeded-violation control helper 
 - Logic: the two test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 - Prototype retirement: the filled mapping table in this story and the post-removal build log noted at close; the user's approval of the deletion recorded in the story
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.ObjectivesStaticScan, ObjectivesIncludeLint; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/
+
+Run result: OBSERVED - L_Prototype loads its five courts as court sockets and the chain runs to an objective win (run-and-observe captures in production/qa/evidence/objectives-chain-013-023-2026-10-28/)
 
 ---
 
@@ -120,3 +123,10 @@ Scans: reuse the TDC include-lint framework and seeded-violation control helper 
 
 - Depends on: `production/epics/objectives-chain/story-021-pie2-end-to-end-cacao-chain.md` (the production path proven before the prototype goes; also stories 001-020 transitively); cross-epic: `production/epics/tuning-data-config/story-011-t0-lint-framework-and-gate.md`, `story-012-include-lint-rules-a-c.md` through `story-016-lint-seeded-violation-controls.md`; `production/epics/tuning-data-config/story-095-retire-prototype-settings-canonical-fields.md`
 - Unlocks: None
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing. Mapping of FStealthRulesObjectiveTest (StealthGame.Rules.ObjectiveStages) before its removal: own stage-1 objective at stage 1 -> StealthGame.Objectives.ProgressOnlyByCompletion; other team's preliminary -> CompletionGate row 6; locked stage-2 at stage 1 -> FinalNeedsOwnUnlock / StageLifecycle; final locked before preliminaries -> FinalNeedsOwnUnlock; shared final for team 0 and for team 1 -> CompletionGateFinal (and StageLifecycle); no team -> CompletionGate rows 2-6. All mapped tests pass in this batch's gate.
+**Deviations**: "Do not commit" in the story predates the user's per-story commit authorisation; the court placement keeps public layout hints (team side / temple socket) until LSC Selection draws roles secretly (recorded stand-in limitation). The prototype ObjectiveInteractTime setting stays (TDC story 095).
+**Test Evidence**: production/qa/evidence/objectives-chain-013-023-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

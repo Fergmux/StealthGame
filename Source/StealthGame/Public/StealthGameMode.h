@@ -15,7 +15,6 @@ class UEncounterService;
 enum class EVictimKind : uint8;
 enum class EKillCause : uint8;
 enum class EActionType : uint8;
-class AStealthObjective;
 class AStealthPlayerController;
 class AStealthPlayerState;
 
@@ -63,11 +62,6 @@ public:
 	/** Asks Round to reset after the end-of-round hold (stealth.round.reset as the host). */
 	void RequestRoundReset();
 
-	// ---- Requests from characters (already on the server) -------------------------------
-
-	/** The prototype objective handler (the composition root's Interact stand-in calls it inside the queue slot). */
-	void HandleInteractRequest(AStealthCharacter* Character, bool bWantsInteract);
-
 	// ---- Encounters (Assassination stories asn-012 / asn-013 play integration) ----------------------------------
 
 	/**
@@ -82,18 +76,11 @@ public:
 	/**
 	 * The prototype follow-ons of the PRODUCTION exile (story nkp-005), called by the composition root's IPenaltyPawnGateway
 	 * right after the factory's hand-over commit released Body from FormerController: the prototype life state Informant
-	 * (a mirror the prototype HUD and pawn still read) and the objective interaction dropped. The respawn is Penalty's own
+	 * (a mirror the prototype HUD and pawn still read). The respawn is Penalty's own
 	 * (Round's OnInformantAwaitingBody and the takeover of an unseen crowd pawn, stories nkp-009 and nkp-012).
 	 */
 	void HandleProductionExile(AStealthCharacter* Body, AController* FormerController);
 	void HandlePing(AStealthCharacter* Sender, const FVector& Location);
-
-	/**
-	 * PROTOTYPE (retired from the production path by Objectives story oc-009; story oc-022 deletes it): the prototype
-	 * objective's completion. Nothing calls AStealthObjective::SetInteractor(true) on the production path any more (the
-	 * Interact command resolves in UObjectivesService's slot), so this runs only if the prototype objective is driven directly.
-	 */
-	void OnObjectiveCompleted(AStealthObjective* Objective, AStealthCharacter* Completer);
 
 	/** True while Round's phase is Active and the round is not latched (the production rules decide the round). */
 	bool IsRoundInProgress() const;

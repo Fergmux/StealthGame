@@ -1,12 +1,12 @@
 # Story 015: Rival signal release scheduling and idle behaviour
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ The count is what the signal is: `RivalPrelimCount` in {0, 1, 2}, the number of 
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-09 remaining clauses, AC-OC-16) and ADR-0020 section 7 steps 3-6, scoped to this story:*
 
-- [ ] **AC1** (AC-OC-09 [U] `RivalSignalReleaseBehaviour`): **GIVEN** team 1's second completion draws a delay that releases it first or on the same tick **THEN** the count rises 0 to 1 to 2 or 0 to 2 and never falls; the replicated field carries only the integer; a release due after the latch is never published; with `bRivalSignalEnabled` false or in a 1v0 dev round nothing is published and no `StageSignal` timer is scheduled (same-tick releases publish once).
-- [ ] **AC2** (AC-OC-16 [U] `WaitingEarnsNothing`): **GIVEN** a round where no pawn tends **WHEN** the fake clock runs 10 x `TargetRoundMinutes` **THEN** no Objectives state, team view or `RivalPrelimCount` changes, no Objectives timer exists (a release timer exists only while a release is pending, and none is) and the round is still `Active`, in coarse and in fine clock steps.
-- [ ] **AC3** (ADR section 7 steps 3-5 [U] `StageSignalPayloadAndLatch`): the scheduled `TimerFired` payload is `Subject` none, `Generation` 0, `Seq` k, `Phase` = viewing team (the completer's opponent); the resolver increments that team's released count, appends server-only `StageSignalReleased(viewingTeam, count)` and writes the view; after the latch the queue returns `Rejected_Latched` for a pending release; `OnRosterReset` clears the pending list; the count never exceeds 2 (a third release attempt trips the assertion); `Seq` k is distinct per release.
+- [x] **AC1** (AC-OC-09 [U] `RivalSignalReleaseBehaviour`): **GIVEN** team 1's second completion draws a delay that releases it first or on the same tick **THEN** the count rises 0 to 1 to 2 or 0 to 2 and never falls; the replicated field carries only the integer; a release due after the latch is never published; with `bRivalSignalEnabled` false or in a 1v0 dev round nothing is published and no `StageSignal` timer is scheduled (same-tick releases publish once).
+- [x] **AC2** (AC-OC-16 [U] `WaitingEarnsNothing`): **GIVEN** a round where no pawn tends **WHEN** the fake clock runs 10 x `TargetRoundMinutes` **THEN** no Objectives state, team view or `RivalPrelimCount` changes, no Objectives timer exists (a release timer exists only while a release is pending, and none is) and the round is still `Active`, in coarse and in fine clock steps.
+- [x] **AC3** (ADR section 7 steps 3-5 [U] `StageSignalPayloadAndLatch`): the scheduled `TimerFired` payload is `Subject` none, `Generation` 0, `Seq` k, `Phase` = viewing team (the completer's opponent); the resolver increments that team's released count, appends server-only `StageSignalReleased(viewingTeam, count)` and writes the view; after the latch the queue returns `Rejected_Latched` for a pending release; `OnRosterReset` clears the pending list; the count never exceeds 2 (a third release attempt trips the assertion); `Seq` k is distinct per release.
 
 ---
 
@@ -73,11 +73,10 @@ Prototype replaced: none (no rival signal existed).
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesRivalSignal.cpp` (`ScheduleRivalRelease`, pending list)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesService.cpp` (`IQueueResolver` for `StageSignal`)
-- `Source/StealthGameplay/Private/Tests/Objectives/RivalSignalReleaseBehaviourTest.cpp` (class `FObjectivesRivalSignalReleaseBehaviourTest`, name `StealthGame.Objectives.RivalSignalReleaseBehaviour`)
-- `Source/StealthGameplay/Private/Tests/Objectives/WaitingEarnsNothingTest.cpp` (`StealthGame.Objectives.WaitingEarnsNothing`)
-- `Source/StealthGameplay/Private/Tests/Objectives/StageSignalPayloadAndLatchTest.cpp` (`StealthGame.Objectives.StageSignalPayloadAndLatch`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesService.cpp, Public/Server/ObjectivesService.h` (the service is the scheduler: ScheduleAt TimerFired{StageSignal, Subject none, Generation 0, Seq k, Phase viewing team}; Resolve; 1v0 suppression; test seam ScheduleRivalReleaseNowForTest)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesCore.h / .cpp` (pending list, ResolveRivalRelease with the <= 2 invariant, StageSignalReleased)
+- `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp` (RivalRelease left to the service; SecretDraw / Clues wired)
+- `Source/StealthGameplay/Private/Tests/Objectives/RivalSignalReleaseBehaviourTest.cpp, WaitingEarnsNothingTest.cpp, StageSignalPayloadAndLatchTest.cpp`
 
 ---
 
@@ -111,7 +110,9 @@ Prototype replaced: none (no rival signal existed).
 **Required evidence**:
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.RivalSignalReleaseBehaviour, WaitingEarnsNothing, StageSignalPayloadAndLatch; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/
+
+Run result: OBSERVED - "Rival steps: 1 of 2" appears on the rival team's client at a grid tick after a counted preliminary (captures in production/qa/evidence/objectives-chain-013-023-2026-10-28/)
 
 ---
 
@@ -119,3 +120,10 @@ Prototype replaced: none (no rival signal existed).
 
 - Depends on: `production/epics/objectives-chain/story-004-core-site-state-and-progress.md`, `production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md`, `production/epics/objectives-chain/story-014-rival-signal-draw-and-grid.md`; cross-epic: round-match-framework (`ScheduleAt`, `RegisterTimerResolver`, latch, Event Log; stories being written in parallel)
 - Unlocks: `production/epics/objectives-chain/story-018-stall-pressure-and-cross-system-checks.md`, `production/epics/objectives-chain/story-019-pie2-team-view-ingress-and-informant-parity.md`, `production/epics/objectives-chain/story-023-playtest-advisory-metrics.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing (on the real queue). RivalPrelimCount is now written for real (it was HOLD at 0 since story 010).
+**Deviations**: a 1v0 dev round is detected by the service at Active entry (one team with members, the other none); it suppresses the signal and appends ObjectivePacing(Code 1) so story 017's F5 calculator excludes the round.
+**Test Evidence**: production/qa/evidence/objectives-chain-013-023-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

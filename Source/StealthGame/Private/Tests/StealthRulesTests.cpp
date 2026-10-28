@@ -17,20 +17,9 @@ namespace StealthRulesTestValues
 	constexpr float RunThreshold = 300.f;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FStealthRulesObjectiveTest, "StealthGame.Rules.ObjectiveStages",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
-
-bool FStealthRulesObjectiveTest::RunTest(const FString& Parameters)
-{
-	TestTrue(TEXT("Own stage-1 objective at stage 1"), FStealthRules::CanCompleteObjective(0, 1, 0, 1));
-	TestFalse(TEXT("Other team's preliminary objective"), FStealthRules::CanCompleteObjective(0, 1, 1, 1));
-	TestFalse(TEXT("Locked stage-2 objective at stage 1"), FStealthRules::CanCompleteObjective(0, 1, 0, 2));
-	TestFalse(TEXT("Final objective locked before preliminaries"), FStealthRules::CanCompleteObjective(1, 2, STEALTH_NO_TEAM, STEALTH_FINAL_STAGE));
-	TestTrue(TEXT("Shared final objective for team 0"), FStealthRules::CanCompleteObjective(0, STEALTH_FINAL_STAGE, STEALTH_NO_TEAM, STEALTH_FINAL_STAGE));
-	TestTrue(TEXT("Shared final objective for team 1"), FStealthRules::CanCompleteObjective(1, STEALTH_FINAL_STAGE, STEALTH_NO_TEAM, STEALTH_FINAL_STAGE));
-	TestFalse(TEXT("No team cannot complete anything"), FStealthRules::CanCompleteObjective(STEALTH_NO_TEAM, 1, STEALTH_NO_TEAM, 1));
-	return true;
-}
+// FStealthRulesObjectiveTest (StealthGame.Rules.ObjectiveStages) was retired by Objectives story oc-022 with
+// FStealthRules::CanCompleteObjective; its seven cases map one-to-one onto StealthGame.Objectives.* tests (the table in
+// production/epics/objectives-chain/story-022-prototype-retirement-and-static-scan.md).
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FStealthRulesVictoryTest, "StealthGame.Rules.EliminationVictory",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)

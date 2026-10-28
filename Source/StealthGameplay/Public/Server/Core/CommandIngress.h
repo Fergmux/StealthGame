@@ -43,6 +43,8 @@ enum class ECommandIngressResult : uint8
 	DroppedMalformed,
 	/** The controller has no command-capable pawn. */
 	DroppedNoPawn,
+	/** An Interact Begin naming an id that is not a court fixture (IIF R5: unknown id, no reply). */
+	DroppedUnknownTarget,
 };
 
 /** Runs stage 1 for one command of Owner. Server only. */

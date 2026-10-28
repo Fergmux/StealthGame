@@ -1,12 +1,12 @@
 # Story 023: Playtest advisory metrics (pacing, exposure, tend share)
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ The three metrics are advisory: they say whether the numbers the design assumed 
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-19, AC-OC-20, AC-OC-21 playtest part), scoped to this story. All three are Playtest/ADVISORY in the GDD; the analyser carries a small T1 fixture test (QA-lead condition):*
 
-- [ ] **AC1** (AC-OC-19 [Playtest/ADVISORY] F1 pacing): **GIVEN** >= 20 objective-ended graybox rounds **THEN** the median `ObjectiveWin` duration and the per-team leg times are logged next to `T_chain` (L of the drawn combo); a median below 6 min triggers the F1 pacing levers; fewer than 20 rounds reports NOT ENOUGH DATA; a median of exactly 6 min is not flagged.
-- [ ] **AC2** (AC-OC-20 [Playtest/ADVISORY] F2 tell timing): **GIVEN** the server log of >= 10 graybox rounds **THEN** for each counted completion the time from the tender's last stop (speed below the walk threshold) to `Complete` is reported, the mean is within `E_tell` +- 1 s (target 4 s; 3.0 s and 5.0 s are in band, 5.01 is not), and probes (early releases after `TendCueDelaySec` at non-live courts) are counted per stage as `N_probe`; rounds with no counted completion are skipped.
-- [ ] **AC3** (AC-OC-21 [Playtest part] F3 measured share): **GIVEN** >= 60 internal graybox rounds, or an accelerated simulation of the same tend volume (labelled as simulation), **THEN** the measured share of opponent-player tends is reported separately for full-length tends (banded 0.65-0.75), early releases (`P_short`, alarm above 0.90) and, among player tends, counted versus feint (`TendCompleted` kind); `P_full` above 0.75 caused by heavy feinting is recorded as a chosen tell, not a defect; the report is saved to `production/qa/evidence/oc-playtest-metrics.md`.
+- [x] **AC1** (AC-OC-19 [Playtest/ADVISORY] F1 pacing): **GIVEN** >= 20 objective-ended graybox rounds **THEN** the median `ObjectiveWin` duration and the per-team leg times are logged next to `T_chain` (L of the drawn combo); a median below 6 min triggers the F1 pacing levers; fewer than 20 rounds reports NOT ENOUGH DATA; a median of exactly 6 min is not flagged.
+- [x] **AC2** (AC-OC-20 [Playtest/ADVISORY] F2 tell timing): **GIVEN** the server log of >= 10 graybox rounds **THEN** for each counted completion the time from the tender's last stop (speed below the walk threshold) to `Complete` is reported, the mean is within `E_tell` +- 1 s (target 4 s; 3.0 s and 5.0 s are in band, 5.01 is not), and probes (early releases after `TendCueDelaySec` at non-live courts) are counted per stage as `N_probe`; rounds with no counted completion are skipped.
+- [x] **AC3** (AC-OC-21 [Playtest part] F3 measured share): **GIVEN** >= 60 internal graybox rounds, or an accelerated simulation of the same tend volume (labelled as simulation), **THEN** the measured share of opponent-player tends is reported separately for full-length tends (banded 0.65-0.75), early releases (`P_short`, alarm above 0.90) and, among player tends, counted versus feint (`TendCompleted` kind); `P_full` above 0.75 caused by heavy feinting is recorded as a chosen tell, not a defect; the report is saved to `production/qa/evidence/oc-playtest-metrics.md`.
 
 ---
 
@@ -71,9 +71,9 @@ Prototype replaced: none. The first-playable report (`production/first-playable-
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesPlaytestAnalyser.h` and `ObjectivesPlaytestAnalyser.cpp` (log analyser, offline)
-- `Source/StealthGameplay/Private/Tests/Objectives/PlaytestAnalyserFixtureTest.cpp` (class `FObjectivesPlaytestAnalyserFixtureTest`, name `StealthGame.Objectives.PlaytestAnalyserFixture`)
-- `production/qa/evidence/oc-playtest-metrics.md` (report: AC1-AC3 numbers, simulation runs labelled)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesPlaytestAnalyser.h / .cpp` (F1 pacing, F2 tell timing and probes, F3 shares, markdown report)
+- `Source/StealthGameplay/Private/Tests/Objectives/PlaytestAnalyserFixtureTest.cpp`
+- `production/qa/evidence/oc-playtest-metrics.md` (record only: NOT ENOUGH DATA)
 
 ---
 
@@ -107,7 +107,9 @@ Prototype replaced: none. The first-playable report (`production/first-playable-
 **Required evidence**:
 - Integration (playtest, ADVISORY): `production/qa/evidence/oc-playtest-metrics.md` with the AC1-AC3 numbers; the analyser's fixture test under `Source/StealthGameplay/Private/Tests/Objectives/` must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.PlaytestAnalyserFixture; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/
+
+Run result: N/A - an offline analyser; the evidence closes with human graybox playtests
 
 ---
 
@@ -115,3 +117,10 @@ Prototype replaced: none. The first-playable report (`production/first-playable-
 
 - Depends on: `production/epics/objectives-chain/story-017-stall-metrics-and-tend-posterior.md`, `production/epics/objectives-chain/story-015-rival-signal-release-scheduling.md`, `production/epics/objectives-chain/story-021-pie2-end-to-end-cacao-chain.md`; cross-epic: round-match-framework (Event Log), crowd-npc-behaviour (decoys; the F3 band needs them), level-socket-contract and procedural-city-generator (the graybox rounds); the first internal playtests
 - Unlocks: None
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: the analyser and its fixture test pass; AC1-AC3 are Playtest/ADVISORY and recorded as NOT ENOUGH DATA (0 graybox playtest rounds exist; human playtesters are a listed human item).
+**Deviations**: none.
+**Test Evidence**: production/qa/evidence/objectives-chain-013-023-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

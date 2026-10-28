@@ -1,12 +1,12 @@
 # Story 019: PIE-2 team view contents, ingress and informant parity
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ This is the whole-state proof that nothing leaks. Story 010 shows the builder ne
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-03 PIE, AC-OC-26, AC-OC-33), scoped to this story:*
 
-- [ ] **AC1** (AC-OC-03 [PIE-2] `StealthGame.Objectives.PIE.TeamViewContents`): **GIVEN** a round at `Active` start **WHEN** each client's replicated data is dumped **THEN** team 0 clients hold only `P1[0]` as a live site, team 1 clients only `P1[1]`, no client holds `Final`, `P2[*]` or any opponent site, and `FRoundPublicState` holds no objective field; **WHEN** team 0 completes both preliminaries **THEN** only team 0 clients gain `Final` (a late-joining client sees the same set).
-- [ ] **AC2** (AC-OC-26 [PIE-2] `StealthGame.Objectives.PIE.IngressAcceptsAnyCourt`): **GIVEN** a human `Interact(Begin)` with a court id that is not live for its team (opponent, locked or completed court) **THEN** the command reaches the queue (not dropped at ingress) and completes with no effect, with acceptance, reply code, hold duration and timing class identical to an own live site (sharing the AC-IVP-41 fixture); **GIVEN** an id that is not a court fixture (including a malformed value) **THEN** it is dropped at ingress as an unknown id (IIF R5, no reply).
-- [ ] **AC3** (AC-OC-33 [PIE-2] `StealthGame.Objectives.PIE.InformantsShareTeamView`): **GIVEN** a team with one Active member and one Informant **WHEN** a release raises that team's `RivalPrelimCount` **THEN** both clients receive the same count, stage card and live-site set in the same update and a client of the other team receives none of them; **GIVEN** the informant rejoins inside the grace **THEN** its team view equals the teammate's (Roster `OnViewRebound`).
+- [x] **AC1** (AC-OC-03 [PIE-2] `StealthGame.Objectives.PIE.TeamViewContents`): **GIVEN** a round at `Active` start **WHEN** each client's replicated data is dumped **THEN** team 0 clients hold only `P1[0]` as a live site, team 1 clients only `P1[1]`, no client holds `Final`, `P2[*]` or any opponent site, and `FRoundPublicState` holds no objective field; **WHEN** team 0 completes both preliminaries **THEN** only team 0 clients gain `Final` (a late-joining client sees the same set).
+- [x] **AC2** (AC-OC-26 [PIE-2] `StealthGame.Objectives.PIE.IngressAcceptsAnyCourt`): **GIVEN** a human `Interact(Begin)` with a court id that is not live for its team (opponent, locked or completed court) **THEN** the command reaches the queue (not dropped at ingress) and completes with no effect, with acceptance, reply code, hold duration and timing class identical to an own live site (sharing the AC-IVP-41 fixture); **GIVEN** an id that is not a court fixture (including a malformed value) **THEN** it is dropped at ingress as an unknown id (IIF R5, no reply).
+- [x] **AC3** (AC-OC-33 [PIE-2] `StealthGame.Objectives.PIE.InformantsShareTeamView`): **GIVEN** a team with one Active member and one Informant **WHEN** a release raises that team's `RivalPrelimCount` **THEN** both clients receive the same count, stage card and live-site set in the same update and a client of the other team receives none of them; **GIVEN** the informant rejoins inside the grace **THEN** its team view equals the teammate's (Roster `OnViewRebound`).
 
 ---
 
@@ -70,10 +70,10 @@ Prototype replaced: the networked prototype tests D and D2 (full chain on a gene
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/TeamViewContentsTest.cpp` (`NETWORK_TEST_CLASS(TeamViewContents, "StealthGame.Objectives.PIE")`)
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/IngressAcceptsAnyCourtTest.cpp` (`NETWORK_TEST_CLASS(IngressAcceptsAnyCourt, "StealthGame.Objectives.PIE")`)
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/InformantsShareTeamViewTest.cpp` (`NETWORK_TEST_CLASS(InformantsShareTeamView, "StealthGame.Objectives.PIE")`)
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/ObjectivesPieFixture.h` (shared fixture)
+- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/TeamViewContentsTest.cpp, IngressAcceptsAnyCourtTest.cpp, InformantsShareTeamViewTest.cpp, ObjectivesPieFixture.h`
+- `Source/StealthGameplay/Public/Server/ActionHub.h` (court-fixture validator), Private/Core/CommandIngress.cpp, Public/Server/Core/CommandIngress.h (DroppedUnknownTarget)
+- `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp` (validator over the court sockets)
+- `Source/StealthGameplay/Features/Objectives/Public/Server/ObjectivesService.h / Private/ObjectivesService.cpp` (GetBoundSitesForDev, ScheduleRivalReleaseNowForTest)
 
 ---
 
@@ -107,7 +107,9 @@ Prototype replaced: the networked prototype tests D and D2 (full chain on a gene
 **Required evidence**:
 - Integration: the three T2 PIE tests under `Source/StealthTestHarness/Private/Tests/PIE/Objectives/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.PIE.TeamViewContents, IngressAcceptsAnyCourt, InformantsShareTeamView; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/
+
+Run result: OBSERVED - the team views of both teams in 3-player PIE (captures in production/qa/evidence/objectives-chain-013-023-2026-10-28/)
 
 ---
 
@@ -115,3 +117,10 @@ Prototype replaced: the networked prototype tests D and D2 (full chain on a gene
 
 - Depends on: `production/epics/objectives-chain/story-007-interact-predicate-and-feint-parity.md`, `production/epics/objectives-chain/story-011-team-view-component-and-replication.md`, `production/epics/objectives-chain/story-012-rejoin-rebind-and-reset.md`, `production/epics/objectives-chain/story-015-rival-signal-release-scheduling.md`; cross-epic: `production/epics/input-interaction-framework/story-020-ingress-clamp-and-drop.md`, `production/epics/input-interaction-framework/story-060-hidden-site-probe.md`, `production/epics/information-visibility-policy/story-051-court-ingress-parity.md`; `production/epics/tuning-data-config/story-019-cqtest-headless-proof.md`
 - Unlocks: `production/epics/objectives-chain/story-021-pie2-end-to-end-cacao-chain.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing in single-process PIE (listen server + 2 clients). Story 011's deferred seamless-travel case: NOT RUN - single-process PIE cannot seamless-travel (ADR-0005); it needs the Session multi-process harness (session-travel epic), recorded there.
+**Deviations**: the AC-IVP-41 fixture does not exist yet; IngressAcceptsAnyCourt builds its own (the IVP epic can reuse it). Ingress drops an Interact Begin naming no court fixture (IIF R5) through a UActionHub validator; "late join" and "rejoin" are reproduced on the server (view reset + Roster RegisterTeamView) because Session's PIE rejoin is not built.
+**Test Evidence**: production/qa/evidence/objectives-chain-013-023-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

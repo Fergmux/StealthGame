@@ -105,6 +105,10 @@ struct FChainBinding
 	EObjectiveStage Stage = EObjectiveStage::Prelim1;
 	EObjectiveEligibility Eligibility = EObjectiveEligibility::Team0;
 	FName ObjectiveId;
+	/** The court's role-blind clue (story oc-013: FObjectivesClue::ClueOf of its public record; {0, 0} without a record). */
+	FClueTag Clue;
+	/** Courts of the layout sharing Clue (0 without a record). */
+	int32 ClueMatches = 0;
 };
 
 /** How an interact end was treated. */
@@ -146,6 +150,10 @@ struct FObjectivesCoreDeps
 	const IObjectivesCourtGeometry* Courts = nullptr;
 	IObjectivesViewSink* Views = nullptr;
 	IObjectivesRivalRelease* RivalRelease = nullptr;
+	/** Story oc-013: every court's public ClueTag record (read once at Bind). */
+	const IObjectivesCourtClues* Clues = nullptr;
+	/** Story oc-014: GetServerSubSeed(StageSignal, k). Without it no rival release is drawn. */
+	const IObjectivesSecretDraw* SecretDraw = nullptr;
 	IStealthFaultSink* Faults = nullptr;
 };
 
@@ -180,8 +188,11 @@ public:
 	 * Validates Chain, reads the assignment through Source.GetSiteAssignment_Server() and binds every definition to its court
 	 * with every site Locked. Any failure (an invalid chain, no assignment, a missing or reused site) binds nothing and returns
 	 * the failure. A second Bind replaces the first (a new layout). Never logs the assignment.
+	 * Story oc-013: each binding's clue is FObjectivesClue::ClueOf of its court's public record (Deps.Clues); when a bound
+	 * site's clue matches more than ClueMatchMaxCount courts, one server-only ClueTooBroad entry (LayoutHash, worst match
+	 * count; never a court or role) is appended per LayoutHash and nothing else changes (never a sharper clue).
 	 */
-	FChainValidationResult Bind(const UObjectiveChainData* Chain, const IObjectivesAssignmentSource& Source);
+	FChainValidationResult Bind(const UObjectiveChainData* Chain, const IObjectivesAssignmentSource& Source, uint64 LayoutHash = 0);
 
 	bool IsBound() const { return bBound; }
 
@@ -228,8 +239,38 @@ public:
 	int32 GetCompletedPreliminaryStages(int32 Team) const;
 	/** Counted preliminary completions of both teams (the round-global ordinal k of OC-12). */
 	uint32 GetPrelimOrdinal() const { return PrelimOrdinal; }
-	/** Rival preliminary completions released to Team (OC-12; 0..2). HOLD: written by stories oc-014/015's resolver only. */
+	/** Rival preliminary completions released to Team (OC-12; 0..2). Written only by ResolveRivalRelease (story oc-015). */
 	uint8 GetRivalPrelimCount(int32 Team) const { return Team >= 0 && Team < TeamCount ? RivalPrelimCount[Team] : 0; }
+
+	// --- The rival signal (stories oc-014 / oc-015) ---------------------------------------------------------------------
+
+	/**
+	 * A round without a rival signal: bRivalSignalEnabled false, or a 1v0 dev round (the service sets it at Active entry when a
+	 * team has no member). Nothing is drawn, scheduled or published; RivalPrelimCount stays 0. Cleared by Reset.
+	 */
+	void SetRivalSignalSuppressed(bool bSuppressed) { bRivalSuppressed = bSuppressed; }
+	bool IsRivalSignalOn() const { return ServerTuning.bRivalSignalEnabled && !bRivalSuppressed; }
+
+	/** The releases drawn and scheduled but not yet resolved (cleared by Reset / OnRosterReset). */
+	const TArray<FObjectivesRivalRelease>& GetPendingRivalReleases() const { return PendingReleases; }
+
+	/**
+	 * The TimerFired(StageSignal) slot (story oc-015): the pending release (ViewingTeam, Ordinal) raises ViewingTeam's
+	 * RivalPrelimCount by one, appends the server-only StageSignalReleased(ViewingTeam, count) and pushes that team's view.
+	 * False (nothing published) when no such release is pending (cleared by a reset), the round is not Active, or the count
+	 * would exceed 2 (an InvariantViolation fault: the count never passes the opponent's two preliminaries).
+	 */
+	bool ResolveRivalRelease(uint8 ViewingTeam, uint32 Ordinal, FQueueKey Key);
+
+	/** The frozen grid and delay bounds in whole milliseconds (converted once in SetTuning). */
+	int32 GetRivalDelayMinMs() const { return RivalDelayMinMs; }
+	int32 GetRivalDelayMaxMs() const { return RivalDelayMaxMs; }
+	int64 GetRivalQuantumMs() const { return RivalQuantumMs; }
+
+#if WITH_STEALTH_TEST_SEAMS
+	/** Test seam (story oc-015 AC3): adds a pending release the rules cannot produce (a third for one team). */
+	void InjectPendingRivalReleaseForTest(const FObjectivesRivalRelease& Release) { PendingReleases.Add(Release); }
+#endif
 
 	// --- The team view (story oc-010) -----------------------------------------------------------------------------------
 
@@ -308,6 +349,10 @@ private:
 	static bool IsEligible(EObjectiveEligibility Eligibility, int32 Team);
 	bool IsStageComplete(int32 Team, EObjectiveStage Stage) const;
 	void SetStageLive(int32 Team, EObjectiveStage Stage);
+	/** Story oc-013: the bindings' clues and the once-per-hash ClueTooBroad check. */
+	void BindClues(uint64 LayoutHash);
+	/** Story oc-014 / oc-015: draws and schedules the release of the k-th counted preliminary (completed by Team). */
+	void ScheduleRivalSignal(int32 Team, uint32 Ordinal);
 
 	FObjectivesCoreDeps Deps;
 	FObjectivesTuning_Public PublicTuning;
@@ -317,8 +362,16 @@ private:
 	EObjectiveSiteState SiteStates[TeamCount][UObjectiveChainData::MaxDefinitions] = {};
 	EObjectiveTeamStage StageIndex[TeamCount] = { EObjectiveTeamStage::None, EObjectiveTeamStage::None };
 	uint16 CompletedDefMask[TeamCount] = { 0, 0 };
-	/** OC-12 released rival count per viewing team (HOLD for stories oc-014/015: nothing writes it before them). */
+	/** OC-12 released rival count per viewing team (written only by ResolveRivalRelease). */
 	uint8 RivalPrelimCount[TeamCount] = { 0, 0 };
+	/** Story oc-015: releases drawn and scheduled, not yet resolved. */
+	TArray<FObjectivesRivalRelease> PendingReleases;
+	bool bRivalSuppressed = false;
+	int32 RivalDelayMinMs = 30000;
+	int32 RivalDelayMaxMs = 165000;
+	int64 RivalQuantumMs = 30000;
+	/** Story oc-013: layout hashes already logged ClueTooBroad (kept across rounds and resets: once per hash). */
+	TSet<uint64> ClueTooBroadHashes;
 	/** The change-only cache of PushView (story oc-010). */
 	FObjectiveTeamView LastPushedView[TeamCount];
 	bool bViewPushed[TeamCount] = { false, false };

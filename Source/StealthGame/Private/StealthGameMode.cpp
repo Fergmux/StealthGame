@@ -10,7 +10,6 @@
 #include "Server/CrowdDirector.h"
 #include "Server/EncounterService.h"
 #include "Server/Core/StealthPawnCommandComponent.h"
-#include "StealthObjective.h"
 #include "StealthPlayerController.h"
 #include "StealthPlayerState.h"
 #include "StealthRules.h"
@@ -470,10 +469,6 @@ void AStealthGameMode::BuildRoundLayout(int32 Seed)
 	PendingLayoutSeed = Seed;
 	GS->ResetRoundState(Seed);
 	GS->BuildCityForSeed(); // clients build the same layout when RoundSeed replicates
-	for (TActorIterator<AStealthObjective> It(GetWorld()); It; ++It)
-	{
-		It->ResetObjective();
-	}
 	NavWaitStartTime = GetWorld()->GetTimeSeconds();
 	GetWorldTimerManager().SetTimer(CrowdSpawnTimer, this, &AStealthGameMode::PollLayoutNavReady, 0.25f, true, 0.25f);
 }
@@ -926,107 +921,8 @@ void AStealthGameMode::HandleProductionExile(AStealthCharacter* Body, AControlle
 	// The Roster transition, the release, the card, the crowd adoption and the hand-over commit already ran in the slot
 	// (UPenaltyService); only the prototype's own mirrors follow here.
 	PS->LifeState = EStealthLifeState::Informant;
-	if (Body != nullptr)
-	{
-		HandleInteractRequest(Body, false);
-	}
 	// The respawn is Penalty's (stories nkp-009 / nkp-012): Round's OnInformantAwaitingBody(StrikeLimit) schedules the
 	// InformantRespawn item and its commit takes over an unseen crowd pawn. The exiled body stays a crowd NPC.
-}
-
-// ---- Defence & objectives -------------------------------------------------------------------------
-
-void AStealthGameMode::HandleInteractRequest(AStealthCharacter* Character, bool bWantsInteract)
-{
-	if (!Character)
-	{
-		return;
-	}
-	if (!bWantsInteract)
-	{
-		for (TActorIterator<AStealthObjective> It(GetWorld()); It; ++It)
-		{
-			It->SetInteractor(Character, false);
-		}
-		return;
-	}
-	const AStealthGameState* GS = GetStealthGameState();
-	if (!IsRoundInProgress() || !Character->IsActiveAgent() || !GS)
-	{
-		return;
-	}
-	const uint8 Team = Character->GetTeam();
-	AStealthObjective* Best = nullptr;
-	float BestDistance = TNumericLimits<float>::Max();
-	for (TActorIterator<AStealthObjective> It(GetWorld()); It; ++It)
-	{
-		AStealthObjective* Objective = *It;
-		if (Objective->IsCompleted() || !Objective->IsInRange(Character)
-			|| !FStealthRules::CanCompleteObjective(Team, GS->GetTeamStage(Team), Objective->OwningTeam, Objective->Stage))
-		{
-			continue;
-		}
-		const float Distance = FVector::Dist2D(Objective->GetActorLocation(), Character->GetActorLocation());
-		if (Distance < BestDistance)
-		{
-			BestDistance = Distance;
-			Best = Objective;
-		}
-	}
-	if (Best)
-	{
-		Best->SetInteractor(Character, true);
-	}
-}
-
-void AStealthGameMode::OnObjectiveCompleted(AStealthObjective* Objective, AStealthCharacter* Completer)
-{
-	AStealthGameState* GS = GetStealthGameState();
-	if (!GS || !Objective || !Completer || !IsRoundInProgress())
-	{
-		return;
-	}
-	const uint8 Team = Completer->GetTeam();
-	if (!FStealthRules::CanCompleteObjective(Team, GS->GetTeamStage(Team), Objective->OwningTeam, Objective->Stage))
-	{
-		Objective->ResetObjective();
-		return;
-	}
-
-	if (Objective->Stage == STEALTH_FINAL_STAGE)
-	{
-		// The final completion goes to Round's F2 ObjectiveWin with the re-validated tender (R15): the completer is
-		// Active, Connected and human-controlled, on the team, and the site is live.
-		URoundMatchStore* Round = URoundMatchStore::Get(GetWorld());
-		const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld());
-		const URosterStore* Roster = URosterStore::Get(GetWorld());
-		AController* CompleterController = Completer->GetController();
-		const FParticipantId Participant = Root ? Root->GetParticipant(Cast<APlayerController>(CompleterController)) : FParticipantId();
-		const FParticipantRecord* Record = Roster && Roster->IsStoreInitialized() && Participant.IsValid() ? Roster->FindRecord(Participant) : nullptr;
-		FRoundObjectiveCompletion Completion;
-		Completion.bFinal = true;
-		Completion.Team = Team;
-		Completion.bCompleterActive = Record && Record->State == EParticipantState::Active;
-		Completion.bCompleterConnected = Record && Record->Connection.Projection == ERosterConnection::Connected;
-		Completion.bHumanControlled = CompleterController && CompleterController->IsPlayerController();
-		Completion.bCompleterOnTeam = Record && Record->Team == (Team == 0 ? ERosterTeam::Team0 : ERosterTeam::Team1);
-		Completion.bSiteLive = true;
-		if (!Round || !Round->SubmitObjectiveCompletion(Completion))
-		{
-			UE_LOG(LogStealth, Log, TEXT("Final objective completion not accepted by Round (re-validation or latch)."));
-			Objective->ResetObjective();
-		}
-		return;
-	}
-
-	GS->TeamStage[Team] = Objective->Stage + 1;
-	MessageTeam(Team, FText::Format(LOCTEXT("StageDone", "Task complete: {0}. Stage {1} unlocked."), Objective->DisplayName, GS->TeamStage[Team]), false, 6.f);
-	const uint8 OtherTeam = Team == 0 ? 1 : 0;
-	MessageTeam(OtherTeam, FText::Format(LOCTEXT("EnemyAdvanced", "The {0} have advanced to stage {1}."), GetTeamName(Team), GS->TeamStage[Team]), true, 5.f);
-	if (GS->TeamStage[Team] == STEALTH_FINAL_STAGE)
-	{
-		MessageTeam(Team, LOCTEXT("FinalUnlocked", "The final target is revealed to you. Strike before the enemy does."), false, 8.f);
-	}
 }
 
 // ---- Communication --------------------------------------------------------------------------------
@@ -1112,7 +1008,7 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 
 	if (Action.Equals(TEXT("report"), ESearchCase::IgnoreCase))
 	{
-		UE_LOG(LogStealth, Log, TEXT("[Bot] Phase=%d Stages=%d/%d Winner=%d NPCs=%d"), (int32)GS->RoundPhase, GS->GetTeamStage(0), GS->GetTeamStage(1), GS->WinningTeam, CrowdNpcs.Num());
+		UE_LOG(LogStealth, Log, TEXT("[Bot] Phase=%d Winner=%d NPCs=%d"), (int32)GS->RoundPhase, GS->WinningTeam, CrowdNpcs.Num());
 		if (const UObjectivesService* Objectives = UObjectivesService::Get(GetWorld()))
 		{
 			UE_LOG(LogStealth, Log, TEXT("[Bot] Objectives: bound=%d team0 stage=%d prelims=%d, team1 stage=%d prelims=%d"), Objectives->IsBound() ? 1 : 0,

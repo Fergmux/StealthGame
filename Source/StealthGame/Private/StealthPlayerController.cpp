@@ -1,4 +1,8 @@
 #include "StealthPlayerController.h"
+
+#include "View/StealthCourtSocket.h"
+#include "View/ObjectiveViewHelpers.h"
+#include "View/StealthTuningPublicSubstructs.h"
 #include "StealthGame.h"
 #include "StealthGameMode.h"
 #include "StealthSettings.h"
@@ -512,6 +516,12 @@ void AStealthPlayerController::ProcessCommandReplies(const TArray<FCommandReply>
 		case ECommandReplyKind::Rejected:
 			ResultMatcher.OnRejected(Reply.Seq);
 			break;
+		case ECommandReplyKind::HoldStatus:
+			if (Reply.Hold.ActionType == EActionType::Interact)
+			{
+				HandleOwnTendStatus(Reply.Hold);
+			}
+			break;
 		default:
 			break;
 		}
@@ -530,6 +540,47 @@ void AStealthPlayerController::ProcessCommandReplies(const TArray<FCommandReply>
 	{
 		ReceivedReplies.RemoveAt(0, ReceivedReplies.Num() - MaxKeptReplies);
 	}
+}
+
+void AStealthPlayerController::HandleOwnTendStatus(const FHoldStatus& Status)
+{
+	if (Status.Outcome != EHoldOutcome::Active)
+	{
+		if (bOwnTend && Status.Seq == OwnTendStatus.Seq)
+		{
+			bOwnTend = false; // completed or cancelled: the ring resets (the next hold starts Bone)
+		}
+		return;
+	}
+	OwnTendStatus = Status;
+	bOwnTend = true;
+	// The target: the nearest court socket in reach of the own pawn now (the IIF prompt-target rule; public geometry only).
+	const APawn* Own = GetPawn();
+	OwnTendTarget = Own != nullptr ? AStealthCourtSocket::FindCourtInReach(GetWorld(), Own->GetActorLocation(), UStealthSettings::Get()->ObjectiveInteractRange)
+		: FCourtFixtureId();
+	// Read once per hold at Begin (a mid-hold publish cannot change it). STAND-IN: the schema defaults are the client face
+	// until the TDC client tuning store feeds features.
+	const FObjectivesTuning_Public Tuning;
+	OwnTendCueDelaySec = Tuning.TendCueDelaySec;
+	OwnTendHoldSec = FMath::Max(0.01, static_cast<double>(Tuning.ObjectiveInteractSec));
+}
+
+EStealthTendRing AStealthPlayerController::GetOwnTendRing(double ServerNow) const
+{
+	if (!bOwnTend)
+	{
+		return EStealthTendRing::None;
+	}
+	const UObjectiveTeamViewComponent* Component = GetObjectiveTeamView();
+	static const FObjectiveTeamView Empty;
+	const FObjectiveTeamView& View = Component != nullptr ? Component->GetView() : Empty;
+	return ObjectiveViewHelpers::RingIsMarigold(View, OwnTendTarget, OwnTendStatus.ServerStartTime, ServerNow, OwnTendCueDelaySec, IsPresentedInformant())
+		? EStealthTendRing::Marigold : EStealthTendRing::Bone;
+}
+
+float AStealthPlayerController::GetOwnTendProgress(double ServerNow) const
+{
+	return bOwnTend ? static_cast<float>(FMath::Clamp((ServerNow - OwnTendStatus.ServerStartTime) / OwnTendHoldSec, 0.0, 1.0)) : -1.f;
 }
 
 int32 AStealthPlayerController::GetShownWrongTargetTally() const

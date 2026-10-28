@@ -61,6 +61,34 @@ public:
 	virtual bool GetFixtureFaces(FCourtFixtureId Court, TArray<FVector, TInlineAllocator<4>>& OutFaces) const = 0;
 };
 
+/**
+ * One court's public ClueTag record (LSC R3 court row; ADR-0014 section 7.4; story oc-013): the court and the two role-blind
+ * values the Level Socket Contract publishes for it, a pure function of the published geometry. Public data: it names a court
+ * and its surroundings, nothing about its role.
+ */
+struct FCourtClueRecord
+{
+	FCourtFixtureId Court;
+	/** LSC AreaTypeId (EClueAreaType values; 0 = None). */
+	uint8 AreaTypeId = 0;
+	/** The nearest distinctive public feature (EClueFeatureKind values; 0 = None, the area-only fallback). */
+	uint8 NearestFeatureKind = 0;
+};
+
+/**
+ * Every court of the current layout with its public ClueTag record (story oc-013). Production: the composition root's layout
+ * adapter (STAND-IN over L_Prototype until the Level Socket Contract's layout service publishes the records). Read once at
+ * OnLayoutReady; the role assignment is never an input.
+ */
+class IObjectivesCourtClues
+{
+public:
+	virtual ~IObjectivesCourtClues() = default;
+
+	/** The layout's courts and their ClueTag records, in any order (each court at most once). */
+	virtual void GetCourtClueRecords(TArray<FCourtClueRecord>& OutRecords) const = 0;
+};
+
 // ---------------------------------------------------------------------------------------------------------
 // Participant State & Roster, Session, pawn control (the gate's server-only queries, ADR-0020 5.4)
 // ---------------------------------------------------------------------------------------------------------
@@ -178,12 +206,54 @@ public:
 	virtual UObjectiveTeamViewComponent* FindTeamView(FParticipantId Participant) const = 0;
 };
 
-/** The OC-12 rival release scheduling after a counted preliminary (stories oc-014 / oc-015 own the draw and the timer). */
+/**
+ * One pending OC-12 release (stories oc-014 / oc-015): the core drew its delay and placed it on the global grid. The timer
+ * payload it becomes is ADR-0002 section 2a's FTimerPayload {Kind StageSignal, Subject none, Generation 0, Seq Ordinal,
+ * Phase ViewingTeam}: no court, completer or step travels.
+ */
+struct FObjectivesRivalRelease
+{
+	/** The team that completed the preliminary (kept server-side for the log and the tests; not in the payload). */
+	uint8 CompletingTeam = 0;
+	/** The team whose RivalPrelimCount the release raises (the completer's opponent). */
+	uint8 ViewingTeam = 1;
+	/** The round-global preliminary ordinal k (1-based; both teams together). */
+	uint32 Ordinal = 0;
+	/** The drawn delay Delta_ms (server-only; tests and the log). */
+	int32 DeltaMs = 0;
+	/** The completion time t_c in integer milliseconds of server time. */
+	int64 CompletedMs = 0;
+	/** The release time on the grid in integer milliseconds of server time (t_rel_ms). */
+	int64 ReleaseMs = 0;
+
+	/** The queue due time (t_rel_ms / 1000; equal milliseconds give identical doubles, so one grid tick is one drain). */
+	double DueServerTime() const { return static_cast<double>(ReleaseMs) / 1000.0; }
+};
+
+/**
+ * The OC-12 rival release scheduling after a counted preliminary (stories oc-014 / oc-015). The core draws and places the
+ * release; this seam schedules its one TimerFired(StageSignal) item. Production: UObjectivesService itself (the round queue's
+ * ScheduleAt, Expected = the round epoch); tests record the requests. Never a tick, FTimerManager timer or latent action.
+ */
 class IObjectivesRivalRelease
 {
 public:
 	virtual ~IObjectivesRivalRelease() = default;
 
-	/** A counted preliminary completion of CompletingTeam with the round-global prelim ordinal (1-based). */
-	virtual void ScheduleRivalRelease(uint8 CompletingTeam, uint32 PrelimOrdinal) = 0;
+	/** Schedules Release's TimerFired(StageSignal) at Release.DueServerTime(). */
+	virtual void ScheduleRivalRelease(const FObjectivesRivalRelease& Release) = 0;
+};
+
+/**
+ * The Objectives-local secret draw seam (story oc-014; ADR-0006): the server sub-seed of the StageSignal domain for the
+ * round-global ordinal k, GetServerSubSeed(StageSignal, k). Keyed by the ordinal ONLY (no team, step, completer or court
+ * parameter exists, so "keyed by ordinal only" is structural). Production: the composition root's adapter over Session's
+ * sub-seed source; tests supply fixed sub-seeds. 0 when no secret is held (nothing is then drawn).
+ */
+class IObjectivesSecretDraw
+{
+public:
+	virtual ~IObjectivesSecretDraw() = default;
+
+	virtual uint64 GetStageSignalSubSeed(uint32 Ordinal) const = 0;
 };

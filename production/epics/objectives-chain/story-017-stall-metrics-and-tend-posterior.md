@@ -1,12 +1,12 @@
 # Story 017: Stall metrics (F5) and the tend posterior band (F3)
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ F3 and F5 are the two reporting formulas the design leans on to say whether the 
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-23, AC-OC-21 unit part, F5 note on cross-review C-W35), scoped to this story. QL-STORY-READY revised AC1 (thresholds stated) and AC2 (formula and source):*
 
-- [ ] **AC1** (AC-OC-23 [U] `StallMetrics`): with `ObjectiveStallGapDefectSec` = 300 and `ObjectiveFinalDwellDefectSec` = 240 (the Tuning Knobs defaults, read from the registry stub), **GIVEN** fixture logs (team 0: P1 95, P2 260, final 420; team 1: P1 180, P2 330) **THEN** `G_mutual` 95, `G_team(0)` 165, `G_team(1)` 180, `FinalDwell` 160 and no defect; **GIVEN** no completion and an elimination at 400 s **THEN** `StallDefect` (`G_mutual` 400 > 300).
-- [ ] **AC2** (AC-OC-21 [U] `TendPosteriorBand`): **GIVEN** `R_full` 0.40 (F1 `T_round` 9 min), `NpcCount` 50, completion share `c` 0.75 and r_N 0.0046 **THEN** `P_full = R_full / (R_full + N_npc * r_N * c)` is in [0.65, 0.75] and stays there for `T_round` 7 and 11 min; **GIVEN** Crowd's registered `CrowdDecoyTendIntervalSec` (13,125 s, read through a stub registry, not hardcoded) **THEN** the computed `P_full` is in band, and a regression to 18,750 s gives 0.77 and fails (negative control).
-- [ ] **AC3** (F5 note, cross-review C-W35 [U] `RejectedFinalNotCounted`): a final `Complete` rejected by the latch is logged `TendCompleted(..., NoEffect)` and counts in tend statistics (two such completions count twice), not as an extra `FinalCompleted` row, and does not move `t_end` or `FinalDwell`.
+- [x] **AC1** (AC-OC-23 [U] `StallMetrics`): with `ObjectiveStallGapDefectSec` = 300 and `ObjectiveFinalDwellDefectSec` = 240 (the Tuning Knobs defaults, read from the registry stub), **GIVEN** fixture logs (team 0: P1 95, P2 260, final 420; team 1: P1 180, P2 330) **THEN** `G_mutual` 95, `G_team(0)` 165, `G_team(1)` 180, `FinalDwell` 160 and no defect; **GIVEN** no completion and an elimination at 400 s **THEN** `StallDefect` (`G_mutual` 400 > 300).
+- [x] **AC2** (AC-OC-21 [U] `TendPosteriorBand`): **GIVEN** `R_full` 0.40 (F1 `T_round` 9 min), `NpcCount` 50, completion share `c` 0.75 and r_N 0.0046 **THEN** `P_full = R_full / (R_full + N_npc * r_N * c)` is in [0.65, 0.75] and stays there for `T_round` 7 and 11 min; **GIVEN** Crowd's registered `CrowdDecoyTendIntervalSec` (13,125 s, read through a stub registry, not hardcoded) **THEN** the computed `P_full` is in band, and a regression to 18,750 s gives 0.77 and fails (negative control).
+- [x] **AC3** (F5 note, cross-review C-W35 [U] `RejectedFinalNotCounted`): a final `Complete` rejected by the latch is logged `TendCompleted(..., NoEffect)` and counts in tend statistics (two such completions count twice), not as an extra `FinalCompleted` row, and does not move `t_end` or `FinalDwell`.
 
 ---
 
@@ -71,10 +71,8 @@ Prototype replaced: none (the prototype logged nothing of this kind).
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesMetrics.h` and `ObjectivesMetrics.cpp` (F5 and F3 pure functions)
-- `Source/StealthGameplay/Private/Tests/Objectives/StallMetricsTest.cpp` (class `FObjectivesStallMetricsTest`, name `StealthGame.Objectives.StallMetrics`)
-- `Source/StealthGameplay/Private/Tests/Objectives/TendPosteriorBandTest.cpp` (`StealthGame.Objectives.TendPosteriorBand`)
-- `Source/StealthGameplay/Private/Tests/Objectives/RejectedFinalNotCountedTest.cpp` (`StealthGame.Objectives.RejectedFinalNotCounted`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesMetrics.h / .cpp` (F5 ComputeStall, StallInputFromLog, CountTends; F3 FullTendPosterior, DecoyRatePerNpcPerMinute, inverse, band)
+- `Source/StealthGameplay/Private/Tests/Objectives/StallMetricsTest.cpp, TendPosteriorBandTest.cpp, RejectedFinalNotCountedTest.cpp`
 
 ---
 
@@ -108,7 +106,9 @@ Prototype replaced: none (the prototype logged nothing of this kind).
 **Required evidence**:
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.StallMetrics, TendPosteriorBand, RejectedFinalNotCounted; evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/
+
+Run result: N/A - pure reporting metrics (no player-visible behaviour)
 
 ---
 
@@ -116,3 +116,10 @@ Prototype replaced: none (the prototype logged nothing of this kind).
 
 - Depends on: `production/epics/objectives-chain/story-001-objectives-tuning-rows-and-invariants.md`, `production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md`, `production/epics/objectives-chain/story-009-final-completion-and-win-declaration.md`; cross-epic: crowd-npc-behaviour (`CrowdDecoyTendIntervalSec` registered key; stories being written in parallel), round-match-framework (Event Log and F7 `StallFlag`)
 - Unlocks: `production/epics/objectives-chain/story-021-pie2-end-to-end-cacao-chain.md` (AC3 excludes 1v0 rounds from F5), `production/epics/objectives-chain/story-023-playtest-advisory-metrics.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing (fixture: G_mutual 95, G_team 165 / 180, FinalDwell 160; idle 400 s round StallDefect; P_full 0.700 at the registered 13,125 s, 0.769 at 18,750 s fails; T_round 7 / 9 / 11 min give 0.749 / 0.699 / 0.655).
+**Deviations**: debug-flagged entries are left out of F5 (R22); rounds flagged by ObjectivePacing(Code 1) are excluded (story 021 AC3).
+**Test Evidence**: production/qa/evidence/objectives-chain-013-023-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

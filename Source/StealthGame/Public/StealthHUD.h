@@ -38,7 +38,6 @@ public:
 protected:
 	void DrawStatusPanel(const AStealthPlayerState* PS, const AStealthGameState* GS, const AStealthCharacter* Pawn, double ServerNow);
 	void DrawTeammateMarkers(const AStealthPlayerState* PS);
-	void DrawObjectiveMarkers(const AStealthPlayerState* PS, const AStealthGameState* GS);
 	void DrawPings(AStealthPlayerController* PC);
 	void DrawMessages(AStealthPlayerController* PC);
 	/** The Result slot (HUD E07 / E08 stand-in): the owner's plate on the F3 timeline from its local contact frame. */

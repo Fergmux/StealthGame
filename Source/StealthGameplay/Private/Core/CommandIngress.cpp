@@ -4,6 +4,7 @@
 #include "Engine/PackageMapClient.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "Server/ActionHub.h"
 #include "Server/Core/StealthPawnCommandComponent.h"
 #include "Server/Testing/StealthCommandSeams.h"
 #include "View/Core/StealthPawn.h"
@@ -39,6 +40,18 @@ ECommandIngressResult IngestCommand(APlayerController& Owner, const FCommandIngr
 	if (Component == nullptr)
 	{
 		return ECommandIngressResult::DroppedNoPawn;
+	}
+
+	// IIF R5 (AC-OC-26): an Interact Begin passes with any court fixture, live or not (its role is never consulted here); an id
+	// naming no court fixture is an unknown id, dropped silently before it reaches the queue. Unset (0) asks for the court in
+	// reach (the IIF prompt-target stand-in).
+	if (Cmd.Kind == ECommandKind::InteractBegin && Cmd.Args.CourtFixtureId.IsSet())
+	{
+		const UActionHub* Hub = UActionHub::Get(Owner.GetWorld());
+		if (Hub != nullptr && !Hub->IsKnownCourtFixture(Cmd.Args.CourtFixtureId))
+		{
+			return ECommandIngressResult::DroppedUnknownTarget;
+		}
 	}
 
 #if WITH_STEALTH_TEST_SEAMS

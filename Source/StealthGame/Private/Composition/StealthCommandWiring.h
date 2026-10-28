@@ -99,8 +99,8 @@ private:
 /**
  * STAND-IN (until IIF stage 2, the IIF slot resolver): the non-Assassination discrete commands, resolved inside the same
  * queue slot after Assassination's action-slot gate. InteractBegin / InteractEnd go to the Interact hold stand-in
- * (FInteractHoldStandIn: the production Objectives path, story oc-005; it replaced the prototype objective handler
- * AStealthGameMode::HandleInteractRequest); Traverse, HideEnter and HideExit execute as no-ops (the sample Blueprint runs
+ * (FInteractHoldStandIn: the production Objectives path, story oc-005; it replaced the prototype objective handler, retired
+ * by story oc-022); Traverse, HideEnter and HideExit execute as no-ops (the sample Blueprint runs
  * traversal; prototype concealment is overlap-driven). Without an Interact resolver the Interact commands are Voided.
  */
 class FStealthPrototypeCommandFallback final : public IQueueResolver

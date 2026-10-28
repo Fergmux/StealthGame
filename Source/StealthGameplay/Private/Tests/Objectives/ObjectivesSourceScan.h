@@ -214,4 +214,103 @@ namespace StealthObjectivesSourceScan
 		}
 		return Findings;
 	}
+
+	// --- Include scans (stories oc-016 AC2 and oc-022 AC2, ObjectivesIncludeLint) ----------------------------------------
+
+	/** The quoted #include paths of Text (comments blanked first; angle-bracket includes are engine/system, never ours). */
+	inline TArray<FString> ParseIncludes(const FString& Text)
+	{
+		TArray<FString> Lines;
+		Text.ParseIntoArrayLines(Lines, /*bCullEmpty*/ false);
+		TArray<FString> Out;
+		bool bInBlock = false;
+		for (const FString& Raw : Lines)
+		{
+			FString Line = Raw.TrimStartAndEnd();
+			if (bInBlock)
+			{
+				const int32 End = Line.Find(TEXT("*/"));
+				if (End == INDEX_NONE)
+				{
+					continue;
+				}
+				Line = Line.RightChop(End + 2).TrimStartAndEnd();
+				bInBlock = false;
+			}
+			if (Line.StartsWith(TEXT("/*")) && !Line.Contains(TEXT("*/")))
+			{
+				bInBlock = true;
+				continue;
+			}
+			if (!Line.StartsWith(TEXT("#include")))
+			{
+				continue;
+			}
+			const int32 Open = Line.Find(TEXT("\""));
+			const int32 Close = Open != INDEX_NONE ? Line.Find(TEXT("\""), ESearchCase::CaseSensitive, ESearchDir::FromStart, Open + 1) : INDEX_NONE;
+			if (Open != INDEX_NONE && Close > Open)
+			{
+				Out.Add(Line.Mid(Open + 1, Close - Open - 1));
+			}
+		}
+		return Out;
+	}
+
+	/** The project source an include path names (a path ending in /IncludePath; the shortest match wins), or null. */
+	inline const FSource* ResolveInclude(TConstArrayView<FSource> Project, const FString& IncludePath)
+	{
+		const FSource* Best = nullptr;
+		const FString Suffix = TEXT("/") + IncludePath;
+		for (const FSource& Source : Project)
+		{
+			if (Source.Path.EndsWith(Suffix) && (Best == nullptr || Source.Path.Len() < Best->Path.Len()))
+			{
+				Best = &Source;
+			}
+		}
+		return Best;
+	}
+
+	/**
+	 * Every forbidden include reached from Start through project headers (transitively): "start -> ... -> header: include".
+	 * IsForbidden decides on the resolved header's path (or the raw include path when it is not a project file).
+	 */
+	inline TArray<FString> FindForbiddenIncludes(TConstArrayView<FSource> Project, const FSource& Start, TFunctionRef<bool(const FString& /*ResolvedPathOrInclude*/)> IsForbidden)
+	{
+		TArray<FString> Findings;
+		TSet<FString> Visited;
+		TArray<TPair<const FSource*, FString>> Stack;
+		Stack.Emplace(&Start, Start.Path);
+		while (Stack.Num() > 0)
+		{
+			const TPair<const FSource*, FString> Item = Stack.Pop();
+			for (const FString& Include : ParseIncludes(Item.Key->Text))
+			{
+				const FSource* Resolved = ResolveInclude(Project, Include);
+				const FString Path = Resolved != nullptr ? Resolved->Path : Include;
+				if (IsForbidden(Path))
+				{
+					Findings.Add(FString::Printf(TEXT("%s: %s"), *Item.Value, *Include));
+					continue;
+				}
+				if (Resolved != nullptr && Resolved->Path.EndsWith(TEXT(".h")) && !Visited.Contains(Resolved->Path))
+				{
+					Visited.Add(Resolved->Path);
+					Stack.Emplace(Resolved, Item.Value + TEXT(" -> ") + Resolved->Path);
+				}
+			}
+		}
+		return Findings;
+	}
+
+	/** Every project source of the runtime modules and the presentation module (the include graph's universe). */
+	inline TArray<FSource> LoadProjectSources()
+	{
+		TArray<FSource> Out;
+		for (const TCHAR* Module : { TEXT("StealthFoundation"), TEXT("StealthGameplay"), TEXT("StealthPresentation"), TEXT("StealthGame") })
+		{
+			Out.Append(LoadSources(Module));
+		}
+		return Out;
+	}
 }

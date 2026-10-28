@@ -36,7 +36,7 @@ The core is where the rules live and where headless tests drive them with stubs.
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-01, AC-OC-25), scoped to this story. QL-STORY-READY revised AC3 into three checks:*
 
 - [x] **AC1** (AC-OC-01 [U] `ChainBindAndValidate`): **GIVEN** the MVP chain **WHEN** validated at `Preparing` **THEN** per team it has one `Prelim1` and one `Prelim2` with distinct ids and text, one `Final` with `TeamEligibility = Both`, and it binds to `P1[T]`, `P2[T]`, `Final` of a fixture `FSiteAssignment`; every bound site state is `Locked`.
-- [x] **AC2** (AC-OC-01 reject clauses): **GIVEN** the valid chain plus one mutation each (`ObjectivesPerStageCount` 2; `CompletionsRequiredCount` 2; 17 rows; duplicate `ObjectiveId`; `SiteRole` not matching `StageKind`; empty `CardTitle`; empty `CardLine`) **THEN** `ValidateChain` returns the **named enum value** `EChainValidation::ObjectiveChainInvalid` (never a string) and nothing is bound; 16 rows is valid.
+- [x] **AC2** (AC-OC-01 reject clauses): **GIVEN** the valid chain plus one mutation each (`ObjectivesPerStageCount` 2; `CompletionsRequiredCount` 2; 17 rows; duplicate `ObjectiveId`; `SiteRole` not matching `StageKind`; empty `CardTitle`; empty `CardLine`) **THEN** `ValidateChain` returns the **named enum value** `EChainValidation::ObjectiveChainInvalid` (never a string) and nothing is bound; 16 rows passes the row bound only (rule 1 still applies: a 16-row chain fails `TeamStageRows`, and 17 rows fail `TooManyRows`; doc fix 2026-10-28, rule 1 wins over the earlier "16 rows is valid").
 - [x] **AC3** (AC-OC-25 [U, static] `AssignmentServerOnly`): (1) a reflection scan finds no replicated property or RPC parameter of type `FSiteAssignment` or carrying its fields; (2) a fake Event Log sink records every entry written during bind and the only entry carrying site data is the server-only header entry; (3) the include scan (`ObjectivesIncludeLint`, story 022) shows only `UObjectivesService`/`FObjectivesCore` reference `GetSiteAssignment_Server` and no client module includes `FSiteAssignment`; no actor is spawned (stub world spawn count 0).
 
 ---
@@ -91,7 +91,7 @@ Prototype replaced: the prototype placed objectives as replicated actors per sit
   - Given: the valid chain plus one mutation each: `ObjectivesPerStageCount` 2; `CompletionsRequiredCount` 2; 17 rows; duplicate `ObjectiveId`; `SiteRole` not matching `StageKind`; empty `CardTitle`; empty `CardLine`
   - When: `ValidateChain` runs on each
   - Then: each returns `ObjectiveChainInvalid` and nothing is bound
-  - Edge cases: 16 rows is valid (boundary); two simultaneous defects still give one reject; the result carries the first failing clause for the log.
+  - Edge cases: 16 rows passes the row bound (boundary) and is then rejected by rule 1 (`TeamStageRows`; doc fix 2026-10-28: rule 1 wins); two simultaneous defects still give one reject; the result carries the first failing clause for the log.
 - **AC-3** (`AssignmentServerOnly`): `FSiteAssignment` access is server-only
   - Given: stub assignment source; fake Event Log sink; reflection and include scan
   - When: bind runs and the scans execute

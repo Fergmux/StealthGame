@@ -14,9 +14,6 @@
  */
 struct STEALTHGAME_API FStealthRules
 {
-	/** Whether a team at CurrentStage may complete an objective of ObjectiveStage owned by ObjectiveTeam. */
-	static bool CanCompleteObjective(uint8 Team, int32 CurrentStage, uint8 ObjectiveTeam, int32 ObjectiveStage);
-
 	/**
 	 * Evaluates the elimination win. Returns the winning team, or STEALTH_NO_TEAM if none.
 	 * A team only loses by elimination if it has at least one player and none of them is active,

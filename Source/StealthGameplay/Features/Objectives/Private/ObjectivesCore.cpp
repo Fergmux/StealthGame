@@ -6,11 +6,20 @@
 #include "ObjectivesCore.h"
 
 #include "GameFramework/Pawn.h"
+#include "ObjectivesClue.h"
+#include "ObjectivesRivalSignal.h"
 #include "Server/StealthFaultSink.h"
 
 namespace ObjectivesCoreLocal
 {
 	const FName FaultSource(TEXT("Objectives"));
+
+	/** Fault details of the core (EStealthFault::InvariantViolation's Detail). */
+	enum class EFaultDetail : int64
+	{
+		RivalCountAboveTwo = 0x0C0101,
+		RivalReleaseRefused = 0x0C0102,
+	};
 
 	bool IsBlank(const FText& Text)
 	{
@@ -47,6 +56,10 @@ void FObjectivesCore::SetTuning(const FObjectivesTuning_Public& InPublic, const 
 {
 	PublicTuning = InPublic;
 	ServerTuning = InServer;
+	// Story oc-014: the release bounds become whole milliseconds once, here (no float enters the draw).
+	RivalDelayMinMs = static_cast<int32>(FObjectivesRivalSignal::ToMs(InServer.RivalSignalDelayMinSec));
+	RivalDelayMaxMs = static_cast<int32>(FObjectivesRivalSignal::ToMs(InServer.RivalSignalDelayMaxSec));
+	RivalQuantumMs = FObjectivesRivalSignal::ToMs(InServer.RivalSignalReleaseQuantumSec);
 }
 
 // --- Validation and binding (story oc-003) ----------------------------------------------------------------------------
@@ -128,7 +141,7 @@ FChainValidationResult FObjectivesCore::ValidateChain(const UObjectiveChainData*
 	return FChainValidationResult();
 }
 
-FChainValidationResult FObjectivesCore::Bind(const UObjectiveChainData* Chain, const IObjectivesAssignmentSource& Source)
+FChainValidationResult FObjectivesCore::Bind(const UObjectiveChainData* Chain, const IObjectivesAssignmentSource& Source, uint64 LayoutHash)
 {
 	const FChainValidationResult Valid = ValidateChain(Chain, ServerTuning);
 	if (!Valid.IsValid())
@@ -172,7 +185,40 @@ FChainValidationResult FObjectivesCore::Bind(const UObjectiveChainData* Chain, c
 	Bindings = MoveTemp(NewBindings);
 	ChainSerial = Chain->ChainSerial;
 	bBound = true;
+	BindClues(LayoutHash);
 	return FChainValidationResult();
+}
+
+void FObjectivesCore::BindClues(uint64 LayoutHash)
+{
+	if (Deps.Clues == nullptr)
+	{
+		return; // no published records: every clue stays {0, 0} (the HUD shows no clue line)
+	}
+	TArray<FCourtClueRecord> Records;
+	Deps.Clues->GetCourtClueRecords(Records);
+	int32 WorstMatches = 0;
+	for (FChainBinding& Binding : Bindings)
+	{
+		const FCourtClueRecord* Record = FObjectivesClue::FindRecord(Records, Binding.Court);
+		Binding.Clue = Record != nullptr ? FObjectivesClue::ClueOf(*Record) : FClueTag();
+		Binding.ClueMatches = Record != nullptr ? FObjectivesClue::CountMatches(Records, Binding.Clue) : 0;
+		WorstMatches = FMath::Max(WorstMatches, Binding.ClueMatches);
+	}
+	// AC-OC-28: a too-broad clue is a layout data defect for LSC. The round proceeds with the same clue; one server-only entry
+	// per layout hash, carrying the hash and the worst count only (never a court id or a role).
+	if (WorstMatches > ServerTuning.ClueMatchMaxCount && !ClueTooBroadHashes.Contains(LayoutHash))
+	{
+		ClueTooBroadHashes.Add(LayoutHash);
+		const int32 MaxCount = ServerTuning.ClueMatchMaxCount;
+		Append(ERoundLogType::ClueTooBroad, FQueueKey(), FParticipantId(), [LayoutHash, WorstMatches, MaxCount](FRoundLogEntry& Entry)
+		{
+			Entry.Data[0] = static_cast<uint32>(LayoutHash & 0xFFFFFFFFull);
+			Entry.Data[1] = static_cast<uint32>(LayoutHash >> 32);
+			Entry.Data[2] = static_cast<uint32>(WorstMatches);
+			Entry.Data[3] = static_cast<uint32>(MaxCount);
+		});
+	}
 }
 
 // --- Active entry and progress (story oc-004) ---------------------------------------------------------------------
@@ -219,6 +265,8 @@ void FObjectivesCore::Reset()
 		LastPushedView[Team] = FObjectiveTeamView();
 		bViewPushed[Team] = false;
 	}
+	PendingReleases.Reset();
+	bRivalSuppressed = false;
 	ChainSerial = 0;
 	PrelimOrdinal = 0;
 	RoundEpoch = 0;
@@ -465,11 +513,72 @@ EObjectivesCompletion FObjectivesCore::ApplyCountedEffects(int32 Team, int32 Def
 		Entry.Flags |= bDebug ? RoundLogFlags::Debug : 0;
 	});
 	PushView(Team);
-	if (Deps.RivalRelease != nullptr)
-	{
-		Deps.RivalRelease->ScheduleRivalRelease(static_cast<uint8>(Team), Ordinal);
-	}
+	ScheduleRivalSignal(Team, Ordinal);
 	return EObjectivesCompletion::CountedStage;
+}
+
+// --- The rival signal (stories oc-014 / oc-015) ---------------------------------------------------------------------------
+
+void FObjectivesCore::ScheduleRivalSignal(int32 Team, uint32 Ordinal)
+{
+	if (!IsRivalSignalOn() || Deps.RivalRelease == nullptr || Deps.SecretDraw == nullptr || Deps.Round == nullptr)
+	{
+		return; // off, a 1v0 dev round, or not wired: nothing drawn, nothing scheduled (no Objectives timer exists)
+	}
+	// Keyed by the ordinal only: the draw's signature takes no team, completer, step or court.
+	const int32 DeltaMs = FObjectivesRivalSignal::DrawRivalDelayMs(Ordinal, *Deps.SecretDraw, RivalDelayMinMs, RivalDelayMaxMs);
+	const int64 CompletedMs = FObjectivesRivalSignal::ToMs(Deps.Round->ServerNow());
+	const int64 ReleaseMs = DeltaMs < 0 ? -1
+		: FObjectivesRivalSignal::ComputeReleaseMs(FObjectivesRivalSignal::ToMs(ActivePhaseStart), CompletedMs, DeltaMs, RivalQuantumMs);
+	if (ReleaseMs < 0)
+	{
+		if (Deps.Faults != nullptr)
+		{
+			Deps.Faults->Report(EStealthFault::InvariantViolation, ObjectivesCoreLocal::FaultSource, static_cast<int64>(ObjectivesCoreLocal::EFaultDetail::RivalReleaseRefused));
+		}
+		return;
+	}
+	FObjectivesRivalRelease Release;
+	Release.CompletingTeam = static_cast<uint8>(Team);
+	Release.ViewingTeam = static_cast<uint8>(1 - Team);
+	Release.Ordinal = Ordinal;
+	Release.DeltaMs = DeltaMs;
+	Release.CompletedMs = CompletedMs;
+	Release.ReleaseMs = ReleaseMs;
+	PendingReleases.Add(Release);
+	Deps.RivalRelease->ScheduleRivalRelease(Release);
+}
+
+bool FObjectivesCore::ResolveRivalRelease(uint8 ViewingTeam, uint32 Ordinal, FQueueKey Key)
+{
+	const int32 Pending = PendingReleases.IndexOfByPredicate([ViewingTeam, Ordinal](const FObjectivesRivalRelease& Release)
+	{
+		return Release.ViewingTeam == ViewingTeam && Release.Ordinal == Ordinal;
+	});
+	if (Pending == INDEX_NONE || !IsActive() || ViewingTeam >= TeamCount)
+	{
+		return false; // cleared by a reset, or not ours: nothing is published
+	}
+	PendingReleases.RemoveAt(Pending);
+	if (RivalPrelimCount[ViewingTeam] >= 2)
+	{
+		// The count is the opponent's released preliminaries: it can never pass two (a third release is a defect).
+		if (Deps.Faults != nullptr)
+		{
+			Deps.Faults->Report(EStealthFault::InvariantViolation, ObjectivesCoreLocal::FaultSource, static_cast<int64>(ObjectivesCoreLocal::EFaultDetail::RivalCountAboveTwo));
+		}
+		return false;
+	}
+	++RivalPrelimCount[ViewingTeam];
+	const uint8 Count = RivalPrelimCount[ViewingTeam];
+	Append(ERoundLogType::StageSignalReleased, Key, FParticipantId(), [ViewingTeam, Count, Ordinal](FRoundLogEntry& Entry)
+	{
+		Entry.Data[0] = static_cast<uint32>(ViewingTeam);
+		Entry.Data[1] = static_cast<uint32>(Count);
+		Entry.Data[2] = Ordinal;
+	});
+	PushView(ViewingTeam);
+	return true;
 }
 
 void FObjectivesCore::Append(ERoundLogType Type, FQueueKey Key, FParticipantId Participant, TFunctionRef<void(FRoundLogEntry&)> Fill)
@@ -540,7 +649,7 @@ FObjectiveTeamView FObjectivesCore::BuildTeamView(int32 Team) const
 			FObjectiveLiveSite& Site = View.LiveSites.AddDefaulted_GetRef();
 			Site.Court = Bindings[Def].Court;
 			Site.DefIndex = static_cast<uint8>(Def);
-			// Site.Clue: story oc-013 (the role-blind clue of the court's public ClueTag record); {0, 0} until then.
+			Site.Clue = Bindings[Def].Clue; // story oc-013: the role-blind clue of the court's public record
 		}
 	}
 	return View;

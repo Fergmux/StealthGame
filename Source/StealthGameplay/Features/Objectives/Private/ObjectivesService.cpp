@@ -63,7 +63,11 @@ bool UObjectivesService::Bind(const FObjectivesServiceInit& Init)
 	Deps.Round = Init.Round;
 	Deps.Courts = Init.Courts;
 	Deps.Views = this; // the service is the core's view sink and the components' only writer
-	Deps.RivalRelease = Init.RivalRelease;
+	// Story oc-015: production schedules its own TimerFired(StageSignal); a test may record the requests instead.
+	Deps.RivalRelease = Init.RivalRelease != nullptr ? Init.RivalRelease : static_cast<IObjectivesRivalRelease*>(this);
+	Deps.Clues = Init.Clues;
+	Deps.SecretDraw = Init.SecretDraw;
+	RoundHooks = Init.Round;
 	Deps.Faults = Init.Faults;
 	Core->Initialize(Deps);
 	Core->SetTuning(Init.PublicTuning, Init.ServerTuning);
@@ -128,6 +132,10 @@ void UObjectivesService::Unbind()
 	bChainSelected = false;
 	LayoutId = 0;
 	ActiveEpoch = 0;
+	ActiveEpochToken = FEpochToken();
+	ScheduledStageSignals = 0;
+	bExcludeFromStallMetrics = false;
+	RoundHooks = nullptr;
 	bBound = false;
 }
 
@@ -185,7 +193,7 @@ bool UObjectivesService::HandleLayoutReady(uint64 InLayoutId, int32 Seed)
 	{
 		return false; // nothing selected (Preparing failed): no site is bound and the assignment is never read
 	}
-	const FChainValidationResult Result = Core->Bind(SelectedChain.Get(), *Assignment);
+	const FChainValidationResult Result = Core->Bind(SelectedChain.Get(), *Assignment, InLayoutId);
 	if (!Result.IsValid())
 	{
 		ReportFault(static_cast<int64>(ObjectivesServiceLocal::EFaultDetail::BindFailed));
@@ -215,6 +223,26 @@ bool UObjectivesService::HandleRoundActive(FEpochToken Epoch, double ActivePhase
 		return false;
 	}
 	ActiveEpoch = Epoch.RoundEpoch;
+	ActiveEpochToken = Epoch;
+	// A 1v0 dev round (bAllowEmptyTeamDev: one team has members, the other none): no rival signal, and out of F5's metrics.
+	bExcludeFromStallMetrics = false;
+	if (ViewTargets != nullptr)
+	{
+		TArray<FParticipantId> Members[FObjectivesCore::TeamCount];
+		ViewTargets->GetTeamMembers(0, Members[0]);
+		ViewTargets->GetTeamMembers(1, Members[1]);
+		bExcludeFromStallMetrics = (Members[0].Num() == 0) != (Members[1].Num() == 0);
+	}
+	Core->SetRivalSignalSuppressed(bExcludeFromStallMetrics);
+	if (bExcludeFromStallMetrics && RoundHooks != nullptr)
+	{
+		FRoundLogEntry Entry;
+		Entry.Type = ERoundLogType::ObjectivePacing;
+		Entry.Code = ObjectivePacingExcludeFromStallMetrics;
+		Entry.ServerTime = RoundHooks->ServerNow();
+		Entry.RoundEpoch = Epoch.RoundEpoch;
+		RoundHooks->AppendEvent(Entry);
+	}
 	return true;
 }
 
@@ -230,6 +258,8 @@ void UObjectivesService::HandleRoundReset()
 	bChainSelected = false;
 	LayoutId = 0;
 	ActiveEpoch = 0;
+	ActiveEpochToken = FEpochToken();
+	bExcludeFromStallMetrics = false;
 }
 
 // --- The team view (stories oc-010..oc-012) ---------------------------------------------------------------------------
@@ -351,8 +381,47 @@ void UObjectivesService::OnInteractCompleteLatched(const AStealthPawn& Pawn, FCo
 
 EResolveResult UObjectivesService::Resolve(const FQueueItem& Item, FQueueKey Key)
 {
-	// Stories oc-014/015 schedule and resolve the rival releases; nothing is scheduled before them, so nothing is published.
-	return EResolveResult::Voided;
+	const FTimerPayload* Timer = Item.Type == EQueueItemType::TimerFired ? Item.Payload.TryGet<FTimerPayload>() : nullptr;
+	if (Timer == nullptr || Timer->Kind != ETimerKind::StageSignal || Timer->Phase >= FObjectivesCore::TeamCount)
+	{
+		return EResolveResult::Voided;
+	}
+	return Core->ResolveRivalRelease(Timer->Phase, Timer->Seq, Key) ? EResolveResult::Executed : EResolveResult::Voided;
+}
+
+#if WITH_STEALTH_TEST_SEAMS
+bool UObjectivesService::ScheduleRivalReleaseNowForTest(uint8 ViewingTeam, double DelaySec)
+{
+	if (!Core->IsActive() || Queue == nullptr || RoundHooks == nullptr || ViewingTeam >= FObjectivesCore::TeamCount)
+	{
+		return false;
+	}
+	static uint32 NextTestOrdinal = 1000;
+	FObjectivesRivalRelease Release;
+	Release.CompletingTeam = static_cast<uint8>(1 - ViewingTeam);
+	Release.ViewingTeam = ViewingTeam;
+	Release.Ordinal = ++NextTestOrdinal;
+	Release.ReleaseMs = static_cast<int64>(FMath::RoundHalfFromZero((RoundHooks->ServerNow() + DelaySec) * 1000.0));
+	Core->InjectPendingRivalReleaseForTest(Release);
+	ScheduleRivalRelease(Release);
+	return true;
+}
+#endif
+
+void UObjectivesService::ScheduleRivalRelease(const FObjectivesRivalRelease& Release)
+{
+	if (Queue == nullptr)
+	{
+		return;
+	}
+	FTimerPayload Timer;
+	Timer.Kind = ETimerKind::StageSignal;
+	Timer.Subject = FSubjectRef(); // none: no court, completer or pawn is named
+	Timer.Generation = 0;
+	Timer.Seq = Release.Ordinal;
+	Timer.Phase = Release.ViewingTeam;
+	Queue->ScheduleAt(Release.DueServerTime(), FQueueItem::Make(EQueueItemType::TimerFired, ActiveEpochToken, FMailboxId::ServerLocal(), Timer));
+	++ScheduledStageSignals;
 }
 
 int32 UObjectivesService::GetCompletedPreliminaryStages(int32 Team) const
@@ -372,5 +441,26 @@ FCourtFixtureId UObjectivesService::GetLiveCourtForDev(int32 Team) const
 	Core->GetLiveDefinitions(Team, Live);
 	const FChainBinding* Binding = Live.Num() > 0 ? Core->GetBinding(Live[0]) : nullptr;
 	return Binding != nullptr ? Binding->Court : FCourtFixtureId();
+}
+
+FSiteAssignment UObjectivesService::GetBoundSitesForDev() const
+{
+	FSiteAssignment Out;
+	for (int32 Def = 0; Def < Core->GetDefinitionCount(); ++Def)
+	{
+		const FChainBinding* Binding = Core->GetBinding(Def);
+		if (Binding == nullptr)
+		{
+			continue;
+		}
+		const int32 Team = Binding->Eligibility == EObjectiveEligibility::Team1 ? 1 : 0;
+		switch (Binding->Stage)
+		{
+		case EObjectiveStage::Prelim1: Out.P1[Team] = Binding->Court; break;
+		case EObjectiveStage::Prelim2: Out.P2[Team] = Binding->Court; break;
+		default: Out.Final = Binding->Court; break;
+		}
+	}
+	return Out;
 }
 #endif
