@@ -289,6 +289,7 @@ void URoundMatchStore::NotifyTuningReady(uint64 TuningHash) { if (Core) { Core->
 void URoundMatchStore::NotifyTuningFailed() { if (Core) { Core->NotifyTuningFailed(); } }
 void URoundMatchStore::NotifyLayoutReady(uint32 LayoutId, int32 Seed) { if (Core) { Core->NotifyLayoutReady(LayoutId, Seed); } }
 void URoundMatchStore::NotifyLayoutAborted() { if (Core) { Core->NotifyLayoutAborted(); } }
+void URoundMatchStore::NotifyObjectiveChainInvalid() { if (Core) { Core->NotifyObjectiveChainInvalid(); } }
 bool URoundMatchStore::NotifyParticipantTravelComplete(const FRoundTravelAck& Ack) { return Core && Core->NotifyParticipantTravelComplete(Ack); }
 bool URoundMatchStore::NotifyParticipantWorldReady(const FRoundTravelAck& Ack) { return Core && Core->NotifyParticipantWorldReady(Ack); }
 FRoundAckEpoch URoundMatchStore::GetPreparingAckEpoch() const { return Core ? Core->GetPreparing().GetAckEpoch() : FRoundAckEpoch(); }

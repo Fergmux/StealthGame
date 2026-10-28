@@ -1,12 +1,12 @@
 # Story 003: Core chain validation and court binding
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -35,9 +35,9 @@ The core is where the rules live and where headless tests drive them with stubs.
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-01, AC-OC-25), scoped to this story. QL-STORY-READY revised AC3 into three checks:*
 
-- [ ] **AC1** (AC-OC-01 [U] `ChainBindAndValidate`): **GIVEN** the MVP chain **WHEN** validated at `Preparing` **THEN** per team it has one `Prelim1` and one `Prelim2` with distinct ids and text, one `Final` with `TeamEligibility = Both`, and it binds to `P1[T]`, `P2[T]`, `Final` of a fixture `FSiteAssignment`; every bound site state is `Locked`.
-- [ ] **AC2** (AC-OC-01 reject clauses): **GIVEN** the valid chain plus one mutation each (`ObjectivesPerStageCount` 2; `CompletionsRequiredCount` 2; 17 rows; duplicate `ObjectiveId`; `SiteRole` not matching `StageKind`; empty `CardTitle`; empty `CardLine`) **THEN** `ValidateChain` returns the **named enum value** `EChainValidation::ObjectiveChainInvalid` (never a string) and nothing is bound; 16 rows is valid.
-- [ ] **AC3** (AC-OC-25 [U, static] `AssignmentServerOnly`): (1) a reflection scan finds no replicated property or RPC parameter of type `FSiteAssignment` or carrying its fields; (2) a fake Event Log sink records every entry written during bind and the only entry carrying site data is the server-only header entry; (3) the include scan (`ObjectivesIncludeLint`, story 022) shows only `UObjectivesService`/`FObjectivesCore` reference `GetSiteAssignment_Server` and no client module includes `FSiteAssignment`; no actor is spawned (stub world spawn count 0).
+- [x] **AC1** (AC-OC-01 [U] `ChainBindAndValidate`): **GIVEN** the MVP chain **WHEN** validated at `Preparing` **THEN** per team it has one `Prelim1` and one `Prelim2` with distinct ids and text, one `Final` with `TeamEligibility = Both`, and it binds to `P1[T]`, `P2[T]`, `Final` of a fixture `FSiteAssignment`; every bound site state is `Locked`.
+- [x] **AC2** (AC-OC-01 reject clauses): **GIVEN** the valid chain plus one mutation each (`ObjectivesPerStageCount` 2; `CompletionsRequiredCount` 2; 17 rows; duplicate `ObjectiveId`; `SiteRole` not matching `StageKind`; empty `CardTitle`; empty `CardLine`) **THEN** `ValidateChain` returns the **named enum value** `EChainValidation::ObjectiveChainInvalid` (never a string) and nothing is bound; 16 rows is valid.
+- [x] **AC3** (AC-OC-25 [U, static] `AssignmentServerOnly`): (1) a reflection scan finds no replicated property or RPC parameter of type `FSiteAssignment` or carrying its fields; (2) a fake Event Log sink records every entry written during bind and the only entry carrying site data is the server-only header entry; (3) the include scan (`ObjectivesIncludeLint`, story 022) shows only `UObjectivesService`/`FObjectivesCore` reference `GetSiteAssignment_Server` and no client module includes `FSiteAssignment`; no actor is spawned (stub world spawn count 0).
 
 ---
 
@@ -69,12 +69,12 @@ Prototype replaced: the prototype placed objectives as replicated actors per sit
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-28; the OC 001-009 batch shares one commit, decision D41). Feature code follows the built features' layout `Source/StealthGameplay/Features/Objectives/{Public/Server,Public/View,Private}` and the tuning rows the TDC convention in StealthFoundation (decisions logged 2026-10-28).*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesCore.h` (`FObjectivesCore`, `EChainValidation`, `FChainBinding`, `IObjectivesAssignmentSource`)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesCore.cpp`
-- `Source/StealthGameplay/Private/Tests/Objectives/ChainBindAndValidateTest.cpp` (class `FObjectivesChainBindAndValidateTest`, name `StealthGame.Objectives.ChainBindAndValidate`)
-- `Source/StealthGameplay/Private/Tests/Objectives/AssignmentServerOnlyTest.cpp` (`StealthGame.Objectives.AssignmentServerOnly`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesCore.h`, `ObjectivesCore.cpp` (`FObjectivesCore::ValidateChain`, `Bind`, `EChainValidation`, `EChainValidationClause`, `FChainBinding`)
+- `Source/StealthGameplay/Features/Objectives/Public/Server/ObjectivesSeams.h` (`FSiteAssignment`, `IObjectivesAssignmentSource::GetSiteAssignment_Server` and the other seams; the LSC epic takes `FSiteAssignment` over)
+- `Source/StealthGame/Private/Composition/StealthObjectivesWiring.h/.cpp` (STAND-IN assignment over L_Prototype's objective actors)
+- Tests: `Source/StealthGameplay/Private/Tests/Objectives/ChainBindAndValidateTest.cpp`, `AssignmentServerOnlyTest.cpp`, rig `ObjectivesTestRig.h`
 
 ---
 
@@ -108,7 +108,9 @@ Prototype replaced: the prototype placed objectives as replicated actors per sit
 **Required evidence**:
 - Logic: the two test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.ChainBindAndValidate, AssignmentServerOnly; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/
+
+Run result: N/A - server-only core logic; the binding is exercised by the 3-player run-and-observe of the batch (production chain to an objective win).
 
 ---
 
@@ -116,3 +118,10 @@ Prototype replaced: the prototype placed objectives as replicated actors per sit
 
 - Depends on: `production/epics/objectives-chain/story-001-objectives-tuning-rows-and-invariants.md`, `production/epics/objectives-chain/story-002-chain-data-types-and-cacao-asset.md`; cross-epic: level-socket-contract (`FSiteAssignment` and `GetSiteAssignment_Server()`; stories not yet written)
 - Unlocks: `production/epics/objectives-chain/story-004-core-site-state-and-progress.md`, `production/epics/objectives-chain/story-005-service-shell-and-composition-root.md`, `production/epics/objectives-chain/story-013-clue-function-and-too-broad-log.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing. AC2's "16 rows is valid" is read as the row-bound clause only: rule 1 with ObjectivesPerStageCount 1 allows exactly five MVP rows, so a 16-row chain passes the bound and fails TeamStageRows, and 17 rows fail TooManyRows (decision logged). AC3 (3)'s include half is ObjectivesIncludeLint (story 022); the name scan here allows `GetSiteAssignment_Server` only in the seam declaration, the core's Bind and the composition root's layout stand-in.
+**Deviations**: the Level Socket Contract is not built: `FSiteAssignment` and `GetSiteAssignment_Server` are declared by Objectives and the composition root implements them as a STAND-IN over L_Prototype's five AStealthObjective actors (court id = 1-based index sorted by name; role from OwningTeam/Stage). Objectives writes no Event Log header entry (Round owns the header).
+**Test Evidence**: production/qa/evidence/objectives-chain-001-009-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (APPROVED; notes in the evidence)

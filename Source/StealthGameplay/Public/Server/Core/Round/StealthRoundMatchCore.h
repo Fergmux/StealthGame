@@ -164,6 +164,11 @@ public:
 
 	/** R7: raised once per round in the Active-entry step, after the state changes and before the Crowd start. */
 	TFunction<void(uint32 /*RoundEpoch*/, double /*ActivePhaseStart*/)> OnRoundActive;
+	/**
+	 * The DebugItem effect of CommandDebugObjectiveStage (R22; ADR-0020 section 3 DebugObjectiveCompletion; story oc-008): the
+	 * Objectives service applies the same counted-completion effect in this slot. Unset: the item changes nothing.
+	 */
+	TFunction<void(uint8 /*Team*/, FQueueKey /*Key*/)> OnObjectiveDebugStage;
 	/** F6 at freeze chose T_needed (the store logs a warning). */
 	TFunction<void(const StealthRoundFormulas::FWatchdogBound&)> OnWatchdogWarning;
 	/** P3: the Event Log header is due (the store writes it to FRoundEventLog). */
@@ -205,6 +210,8 @@ public:
 	void NotifyTuningReady(uint64 TuningHash) { Preparing.OnTuningReady(TuningHash); }
 	void NotifyTuningFailed() { Preparing.OnTuningFailed(); }
 	void NotifyTuningSnapshotFault() { Preparing.OnTuningSnapshotFault(); }
+	/** Objectives' ValidateSelectedChain failed: PreparingFailed(ObjectiveChainInvalid) (story oc-005). */
+	void NotifyObjectiveChainInvalid() { Preparing.OnObjectiveChainInvalid(); }
 	void NotifyLayoutReady(uint32 LayoutId, int32 Seed) { Preparing.OnLayoutReady(LayoutId, Seed); }
 	void NotifyLayoutAborted() { Preparing.OnLayoutAborted(); }
 	bool NotifyParticipantTravelComplete(const FRoundTravelAck& Ack) { return Preparing.OnParticipantTravelComplete(Ack); }
@@ -276,6 +283,11 @@ public:
 	/** The queue's RoundEndStep write (the terminal key must be this round's). */
 	void OnQueueRoundEndStep(const FRoundEndPayload& Payload);
 
+	/**
+	 * Non-Shipping DebugObjectiveCompletion (R13, R22; story oc-008): submits a DebugItem whose slot calls OnObjectiveDebugStage
+	 * for Team. Active only (WrongPhase otherwise); Unavailable in Shipping or without a debug queue.
+	 */
+	ERoundCommandResult SubmitDebugObjectiveStage(uint8 Team);
 	/** Objectives' resolver: the final completion re-validated (R15); TryTerminate(Win(Team, ObjectiveWin), Key). */
 	bool DeclareObjectiveWin(uint8 Team, FQueueKey Key);
 	/** F2 Valid(i)'s completer clauses for Completer on Team now (R13, R15; story rmf-049). */
@@ -406,6 +418,8 @@ public:
 	/** Command values carried in FDebugPayload::Command. */
 	static constexpr uint8 CommandDebugWin = 1;
 	static constexpr uint8 CommandDebugEliminate = 2;
+	/** Objectives' debug stage completion (story oc-008): no generic entry; the Objectives core logs its own Debug-flagged rows. */
+	static constexpr uint8 CommandDebugObjectiveStage = 3;
 
 	FRoundDebugResolver(IRoundLogWriter& InLog, const IStealthClock& InClock) : Log(InLog), Clock(InClock) {}
 

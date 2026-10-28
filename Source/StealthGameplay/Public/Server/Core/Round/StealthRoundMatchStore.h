@@ -127,6 +127,8 @@ public:
 	void NotifyTuningFailed();
 	void NotifyLayoutReady(uint32 LayoutId, int32 Seed);
 	void NotifyLayoutAborted();
+	/** Objectives' chain validation failed during Preparing: PreparingFailed(ObjectiveChainInvalid) (story oc-005). */
+	void NotifyObjectiveChainInvalid();
 	bool NotifyParticipantTravelComplete(const FRoundTravelAck& Ack);
 	bool NotifyParticipantWorldReady(const FRoundTravelAck& Ack);
 	/** This Preparing's acknowledgement nonce (Session stamps acknowledgements with it). */

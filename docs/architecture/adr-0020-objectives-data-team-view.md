@@ -454,3 +454,9 @@ Technical Setup 2026-10-25 (Technical Director gate findings; architecture-revie
 
 Architecture review 2026-10-25b (`docs/architecture/architecture-review-2026-10-25b.md`); text corrections only, decision unchanged, Status unchanged (Accepted).
 - Section reference in the StageSignal amendment corrected (§7 step 3); `ClueTag` text updated now that the LSC GDD delivers it.
+
+Implementation notes (Objectives Chain stories oc-001..oc-009, 2026-10-28); decision unchanged, Status unchanged (Accepted).
+- §5.1: `IInteractTargetOwner` is declared in Core (`StealthGameplay/Public/Server/Core/InteractTargetOwner.h`) with one addition, `OnInteractCompleteLatched(Pawn, Court, Key)`: the queue's `OnRejectedLatched` for a latched `HoldTimer(Complete)` reaches the owner, which releases its claim and appends Round R19's `TendCompleted(NoEffect, Latched)` (cross-review C-W35). `UActionHub::RegisterInteractTargetOwner` / `ResolveInteractTargetOwner` hold it weakly; a dead owner reports `DeadRegistration`.
+- §2 / ADR-0002 §8.6: Round's Preparing abort set gained `ObjectiveChainInvalid` (14 codes), raised by `URoundMatchStore::NotifyObjectiveChainInvalid` when `ValidateSelectedChain` fails.
+- §3 `DebugObjectiveCompletion`: Round's `FRoundDebugResolver::CommandDebugObjectiveStage` (3) routes the DebugItem slot to `UObjectivesService::ApplyDebugStage` (non-Shipping producer `FRoundMatchCore::SubmitDebugObjectiveStage`).
+- Key Interfaces: the queue reads (`CurrentKey`, `ServerNow`) are folded into `IRoundObjectiveHooks`; `FSiteAssignment` and `IObjectivesAssignmentSource::GetSiteAssignment_Server` are declared in the Objectives server header until the Level Socket Contract epic takes them over (the composition root's stand-in reads L_Prototype's objective actors).

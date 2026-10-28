@@ -1,12 +1,12 @@
 # Story 002: Chain data types and the Cacao chain asset
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -35,10 +35,10 @@ This story creates the data shape and the one shipped chain. The shape is the re
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-01 static clause, OC-16) and ADR-0020 sections 1-2, scoped to this story. QL-STORY-READY revised AC2 (match rule), AC3 (split) and AC4 (checks):*
 
-- [ ] **AC1** (AC-OC-01 [U] static check `ChainDefShape`): the `FObjectiveDef` type has the fields `ObjectiveId`, `StageKind`, `TeamEligibility`, `SiteRole`, `CompletionsRequiredCount`, `CardTitle`, `CardLine`, `ClueForm` and **no hold-time field** (a reflection check fails on any property whose name contains `Hold` or `InteractSec`; a seeded control struct with a `HoldSec` member fails the same check).
-- [ ] **AC2** (OC-16, OC-3 [U] `CacaoChainContent`): **GIVEN** `DA_ObjectiveChain_Cacao` loaded **THEN** it holds exactly the five rows of the OC-16 table (`Cacao.T0.PayRunner`, `Cacao.T0.GatherRoot`, `Cacao.T1.HearRunner`, `Cacao.T1.TakeGourd`, `Cacao.Final` with their stage, eligibility, site role, card title and card line equal to a constant fixture of the table), `ChainSerial` is set, there are at most 16 rows, card text is non-empty (whitespace-only counts as empty) and no title or line contains **objective, target, enemy, player or NPC as a case-insensitive whole word**.
-- [ ] **AC3** (ADR-0020 sections 1-2, OBJ-V3): (a) [U] **GIVEN** the primary asset type `ObjectiveChain` **THEN** `GetPrimaryAssetId()` is invalid for the CDO and the type name equals the `DefaultGame.ini` scan entry exactly (case-sensitive); (b) [OBJ-V3 verification] a cooked-client run resolves `FPrimaryAssetId("ObjectiveChain", DA_ObjectiveChain_Cacao)` with cook rule `AlwaysCook` and loads it; the log line, cook command and build id are saved to `production/qa/evidence/oc-cook-check.md`.
-- [ ] **AC4** (ADR-0020 E6, section 2): (a) a config test parses the localisation gather-target configuration and asserts the chain asset folder path is included; (b) `CardTitle` and `CardLine` are `FText`, `FObjectiveTeamView` (story 010) carries only indices and enums, and the cooked client reads card text from the asset, with no network read path for it.
+- [x] **AC1** (AC-OC-01 [U] static check `ChainDefShape`): the `FObjectiveDef` type has the fields `ObjectiveId`, `StageKind`, `TeamEligibility`, `SiteRole`, `CompletionsRequiredCount`, `CardTitle`, `CardLine`, `ClueForm` and **no hold-time field** (a reflection check fails on any property whose name contains `Hold` or `InteractSec`; a seeded control struct with a `HoldSec` member fails the same check).
+- [x] **AC2** (OC-16, OC-3 [U] `CacaoChainContent`): **GIVEN** `DA_ObjectiveChain_Cacao` loaded **THEN** it holds exactly the five rows of the OC-16 table (`Cacao.T0.PayRunner`, `Cacao.T0.GatherRoot`, `Cacao.T1.HearRunner`, `Cacao.T1.TakeGourd`, `Cacao.Final` with their stage, eligibility, site role, card title and card line equal to a constant fixture of the table), `ChainSerial` is set, there are at most 16 rows, card text is non-empty (whitespace-only counts as empty) and no title or line contains **objective, target, enemy, player or NPC as a case-insensitive whole word**.
+- [x] **AC3** (ADR-0020 sections 1-2, OBJ-V3): (a) [U] **GIVEN** the primary asset type `ObjectiveChain` **THEN** `GetPrimaryAssetId()` is invalid for the CDO and the type name equals the `DefaultGame.ini` scan entry exactly (case-sensitive); (b) [OBJ-V3 verification] a cooked-client run resolves `FPrimaryAssetId("ObjectiveChain", DA_ObjectiveChain_Cacao)` with cook rule `AlwaysCook` and loads it; the log line, cook command and build id are saved to `production/qa/evidence/oc-cook-check.md`.
+- [x] **AC4** (ADR-0020 E6, section 2): (a) a config test parses the localisation gather-target configuration and asserts the chain asset folder path is included; (b) `CardTitle` and `CardLine` are `FText`, `FObjectiveTeamView` (story 010) carries only indices and enums, and the cooked client reads card text from the asset, with no network read path for it.
 
 ---
 
@@ -68,16 +68,16 @@ Prototype replaced: nothing in the prototype has a data asset. `AStealthObjectiv
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-28; the OC 001-009 batch shares one commit, decision D41). Feature code follows the built features' layout `Source/StealthGameplay/Features/Objectives/{Public/Server,Public/View,Private}` and the tuning rows the TDC convention in StealthFoundation (decisions logged 2026-10-28).*
 
-- `Source/StealthGameplay/Public/View/Features/Objectives/ObjectiveChainData.h` (enums, `FObjectiveDef`, `UObjectiveChainData`)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectiveChainData.cpp`
-- `Content/StealthGame/Objectives/DA_ObjectiveChain_Cacao.uasset` (created in the editor)
-- `Config/DefaultGame.ini` (Asset Manager primary asset type; shared with TDC story 057, coordinate)
-- `Config/Localization/` gather-target entry for the chain folder
-- `Source/StealthGameplay/Private/Tests/Objectives/ChainDefShapeTest.cpp` (class `FObjectivesChainDefShapeTest`, name `StealthGame.Objectives.ChainDefShape`)
-- `Source/StealthGameplay/Private/Tests/Objectives/CacaoChainContentTest.cpp` (`StealthGame.Objectives.CacaoChainContent`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ChainAssetIdTest.cpp` (`StealthGame.Objectives.ChainAssetId`)
+- `Source/StealthGameplay/Features/Objectives/Public/View/ObjectiveChainData.h`, `Source/StealthGameplay/Features/Objectives/Private/ObjectiveChainData.cpp` (`EObjectiveStage`, `EObjectiveEligibility`, `EObjectiveSiteRole`, `EObjectiveTeamStage`, `EClueForm`, `FObjectiveDef` with no hold-time field, `UObjectiveChainData` with `GetPrimaryAssetId()`)
+- `Source/StealthGameplay/Features/Objectives/Public/View/Testing/ObjectiveCacaoChainFixture.h` (the OC-16 table as constant data)
+- `Source/StealthGameEditor/Private/Objectives/ObjectiveChainAuthoring.cpp` (`Stealth.Objectives.BuildCacaoChain`: authors and saves exactly the chain package in the editor; never a hand-edited .uasset)
+- `Content/StealthGame/Objectives/DA_ObjectiveChain_Cacao.uasset` (created by that command, 5 rows, ChainSerial 1)
+- `Config/DefaultGame.ini` (`+PrimaryAssetTypesToScan` ObjectiveChain, `/Game/StealthGame/Objectives`, `CookRule=AlwaysCook`), `Config/Localization/Game_Gather.ini` (the Game gather target with the chain folder)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesChainRegistry.cpp` (`Stealth.Objectives.ResolveChain`, non-Shipping: the cooked-client resolution of OBJ-V3)
+- `Source/StealthGameplay/StealthGameplay.Build.cs` (the Objectives feature include paths; project files regenerated: Result: Succeeded)
+- Tests: `Source/StealthGameplay/Private/Tests/Objectives/ChainDefShapeTest.cpp`, `CacaoChainContentTest.cpp`, `ChainAssetIdTest.cpp` (also `StealthGame.Objectives.ChainTextLocalisable`, AC4), `ObjectivesTestTypes.h` (seeded control structs)
 - `production/qa/evidence/oc-cook-check.md`
 
 ---
@@ -118,7 +118,9 @@ Prototype replaced: nothing in the prototype has a data asset. `AStealthObjectiv
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 - OBJ-V3: `production/qa/evidence/oc-cook-check.md` (cooked-client resolution log, cook command, build id)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.ChainDefShape, CacaoChainContent, ChainAssetId, ChainTextLocalisable; OBJ-V3 `production/qa/evidence/oc-cook-check.md`; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/
+
+Run result: N/A - data types and a data asset; their in-game use (the chain driving a round) is observed under stories 005-009 (screenshots in the evidence folder).
 
 ---
 
@@ -126,3 +128,10 @@ Prototype replaced: nothing in the prototype has a data asset. `AStealthObjectiv
 
 - Depends on: cross-epic: `production/epics/tuning-data-config/story-002-gameplay-presentation-module-skeletons.md`; cross-epic: `production/epics/tuning-data-config/story-057-asset-manager-primary-types.md` (the `DefaultGame.ini` primary-type mechanism)
 - Unlocks: `production/epics/objectives-chain/story-003-core-chain-validation-and-court-binding.md`, `production/epics/objectives-chain/story-010-team-view-struct-and-builder.md`, `production/epics/objectives-chain/story-016-presentation-view-helpers-and-ring-rule.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC4 passing. AC3 (b) OBJ-V3: a cooked Development client resolved FPrimaryAssetId("ObjectiveChain", DA_ObjectiveChain_Cacao) and loaded its five rows (`Stealth.Objectives.ResolveChain`: PASS, cooked=1; the asset is referenced by nothing, so it is in the pak through AlwaysCook) - production/qa/evidence/oc-cook-check.md. AC4 (b): CardTitle/CardLine are FText and nothing of the chain replicates; the team view carrying only indices and enums is story 010's.
+**Deviations**: the asset is authored by the editor command Stealth.Objectives.BuildCacaoChain from the OC-16 fixture (repeatable; card text gets stable localisation keys). UObjectivesChainRegistry (the session's cooked chains) is added here for story 005's selection. The first cook attempt exposed a pre-existing Development-game build break in StealthGame.Assassination.WarpTargetsNotReplicated (UClass::ClassGeneratedBy is editor-only): fixed with CLASS_CompiledFromBlueprint.
+**Test Evidence**: production/qa/evidence/objectives-chain-001-009-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (APPROVED; notes in the evidence)

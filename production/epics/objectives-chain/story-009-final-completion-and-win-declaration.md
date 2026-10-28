@@ -1,12 +1,12 @@
 # Story 009: Final completion and win declaration
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,10 +36,10 @@ The win is a single call. What makes it correct is everything around it: it happ
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-05, AC-OC-06 final rows, AC-OC-07, Edge Cases), scoped to this story:*
 
-- [ ] **AC1** (AC-OC-06 [U, table-driven] `CompletionGate`, final rows): the same six-row table (human on an eligible team; AI-driven hand-over; Unresponsive; Disconnected; Informant; Active on a team for which the final is not `Live`) applied to a **final** `HoldTimer(Complete)` slot yields `DeclareObjectiveWin` exactly once for row 1 and 0 times for rows 2-6, with site state and team views unchanged for rows 2-6.
-- [ ] **AC2** (AC-OC-07 [U] `FollowOnInSlot`): **GIVEN** a stub queue **WHEN** a counted final completes **THEN** `DeclareObjectiveWin` is called with the `HoldTimer(Complete)` key inside that slot and no other item interleaves; `FinalCompleted(team, Key)` is logged; no team-view write contains the final.
-- [ ] **AC3** (AC-OC-05 [U] `NoStackNoCancel`): **GIVEN** two teammates holding at their live site 0.5 s apart **WHEN** the first completes **THEN** the stage counts once, the second hold is not cancelled, completes at its own `D` and changes nothing; no `TargetInvalid` is emitted.
-- [ ] **AC4** (GDD Edge Cases [U] `FinalSameFrameOrdering`): Complete before a strike on the tender in one tick counts (the strike returns `Rejected_Latched` for a final); a strike first cancels the hold (`PawnRemoved`/`Illegal`, no completion); both teams' final holds due in one frame are stamped by `(DueTime, Begin key)`, the first latches `ObjectiveWin` and the second returns `Rejected_Latched` and is logged `TendCompleted(..., NoEffect)`; a completer killed later in the same drain does not reverse the win (the kill item returns `Rejected_Latched`).
+- [x] **AC1** (AC-OC-06 [U, table-driven] `CompletionGate`, final rows): the same six-row table (human on an eligible team; AI-driven hand-over; Unresponsive; Disconnected; Informant; Active on a team for which the final is not `Live`) applied to a **final** `HoldTimer(Complete)` slot yields `DeclareObjectiveWin` exactly once for row 1 and 0 times for rows 2-6, with site state and team views unchanged for rows 2-6.
+- [x] **AC2** (AC-OC-07 [U] `FollowOnInSlot`): **GIVEN** a stub queue **WHEN** a counted final completes **THEN** `DeclareObjectiveWin` is called with the `HoldTimer(Complete)` key inside that slot and no other item interleaves; `FinalCompleted(team, Key)` is logged; no team-view write contains the final.
+- [x] **AC3** (AC-OC-05 [U] `NoStackNoCancel`): **GIVEN** two teammates holding at their live site 0.5 s apart **WHEN** the first completes **THEN** the stage counts once, the second hold is not cancelled, completes at its own `D` and changes nothing; no `TargetInvalid` is emitted.
+- [x] **AC4** (GDD Edge Cases [U] `FinalSameFrameOrdering`): Complete before a strike on the tender in one tick counts (the strike returns `Rejected_Latched` for a final); a strike first cancels the hold (`PawnRemoved`/`Illegal`, no completion); both teams' final holds due in one frame are stamped by `(DueTime, Begin key)`, the first latches `ObjectiveWin` and the second returns `Rejected_Latched` and is logged `TendCompleted(..., NoEffect)`; a completer killed later in the same drain does not reverse the win (the kill item returns `Rejected_Latched`).
 
 ---
 
@@ -70,13 +70,12 @@ Prototype replaced: the final in the prototype ended the round from `AStealthGam
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-28; the OC 001-009 batch shares one commit, decision D41). Feature code follows the built features' layout `Source/StealthGameplay/Features/Objectives/{Public/Server,Public/View,Private}` and the tuning rows the TDC convention in StealthFoundation (decisions logged 2026-10-28).*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesCore.cpp` (the final branch)
-- `Source/StealthGameplay/Private/Tests/Objectives/CompletionGateFinalTest.cpp` (class `FObjectivesCompletionGateFinalTest`, name `StealthGame.Objectives.CompletionGateFinal`)
-- `Source/StealthGameplay/Private/Tests/Objectives/FollowOnInSlotTest.cpp` (`StealthGame.Objectives.FollowOnInSlot`)
-- `Source/StealthGameplay/Private/Tests/Objectives/NoStackNoCancelTest.cpp` (`StealthGame.Objectives.NoStackNoCancel`)
-- `Source/StealthGameplay/Private/Tests/Objectives/FinalSameFrameOrderingTest.cpp` (`StealthGame.Objectives.FinalSameFrameOrdering`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesCore.cpp` (the final branch: FinalCompleted then `DeclareObjectiveWin(team, Key)` in the slot; `OnInteractCompleteLatched`)
+- `Source/StealthGame/Private/Composition/StealthObjectivesWiring.cpp` (`DeclareObjectiveWin` -> `FRoundMatchCore::DeclareObjectiveWin`), `StealthCompositionRoot.cpp` (`IRoundObjectiveProgress` reads the production store for TeamSummary)
+- `Source/StealthGame/Public/StealthGameMode.h` (the prototype `OnObjectiveCompleted` retired from the production path; deletion is story 022)
+- Tests: `Source/StealthGameplay/Private/Tests/Objectives/CompletionGateFinalTest.cpp`, `FollowOnInSlotTest.cpp`, `NoStackNoCancelTest.cpp`, `FinalSameFrameOrderingTest.cpp`
 
 ---
 
@@ -115,7 +114,9 @@ Prototype replaced: the final in the prototype ended the round from `AStealthGam
 **Required evidence**:
 - Logic: the four test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.CompletionGateFinal, FollowOnInSlot, NoStackNoCancel, FinalSameFrameOrdering; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype: team 0 (Jaguar) completed Prelim1, Prelim2 and the shared final through the production chain; the round ended "JAGUAR WIN (final objective)", "Jaguar: steps 3 of 3", "Eagle: steps 0 of 3" on both teams' clients (`oc-08`, `oc-09`).
 
 ---
 
@@ -123,3 +124,10 @@ Prototype replaced: the final in the prototype ended the round from `AStealthGam
 
 - Depends on: `production/epics/objectives-chain/story-006-fixture-claims-and-interact-target-owner.md`, `production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md`; cross-epic: round-match-framework (`DeclareObjectiveWin`, latch, `Rejected_Latched`; stories being written in parallel), `production/epics/input-interaction-framework/story-050-hold-timer-key-order.md`
 - Unlocks: `production/epics/objectives-chain/story-017-stall-metrics-and-tend-posterior.md`, `production/epics/objectives-chain/story-018-stall-pressure-and-cross-system-checks.md`, `production/epics/objectives-chain/story-021-pie2-end-to-end-cacao-chain.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC4 passing (AC2 to AC4 on the real resolution queue with the hold stand-in and a strike stub).
+**Deviations**: the prototype objective events (`AStealthGameMode::OnObjectiveCompleted`, `HandleInteractRequest`, `AStealthObjective` progress) are off the production path: Interact commands resolve in the hold stand-in and complete in UObjectivesService's slot; the AStealthObjective actors remain only as the stand-in courts' placement. Their deletion and `StealthGame.Rules.ObjectiveStages`' mapping are story 022's.
+**Test Evidence**: production/qa/evidence/objectives-chain-001-009-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (APPROVED; notes in the evidence)

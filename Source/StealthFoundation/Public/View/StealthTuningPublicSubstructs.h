@@ -116,15 +116,28 @@ struct STEALTHFOUNDATION_API FPenaltyTuning_Public
 	float ExileCardTimeoutSec = 2.0f;
 };
 
-/** Objectives Chain keys a client needs. */
+/**
+ * Objectives Chain keys a client needs (GDD objectives-chain.md Tuning Knobs, audience All; ADR-0020 section 8; story oc-001):
+ * the owner's ring prediction reads them on the client face. ObjectiveInteractSec is the TDC canonical row (story tdc-040);
+ * TendCueDelaySec and FixtureInteractSideCount are Objectives' own All keys. The eight ServerOnly keys are
+ * FObjectivesTuning_Server (Server/StealthTuningSubstructs.h), never nameable here.
+ */
 USTRUCT()
 struct STEALTHFOUNDATION_API FObjectivesTuning_Public
 {
 	GENERATED_BODY()
 
-	/** Hold-to-interact time at an objective in seconds. */
+	/** Hold-to-interact time at an objective in seconds: one chain-wide D for every court (OC-14; never per court, ADR-0020 5.2). */
 	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "2.0", ClampMax = "6.0", SafeMin = "2.9", SafeMax = "4.5", Latch = "Action", Owner = "Objectives", Unit = "Sec"))
 	float ObjectiveInteractSec = 3.0f;
+
+	/** Time after Begin before the owner's ring turns Marigold at an own live site (OC-6; invariant I-OC3). */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "0.5", ClampMax = "2.0", SafeMin = "0.8", SafeMax = "1.5", Latch = "Action", Owner = "Objectives", Unit = "Sec"))
+	float TendCueDelaySec = 1.0f;
+
+	/** Tend stand points per court fixture, one per face (OC-8); a fixture with every point claimed rejects a Begin (OC-7). */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "1", ClampMax = "4", SafeMin = "3", SafeMax = "4", Latch = "Round", Owner = "Objectives", Unit = "Count"))
+	int32 FixtureInteractSideCount = 4;
 };
 
 /**

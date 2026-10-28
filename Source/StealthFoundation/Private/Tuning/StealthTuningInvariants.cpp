@@ -6,6 +6,7 @@
 #include "Server/StealthTuningInvariants.h"
 
 #include "Server/StealthAssassinationInvariants.h"
+#include "Server/StealthObjectivesInvariants.h"
 #include "Server/StealthPenaltyInvariants.h"
 #include "Server/StealthServerTuning.h"
 #include "Server/StealthTuningConstants.h"
@@ -293,6 +294,11 @@ namespace
 		{ "W-NKP-3", "Penalty", &StealthPenaltyInvariants::TableCheck<&StealthPenaltyInvariants::CheckWNkp3> },
 		{ "W-NKP-4", "Penalty", &StealthPenaltyInvariants::TableCheck<&StealthPenaltyInvariants::CheckWNkp4> },
 		{ "W-NKP-5", "Penalty", &StealthPenaltyInvariants::TableCheck<&StealthPenaltyInvariants::CheckWNkp5> },
+		// Objectives Chain rows (story oc-001; checks in ObjectivesInvariants.cpp). I-OC2 is a mixed row.
+		{ "I-OC1", "Objectives", &StealthObjectivesInvariants::TableCheck<&StealthObjectivesInvariants::CheckIOc1> },
+		{ "I-OC2", "Objectives", &StealthObjectivesInvariants::TableCheck<&StealthObjectivesInvariants::CheckIOc2>,
+			StealthObjectivesInvariants::IOc2RejectClause, StealthObjectivesInvariants::IOc2WarnClause },
+		{ "I-OC3", "Objectives", &StealthObjectivesInvariants::TableCheck<&StealthObjectivesInvariants::CheckIOc3> },
 	};
 
 	/**

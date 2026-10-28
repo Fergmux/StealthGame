@@ -59,6 +59,49 @@ struct STEALTHFOUNDATION_API FPenaltyTuning_Server
 	float StrikeOutReleaseGraceSec = 2.0f;
 };
 
+/**
+ * Objectives Chain ServerOnly keys (GDD objectives-chain.md Tuning Knobs, audience ServerOnly; ADR-0020 section 8; story
+ * oc-001): never replicated, read only by the server's Objectives core. A client module cannot name them (this header is
+ * guarded). Invariants I-OC1..I-OC3 are ADR-0004 Check rows (Server/StealthObjectivesInvariants.h).
+ */
+USTRUCT()
+struct STEALTHFOUNDATION_API FObjectivesTuning_Server
+{
+	GENERATED_BODY()
+
+	/** Sites per preliminary stage (OC-3); a value above 1 fails Preparing (ObjectiveChainInvalid) until LSC Selection supports it. */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "1", ClampMax = "3", SafeMin = "1", SafeMax = "1", Latch = "Round", Owner = "Objectives", Unit = "Count"))
+	int32 ObjectivesPerStageCount = 1;
+
+	/** OC-12 rival race signal on/off (ON by default, user 2026-10-25). */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (Latch = "Round", Owner = "Objectives", Unit = "Bool"))
+	bool bRivalSignalEnabled = true;
+
+	/** Earliest per-completion rival release delay (OC-12 1, F4; I-OC2). */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "30", ClampMax = "120", SafeMin = "30", SafeMax = "60", Latch = "Round", Owner = "Objectives", Unit = "Sec"))
+	float RivalSignalDelayMinSec = 30.0f;
+
+	/** Latest per-completion rival release delay (F4; I-OC2: W_eff = Max - Min + Q, and Max >= Min + 30). */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "70", ClampMax = "300", SafeMin = "163", SafeMax = "200", Latch = "Round", Owner = "Objectives", Unit = "Sec"))
+	float RivalSignalDelayMaxSec = 165.0f;
+
+	/** Global release grid period anchored at Active entry, shared by both teams (OC-12 2, F4). */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "10", ClampMax = "90", SafeMin = "28", SafeMax = "45", Latch = "Round", Owner = "Objectives", Unit = "Sec"))
+	float RivalSignalReleaseQuantumSec = 30.0f;
+
+	/** Courts a stage clue may match before the layout logs ClueTooBroad (OC-15). */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "1", ClampMax = "6", SafeMin = "2", SafeMax = "3", Latch = "Round", Owner = "Objectives", Unit = "Count"))
+	int32 ClueMatchMaxCount = 3;
+
+	/** F5 mutual-gap defect threshold (reporting only, never a rule). */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "120", ClampMax = "900", SafeMin = "240", SafeMax = "420", Latch = "Use", Owner = "Objectives", Unit = "Sec"))
+	float ObjectiveStallGapDefectSec = 300.0f;
+
+	/** F5 final-dwell defect threshold (reporting only, never a rule). */
+	UPROPERTY(EditAnywhere, Category = "Objectives", meta = (ClampMin = "90", ClampMax = "600", SafeMin = "180", SafeMax = "360", Latch = "Use", Owner = "Objectives", Unit = "Sec"))
+	float ObjectiveFinalDwellDefectSec = 240.0f;
+};
+
 /** Crowd & NPC Behaviour ServerOnly keys (the owner has no public key yet, so no _Public struct). */
 USTRUCT()
 struct STEALTHFOUNDATION_API FCrowdTuning_Server

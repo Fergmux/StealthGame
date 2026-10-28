@@ -1,0 +1,2 @@
+tests exit=0
+Success  StealthGame.Assassination.PIE.KillAtArmsLength.RivalAt230cmIsAssassinatedAndFallsAtContactWithNoGameCameraRotation

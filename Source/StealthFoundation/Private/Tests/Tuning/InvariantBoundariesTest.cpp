@@ -186,13 +186,23 @@ bool FTuningInvariantBoundariesTest::RunTest(const FString& Parameters)
 	}
 	const TArray<FTuningSchemaRow> Schema = FixtureSchema();
 	TestEqual(TEXT("the fixture schema holds exactly one range pair beyond the real schema's"), FindTuningRangePairs(Schema).Num(), FindTuningRangePairs(GetTuningSchema()).Num() + 1);
-	// The real schema's pairs are the 18 Crowd Min/Max pairs registered by story cnb-003 (none before it).
+	// The real schema's pairs are the 18 Crowd Min/Max pairs registered by story cnb-003 (none before it) and Objectives'
+	// RivalSignalDelayMinSec / RivalSignalDelayMaxSec (story oc-001; I-5 checks Min <= Max beside I-OC2's spread rule).
 	const TArray<FTuningRangePair> RealPairs = FindTuningRangePairs(GetTuningSchema());
-	TestEqual(TEXT("the real schema holds the 18 Crowd range pairs (story cnb-003)"), RealPairs.Num(), 18);
+	TestEqual(TEXT("the real schema holds the 18 Crowd range pairs (story cnb-003) and the Objectives rival-delay pair (oc-001)"), RealPairs.Num(), 19);
+	int32 ObjectivesPairs = 0;
 	for (const FTuningRangePair& Pair : RealPairs)
 	{
-		TestEqual(FString::Printf(TEXT("range pair %s is Crowd-owned"), *FString(Pair.Min->Key)), FString(Pair.Min->Owner), FString(TEXT("Crowd")));
+		const FString Owner(Pair.Min->Owner);
+		if (Owner == TEXT("Objectives"))
+		{
+			++ObjectivesPairs;
+			TestEqual(TEXT("the Objectives pair is the rival-signal delay"), FString(Pair.Min->Key), FString(TEXT("RivalSignalDelayMinSec")));
+			continue;
+		}
+		TestEqual(FString::Printf(TEXT("range pair %s is Crowd-owned"), *FString(Pair.Min->Key)), Owner, FString(TEXT("Crowd")));
 	}
+	TestEqual(TEXT("one Objectives range pair"), ObjectivesPairs, 1);
 
 	// Range-pair recognition: <Prefix>Min<Unit>/<Prefix>Max<Unit>; a one-sided bound or a lone Min is not a pair.
 	{

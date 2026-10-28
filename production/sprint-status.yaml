@@ -25,7 +25,7 @@ goal: "Production Foundation + Core spine: TDC Exit B pipeline, Participant Stat
 start: "2026-11-09"
 end: "2026-11-20"
 generated: "2026-10-25"
-updated: "2026-10-27"
+updated: "2026-10-28"
 
 stories:
   - id: "tdc-001"
@@ -3851,3 +3851,102 @@ stories:
     completed: "2026-10-28"
     sprint: 2
     note: "NKP batch 2026-10-28; tools/analysis/penalty_telemetry_report.py --self-test (37 checks); report slot production/qa/penalty-telemetry-2026-10-27.md (playtests not yet run, advisory)"
+  - id: "oc-001"
+    name: "Objectives tuning rows and invariants I-OC1 to I-OC3"
+    file: "production/epics/objectives-chain/story-001-objectives-tuning-rows-and-invariants.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28; ten Objectives keys (TuningSchemaVersion 8), I-OC1..3 Check rows; InteractSecFloor, RivalSignalBound, TendCueDelayInvariant, ObjectivesTuningRows; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"
+  - id: "oc-002"
+    name: "Chain data types and the Cacao chain asset"
+    file: "production/epics/objectives-chain/story-002-chain-data-types-and-cacao-asset.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28; FObjectiveDef / UObjectiveChainData (ObjectiveChain, AlwaysCook), DA_ObjectiveChain_Cacao authored by Stealth.Objectives.BuildCacaoChain, Game gather target; ChainDefShape, CacaoChainContent, ChainAssetId, ChainTextLocalisable; OBJ-V3 PASS on a cooked client (production/qa/evidence/oc-cook-check.md); evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"
+  - id: "oc-003"
+    name: "Core chain validation and court binding"
+    file: "production/epics/objectives-chain/story-003-core-chain-validation-and-court-binding.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28; FObjectivesCore ValidateChain / Bind; FSiteAssignment STAND-IN over L_Prototype objective actors; ChainBindAndValidate, AssignmentServerOnly; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"
+  - id: "oc-004"
+    name: "Core site state and per-team progress"
+    file: "production/epics/objectives-chain/story-004-core-site-state-and-progress.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28; Locked/Live/Completed per (team,row), ApplyCountedCompletion only writer; ProgressOnlyByCompletion, FinalNeedsOwnUnlock, StageLifecycle; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"
+  - id: "oc-005"
+    name: "Service shell and composition-root wiring"
+    file: "production/epics/objectives-chain/story-005-service-shell-and-composition-root.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28; UObjectivesService + registrations, PreparingFailed(ObjectiveChainInvalid), Interact hold STAND-IN (IIF stage 2); PreparingFailsOnBadChain, ServiceHasNoTickTimerActor, CompositionRootRegistrations, PIE.ServiceBoots; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"
+  - id: "oc-006"
+    name: "Fixture claims and the interact-target owner"
+    file: "production/epics/objectives-chain/story-006-fixture-claims-and-interact-target-owner.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28; IInteractTargetOwner in Core (ADR-0020 5.1), claim table, drain-end check; InteractHoldSecOneValue, ClaimLifecycle, ClaimReleaseOutsideSlot, ClaimConsistencyCheck; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"
+  - id: "oc-007"
+    name: "Interact predicate and feint/decoy parity"
+    file: "production/epics/objectives-chain/story-007-interact-predicate-and-feint-parity.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28; predicate TU reads court, occupancy, legality only; PredicateSiteAndClassOnly, FeintMatchesDecoy, DecoyIncludesTendedCourts; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"
+  - id: "oc-008"
+    name: "Completion gate and stage effects"
+    file: "production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28; gate (a)-(e), ObjectiveStage/TendCompleted, DebugCompleteStage via Round DebugItem; CompletionGate, CompletionGateControlEpoch, StageCompletionEffects, DebugCompleteStage; Shipping build Result: Succeeded (production/qa/evidence/oc-shipping-build.md); evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"
+  - id: "oc-009"
+    name: "Final completion and win declaration"
+    file: "production/epics/objectives-chain/story-009-final-completion-and-win-declaration.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28; FinalCompleted + DeclareObjectiveWin in the slot; CompletionGateFinal, FollowOnInSlot, NoStackNoCancel, FinalSameFrameOrdering; run-and-observe: team 0 objective win in 3-player PIE; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"

@@ -29,6 +29,7 @@
 #include "Server/Testing/StealthNegativeControl.h"
 #include "Server/Testing/StealthAssassinationTuningKnobs.h"
 #include "Server/Testing/StealthCrowdTuningKnobs.h"
+#include "Server/Testing/StealthObjectivesTuningKnobs.h"
 #include "Server/Testing/StealthPenaltyTuningKnobs.h"
 #include "Server/Testing/StealthSclTuningKnobs.h"
 #include "Tuning/StealthTuningSchemaGen.h"
@@ -286,6 +287,11 @@ bool FTuningSchemaCompleteTest::RunTest(const FString& Parameters)
 	}
 	// The Penalty Tuning Knobs rows (story nkp-002); NpcKillStrikeLimit is already a TDC canonical pin.
 	for (const StealthPenaltyTuningKnobs::FKnob& Knob : StealthPenaltyTuningKnobs::Knobs)
+	{
+		Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
+	}
+	// The ten Objectives-owned Tuning Knobs rows (story oc-001); ObjectiveInteractSec is already a TDC canonical pin.
+	for (const StealthObjectivesTuningKnobs::FKnob& Knob : StealthObjectivesTuningKnobs::Knobs)
 	{
 		Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
 	}

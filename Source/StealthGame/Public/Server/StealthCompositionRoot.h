@@ -9,6 +9,7 @@
 #include "Server/Core/StealthPawnFactory.h"
 #include "Server/Random/StealthServerSeeds.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "View/CourtFixtureId.h"
 #include "View/StealthRoundPublicState.h"
 
 #include "StealthCompositionRoot.generated.h"
@@ -170,6 +171,31 @@ public:
 	/** Assassination's server facade, registered on Round's queue for the current server world (stories asn-012/013). */
 	class UEncounterService* GetEncounterService() const { return Encounters; }
 
+	/** Faults reported to the composition root's command-path sink (the Objectives, Penalty and Encounter seams' sink). */
+	int32 GetCommandFaultCount() const { return CommandFaults.GetReportCount(); }
+
+	/** The Objectives service of the current server world (stories oc-005..oc-009), or null. */
+	class UObjectivesService* GetObjectivesService() const { return Objectives.Get(); }
+
+	/**
+	 * Preparing (ADR-0020 section 2): Objectives selects and validates the one cooked chain. False: the round must fail
+	 * Preparing with ObjectiveChainInvalid. True when no Objectives service is wired in this world.
+	 */
+	bool ValidateObjectivesChain() const;
+
+	/** OnLayoutReady (the prototype layout's nav-ready step): Objectives binds the chain to the site assignment (story oc-005). */
+	void HandleObjectivesLayoutReady(uint32 LayoutId, int32 Seed);
+
+	/** The Interact hold stand-in of the current server world (IIF stage 2 replaces it; tests and dumps). */
+	const class FInteractHoldStandIn* GetInteractHolds() const { return InteractHolds.Get(); }
+
+#if !UE_BUILD_SHIPPING
+	/** DEV ONLY (StealthBot): the live court of Participant's team, from the server store. Unset when none. */
+	FCourtFixtureId FindObjectivesLiveCourtForDev(FParticipantId Participant) const;
+	/** DEV ONLY (StealthBot, tests): the stand-in court actor of an id (L_Prototype's objective actors), or null. */
+	const AActor* FindObjectivesCourtActorForDev(FCourtFixtureId Court) const;
+#endif
+
 private:
 	void HandleRosterEvent(const FRosterEvent& Event);
 	/** Builds the encounter service for World and registers it on Round's current queue (strikes resolve in its slot). */
@@ -181,6 +207,10 @@ private:
 	/** The reply step (story asn-015): after each drain, one batched ClientCommandReplies per connection. */
 	void HandleRoundQueueDrained();
 	void MirrorTeamsToPrototype();
+	/** Builds and binds the Objectives service, its adapters and the Interact hold stand-in (stories oc-005..oc-009). */
+	void WireObjectives(AStealthGameMode* InGameMode);
+	/** Round's R7 Active-entry step: Objectives' HandleRoundActive (story oc-005). */
+	void HandleRoundActive(uint32 RoundEpoch, double ActivePhaseStart);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UStealthMatchAdapters> Adapters;
@@ -225,6 +255,11 @@ private:
 	TSharedPtr<class FStealthPenaltyRespawnGateway> PenaltyRespawns;
 	TSharedPtr<class FStealthRosterOwnerViewFeed> OwnerViewFeed;
 	TSharedPtr<class FPenaltyDueAdapter> DueAdapter;
+	/** Objectives Chain (stories oc-005..oc-009): the current server world's service, its adapters and the Interact hold stand-in. */
+	TWeakObjectPtr<class UObjectivesService> Objectives;
+	TSharedPtr<class FStealthObjectivesAdapters> ObjectivesAdapters;
+	TSharedPtr<class FInteractHoldStandIn> InteractHolds;
+	FDelegateHandle RoundActiveHandle;
 	/** The reply step's transport for the current server world. */
 	TSharedPtr<class FStealthControllerReplyTransport> ReplyTransport;
 	TWeakObjectPtr<UWorld> ReplyWorld;

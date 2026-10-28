@@ -1,12 +1,12 @@
 # Story 005: Service shell and composition-root wiring
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,10 +36,10 @@ The service is a thin shell: it owns the core, wires the injected dependencies t
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-01 `PreparingFailed` clause, OC-17) and ADR-0020 sections 1, 3 and Guidelines, scoped to this story. QL-STORY-READY revised: AC4 (the PIE smoke) was added and the include-lint ownership moved to story 022:*
 
-- [ ] **AC1** (AC-OC-01 [U] `PreparingFailsOnBadChain`): **GIVEN** an invalid chain asset, or two cooked chains with no selection rule, **WHEN** Round `Preparing` calls `ValidateSelectedChain` **THEN** Round receives `PreparingFailed(ObjectiveChainInvalid)` and no site is bound (stub LSC read count 0); exactly one valid chain succeeds; zero cooked chains also fails.
-- [ ] **AC2** (ADR-0020 section 1 [U] `ServiceHasNoTickTimerActor`): **GIVEN** `UObjectivesService` driven through Preparing, Active and Ended against a stub world and stub timer manager **THEN** no tick function is registered, the timer manager call count is 0, no latent action exists and the spawn count is 0 (the rival release timer belongs to the Round queue, not the service). The include-lint half of this guideline is owned by `ObjectivesIncludeLint` in story 022.
-- [ ] **AC3** (ADR-0020 sections 3, 5 [U] `CompositionRootRegistrations`): **GIVEN** a composition root with stub registries and fault sink **WHEN** `HandleLayoutReady(LayoutId, Seed)` then `HandleRoundActive(Epoch, ActivePhaseStart)` run **THEN** the layout is bound, t0 (`ActivePhaseStart`) is stored, both teams' `Prelim1` are `Live`, and the service is registered weakly as `ICommandPredicate(Interact)`, `IInteractTargetOwner` and the `TimerFired(StageSignal)` resolver; destroying the service and then resolving a registration reports exactly once to the fault sink; `HandleRoundActive` before `HandleLayoutReady` reports a fault; a second `HandleRoundActive` for the same epoch is ignored.
-- [ ] **AC4** (PIE smoke `StealthGame.Objectives.PIE.ServiceBoots`): on a PIE listen server the service exists, the three registrations are live and the fault sink is empty after a round reaches `Active`.
+- [x] **AC1** (AC-OC-01 [U] `PreparingFailsOnBadChain`): **GIVEN** an invalid chain asset, or two cooked chains with no selection rule, **WHEN** Round `Preparing` calls `ValidateSelectedChain` **THEN** Round receives `PreparingFailed(ObjectiveChainInvalid)` and no site is bound (stub LSC read count 0); exactly one valid chain succeeds; zero cooked chains also fails.
+- [x] **AC2** (ADR-0020 section 1 [U] `ServiceHasNoTickTimerActor`): **GIVEN** `UObjectivesService` driven through Preparing, Active and Ended against a stub world and stub timer manager **THEN** no tick function is registered, the timer manager call count is 0, no latent action exists and the spawn count is 0 (the rival release timer belongs to the Round queue, not the service). The include-lint half of this guideline is owned by `ObjectivesIncludeLint` in story 022.
+- [x] **AC3** (ADR-0020 sections 3, 5 [U] `CompositionRootRegistrations`): **GIVEN** a composition root with stub registries and fault sink **WHEN** `HandleLayoutReady(LayoutId, Seed)` then `HandleRoundActive(Epoch, ActivePhaseStart)` run **THEN** the layout is bound, t0 (`ActivePhaseStart`) is stored, both teams' `Prelim1` are `Live`, and the service is registered weakly as `ICommandPredicate(Interact)`, `IInteractTargetOwner` and the `TimerFired(StageSignal)` resolver; destroying the service and then resolving a registration reports exactly once to the fault sink; `HandleRoundActive` before `HandleLayoutReady` reports a fault; a second `HandleRoundActive` for the same epoch is ignored.
+- [x] **AC4** (PIE smoke `StealthGame.Objectives.PIE.ServiceBoots`): on a PIE listen server the service exists, the three registrations are live and the fault sink is empty after a round reaches `Active`.
 
 ---
 
@@ -72,15 +72,14 @@ Prototype replaced: `AStealthGameMode` wiring of objective actors (`HandleIntera
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-28; the OC 001-009 batch shares one commit, decision D41). Feature code follows the built features' layout `Source/StealthGameplay/Features/Objectives/{Public/Server,Public/View,Private}` and the tuning rows the TDC convention in StealthFoundation (decisions logged 2026-10-28).*
 
-- `Source/StealthGameplay/Public/Server/Features/Objectives/ObjectivesService.h`
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesService.cpp`
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesCompositionRoot.cpp` (registrations and injected-interface adapters)
-- `Source/StealthGameplay/Private/Tests/Objectives/PreparingFailsOnBadChainTest.cpp` (class `FObjectivesPreparingFailsOnBadChainTest`, name `StealthGame.Objectives.PreparingFailsOnBadChain`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ServiceHasNoTickTimerActorTest.cpp` (`StealthGame.Objectives.ServiceHasNoTickTimerActor`)
-- `Source/StealthGameplay/Private/Tests/Objectives/CompositionRootRegistrationsTest.cpp` (`StealthGame.Objectives.CompositionRootRegistrations`)
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/ServiceBootsTest.cpp` (`NETWORK_TEST_CLASS(ServiceBoots, "StealthGame.Objectives.PIE")`)
+- `Source/StealthGameplay/Features/Objectives/Public/Server/ObjectivesService.h`, `Private/ObjectivesService.cpp` (`UObjectivesService`: server-only world subsystem, `Bind`/`Unbind`, `ValidateSelectedChain`, `HandleLayoutReady`, `HandleRoundActive`, `HandleRoundEnded`, `HandleRoundReset`, StageSignal resolver registration)
+- `Source/StealthGameplay/Features/Objectives/Public/View/ObjectivesChainRegistry.h`, `Private/ObjectivesChainRegistry.cpp` (`UObjectivesChainRegistry`: the cooked chains through the Asset Manager)
+- `Source/StealthGameplay/Public/Server/Core/InteractHoldStandIn.h`, `Private/Core/InteractHoldStandIn.cpp` (STAND-IN for the IIF stage-2 Interact hold)
+- `Source/StealthGameplay/Public/Server/Core/Round/StealthRoundPreparing.h`, `Private/Core/Round/StealthRoundPreparing.cpp`, `StealthRoundMatchCore.h/.cpp`, `StealthRoundMatchStore.h/.cpp` (abort code `ObjectiveChainInvalid`, `NotifyObjectiveChainInvalid`; the DebugItem command of story 008)
+- `Source/StealthGame/Private/Composition/StealthObjectivesWiring.h/.cpp` (the adapters), `StealthCompositionRoot.cpp`, `Public/Server/StealthCompositionRoot.h` (WireObjectives, the registrations, Preparing validation, OnRoundActive, Ended/Reset, drain-end claim check), `StealthCommandWiring.h/.cpp` (Interact commands to the hold stand-in), `Private/StealthGameMode.cpp`, `Public/StealthGameMode.h` (OnLayoutReady hook, the StealthBot `interact`, `interactend`, `debugstage` commands, the prototype HUD mirror)
+- Tests: `Source/StealthGameplay/Private/Tests/Objectives/PreparingFailsOnBadChainTest.cpp`, `ServiceHasNoTickTimerActorTest.cpp`, `CompositionRootRegistrationsTest.cpp`, rig `ObjectivesQueueRig.h`; `Source/StealthTestHarness/Private/Tests/PIE/Objectives/ServiceBootsTest.cpp`
 
 ---
 
@@ -119,7 +118,9 @@ Prototype replaced: `AStealthGameMode` wiring of objective actors (`HandleIntera
 **Required evidence**:
 - Integration: the three T1 tests under `Source/StealthGameplay/Private/Tests/Objectives/` and the T2 smoke under `Source/StealthTestHarness/Private/Tests/PIE/Objectives/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.PreparingFailsOnBadChain, ServiceHasNoTickTimerActor, CompositionRootRegistrations, StealthGame.Objectives.PIE.ServiceBoots.ServerOnlyServiceRegisteredWithNoFaultAtActive; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype: the service bound, both teams Stage1 at Active (`oc-01`, `oc-02`, the `[Bot] Objectives: bound=1` log line).
 
 ---
 
@@ -127,3 +128,10 @@ Prototype replaced: `AStealthGameMode` wiring of objective actors (`HandleIntera
 
 - Depends on: `production/epics/objectives-chain/story-003-core-chain-validation-and-court-binding.md`, `production/epics/objectives-chain/story-004-core-site-state-and-progress.md`; cross-epic: round-match-framework (`PreparingFailed`, `OnRoundActive`, queue and `RegisterTimerResolver`; stories being written in parallel); `production/epics/input-interaction-framework/story-003-action-hub-and-predicate-registry.md` (`RegisterInteractTargetOwner`, predicate registry); `production/epics/tuning-data-config/story-004-test-harness-module-shipping-excluded.md` and `story-008-fault-sink-and-test-seams-define.md`
 - Unlocks: `production/epics/objectives-chain/story-006-fixture-claims-and-interact-target-owner.md`, `production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md`, `production/epics/objectives-chain/story-012-rejoin-rebind-and-reset.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC4 passing. AC2's "stub timer manager call count 0" is proved structurally: the service is neither an FTickableGameObject nor a UTickableWorldSubsystem and the Objectives sources name no Tick / IsTickable / timer manager / SetTimer / latent action / SpawnActor (comment- and literal-blind scan with a seeded control), and a full Preparing -> Active (a tend) -> Ended drive spawns nothing.
+**Deviations**: Preparing's validation runs in the composition root's tuning-ready step (an invalid chain calls `NotifyObjectiveChainInvalid` instead of `NotifyTuningReady`); Round's abort set gained `ObjectiveChainInvalid` (14 codes; an ADR-0002 8.6 amendment, decision logged). The injected seams follow ADR-0020's Key Interfaces with the queue reads folded into `IRoundObjectiveHooks` (CurrentKey, ServerNow). STAND-INs (composition root): the IIF Interact hold (`FInteractHoldStandIn`: predicate at Begin, the court from the command or the nearest in reach, D read once, HoldTimer(Complete) on Round's queue; no release debounce, reply batch or FHoldStatus), the LSC assignment and court geometry (L_Prototype's objective actors), the team view (the prototype HUD mirror) and the rival release (none scheduled). Tuning: the schema defaults until the TDC store feeds features the frozen set.
+**Test Evidence**: production/qa/evidence/objectives-chain-001-009-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (APPROVED; notes in the evidence)

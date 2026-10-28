@@ -88,8 +88,19 @@ public:
 	void HandleProductionExile(AStealthCharacter* Body, AController* FormerController);
 	void HandlePing(AStealthCharacter* Sender, const FVector& Location);
 
-	/** Called by an objective when Completer finished interacting with it. */
+	/**
+	 * PROTOTYPE (retired from the production path by Objectives story oc-009; story oc-022 deletes it): the prototype
+	 * objective's completion. Nothing calls AStealthObjective::SetInteractor(true) on the production path any more (the
+	 * Interact command resolves in UObjectivesService's slot), so this runs only if the prototype objective is driven directly.
+	 */
 	void OnObjectiveCompleted(AStealthObjective* Objective, AStealthCharacter* Completer);
+
+	/**
+	 * STAND-IN for the team view (Objectives stories oc-010 / oc-011): mirrors the production stage of Team (UObjectivesService)
+	 * into the prototype HUD's AStealthGameState::TeamStage (1, 2, then the final as 3) and tells Team when a stage was banked.
+	 * Called by the composition root's IObjectivesViewSink at Active entry and after each counted stage.
+	 */
+	void MirrorProductionObjectiveStage(uint8 Team);
 
 	/** True while Round's phase is Active and the round is not latched (the production rules decide the round). */
 	bool IsRoundInProgress() const;

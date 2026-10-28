@@ -55,10 +55,15 @@ enum class ERoundPreparingAbortCode : uint8
 	PlacementInfeasible,
 	NpcCountTooLow,
 	PreparingWatchdog,
+	/**
+	 * Objectives' ValidateSelectedChain failed (an invalid chain, no cooked chain, or several with no selection rule;
+	 * ADR-0020 section 2, AC-OC-01; appended by Objectives story oc-005, an amendment of ADR-0002 section 8.6's set).
+	 */
+	ObjectiveChainInvalid,
 };
 
 /** Number of abort codes (None excluded). */
-inline constexpr int32 GRoundPreparingAbortCodeCount = 13;
+inline constexpr int32 GRoundPreparingAbortCodeCount = 14;
 
 /** Where the sequence is. */
 enum class ERoundPreparingStep : uint8
@@ -138,6 +143,9 @@ public:
 	void OnTuningFailed();
 	/** P2: TDC's server self-check fault (never a client hash mismatch). */
 	void OnTuningSnapshotFault();
+
+	/** Objectives' chain validation failed while Preparing runs: abort ObjectiveChainInvalid (story oc-005). */
+	void OnObjectiveChainInvalid();
 	/** P4. */
 	void OnLayoutReady(uint32 LayoutId, int32 LayoutSeed);
 	void OnLayoutAborted();

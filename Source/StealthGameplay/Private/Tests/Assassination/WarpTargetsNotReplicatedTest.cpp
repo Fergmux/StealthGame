@@ -83,7 +83,7 @@ bool FAssassinationWarpTargetsNotReplicatedTest::RunTest(const FString& Paramete
 	{
 		UClass* Class = *It;
 		if (!Class->IsChildOf(AStealthPawn::StaticClass()) || Class->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists)
-			|| Class->ClassGeneratedBy != nullptr || Class->GetName().StartsWith(TEXT("SKEL_")) || Class->GetName().StartsWith(TEXT("REINST_")))
+			|| Class->HasAnyClassFlags(CLASS_CompiledFromBlueprint) || Class->GetName().StartsWith(TEXT("SKEL_")) || Class->GetName().StartsWith(TEXT("REINST_")))
 		{
 			continue;
 		}

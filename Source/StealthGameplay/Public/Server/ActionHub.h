@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Server/Core/CancelReason.h"
 #include "Server/Core/CommandPredicate.h"
+#include "Server/Core/InteractTargetOwner.h"
 #include "Server/Core/PawnCommandCore.h"
 #include "Server/Core/ReplySink.h"
 #include "Server/StealthLogFaultSink.h"
@@ -67,6 +68,24 @@ public:
 	 */
 	FPredicateResult ResolvePredicate(EActionType Type, const AStealthPawn& Pawn, const FCommandPayload& Cmd) const;
 
+	/**
+	 * Registers (or replaces) the one interact-target owner (ADR-0020 5.1, the ADR-0011 amendment; Objectives story oc-005),
+	 * weakly. A null or dead owner is refused with a DeadRegistration fault (false).
+	 */
+	bool RegisterInteractTargetOwner(TWeakInterfacePtr<IInteractTargetOwner> Owner);
+
+	/** Drops the interact-target owner registration. */
+	void UnregisterInteractTargetOwner() { InteractTargetOwner.Reset(); bInteractTargetOwnerRegistered = false; }
+
+	/** True when a live interact-target owner is registered. */
+	bool HasInteractTargetOwner() const { return InteractTargetOwner.IsValid(); }
+
+	/**
+	 * The live interact-target owner, or null. An owner that was registered and has since been destroyed reports one
+	 * DeadRegistration fault per call (ADR-0007 section 4: a dead registration is loud, never a silent dead feature).
+	 */
+	IInteractTargetOwner* ResolveInteractTargetOwner() const;
+
 	/** Overrides the fault sink (tests); null restores the hub's own log sink. */
 	void SetFaultSink(IStealthFaultSink* InFaultSink) { InjectedFaultSink = InFaultSink; }
 
@@ -93,6 +112,8 @@ private:
 	IStealthFaultSink& GetFaultSink() const;
 
 	TWeakInterfacePtr<ICommandPredicate> Predicates[GActionTypeCount];
+	TWeakInterfacePtr<IInteractTargetOwner> InteractTargetOwner;
+	bool bInteractTargetOwnerRegistered = false;
 
 	IStealthFaultSink* InjectedFaultSink = nullptr;
 	mutable FStealthLogFaultSink LogFaultSink;

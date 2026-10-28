@@ -1,12 +1,12 @@
 # Story 006: Fixture claims and the interact-target owner
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,10 +36,10 @@
 
 *From ADR-0020 sections 5.1-5.3 and GDD OC-7/OC-8/OC-14, scoped to this story (criteria are ADR-derived because the GDD states no AC for the claim table):*
 
-- [ ] **AC1** (ADR 5.2 [U] `InteractHoldSecOneValue`): `GetInteractHoldSec()` returns the frozen `ObjectiveInteractSec`, takes no court parameter and is equal for every court; `D` is read once at execution, so a later tuning publish never changes a running hold and the next Begin reads the new frozen value.
-- [ ] **AC2** (ADR 5.1, 5.3 [U] `ClaimLifecycle`): `OnInteractExecuted` claims the free face nearest the pawn (ties to the lower face index) and records the pawn's control epoch with the claim; `OnInteractEnded` (`Completed` or `Cancelled`) releases only that pawn's own claim; a pending debounced End keeps the claim until the `DebounceExpiry` slot ends the hold.
-- [ ] **AC3** (ADR 5.1 outside a slot, OC-8 [U] `ClaimReleaseOutsideSlot`): `OnInteractEnded` with an invalid `FQueueKey` (round-end staging, pawn teardown) is a claim release only (gate not entered, log call count 0); a body standing at a face with no hold holds no claim and cannot lock a fixture.
-- [ ] **AC4** (ADR 5.1 [U] `ClaimConsistencyCheck`): in a non-Shipping build, at drain end each fixture's claim count equals the number of IIF `Interacting` slots targeting it; a seeded mismatch reports to the fault sink exactly once.
+- [x] **AC1** (ADR 5.2 [U] `InteractHoldSecOneValue`): `GetInteractHoldSec()` returns the frozen `ObjectiveInteractSec`, takes no court parameter and is equal for every court; `D` is read once at execution, so a later tuning publish never changes a running hold and the next Begin reads the new frozen value.
+- [x] **AC2** (ADR 5.1, 5.3 [U] `ClaimLifecycle`): `OnInteractExecuted` claims the free face nearest the pawn (ties to the lower face index) and records the pawn's control epoch with the claim; `OnInteractEnded` (`Completed` or `Cancelled`) releases only that pawn's own claim; a pending debounced End keeps the claim until the `DebounceExpiry` slot ends the hold.
+- [x] **AC3** (ADR 5.1 outside a slot, OC-8 [U] `ClaimReleaseOutsideSlot`): `OnInteractEnded` with an invalid `FQueueKey` (round-end staging, pawn teardown) is a claim release only (gate not entered, log call count 0); a body standing at a face with no hold holds no claim and cannot lock a fixture.
+- [x] **AC4** (ADR 5.1 [U] `ClaimConsistencyCheck`): in a non-Shipping build, at drain end each fixture's claim count equals the number of IIF `Interacting` slots targeting it; a seeded mismatch reports to the fault sink exactly once.
 
 ---
 
@@ -69,15 +69,13 @@ Prototype replaced: the prototype counted interactors with a replicated `Interac
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-28; the OC 001-009 batch shares one commit, decision D41). Feature code follows the built features' layout `Source/StealthGameplay/Features/Objectives/{Public/Server,Public/View,Private}` and the tuning rows the TDC convention in StealthFoundation (decisions logged 2026-10-28).*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesClaims.h` (claim table)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesClaims.cpp`
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesService.cpp` (`IInteractTargetOwner` bodies)
-- `Source/StealthGameplay/Private/Tests/Objectives/InteractHoldSecOneValueTest.cpp` (class `FObjectivesInteractHoldSecOneValueTest`, name `StealthGame.Objectives.InteractHoldSecOneValue`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ClaimLifecycleTest.cpp` (`StealthGame.Objectives.ClaimLifecycle`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ClaimReleaseOutsideSlotTest.cpp` (`StealthGame.Objectives.ClaimReleaseOutsideSlot`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ClaimConsistencyCheckTest.cpp` (`StealthGame.Objectives.ClaimConsistencyCheck`)
+- `Source/StealthGameplay/Public/Server/Core/InteractTargetOwner.h` (`IInteractTargetOwner`, `EInteractEnd`: the ADR-0020 5.1 amendment of ADR-0011, declared in Core), `Source/StealthGameplay/Public/Server/ActionHub.h`, `Private/Core/ActionHub.cpp` (`RegisterInteractTargetOwner`, `ResolveInteractTargetOwner`: a dead owner reports DeadRegistration)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesClaims.h`, `ObjectivesClaims.cpp` (the claim table, the non-Shipping consistency check)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesService.cpp` (the owner bodies), `ObjectivesCore.cpp` (`OnInteractExecuted`, the release half of `OnInteractEnded`)
+- `Source/StealthGameplay/Public/Server/Core/StealthPawnFactory.h`, `Private/Core/PawnFactory/StealthPawnFactory.cpp` (`IsHandOverPending(Pawn)`, ADR-0010 4.4, read by gate (c))
+- Tests: `Source/StealthGameplay/Private/Tests/Objectives/InteractHoldSecOneValueTest.cpp`, `ClaimLifecycleTest.cpp`, `ClaimReleaseOutsideSlotTest.cpp`, `ClaimConsistencyCheckTest.cpp`
 
 ---
 
@@ -116,7 +114,9 @@ Prototype replaced: the prototype counted interactors with a replicated `Interac
 **Required evidence**:
 - Logic: the four test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.InteractHoldSecOneValue, ClaimLifecycle, ClaimReleaseOutsideSlot, ClaimConsistencyCheck; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/
+
+Run result: OBSERVED with the batch: every tend of the 3-player run claimed and released through the owner (no claim-consistency fault: `[Bot]` dumps, ServiceBoots).
 
 ---
 
@@ -124,3 +124,10 @@ Prototype replaced: the prototype counted interactors with a replicated `Interac
 
 - Depends on: `production/epics/objectives-chain/story-001-objectives-tuning-rows-and-invariants.md`, `production/epics/objectives-chain/story-005-service-shell-and-composition-root.md`; cross-epic: `production/epics/input-interaction-framework/story-003-action-hub-and-predicate-registry.md` (declares `IInteractTargetOwner`), `production/epics/input-interaction-framework/story-095-command-test-seams.md`; cross-epic: level-socket-contract (fixture face geometry; stories not yet written)
 - Unlocks: `production/epics/objectives-chain/story-007-interact-predicate-and-feint-parity.md`, `production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md`, `production/epics/objectives-chain/story-009-final-completion-and-win-declaration.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC4 passing. AC2's debounced End is asserted on the owner side (no OnInteractEnded call until the slot that ends the hold, so the claim stands); the stand-in IIF hold has no release debounce yet (IIF stage 2).
+**Deviations**: `IInteractTargetOwner` gains `OnInteractCompleteLatched` (the queue's OnRejectedLatched for a latched HoldTimer(Complete): the claim release and Round R19's TendCompleted(NoEffect, Latched)); declared by Objectives because IIF story 003 did not ship the interface. The drain-end check compares claims with the stand-in's running holds per court.
+**Test Evidence**: production/qa/evidence/objectives-chain-001-009-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (APPROVED; notes in the evidence)

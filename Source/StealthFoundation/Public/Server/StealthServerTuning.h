@@ -49,6 +49,9 @@ struct STEALTHFOUNDATION_API FStealthServerTuning
 	UPROPERTY(EditAnywhere, Category = "Objectives")
 	FObjectivesTuning_Public Objectives_Public;
 
+	UPROPERTY(EditAnywhere, Category = "Objectives")
+	FObjectivesTuning_Server Objectives_Server;
+
 	UPROPERTY(EditAnywhere, Category = "Locomotion")
 	FLocomotionTuning_Public Locomotion_Public;
 

@@ -988,6 +988,14 @@ bool FRoundMatchCore::EndRound(uint8 WinningTeam, uint8 PublicReason)
 
 void FRoundMatchCore::ApplyDebugItem(const FDebugPayload& Payload, FQueueKey Key)
 {
+	if (Payload.Command == FRoundDebugResolver::CommandDebugObjectiveStage)
+	{
+		if (OnObjectiveDebugStage && Payload.Arg <= 1)
+		{
+			OnObjectiveDebugStage(static_cast<uint8>(Payload.Arg), Key);
+		}
+		return;
+	}
 	if (Payload.Command == FRoundDebugResolver::CommandDebugWin)
 	{
 		// The resolver already wrote the Debug-flagged WinLatched entry.
@@ -1182,6 +1190,27 @@ ERoundCommandResult FRoundMatchCore::SubmitDebugItem(ERoundHostCommand Command, 
 #endif
 }
 
+ERoundCommandResult FRoundMatchCore::SubmitDebugObjectiveStage(uint8 Team)
+{
+#if UE_BUILD_SHIPPING
+	return ERoundCommandResult::Unavailable;
+#else
+	if (PhaseCore.GetPhase() != ERoundPhase::Active)
+	{
+		return ERoundCommandResult::WrongPhase;
+	}
+	if (DebugQueue == nullptr || Team > 1)
+	{
+		return ERoundCommandResult::Unavailable;
+	}
+	FDebugPayload Payload;
+	Payload.Command = FRoundDebugResolver::CommandDebugObjectiveStage;
+	Payload.Arg = static_cast<uint32>(Team);
+	DebugQueue->Submit(FMailboxId::ServerLocal(), FQueueItem::Make(EQueueItemType::DebugItem, Gateways.Roster->GetEpochToken(), FMailboxId::ServerLocal(), Payload));
+	return ERoundCommandResult::Executed;
+#endif
+}
+
 ERoundCommandResult FRoundMatchCore::ExecuteHostCommand(const FRoundCommandCaller& Caller, ERoundHostCommand Command, const FRoundCommandArgs& Args)
 {
 	if (!Caller.IsHost())
@@ -1351,6 +1380,15 @@ EResolveResult FRoundDebugResolver::Resolve(const FQueueItem& Item, FQueueKey Ke
 	if (Payload == nullptr)
 	{
 		return EResolveResult::Voided;
+	}
+	if (Payload->Command == CommandDebugObjectiveStage)
+	{
+		// The Objectives core logs its own Debug-flagged ObjectiveStage / FinalCompleted rows in this slot.
+		if (OnDebug)
+		{
+			OnDebug(*Payload, Key);
+		}
+		return EResolveResult::Executed;
 	}
 	FRoundLogEntry Entry;
 	Entry.Key = Key;

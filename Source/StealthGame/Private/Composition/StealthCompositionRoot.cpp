@@ -7,8 +7,14 @@
 #include "Server/StealthPenaltyDueAdapter.h"
 #include "Server/StealthPenaltyService.h"
 #include "Server/StealthTuningSubstructs.h"
+#include "Server/Core/InteractHoldStandIn.h"
+#include "Server/ObjectivesService.h"
+#include "Server/StealthServerTuning.h"
 #include "StealthCommandWiring.h"
+#include "StealthObjective.h"
+#include "StealthObjectivesWiring.h"
 #include "StealthPenaltyWiring.h"
+#include "View/ObjectivesChainRegistry.h"
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -169,10 +175,9 @@ FPawnHandle UStealthMatchAdapters::GetBoundPawn(FParticipantId Participant) cons
 
 int32 UStealthMatchAdapters::GetCompletedPreliminaryStages(int32 Team) const
 {
-	const UWorld* World = GetGameWorld();
-	const AStealthGameState* State = World != nullptr ? World->GetGameState<AStealthGameState>() : nullptr;
-	// TeamStage is the stage being worked on (1, 2, then the final): the completed preliminary stages are one fewer.
-	return State != nullptr && (Team == 0 || Team == 1) ? FMath::Clamp(State->GetTeamStage(static_cast<uint8>(Team)) - 1, 0, 2) : 0;
+	// Objectives story oc-009: the production store (UObjectivesService) replaces the prototype TeamStage counter.
+	const UObjectivesService* Objectives = UObjectivesService::Get(GetGameWorld());
+	return Objectives != nullptr && (Team == 0 || Team == 1) ? FMath::Clamp(Objectives->GetCompletedPreliminaryStages(Team), 0, 2) : 0;
 }
 
 ERoundTravelRequestResult UStealthMatchAdapters::RequestRoundTravel(FName MapId, FName PresetId, uint32 RoundIndex)
@@ -251,6 +256,14 @@ void UStealthMatchAdapters::SignalPreparingEntered()
 		}
 		// The same world hosts every round: each connected player's "travel" is complete now (Session rule 11 stand-in).
 		AcknowledgeConnectedPlayers(/*bWorldReady*/ false);
+		// Objectives story oc-005 (ADR-0020 section 2): the one cooked chain is selected and validated at Preparing; an
+		// invalid chain, none or several is PreparingFailed(ObjectiveChainInvalid) and nothing is bound.
+		const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(WeakWorld.Get());
+		if (Root != nullptr && !Root->ValidateObjectivesChain())
+		{
+			Round->NotifyObjectiveChainInvalid();
+			return;
+		}
 		Round->NotifyTuningReady(0);
 	}));
 }
@@ -408,6 +421,7 @@ void UStealthCompositionRoot::Initialize(FSubsystemCollectionBase& Collection)
 		QueueReleasingHandle = Round->OnRoundQueueReleasing.AddUObject(this, &UStealthCompositionRoot::HandleRoundQueueReleasing);
 		RoundPhaseHandle = Round->OnPhaseChanged.AddUObject(this, &UStealthCompositionRoot::HandleRoundPhaseChanged);
 		QueueDrainedHandle = Round->OnRoundQueueDrained.AddUObject(this, &UStealthCompositionRoot::HandleRoundQueueDrained);
+		RoundActiveHandle = Round->OnRoundActive.AddUObject(this, &UStealthCompositionRoot::HandleRoundActive);
 		Round->SetLocalParticipantResolver([this](const UWorld* World) -> FParticipantId
 		{
 			const APlayerController* Local = World != nullptr ? World->GetFirstPlayerController() : nullptr;
@@ -448,7 +462,15 @@ void UStealthCompositionRoot::Deinitialize()
 		Round->OnRoundQueueReleasing.Remove(QueueReleasingHandle);
 		Round->OnPhaseChanged.Remove(RoundPhaseHandle);
 		Round->OnRoundQueueDrained.Remove(QueueDrainedHandle);
+		Round->OnRoundActive.Remove(RoundActiveHandle);
 	}
+	if (UObjectivesService* ObjectivesService = Objectives.Get())
+	{
+		ObjectivesService->Unbind();
+	}
+	Objectives.Reset();
+	InteractHolds.Reset();
+	ObjectivesAdapters.Reset();
 	PrototypeFallback.Reset();
 	PrototypeBushes.Reset();
 	PrototypeBodyObserver.Reset();
@@ -612,7 +634,25 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	// Interact / Hide / Traverse dispatch until IIF stage 2. Tuning: the schema defaults until the TDC store feeds features.
 	const FEncounterParams Params = FEncounterParams::Defaults();
 	PrototypeBushes = MakeShared<FStealthPrototypeBushSpotQuery>(World, Params.Server.OpenSpotToleranceCm); // = BushSpotToleranceCm (W-ASN-9)
-	PrototypeFallback = MakeShared<FStealthPrototypeCommandFallback>(InGameMode);
+	// Objectives stories oc-005..009: the Interact hold stand-in (until IIF stage 2) and the Objectives adapters it reads.
+	ObjectivesAdapters = MakeShared<FStealthObjectivesAdapters>(World, this, CommandClock.Get());
+	FInteractHoldStandIn::FDeps HoldDeps;
+	HoldDeps.Hub = UActionHub::Get(World);
+	HoldDeps.Queue = CommandQueue.Get();
+	HoldDeps.Clock = CommandClock.Get();
+	TWeakPtr<FStealthObjectivesAdapters> WeakObjectivesAdapters = ObjectivesAdapters;
+	HoldDeps.FindCourtInReach = [WeakObjectivesAdapters](const APawn& Pawn)
+	{
+		const TSharedPtr<FStealthObjectivesAdapters> Pinned = WeakObjectivesAdapters.Pin();
+		return Pinned.IsValid() ? Pinned->FindCourtInReach(Pawn) : FCourtFixtureId();
+	};
+	HoldDeps.IsLegalityActive = [WeakObjectivesAdapters](const APawn& Pawn)
+	{
+		const TSharedPtr<FStealthObjectivesAdapters> Pinned = WeakObjectivesAdapters.Pin();
+		return Pinned.IsValid() && Pinned->IsLegalityActive(Pawn);
+	};
+	InteractHolds = MakeShared<FInteractHoldStandIn>(HoldDeps);
+	PrototypeFallback = MakeShared<FStealthPrototypeCommandFallback>(InGameMode, InteractHolds.Get());
 	PrototypeBodyObserver = MakeShared<FStealthPrototypeBodyRemovalObserver>(); // STAND-IN: Concealment's removal observer
 	ReplyTransport = MakeShared<FStealthControllerReplyTransport>(World);
 	ReplyWorld = World;
@@ -638,9 +678,9 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		UE_LOGF(LogStealth, Error, "Encounters not wired: the service refused its seams.");
 		return;
 	}
-	// HoldTimer: Assassination's Prepare timers and its pose ends; no other owner submits hold timers to the queue yet
-	// (the prototype objective keeps its own timer), so the fallback hold resolver is none.
-	Encounters->SetFallbackResolvers(PrototypeFallback.Get(), nullptr);
+	// HoldTimer: Assassination's Prepare timers and its pose ends; every other hold timer (Interact's HoldTimer(Complete), story
+	// oc-005) goes to the Interact hold stand-in.
+	Encounters->SetFallbackResolvers(PrototypeFallback.Get(), InteractHolds.Get());
 	if (!Encounters->RegisterOn(*Queue))
 	{
 		UE_LOGF(LogStealth, Error, "Encounters: a PawnCommand / HoldTimer resolver or a DeathWrite / CounterPose applier was already registered.");
@@ -698,7 +738,121 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		});
 		DueAdapter->Bind(*PenaltyService);
 	}
+	WireObjectives(InGameMode);
 }
+
+void UStealthCompositionRoot::WireObjectives(AStealthGameMode* InGameMode)
+{
+	URoundMatchStore* Round = GetRoundStore();
+	FResolutionQueueCore* Queue = Round != nullptr ? Round->GetRoundQueue() : nullptr;
+	FRoundMatchCore* MatchCore = Round != nullptr ? Round->GetMatchCore() : nullptr;
+	UWorld* World = InGameMode != nullptr ? InGameMode->GetWorld() : nullptr;
+	UObjectivesService* ObjectivesService = World != nullptr ? World->GetSubsystem<UObjectivesService>() : nullptr;
+	UActionHub* Hub = UActionHub::Get(World);
+	if (ObjectivesService == nullptr || Hub == nullptr || !ObjectivesAdapters.IsValid() || Queue == nullptr || MatchCore == nullptr)
+	{
+		UE_LOGF(LogStealth, Error, "Objectives not wired: no service, hub, adapters or round queue (no objective can complete this match).");
+		return;
+	}
+	FStealthObjectivesAdapters& A = *ObjectivesAdapters;
+	FObjectivesServiceInit Init;
+	Init.Roster = &A;
+	Init.Session = &A;
+	Init.PawnControl = &A;
+	Init.Round = &A;
+	Init.Courts = &A;
+	Init.Assignment = &A;
+	Init.Chains = UObjectivesChainRegistry::Get(World);
+	Init.Views = &A;
+	Init.RivalRelease = &A;
+	Init.Queue = Queue;
+	Init.Faults = &CommandFaults;
+	// Tuning stand-in: the schema defaults (as the Crowd director and Assassination) until the TDC store feeds features.
+	Init.PublicTuning = FObjectivesTuning_Public();
+	Init.ServerTuning = FObjectivesTuning_Server();
+#if !UE_BUILD_SHIPPING
+	TWeakObjectPtr<URoundMatchStore> WeakRound(Round);
+	Init.SubmitDebugStage = [WeakRound](uint8 Team)
+	{
+		URoundMatchStore* Store = WeakRound.Get();
+		FRoundMatchCore* Core = Store != nullptr ? Store->GetMatchCore() : nullptr;
+		return Core != nullptr && Core->SubmitDebugObjectiveStage(Team) == ERoundCommandResult::Executed;
+	};
+#endif
+	if (!ObjectivesService->Bind(Init))
+	{
+		UE_LOGF(LogStealth, Error, "Objectives not wired: the service refused its seams.");
+		return;
+	}
+	Objectives = ObjectivesService;
+	// ADR-0020 section 1 / ADR-0011 section 6: the Interact predicate and the one interact-target owner, registered weakly.
+	Hub->RegisterPredicate(EActionType::Interact, TWeakInterfacePtr<ICommandPredicate>(ObjectivesService));
+	Hub->RegisterInteractTargetOwner(TWeakInterfacePtr<IInteractTargetOwner>(ObjectivesService));
+#if !UE_BUILD_SHIPPING
+	// Round's DebugItem slot for DebugObjectiveCompletion runs the same counted-completion effect (story oc-008).
+	TWeakObjectPtr<UObjectivesService> WeakService(ObjectivesService);
+	MatchCore->OnObjectiveDebugStage = [WeakService](uint8 Team, FQueueKey Key)
+	{
+		if (UObjectivesService* Service = WeakService.Get())
+		{
+			Service->ApplyDebugStage(Team, Key);
+		}
+	};
+#endif
+}
+
+bool UStealthCompositionRoot::ValidateObjectivesChain() const
+{
+	UObjectivesService* ObjectivesService = Objectives.Get();
+	if (ObjectivesService == nullptr)
+	{
+		return true; // no Objectives wiring in this world (a harness world without the composition root's game mode)
+	}
+	const FObjectivesSelection Selection = ObjectivesService->ValidateSelectedChain(FStealthServerTuning());
+	if (!Selection.bValid)
+	{
+		UE_LOGF(LogStealth, Error, "Objectives: the selected chain is invalid (clause %d, row %d, %d cooked chain(s)): PreparingFailed(ObjectiveChainInvalid).",
+			static_cast<int32>(Selection.Clause), Selection.Row, Selection.CookedChainCount);
+	}
+	return Selection.bValid;
+}
+
+void UStealthCompositionRoot::HandleObjectivesLayoutReady(uint32 LayoutId, int32 Seed)
+{
+	if (UObjectivesService* ObjectivesService = Objectives.Get())
+	{
+		ObjectivesService->HandleLayoutReady(LayoutId, Seed);
+	}
+}
+
+void UStealthCompositionRoot::HandleRoundActive(uint32 RoundEpoch, double ActivePhaseStart)
+{
+	UObjectivesService* ObjectivesService = Objectives.Get();
+	const URosterStore* Roster = GetRosterStore();
+	if (ObjectivesService != nullptr)
+	{
+		const FEpochToken Epoch(Roster != nullptr && Roster->IsStoreInitialized() ? Roster->GetEpochToken().MatchId : 0, RoundEpoch);
+		ObjectivesService->HandleRoundActive(Epoch, ActivePhaseStart);
+	}
+}
+
+#if !UE_BUILD_SHIPPING
+FCourtFixtureId UStealthCompositionRoot::FindObjectivesLiveCourtForDev(FParticipantId Participant) const
+{
+	const UObjectivesService* ObjectivesService = Objectives.Get();
+	if (ObjectivesService == nullptr || !ObjectivesAdapters.IsValid() || !Participant.IsValid())
+	{
+		return FCourtFixtureId();
+	}
+	return ObjectivesService->GetLiveCourtForDev(ObjectivesAdapters->GetTeam(Participant));
+}
+
+const AActor* UStealthCompositionRoot::FindObjectivesCourtActorForDev(FCourtFixtureId Court) const
+{
+	return ObjectivesAdapters.IsValid() ? ObjectivesAdapters->FindCourtActor(Court) : nullptr;
+}
+#endif
+
 
 void UStealthCompositionRoot::HandleRoundPhaseChanged(ERoundPhase OldPhase, ERoundPhase NewPhase)
 {
@@ -707,6 +861,26 @@ void UStealthCompositionRoot::HandleRoundPhaseChanged(ERoundPhase OldPhase, ERou
 	if (NewPhase == ERoundPhase::Reset && Encounters != nullptr)
 	{
 		Encounters->ResetRound();
+	}
+	// Objectives (stories oc-004, oc-005): frozen at Ended; cleared at Reset. Every running hold ends outside a slot (the
+	// round-end staging pass): a claim release only.
+	if (NewPhase == ERoundPhase::Ended || NewPhase == ERoundPhase::Reset)
+	{
+		if (InteractHolds.IsValid())
+		{
+			InteractHolds->CancelAll();
+		}
+		if (UObjectivesService* ObjectivesService = Objectives.Get())
+		{
+			if (NewPhase == ERoundPhase::Ended)
+			{
+				ObjectivesService->HandleRoundEnded();
+			}
+			else
+			{
+				ObjectivesService->HandleRoundReset();
+			}
+		}
 	}
 	// NKP story 001 (PEN-R4): Penalty latches L and the release grace at Preparing (TDC rule CR-11 Latching).
 	if (NewPhase == ERoundPhase::Preparing)
@@ -727,10 +901,24 @@ void UStealthCompositionRoot::HandleRoundQueueDrained()
 	{
 		Hub->GetReplySinks().FlushPass(*ReplyTransport);
 	}
+#if !UE_BUILD_SHIPPING
+	// ADR-0020 5.1 (story oc-006): at drain end each fixture's claim count equals the Interacting slots targeting it.
+	UObjectivesService* ObjectivesService = Objectives.Get();
+	if (ObjectivesService != nullptr && InteractHolds.IsValid())
+	{
+		TMap<FCourtFixtureId, int32> Slots;
+		InteractHolds->GetInteractingSlotsByCourt(Slots);
+		ObjectivesService->CheckClaimConsistency(Slots);
+	}
+#endif
 }
 
 void UStealthCompositionRoot::HandleRoundQueueReleasing()
 {
+	if (UObjectivesService* ObjectivesService = Objectives.Get())
+	{
+		ObjectivesService->ForgetQueue(); // its StageSignal registration goes with the queue
+	}
 	if (DueAdapter.IsValid())
 	{
 		DueAdapter->Unbind();

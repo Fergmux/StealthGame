@@ -1,12 +1,12 @@
 # Story 004: Core site state and per-team progress
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -35,9 +35,9 @@ This is the one-way state machine of OC-4. A court's state is never stored on th
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-02, AC-OC-17, OC-4, OC-17, States and Transitions), scoped to this story:*
 
-- [ ] **AC1** (AC-OC-02 [U] `ProgressOnlyByCompletion`): **GIVEN** team 0 at `Stage1` **WHEN** its `Prelim1` completes **THEN** `Prelim2(0)` is `Live` in the same slot and team 1's states are unchanged; **WHEN** the fake clock advances 60 min with no completion **THEN** no state changes and no event is emitted.
-- [ ] **AC2** (AC-OC-17 [U] `FinalNeedsOwnUnlock`): **GIVEN** team 1 before its unlock **WHEN** a team 1 pawn tends the true final to `D` **THEN** no effect and no state change (a team 0 unlock never unlocks team 1; team 1 with only `Prelim1` done is still locked).
-- [ ] **AC3** (OC-4, OC-17 [U] `StageLifecycle`): at `Active` entry both teams are `Stage1` with `Prelim1` `Live` and all else `Locked`; completing every `Prelim2` makes `Final` `Live` for that team only; progress never regresses when a completer later dies, disconnects or is removed (roster events from a stub); after `Ended` all states are frozen and a completion arriving afterwards is ignored.
+- [x] **AC1** (AC-OC-02 [U] `ProgressOnlyByCompletion`): **GIVEN** team 0 at `Stage1` **WHEN** its `Prelim1` completes **THEN** `Prelim2(0)` is `Live` in the same slot and team 1's states are unchanged; **WHEN** the fake clock advances 60 min with no completion **THEN** no state changes and no event is emitted.
+- [x] **AC2** (AC-OC-17 [U] `FinalNeedsOwnUnlock`): **GIVEN** team 1 before its unlock **WHEN** a team 1 pawn tends the true final to `D` **THEN** no effect and no state change (a team 0 unlock never unlocks team 1; team 1 with only `Prelim1` done is still locked).
+- [x] **AC3** (OC-4, OC-17 [U] `StageLifecycle`): at `Active` entry both teams are `Stage1` with `Prelim1` `Live` and all else `Locked`; completing every `Prelim2` makes `Final` `Live` for that team only; progress never regresses when a completer later dies, disconnects or is removed (roster events from a stub); after `Ended` all states are frozen and a completion arriving afterwards is ignored.
 
 ---
 
@@ -68,13 +68,10 @@ Prototype replaced: `FStealthRules::CanCompleteObjective` and the stage counter 
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-28; the OC 001-009 batch shares one commit, decision D41). Feature code follows the built features' layout `Source/StealthGameplay/Features/Objectives/{Public/Server,Public/View,Private}` and the tuning rows the TDC convention in StealthFoundation (decisions logged 2026-10-28).*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesCore.h` (site state, `StageIndex`, `ApplyCountedCompletion`, `HandleActiveEntry`)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesCore.cpp`
-- `Source/StealthGameplay/Private/Tests/Objectives/ProgressOnlyByCompletionTest.cpp` (class `FObjectivesProgressOnlyByCompletionTest`, name `StealthGame.Objectives.ProgressOnlyByCompletion`)
-- `Source/StealthGameplay/Private/Tests/Objectives/FinalNeedsOwnUnlockTest.cpp` (`StealthGame.Objectives.FinalNeedsOwnUnlock`)
-- `Source/StealthGameplay/Private/Tests/Objectives/StageLifecycleTest.cpp` (`StealthGame.Objectives.StageLifecycle`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesCore.h`, `ObjectivesCore.cpp` (site state per (team, row), `StageIndex`, `CompletedDefMask`, `HandleActiveEntry`, `ApplyCountedCompletion` (the only writer), `HandleRoundEnded`, `Reset`)
+- Tests: `Source/StealthGameplay/Private/Tests/Objectives/ProgressOnlyByCompletionTest.cpp`, `FinalNeedsOwnUnlockTest.cpp`, `StageLifecycleTest.cpp`
 
 ---
 
@@ -108,7 +105,9 @@ Prototype replaced: `FStealthRules::CanCompleteObjective` and the stage counter 
 **Required evidence**:
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.ProgressOnlyByCompletion, FinalNeedsOwnUnlock, StageLifecycle; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/
+
+Run result: OBSERVED with the batch (stories 005-009): team 0's Prelim1, Prelim2 and the final completed in order in 3-player PIE; team 1's tend at a completed court changed nothing (`oc-04`, `oc-06`, `oc-08`).
 
 ---
 
@@ -116,3 +115,10 @@ Prototype replaced: `FStealthRules::CanCompleteObjective` and the stage counter 
 
 - Depends on: `production/epics/objectives-chain/story-003-core-chain-validation-and-court-binding.md`
 - Unlocks: `production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md`, `production/epics/objectives-chain/story-010-team-view-struct-and-builder.md`, `production/epics/objectives-chain/story-015-rival-signal-release-scheduling.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing. The core reads no clock at all (nothing keyed on elapsed time exists), so AC1's 60-minute advance changes nothing by construction; the test still advances the stub clock in 3600 steps and in one. AC2's "no log entry from the core" means no ObjectiveStage / FinalCompleted: a bound pawn's completion also appends the server-only TendCompleted(NoEffect) measurement row of story 008.
+**Deviations**: none.
+**Test Evidence**: production/qa/evidence/objectives-chain-001-009-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (APPROVED; notes in the evidence)

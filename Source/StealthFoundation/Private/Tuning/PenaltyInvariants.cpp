@@ -6,7 +6,9 @@
 
 #include "Server/StealthServerTuning.h"
 
-namespace
+// A named namespace, not an anonymous one: the unity build can merge this file with AssassinationInvariants.cpp, whose
+// anonymous-namespace helpers have the same names.
+namespace PenaltyInvariantsLocal
 {
 	using StealthPenaltyInvariants::CompareToleranceAbs;
 
@@ -35,6 +37,10 @@ FPenaltyInvariantInputs FPenaltyInvariantInputs::FromValues(const FStealthServer
 
 namespace StealthPenaltyInvariants
 {
+	using PenaltyInvariantsLocal::AtMost;
+	using PenaltyInvariantsLocal::WarnUnless;
+	using PenaltyInvariantsLocal::PenaltyInvariantRows;
+
 	ETuningCheck CheckINkp1(const FStealthServerTuning& V, const FPenaltyInvariantInputs&, const FTuningCheckContext& Context)
 	{
 		if (V.Penalty_Public.NpcKillStrikeLimit != 1)

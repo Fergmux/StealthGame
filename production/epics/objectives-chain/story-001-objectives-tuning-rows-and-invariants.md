@@ -1,12 +1,12 @@
 # Story 001: Objectives tuning rows and invariants I-OC1 to I-OC3
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -35,10 +35,10 @@ This is the data foundation the rest of the epic reads. It adds the ten keys the
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-11, AC-OC-22, AC-OC-32 invariant clauses, Tuning Knobs table), scoped to this story. QL-STORY-READY revised AC4 (mechanism) and fixed the W_eff definition in AC2:*
 
-- [ ] **AC1** (AC-OC-11 [U] `InteractSecFloor`): **GIVEN** a preset with `ObjectiveInteractSec` 1.0 **THEN** the effective value is 2.0 with a warning; **GIVEN** `CrowdAmbientTouchMaxSec` 1.8 and `ObjectiveInteractSec` 2.0 **THEN** I-OC1 (`ObjectiveInteractSec >= CrowdAmbientTouchMaxSec + 0.5`) warns.
-- [ ] **AC2** (AC-OC-22 [U] `RivalSignalBound`): **GIVEN** the defaults (Min 30, Max 165, Q 30) **THEN** `W_eff` = 165 s (`W_eff = (Max - Min) + Q`, GDD F4) and `LR_sig` <= 2.4 at lambda_c 0.0033; **GIVEN** Min 40, Max 150, Q 30 (`W_eff` 140) **THEN** I-OC2 warns; **GIVEN** Min 60, Max 100, Q 20 (`W_eff` 60) **THEN** I-OC2 rejects the preset (TDC CR-6 fallback applies, no value is repaired); **GIVEN** Min 120, Max 70 **THEN** I-OC2 rejects (`Max >= Min + 30` fails).
-- [ ] **AC3** (AC-OC-32 [U] `TendCueDelay`, invariant clauses): **GIVEN** `TendCueDelaySec` 0.5 with `CrowdDecoyEarlyReleaseMinSec` 0.8 **THEN** I-OC3 (`TendCueDelaySec + 0.25 >= CrowdDecoyEarlyReleaseMinSec` and `TendCueDelaySec <= ObjectiveInteractSec - 1.0`) rejects the preset; **GIVEN** `TendCueDelaySec` 2.5 with `ObjectiveInteractSec` 3.0 **THEN** the hard range clamps it to 2.0 with a warning and I-OC3 then passes (2.0 <= 3.0 - 1.0). The order is clamp, then invariant.
-- [ ] **AC4** (GDD Tuning Knobs, ADR-0020 section 8): the ten Objectives-owned keys exist as ADR-0004 rows equal to a **constant fixture copied from the GDD Tuning Knobs table** (never derived from the rows under test): public face `TendCueDelaySec`, `FixtureInteractSideCount`; server face `ObjectivesPerStageCount`, `bRivalSignalEnabled`, `RivalSignalDelayMinSec`, `RivalSignalDelayMaxSec`, `RivalSignalReleaseQuantumSec`, `ClueMatchMaxCount`, `ObjectiveStallGapDefectSec`, `ObjectiveFinalDwellDefectSec`; `ObjectiveInteractSec` resolves to the TDC row and is not redeclared; **AND** a grep of every client-module source and header for the eight server-face key names returns 0 hits, and a seeded client include of a server-face key header fails `ObjectivesIncludeLint` (story 022).
+- [x] **AC1** (AC-OC-11 [U] `InteractSecFloor`): **GIVEN** a preset with `ObjectiveInteractSec` 1.0 **THEN** the effective value is 2.0 with a warning; **GIVEN** `CrowdAmbientTouchMaxSec` 1.8 and `ObjectiveInteractSec` 2.0 **THEN** I-OC1 (`ObjectiveInteractSec >= CrowdAmbientTouchMaxSec + 0.5`) warns.
+- [x] **AC2** (AC-OC-22 [U] `RivalSignalBound`): **GIVEN** the defaults (Min 30, Max 165, Q 30) **THEN** `W_eff` = 165 s (`W_eff = (Max - Min) + Q`, GDD F4) and `LR_sig` <= 2.4 at lambda_c 0.0033; **GIVEN** Min 40, Max 150, Q 30 (`W_eff` 140) **THEN** I-OC2 warns; **GIVEN** Min 60, Max 100, Q 20 (`W_eff` 60) **THEN** I-OC2 rejects the preset (TDC CR-6 fallback applies, no value is repaired); **GIVEN** Min 120, Max 70 **THEN** I-OC2 rejects (`Max >= Min + 30` fails).
+- [x] **AC3** (AC-OC-32 [U] `TendCueDelay`, invariant clauses): **GIVEN** `TendCueDelaySec` 0.5 with `CrowdDecoyEarlyReleaseMinSec` 0.8 **THEN** I-OC3 (`TendCueDelaySec + 0.25 >= CrowdDecoyEarlyReleaseMinSec` and `TendCueDelaySec <= ObjectiveInteractSec - 1.0`) rejects the preset; **GIVEN** `TendCueDelaySec` 2.5 with `ObjectiveInteractSec` 3.0 **THEN** the hard range clamps it to 2.0 with a warning and I-OC3 then passes (2.0 <= 3.0 - 1.0). The order is clamp, then invariant.
+- [x] **AC4** (GDD Tuning Knobs, ADR-0020 section 8): the ten Objectives-owned keys exist as ADR-0004 rows equal to a **constant fixture copied from the GDD Tuning Knobs table** (never derived from the rows under test): public face `TendCueDelaySec`, `FixtureInteractSideCount`; server face `ObjectivesPerStageCount`, `bRivalSignalEnabled`, `RivalSignalDelayMinSec`, `RivalSignalDelayMaxSec`, `RivalSignalReleaseQuantumSec`, `ClueMatchMaxCount`, `ObjectiveStallGapDefectSec`, `ObjectiveFinalDwellDefectSec`; `ObjectiveInteractSec` resolves to the TDC row and is not redeclared; **AND** a grep of every client-module source and header for the eight server-face key names returns 0 hits, and a seeded client include of a server-face key header fails `ObjectivesIncludeLint` (story 022).
 
 ---
 
@@ -68,15 +68,16 @@ Prototype replaced: `UStealthSettings::ObjectiveInteractTime` (prototype setting
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-28; the OC 001-009 batch shares one commit, decision D41). Feature code follows the built features' layout `Source/StealthGameplay/Features/Objectives/{Public/Server,Public/View,Private}` and the tuning rows the TDC convention in StealthFoundation (decisions logged 2026-10-28).*
 
-- `Source/StealthGameplay/Public/View/Features/Objectives/ObjectivesTuningPublic.h` (`FObjectivesTuning_Public`)
-- `Source/StealthGameplay/Public/Server/Features/Objectives/ObjectivesTuningServer.h` (`FObjectivesTuning_Server`)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesTuningChecks.cpp` (I-OC1..I-OC3 `Check` rows)
-- `Source/StealthGameplay/Private/Tests/Objectives/InteractSecFloorTest.cpp` (class `FObjectivesInteractSecFloorTest`, name `StealthGame.Objectives.InteractSecFloor`)
-- `Source/StealthGameplay/Private/Tests/Objectives/RivalSignalBoundTest.cpp` (`StealthGame.Objectives.RivalSignalBound`)
-- `Source/StealthGameplay/Private/Tests/Objectives/TendCueDelayInvariantTest.cpp` (`StealthGame.Objectives.TendCueDelayInvariant`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ObjectivesTuningRowsTest.cpp` (`StealthGame.Objectives.ObjectivesTuningRows`)
+- `Source/StealthFoundation/Public/View/StealthTuningPublicSubstructs.h` (`FObjectivesTuning_Public`: `TendCueDelaySec`, `FixtureInteractSideCount` beside the TDC canonical `ObjectiveInteractSec`)
+- `Source/StealthFoundation/Public/Server/StealthTuningSubstructs.h` (`FObjectivesTuning_Server`, the eight ServerOnly keys), `StealthServerTuning.h`, `StealthTuningData.h` (`Objectives_Server` on both faces)
+- `Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl` (regenerated, `Stealth.Tuning.SchemaGen` WROTE), `Source/StealthFoundation/Public/Server/StealthTuningVersion.h` (TuningSchemaVersion 8)
+- `Source/StealthFoundation/Public/Server/StealthObjectivesInvariants.h`, `Source/StealthFoundation/Private/Tuning/ObjectivesInvariants.cpp` (I-OC1..I-OC3 Check rows), `Source/StealthFoundation/Private/Tuning/StealthTuningInvariants.cpp` (registered, owner Objectives; I-OC2 mixed row)
+- `Source/StealthFoundation/Private/Tuning/PenaltyInvariants.cpp` (named local namespace: the unity build merged it with AssassinationInvariants.cpp once the new file shifted the unity groups)
+- `Source/StealthFoundation/Private/Tests/Tuning/InvariantBoundariesTest.cpp` (the real schema now has 19 range pairs: the 18 Crowd pairs and Objectives' RivalSignalDelayMinSec / MaxSec, which TDC's I-5 checks Min <= Max beside I-OC2)
+- `Source/StealthFoundation/Public/Server/Testing/StealthObjectivesTuningKnobs.h` (the GDD table as a constant fixture), `Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp` (pins)
+- Tests: `Source/StealthGameplay/Private/Tests/Objectives/InteractSecFloorTest.cpp`, `RivalSignalBoundTest.cpp`, `TendCueDelayInvariantTest.cpp`, `ObjectivesTuningRowsTest.cpp`, helpers `ObjectivesTuningTestSupport.h`, `ObjectivesSourceScan.h`
 
 ---
 
@@ -115,7 +116,9 @@ Prototype replaced: `UStealthSettings::ObjectiveInteractTime` (prototype setting
 **Required evidence**:
 - Logic: the four test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.InteractSecFloor, RivalSignalBound, TendCueDelayInvariant, ObjectivesTuningRows; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/
+
+Run result: N/A - tuning rows and preset-load invariants have no in-game surface (warnings and rejects are log lines and report findings, captured by the tests).
 
 ---
 
@@ -123,3 +126,10 @@ Prototype replaced: `UStealthSettings::ObjectiveInteractTime` (prototype setting
 
 - Depends on: cross-epic: `production/epics/tuning-data-config/story-038-schema-row-types.md`, `production/epics/tuning-data-config/story-040-canonical-keys-and-faces.md`, `production/epics/tuning-data-config/story-055-owner-invariant-mechanism.md`; cross-epic: `production/epics/tuning-data-config/story-002-gameplay-presentation-module-skeletons.md` (the `StealthGameplay` module); cross-epic: crowd-npc-behaviour (owns `CrowdAmbientTouchMaxSec`, `CrowdDecoyEarlyReleaseMinSec`; read through the registry, stories written in parallel)
 - Unlocks: `production/epics/objectives-chain/story-006-fixture-claims-and-interact-target-owner.md`, `production/epics/objectives-chain/story-013-clue-function-and-too-broad-log.md`, `production/epics/objectives-chain/story-014-rival-signal-draw-and-grid.md`, `production/epics/objectives-chain/story-016-presentation-view-helpers-and-ring-rule.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC4 passing. AC1 cases floor 1.0 / 1.99 to 2.0 with one clamp warning; the floored presets lower Crowd's CrowdDecoyEarlyReleaseMaxSec to 1.9 so Crowd's own I-CNB-6 (< ObjectiveInteractSec) does not reject first. AC4's seeded client INCLUDE of the server-face header is ObjectivesIncludeLint's (story 022, as the AC says); the name grep of every client-module source (StealthPresentation and every View/ folder) and its seeded control are here.
+**Deviations**: sub-structs live in StealthFoundation (the TDC schema convention every feature followed; FStealthServerTuning is a Foundation type) instead of the story's StealthGameplay paths; `bRivalSignalEnabled` carries Unit meta "Bool" (the generator requires a Unit; bools skip the suffix rule).
+**Test Evidence**: production/qa/evidence/objectives-chain-001-009-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (APPROVED; notes in the evidence)

@@ -147,6 +147,10 @@ bool FStealthPrototypeBushSpotQuery::IsConcealed(const APawn* Pawn) const
 EResolveResult FStealthPrototypeCommandFallback::Resolve(const FQueueItem& Item, FQueueKey Key)
 {
 	const FCommandPayload* Payload = Item.Type == EQueueItemType::PawnCommand ? Item.Payload.TryGet<FCommandPayload>() : nullptr;
+	if (Payload != nullptr && (static_cast<ECommandKind>(Payload->Kind) == ECommandKind::InteractBegin || static_cast<ECommandKind>(Payload->Kind) == ECommandKind::InteractEnd))
+	{
+		return Interact != nullptr ? Interact->Resolve(Item, Key) : EResolveResult::Voided; // every pawn kind, the same path
+	}
 	AStealthGameMode* Mode = GameMode.Get();
 	AStealthCharacter* Character = Payload != nullptr ? Cast<AStealthCharacter>(Payload->Pawn.Pawn.Get()) : nullptr;
 	if (Payload == nullptr || Mode == nullptr || Character == nullptr)
@@ -155,12 +159,6 @@ EResolveResult FStealthPrototypeCommandFallback::Resolve(const FQueueItem& Item,
 	}
 	switch (static_cast<ECommandKind>(Payload->Kind))
 	{
-	case ECommandKind::InteractBegin:
-		Mode->HandleInteractRequest(Character, true);
-		return EResolveResult::Executed;
-	case ECommandKind::InteractEnd:
-		Mode->HandleInteractRequest(Character, false);
-		return EResolveResult::Executed;
 	case ECommandKind::Traverse:
 	case ECommandKind::HideEnter:
 	case ECommandKind::HideExit:

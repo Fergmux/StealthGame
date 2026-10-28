@@ -1,12 +1,12 @@
 # Story 008: Completion gate and stage effects
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -38,10 +38,10 @@ This is the gate of OC-10 for the two preliminary stages (the final's win declar
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-06 stage rows, OC-10) and ADR-0020 sections 3 and 5.4, scoped to this story. QL-STORY-READY revised AC4 (Shipping evidence) and asked for the TendCompleted reading in AC3, resolved in Implementation Notes:*
 
-- [ ] **AC1** (AC-OC-06 [U, table-driven] `CompletionGate`, stage rows): **GIVEN** a stage `HoldTimer(Complete)` slot and, one row each, a completer that is (1) Active+Connected+human on an eligible team, (2) AI-driven (hand-over), (3) Unresponsive, (4) Disconnected, (5) an Informant at the slot, (6) Active on a team for which the site is not `Live`, **THEN** exactly one `ObjectiveStage` log entry for row 1 and 0 for rows 2-6, and site state and team views are unchanged for rows 2-6.
-- [ ] **AC2** (ADR-0020 5.4 (c)-(e) [U] `CompletionGateControlEpoch`): **GIVEN** a pawn whose control epoch changed since Begin, or with a hand-over pending, **THEN** the completion has no effect; **GIVEN** a second completion at an already `Completed` site **THEN** no effect and no log entry; a rejected completion emits nothing beyond the IIF's normal `OnActionCompleted`.
-- [ ] **AC3** (OC-10 stage effect [U] `StageCompletionEffects`): a counted stage completion marks the site `Completed`, unlocks the next stage for that team only in the same slot, logs `ObjectiveStage(team, stage, ObjectiveId, ParticipantId, Key)`, pushes the team view and schedules the rival release (a stub observes the call); every completion by a pawn bound to a participant (counted or not) appends server-only `TendCompleted(ParticipantId, Court, Counted|NoEffect)`; an unbound NPC decoy completion appends nothing.
-- [ ] **AC4** (ADR-0020 section 3 [U] `DebugCompleteStage`): (a) non-Shipping `DebugCompleteStage(Team)` enqueues its own Round `DebugItem` slot and calls the same `ApplyCountedCompletion` as AC3; (b) a source scan asserts every definition and declaration of `DebugCompleteStage` sits inside `#if !UE_BUILD_SHIPPING`; (c) a Shipping build/link of the module succeeds with no unresolved reference, with the build log retained in `production/qa/evidence/oc-shipping-build.md`.
+- [x] **AC1** (AC-OC-06 [U, table-driven] `CompletionGate`, stage rows): **GIVEN** a stage `HoldTimer(Complete)` slot and, one row each, a completer that is (1) Active+Connected+human on an eligible team, (2) AI-driven (hand-over), (3) Unresponsive, (4) Disconnected, (5) an Informant at the slot, (6) Active on a team for which the site is not `Live`, **THEN** exactly one `ObjectiveStage` log entry for row 1 and 0 for rows 2-6, and site state and team views are unchanged for rows 2-6.
+- [x] **AC2** (ADR-0020 5.4 (c)-(e) [U] `CompletionGateControlEpoch`): **GIVEN** a pawn whose control epoch changed since Begin, or with a hand-over pending, **THEN** the completion has no effect; **GIVEN** a second completion at an already `Completed` site **THEN** no effect and no log entry; a rejected completion emits nothing beyond the IIF's normal `OnActionCompleted`.
+- [x] **AC3** (OC-10 stage effect [U] `StageCompletionEffects`): a counted stage completion marks the site `Completed`, unlocks the next stage for that team only in the same slot, logs `ObjectiveStage(team, stage, ObjectiveId, ParticipantId, Key)`, pushes the team view and schedules the rival release (a stub observes the call); every completion by a pawn bound to a participant (counted or not) appends server-only `TendCompleted(ParticipantId, Court, Counted|NoEffect)`; an unbound NPC decoy completion appends nothing.
+- [x] **AC4** (ADR-0020 section 3 [U] `DebugCompleteStage`): (a) non-Shipping `DebugCompleteStage(Team)` enqueues its own Round `DebugItem` slot and calls the same `ApplyCountedCompletion` as AC3; (b) a source scan asserts every definition and declaration of `DebugCompleteStage` sits inside `#if !UE_BUILD_SHIPPING`; (c) a Shipping build/link of the module succeeds with no unresolved reference, with the build log retained in `production/qa/evidence/oc-shipping-build.md`.
 
 ---
 
@@ -74,14 +74,12 @@ Prototype replaced: `AStealthGameMode::OnObjectiveCompleted` and `FStealthRules:
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-28; the OC 001-009 batch shares one commit, decision D41). Feature code follows the built features' layout `Source/StealthGameplay/Features/Objectives/{Public/Server,Public/View,Private}` and the tuning rows the TDC convention in StealthFoundation (decisions logged 2026-10-28).*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesCore.h` and `ObjectivesCore.cpp` (`OnInteractEnded`, gate (a)-(e), `ApplyCountedCompletion` wiring)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesService.cpp` (`DebugCompleteStage`, guarded)
-- `Source/StealthGameplay/Private/Tests/Objectives/CompletionGateTest.cpp` (class `FObjectivesCompletionGateTest`, name `StealthGame.Objectives.CompletionGate`)
-- `Source/StealthGameplay/Private/Tests/Objectives/CompletionGateControlEpochTest.cpp` (`StealthGame.Objectives.CompletionGateControlEpoch`)
-- `Source/StealthGameplay/Private/Tests/Objectives/StageCompletionEffectsTest.cpp` (`StealthGame.Objectives.StageCompletionEffects`)
-- `Source/StealthGameplay/Private/Tests/Objectives/DebugCompleteStageTest.cpp` (`StealthGame.Objectives.DebugCompleteStage`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesCore.h`, `ObjectivesCore.cpp` (the gate (a)-(e), `ApplyCountedEffects`: ObjectiveStage, view push, rival release; TendCompleted for bound pawns; `ApplyDebugStageCompletion`, non-Shipping)
+- `Source/StealthGameplay/Features/Objectives/Public/Server/ObjectivesService.h`, `Private/ObjectivesService.cpp` (`DebugCompleteStage`, `ApplyDebugStage`, non-Shipping)
+- `Source/StealthGameplay/Public/Server/Core/Round/StealthRoundMatchCore.h`, `Private/Core/Round/StealthRoundMatchCore.cpp` (`FRoundDebugResolver::CommandDebugObjectiveStage`, `OnObjectiveDebugStage`, `SubmitDebugObjectiveStage`)
+- Tests: `Source/StealthGameplay/Private/Tests/Objectives/CompletionGateTest.cpp`, `CompletionGateControlEpochTest.cpp`, `StageCompletionEffectsTest.cpp`, `DebugCompleteStageTest.cpp`, `ObjectivesGateRows.h`
 - `production/qa/evidence/oc-shipping-build.md`
 
 ---
@@ -122,7 +120,9 @@ Prototype replaced: `AStealthGameMode::OnObjectiveCompleted` and `FStealthRules:
 - Logic: the four test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 - AC4(c): `production/qa/evidence/oc-shipping-build.md` (Shipping build/link log)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.CompletionGate, CompletionGateControlEpoch, StageCompletionEffects, DebugCompleteStage; Shipping build `production/qa/evidence/oc-shipping-build.md`; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/
+
+Run result: OBSERVED - team 0's stages counted through the gate in 3-player PIE (`oc-04` Stage 2/3, `oc-06` Stage 3/3).
 
 ---
 
@@ -130,3 +130,10 @@ Prototype replaced: `AStealthGameMode::OnObjectiveCompleted` and `FStealthRules:
 
 - Depends on: `production/epics/objectives-chain/story-004-core-site-state-and-progress.md`, `production/epics/objectives-chain/story-006-fixture-claims-and-interact-target-owner.md`, `production/epics/objectives-chain/story-007-interact-predicate-and-feint-parity.md`; cross-epic: `production/epics/input-interaction-framework/story-055-objectives-completion.md`, `production/epics/input-interaction-framework/story-050-hold-timer-key-order.md`; round-match-framework (queue, latch, Event Log, `DebugItem`; stories being written in parallel); session-travel (connection state: `story-015-connection-state-machine-illegal-transitions.md`); shared-character-locomotion/pawn factory (`GetControlEpoch`, `IsHandOverPending`)
 - Unlocks: `production/epics/objectives-chain/story-009-final-completion-and-win-declaration.md`, `production/epics/objectives-chain/story-012-rejoin-rebind-and-reset.md`, `production/epics/objectives-chain/story-015-rival-signal-release-scheduling.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC4 passing. TendCompleted reading (the story's question): every completion by a pawn the Roster binds appends TendCompleted (rows 2-6 NoEffect), an unbound crowd pawn appends nothing; in the production path the IIF stand-in cancels an Informant's hold (Illegal) at its slot, so row 5 never reaches the gate there (the core's gate still gives NoEffect, tested). ObjectiveStage carries the row index and ChainSerial in place of the ObjectiveId name (log entries hold no strings). AC4 (c): Shipping build/link Result: Succeeded, production/qa/evidence/oc-shipping-build.md.
+**Deviations**: DebugCompleteStage runs through Round's own DebugItem (new command CommandDebugObjectiveStage = 3, routed by FRoundMatchCore::OnObjectiveDebugStage; SubmitDebugObjectiveStage). Team-view push and rival release are observer seams until stories 010/011 and 014/015 (the composition root's stand-ins: the prototype HUD mirror, no release).
+**Test Evidence**: production/qa/evidence/objectives-chain-001-009-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (APPROVED; notes in the evidence)

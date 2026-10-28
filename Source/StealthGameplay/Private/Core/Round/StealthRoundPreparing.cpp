@@ -146,6 +146,14 @@ void FRoundPreparingSequencer::OnTuningSnapshotFault()
 	}
 }
 
+void FRoundPreparingSequencer::OnObjectiveChainInvalid()
+{
+	if (IsRunning())
+	{
+		Abort(ERoundPreparingAbortCode::ObjectiveChainInvalid);
+	}
+}
+
 void FRoundPreparingSequencer::OnLayoutReady(uint32 InLayoutId, int32 LayoutSeed)
 {
 	if (Step != ERoundPreparingStep::AwaitLayoutAndBarrier || bLayoutReady)

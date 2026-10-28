@@ -150,6 +150,12 @@ public:
 	/** Hand-overs requested by RequestHandOver whose AI possession has not executed yet (tests and dumps). */
 	int32 GetPendingHandOverCount() const { return PendingHandOvers; }
 
+	/**
+	 * True while a hand-over of Pawn was committed (RequestHandOver / RequestHandOverToPlayer) and its possession has not
+	 * executed yet (ADR-0010 section 4.4 IsHandOverPending; read by the Objectives completion gate (c), story oc-008).
+	 */
+	bool IsHandOverPending(const AActor* Pawn) const { return Pawn != nullptr && PendingHandOverPawns.Contains(FObjectKey(Pawn)); }
+
 	/** True while ReleaseBody runs its UnPossess (the controller's OnUnPossess keeps the view target then). */
 	static bool IsReleasingBody() { return ReleasingBodyDepth > 0; }
 
@@ -177,6 +183,7 @@ private:
 	uint32 NextSpawnOrdinal = 0;
 	int32 SpawnCount = 0;
 	int32 PendingHandOvers = 0;
+	TSet<FObjectKey> PendingHandOverPawns;
 	FStealthLogFaultSink FaultSink;
 
 	/** Nesting of ReleaseBody (game thread only). */

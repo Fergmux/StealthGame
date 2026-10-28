@@ -1,12 +1,12 @@
 # Story 007: Interact predicate and feint/decoy parity
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ The hidden-site oracle guard lives here. The prompt, the pose, the timer and the
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-04, AC-OC-30, AC-OC-31), scoped to this story:*
 
-- [ ] **AC1** (AC-OC-04 [U] `PredicateSiteAndClassOnly`): **GIVEN** an Active-class pawn (human-bound, unbound NPC) and an Informant pawn **WHEN** `CanBegin(Interact)` is called on a live, locked, completed, opponent and hidden-final court with a free stand point **THEN** the Active pawns get `Allow` at all five and the Informant gets `Reject(NotNow)` at all five; **WHEN** all 4 stand points of the court are occupied **THEN** every pawn gets `Reject(NotNow)` at every court kind; the predicate's inputs are only (court, its public stand-point occupancy, legality class) (static check: the predicate translation unit calls no Roster team or binding query, no `FSiteAssignment` accessor and no `FObjectivesCore` site-state accessor); it never returns `AllowNoEffect`.
-- [ ] **AC2** (AC-OC-30 [U] `FeintMatchesDecoy`): **GIVEN** an NPC decoy tend and a human feint at the same non-live court **THEN** both pass the same `CanBegin`, run the same IIF path, emit identical `OnActionCompleted` events and identical replication to non-owner clients (recording stub driver), and neither changes state.
-- [ ] **AC3** (AC-OC-31 [U] `DecoyIncludesTendedCourts`, Objectives side): **GIVEN** a court with one stand point taken by a tending human **THEN** a decoy's `CanBegin` is `Allow` and its Begin takes a free stand point; **WHEN** all 4 points are taken **THEN** the decoy's Begin is `Reject(NotNow)`. (The 2,000-trial uniform court-choice chi-square belongs to the Crowd epic and consumes this predicate; it is not duplicated here.)
+- [x] **AC1** (AC-OC-04 [U] `PredicateSiteAndClassOnly`): **GIVEN** an Active-class pawn (human-bound, unbound NPC) and an Informant pawn **WHEN** `CanBegin(Interact)` is called on a live, locked, completed, opponent and hidden-final court with a free stand point **THEN** the Active pawns get `Allow` at all five and the Informant gets `Reject(NotNow)` at all five; **WHEN** all 4 stand points of the court are occupied **THEN** every pawn gets `Reject(NotNow)` at every court kind; the predicate's inputs are only (court, its public stand-point occupancy, legality class) (static check: the predicate translation unit calls no Roster team or binding query, no `FSiteAssignment` accessor and no `FObjectivesCore` site-state accessor); it never returns `AllowNoEffect`.
+- [x] **AC2** (AC-OC-30 [U] `FeintMatchesDecoy`): **GIVEN** an NPC decoy tend and a human feint at the same non-live court **THEN** both pass the same `CanBegin`, run the same IIF path, emit identical `OnActionCompleted` events and identical replication to non-owner clients (recording stub driver), and neither changes state.
+- [x] **AC3** (AC-OC-31 [U] `DecoyIncludesTendedCourts`, Objectives side): **GIVEN** a court with one stand point taken by a tending human **THEN** a decoy's `CanBegin` is `Allow` and its Begin takes a free stand point; **WHEN** all 4 points are taken **THEN** the decoy's Begin is `Reject(NotNow)`. (The 2,000-trial uniform court-choice chi-square belongs to the Crowd epic and consumes this predicate; it is not duplicated here.)
 
 ---
 
@@ -69,13 +69,11 @@ Prototype replaced: the prototype let the server decide interactability from the
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
+*Files changed by /dev-story (2026-10-28; the OC 001-009 batch shares one commit, decision D41). Feature code follows the built features' layout `Source/StealthGameplay/Features/Objectives/{Public/Server,Public/View,Private}` and the tuning rows the TDC convention in StealthFoundation (decisions logged 2026-10-28).*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesInteractPredicate.cpp` (the predicate translation unit)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesService.cpp` (`ICommandPredicate` registration glue)
-- `Source/StealthGameplay/Private/Tests/Objectives/PredicateSiteAndClassOnlyTest.cpp` (class `FObjectivesPredicateSiteAndClassOnlyTest`, name `StealthGame.Objectives.PredicateSiteAndClassOnly`)
-- `Source/StealthGameplay/Private/Tests/Objectives/FeintMatchesDecoyTest.cpp` (`StealthGame.Objectives.FeintMatchesDecoy`)
-- `Source/StealthGameplay/Private/Tests/Objectives/DecoyIncludesTendedCourtsTest.cpp` (`StealthGame.Objectives.DecoyIncludesTendedCourts`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesInteractPredicate.cpp` (the predicate translation unit: `UObjectivesService::CanBegin`, `ObjectivesInteractPredicate::Evaluate`)
+- `Source/StealthGame/Private/Composition/StealthCompositionRoot.cpp` (`RegisterPredicate(EActionType::Interact, ...)`)
+- Tests: `Source/StealthGameplay/Private/Tests/Objectives/PredicateSiteAndClassOnlyTest.cpp`, `FeintMatchesDecoyTest.cpp`, `DecoyIncludesTendedCourtsTest.cpp`
 
 ---
 
@@ -109,7 +107,9 @@ Prototype replaced: the prototype let the server decide interactability from the
 **Required evidence**:
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.PredicateSiteAndClassOnly, FeintMatchesDecoy, DecoyIncludesTendedCourts; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/
+
+Run result: OBSERVED - in 3-player PIE team 1 tended a completed court (a feint): the tend ran and changed nothing (`oc-05`; team 1 stayed at stage 1, prelims 0).
 
 ---
 
@@ -117,3 +117,10 @@ Prototype replaced: the prototype let the server decide interactability from the
 
 - Depends on: `production/epics/objectives-chain/story-006-fixture-claims-and-interact-target-owner.md`; cross-epic: `production/epics/participant-state-roster/story-031-legality-class-and-adoption.md` (`GetLegalityClass`), `production/epics/input-interaction-framework/story-003-action-hub-and-predicate-registry.md`, `production/epics/input-interaction-framework/story-028-allow-no-effect-parity.md`
 - Unlocks: `production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md`, `production/epics/objectives-chain/story-019-pie2-team-view-ingress-and-informant-parity.md`, `production/epics/objectives-chain/story-020-pie2-hidden-site-oracle-and-world-signature.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing. AC2's "identical replication to non-owner clients (recording stub driver)" is recorded as everything Objectives can send towards clients (team-view pushes, rival releases) plus the action hub's events and the completion time: identical (none, none, Started/Completed, D); the bound feint's only difference is the server-only TendCompleted row. The byte-exact multi-client capture is story 020's.
+**Deviations**: none.
+**Test Evidence**: production/qa/evidence/objectives-chain-001-009-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (APPROVED; notes in the evidence)

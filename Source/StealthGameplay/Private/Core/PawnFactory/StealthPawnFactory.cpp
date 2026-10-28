@@ -238,9 +238,11 @@ bool UStealthPawnFactory::RequestHandOver(APawn* Pawn, EStealthPawnControlKind K
 		BumpControlEpoch(Pawn); // nobody held it: the commit still makes every older-epoch command stale
 	}
 	TWeakObjectPtr<APawn> WeakPawn(Pawn);
-	auto Possess = [this, WeakPawn]()
+	const FObjectKey PendingKey(Pawn);
+	auto Possess = [this, WeakPawn, PendingKey]()
 	{
 		PendingHandOvers = FMath::Max(PendingHandOvers - 1, 0);
+		PendingHandOverPawns.Remove(PendingKey);
 		APawn* Target = WeakPawn.Get();
 		AStealthPawn* Shared = Cast<AStealthPawn>(Target);
 		IStealthPawnFactoryHooks* ActiveHooks = GetHooks();
@@ -256,6 +258,7 @@ bool UStealthPawnFactory::RequestHandOver(APawn* Pawn, EStealthPawnControlKind K
 		}
 	};
 	++PendingHandOvers;
+	PendingHandOverPawns.Add(PendingKey);
 	const double Delay = PossessNotBeforeServerTime - World->GetTimeSeconds();
 	if (Delay <= 0.0)
 	{
@@ -278,10 +281,13 @@ bool UStealthPawnFactory::RequestHandOverToPlayer(APawn* Pawn, AController* Play
 	BumpControlEpoch(Pawn);
 	TWeakObjectPtr<APawn> WeakPawn(Pawn);
 	TWeakObjectPtr<AController> WeakPlayer(PlayerController);
+	const FObjectKey PendingKey(Pawn);
 	++PendingHandOvers;
-	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, WeakPawn, WeakPlayer]()
+	PendingHandOverPawns.Add(PendingKey);
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, WeakPawn, WeakPlayer, PendingKey]()
 	{
 		PendingHandOvers = FMath::Max(PendingHandOvers - 1, 0);
+		PendingHandOverPawns.Remove(PendingKey);
 		APawn* Target = WeakPawn.Get();
 		AController* Player = WeakPlayer.Get();
 		const AStealthPawn* Shared = Cast<AStealthPawn>(Target);

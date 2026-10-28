@@ -1,0 +1,24 @@
+[2026.10.28-07.45.35:314][165]LogStealth: Layout ready (seed 1895911253, nav wait 1.7s).
+[2026.10.28-07.45.52:455][217]LogStealth: [Bot] Phase=1 Stages=1/1 Winner=255 NPCs=50
+[2026.10.28-07.45.52:455][217]LogStealth: [Bot] Objectives: bound=1 team0 stage=1 prelims=0, team1 stage=1 prelims=0
+[2026.10.28-07.45.52:455][217]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.28-07.45.52:455][217]LogStealth: [Bot] #0 FergsPC-E88C974D41EC team=0 state=Active pawn=V(X=-2400.00, Y=-2600.00, Z=88.27) braced=0 concealed=0
+[2026.10.28-07.45.52:455][217]LogStealth: [Bot] #1 FergsPC-5A03B2B04F55 team=1 state=Active pawn=V(X=-2850.00, Y=2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.28-07.45.52:455][217]LogStealth: [Bot] #2 FergsPC-F2DDBDCA4A8A team=0 state=Active pawn=V(X=-3000.00, Y=-2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.28-07.46.10:108][270]LogStealth: [Bot] #2 tends court 1: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-07.46.18:108][294]LogStealth: [Bot] Phase=1 Stages=2/1 Winner=255 NPCs=50
+[2026.10.28-07.46.18:108][294]LogStealth: [Bot] Objectives: bound=1 team0 stage=2 prelims=1, team1 stage=1 prelims=0
+[2026.10.28-07.46.18:108][294]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.28-07.46.18:108][294]LogStealth: [Bot] #0 FergsPC-E88C974D41EC team=0 state=Active pawn=V(X=-2400.00, Y=-2600.00, Z=88.27) braced=0 concealed=0
+[2026.10.28-07.46.18:108][294]LogStealth: [Bot] #1 FergsPC-5A03B2B04F55 team=1 state=Active pawn=V(X=-2850.00, Y=2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.28-07.46.18:108][294]LogStealth: [Bot] #2 FergsPC-F2DDBDCA4A8A team=0 state=Active pawn=V(X=-899.35, Y=-2796.06, Z=88.28) braced=0 concealed=0
+[2026.10.28-07.46.27:182][321]LogStealth: [Bot] #2 tends court 2: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-07.46.28:174][324]LogStealth: [Bot] #1 tends court 1: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-07.46.37:848][353]LogStealth: [Bot] Phase=1 Stages=3/1 Winner=255 NPCs=50
+[2026.10.28-07.46.37:848][353]LogStealth: [Bot] Objectives: bound=1 team0 stage=3 prelims=2, team1 stage=1 prelims=0
+[2026.10.28-07.46.37:848][353]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.28-07.46.37:848][353]LogStealth: [Bot] #0 FergsPC-E88C974D41EC team=0 state=Active pawn=V(X=-2400.00, Y=-2600.00, Z=88.27) braced=0 concealed=0
+[2026.10.28-07.46.37:848][353]LogStealth: [Bot] #1 FergsPC-5A03B2B04F55 team=1 state=Active pawn=V(X=-804.28, Y=-2670.17, Z=88.28) braced=0 concealed=0
+[2026.10.28-07.46.37:848][353]LogStealth: [Bot] #2 FergsPC-F2DDBDCA4A8A team=0 state=Active pawn=V(X=-773.20, Y=-3601.81, Z=88.28) braced=0 concealed=0
+[2026.10.28-07.46.45:514][376]LogStealth: [Bot] #0 tends court 5: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-07.46.48:843][386]LogStealth: Round over: team 0 wins (objective).

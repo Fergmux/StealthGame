@@ -68,15 +68,15 @@ Written by `/create-stories objectives-chain` (story_granularity `balanced`, 2-4
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | Objectives tuning rows and invariants I-OC1 to I-OC3 | Logic | Ready | ADR-0020 |
-| 002 | Chain data types and the Cacao chain asset | Logic | Ready | ADR-0020 |
-| 003 | Core chain validation and court binding | Logic | Ready | ADR-0020 |
-| 004 | Core site state and per-team progress | Logic | Ready | ADR-0020 |
-| 005 | Service shell and composition-root wiring | Integration | Ready | ADR-0020 |
-| 006 | Fixture claims and the interact-target owner | Logic | Ready | ADR-0020 |
-| 007 | Interact predicate and feint/decoy parity | Logic | Ready | ADR-0020 |
-| 008 | Completion gate and stage effects | Logic | Ready | ADR-0020 |
-| 009 | Final completion and win declaration | Logic | Ready | ADR-0020 |
+| 001 | Objectives tuning rows and invariants I-OC1 to I-OC3 | Logic | Complete | ADR-0020 |
+| 002 | Chain data types and the Cacao chain asset | Logic | Complete | ADR-0020 |
+| 003 | Core chain validation and court binding | Logic | Complete | ADR-0020 |
+| 004 | Core site state and per-team progress | Logic | Complete | ADR-0020 |
+| 005 | Service shell and composition-root wiring | Integration | Complete | ADR-0020 |
+| 006 | Fixture claims and the interact-target owner | Logic | Complete | ADR-0020 |
+| 007 | Interact predicate and feint/decoy parity | Logic | Complete | ADR-0020 |
+| 008 | Completion gate and stage effects | Logic | Complete | ADR-0020 |
+| 009 | Final completion and win declaration | Logic | Complete | ADR-0020 |
 | 010 | Team view struct and builder | Logic | Ready | ADR-0020 |
 | 011 | Team view component and replication | Integration | Ready | ADR-0020 |
 | 012 | Rejoin, view rebind and round reset | Logic | Ready | ADR-0020 |

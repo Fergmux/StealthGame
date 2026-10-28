@@ -21,6 +21,7 @@
 #include "Server/StealthCompositionRoot.h"
 #include "Server/StealthPenaltyHarnessSeams.h"
 #include "Server/StealthPenaltyService.h"
+#include "Server/ObjectivesService.h"
 
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
@@ -495,6 +496,11 @@ void AStealthGameMode::PollLayoutNavReady()
 		It->ValidateReachability();
 	}
 	UE_LOG(LogStealth, Log, TEXT("Layout ready (seed %d, nav wait %.1fs)."), PendingLayoutSeed, Waited);
+	// Objectives story oc-005: OnLayoutReady binds the chain to the (stand-in) site assignment before Round hears of the layout.
+	if (UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld()))
+	{
+		Root->HandleObjectivesLayoutReady(1, PendingLayoutSeed);
+	}
 	if (URoundMatchStore* Round = URoundMatchStore::Get(GetWorld()))
 	{
 		Round->NotifyLayoutReady(1, PendingLayoutSeed);
@@ -1023,6 +1029,26 @@ void AStealthGameMode::OnObjectiveCompleted(AStealthObjective* Objective, ASteal
 	}
 }
 
+void AStealthGameMode::MirrorProductionObjectiveStage(uint8 Team)
+{
+	AStealthGameState* GS = GetStealthGameState();
+	const UObjectivesService* Objectives = UObjectivesService::Get(GetWorld());
+	if (GS == nullptr || Objectives == nullptr || !GS->TeamStage.IsValidIndex(Team))
+	{
+		return;
+	}
+	const EObjectiveTeamStage Stage = Objectives->GetObjectiveTeamStage(Team);
+	const int32 Mirrored = Stage == EObjectiveTeamStage::Stage2 ? 2 : Stage == EObjectiveTeamStage::Final ? STEALTH_FINAL_STAGE : 1;
+	const bool bAdvanced = Mirrored > GS->TeamStage[Team];
+	GS->TeamStage[Team] = Mirrored;
+	if (bAdvanced)
+	{
+		// Team audience only (the opponent learns nothing at this instant; OC-12's delayed count is stories oc-014/015).
+		MessageTeam(Team, Mirrored == STEALTH_FINAL_STAGE ? LOCTEXT("ProdFinalUnlocked", "Your house's preparations are done. Find the ruler's cup.")
+			: LOCTEXT("ProdStageBanked", "Task complete. The next task is ready."), false, 6.f);
+	}
+}
+
 // ---- Communication --------------------------------------------------------------------------------
 
 void AStealthGameMode::HandlePing(AStealthCharacter* Sender, const FVector& Location)
@@ -1107,6 +1133,12 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 	if (Action.Equals(TEXT("report"), ESearchCase::IgnoreCase))
 	{
 		UE_LOG(LogStealth, Log, TEXT("[Bot] Phase=%d Stages=%d/%d Winner=%d NPCs=%d"), (int32)GS->RoundPhase, GS->GetTeamStage(0), GS->GetTeamStage(1), GS->WinningTeam, CrowdNpcs.Num());
+		if (const UObjectivesService* Objectives = UObjectivesService::Get(GetWorld()))
+		{
+			UE_LOG(LogStealth, Log, TEXT("[Bot] Objectives: bound=%d team0 stage=%d prelims=%d, team1 stage=%d prelims=%d"), Objectives->IsBound() ? 1 : 0,
+				static_cast<int32>(Objectives->GetObjectiveTeamStage(0)), Objectives->GetCompletedPreliminaryStages(0),
+				static_cast<int32>(Objectives->GetObjectiveTeamStage(1)), Objectives->GetCompletedPreliminaryStages(1));
+		}
 		if (const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld()))
 		{
 			UE_LOG(LogStealth, Log, TEXT("[Bot] %s"), *Root->DescribeProductionState(GetWorld()));
@@ -1274,20 +1306,45 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 		return;
 	}
 
-	if (Action.Equals(TEXT("interact"), ESearchCase::IgnoreCase))
+	if (Action.StartsWith(TEXT("interact"), ESearchCase::IgnoreCase) && !Action.Equals(TEXT("interactend"), ESearchCase::IgnoreCase))
 	{
-		const uint8 Team = Pawn->GetTeam();
-		for (TActorIterator<AStealthObjective> It(GetWorld()); It; ++It)
+		// The production path (Objectives stories oc-005..009): stand at a court and submit InteractBegin through the pawn's
+		// command component; the hold resolves in Round's queue (the IIF stand-in) and completes in UObjectivesService's slot
+		// after ObjectiveInteractSec. "interact" picks this player's team's own live court (a dev read of the server store);
+		// "interact <court id>" tends any court (a feint at a non-live court has no effect).
+		const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld());
+		const FString Arg = Action.RightChop(8).TrimStartAndEnd();
+		const AStealthPlayerController* OwnerController = Cast<AStealthPlayerController>(Controller);
+		const FParticipantId Participant = Root != nullptr && OwnerController != nullptr ? Root->GetParticipant(OwnerController) : FParticipantId();
+		const FCourtFixtureId Court = Arg.IsEmpty() ? (Root != nullptr ? Root->FindObjectivesLiveCourtForDev(Participant) : FCourtFixtureId())
+			: FCourtFixtureId(static_cast<uint16>(FCString::Atoi(*Arg)));
+		const AActor* CourtActor = Root != nullptr ? Root->FindObjectivesCourtActorForDev(Court) : nullptr;
+		if (CourtActor == nullptr)
 		{
-			if (!It->IsCompleted() && FStealthRules::CanCompleteObjective(Team, GS->GetTeamStage(Team), It->OwningTeam, It->Stage))
-			{
-				FaceAndApproach(*It, 150.f);
-				HandleInteractRequest(Pawn, true);
-				UE_LOG(LogStealth, Log, TEXT("[Bot] #%d interacting with '%s' (stage %d)."), PlayerIndex, *It->DisplayName.ToString(), It->Stage);
-				return;
-			}
+			UE_LOG(LogStealth, Warning, TEXT("[Bot] #%d interact: no court (live court for this team not found)."), PlayerIndex);
+			return;
 		}
-		UE_LOG(LogStealth, Warning, TEXT("[Bot] #%d interact: no available objective."), PlayerIndex);
+		FaceAndApproach(CourtActor, 150.f);
+		AsOwner([Court](UPawnCommandComponent& Command) { Command.InteractBegin(Court); });
+		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d tends court %d: InteractBegin submitted (hold %.1f s)."), PlayerIndex, static_cast<int32>(Court.Value),
+			UObjectivesService::Get(GetWorld()) != nullptr ? UObjectivesService::Get(GetWorld())->GetInteractHoldSec() : 0.0);
+		return;
+	}
+
+	if (Action.StartsWith(TEXT("debugstage"), ESearchCase::IgnoreCase))
+	{
+		// DebugObjectiveCompletion (Objectives story oc-008): Round's own DebugItem slot completes the team's current stage.
+		const int32 Team = FCString::Atoi(*Action.RightChop(10).TrimStartAndEnd());
+		UObjectivesService* Objectives = UObjectivesService::Get(GetWorld());
+		const bool bQueued = Objectives != nullptr && (Team == 0 || Team == 1) && Objectives->DebugCompleteStage(static_cast<uint8>(Team));
+		UE_LOG(LogStealth, Log, TEXT("[Bot] debugstage %d: %s"), Team, bQueued ? TEXT("DebugItem submitted") : TEXT("refused"));
+		return;
+	}
+
+	if (Action.Equals(TEXT("interactend"), ESearchCase::IgnoreCase))
+	{
+		AsOwner([](UPawnCommandComponent& Command) { Command.InteractEnd(); });
+		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d release: InteractEnd submitted"), PlayerIndex);
 		return;
 	}
 

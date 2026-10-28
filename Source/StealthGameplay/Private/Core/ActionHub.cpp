@@ -61,3 +61,28 @@ FPredicateResult UActionHub::ResolvePredicate(EActionType Type, const AStealthPa
 	}
 	return Predicates[static_cast<int32>(Type)]->CanBegin(Pawn, Cmd);
 }
+
+bool UActionHub::RegisterInteractTargetOwner(TWeakInterfacePtr<IInteractTargetOwner> Owner)
+{
+	if (!Owner.IsValid())
+	{
+		GetFaultSink().Report(EStealthFault::DeadRegistration, ActionHubPrivate::FaultSource, static_cast<int64>(EActionType::Interact));
+		return false;
+	}
+	InteractTargetOwner = Owner;
+	bInteractTargetOwnerRegistered = true;
+	return true;
+}
+
+IInteractTargetOwner* UActionHub::ResolveInteractTargetOwner() const
+{
+	if (InteractTargetOwner.IsValid())
+	{
+		return InteractTargetOwner.Get();
+	}
+	if (bInteractTargetOwnerRegistered)
+	{
+		GetFaultSink().Report(EStealthFault::DeadRegistration, ActionHubPrivate::FaultSource, static_cast<int64>(EActionType::Interact));
+	}
+	return nullptr;
+}
