@@ -1029,26 +1029,6 @@ void AStealthGameMode::OnObjectiveCompleted(AStealthObjective* Objective, ASteal
 	}
 }
 
-void AStealthGameMode::MirrorProductionObjectiveStage(uint8 Team)
-{
-	AStealthGameState* GS = GetStealthGameState();
-	const UObjectivesService* Objectives = UObjectivesService::Get(GetWorld());
-	if (GS == nullptr || Objectives == nullptr || !GS->TeamStage.IsValidIndex(Team))
-	{
-		return;
-	}
-	const EObjectiveTeamStage Stage = Objectives->GetObjectiveTeamStage(Team);
-	const int32 Mirrored = Stage == EObjectiveTeamStage::Stage2 ? 2 : Stage == EObjectiveTeamStage::Final ? STEALTH_FINAL_STAGE : 1;
-	const bool bAdvanced = Mirrored > GS->TeamStage[Team];
-	GS->TeamStage[Team] = Mirrored;
-	if (bAdvanced)
-	{
-		// Team audience only (the opponent learns nothing at this instant; OC-12's delayed count is stories oc-014/015).
-		MessageTeam(Team, Mirrored == STEALTH_FINAL_STAGE ? LOCTEXT("ProdFinalUnlocked", "Your house's preparations are done. Find the ruler's cup.")
-			: LOCTEXT("ProdStageBanked", "Task complete. The next task is ready."), false, 6.f);
-	}
-}
-
 // ---- Communication --------------------------------------------------------------------------------
 
 void AStealthGameMode::HandlePing(AStealthCharacter* Sender, const FVector& Location)

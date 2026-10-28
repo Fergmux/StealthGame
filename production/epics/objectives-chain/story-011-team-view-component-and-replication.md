@@ -1,12 +1,12 @@
 # Story 011: Team view component and replication
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ The view is the only objective data any client ever receives. This story is the 
 
 *From ADR-0020 (OBJ-V1, OBJ-V2, section 6) and GDD AC-OC-03/AC-OC-09, scoped to this story:*
 
-- [ ] **AC1** (ADR OBJ-V1, [T2 PIE] `StealthGame.Objectives.PIE.TeamViewOwnerOnly`): **GIVEN** `UObjectiveTeamViewComponent` on `AStealthPlayerController` in a multi-client PIE run (2 teams, 1 client each) **THEN** each team's view is present only on its own team's owning connections and the other team's client never receives it, including after a rejoin; the **seamless-travel** case runs in the Session multi-process harness (single-process PIE cannot represent seamless travel, ADR-0005).
-- [ ] **AC2** (ADR OBJ-V2, AC-OC-09 clause [T2 PIE] `StealthGame.Objectives.PIE.RivalCountOneUpdate`): **GIVEN** two `RivalPrelimCount` writes in one server frame (0 to 1 to 2) **THEN** the client receives exactly one change with the final value 2; writes in two frames give two changes; the count never decreases.
-- [ ] **AC3** (ADR section 6 [U] `ObjectivesAllowlistRow` and PIE push-model run): `View` is registered with `bIsPushBased` and every write calls `MARK_PROPERTY_DIRTY_FROM_NAME`; the client view updates with `Net.IsPushModelEnabled` both 1 and 0; the controller uses the registered sub-object list; the ADR-0003 allowlist has exactly one row for `UObjectiveTeamViewComponent::View` (audience Team, carrier C-TeamView, mapped to the IVP R3 rows), and the reflection audit fails when that row is removed (and when a duplicate row is seeded).
+- [x] **AC1** (ADR OBJ-V1, [T2 PIE] `StealthGame.Objectives.PIE.TeamViewOwnerOnly`): **GIVEN** `UObjectiveTeamViewComponent` on `AStealthPlayerController` in a multi-client PIE run (2 teams, 1 client each) **THEN** each team's view is present only on its own team's owning connections and the other team's client never receives it, including after a rejoin; the **seamless-travel** case runs in the Session multi-process harness (single-process PIE cannot represent seamless travel, ADR-0005). *(2026-10-28: multi-client and rejoin PASS; the seamless-travel clause NOT RUN, deferred: see Completion Notes.)*
+- [x] **AC2** (ADR OBJ-V2, AC-OC-09 clause [T2 PIE] `StealthGame.Objectives.PIE.RivalCountOneUpdate`): **GIVEN** two `RivalPrelimCount` writes in one server frame (0 to 1 to 2) **THEN** the client receives exactly one change with the final value 2; writes in two frames give two changes; the count never decreases.
+- [x] **AC3** (ADR section 6 [U] `ObjectivesAllowlistRow` and PIE push-model run): `View` is registered with `bIsPushBased` and every write calls `MARK_PROPERTY_DIRTY_FROM_NAME`; the client view updates with `Net.IsPushModelEnabled` both 1 and 0; the controller uses the registered sub-object list; the ADR-0003 allowlist has exactly one row for `UObjectiveTeamViewComponent::View` (audience Team, carrier C-TeamView, mapped to the IVP R3 rows), and the reflection audit fails when that row is removed (and when a duplicate row is seeded).
 
 ---
 
@@ -73,14 +73,14 @@ Prototype replaced: the replicated actor per site (`AStealthObjective`, `bComple
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Public/View/Features/Objectives/ObjectiveTeamViewComponent.h`
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectiveTeamViewComponent.cpp`
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesService.cpp` (`PushTeamView`)
-- `Source/StealthGame/Public/StealthPlayerController.h` and `Private/StealthPlayerController.cpp` (default subobject, `bReplicateUsingRegisteredSubObjectList`; coordinate with the ADR-0001 owner story)
-- `Source/StealthFoundation/Private/Tests/Data/ReplicationAllowlist.json` (one row)
-- `Source/StealthGameplay/Private/Tests/Objectives/ObjectivesAllowlistRowTest.cpp` (class `FObjectivesAllowlistRowTest`, name `StealthGame.Objectives.ObjectivesAllowlistRow`)
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/TeamViewOwnerOnlyTest.cpp` (`NETWORK_TEST_CLASS(TeamViewOwnerOnly, "StealthGame.Objectives.PIE")`)
-- `Source/StealthTestHarness/Private/Tests/PIE/Objectives/RivalCountOneUpdateTest.cpp` (`NETWORK_TEST_CLASS(RivalCountOneUpdate, "StealthGame.Objectives.PIE")`)
+- `Source/StealthGameplay/Features/Objectives/Public/View/ObjectiveTeamViewComponent.h` / `Private/ObjectiveTeamViewComponent.cpp` (push-based `View`, change-only `ApplyView`, test seams for the dirty-mark control)
+- `Source/StealthGameplay/Features/Objectives/Public/Server/ObjectivesService.h` / `Private/ObjectivesService.cpp` (the service is the core's view sink: `PushTeamView`, `WriteTeamView`, `BuildTeamView`; `IObjectivesViewTargets` in `ObjectivesSeams.h`)
+- `Source/StealthGame/Public/StealthPlayerController.h` / `Private/StealthPlayerController.cpp` (default subobject `ObjectiveTeamView`; `bReplicateUsingRegisteredSubObjectList` was already set; the owner's local "stage banked" line, from the view)
+- `Source/StealthGame/Private/Composition/StealthObjectivesWiring.h` / `.cpp`, `StealthCompositionRoot.cpp` (the `IObjectivesViewTargets` adapter; the prototype `TeamStage` mirror removed), `StealthGameMode.h` / `.cpp` (`MirrorProductionObjectiveStage` deleted)
+- `Source/StealthGame/Private/StealthHUD.cpp` (objective panel, markers and the automation dump read only the own team's view: card titles from the cooked chain, "Rival steps: N of 2"; the prototype "Enemy progress" line is gone), `StealthObjective.h` / `.cpp` (`GetStandInCourts` / `FindStandInCourt`, the shared stand-in court ids)
+- `Source/StealthFoundation/Private/Tests/Data/ReplicationAllowlist.json` (created, with this row), `Source/StealthFoundation/Public/Server/Testing/StealthReplicationAllowlist.h` / `Private/Testing/StealthReplicationAllowlist.cpp` (parse + per-class audit, stand-in for IVP 013/015)
+- `Source/StealthGameplay/StealthGameplay.Build.cs` (`NetCore` private dependency for the push-model mark)
+- `Source/StealthGameplay/Private/Tests/Objectives/ObjectivesAllowlistRowTest.cpp`; `Source/StealthTestHarness/Private/Tests/PIE/Objectives/TeamViewOwnerOnlyTest.cpp`, `RivalCountOneUpdateTest.cpp`
 
 ---
 
@@ -114,7 +114,9 @@ Prototype replaced: the replicated actor per site (`AStealthObjective`, `bComple
 **Required evidence**:
 - Integration: the two T2 PIE tests under `Source/StealthTestHarness/Private/Tests/PIE/Objectives/` and the T1 audit test under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass; the OBJ-V1/OBJ-V2 outcome is recorded in the run output attached to the story at close
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.ObjectivesAllowlistRow; StealthGame.Objectives.PIE.TeamViewOwnerOnly.EachTeamsViewReachesOnlyItsOwnClients; StealthGame.Objectives.PIE.RivalCountOneUpdate.OneChangePerFrame_PushModelOn / _PushModelOff. OBJ-V1: PASS in single-process PIE (multi-client and rejoin rebind; seamless travel not run). OBJ-V2: PASS (one change for two same-frame writes, two for two frames, push model on and off). Output: production/qa/evidence/objectives-chain-010-012-2026-10-28/objectives-pie-filtered.txt
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype: team 0 banked P1 and P2 through the production chain; team 0's client and the host showed Stage 2/3 then 3/3 "The Ruler's Cacao" with their own markers; team 1's client stayed at Stage 1/3 "Hear the Runner", "Rival steps: 0 of 2", with no enemy stage line (production/qa/evidence/objectives-chain-010-012-2026-10-28/ `oc11-04`..`oc11-08`).
 
 ---
 
@@ -122,3 +124,10 @@ Prototype replaced: the replicated actor per site (`AStealthObjective`, `bComple
 
 - Depends on: `production/epics/objectives-chain/story-010-team-view-struct-and-builder.md`, `production/epics/objectives-chain/story-005-service-shell-and-composition-root.md`; cross-epic: `production/epics/participant-state-roster/story-038-owner-view-feed.md` and `story-041-team-view-repush-on-controller-swap.md` (C-TeamView carrier base and controller swap), `production/epics/information-visibility-policy/story-013-allowlist-content.md` and `story-015-replicated-property-audit.md`, `production/epics/information-visibility-policy/story-021-team-view-never-to-opponents.md`; `production/epics/tuning-data-config/story-004-test-harness-module-shipping-excluded.md`
 - Unlocks: `production/epics/objectives-chain/story-012-rejoin-rebind-and-reset.md`, `production/epics/objectives-chain/story-019-pie2-team-view-ingress-and-informant-parity.md`, `production/epics/objectives-chain/story-021-pie2-end-to-end-cacao-chain.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC2 and AC3 passing; AC1 passing for the multi-client and rejoin cases in single-process PIE. AC1's seamless-travel clause was NOT run: the Session multi-process harness (tools/ci/mp and its spike scenarios) has no production-game-mode Objectives scenario yet; deferred to story 019 / the session-travel epic (decision logged). The rejoin case reproduces a new controller on the server (Session's PIE rejoin is not built; the approach of NKP story 017's test).
+**Deviations**: the IVP allowlist file, parser and reflection audit did not exist (IVP 013/015 unbuilt): this story created the file at ADR-0008's path with its own row and a per-class audit (exactly one row per replicated property, the condition matches, no stray row) that fails on a removed, duplicated or mis-conditioned row; IVP 013/015 extend it. The push-on "unmarked write is not sent" control is an observation, not an assertion: the engine compares a NetSerialize property after a GC regardless of the mark (RepLayout `IsPropertyDirty`), so the "every write marks dirty" rule is pinned by a source check with a seeded control. The HUD reads only the owner-only view (the prototype's replicated `AStealthGameState::TeamStage` is no longer written on the production path; its deletion is story 022).
+**Test Evidence**: production/qa/evidence/objectives-chain-010-012-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

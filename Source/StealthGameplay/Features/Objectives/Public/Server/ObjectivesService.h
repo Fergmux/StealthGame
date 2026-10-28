@@ -20,6 +20,8 @@ class FResolutionQueueCore;
 class IObjectivesChainSource;
 class IStealthFaultSink;
 class UObjectiveChainData;
+class URosterStore;
+struct FRosterEvent;
 struct FStealthServerTuning;
 enum class EChainValidation : uint8;
 enum class EChainValidationClause : uint8;
@@ -35,7 +37,15 @@ struct FObjectivesServiceInit
 	const IObjectivesCourtGeometry* Courts = nullptr;
 	const IObjectivesAssignmentSource* Assignment = nullptr;
 	const IObjectivesChainSource* Chains = nullptr;
+	/** Where each team's view is written: the team members' controllers' UObjectiveTeamViewComponent (story oc-011). */
+	IObjectivesViewTargets* ViewTargets = nullptr;
+	/** Optional observer of every team-level view change (tests and dumps); never a second writer. */
 	IObjectivesViewSink* Views = nullptr;
+	/**
+	 * The Roster whose events the service subscribes to (story oc-012): OnParticipantViewRebound (the rejoin rebind write) and
+	 * OnRosterEvent's RosterReset (the clear). Null: no subscription (headless rigs call the handlers directly).
+	 */
+	URosterStore* RosterEvents = nullptr;
 	IObjectivesRivalRelease* RivalRelease = nullptr;
 	/** The round queue the TimerFired(StageSignal) resolver registers on (null: not registered). */
 	FResolutionQueueCore* Queue = nullptr;
@@ -66,8 +76,14 @@ struct FObjectivesSelection
  * worlds only (never on a client), NotBlueprintType, over the headless FObjectivesCore. It implements ICommandPredicate
  * (Interact), IInteractTargetOwner and IQueueResolver (TimerFired(StageSignal), the rival releases of stories oc-014/015).
  * It spawns no actor, has no tick function, no FTimerManager use and no latent action: it runs only inside queue slots, the
- * OnLayoutReady / OnRoundActive server hooks and the Roster's rebind handler. The composition root binds the seams and
- * registers it weakly; every registration it makes is undone by Unbind / Deinitialize.
+ * OnLayoutReady / OnRoundActive server hooks and the Roster's rebind and reset handlers. The composition root binds the seams and
+ * registers it weakly; every registration and subscription it makes is undone by Unbind / Deinitialize.
+ *
+ * The team view (stories oc-010..oc-012): the service is the core's view sink and the ONLY writer of
+ * UObjectiveTeamViewComponent::View. A team-level change (change-only in the core) is written to the component of each
+ * current controller of the team's members (Active or Informant), again change-only per component; the Roster's
+ * OnParticipantViewRebound writes that participant's team view inline (the empty default before Active entry); RosterReset
+ * clears the store and writes the empty default to every member.
  *
  * Usage (composition root, server):
  *   UObjectivesService* Objectives = World->GetSubsystem<UObjectivesService>();
@@ -78,7 +94,8 @@ struct FObjectivesSelection
  *   // OnLayoutReady: Objectives->HandleLayoutReady(LayoutId, Seed);  OnRoundActive: Objectives->HandleRoundActive(Epoch, t0);
  */
 UCLASS(NotBlueprintType, NotBlueprintable)
-class STEALTHGAMEPLAY_API UObjectivesService : public UWorldSubsystem, public ICommandPredicate, public IInteractTargetOwner, public IQueueResolver
+class STEALTHGAMEPLAY_API UObjectivesService : public UWorldSubsystem, public ICommandPredicate, public IInteractTargetOwner, public IQueueResolver,
+	public IObjectivesViewSink
 {
 	GENERATED_BODY()
 
@@ -127,8 +144,36 @@ public:
 	/** Round reached Ended: Objectives state is frozen. */
 	void HandleRoundEnded();
 
-	/** Round Reset / OnRosterReset: the store is cleared (story oc-012 owns the Roster subscription). */
+	/** Round Reset: the store is cleared (as HandleRosterReset, without the view clear: the Roster's reset precedes it). */
 	void HandleRoundReset();
+
+	// --- The team view (stories oc-010..oc-012) -------------------------------------------------------------------------
+
+	/** IObjectivesViewSink (the core's change-only push): writes View to every member of Team, then tells the observer. */
+	virtual void PushTeamView(uint8 Team, const FObjectiveTeamView& View) override;
+
+	/** Writes View to the component of each current controller of Team's members, change-only. Returns the components written. */
+	int32 WriteTeamView(uint8 Team, const FObjectiveTeamView& View);
+
+	/**
+	 * Roster OnParticipantViewRebound (ADR-0020 section 6, ADR-0005 RebindView; story oc-012): writes Participant's team view
+	 * inline to its new controller's component (the empty default before Active entry; nothing for a participant without a
+	 * team). Only that participant's component is written. True when the component's value changed.
+	 */
+	bool HandleViewRebound(FParticipantId Participant);
+
+	/**
+	 * Roster OnRosterReset (story oc-012): clears the store (site states, claims, view caches, rival counts; the pending rival
+	 * list of story oc-015 when it exists) and writes the empty default to every member's component, so no client keeps a
+	 * site across rounds.
+	 */
+	void HandleRosterReset();
+
+	/** Team's current view as the core builds it (server only: the clients' copy is their own component; tests and dumps). */
+	FObjectiveTeamView BuildTeamView(int32 Team) const;
+
+	/** Component writes made by the service (change-only writes that changed a value; tests). */
+	int32 GetViewWriteCount() const { return ViewWriteCount; }
 
 #if !UE_BUILD_SHIPPING
 	/**
@@ -186,6 +231,9 @@ public:
 
 private:
 	void ReportFault(int64 Detail) const;
+	void HandleRosterEvent(const FRosterEvent& Event);
+	void HandleViewRebound_Event(FParticipantId Participant);
+	void Unsubscribe();
 
 	TPimplPtr<FObjectivesCore> Core;
 
@@ -195,6 +243,12 @@ private:
 	const IObjectivesRosterView* Roster = nullptr;
 	const IObjectivesAssignmentSource* Assignment = nullptr;
 	const IObjectivesChainSource* Chains = nullptr;
+	IObjectivesViewTargets* ViewTargets = nullptr;
+	IObjectivesViewSink* ViewObserver = nullptr;
+	TWeakObjectPtr<URosterStore> RosterEvents;
+	FDelegateHandle RosterEventHandle;
+	FDelegateHandle ViewReboundHandle;
+	int32 ViewWriteCount = 0;
 	FResolutionQueueCore* Queue = nullptr;
 	IStealthFaultSink* Faults = nullptr;
 #if !UE_BUILD_SHIPPING

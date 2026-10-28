@@ -452,6 +452,10 @@ void URosterStore::RegisterTeamView(FParticipantId Id, URosterTeamViewComponent*
 	{
 		PushStep->RegisterView(Id, View);
 	}
+	if (Id.IsValid())
+	{
+		OnParticipantViewRebound.Broadcast(Id); // the other C-TeamView parts rebind inline (Objectives, ADR-0020 section 6)
+	}
 }
 
 void URosterStore::UnregisterTeamView(FParticipantId Id)

@@ -15,6 +15,9 @@
 #include "View/OwnResultPlateSettings.h"
 #include "View/PenaltyHudViewModel.h"
 #include "View/EncounterPresentation.h"
+#include "View/ObjectiveChainData.h"
+#include "View/ObjectiveTeamViewComponent.h"
+#include "View/ObjectivesChainRegistry.h"
 
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
@@ -35,6 +38,51 @@ namespace
 		const TArray<FText>& Names = UStealthSettings::Get()->TeamNames;
 		return Names.IsValidIndex(Team) ? Names[Team].ToString() : TEXT("Unassigned");
 	}
+
+	// --- The team's objective view (story oc-011): the ONLY objective source of the HUD --------------------------------
+
+	/** The owner's own team view (empty default when there is none). */
+	const FObjectiveTeamView& ObjectiveViewOf(const AStealthPlayerController* PC)
+	{
+		static const FObjectiveTeamView Empty;
+		const UObjectiveTeamViewComponent* Component = PC != nullptr ? PC->GetObjectiveTeamView() : nullptr;
+		return Component != nullptr ? Component->GetView() : Empty;
+	}
+
+	/** 1, 2, 3 for Stage1, Stage2, Final; 0 before Active entry. */
+	int32 StageNumber(EObjectiveTeamStage Stage)
+	{
+		switch (Stage)
+		{
+		case EObjectiveTeamStage::Stage1: return 1;
+		case EObjectiveTeamStage::Stage2: return 2;
+		case EObjectiveTeamStage::Final: return 3;
+		default: return 0;
+		}
+	}
+
+	/** The local cooked chain the view's indices refer to (by ChainSerial), or null. Card text is local data. */
+	const UObjectiveChainData* ChainOf(const UWorld* World, const FObjectiveTeamView& View)
+	{
+		const UObjectivesChainRegistry* Registry = UObjectivesChainRegistry::Get(World);
+		if (Registry == nullptr || View.ChainSerial == 0)
+		{
+			return nullptr;
+		}
+		TArray<const UObjectiveChainData*> Chains;
+		Registry->GetCookedChains(Chains);
+		const UObjectiveChainData* const* Found = Chains.FindByPredicate([&View](const UObjectiveChainData* Chain) { return Chain != nullptr && Chain->ChainSerial == View.ChainSerial; });
+		return Found != nullptr ? *Found : nullptr;
+	}
+
+	/** The stage card title of a live site's row (local text), or "?" without the chain. */
+	FString CardTitleOf(const UObjectiveChainData* Chain, const FObjectiveLiveSite& Site)
+	{
+		return Chain != nullptr && Chain->Definitions.IsValidIndex(Site.DefIndex) ? Chain->Definitions[Site.DefIndex].CardTitle.ToString() : FString(TEXT("?"));
+	}
+
+	/** The rival's two preliminary steps (HUD-R11: filled from RivalPrelimCount only; never a final step). */
+	constexpr int32 RivalStepCount = 2;
 }
 
 void AStealthHUD::BeginPlay()
@@ -233,24 +281,25 @@ void AStealthHUD::DrawStatusPanel(const AStealthPlayerState* PS, const AStealthG
 		}
 	}
 
-	// Team progress (own team in full, enemy stage only — never their location).
+	// Team progress (story oc-011): the own team's objective view only (owner-only C-TeamView part). The rival's progress is
+	// RivalPrelimCount and nothing else (OC-12; 0 until the delayed releases of stories oc-014/015 exist).
 	if (PS->Team < STEALTH_NUM_TEAMS)
 	{
-		const int32 Stage = GS->GetTeamStage(PS->Team);
-		const int32 EnemyStage = GS->GetTeamStage(PS->Team == 0 ? 1 : 0);
-		FString Current = TEXT("-");
-		for (TActorIterator<AStealthObjective> It(GetWorld()); It; ++It)
-		{
-			if (!It->IsCompleted() && FStealthRules::CanCompleteObjective(PS->Team, Stage, It->OwningTeam, It->Stage))
-			{
-				Current = It->DisplayName.ToString();
-				break;
-			}
-		}
+		const FObjectiveTeamView& View = ObjectiveViewOf(Cast<AStealthPlayerController>(GetOwningPlayerController()));
+		const UObjectiveChainData* Chain = ChainOf(GetWorld(), View);
+		const int32 Stage = StageNumber(View.StageIndex);
 		Y += Line * 0.5f;
-		DrawShadowedText(FString::Printf(TEXT("Stage %d/%d: %s  [hold E]"), Stage, STEALTH_FINAL_STAGE, *Current), X, Y, Neutral);
-		Y += Line;
-		DrawShadowedText(FString::Printf(TEXT("Enemy progress: stage %d/%d"), EnemyStage, STEALTH_FINAL_STAGE), X, Y, Muted);
+		if (Stage == 0)
+		{
+			DrawShadowedText(TEXT("Objectives: waiting for the round"), X, Y, Muted);
+		}
+		else
+		{
+			const FString Current = View.LiveSites.Num() > 0 ? CardTitleOf(Chain, View.LiveSites[0]) : FString(TEXT("-"));
+			DrawShadowedText(FString::Printf(TEXT("Stage %d/%d: %s  [hold E]"), Stage, STEALTH_FINAL_STAGE, *Current), X, Y, Neutral);
+			Y += Line;
+			DrawShadowedText(FString::Printf(TEXT("Rival steps: %d of %d"), FMath::Min<int32>(View.RivalPrelimCount, RivalStepCount), RivalStepCount), X, Y, Muted);
+		}
 	}
 }
 
@@ -295,19 +344,17 @@ void AStealthHUD::DrawObjectiveMarkers(const AStealthPlayerState* PS, const ASte
 	{
 		return;
 	}
-	const int32 Stage = GS->GetTeamStage(PS->Team);
-	for (TActorIterator<AStealthObjective> It(GetWorld()); It; ++It)
+	// Story oc-011: a marker only at the own team's live sites from its view (the final only once the view holds it, SP-1).
+	const FObjectiveTeamView& View = ObjectiveViewOf(PresentingController);
+	const UObjectiveChainData* Chain = ChainOf(GetWorld(), View);
+	for (const FObjectiveLiveSite& Site : View.LiveSites)
 	{
-		// The final site is only revealed to a team once its preliminaries are done (anti-camping, Pillar 4).
-		if (It->IsCompleted() || !FStealthRules::CanCompleteObjective(PS->Team, Stage, It->OwningTeam, It->Stage))
-		{
-			continue;
-		}
+		const AStealthObjective* Court = AStealthObjective::FindStandInCourt(GetWorld(), Site.Court);
 		FVector2D Screen;
-		if (ProjectToScreen(It->GetActorLocation() + FVector(0.f, 0.f, 150.f), Screen))
+		if (Court != nullptr && ProjectToScreen(Court->GetActorLocation() + FVector(0.f, 0.f, 150.f), Screen))
 		{
 			DrawRect(AlliedTurquoise, Screen.X - 5.f, Screen.Y - 5.f, 10.f, 10.f);
-			DrawShadowedText(It->DisplayName.ToString(), Screen.X, Screen.Y - 28.f, AlliedTurquoise, 0.85f, true);
+			DrawShadowedText(CardTitleOf(Chain, Site), Screen.X, Screen.Y - 28.f, AlliedTurquoise, 0.85f, true);
 		}
 	}
 }
@@ -476,8 +523,9 @@ void AStealthHUD::CollectOwnerElements(const AStealthPlayerController& PC, TArra
 	}
 	if (PS->Team < STEALTH_NUM_TEAMS)
 	{
-		Out.Add(FString::Printf(TEXT("Stage:%d"), GS->GetTeamStage(PS->Team)));
-		Out.Add(FString::Printf(TEXT("EnemyStage:%d"), GS->GetTeamStage(PS->Team == 0 ? 1 : 0)));
+		const FObjectiveTeamView& ObjectiveView = ObjectiveViewOf(&PC);
+		Out.Add(FString::Printf(TEXT("Stage:%d"), StageNumber(ObjectiveView.StageIndex)));
+		Out.Add(FString::Printf(TEXT("RivalSteps:%d"), static_cast<int32>(ObjectiveView.RivalPrelimCount)));
 		// Teammate markers, by state (DrawTeammateMarkers also skips the off-screen ones).
 		for (TActorIterator<AStealthCharacter> It(World); It; ++It)
 		{
@@ -491,13 +539,10 @@ void AStealthHUD::CollectOwnerElements(const AStealthPlayerController& PC, TArra
 		const bool bRoundOn = GS->RoundPhase == EStealthRoundPhase::InProgress || (GS->RoundPhase == EStealthRoundPhase::RoundOver && !PC.IsRoundEndPresented());
 		if (!bInformant && bRoundOn)
 		{
-			const int32 Stage = GS->GetTeamStage(PS->Team);
-			for (TActorIterator<AStealthObjective> It(World); It; ++It)
+			const UObjectiveChainData* Chain = ChainOf(World, ObjectiveView);
+			for (const FObjectiveLiveSite& Site : ObjectiveView.LiveSites)
 			{
-				if (!It->IsCompleted() && FStealthRules::CanCompleteObjective(PS->Team, Stage, It->OwningTeam, It->Stage))
-				{
-					Out.Add(FString::Printf(TEXT("ObjectiveMarker:%s"), *It->DisplayName.ToString()));
-				}
+				Out.Add(FString::Printf(TEXT("ObjectiveMarker:%s"), *CardTitleOf(Chain, Site)));
 			}
 		}
 	}

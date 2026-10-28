@@ -1,5 +1,6 @@
 // Objectives Chain stories oc-003 (validation and binding), oc-004 (site state and progress), oc-006 (claims), oc-008 (the
-// completion gate and stage effects) and oc-009 (the final's win declaration): production/epics/objectives-chain/.
+// completion gate and stage effects), oc-009 (the final's win declaration) and oc-010 (the team view builder):
+// production/epics/objectives-chain/.
 // See ObjectivesCore.h.
 
 #include "ObjectivesCore.h"
@@ -214,6 +215,9 @@ void FObjectivesCore::Reset()
 		}
 		StageIndex[Team] = EObjectiveTeamStage::None;
 		CompletedDefMask[Team] = 0;
+		RivalPrelimCount[Team] = 0;
+		LastPushedView[Team] = FObjectiveTeamView();
+		bViewPushed[Team] = false;
 	}
 	ChainSerial = 0;
 	PrelimOrdinal = 0;
@@ -496,8 +500,54 @@ void FObjectivesCore::AppendTend(FParticipantId Participant, FCourtFixtureId Cou
 
 void FObjectivesCore::PushView(int32 Team)
 {
-	if (Deps.Views != nullptr && Team >= 0 && Team < TeamCount)
+	if (Team < 0 || Team >= TeamCount)
 	{
-		Deps.Views->PushTeamView(static_cast<uint8>(Team));
+		return;
 	}
+	const FObjectiveTeamView View = BuildTeamView(Team);
+	if (bViewPushed[Team] && View == LastPushedView[Team])
+	{
+		return; // change-only: an identical push is a no-op
+	}
+	LastPushedView[Team] = View;
+	bViewPushed[Team] = true;
+	if (Deps.Views != nullptr)
+	{
+		Deps.Views->PushTeamView(static_cast<uint8>(Team), View);
+	}
+}
+
+// --- The team view (story oc-010) ---------------------------------------------------------------------------------------
+
+FObjectiveTeamView FObjectivesCore::BuildTeamView(int32 Team) const
+{
+	FObjectiveTeamView View;
+	if (!bActive || !bBound || Team < 0 || Team >= TeamCount)
+	{
+		return View; // AC-OC-29: no site, no stage card before Active entry
+	}
+	View.RoundEpoch = RoundEpoch;
+	View.ChainSerial = ChainSerial;
+	View.StageIndex = StageIndex[Team];
+	View.CompletedDefMask = CompletedDefMask[Team]; // own prelims only (ApplyCountedCompletion never sets the final's bit)
+	View.RivalPrelimCount = RivalPrelimCount[Team];
+	for (int32 Def = 0; Def < Bindings.Num() && View.LiveSites.Num() < FObjectiveTeamView::MaxLiveSites; ++Def)
+	{
+		// Live for THIS team only: a Locked row (a later stage, the final before SP-1) and every opponent row are never Live
+		// for Team, so they never enter its view.
+		if (SiteStates[Team][Def] == EObjectiveSiteState::Live && IsEligible(Bindings[Def].Eligibility, Team))
+		{
+			FObjectiveLiveSite& Site = View.LiveSites.AddDefaulted_GetRef();
+			Site.Court = Bindings[Def].Court;
+			Site.DefIndex = static_cast<uint8>(Def);
+			// Site.Clue: story oc-013 (the role-blind clue of the court's public ClueTag record); {0, 0} until then.
+		}
+	}
+	return View;
+}
+
+const FObjectiveTeamView& FObjectivesCore::GetLastPushedView(int32 Team) const
+{
+	static const FObjectiveTeamView Empty;
+	return Team >= 0 && Team < TeamCount ? LastPushedView[Team] : Empty;
 }

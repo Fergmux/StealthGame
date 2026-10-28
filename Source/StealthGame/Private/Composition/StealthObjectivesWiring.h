@@ -32,13 +32,14 @@ class UWorld;
  *                                keep only their placement: no objective gameplay runs on them on the production path.
  *   FindCourtInReach             STAND-IN for the IIF's prompt target: the nearest court within UStealthSettings
  *                                ObjectiveInteractRange of the pawn (the human client sends no fixture id yet).
- *   IObjectivesViewSink          STAND-IN until stories oc-010 / oc-011 (FObjectiveTeamView on C-TeamView): mirrors the
- *                                team's production stage into the prototype HUD's AStealthGameState::TeamStage and tells the
- *                                completing team its stage was banked (AStealthGameMode::MirrorProductionObjectiveStage).
+ *   IObjectivesViewTargets       story oc-011: a team's members are the Roster records of that team (Active and Informant
+ *                                alike); a member's view is the UObjectiveTeamViewComponent of its current controller (the
+ *                                composition root's controller map, Session's connection table stand-in). The prototype
+ *                                HUD's replicated AStealthGameState::TeamStage is no longer written on the production path.
  *   IObjectivesRivalRelease      STAND-IN until stories oc-014 / oc-015: no release is scheduled (RivalPrelimCount stays 0).
  */
 class FStealthObjectivesAdapters final : public IObjectivesRosterView, public IObjectivesSessionView, public IObjectivesPawnControlView,
-	public IRoundObjectiveHooks, public IObjectivesAssignmentSource, public IObjectivesCourtGeometry, public IObjectivesViewSink,
+	public IRoundObjectiveHooks, public IObjectivesAssignmentSource, public IObjectivesCourtGeometry, public IObjectivesViewTargets,
 	public IObjectivesRivalRelease
 {
 public:
@@ -72,8 +73,11 @@ public:
 	virtual bool GetSiteAssignment_Server(FSiteAssignment& OutAssignment) const override;
 	virtual bool GetFixtureFaces(FCourtFixtureId Court, TArray<FVector, TInlineAllocator<4>>& OutFaces) const override;
 
-	// IObjectivesViewSink / IObjectivesRivalRelease (stand-ins)
-	virtual void PushTeamView(uint8 Team) override;
+	// IObjectivesViewTargets (story oc-011)
+	virtual void GetTeamMembers(uint8 Team, TArray<FParticipantId>& OutMembers) const override;
+	virtual UObjectiveTeamViewComponent* FindTeamView(FParticipantId Participant) const override;
+
+	// IObjectivesRivalRelease (stand-in)
 	virtual void ScheduleRivalRelease(uint8 CompletingTeam, uint32 PrelimOrdinal) override {}
 
 	/** The nearest court within the interact range of Pawn, or an unset id (the IIF target stand-in). */

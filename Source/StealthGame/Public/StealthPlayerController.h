@@ -17,6 +17,8 @@ struct FPenaltyTallyView;
 enum class EPenaltyCardPhase : uint8;
 
 class URosterTeamViewComponent;
+class UObjectiveTeamViewComponent;
+struct FObjectiveTeamView;
 class UPawnCommandClient;
 class UDefenceOwnerComponent;
 class AStealthPawn;
@@ -332,6 +334,9 @@ public:
 	/** The owner-only C-TeamView Roster part (written only by the Roster push step). */
 	URosterTeamViewComponent* GetTeamView() const { return TeamView; }
 
+	/** The owner-only C-TeamView Objectives part (story oc-011; written only by UObjectivesService). The HUD's objective source. */
+	UObjectiveTeamViewComponent* GetObjectiveTeamView() const { return ObjectiveTeamView; }
+
 	/** Removes expired messages and pings. */
 	void PruneExpired(double Now);
 
@@ -451,6 +456,15 @@ protected:
 	/** C-TeamView, Roster part (ADR-0001): replicated to the owning connection only. */
 	UPROPERTY(VisibleAnywhere, Category = "Stealth")
 	TObjectPtr<URosterTeamViewComponent> TeamView;
+
+	/** C-TeamView, Objectives part (ADR-0020 section 6, story oc-011): the team's objective view, owning connection only. */
+	UPROPERTY(VisibleAnywhere, Category = "Stealth")
+	TObjectPtr<UObjectiveTeamViewComponent> ObjectiveTeamView;
+
+	/** Owner: a local HUD line when the own team's stage advances (from the view, never from an RPC). */
+	void HandleObjectiveViewUpdated(const FObjectiveTeamView& View);
+	/** The StageIndex (as uint8) of the last objective view this owner presented. */
+	uint8 LastPresentedObjectiveStage = 0;
 
 	/** Overhead debug camera (local only). */
 	UPROPERTY(Transient)

@@ -95,13 +95,6 @@ public:
 	 */
 	void OnObjectiveCompleted(AStealthObjective* Objective, AStealthCharacter* Completer);
 
-	/**
-	 * STAND-IN for the team view (Objectives stories oc-010 / oc-011): mirrors the production stage of Team (UObjectivesService)
-	 * into the prototype HUD's AStealthGameState::TeamStage (1, 2, then the final as 3) and tells Team when a stage was banked.
-	 * Called by the composition root's IObjectivesViewSink at Active entry and after each counted stage.
-	 */
-	void MirrorProductionObjectiveStage(uint8 Team);
-
 	/** True while Round's phase is Active and the round is not latched (the production rules decide the round). */
 	bool IsRoundInProgress() const;
 

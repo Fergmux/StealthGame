@@ -1,0 +1,18 @@
+[2026.10.28-10.03.03:173][138]LogStealthRound: Round phase Unknown -> Lobby (change 1, round 0)
+[2026.10.28-10.03.08:459][156]LogStealthRound: Round phase Lobby -> Preparing (change 2, round 1)
+[2026.10.28-10.03.11:572][167]LogStealthRound: Round phase Preparing -> Active (change 3, round 1)
+[2026.10.28-10.03.11:592][168]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.28-10.03.11:602][168]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.28-10.03.11:609][168]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: The round begins. Complete your team's tasks. Trust no one in the crowd.
+[2026.10.28-10.03.55:038][298]LogStealth: [Bot] Phase=1 Stages=1/1 Winner=255 NPCs=50
+[2026.10.28-10.03.55:038][298]LogStealth: [Bot] Objectives: bound=1 team0 stage=1 prelims=0, team1 stage=1 prelims=0
+[2026.10.28-10.03.55:038][298]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.28-10.03.55:038][298]LogStealth: [Bot] #0 FergsPC-C447B3A9456D team=0 state=Active pawn=V(X=-3000.00, Y=-2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.28-10.03.55:038][298]LogStealth: [Bot] #1 FergsPC-2166D7104B71 team=1 state=Active pawn=V(X=-2400.00, Y=2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.28-10.03.55:038][298]LogStealth: [Bot] #2 FergsPC-44610C2B4657 team=0 state=Active pawn=V(X=-2550.00, Y=-2600.00, Z=88.27) braced=0 concealed=0
+[2026.10.28-10.04.08:644][339]LogStealth: [Bot] #2 tends court 1: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-10.04.11:963][349]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: Task complete. The next task is ready.
+[2026.10.28-10.04.12:285][350]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Task complete. The next task is ready.
+[2026.10.28-10.04.28:976][400]LogStealth: [Bot] #2 tends court 2: InteractBegin submitted (hold 3.0 s).
+[2026.10.28-10.04.32:293][410]LogStealth: [HUD] StealthPlayerController_0 (netmode 2) message: Your house's preparations are done. Find the ruler's cup.
+[2026.10.28-10.04.32:616][411]LogStealth: [HUD] StealthPlayerController_0 (netmode 3) message: Your house's preparations are done. Find the ruler's cup.

@@ -50,5 +50,9 @@ public class StealthGameplay : ModuleRules
 		// StateTree modules and GameplayTags are public; NavigationSystem stays private.
 		PublicDependencyModuleNames.AddRange(new string[] { "StateTreeModule", "GameplayStateTreeModule", "GameplayTags" });
 		PrivateDependencyModuleNames.Add("NavigationSystem");
+
+		// ADR-0020 section 6 (Objectives story oc-011): UObjectiveTeamViewComponent marks its push-model property dirty
+		// (MARK_PROPERTY_DIRTY_FROM_NAME links against NetCore's UEPushModelPrivate).
+		PrivateDependencyModuleNames.Add("NetCore");
 	}
 }

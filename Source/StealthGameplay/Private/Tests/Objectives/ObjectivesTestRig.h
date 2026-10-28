@@ -15,6 +15,7 @@
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 #include "View/ObjectiveChainData.h"
+#include "View/ObjectiveTeamViewComponent.h"
 #include "View/ObjectivesChainRegistry.h"
 #include "View/Testing/ObjectiveCacaoChainFixture.h"
 
@@ -214,12 +215,76 @@ namespace StealthObjectivesTest
 		}
 	};
 
+	/** Records every team-level view push (the core's change-only PushView) and the last value per team. */
 	class FStubViews : public IObjectivesViewSink
 	{
 	public:
 		TArray<uint8> Pushes;
-		virtual void PushTeamView(uint8 Team) override { Pushes.Add(Team); }
+		FObjectiveTeamView Last[2];
+		virtual void PushTeamView(uint8 Team, const FObjectiveTeamView& View) override
+		{
+			Pushes.Add(Team);
+			if (Team < 2)
+			{
+				Last[Team] = View;
+			}
+		}
 		int32 PushesFor(uint8 Team) const { return Pushes.FilterByPredicate([Team](uint8 T) { return T == Team; }).Num(); }
+	};
+
+	/**
+	 * The service's view targets (story oc-011): members per team and one transient UObjectiveTeamViewComponent per member
+	 * (no controller: ApplyView still counts and compares; nothing replicates in a headless rig).
+	 */
+	class FStubViewTargets : public IObjectivesViewTargets
+	{
+	public:
+		struct FMember
+		{
+			FParticipantId Id;
+			int32 Team = 0;
+			TStrongObjectPtr<UObjectiveTeamViewComponent> View;
+		};
+		TArray<FMember> Members;
+
+		UObjectiveTeamViewComponent* Add(uint32 Participant, int32 Team)
+		{
+			FMember& Member = Members.AddDefaulted_GetRef();
+			Member.Id = FParticipantId(Participant);
+			Member.Team = Team;
+			Member.View.Reset(NewObject<UObjectiveTeamViewComponent>(GetTransientPackage(), NAME_None, RF_Transient));
+			return Member.View.Get();
+		}
+		/** Replaces Participant's component (a new controller after a rejoin or travel). */
+		UObjectiveTeamViewComponent* Replace(uint32 Participant)
+		{
+			for (FMember& Member : Members)
+			{
+				if (Member.Id.Value == Participant)
+				{
+					Member.View.Reset(NewObject<UObjectiveTeamViewComponent>(GetTransientPackage(), NAME_None, RF_Transient));
+					return Member.View.Get();
+				}
+			}
+			return nullptr;
+		}
+		UObjectiveTeamViewComponent* ViewOf(uint32 Participant) const
+		{
+			const FMember* Found = Members.FindByPredicate([Participant](const FMember& M) { return M.Id.Value == Participant; });
+			return Found != nullptr ? Found->View.Get() : nullptr;
+		}
+		virtual void GetTeamMembers(uint8 Team, TArray<FParticipantId>& Out) const override
+		{
+			Out.Reset();
+			for (const FMember& Member : Members)
+			{
+				if (Member.Team == Team)
+				{
+					Out.Add(Member.Id);
+				}
+			}
+		}
+		virtual UObjectiveTeamViewComponent* FindTeamView(FParticipantId Participant) const override { return ViewOf(Participant.Value); }
 	};
 
 	class FStubRival : public IObjectivesRivalRelease

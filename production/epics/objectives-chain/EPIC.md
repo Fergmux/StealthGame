@@ -77,9 +77,9 @@ Written by `/create-stories objectives-chain` (story_granularity `balanced`, 2-4
 | 007 | Interact predicate and feint/decoy parity | Logic | Complete | ADR-0020 |
 | 008 | Completion gate and stage effects | Logic | Complete | ADR-0020 |
 | 009 | Final completion and win declaration | Logic | Complete | ADR-0020 |
-| 010 | Team view struct and builder | Logic | Ready | ADR-0020 |
-| 011 | Team view component and replication | Integration | Ready | ADR-0020 |
-| 012 | Rejoin, view rebind and round reset | Logic | Ready | ADR-0020 |
+| 010 | Team view struct and builder | Logic | Complete | ADR-0020 |
+| 011 | Team view component and replication | Integration | Complete | ADR-0020 |
+| 012 | Rejoin, view rebind and round reset | Logic | Complete | ADR-0020 |
 | 013 | Clue function and the too-broad clue log | Logic | Ready | ADR-0020 |
 | 014 | Rival signal delay draw and release grid | Logic | Ready | ADR-0020 |
 | 015 | Rival signal release scheduling and idle behaviour | Logic | Ready | ADR-0020 |

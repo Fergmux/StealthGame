@@ -8,6 +8,7 @@
 #include "Server/Core/Round/StealthRoundMatchStore.h"
 #include "Server/StealthCompositionRoot.h"
 #include "View/StealthRosterTeamView.h"
+#include "View/ObjectiveTeamViewComponent.h"
 
 #include "Camera/CameraActor.h"
 #include "Camera/PlayerCameraManager.h"
@@ -97,9 +98,24 @@ AStealthPlayerController::AStealthPlayerController()
 	// ADR-0020 E2: replicated components travel only through the registered subobject list.
 	bReplicateUsingRegisteredSubObjectList = true;
 	TeamView = CreateDefaultSubobject<URosterTeamViewComponent>(TEXT("TeamView"));
+	// Story oc-011 (ADR-0020 section 6): the Objectives part of C-TeamView, owner-only through this controller.
+	ObjectiveTeamView = CreateDefaultSubobject<UObjectiveTeamViewComponent>(TEXT("ObjectiveTeamView"));
 	CommandClient = CreateDefaultSubobject<UPawnCommandClient>(TEXT("CommandClient"));
 	// Story asn-016 (ADR-0018 section 1.5): the owner's cooldown end, COND_OwnerOnly through the registered subobject list.
 	DefenceOwner = CreateDefaultSubobject<UDefenceOwnerComponent>(TEXT("DefenceOwner"));
+}
+
+void AStealthPlayerController::HandleObjectiveViewUpdated(const FObjectiveTeamView& View)
+{
+	const uint8 Stage = static_cast<uint8>(View.StageIndex);
+	const uint8 Previous = LastPresentedObjectiveStage;
+	LastPresentedObjectiveStage = Stage;
+	if (Previous == static_cast<uint8>(EObjectiveTeamStage::None) || Stage <= Previous)
+	{
+		return; // the first view of a round, a reset or a re-push: no banked line
+	}
+	AddHudMessage(View.StageIndex == EObjectiveTeamStage::Final ? NSLOCTEXT("StealthObjectives", "ProdFinalUnlocked", "Your house's preparations are done. Find the ruler's cup.")
+		: NSLOCTEXT("StealthObjectives", "ProdStageBanked", "Task complete. The next task is ready."), false, 6.f);
 }
 
 // ---- Pawn command transport (ADR-0011 section 2; story iif-094) -------------------------------------------------
@@ -113,6 +129,10 @@ void AStealthPlayerController::BeginPlay()
 		{
 			ReplySink = Hub->GetReplySinks().Allocate();
 		}
+	}
+	if (IsLocalController() && ObjectiveTeamView)
+	{
+		ObjectiveTeamView->OnViewUpdated.AddUObject(this, &AStealthPlayerController::HandleObjectiveViewUpdated);
 	}
 	if (IsLocalController() && CommandClient)
 	{

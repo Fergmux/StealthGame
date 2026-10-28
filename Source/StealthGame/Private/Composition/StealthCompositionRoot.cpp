@@ -763,7 +763,10 @@ void UStealthCompositionRoot::WireObjectives(AStealthGameMode* InGameMode)
 	Init.Courts = &A;
 	Init.Assignment = &A;
 	Init.Chains = UObjectivesChainRegistry::Get(World);
-	Init.Views = &A;
+	// Story oc-011: the team view is written to each member's UObjectiveTeamViewComponent (owner-only C-TeamView part); story
+	// oc-012: the service subscribes to the Roster's rebind and reset events itself.
+	Init.ViewTargets = &A;
+	Init.RosterEvents = GetRosterStore();
 	Init.RivalRelease = &A;
 	Init.Queue = Queue;
 	Init.Faults = &CommandFaults;

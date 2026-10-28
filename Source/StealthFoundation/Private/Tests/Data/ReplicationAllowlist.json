@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "owner": "information-visibility-policy",
+  "note": "ADR-0003 section 8 / ADR-0008 section 4: the single checked-in replicated-property allowlist. Rows {class, property, condition, audience, carrier, policyRows[], owners[]}; a row changes only with every owner's sign-off. Started by Objectives story oc-011 with its own row; IVP story ivp-013 adds the remaining sections (Shared Pawn, AStealthPlayerState, AStealthPlayerController, the other C-TeamView parts, the GameState) and ivp-015 audits every replicated class against it.",
+  "sections": [
+    {
+      "name": "C-TeamView: Objectives part (UTeamViewComponentBase)",
+      "rows": [
+        {
+          "class": "UObjectiveTeamViewComponent",
+          "property": "View",
+          "condition": "COND_None",
+          "audience": "Team",
+          "carrier": "C-TeamView",
+          "policyRows": ["ObjectiveProgress", "SiteKnownToTeam", "RivalPrelimCount"],
+          "owners": ["information-visibility-policy", "objectives-chain"],
+          "source": "ADR-0020 sections 4 and 6; owner-only through the PlayerController (bOnlyRelevantToOwner, registered sub-object list), push-based"
+        }
+      ]
+    }
+  ]
+}

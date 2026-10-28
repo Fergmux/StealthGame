@@ -5,10 +5,12 @@
 #include "CoreMinimal.h"
 #include "Server/EventLog/StealthRoundLogTypes.h"
 #include "View/CourtFixtureId.h"
+#include "View/ObjectiveTeamView.h"
 #include "View/StealthQueueTypes.h"
 #include "View/StealthRosterTypes.h"
 
 class APawn;
+class UObjectiveTeamViewComponent;
 
 /**
  * The Objectives Chain's consumer-owned seams (ADR-0020 Key Interfaces; stories oc-003..oc-009). FObjectivesCore reads the
@@ -141,21 +143,39 @@ public:
 };
 
 // ---------------------------------------------------------------------------------------------------------
-// Downstream stand-ins of later stories (observed by the tests of stories oc-008)
+// The team view and the rival release (stories oc-010 / oc-011; oc-014 / oc-015)
 // ---------------------------------------------------------------------------------------------------------
 
 /**
- * The team-view write after a counted stage (ADR-0020 section 6). Stories oc-010 / oc-011 build FObjectiveTeamView and its
- * replicated component; until then the service forwards the push to this observer (the composition root's stand-in mirrors
- * the stage to the prototype HUD).
+ * The team-level view write (ADR-0020 section 6; stories oc-010 / oc-011). FObjectivesCore builds the team's view
+ * (BuildTeamView) and calls PushTeamView only when the value differs from the last one it pushed for that team (change-only):
+ * at Active entry (both teams), after a counted preliminary stage, and when the view is cleared. Never for the final's
+ * completion. UObjectivesService is the production sink: it writes the value to every current controller of the team's
+ * members (IObjectivesViewTargets); tests observe the pushes with a stub.
  */
 class IObjectivesViewSink
 {
 public:
 	virtual ~IObjectivesViewSink() = default;
 
-	/** Team's view changed (Active entry, a counted stage). Never called for the final. */
-	virtual void PushTeamView(uint8 Team) = 0;
+	/** Team's view changed to View. */
+	virtual void PushTeamView(uint8 Team, const FObjectiveTeamView& View) = 0;
+};
+
+/**
+ * Where the service writes a team's view (ADR-0020 section 6: Roster GetTeamMembers(T), controller from Session's connection
+ * table; production: the composition root's adapter over URosterStore and its controller map). Server only.
+ */
+class IObjectivesViewTargets
+{
+public:
+	virtual ~IObjectivesViewTargets() = default;
+
+	/** Team's participants (Active and Informant alike: the Team audience includes the team's informants), ascending. */
+	virtual void GetTeamMembers(uint8 Team, TArray<FParticipantId>& OutMembers) const = 0;
+
+	/** The Objectives view component of Participant's current controller, or null (no controller connected). */
+	virtual UObjectiveTeamViewComponent* FindTeamView(FParticipantId Participant) const = 0;
 };
 
 /** The OC-12 rival release scheduling after a counted preliminary (stories oc-014 / oc-015 own the draw and the timer). */

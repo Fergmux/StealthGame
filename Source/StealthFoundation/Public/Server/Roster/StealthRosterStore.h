@@ -18,6 +18,7 @@ class URosterTeamViewComponent;
 struct FRosterStoreAdapters;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnRosterStoreEvent, const FRosterEvent& /*Event*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnParticipantViewRebound, FParticipantId /*Participant*/);
 
 /** Optional overrides of URosterStore's engine adapters (tests only; production passes none). */
 struct FRosterStoreInitOverrides
@@ -153,8 +154,20 @@ public:
 
 	// --- C-TeamView (story psr-062) ---------------------------------------------------------------------------------
 
-	/** Binds Id's controller-owned view component; the push step is its only writer. */
+	/**
+	 * Binds Id's controller-owned view component (the push step is its only writer), then raises OnParticipantViewRebound(Id).
+	 * The composition root calls it for each newly registered controller: a first join, a rejoin and the new controller of a
+	 * seamless travel alike (ADR-0005 RebindView: the controller that carried Id's C-TeamView was replaced).
+	 */
 	void RegisterTeamView(FParticipantId Id, URosterTeamViewComponent* View);
+
+	/**
+	 * Raised (server, game thread) after RegisterTeamView rebound Id's C-TeamView to a new controller (ADR-0005 section 2; the
+	 * Roster GDD's OnViewRebound). Consumers that own other C-TeamView parts (Objectives, ADR-0020 section 6) write their part
+	 * for Id inline in the handler; they subscribe here instead of depending on providers registered at world wiring.
+	 * STAND-IN scope: raised from RegisterTeamView until roster story psr-041's RebindView exists (it keeps this event).
+	 */
+	FOnParticipantViewRebound OnParticipantViewRebound;
 	void UnregisterTeamView(FParticipantId Id);
 	/** Runs the push step now (the tick calls it once per frame); returns the components written. */
 	int32 FlushTeamViews();

@@ -101,8 +101,11 @@ namespace StealthObjectivesTest
 		FQueueRoundHooks Round;
 		FStubCourts Courts;
 		FStubViews Views;
+		FStubViewTargets ViewTargets;
 		FStubRival Rival;
 		FStubChains Chains;
+		/** The Init the service was bound with (tests may change it and Bind again). */
+		FObjectivesServiceInit Init;
 		FRigCommandQueue CommandQueue;
 		FRigCommandResolver Resolver;
 		/** Round's DebugItem resolver stand-in: CommandDebugObjectiveStage -> the service's ApplyDebugStage in its own slot. */
@@ -126,7 +129,6 @@ namespace StealthObjectivesTest
 			Chain.Reset(MakeCacaoChain());
 			Chains.Chains = { Chain.Get() };
 
-			FObjectivesServiceInit Init;
 			Init.Roster = &Roster;
 			Init.Session = &Session;
 			Init.PawnControl = &PawnControl;
@@ -135,6 +137,7 @@ namespace StealthObjectivesTest
 			Init.Assignment = &Assignment;
 			Init.Chains = &Chains;
 			Init.Views = &Views;
+			Init.ViewTargets = &ViewTargets;
 			Init.RivalRelease = &Rival;
 			Init.Queue = Q.Queue.Get();
 			Init.Faults = &Q.Faults;

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "StealthTypes.h"
+#include "View/CourtFixtureId.h"
 #include "StealthObjective.generated.h"
 
 class AStealthCharacter;
@@ -52,6 +53,17 @@ public:
 
 	/** Server: whether Character is close enough to interact. */
 	bool IsInRange(const AStealthCharacter* Character) const;
+
+	/**
+	 * STAND-IN court ids (Objectives Chain stories oc-005 and oc-011, until the Level Socket Contract's court fixtures exist):
+	 * World's objective actors sorted by name; a court's FCourtFixtureId is its 1-based index in that order. The level-placed
+	 * actors have the same names on the server and on every client, so the server's assignment adapter and a client's HUD
+	 * (which places the markers of its own team view's live sites) agree on the ids. Placement only: no role is read here.
+	 */
+	static void GetStandInCourts(const UWorld* World, TArray<const AStealthObjective*>& OutCourts);
+
+	/** The stand-in court actor of Court in World, or null. */
+	static const AStealthObjective* FindStandInCourt(const UWorld* World, FCourtFixtureId Court);
 
 protected:
 	UFUNCTION()

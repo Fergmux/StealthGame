@@ -1,12 +1,12 @@
 # Story 010: Team view struct and builder
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -35,9 +35,9 @@ This story builds the data the HUD will read and the rules for what may be in it
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-03 contents, AC-OC-29) and ADR-0020 sections 4 and 6, scoped to this story. QL-STORY-READY revised AC1 (core-level scope) and AC3 (exact width):*
 
-- [ ] **AC1** (AC-OC-29 [U] `NoTeamViewBeforeActive`, core level): **GIVEN** a round in `Preparing` after `OnLayoutReady` **THEN** every stub per-controller view sink holds the empty default (no site id, no stage card); **WHEN** `Active` begins **THEN** each team's view is pushed in that slot, exactly once per team. (The replicated check is story 019.)
-- [ ] **AC2** (AC-OC-03 [U] `TeamViewContentsCore`): **GIVEN** a round at `Active` start **THEN** team 0's built view holds only `P1[0]` as a live site and team 1's only `P1[1]`, and no view holds `Final`, `P2[*]` or any opponent site; **WHEN** team 0 completes both preliminaries **THEN** only team 0's view gains `Final`; `FRoundPublicState` carries no objective field.
-- [ ] **AC3** (ADR-0020 sections 4 and 6 [U] `TeamViewWidthAndChangeOnly`): the view is written only when its value differs (an identical second write is a no-op); every member of team T, Active or Informant, gets the same view; `CompletedDefMask` never includes the final; `NetSerialize` of `FObjectiveTeamView` writes **at most 12 + 4 x LiveSiteCount bytes** (asserted for 0, 1, 2 and the maximum live-site count; a regression above that fails); `DefIndex` (not `FName`) travels; `RoundEpoch` and `ChainSerial` are set; the struct has no `FString`, `FText` or `FName` member.
+- [x] **AC1** (AC-OC-29 [U] `NoTeamViewBeforeActive`, core level): **GIVEN** a round in `Preparing` after `OnLayoutReady` **THEN** every stub per-controller view sink holds the empty default (no site id, no stage card); **WHEN** `Active` begins **THEN** each team's view is pushed in that slot, exactly once per team. (The replicated check is story 019.)
+- [x] **AC2** (AC-OC-03 [U] `TeamViewContentsCore`): **GIVEN** a round at `Active` start **THEN** team 0's built view holds only `P1[0]` as a live site and team 1's only `P1[1]`, and no view holds `Final`, `P2[*]` or any opponent site; **WHEN** team 0 completes both preliminaries **THEN** only team 0's view gains `Final`; `FRoundPublicState` carries no objective field.
+- [x] **AC3** (ADR-0020 sections 4 and 6 [U] `TeamViewWidthAndChangeOnly`): the view is written only when its value differs (an identical second write is a no-op); every member of team T, Active or Informant, gets the same view; `CompletedDefMask` never includes the final; `NetSerialize` of `FObjectiveTeamView` writes **at most 12 + 4 x LiveSiteCount bytes** (asserted for 0, 1, 2 and the maximum live-site count; a regression above that fails); `DefIndex` (not `FName`) travels; `RoundEpoch` and `ChainSerial` are set; the struct has no `FString`, `FText` or `FName` member.
 
 ---
 
@@ -76,12 +76,12 @@ Prototype replaced: the prototype replicated per-site actors with `bCompleted`/`
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Public/View/Features/Objectives/ObjectiveTeamView.h` (`EObjectiveTeamStage`, `FObjectiveLiveSite`, `FObjectiveTeamView`)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectiveTeamView.cpp`
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesCore.cpp` (`BuildTeamView`, change-only write seam)
-- `Source/StealthGameplay/Private/Tests/Objectives/NoTeamViewBeforeActiveTest.cpp` (class `FObjectivesNoTeamViewBeforeActiveTest`, name `StealthGame.Objectives.NoTeamViewBeforeActive`)
-- `Source/StealthGameplay/Private/Tests/Objectives/TeamViewContentsCoreTest.cpp` (`StealthGame.Objectives.TeamViewContentsCore`)
-- `Source/StealthGameplay/Private/Tests/Objectives/TeamViewWidthAndChangeOnlyTest.cpp` (`StealthGame.Objectives.TeamViewWidthAndChangeOnly`)
+- `Source/StealthGameplay/Public/View/Core/ClueTag.h` (`FClueTag`, declared here; story 013 owns its content)
+- `Source/StealthGameplay/Features/Objectives/Public/View/ObjectiveTeamView.h` (`FObjectiveLiveSite`, `FObjectiveTeamView`; the planned `Public/View/Features/Objectives/` path is the feature folder's `Features/Objectives/Public/View/`, as for stories 002-009; `EObjectiveTeamStage` stays in `ObjectiveChainData.h` where story 004 put it)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectiveTeamView.cpp` (fixed-width `NetSerialize`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesCore.h` / `.cpp` (`BuildTeamView`, the change-only `PushView`, the `RivalPrelimCount` store HOLD, `GetLastPushedView`)
+- `Source/StealthGameplay/Features/Objectives/Public/Server/ObjectivesSeams.h` (`IObjectivesViewSink::PushTeamView(Team, View)`)
+- `Source/StealthGameplay/Private/Tests/Objectives/NoTeamViewBeforeActiveTest.cpp`, `TeamViewContentsCoreTest.cpp`, `TeamViewWidthAndChangeOnlyTest.cpp`; rig updates `ObjectivesTestRig.h`, `ObjectivesQueueRig.h`
 
 ---
 
@@ -115,7 +115,9 @@ Prototype replaced: the prototype replicated per-site actors with `bCompleted`/`
 **Required evidence**:
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.NoTeamViewBeforeActive, TeamViewContentsCore, TeamViewWidthAndChangeOnly; evidence production/qa/evidence/objectives-chain-010-012-2026-10-28/
+
+Run result: OBSERVED - with story 011 (the carrier and HUD): 3-player listen-server PIE on L_Prototype, each team's client shows its own view (stage, card title from the cooked chain by DefIndex, own live-site marker): production/qa/evidence/objectives-chain-010-012-2026-10-28/ (`oc11-01`, `oc11-02`).
 
 ---
 
@@ -123,3 +125,10 @@ Prototype replaced: the prototype replicated per-site actors with `bCompleted`/`
 
 - Depends on: `production/epics/objectives-chain/story-002-chain-data-types-and-cacao-asset.md`, `production/epics/objectives-chain/story-004-core-site-state-and-progress.md`, `production/epics/objectives-chain/story-013-clue-function-and-too-broad-log.md` (declares `FClueTag`, which `FObjectiveLiveSite` carries); cross-epic: `production/epics/participant-state-roster/story-037-team-view-serialized-size.md` (the C-TeamView budget this width sits inside); `production/epics/information-visibility-policy/story-013-allowlist-content.md`
 - Unlocks: `production/epics/objectives-chain/story-011-team-view-component-and-replication.md`, `production/epics/objectives-chain/story-012-rejoin-rebind-and-reset.md`, `production/epics/objectives-chain/story-016-presentation-view-helpers-and-ring-rule.md`, `production/epics/objectives-chain/story-019-pie2-team-view-ingress-and-informant-parity.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing.
+**Deviations**: `FClueTag` is declared by this story (story 013 is a "Depends on" but unbuilt; the declaration is the ADR's `{uint8 AreaType, uint8 FeatureKind}` and every site carries {0, 0} until 013). `RivalPrelimCount` is a core field nothing writes before stories 014/015 (HOLD, named in code). AC3's width is held by a custom fixed-width `NetSerialize` (9/14/18/23 bytes for 0-3 sites against 12/16/20/24); the maximum live-site count is 3, the hard maximum of `ObjectivesPerStageCount`.
+**Test Evidence**: production/qa/evidence/objectives-chain-010-012-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)

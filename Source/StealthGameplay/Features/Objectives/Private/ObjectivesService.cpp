@@ -1,5 +1,5 @@
-// Objectives Chain stories oc-005 (service shell), oc-006 (the interact-target owner), oc-008 (DebugCompleteStage) and oc-009
-// (the final): production/epics/objectives-chain/. The Interact predicate is ObjectivesInteractPredicate.cpp (its own
+// Objectives Chain stories oc-005 (service shell), oc-006 (the interact-target owner), oc-008 (DebugCompleteStage), oc-009
+// (the final), oc-011 (the team-view writer) and oc-012 (the Roster rebind and reset handlers): production/epics/objectives-chain/. The Interact predicate is ObjectivesInteractPredicate.cpp (its own
 // translation unit for the static check of story oc-007). See Server/ObjectivesService.h.
 
 #include "Server/ObjectivesService.h"
@@ -7,9 +7,11 @@
 #include "Engine/World.h"
 #include "ObjectivesCore.h"
 #include "Server/Queue/StealthResolutionQueueCore.h"
+#include "Server/Roster/StealthRosterStore.h"
 #include "Server/StealthFaultSink.h"
 #include "Server/StealthServerTuning.h"
 #include "View/Core/StealthPawn.h"
+#include "View/ObjectiveTeamViewComponent.h"
 #include "View/ObjectivesChainRegistry.h"
 
 namespace ObjectivesServiceLocal
@@ -60,7 +62,7 @@ bool UObjectivesService::Bind(const FObjectivesServiceInit& Init)
 	Deps.PawnControl = Init.PawnControl;
 	Deps.Round = Init.Round;
 	Deps.Courts = Init.Courts;
-	Deps.Views = Init.Views;
+	Deps.Views = this; // the service is the core's view sink and the components' only writer
 	Deps.RivalRelease = Init.RivalRelease;
 	Deps.Faults = Init.Faults;
 	Core->Initialize(Deps);
@@ -68,11 +70,20 @@ bool UObjectivesService::Bind(const FObjectivesServiceInit& Init)
 	Roster = Init.Roster;
 	Assignment = Init.Assignment;
 	Chains = Init.Chains;
+	ViewTargets = Init.ViewTargets;
+	ViewObserver = Init.Views;
 	Queue = Init.Queue;
 	Faults = Init.Faults;
 #if !UE_BUILD_SHIPPING
 	SubmitDebugStage = Init.SubmitDebugStage;
 #endif
+	// Story oc-012 (ADR-0005: consumers needing world wiring subscribe to Roster events): the rebind write and the reset clear.
+	if (URosterStore* Store = Init.RosterEvents)
+	{
+		RosterEvents = Store;
+		RosterEventHandle = Store->OnRosterEvent.AddUObject(this, &UObjectivesService::HandleRosterEvent);
+		ViewReboundHandle = Store->OnParticipantViewRebound.AddUObject(this, &UObjectivesService::HandleViewRebound_Event);
+	}
 	if (Queue != nullptr)
 	{
 		bStageSignalRegistered = Queue->RegisterTimerResolver(ETimerKind::StageSignal, this);
@@ -81,8 +92,21 @@ bool UObjectivesService::Bind(const FObjectivesServiceInit& Init)
 	return true;
 }
 
+void UObjectivesService::Unsubscribe()
+{
+	if (URosterStore* Store = RosterEvents.Get())
+	{
+		Store->OnRosterEvent.Remove(RosterEventHandle);
+		Store->OnParticipantViewRebound.Remove(ViewReboundHandle);
+	}
+	RosterEvents.Reset();
+	RosterEventHandle.Reset();
+	ViewReboundHandle.Reset();
+}
+
 void UObjectivesService::Unbind()
 {
+	Unsubscribe();
 	if (Queue != nullptr && bStageSignalRegistered)
 	{
 		Queue->UnregisterTimerResolver(ETimerKind::StageSignal);
@@ -94,6 +118,8 @@ void UObjectivesService::Unbind()
 	Roster = nullptr;
 	Assignment = nullptr;
 	Chains = nullptr;
+	ViewTargets = nullptr;
+	ViewObserver = nullptr;
 	Faults = nullptr;
 #if !UE_BUILD_SHIPPING
 	SubmitDebugStage = nullptr;
@@ -204,6 +230,82 @@ void UObjectivesService::HandleRoundReset()
 	bChainSelected = false;
 	LayoutId = 0;
 	ActiveEpoch = 0;
+}
+
+// --- The team view (stories oc-010..oc-012) ---------------------------------------------------------------------------
+
+void UObjectivesService::PushTeamView(uint8 Team, const FObjectiveTeamView& View)
+{
+	WriteTeamView(Team, View);
+	if (ViewObserver != nullptr)
+	{
+		ViewObserver->PushTeamView(Team, View);
+	}
+}
+
+int32 UObjectivesService::WriteTeamView(uint8 Team, const FObjectiveTeamView& View)
+{
+	if (ViewTargets == nullptr)
+	{
+		return 0;
+	}
+	TArray<FParticipantId> Members;
+	ViewTargets->GetTeamMembers(Team, Members);
+	int32 Written = 0;
+	for (const FParticipantId Member : Members)
+	{
+		UObjectiveTeamViewComponent* Component = ViewTargets->FindTeamView(Member);
+		Written += Component != nullptr && Component->ApplyView(View) ? 1 : 0;
+	}
+	ViewWriteCount += Written;
+	return Written;
+}
+
+FObjectiveTeamView UObjectivesService::BuildTeamView(int32 Team) const
+{
+	return Core->BuildTeamView(Team);
+}
+
+bool UObjectivesService::HandleViewRebound(FParticipantId Participant)
+{
+	if (!bBound || ViewTargets == nullptr || Roster == nullptr || !Participant.IsValid())
+	{
+		return false;
+	}
+	const int32 Team = Roster->GetTeam(Participant);
+	UObjectiveTeamViewComponent* Component = Team >= 0 && Team < FObjectivesCore::TeamCount ? ViewTargets->FindTeamView(Participant) : nullptr;
+	if (Component == nullptr)
+	{
+		return false;
+	}
+	// Inline in the handler: the team's current view (the empty default before Active entry, so no client knows a site early;
+	// at seamless travel the new world's service is not Active and the new controller's default is already correct).
+	const bool bWritten = Component->ApplyView(Core->BuildTeamView(Team));
+	ViewWriteCount += bWritten ? 1 : 0;
+	return bWritten;
+}
+
+void UObjectivesService::HandleViewRebound_Event(FParticipantId Participant)
+{
+	HandleViewRebound(Participant);
+}
+
+void UObjectivesService::HandleRosterReset()
+{
+	HandleRoundReset();
+	// Nothing carries across rounds: every member's component returns to the empty default (change-only).
+	for (uint8 Team = 0; Team < FObjectivesCore::TeamCount; ++Team)
+	{
+		WriteTeamView(Team, FObjectiveTeamView());
+	}
+}
+
+void UObjectivesService::HandleRosterEvent(const FRosterEvent& Event)
+{
+	if (Event.Type == ERosterEventType::RosterReset)
+	{
+		HandleRosterReset();
+	}
 }
 
 #if !UE_BUILD_SHIPPING

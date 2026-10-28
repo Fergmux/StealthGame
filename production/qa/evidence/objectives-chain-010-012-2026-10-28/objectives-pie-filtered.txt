@@ -1,0 +1,13 @@
+LogAutomationController: Display: Test Completed. Result={Success} Name={OneChangePerFrame_PushModelOff} Path={StealthGame.Objectives.PIE.RivalCountOneUpdate.OneChangePerFrame_PushModelOff}
+LogAutomationController: OC011 OBJ-V2 push=0 one-frame pair: 1 change(s), final 2
+LogAutomationController: OC011 OBJ-V2 push=0 two frames: 2 change(s)
+LogAutomationController: OC011 push=0 unmarked write arrived=1
+LogAutomationController: Display: Test Completed. Result={Success} Name={OneChangePerFrame_PushModelOn} Path={StealthGame.Objectives.PIE.RivalCountOneUpdate.OneChangePerFrame_PushModelOn}
+LogAutomationController: OC011 OBJ-V2 push=1 one-frame pair: 1 change(s), final 2
+LogAutomationController: OC011 OBJ-V2 push=1 two frames: 2 change(s)
+LogAutomationController: OC011 push=1 unmarked write arrived=1
+LogAutomationController: Display: Test Completed. Result={Success} Name={ServerOnlyServiceRegisteredWithNoFaultAtActive} Path={StealthGame.Objectives.PIE.ServiceBoots.ServerOnlyServiceRegisteredWithNoFaultAtActive}
+LogAutomationController: Display: Test Completed. Result={Success} Name={EachTeamsViewReachesOnlyItsOwnClients} Path={StealthGame.Objectives.PIE.TeamViewOwnerOnly.EachTeamsViewReachesOnlyItsOwnClients}
+LogAutomationController: OC011 OBJ-V1 team 0 client: stage 1 court 1 def 0
+LogAutomationController: OC011 OBJ-V1 team 1 client: stage 1 court 3 def 2
+LogAutomationController: OC011 OBJ-V1 samples=7 component-count violations=0 leak violations=0

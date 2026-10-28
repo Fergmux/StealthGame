@@ -1,4 +1,4 @@
-// Objectives Chain stories oc-005..oc-009 (production/epics/objectives-chain/): the composition root's Objectives adapters.
+// Objectives Chain stories oc-005..oc-009 and oc-011 (production/epics/objectives-chain/): the composition root's Objectives adapters.
 // See StealthObjectivesWiring.h.
 
 #include "StealthObjectivesWiring.h"
@@ -16,6 +16,7 @@
 #include "StealthObjective.h"
 #include "StealthSettings.h"
 #include "StealthTypes.h"
+#include "View/ObjectiveTeamViewComponent.h"
 
 FStealthObjectivesAdapters::FStealthObjectivesAdapters(UWorld* InWorld, UStealthCompositionRoot* InRoot, const IStealthClock* InClock)
 	: World(InWorld)
@@ -158,26 +159,12 @@ double FStealthObjectivesAdapters::ServerNow() const
 
 void FStealthObjectivesAdapters::GetCourts(TArray<const AStealthObjective*>& Out) const
 {
-	Out.Reset();
-	if (UWorld* Target = World.Get())
-	{
-		for (TActorIterator<AStealthObjective> It(Target); It; ++It)
-		{
-			if (IsValid(*It))
-			{
-				Out.Add(*It);
-			}
-		}
-	}
-	Out.Sort([](const AStealthObjective& A, const AStealthObjective& B) { return A.GetFName().LexicalLess(B.GetFName()); });
+	AStealthObjective::GetStandInCourts(World.Get(), Out);
 }
 
 const AStealthObjective* FStealthObjectivesAdapters::FindCourtActor(FCourtFixtureId Court) const
 {
-	TArray<const AStealthObjective*> Courts;
-	GetCourts(Courts);
-	const int32 Index = static_cast<int32>(Court.Value) - 1;
-	return Courts.IsValidIndex(Index) ? Courts[Index] : nullptr;
+	return AStealthObjective::FindStandInCourt(World.Get(), Court);
 }
 
 bool FStealthObjectivesAdapters::GetSiteAssignment_Server(FSiteAssignment& OutAssignment) const
@@ -242,13 +229,32 @@ bool FStealthObjectivesAdapters::IsLegalityActive(const APawn& Pawn) const
 	return GetLegalityClass(Pawn) == EObjectivesLegalityClass::Active;
 }
 
-// --- Stand-ins of later stories ---------------------------------------------------------------------------------------
+// --- IObjectivesViewTargets (story oc-011) -------------------------------------------------------------------------
 
-void FStealthObjectivesAdapters::PushTeamView(uint8 Team)
+void FStealthObjectivesAdapters::GetTeamMembers(uint8 Team, TArray<FParticipantId>& OutMembers) const
+{
+	OutMembers.Reset();
+	const URosterStore* Roster = GetRoster();
+	if (Roster == nullptr)
+	{
+		return;
+	}
+	TArray<FParticipantId> Ids;
+	Roster->GetParticipantIds(Ids);
+	const ERosterTeam Wanted = Team == 0 ? ERosterTeam::Team0 : ERosterTeam::Team1;
+	for (const FParticipantId Id : Ids)
+	{
+		const FParticipantRecord* Record = Roster->FindRecord(Id);
+		if (Record != nullptr && Record->Team == Wanted)
+		{
+			OutMembers.Add(Id);
+		}
+	}
+}
+
+UObjectiveTeamViewComponent* FStealthObjectivesAdapters::FindTeamView(FParticipantId Participant) const
 {
 	const UStealthCompositionRoot* Composition = Root.Get();
-	if (AStealthGameMode* Mode = Composition != nullptr ? Composition->GetGameMode() : nullptr)
-	{
-		Mode->MirrorProductionObjectiveStage(Team);
-	}
+	const APlayerController* Controller = Composition != nullptr ? Composition->GetController(Participant) : nullptr;
+	return Controller != nullptr ? Controller->FindComponentByClass<UObjectiveTeamViewComponent>() : nullptr;
 }

@@ -1,4 +1,6 @@
 #include "StealthObjective.h"
+
+#include "EngineUtils.h"
 #include "StealthCharacter.h"
 #include "StealthGameMode.h"
 #include "StealthSettings.h"
@@ -50,6 +52,31 @@ void AStealthObjective::BeginPlay()
 {
 	Super::BeginPlay();
 	UpdateVisuals();
+}
+
+void AStealthObjective::GetStandInCourts(const UWorld* World, TArray<const AStealthObjective*>& OutCourts)
+{
+	OutCourts.Reset();
+	if (World == nullptr)
+	{
+		return;
+	}
+	for (TActorIterator<AStealthObjective> It(World); It; ++It)
+	{
+		if (IsValid(*It))
+		{
+			OutCourts.Add(*It);
+		}
+	}
+	OutCourts.Sort([](const AStealthObjective& A, const AStealthObjective& B) { return A.GetFName().LexicalLess(B.GetFName()); });
+}
+
+const AStealthObjective* AStealthObjective::FindStandInCourt(const UWorld* World, FCourtFixtureId Court)
+{
+	TArray<const AStealthObjective*> Courts;
+	GetStandInCourts(World, Courts);
+	const int32 Index = static_cast<int32>(Court.Value) - 1;
+	return Courts.IsValidIndex(Index) ? Courts[Index] : nullptr;
 }
 
 bool AStealthObjective::IsInRange(const AStealthCharacter* Character) const

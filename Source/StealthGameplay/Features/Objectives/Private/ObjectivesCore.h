@@ -22,8 +22,9 @@ class IStealthFaultSink;
  *   HandleActiveEntry    at OnRoundActive: both teams Stage1, their Prelim1 sites Live
  *   OnInteractExecuted / OnInteractEnded   the interact-target owner calls (claims; the completion gate (a)-(e))
  *   ApplyCountedCompletion                 the ONLY writer of site state (the gate and the debug completion share it)
+ *   BuildTeamView        the team view (story oc-010): a pure function of the store; PushView writes it change-only
  *   HandleRoundEnded     frozen: nothing changes afterwards
- *   Reset                OnRosterReset / Deinitialize
+ *   Reset                OnRosterReset / Deinitialize (every site state, claim, view cache and the rival count)
  *
  * Site state per (team, definition) is Locked -> Live -> Completed with no backward transition and exactly three triggers:
  * Active entry, the team's own counted completion of every definition of a stage, and Reset. Nothing keyed on elapsed time
@@ -195,7 +196,7 @@ public:
 	/** Round Ended: every state is frozen; a completion arriving afterwards is ignored. */
 	void HandleRoundEnded() { bEnded = true; }
 
-	/** OnRosterReset / Deinitialize: clears the store (unbound, nothing Live, no claims). */
+	/** OnRosterReset / Deinitialize: clears the store (unbound, nothing Live, no claims, no view cache, rival counts 0). */
 	void Reset();
 
 	bool IsActive() const { return bActive && !bEnded; }
@@ -227,6 +228,28 @@ public:
 	int32 GetCompletedPreliminaryStages(int32 Team) const;
 	/** Counted preliminary completions of both teams (the round-global ordinal k of OC-12). */
 	uint32 GetPrelimOrdinal() const { return PrelimOrdinal; }
+	/** Rival preliminary completions released to Team (OC-12; 0..2). HOLD: written by stories oc-014/015's resolver only. */
+	uint8 GetRivalPrelimCount(int32 Team) const { return Team >= 0 && Team < TeamCount ? RivalPrelimCount[Team] : 0; }
+
+	// --- The team view (story oc-010) -----------------------------------------------------------------------------------
+
+	/**
+	 * Team's FObjectiveTeamView, a pure function of the store (ADR-0020 section 4): before Active entry (and after Reset) the
+	 * empty default; afterwards RoundEpoch, ChainSerial, StageIndex, the team's OWN Live sites (its current stage only, at most
+	 * ObjectivesPerStageCount; the final only once the team's own preliminaries are complete, SP-1) with their row index and
+	 * clue, the team's own completed preliminary rows (never the final) and RivalPrelimCount. Never a Locked site, an opponent
+	 * site, opponent progress other than RivalPrelimCount, or anyone's hold progress. Every member of Team gets this value.
+	 */
+	FObjectiveTeamView BuildTeamView(int32 Team) const;
+
+	/** The view last pushed for Team (the change-only cache; the empty default before the first push). */
+	const FObjectiveTeamView& GetLastPushedView(int32 Team) const;
+
+	/**
+	 * The one path to the view sink: builds Team's view and pushes it only when it differs from the last push (an identical
+	 * second push is a no-op). Called at Active entry and after a counted preliminary stage (and, from oc-015, a rival release).
+	 */
+	void PushView(int32 Team);
 
 	// --- The interact-target owner (stories oc-006, oc-008, oc-009) -----------------------------------------------------
 
@@ -283,7 +306,6 @@ private:
 	void Append(ERoundLogType Type, FQueueKey Key, FParticipantId Participant, TFunctionRef<void(FRoundLogEntry&)> Fill);
 	void AppendTend(FParticipantId Participant, FCourtFixtureId Court, ERoundTendResult Result, bool bLatched, FQueueKey Key);
 	static bool IsEligible(EObjectiveEligibility Eligibility, int32 Team);
-	void PushView(int32 Team);
 	bool IsStageComplete(int32 Team, EObjectiveStage Stage) const;
 	void SetStageLive(int32 Team, EObjectiveStage Stage);
 
@@ -295,6 +317,11 @@ private:
 	EObjectiveSiteState SiteStates[TeamCount][UObjectiveChainData::MaxDefinitions] = {};
 	EObjectiveTeamStage StageIndex[TeamCount] = { EObjectiveTeamStage::None, EObjectiveTeamStage::None };
 	uint16 CompletedDefMask[TeamCount] = { 0, 0 };
+	/** OC-12 released rival count per viewing team (HOLD for stories oc-014/015: nothing writes it before them). */
+	uint8 RivalPrelimCount[TeamCount] = { 0, 0 };
+	/** The change-only cache of PushView (story oc-010). */
+	FObjectiveTeamView LastPushedView[TeamCount];
+	bool bViewPushed[TeamCount] = { false, false };
 	uint16 ChainSerial = 0;
 	uint32 PrelimOrdinal = 0;
 	uint32 RoundEpoch = 0;

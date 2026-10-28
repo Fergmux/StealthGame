@@ -3950,3 +3950,36 @@ stories:
     completed: "2026-10-28"
     sprint: 2
     note: "OC batch 2026-10-28; FinalCompleted + DeclareObjectiveWin in the slot; CompletionGateFinal, FollowOnInSlot, NoStackNoCancel, FinalSameFrameOrdering; run-and-observe: team 0 objective win in 3-player PIE; evidence production/qa/evidence/objectives-chain-001-009-2026-10-28/"
+  - id: "oc-010"
+    name: "Team view struct and builder"
+    file: "production/epics/objectives-chain/story-010-team-view-struct-and-builder.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28b; FObjectiveTeamView fixed-width NetSerialize (9/14/18/23 B for 0-3 sites), BuildTeamView, change-only PushView; FClueTag declared ({0,0} until oc-013); RivalPrelimCount HOLD for oc-014/015; NoTeamViewBeforeActive, TeamViewContentsCore, TeamViewWidthAndChangeOnly; evidence production/qa/evidence/objectives-chain-010-012-2026-10-28/"
+  - id: "oc-011"
+    name: "Team view component and replication"
+    file: "production/epics/objectives-chain/story-011-team-view-component-and-replication.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.5
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28b; UObjectiveTeamViewComponent on AStealthPlayerController (push-based, owner-only via the controller); OBJ-V1 PASS in PIE (multi-client + rejoin rebind; seamless-travel clause NOT RUN, deferred to oc-019 / session-travel MP harness); OBJ-V2 PASS push on/off; ReplicationAllowlist.json created with its row + per-class audit (IVP 013/015 stand-in); HUD reads only the own view (prototype Enemy progress leak removed); ObjectivesAllowlistRow, PIE.TeamViewOwnerOnly, PIE.RivalCountOneUpdate x2; run-and-observe OBSERVED"
+  - id: "oc-012"
+    name: "Rejoin, view rebind and round reset"
+    file: "production/epics/objectives-chain/story-012-rejoin-rebind-and-reset.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-28"
+    sprint: 2
+    note: "OC batch 2026-10-28b; URosterStore::OnParticipantViewRebound (raised from RegisterTeamView until psr-041), service subscribes to it and RosterReset (reset writes the empty default to every member); ResetAndRejoin, ViewReboundWritesTeamView (real URosterStore), RejoinHoldDoesNotResume; evidence production/qa/evidence/objectives-chain-010-012-2026-10-28/"

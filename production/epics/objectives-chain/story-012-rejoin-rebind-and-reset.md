@@ -1,12 +1,12 @@
 # Story 012: Rejoin, view rebind and round reset
 
 > **Epic**: Objectives Chain
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-28
 
 ## Context
 
@@ -36,9 +36,9 @@ The view must be right at every moment a player can look at it, including after 
 
 *From GDD `design/gdd/objectives-chain.md` (AC-OC-15, Edge Cases) and ADR-0020 section 6, scoped to this story. QL-STORY-READY revised AC2 (write count) and AC3 (hold progress versus team progress, owner of the cancel):*
 
-- [ ] **AC1** (AC-OC-15 [U] `ResetAndRejoin`): **GIVEN** a round reset **THEN** all site states, team views and pending signals are cleared on `OnRosterReset`; **GIVEN** a rejoin inside the grace **THEN** the rejoiner's team view equals its teammates'; a rejoin after the grace expires restores nothing.
-- [ ] **AC2** (ADR section 6 [U] `ViewReboundWritesTeamView`): the service is subscribed to `URosterStore::OnParticipantViewRebound` and writes that participant's team view inline in the handler (only the participant's own team; an event before `Active` writes the empty default); at seamless travel the **view write count is 0** and the new controller's view equals the empty default until `Active` entry.
-- [ ] **AC3** (GDD Edge Cases [U] `RejoinHoldDoesNotResume`): **GIVEN** a tender who rejoins inside the grace **THEN** the hold does not resume (a new `Begin` is required) and team stage state is unchanged; **GIVEN** a tender who becomes Unresponsive mid-hold **THEN** the IIF cancels the hold (Round hands the pawn to AI by the normal blend; Objectives only receives `OnInteractEnded(..., Cancelled, ...)`, so the test stubs the IIF side), its elapsed hold time reads 0, a new `Begin` is required to resume and team stage state is unchanged.
+- [x] **AC1** (AC-OC-15 [U] `ResetAndRejoin`): **GIVEN** a round reset **THEN** all site states, team views and pending signals are cleared on `OnRosterReset`; **GIVEN** a rejoin inside the grace **THEN** the rejoiner's team view equals its teammates'; a rejoin after the grace expires restores nothing.
+- [x] **AC2** (ADR section 6 [U] `ViewReboundWritesTeamView`): the service is subscribed to `URosterStore::OnParticipantViewRebound` and writes that participant's team view inline in the handler (only the participant's own team; an event before `Active` writes the empty default); at seamless travel the **view write count is 0** and the new controller's view equals the empty default until `Active` entry.
+- [x] **AC3** (GDD Edge Cases [U] `RejoinHoldDoesNotResume`): **GIVEN** a tender who rejoins inside the grace **THEN** the hold does not resume (a new `Begin` is required) and team stage state is unchanged; **GIVEN** a tender who becomes Unresponsive mid-hold **THEN** the IIF cancels the hold (Round hands the pawn to AI by the normal blend; Objectives only receives `OnInteractEnded(..., Cancelled, ...)`, so the test stubs the IIF side), its elapsed hold time reads 0, a new `Begin` is required to resume and team stage state is unchanged.
 
 ---
 
@@ -71,11 +71,10 @@ Prototype replaced: nothing in the prototype handled rejoin for objective state 
 
 *The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
 
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesService.cpp` (rebind handler, reset)
-- `Source/StealthGameplay/Private/Features/Objectives/ObjectivesCore.cpp` (`ResetAll`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ResetAndRejoinTest.cpp` (class `FObjectivesResetAndRejoinTest`, name `StealthGame.Objectives.ResetAndRejoin`)
-- `Source/StealthGameplay/Private/Tests/Objectives/ViewReboundWritesTeamViewTest.cpp` (`StealthGame.Objectives.ViewReboundWritesTeamView`)
-- `Source/StealthGameplay/Private/Tests/Objectives/RejoinHoldDoesNotResumeTest.cpp` (`StealthGame.Objectives.RejoinHoldDoesNotResume`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesService.cpp` / `Public/Server/ObjectivesService.h` (`HandleViewRebound` subscribed to `URosterStore::OnParticipantViewRebound`, `HandleRosterReset` subscribed to `OnRosterEvent(RosterReset)`, `Init.RosterEvents`)
+- `Source/StealthGameplay/Features/Objectives/Private/ObjectivesCore.cpp` (`Reset` clears the view caches and rival counts; the planned `ResetAll` is the existing `Reset`)
+- `Source/StealthFoundation/Public/Server/Roster/StealthRosterStore.h` / `Private/Roster/StealthRosterStore.cpp` (`OnParticipantViewRebound`, raised from `RegisterTeamView`: the RebindView stand-in until Roster psr-041)
+- `Source/StealthGameplay/Private/Tests/Objectives/ResetAndRejoinTest.cpp`, `ViewReboundWritesTeamViewTest.cpp`, `RejoinHoldDoesNotResumeTest.cpp`, `ObjectivesRosterFixture.h` (a real URosterStore)
 
 ---
 
@@ -109,7 +108,9 @@ Prototype replaced: nothing in the prototype handled rejoin for objective state 
 **Required evidence**:
 - Logic: the three test files under `Source/StealthGameplay/Private/Tests/Objectives/` — must exist and pass (`/story-done` checks that it EXISTS; pass/fail is established by `/gate-check` and `/smoke-check`, both later)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-28): StealthGame.Objectives.ResetAndRejoin, ViewReboundWritesTeamView, RejoinHoldDoesNotResume; evidence production/qa/evidence/objectives-chain-010-012-2026-10-28/
+
+Run result: N/A - a rejoin and a Roster reset inside a running round have no single-process PIE path yet (Session's PIE rejoin is not built); the rebind write is exercised on the real Roster store headless and through the replicated carrier in StealthGame.Objectives.PIE.TeamViewOwnerOnly (story 011).
 
 ---
 
@@ -117,3 +118,10 @@ Prototype replaced: nothing in the prototype handled rejoin for objective state 
 
 - Depends on: `production/epics/objectives-chain/story-008-completion-gate-and-stage-effects.md`, `production/epics/objectives-chain/story-010-team-view-struct-and-builder.md`, `production/epics/objectives-chain/story-011-team-view-component-and-replication.md`; cross-epic: `production/epics/participant-state-roster/story-041-team-view-repush-on-controller-swap.md`, `production/epics/session-travel/story-056-roster-rebind-both-paths.md`, `production/epics/participant-state-roster/story-059-mp-rejoin-within-grace.md`
 - Unlocks: `production/epics/objectives-chain/story-019-pie2-team-view-ingress-and-informant-parity.md`
+
+## Completion Notes
+**Completed**: 2026-10-28
+**Criteria**: AC1-AC3 passing.
+**Deviations**: the Roster's `OnParticipantViewRebound` did not exist (Roster psr-041 / Session st-056 unbuilt): it is added to URosterStore and raised from `RegisterTeamView`, which the composition root calls for every newly registered controller (join, rejoin, the new controller after travel). The service subscribes itself (Init.RosterEvents) to that event and to `RosterReset`; at the reset it also writes the empty default to every member so a client never keeps a site across rounds (a write outside the three listed contexts; logged). "A rejoin after the grace restores nothing" is read as: the participant (now an Informant) gets the team view like any informant, and no hold, claim or progress is restored. The pending rival-release list is story 015's (HOLD; the rival count is cleared). The IIF debounce edge case waits for IIF stage 2 (the stand-in has no debounce).
+**Test Evidence**: production/qa/evidence/objectives-chain-010-012-2026-10-28/
+**Reviewed by**: self code review 2026-10-28 (notes in the evidence)
