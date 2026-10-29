@@ -182,6 +182,196 @@ struct STEALTHFOUNDATION_API FConcealmentTuning_Public
 };
 
 /**
+ * Camera System keys (GDD camera-system.md Tuning Knobs, owner Camera, audience Client: one value for every client, no NPC or
+ * player variant; ADR-0015 sections 2 and 7; story cs-001). Owner-local presentation on the client face. The keys marked *
+ * in the GDD (FpFovVDeg, TpFovVDeg, StickDeadZoneFrac, StickCurveExp, StickYawRateDegPerSec, StickPitchRateDegPerSec) are
+ * local user settings, not tuning keys: their hard ranges and defaults are FStealthCameraUserSettings
+ * (View/Tuning/StealthCameraParams.h, TDC CR-14). The invariants I-CS-1..5 are TDC Check rows
+ * (Server/StealthCameraInvariants.h). The camera cores read these through the plain FStealthCameraParams, never this UStruct.
+ */
+USTRUCT()
+struct STEALTHFOUNDATION_API FCameraTuning_Public
+{
+	GENERATED_BODY()
+
+	/** OQ2 fallback (CS-R3.5): the view may lead the visible head by at most this. Disabled by default: the sentinel 0 (35 when enabled). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "15", ClampMax = "70", SafeMin = "25", SafeMax = "45", Latch = "Round", Owner = "Camera", Unit = "Deg", Sentinel = "0"))
+	float ViewHeadLeadMaxDeg = 0.0f;
+
+	/** Local view and aim pitch limit downward, both modes (CS-R3.1; SCL D6). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "20", ClampMax = "75", SafeMin = "50", SafeMax = "65", Latch = "Round", Owner = "Camera", Unit = "Deg"))
+	float ViewPitchDownLimitDeg = 60.0f;
+
+	/** Local view and aim pitch limit upward, both modes (CS-R3.1). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "20", ClampMax = "60", SafeMin = "30", SafeMax = "45", Latch = "Round", Owner = "Camera", Unit = "Deg"))
+	float ViewPitchUpLimitDeg = 40.0f;
+
+	/** Elastic overshoot of the target past the yaw limit (F1); must be >= 2 (I-CS-5) so SCL R5.5 sees the crossing. */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "2", ClampMax = "10", SafeMin = "3", SafeMax = "8", Latch = "Use", Owner = "Camera", Unit = "Deg"))
+	float CameraEdgePushDeg = 5.0f;
+
+	/** Raw outward look rate that counts as a push at the limit (F1). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "5", ClampMax = "40", SafeMin = "10", SafeMax = "25", Latch = "Use", Owner = "Camera", Unit = "PerSec"))
+	float EdgePushMinRateDegPerSec = 15.0f;
+
+	/** A push stays latched this long across a gap in outward input (mouse re-centre; F1). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0.05", ClampMax = "0.3", SafeMin = "0.1", SafeMax = "0.2", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float EdgePushLatchSec = 0.15f;
+
+	/** Look gain at the hard limit (the soft edge's floor; F1). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0.05", ClampMax = "0.3", SafeMin = "0.08", SafeMax = "0.15", Latch = "Use", Owner = "Camera", Unit = "Gain"))
+	float CameraEdgeSoftMinGain = 0.1f;
+
+	/** Rate the target relaxes back to the limit when the push ends (F1). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "20", ClampMax = "200", SafeMin = "40", SafeMax = "120", Latch = "Use", Owner = "Camera", Unit = "PerSec"))
+	float EdgePushRelaxDegPerSec = 60.0f;
+
+	/** Yaw width of the soft edge inside the limit (F1); 0 is a hard wall. */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "15", SafeMin = "6", SafeMax = "12", Latch = "Use", Owner = "Camera", Unit = "Deg"))
+	float CameraEdgeSoftYawDeg = 10.0f;
+
+	/** Pitch width of the soft edge inside the limits (F1). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "10", SafeMin = "3", SafeMax = "6", Latch = "Use", Owner = "Camera", Unit = "Deg"))
+	float CameraEdgeSoftPitchDeg = 5.0f;
+
+	/** Pivot smoothing lag (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "0.25", SafeMin = "0.06", SafeMax = "0.14", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float CameraPivotLagSec = 0.1f;
+
+	/** Pivot smoothing lag during traversal (the GDD row's parenthesised value; F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "0.25", SafeMin = "0.06", SafeMax = "0.14", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float CameraPivotLagTraversalSec = 0.12f;
+
+	/** Vertical pivot speed cap (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "100", ClampMax = "600", SafeMin = "200", SafeMax = "400", Latch = "Use", Owner = "Camera", Unit = "CmPerSec"))
+	float PivotMaxVertCmPerSec = 300.0f;
+
+	/** Third-person boom length (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "100", ClampMax = "250", SafeMin = "150", SafeMax = "200", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float BoomLengthCm = 180.0f;
+
+	/** Shoulder (lateral) offset (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "60", SafeMin = "35", SafeMax = "50", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float ShoulderOffsetCm = 45.0f;
+
+	/** Boom height above the pivot; must be <= 25 (I-CS-2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "25", SafeMin = "5", SafeMax = "20", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float BoomHeightOffsetCm = 15.0f;
+
+	/** Guard radius of the boom collision (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "1", ClampMax = "5", SafeMin = "2", SafeMax = "2", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float CameraGuardRadiusCm = 2.0f;
+
+	/** Probe radius of the boom collision (F2); below 12 the near plane clips walls. */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "10", ClampMax = "20", SafeMin = "12", SafeMax = "16", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float CameraProbeRadiusCm = 14.0f;
+
+	/** Hold before a compressed boom recovers (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "0.5", SafeMin = "0.1", SafeMax = "0.2", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float BoomRecoverHoldSec = 0.15f;
+
+	/** Boom recovery time constant (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0.1", ClampMax = "0.6", SafeMin = "0.25", SafeMax = "0.4", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float BoomRecoverTauSec = 0.3f;
+
+	/** Boom recovery speed cap (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "100", ClampMax = "800", SafeMin = "200", SafeMax = "450", Latch = "Use", Owner = "Camera", Unit = "CmPerSec"))
+	float BoomRecoverCmPerSec = 300.0f;
+
+	/** Shoulder squeeze-in time (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0.05", ClampMax = "0.5", SafeMin = "0.1", SafeMax = "0.2", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float ShoulderSqueezeInSec = 0.15f;
+
+	/** Shoulder squeeze-out time (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0.1", ClampMax = "1", SafeMin = "0.3", SafeMax = "0.5", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float ShoulderSqueezeOutSec = 0.4f;
+
+	/** Free boom under which the own head hides (F2). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "30", ClampMax = "100", SafeMin = "50", SafeMax = "80", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float BoomCloseCm = 60.0f;
+
+	/** Boom inside a bush, straight back (CS-R11.3); <= 70 and <= BoomLengthCm (I-CS-4). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "70", SafeMin = "40", SafeMax = "60", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float ConcealedBoomCm = 60.0f;
+
+	/** First-person lens forward of the eye (CS-R5a). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "20", SafeMin = "5", SafeMax = "12", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float FpForwardOffsetCm = 8.0f;
+
+	/** D6: the mask turns off below 25 cm of free boom and on again above 25 + this (35 cm at the default). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "5", ClampMax = "30", SafeMin = "8", SafeMax = "15", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float CameraMaskOffHysteresisCm = 10.0f;
+
+	/** Near clip plane. */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "1", ClampMax = "15", SafeMin = "3", SafeMax = "8", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float CameraNearClipCm = 5.0f;
+
+	/** Eye-mask cone half-angle, horizontal (F3); >= FovHMaxDeg / 2 (I-CS-3). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "40", ClampMax = "70", SafeMin = "54", SafeMax = "60", Latch = "Round", Owner = "Camera", Unit = "Deg"))
+	float EyeConeHalfHDeg = 55.0f;
+
+	/** Eye-mask cone half-angle, vertical (F3); >= FovVMaxDeg / 2 (I-CS-3). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "25", ClampMax = "50", SafeMin = "38", SafeMax = "42", Latch = "Round", Owner = "Camera", Unit = "Deg"))
+	float EyeConeHalfVDeg = 38.0f;
+
+	/** Consecutive failed eye tests before a pawn fades out (F3). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "1", ClampMax = "4", SafeMin = "2", SafeMax = "3", Latch = "Use", Owner = "Camera", Unit = "Count"))
+	int32 EyeMaskHideFailCount = 2;
+
+	/** Eye-mask fade time (F3). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0.05", ClampMax = "0.3", SafeMin = "0.08", SafeMax = "0.12", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float EyeMaskFadeSec = 0.1f;
+
+	/** Eye-mask near band (trace rate EyeMaskNearHz; F3). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "1000", ClampMax = "4000", SafeMin = "1000", SafeMax = "4000", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float EyeMaskNearCm = 2000.0f;
+
+	/** Eye-mask far band edge (beyond it EyeMaskBeyondHz; F3). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "3000", ClampMax = "10000", SafeMin = "3000", SafeMax = "10000", Latch = "Use", Owner = "Camera", Unit = "Cm"))
+	float EyeMaskRangeCm = 6000.0f;
+
+	/** Eye-test rate inside EyeMaskNearCm (F3). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "30", ClampMax = "60", SafeMin = "45", SafeMax = "60", Latch = "Use", Owner = "Camera", Unit = "Hz"))
+	float EyeMaskNearHz = 60.0f;
+
+	/** Eye-test rate up to EyeMaskRangeCm (F3). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "10", ClampMax = "30", SafeMin = "12", SafeMax = "20", Latch = "Use", Owner = "Camera", Unit = "Hz"))
+	float EyeMaskFarHz = 15.0f;
+
+	/** Eye-test rate beyond EyeMaskRangeCm (F3; the line-of-sight test still runs). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "2", ClampMax = "15", SafeMin = "4", SafeMax = "8", Latch = "Use", Owner = "Camera", Unit = "Hz"))
+	float EyeMaskBeyondHz = 5.0f;
+
+	/** 1P/3P toggle blend (F4); <= CameraToggleLockoutSec - 1/60 s (I-CS-1, reject, no runtime clamp). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "0.28", SafeMin = "0.15", SafeMax = "0.25", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float CameraToggleBlendSec = 0.2f;
+
+	/** Shoulder swap blend. */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "0.5", SafeMin = "0.2", SafeMax = "0.35", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float ShoulderSwapBlendSec = 0.25f;
+
+	/** Fade to and from the neutral view when no pawn is possessed (CS-R13). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0", ClampMax = "1.5", SafeMin = "0.3", SafeMax = "0.8", Latch = "Use", Owner = "Camera", Unit = "Sec"))
+	float NoPawnFadeSec = 0.5f;
+
+	/** Vertical FOV setting minimum (F5). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "45", ClampMax = "90", SafeMin = "55", SafeMax = "55", Latch = "Round", Owner = "Camera", Unit = "Deg"))
+	float FovVMinDeg = 55.0f;
+
+	/** Vertical FOV setting maximum (F5); raises everyone's periphery equally. */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "45", ClampMax = "90", SafeMin = "75", SafeMax = "75", Latch = "Round", Owner = "Camera", Unit = "Deg"))
+	float FovVMaxDeg = 75.0f;
+
+	/** Horizontal FOV cap for any aspect (fairness; F5). */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "90", ClampMax = "120", SafeMin = "100", SafeMax = "110", Latch = "Round", Owner = "Camera", Unit = "Deg"))
+	float FovHMaxDeg = 108.0f;
+
+	/** Stick outer zone (F6): deflection at or above it is full deflection. */
+	UPROPERTY(EditAnywhere, Category = "Camera", meta = (ClampMin = "0.9", ClampMax = "1", SafeMin = "0.95", SafeMax = "0.99", Latch = "Use", Owner = "Camera", Unit = "Frac"))
+	float StickOuterZoneFrac = 0.98f;
+};
+
+/**
  * Shared Character & Locomotion keys a client needs (GDD shared-character-locomotion.md Tuning Knobs, audience Client;
  * story SCL-003). One value for every pawn: no key has an NPC or player variant (AC-SCL-01). Keys marked provisional in
  * the GDD (traversal, net emulation, spike R3) change only through /propagate-design-change.

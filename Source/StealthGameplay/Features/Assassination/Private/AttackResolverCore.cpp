@@ -250,6 +250,10 @@ EResolveResult FAttackResolverCore::ResolveAttack(const FQueueItem& Item, const 
 	Request.Key = Key;
 	Request.Variant = Variant;
 	const FVictimResolution Victim = FVictimResolverCore::Resolve(Params, MakeResolverDeps(), Request);
+	if (Victim.bInBushZone && Deps.Bushes != nullptr)
+	{
+		Deps.Bushes->OnBushStrike(Victim.BushId, Attacker, Victim.CandidateCount, Victim.ReachableCount, Key); // CON-R15 row
+	}
 
 	FAttackResolution Resolution;
 	Resolution.Key = Key;
@@ -343,6 +347,10 @@ void FAttackResolverCore::ApplyKill(const FQueueItem& Item, FQueueKey Key, APawn
 	if (Resolution.bVictimConcealed)
 	{
 		DiedConcealed.Add(FObjectKey(Victim)); // FDeathState.bDiedConcealed at its death write (story asn-023 reads it)
+	}
+	if (Deps.Bushes != nullptr)
+	{
+		Deps.Bushes->OnStrikeKilled(Attacker); // CON-R15: an emerging striker's Emerge row carries the kill
 	}
 	// (6) OnPawnKilled for every kind.
 	OnPawnKilled.Broadcast(Victim, Attacker, Kind, EKillCause::Strike);

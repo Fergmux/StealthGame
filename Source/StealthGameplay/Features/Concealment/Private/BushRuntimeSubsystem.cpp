@@ -4,6 +4,11 @@
 #include "View/BushRuntimeSubsystem.h"
 
 #include "Engine/World.h"
+#include "Components/AudioComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "Materials/MaterialParameterCollectionInstance.h"
+#include "Sound/SoundBase.h"
 #include "View/BushVolumeSet.h"
 
 bool UBushRuntimeSubsystem::ShouldCreateSubsystem(UObject* Outer) const
@@ -81,6 +86,7 @@ void UBushRuntimeSubsystem::Clear()
 	}
 	VolumeSet.Reset();
 	Bushes.Reset();
+	RustleLog.Reset();
 	bBuilt = false;
 }
 
@@ -116,4 +122,82 @@ const FBushRuntime* UBushRuntimeSubsystem::FindBushAt(const FVector& Location) c
 		}
 	}
 	return nullptr;
+}
+
+// ---- Rustle (story con-029) ----------------------------------------------------------------------------------------------
+
+namespace BushRustleLocal
+{
+	/** The observation log's bound (halved when full). */
+	constexpr int32 MaxLogRows = 1024;
+}
+
+int32 UBushRuntimeSubsystem::PushRustlePulse(uint16 BushId, uint8 Side, double StartServerTime, EBushRustleKind Kind, double NowServerTime)
+{
+	const UWorld* World = GetWorld();
+	const FBushRuntime* Bush = Find(BushId);
+	if (World == nullptr || World->GetNetMode() == NM_DedicatedServer || Bush == nullptr)
+	{
+		return INDEX_NONE;
+	}
+	FConcealmentTuning_Public Tuning; // the schema defaults until the TDC store feeds features (as every Concealment reader)
+	const FBushRustlePulse Pulse = BushRustle::MakePulse(*Bush, ConcealmentGeometry::ValidateSide(Bush->EntryAxisMask, Side), Kind, StartServerTime, Tuning, RustleSound);
+	if (NowServerTime > Pulse.OnsetServerTime + BushRustle::PulseLifeSec)
+	{
+		return INDEX_NONE; // long over: a late actor never replays a finished rustle
+	}
+	const int32 Slot = RustleRing.Write(Pulse);
+	if (RustleLog.Num() >= BushRustleLocal::MaxLogRows)
+	{
+		RustleLog.RemoveAt(0, BushRustleLocal::MaxLogRows / 2);
+	}
+	RustleLog.Add(Pulse);
+	if (RustleCollection != nullptr)
+	{
+		if (UMaterialParameterCollectionInstance* Instance = GetWorld()->GetParameterCollectionInstance(RustleCollection))
+		{
+			Instance->SetVectorParameterValue(*FString::Printf(TEXT("RustleA_%d"), Slot), FLinearColor(Pulse.WorldPos.X, Pulse.WorldPos.Y, Pulse.WorldPos.Z, Pulse.OnsetServerTime));
+			Instance->SetVectorParameterValue(*FString::Printf(TEXT("RustleB_%d"), Slot), FLinearColor(Pulse.SideDir.X, Pulse.SideDir.Y, Pulse.AmplitudeCm, 0.0f));
+		}
+	}
+	PlayRustleSound(Pulse, FMath::Max(NowServerTime - Pulse.OnsetServerTime, 0.0));
+	return Slot;
+}
+
+void UBushRuntimeSubsystem::PlayRustleSound(const FBushRustlePulse& Pulse, double SeekSec)
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr || !World->bAllowAudioPlayback || World->GetAudioDeviceRaw() == nullptr)
+	{
+		return; // no audio on this machine (a -nullrhi test run): the pulse record is the observation
+	}
+	USoundBase* Sound = Cast<USoundBase>(Pulse.Sound.TryLoad());
+	if (Sound == nullptr)
+	{
+		return;
+	}
+	const int32 Slot = (RustleRing.GetNextSlot() + BushRustle::SlotCount - 1) % BushRustle::SlotCount;
+	if (RustlePool.Num() < BushRustle::SlotCount)
+	{
+		RustlePool.SetNum(BushRustle::SlotCount);
+	}
+	TObjectPtr<UAudioComponent>& Component = RustlePool[Slot];
+	if (Component == nullptr || !IsValid(Component))
+	{
+		// Spatialised at the face; started at the onset, or seeked into the clip by a late write (never restarted).
+		Component = UGameplayStatics::SpawnSoundAtLocation(World, Sound, Pulse.WorldPos, FRotator::ZeroRotator, 1.0f, 1.0f,
+			static_cast<float>(SeekSec), nullptr, nullptr, /*bAutoDestroy*/ false);
+		if (Component == nullptr)
+		{
+			return;
+		}
+	}
+	else
+	{
+		Component->Stop();
+		Component->SetSound(Sound);
+		Component->SetWorldLocation(Pulse.WorldPos);
+		Component->Play(static_cast<float>(SeekSec));
+	}
+	++RustleSoundPlays;
 }

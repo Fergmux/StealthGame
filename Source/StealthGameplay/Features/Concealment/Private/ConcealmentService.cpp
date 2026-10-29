@@ -85,7 +85,7 @@ struct UConcealmentService::FAdapters final : public IConcealmentPawnWorld, publ
 		const AStealthPawn* Body = AsPawn(Pawn);
 		return Body != nullptr ? Body->GetActionState() : FActionState();
 	}
-	virtual void StartWarp(APawn& Pawn, const FVector& Target, double DurationSec, bool bEnter) override
+	virtual void StartWarp(APawn& Pawn, const FVector& Target, double DurationSec, bool bEnter, bool bOwnerPredicts) override
 	{
 		ACharacter* Character = Cast<ACharacter>(&Pawn);
 		UCharacterMovementComponent* Movement = Character != nullptr ? Character->GetCharacterMovement() : nullptr;
@@ -108,7 +108,8 @@ struct UConcealmentService::FAdapters final : public IConcealmentPawnWorld, publ
 		Source->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::SetVelocity;
 		Source->FinishVelocityParams.SetVelocity = FVector::ZeroVector;
 		Movement->ApplyRootMotionSource(Source);
-		if (UConcealmentComponent* Component = UConcealmentComponent::Find(&Pawn))
+		UConcealmentComponent* Component = bOwnerPredicts ? UConcealmentComponent::Find(&Pawn) : nullptr;
+		if (Component != nullptr)
 		{
 			Component->OnServerWarpStarted(DurationSec); // the owner-side mechanism's server half (story con-012)
 		}
@@ -253,6 +254,7 @@ bool UConcealmentService::Bind(const FConcealmentServiceInit& Init)
 	if (URosterStore* Store = Roster.Get())
 	{
 		RosterEventHandle = Store->OnRosterEvent.AddUObject(this, &UConcealmentService::HandleRosterEvent);
+		ReleasedHandle = Store->OnPawnReleasedToCrowd.AddUObject(this, &UConcealmentService::HandlePawnReleased);
 	}
 	return true;
 }
@@ -271,9 +273,11 @@ void UConcealmentService::Unbind()
 	if (URosterStore* Store = Roster.Get())
 	{
 		Store->OnRosterEvent.Remove(RosterEventHandle);
+		Store->OnPawnReleasedToCrowd.Remove(ReleasedHandle);
 	}
 	ActionStartedHandle.Reset();
 	RosterEventHandle.Reset();
+	ReleasedHandle.Reset();
 	Core.Reset();
 	Adapters.Reset();
 }
@@ -304,6 +308,14 @@ void UConcealmentService::HandleRosterEvent(const FRosterEvent& Event)
 	if (Event.Type == ERosterEventType::RosterReset && Core.IsValid())
 	{
 		Core->ResetAll();
+	}
+}
+
+void UConcealmentService::HandlePawnReleased(APawn* Pawn, FParticipantId FormerParticipant)
+{
+	if (Pawn != nullptr && Core.IsValid())
+	{
+		Core->OnPawnReleased(*Pawn, FormerParticipant);
 	}
 }
 
@@ -388,6 +400,22 @@ bool UConcealmentService::GetFootprint(uint16 BushId, FBox2D& OutFootprint) cons
 void UConcealmentService::RemoveOccupant(APawn* Pawn)
 {
 	HandlePawnKilled(Pawn); // CON-R9: the in-slot occupancy exit of a victim killed while concealed (idempotent)
+}
+
+void UConcealmentService::OnBushStrike(uint16 BushId, const APawn* Attacker, int32 CandidatesBeforeReach, int32 CandidatesAfterReach, FQueueKey Key)
+{
+	if (Attacker != nullptr && Core.IsValid())
+	{
+		Core->OnBushStrike(*Attacker, BushId, CandidatesBeforeReach, CandidatesAfterReach, Key);
+	}
+}
+
+void UConcealmentService::OnStrikeKilled(const APawn* Attacker)
+{
+	if (Attacker != nullptr && Core.IsValid())
+	{
+		Core->OnStrikeKilled(*Attacker);
+	}
 }
 
 void UConcealmentService::OnBodyRemovalCommitted(APawn* Body)

@@ -118,6 +118,9 @@ public:
 	/** Owner: the press was predicted and not yet confirmed or expired (tests, the spike's probe). */
 	bool HasPendingOwnerPrediction() const { return OwnerPredictedUntil >= 0.0; }
 
+	/** Rustle pulses this component pushed (observation; story con-029). */
+	int32 GetRustlePushCount() const { return RustlePushes; }
+
 	/** The collision writer (observation: write count; story con-008). */
 	const FConcealCollisionWriter& GetCollisionWriter() const { return CollisionWriter; }
 
@@ -147,6 +150,15 @@ protected:
 
 	/** The local viewer's C-TeamView facts about this pawn: its teammate flag, and whether any living entry is unresolved. */
 	void ReadAllyEvidence(bool& bOutAllyConcealed, bool& bOutUnresolvedEntry) const;
+
+	/**
+	 * The rustle of a hide transition (story con-029, ADR-0017 section 9): a new BushEnter / BushExit / bush-emerge pose arms
+	 * one pending pulse; at its onset (0.1 s before the swap or the crossing) the side is read from public geometry (the
+	 * entry side from the pawn's position at the pose, the exit side from its position at the onset) and the pulse is pushed
+	 * to UBushRuntimeSubsystem. A late actor pushes on arrival (the ring slot and the SFX are seeked by the start time).
+	 */
+	void ArmRustle(const FActionState& State);
+	void UpdateRustle(double Now);
 
 	/** The pawn's capsule (the gate's collision target). */
 	UPrimitiveComponent* GetCapsule() const;
@@ -184,6 +196,16 @@ private:
 	int32 PresentationWrites = 0;
 	/** The FActionState Seq this machine last saw (a1 starts once per pose write). */
 	uint16 LastSeenActionSeq = 0;
+
+	/** The pose write the rustle last armed for (Seq and start: one pulse per transition, whatever the RepNotify count). */
+	uint16 RustleSeq = 0;
+	double RustleStart = -2.0;
+	/** The armed pulse (bush 0: none). */
+	uint16 RustleBushId = 0;
+	uint8 RustleEntrySide = 0;
+	uint8 RustleKind = 0;
+	double RustleOnset = -1.0;
+	int32 RustlePushes = 0;
 
 	FConcealmentTuning_Public Tuning;
 	FConcealCollisionWriter CollisionWriter;

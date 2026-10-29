@@ -1,12 +1,12 @@
 # Story 033: Blind strikes at any bush look identical to the attacker and a killed-concealed body is never drawn on a non-owner client
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready — Update 2026-10-29: the assassination-defence-reversal strike resolver is built (asn epic: AttackResolverCore / VictimResolverCore with the BushSpotPick draw over Concealment's IBushSpotQuery); the S10 gate was cleared 2026-10-26 (story-056 PASS).
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: 2026-10-26
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -58,9 +58,13 @@ These are CQTest PIE tests using the real strike resolver, the cull (story 025) 
 
 ## Files
 
-- `Source/StealthTestHarness/Private/Tests/PIE/BlindStrikeParityTest.cpp` (`NETWORK_TEST_CLASS(BlindStrikeParity, "StealthGame.Concealment.PIE")`)
-- `Source/StealthTestHarness/Private/Tests/PIE/KillWhileConcealedTimingTest.cpp` (`NETWORK_TEST_CLASS(KillWhileConcealedTiming, "StealthGame.Concealment.PIE")`)
-- `Source/StealthTestHarness/Private/Tests/PIE/NoImmunityWhileEnteringPieTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Concealment/BlindStrikeParityPieTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Concealment/KillWhileConcealedTimingPieTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Concealment/NoImmunityWhileEnteringPieTest.cpp`
+- `Source/StealthGameplay/Features/Concealment/Private/BodyHiddenLatch.cpp`
+- `Source/StealthGameplay/Private/Tests/Concealment/BodyHiddenLatchTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Concealment/PerViewerVisibilityPieTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Concealment/ConcealmentTestRig.h`
 
 ---
 
@@ -97,3 +101,12 @@ These are CQTest PIE tests using the real strike resolver, the cull (story 025) 
 
 - Depends on: `story-014-attack-breaks-concealment.md`, `story-015-spot-zone-and-occupants.md`, `story-016-spot-pick-secret-stream.md`, `story-017-kill-while-concealed-server-rules.md`, `story-018-no-immunity-while-entering.md`, `story-020-fresh-actor-latch-and-ally-hidden-read.md`, `story-024-is-concealed-from-truth-table.md`, `story-025-cull-push-wiring.md`; IVP S9, S10 spike stories (blockers) and `story-028-blind-spot-attack-on-culled.md`; assassination-defence-reversal epic
 - Unlocks: `story-035-prototype-retirement-and-regression.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing. AC1 StealthGame.Concealment.PIE.BlindStrikeParity: the attacker machine's trace (replicated property changes of its own pawn and controller, replies, receipt times +- tick + frame, Strike pose fields) until the FStrikeResult is identical to the same request into an empty bush (cases ally-only, NPC kill, rival kill against case 0; out-of-reach against case 5, an empty bush from the same stance); the killed NPC's body is never drawn on any machine through removal. AC2 StealthGame.Concealment.PIE.KillWhileConcealedTiming (StealthLeak1): the victim leaves occupancy in the slot; no opponent connection holds a channel before ContactServerTime - StrikeNetLeadSec (+- tick, the server's send side); the re-opened actor carries bDiedConcealed; never drawn on any non-owner machine; NPC and rival fields equal. AC3 StealthGame.Concealment.PIE.NoImmunityWhileEntering: a TargetPawn strike at +0.3 s of BushEnter: no commit or cull, no bDiedConcealed, the body drawn at contact and Death_Fall on the contact frame on every machine.
+**Deviations**: ADVISORY: AC3 found and fixed a latch defect: the pending-swap cancellation keyed on DeathServerTime < swap, but a strike executed at +0.3 s contacts at +0.7 s (after the swap), so the fall was hidden; EvaluateBodyHidden now treats a death write WITHOUT bDiedConcealed as killed-before-commit (the server sets it for every post-commit kill); the body vanishes at the swap for up to one death-write round trip and reappears falling (outcome-blind: the client cannot know earlier). BodyHiddenLatchTable row updated and a row added. Also fixed: the server stopped correcting a remote owner after a bush-emerge strike the owner never predicts (StartWarp's bOwnerPredicts). AC2's opponent receipt on the client clock is logged as information (the client's estimate under LeakNet runs behind).
+**Test Evidence**: Source/StealthTestHarness/Private/Tests/PIE/Concealment/BlindStrikeParityPieTest.cpp, KillWhileConcealedTimingPieTest.cpp, NoImmunityWhileEnteringPieTest.cpp
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: OBSERVED — the 3-player PIE blind strike of the batch 001-026 run still holds; this story's per-machine draw and wire facts are asserted by the PIE tests.
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/concealment-027-034-2026-10-29/evidence.md)

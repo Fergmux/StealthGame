@@ -1,12 +1,12 @@
 # Story 012: Eye mask core
 
 > **Epic**: Camera System
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -65,14 +65,13 @@ Prototype replaced: none (no mask exists in the prototype).
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
 - `Source/StealthGameplay/Public/View/Core/StealthEyeMaskCore.h`
 - `Source/StealthGameplay/Private/Core/Camera/StealthEyeMaskCore.cpp`
-- `Source/StealthGameplay/Private/Tests/Camera/MaskTimingTest.cpp` (class `FCameraMaskTimingTest`, name `StealthGame.Camera.MaskTiming`)
-- `Source/StealthGameplay/Private/Tests/Camera/MaskParityAndInputsTest.cpp` (class `FCameraMaskParityAndInputsTest`, name `StealthGame.Camera.MaskParityAndInputs`)
-- `Source/StealthGameplay/Private/Tests/Camera/MaskConeAndBandsTest.cpp` (class `FCameraMaskConeAndBandsTest`)
-- `Source/StealthGameplay/Private/Tests/Camera/MaskTraceCapTest.cpp` (class `FCameraMaskTraceCapTest`)
+- `Source/StealthGameplay/Private/Tests/Camera/EyeMaskTestSupport.h`
+- `Source/StealthGameplay/Private/Tests/Camera/MaskTimingTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/MaskParityAndInputsTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/MaskConeAndBandsTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/MaskTraceCapTest.cpp`
 
 ---
 
@@ -124,3 +123,12 @@ Test: AC4 `MaskTraceCap`
 
 - Depends on: `production/epics/camera-system/story-001-camera-tuning-keys-and-invariants.md`, `story-006-eye-pivot-boom-collision.md` (mask origin); cross-epic: tuning-data-config `story-007-stealth-clock-interface.md`, `story-011-t0-lint-framework-and-gate.md`
 - Unlocks: `production/epics/camera-system/story-013-mask-live-world-is-eye-mask-visible.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC4 passing: StealthGame.Camera.MaskTiming (fade-in on the landing frame, complete 0.10 s later; fade-out after the 2nd failed result, <= 50 ms), StealthGame.Camera.MaskParityAndInputs (two dummies, identical alpha curves; no team / binding / Roster / controller read in the mask or rig sources, seeded control), StealthGame.Camera.MaskConeAndBands (out-of-cone probes cost no trace and never count; in-cone probes submitted together; 60 / 15 / 5 Hz bands, no cutoff), StealthGame.Camera.MaskTraceCap (<= 160 traces per frame; the remainder deferred one frame round-robin by registry index).
+**Deviations**: ADVISORY: EyeMaskTracesPerFrameMax is ADR-0015's code constant (160), not a tuning key; dependency 006's adapter and the clock interface are injected by the caller; the AC2 parity runs both dummies at one spot (identical geometry), the 'mirrored' layout of the GDD being equivalent for a core that receives no kind.
+**Test Evidence**: Source/StealthGameplay/Private/Tests/Camera/MaskTimingTest.cpp, MaskParityAndInputsTest.cpp, MaskConeAndBandsTest.cpp, MaskTraceCapTest.cpp
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: N/A — the mask core is not applied to the world yet (stories 013/015).
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/camera-001-012-2026-10-29/evidence.md)

@@ -1,12 +1,12 @@
 # Story 002: View envelope pure function
 
 > **Epic**: Camera System
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -64,13 +64,12 @@ Prototype replaced: none. The prototype has no envelope; look is unclamped (`Ste
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
 - `Source/StealthGameplay/Public/View/Core/StealthViewEnvelope.h`
 - `Source/StealthGameplay/Private/Core/Camera/StealthViewEnvelope.cpp`
-- `Source/StealthGameplay/Private/Tests/Camera/EnvelopeClampTest.cpp` (class `FCameraEnvelopeClampTest`, name `StealthGame.Camera.EnvelopeClamp`)
-- `Source/StealthGameplay/Private/Tests/Camera/SoftEdgeNoDeadZoneTest.cpp` (class `FCameraSoftEdgeNoDeadZoneTest`)
-- `Source/StealthGameplay/Private/Tests/Camera/MouseLatchedPushTest.cpp` (class `FCameraMouseLatchedPushTest`)
+- `Source/StealthGameplay/Private/Tests/Camera/CameraEnvelopeTestSupport.h`
+- `Source/StealthGameplay/Private/Tests/Camera/EnvelopeClampTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/SoftEdgeNoDeadZoneTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/MouseLatchedPushTest.cpp`
 
 ---
 
@@ -102,3 +101,12 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/camera-system/story-001-camera-tuning-keys-and-invariants.md`; cross-epic: tuning-data-config module skeleton (`story-002-gameplay-presentation-module-skeletons.md`)
 - Unlocks: `production/epics/camera-system/story-005-look-wiring-control-rotation.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing: StealthGame.Camera.EnvelopeClamp, StealthGame.Camera.SoftEdgeNoDeadZone, StealthGame.Camera.MouseLatchedPush (and the disabled CS-R3.5 clamp is a no-op, enabled it bounds the lead).
+**Deviations**: None.
+**Test Evidence**: Source/StealthGameplay/Private/Tests/Camera/EnvelopeClampTest.cpp, SoftEdgeNoDeadZoneTest.cpp, MouseLatchedPushTest.cpp
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: N/A — a pure function; the look wiring that puts it on screen is story 005 (not built).
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/camera-001-012-2026-10-29/evidence.md)

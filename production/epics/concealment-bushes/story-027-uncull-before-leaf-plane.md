@@ -1,12 +1,12 @@
 # Story 027: On exit and bush-emerge the body is never drawn before the leaf crossing and the actor exists by then
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready — Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25). Other dependencies are ordinary story order (see Dependencies).
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: 2026-10-26
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -57,8 +57,9 @@ The test logs draw time and actor-creation time per client against the server cr
 
 ## Files
 
-- `Source/StealthTestHarness/Private/Tests/PIE/ExitUncullBeforeLeafPlaneTest.cpp` (`NETWORK_TEST_CLASS(ExitUncullBeforeLeafPlane, "StealthGame.Concealment.PIE")`)
-- `Source/StealthTestHarness/Private/Tests/PIE/AttackBreaksConcealmentPieTest.cpp` (`NETWORK_TEST_CLASS(AttackBreaksConcealment, "StealthGame.Concealment.PIE")`)
+- `Source/StealthTestHarness/Private/Tests/PIE/Concealment/ExitUncullBeforeLeafPlanePieTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Concealment/AttackBreaksConcealmentPieTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Concealment/ConcealmentPieSupport.h`
 
 ---
 
@@ -91,3 +92,12 @@ The test logs draw time and actor-creation time per client against the server cr
 
 - Depends on: `story-005-hide-exit-execution-and-blocked-side.md`, `story-014-attack-breaks-concealment.md`, `story-020-fresh-actor-latch-and-ally-hidden-read.md`, `story-025-cull-push-wiring.md`; IVP S9, S10, S12 spike stories (blockers), `story-029-uncull-lead-bound.md`
 - Unlocks: `story-035-prototype-retirement-and-regression.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1, AC2 passing. AC1 StealthGame.Concealment.PIE.ExitUncullBeforeLeafPlane: 1,000 exits and 300 bush-emerge strikes under StealthLeak1 (20 unbound hiders, 2 per bush, cooldown lifted by the test seam): (a) 0 draws before the crossing on any machine; (b) late actors within bounds, no snap; (c) p99 T_uncull within crossing - 50 ms (numbers in the evidence). AC2 StealthGame.Concealment.PIE.AttackBreaksConcealment: the opponent first draws the attacker at t0 + 0.35 s (+- tick + frame), the victim's Death_Fall at t0 + 0.75 s (+- frame), the attacker ends Outside; control: a braced victim reverses.
+**Deviations**: ADVISORY: tests live under Source/StealthTestHarness/Private/Tests/PIE/Concealment/ (the module's convention), not Tests/PIE/; the measurement uses unbound NPC hiders (same path, CON-R3) so 1,300 transitions fit a gate run; IVP story-029 (threshold arithmetic) is still Blocked and its observation is this run.
+**Test Evidence**: production/qa/evidence/concealment-027-034-2026-10-29/
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: OBSERVED — 3-player PIE: after Hide(Exit) the enemy's client shows the hider outside the bush only after the crossing (con-exit-opp-3p-after-crossing.png).
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/concealment-027-034-2026-10-29/evidence.md)

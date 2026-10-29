@@ -147,6 +147,17 @@ namespace StealthEncounterTest
 		TArray<FBush> Bushes;
 		TSet<const APawn*> Concealed;
 		TArray<APawn*> Removed;
+		/** OnBushStrike calls (story con-030): the candidate counts before / after the reach filter, in the slot. */
+		struct FStrike
+		{
+			uint16 BushId = 0;
+			const APawn* Attacker = nullptr;
+			int32 Before = 0;
+			int32 After = 0;
+			FQueueKey Key;
+		};
+		TArray<FStrike> Strikes;
+		TArray<const APawn*> StrikeKills;
 
 		virtual bool FindSpotZone(const FVector& WorldPoint, uint16& OutBushId) const override
 		{
@@ -183,6 +194,8 @@ namespace StealthEncounterTest
 			}
 			return false;
 		}
+		virtual void OnBushStrike(uint16 BushId, const APawn* Attacker, int32 Before, int32 After, FQueueKey Key) override { Strikes.Add({ BushId, Attacker, Before, After, Key }); }
+		virtual void OnStrikeKilled(const APawn* Attacker) override { StrikeKills.Add(Attacker); }
 		virtual void RemoveOccupant(APawn* Pawn) override
 		{
 			Removed.Add(Pawn);

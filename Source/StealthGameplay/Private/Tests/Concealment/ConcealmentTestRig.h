@@ -95,7 +95,7 @@ namespace StealthConcealmentTest
 			PoseLog.Add({ &Pawn, Pose });
 		}
 		virtual FActionState GetActionState(const APawn& Pawn) const override { const FPawnFacts* F = Facts.Find(&Pawn); return F != nullptr ? F->Action : FActionState(); }
-		virtual void StartWarp(APawn& Pawn, const FVector& Target, double DurationSec, bool) override
+		virtual void StartWarp(APawn& Pawn, const FVector& Target, double DurationSec, bool, bool) override
 		{
 			FPawnFacts& F = Of(&Pawn);
 			F.WarpStart = F.Location;

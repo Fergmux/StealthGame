@@ -110,7 +110,7 @@ NETWORK_TEST_CLASS(InformantKilledView, "StealthGame.Penalty.PIE")
 
 	/** The fade start (DeathServerTime + DeathFallSec) and its end (+ NoPawnFadeSec). */
 	double FadeStart() const { return DeathServerTime + static_cast<double>(FAssassinationTuning_Public().DeathFallSec); }
-	double FadeEnd() const { return FadeStart() + StealthTuningPendingOwnerKeys::NoPawnFadeSec; }
+	double FadeEnd() const { return FadeStart() + static_cast<double>(FCameraTuning_Public().NoPawnFadeSec); }
 
 	TEST_METHOD(NoCardViewOnFallingBodyCountdownAfterFade)
 	{

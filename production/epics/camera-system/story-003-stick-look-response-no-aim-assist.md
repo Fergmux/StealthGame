@@ -1,12 +1,12 @@
 # Story 003: Stick look response and no aim assist
 
 > **Epic**: Camera System
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -61,12 +61,10 @@ Prototype replaced: none (the prototype uses stock `AddControllerYawInput`).
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
 - `Source/StealthGameplay/Public/View/Core/StealthLookResponse.h`
 - `Source/StealthGameplay/Private/Core/Camera/StealthLookResponse.cpp`
-- `Source/StealthGameplay/Private/Tests/Camera/StickCurveTest.cpp` (class `FCameraStickCurveTest`, name `StealthGame.Camera.StickCurve`)
-- `Source/StealthGameplay/Private/Tests/Camera/NoAimAssistTest.cpp` (class `FCameraNoAimAssistTest`, name `StealthGame.Camera.NoAimAssist`)
+- `Source/StealthGameplay/Private/Tests/Camera/StickCurveTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/NoAimAssistTest.cpp`
 
 ---
 
@@ -106,3 +104,12 @@ Test: AC2 `NoAimAssist` (AC-CS-14)
 
 - Depends on: `production/epics/camera-system/story-001-camera-tuning-keys-and-invariants.md`, `story-002-view-envelope-pure-function.md` (NoAimAssist replays through it)
 - Unlocks: `production/epics/camera-system/story-005-look-wiring-control-rotation.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1, AC2 passing: StealthGame.Camera.StickCurve (63.6 / 0 / 180 deg/s; diagonal 45.0 / 30.0; mouse raw x sensitivity); StealthGame.Camera.NoAimAssist (identical trajectories with and without a dummy pawn under the screen centre; the look path names no pawn, registry, target or assist, seeded control).
+**Deviations**: None.
+**Test Evidence**: Source/StealthGameplay/Private/Tests/Camera/StickCurveTest.cpp, NoAimAssistTest.cpp
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: N/A — a pure response curve; on screen with story 005.
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/camera-001-012-2026-10-29/evidence.md)

@@ -56,10 +56,10 @@ namespace
 	constexpr double ReachedEpsilonSec = 0.001;
 
 	/**
-	 * Camera's NoPawnFadeSec (the fade to the neutral view, CS-R12.1): a pending-owner constant until Camera registers the
-	 * key (TD-TDC-I3); the countdown shows only after this fade completes (UI-NKP-4, story nkp-018).
+	 * Camera's NoPawnFadeSec (the fade to the neutral view, CS-R12.1; registered by Camera story cs-001), read as the schema
+	 * default until the client tuning store feeds the HUD; the countdown shows only after this fade completes (UI-NKP-4).
 	 */
-	constexpr double NoPawnFadeSec = StealthTuningPendingOwnerKeys::NoPawnFadeSec;
+	const double NoPawnFadeSec = static_cast<double>(FCameraTuning_Public().NoPawnFadeSec);
 
 #if WITH_STEALTH_TEST_SEAMS
 	bool GPresentOnRosterReceipt = false;

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Server/Core/CommandPredicate.h"
+#include "Server/ConcealmentLog.h"
 #include "Server/Core/PawnCommandCore.h"
 #include "Server/StealthQueuePayloads.h"
 #include "Server/StealthTuningSubstructs.h"
@@ -80,8 +81,12 @@ public:
 	virtual void WritePose(APawn& Pawn, EActionPose Pose, double StartServerTime) = 0;
 	/** The pawn's current FActionState. */
 	virtual FActionState GetActionState(const APawn& Pawn) const = 0;
-	/** Starts the server root-motion move to Target over DurationSec (FRootMotionSource_MoveToForce; story con-011). */
-	virtual void StartWarp(APawn& Pawn, const FVector& Target, double DurationSec, bool bEnter) = 0;
+	/**
+	 * Starts the server root-motion move to Target over DurationSec (FRootMotionSource_MoveToForce; story con-011).
+	 * bOwnerPredicts: the owner started the identical move at its press (PredictOnPress, story con-012), so the server may
+	 * stop generating corrections for it; false for a move the owner cannot predict (a bush-emerge strike, the guard's exit).
+	 */
+	virtual void StartWarp(APawn& Pawn, const FVector& Target, double DurationSec, bool bEnter, bool bOwnerPredicts) = 0;
 	/** The server mirror of the record (the pawn's UConcealmentComponent; the host presentation refresh). */
 	virtual void OnStateChanged(APawn& Pawn, EConcealState State, uint16 BushId, double TransitionStartServerTime) = 0;
 	/** Live pawns whose capsule centre is within RadiusCm (horizontal) of Point. */
@@ -132,15 +137,6 @@ public:
 	virtual void OnActionStarted(APawn& Pawn, EActionType Type) = 0;
 };
 
-/** Concealment's Event Log events (ADR-0017 section 10; EConcealmentLogEvent is FRoundLogEntry::Code). */
-enum class EConcealmentLogEvent : uint8
-{
-	Commit,
-	ExitCross,
-	Emerge,
-	Killed,
-	BushStrike,
-};
 
 /** The core's seams. Clock, Pawns and Queue are required. */
 struct FConcealmentCoreDeps
@@ -182,6 +178,8 @@ struct FConcealRecord
 	FParticipantId FlagParticipant;
 	/** The side the transition uses (entry side for Enter, exit side for Exit and Emerge). */
 	uint8 Side = 0;
+	/** Emerging: the strike that broke concealment killed its victim (the Emerge row's kill flag, CON-R15). */
+	bool bEmergeKilled = false;
 };
 
 class STEALTHGAMEPLAY_API FConcealmentCore
@@ -228,13 +226,30 @@ public:
 	/** True when the victim's FDeathState must carry bDiedConcealed (Concealed or CullPending at the death write). */
 	bool ShouldMarkDiedConcealed(const APawn& Victim) const;
 
-	/** The server body removal of Body (ADR-0018 IBodyRemovalObserver): clears a killed-concealed pawn's flags. */
+	/** Assassination's strike by Attacker killed in this slot (story con-030): an emerging striker's Emerge row records it. */
+	void OnStrikeKilled(const APawn& Attacker);
+
+	/**
+	 * A strike resolved through the bush spot rule (story con-030, CON-R15): the BushStrike row with the candidate-set size
+	 * before and after Assassination's reach filter (0 is valid). Logging only; never an outcome input.
+	 */
+	void OnBushStrike(const APawn& Attacker, uint16 BushId, int32 CandidatesBeforeReach, int32 CandidatesAfterReach, FQueueKey Key);
+
+		/** The server body removal of Body (ADR-0018 IBodyRemovalObserver): clears a killed-concealed pawn's flags. */
 	void OnBodyRemoved(APawn& Body);
 
 	/** Participant was bound to a new pawn (BindPawn / TakeOverCrowdPawn): flags carried for its old body clear. */
 	void OnParticipantRebound(FParticipantId Participant, const APawn* NewPawn);
 
-	/** OnRosterReset: every record and occupancy cleared, every flag cleared (items drop by epoch). */
+	/**
+	 * Control of a pawn passed to the crowd (Roster ReleaseToCrowd; story con-032, CON-R11): the pawn is now an NPC. A
+	 * transition in flight completes untouched; a concealed pawn stays Concealed (only an ordinary Hide(Exit) leaves); the
+	 * former participant's owner and team flags clear (it no longer owns the pawn), and a culled pawn's cull is pushed again
+	 * so its former allies, now non-allies, are closed at the next cull boundary. Nothing else changes.
+	 */
+	void OnPawnReleased(APawn& Pawn, FParticipantId FormerParticipant);
+
+		/** OnRosterReset: every record and occupancy cleared, every flag cleared (items drop by epoch). */
 	void ResetAll();
 
 	// ---- Server queries ---------------------------------------------------------------------------------------------

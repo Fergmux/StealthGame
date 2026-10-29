@@ -121,13 +121,17 @@ namespace StealthTuningPendingOwnerKeys
 	 */
 	inline constexpr double ConcealCullDelayMs = 250.0;
 	/**
+	 * The Input & Interaction Framework's CameraToggleLockoutSec (default 0.30 s), read by Camera's I-CS-1 until IIF
+	 * registers it as a schema row (story cs-001; the TD-TDC-I3 pattern).
+	 */
+	inline constexpr double CameraToggleLockoutSec = 0.30;
+	/**
 	 * The keys Penalty's F2 respawn due time and its commit retries read from owners that have not registered them yet
-	 * (stories nkp-009, nkp-012; the TD-TDC-I3 pattern), each the owner GDD's default: Camera's NoPawnFadeSec 0.5 (the F2
-	 * floor, CS-R12.1), the Level Socket Contract's EmergenceRetrySec 1 (the takeover retry cadence, LSC R5b.5) and
+	 * (stories nkp-009, nkp-012; the TD-TDC-I3 pattern), each the owner GDD's default (Camera's NoPawnFadeSec was, until
+	 * Camera story cs-001 registered it): the Level Socket Contract's EmergenceRetrySec 1 (the takeover retry cadence, LSC R5b.5) and
 	 * InformantRespawnPathCm 4500 (the respawn region radius the stand-in picker uses until LSC story 033). When the owner
 	 * registers the key, FPenaltyParams::FromTuning reads it from the value set and the constant is deleted.
 	 */
-	inline constexpr double NoPawnFadeSec = 0.5;
 	inline constexpr double EmergenceRetrySec = 1.0;
 	inline constexpr double InformantRespawnPathCm = 4500.0;
 	/**

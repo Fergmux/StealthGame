@@ -81,6 +81,8 @@ struct FVictimResolution
 	FVector RefAtContact = FVector::ZeroVector;
 	/** Rule 2 observation (tests): the survivors of the reach filter and the UniformBelow draws consumed. */
 	int32 ReachableCount = 0;
+	/** Rule 2: the non-ally candidates before the reach filter (the CON-R15 BushStrike row's first count). */
+	int32 CandidateCount = 0;
 	int32 BushDraws = 0;
 
 	bool operator==(const FVictimResolution& Other) const

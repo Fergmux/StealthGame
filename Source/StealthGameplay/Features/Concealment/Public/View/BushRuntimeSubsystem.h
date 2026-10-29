@@ -2,11 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "View/BushRustle.h"
 #include "View/ConcealmentTypes.h"
 
 #include "BushRuntimeSubsystem.generated.h"
 
 class ABushVolumeSet;
+class UAudioComponent;
+class UMaterialParameterCollection;
 
 /**
  * One BushSite of the layout Manifest (ADR-0014 BushSite, ADR-0017 section 1; decision D49: the graybox Manifest carries
@@ -97,12 +100,50 @@ public:
 	/** Layout builds accepted since the subsystem started (observation). */
 	int32 GetBuildCount() const { return BuildCount; }
 
-	/** Broadcast after every accepted build (presentation hooks: the rustle positions, the HUD). */
+	// ---- Rustle (ADR-0017 section 9; story con-029) ---------------------------------------------------------------------
+
+	/**
+	 * Writes the client-local rustle pulse of a hide transition of any pawn: one slot of the 8-slot ring (the oldest),
+	 * timed from the pose's StartServerTime, at the bush face on Side; the MPC slot when an MPC is configured; and the one
+	 * shared SFX spatialised at the face (seeked when the write comes after the onset; nothing past the pulse's life). No
+	 * pawn kind, LOD, camera mode or occupancy is an input. No-op for an unknown bush or on a dedicated server. Returns the
+	 * slot written, or INDEX_NONE.
+	 */
+	int32 PushRustlePulse(uint16 BushId, uint8 Side, double StartServerTime, EBushRustleKind Kind, double NowServerTime);
+
+	/** The ring (observation; the material reads the MPC). */
+	const FBushRustleRing& GetRustleRing() const { return RustleRing; }
+
+	/** Every pulse written since the build, in order (bounded; observation for the parity tests). */
+	const TArray<FBushRustlePulse>& GetRustleLog() const { return RustleLog; }
+
+	/** The SFX plays started (observation; an audio-less machine starts none). */
+	int32 GetRustleSoundPlays() const { return RustleSoundPlays; }
+
+	/** The rustle's Material Parameter Collection (Art epic; unset on the graybox). Slot i writes vectors RustleA_i / RustleB_i. */
+	void SetRustleCollection(UMaterialParameterCollection* Collection) { RustleCollection = Collection; }
+
+	/** The one shared SFX (the STAND-IN default until the Art epic records one). */
+	void SetRustleSound(const FSoftObjectPath& Sound) { RustleSound = Sound; }
+	const FSoftObjectPath& GetRustleSound() const { return RustleSound; }
+
+		/** Broadcast after every accepted build (presentation hooks: the rustle positions, the HUD). */
 	DECLARE_MULTICAST_DELEGATE(FOnBushRuntimeBuilt);
 	FOnBushRuntimeBuilt OnBuilt;
 
 private:
+	void PlayRustleSound(const FBushRustlePulse& Pulse, double SeekSec);
+
 	TArray<FBushRuntime> Bushes;
+	FBushRustleRing RustleRing;
+	TArray<FBushRustlePulse> RustleLog;
+	FSoftObjectPath RustleSound = BushRustle::DefaultSound();
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialParameterCollection> RustleCollection;
+	/** The shared SFX pool (one component per ring slot, reused round-robin). */
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UAudioComponent>> RustlePool;
+	int32 RustleSoundPlays = 0;
 	TWeakObjectPtr<ABushVolumeSet> VolumeSet;
 	EBushSiteReject LastReject = EBushSiteReject::None;
 	bool bBuilt = false;

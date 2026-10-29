@@ -7,6 +7,7 @@
 
 #include "Server/StealthAssassinationInvariants.h"
 #include "Server/StealthObjectivesInvariants.h"
+#include "Server/StealthCameraInvariants.h"
 #include "Server/StealthConcealmentInvariants.h"
 #include "Server/StealthPenaltyInvariants.h"
 #include "Server/StealthServerTuning.h"
@@ -307,6 +308,12 @@ namespace
 		{ "I-CON-F3d", "Concealment", &StealthConcealmentInvariants::TableCheck<StealthConcealmentInvariants::F3d> },
 		{ "I-CON-F3e", "Concealment", &StealthConcealmentInvariants::TableCheck<StealthConcealmentInvariants::F3e> },
 		{ "I-CON-F3f", "Concealment", &StealthConcealmentInvariants::TableCheck<StealthConcealmentInvariants::F3f> },
+		// Camera System rows (story cs-001; CameraInvariants.cpp): every one Reject, no runtime clamp.
+		{ "I-CS-1", "Camera", &StealthCameraInvariants::TableCheck<&StealthCameraInvariants::CheckICs1> },
+		{ "I-CS-2", "Camera", &StealthCameraInvariants::TableCheck<&StealthCameraInvariants::CheckICs2> },
+		{ "I-CS-3", "Camera", &StealthCameraInvariants::TableCheck<&StealthCameraInvariants::CheckICs3> },
+		{ "I-CS-4", "Camera", &StealthCameraInvariants::TableCheck<&StealthCameraInvariants::CheckICs4> },
+		{ "I-CS-5", "Camera", &StealthCameraInvariants::TableCheck<&StealthCameraInvariants::CheckICs5> },
 	};
 
 	/**

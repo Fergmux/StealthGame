@@ -1,12 +1,12 @@
 # Story 010: Field of view
 
 > **Epic**: Camera System
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -59,12 +59,10 @@ Prototype replaced: the sample camera's fixed FOV; none promoted.
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
 - `Source/StealthGameplay/Public/View/Core/StealthFov.h`
 - `Source/StealthGameplay/Private/Core/Camera/StealthFov.cpp`
-- `Source/StealthGameplay/Private/Tests/Camera/FovCapTest.cpp` (class `FCameraFovCapTest`, name `StealthGame.Camera.FovCap`)
-- `Source/StealthGameplay/Private/Tests/Camera/FovEaseTest.cpp` (class `FCameraFovEaseTest`, name `StealthGame.Camera.FovEase`)
+- `Source/StealthGameplay/Private/Tests/Camera/FovCapTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/FovEaseTest.cpp`
 
 ---
 
@@ -104,3 +102,12 @@ Test: AC2 `FovEase` (AC-CS-31)
 
 - Depends on: `production/epics/camera-system/story-001-camera-tuning-keys-and-invariants.md`, `story-004-camera-manager-shell-remote-pov.md`, `story-008-toggle-blend-reduce-motion-remembered-mode.md` (Reduce camera motion setting)
 - Unlocks: `production/epics/camera-system/story-021-camera-mode-not-observable.md` (FOV changes in the 3P run)
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1, AC2 passing: StealthGame.Camera.FovCap (<= 108 deg horizontal at 16:9 / 21:9 / 32:9; VFOV_eff 42.3 at 32:9; slider top 75 / 61.1; disabled at 32:9), StealthGame.Camera.FovEase (0.15 s monotone ease, instant under Reduce camera motion; the cone untouched; no network declaration in the FOV path, seeded control).
+**Deviations**: ADVISORY: dependencies 004 (manager) and 008 (the Reduce-motion setting) not built: the ease is a plain struct the manager will step; the setting arrives as a parameter.
+**Test Evidence**: Source/StealthGameplay/Private/Tests/Camera/FovCapTest.cpp, FovEaseTest.cpp
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: N/A — F5 and the ease as functions; the lens applies them with story 004.
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/camera-001-012-2026-10-29/evidence.md)

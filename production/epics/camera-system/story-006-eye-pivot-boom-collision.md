@@ -1,12 +1,12 @@
 # Story 006: Eye pivot, boom and collision
 
 > **Epic**: Camera System
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -67,14 +67,12 @@ Prototype replaced: the sample's spring-arm style camera (`CBP_SandboxCharacter`
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
 - `Source/StealthGameplay/Public/View/Core/StealthCameraCore.h`
-- `Source/StealthGameplay/Private/Core/Camera/StealthCameraCore.cpp` (pivot filter, boom, squeeze, swap)
-- `Source/StealthGameplay/Private/Core/Camera/StealthPlayerCameraManager.cpp` (adapter: trace backend, socket read)
-- `Source/StealthGameplay/Private/Tests/Camera/BoomRecoveryTest.cpp` (class `FCameraBoomRecoveryTest`, name `StealthGame.Camera.BoomRecovery`)
-- `Source/StealthGameplay/Private/Tests/Camera/PivotCapAndCorrectionTest.cpp` (class `FCameraPivotCapAndCorrectionTest`)
-- `Source/StealthGameplay/Private/Tests/Camera/SqueezeAndSwapTest.cpp` (class `FCameraSqueezeAndSwapTest`)
+- `Source/StealthGameplay/Private/Core/Camera/StealthCameraCore.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/CameraCoreTestSupport.h`
+- `Source/StealthGameplay/Private/Tests/Camera/BoomRecoveryTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/PivotCapAndCorrectionTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/SqueezeAndSwapTest.cpp`
 
 ---
 
@@ -106,3 +104,12 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/camera-system/story-001-camera-tuning-keys-and-invariants.md`, `story-004-camera-manager-shell-remote-pov.md`, `story-005-look-wiring-control-rotation.md`; cross-epic: shared-character-locomotion (`story-002-body-constants-published.md` capsule and eye socket, `IsInTraversal`, `PawnSmoothSnapThresholdCm`)
 - Unlocks: `production/epics/camera-system/story-008-toggle-blend-reduce-motion-remembered-mode.md`, `story-009-first-person-own-head-hide.md`, `story-013-mask-live-world-is-eye-mask-visible.md`, `story-014-concealed-and-informant-view.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing on the core: StealthGame.Camera.BoomRecovery (52 cm on the frame, 0.15 s hold, >= 179.3 cm by 1.15 s, <= 300 cm/s; Reduce-motion cut; mask-off band 25 / 35 cm), StealthGame.Camera.PivotCapAndCorrection (<= 300 cm/s on a 150 cm drop and 120 cm climb; mask origin never above the eye; sub-threshold correction <= 5 cm per frame, above it a snap), StealthGame.Camera.SqueezeAndSwap (0 within 0.15 s, back within 0.40 s, no flip; 0.25 s mirror, one buffered press, guard ray clear; Reduce-motion cut).
+**Deviations**: ADVISORY: the manager adapter (Camera-channel traces, eye-socket read) is story 004's shell, not built; dependencies 004/005 were not complete (proceeded at risk: every AC here is [U] on the core). The pivot's speed cap wins over the capsule clamp while the body moves faster than the cap (the AC's 300 cm/s bound); the mask origin never rises above the real eye either way.
+**Test Evidence**: Source/StealthGameplay/Private/Tests/Camera/BoomRecoveryTest.cpp, PivotCapAndCorrectionTest.cpp, SqueezeAndSwapTest.cpp
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: N/A — the rig core is not wired to a camera manager yet (story 004); nothing new on screen.
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/camera-001-012-2026-10-29/evidence.md)

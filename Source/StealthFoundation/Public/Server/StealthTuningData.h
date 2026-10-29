@@ -66,6 +66,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Locomotion")
 	FLocomotionTuning_Public Locomotion_Public;
 
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	FCameraTuning_Public Camera_Public;
+
 	UPROPERTY(EditAnywhere, Category = "Locomotion")
 	FLocomotionTuning_Server Locomotion_Server;
 };

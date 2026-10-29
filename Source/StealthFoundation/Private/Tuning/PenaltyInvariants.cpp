@@ -30,7 +30,7 @@ FPenaltyInvariantInputs FPenaltyInvariantInputs::FromValues(const FStealthServer
 {
 	FPenaltyInvariantInputs Out;
 	Out.RespawnStarvationSec = StealthTuningPendingOwnerKeys::RespawnStarvationSec;
-	Out.NoPawnFadeSec = StealthTuningPendingOwnerKeys::NoPawnFadeSec;
+	Out.NoPawnFadeSec = static_cast<double>(Values.Camera_Public.NoPawnFadeSec); // registered by story cs-001
 	Out.BushStrikeEmergeSec = static_cast<double>(Values.Concealment_Public.BushStrikeEmergeSec); // registered by story con-001
 	return Out;
 }

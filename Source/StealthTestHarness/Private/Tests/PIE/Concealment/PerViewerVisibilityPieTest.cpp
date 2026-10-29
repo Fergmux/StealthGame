@@ -60,7 +60,8 @@ namespace ConcealmentPerViewerPie
 	{
 		for (TActorIterator<AStealthPawn> It(World); It; ++It)
 		{
-			if (IsValid(*It) && FVector::Dist2D(It->GetActorLocation(), At) <= RadiusCm)
+			// Never the local viewer's own pawn (an attacker warped to the planter edge stands inside the radius).
+			if (IsValid(*It) && !It->IsLocallyControlled() && FVector::Dist2D(It->GetActorLocation(), At) <= RadiusCm)
 			{
 				return *It;
 			}

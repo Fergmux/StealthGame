@@ -169,7 +169,15 @@ void UStealthMatchAdapters::RequestPawnStop(const FRoundLivePawn& Pawn, double B
 
 FPawnHandle UStealthMatchAdapters::GetBoundPawn(FParticipantId Participant) const
 {
+	// The Roster's binding first: a disconnected participant has no controller, and its held pawn is still bound until the
+	// grace conversion releases it (Concealment story con-032 found the controller-only lookup releasing nothing).
 	FPawnHandle Handle;
+	const URosterStore* Roster = URosterStore::Get(GetGameWorld());
+	if (APawn* Bound = Roster != nullptr && Roster->IsStoreInitialized() ? Roster->GetPawn(Participant) : nullptr)
+	{
+		Handle.Pawn = Bound;
+		return Handle;
+	}
 	const UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetGameWorld());
 	if (const APlayerController* Player = Root != nullptr ? Root->GetController(Participant) : nullptr)
 	{
@@ -1131,6 +1139,20 @@ void UStealthCompositionRoot::UnregisterPlayer(APlayerController* Player)
 		}
 	}
 }
+
+#if WITH_STEALTH_TEST_SEAMS
+void UStealthCompositionRoot::DropConnectionForTest(APlayerController* Player)
+{
+	URosterStore* Roster = GetRosterStore();
+	const FParticipantId Id = GetParticipant(Player);
+	if (Roster == nullptr || !Id.IsValid())
+	{
+		return;
+	}
+	ParticipantByController.Remove(Player);
+	Roster->NotifyConnectionChanged(Id, ERosterConnection::Disconnected);
+}
+#endif
 
 FParticipantId UStealthCompositionRoot::GetParticipant(const APlayerController* Player) const
 {

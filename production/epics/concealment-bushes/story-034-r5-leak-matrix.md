@@ -1,12 +1,12 @@
 # Story 034: The R5 leak matrix passes on the production hide for every LOD and lighting cell
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready — Update 2026-10-29: spike R5 reported (`production/qa/spikes/2026-10-29_R5.md`) and the production hide (story 022) is built; the hardware-RT Lumen cells need an `r.RayTracing=True` build (R5 could not run them).
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -56,8 +56,8 @@ Reuse the capture tooling and noise-floor method from spike R5 (story 021), now 
 
 ## Files
 
-- `production/qa/evidence/con-r5-*.png` and `con-r5-results.md` (the results sheet and sign-off)
-- `Source/StealthTestHarness/Private/Scenarios/R5LeakMatrixCapture.cpp` (capture scenario, if not reused from the spike)
+- `Source/StealthTestHarness/Private/Scenarios/R5LeakMatrixCapture.cpp`
+- `tools/analysis/r5_matrix.py`
 
 ---
 
@@ -86,3 +86,12 @@ Reuse the capture tooling and noise-floor method from spike R5 (story 021), now 
 
 - Depends on: `story-021-spike-r5-hidden-primitive-leaks.md` (blocker), `story-022-presentation-hide-application-and-host-parity.md`, `story-028-enter-swap-hides-body-per-viewer.md`
 - Unlocks: `story-035-prototype-retirement-and-regression.md`
+
+## Completion Notes
+**Completed**: 2026-10-29 (status In Review)
+**Criteria**: PARTIAL (see con-r5-results.md). Built: the production-hide capture scenario Stealth.R5Matrix (Source/StealthTestHarness/Private/Scenarios/R5LeakMatrixCapture.cpp) and tools/analysis/r5_matrix.py; run 4 times in the editor's standalone PIE. Holds: no subject primitive (body, groom, Niagara) keeps a render proxy while hidden in any cell or at the mesh's one LOD; in every converged cell the occupied bush's ROI residual equals the empty-vs-empty noise; the magenta occlusion proxy (run 3) showed 0 body pixels in every frame from the swap to the crossing at 5 and 15 m with valid controls (1,707 / 266 body pixels visible). Open: some cells' lighting did not converge between their two empty captures (sky light / Lumen settling after the sun moves), so those cells are NOT ASSESSED; the 25 m magenta row had no valid control; single frames show a faint temporal-AA ghost of the body for ~2-3 frames after the swap (inside the rustle window, which AC-CON-23 excludes; recorded for the lead). HW-RT cells: N/A by configuration (r.RayTracing=False, ADR-0022).
+**Deviations**: ADVISORY: the mesh has a single LOD, so 'every LOD' is LOD0; lead sign-off pending.
+**Test Evidence**: production/qa/evidence/concealment-027-034-2026-10-29/
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: OBSERVED — production hide captured in standalone PIE across the lighting cells (con-r5-*.png); results sheet con-r5-results.md.
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/concealment-027-034-2026-10-29/evidence.md)

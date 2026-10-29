@@ -28,6 +28,7 @@
 #include "Server/StealthTuningSchema.h"
 #include "Server/Testing/StealthNegativeControl.h"
 #include "Server/Testing/StealthAssassinationTuningKnobs.h"
+#include "Server/Testing/StealthCameraTuningKnobs.h"
 #include "Server/Testing/StealthConcealmentTuningKnobs.h"
 #include "Server/Testing/StealthCrowdTuningKnobs.h"
 #include "Server/Testing/StealthObjectivesTuningKnobs.h"
@@ -303,6 +304,11 @@ bool FTuningSchemaCompleteTest::RunTest(const FString& Parameters)
 	}
 	// The eleven Concealment Tuning Knobs rows (story con-001; BushVictimMode pins its value index, UniformHash 0).
 	for (const StealthConcealmentTuningKnobs::FKnob& Knob : StealthConcealmentTuningKnobs::Knobs)
+	{
+		Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
+	}
+	// The 44 Camera Tuning Knobs rows (story cs-001; ViewHeadLeadMaxDeg pins its "disabled" sentinel 0).
+	for (const StealthCameraTuningKnobs::FKnob& Knob : StealthCameraTuningKnobs::Knobs)
 	{
 		Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
 	}

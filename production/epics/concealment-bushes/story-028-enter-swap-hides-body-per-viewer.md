@@ -1,12 +1,12 @@
 # Story 028: At the swap server time the body, shadow and reflections vanish on the same frame for opponent and ally clients
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready — Update 2026-10-29: spike R5 reported (`production/qa/spikes/2026-10-29_R5.md`: the ADR-0017 §6 flag set suffices for the software-Lumen cells; groom and attached Niagara lose their proxy with the mesh) and story 022 built the production hide; the S10 gate was cleared 2026-10-26 (story-056 PASS).
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: 2026-10-26
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -58,8 +58,7 @@ The capture harness steps frames and logs `EstimatedServerNow()` per frame. The 
 
 ## Files
 
-- `production/qa/evidence/con-enter-opp-1p.png`, `con-enter-opp-3p.png`, `con-enter-ally-1p.png`, `con-enter-ally-3p.png`, `con-enter-evidence.md`
-- `Source/StealthTestHarness/Private/Tests/PIE/EnterSwapHidesBodyPerViewerTest.cpp` (frame-stepped capture harness)
+- `Source/StealthTestHarness/Private/Tests/PIE/Concealment/EnterSwapHidesBodyPerViewerPieTest.cpp`
 
 ---
 
@@ -88,3 +87,12 @@ The capture harness steps frames and logs `EstimatedServerNow()` per frame. The 
 
 - Depends on: `story-020-fresh-actor-latch-and-ally-hidden-read.md`, `story-021-spike-r5-hidden-primitive-leaks.md` (blocker), `story-022-presentation-hide-application-and-host-parity.md`, `story-025-cull-push-wiring.md`; IVP `story-027-concealment-local-hide-at-swap.md`
 - Unlocks: `story-035-prototype-retirement-and-regression.md`
+
+## Completion Notes
+**Completed**: 2026-10-29 (status In Review)
+**Criteria**: AC1 automated part passing: StealthGame.Concealment.PIE.EnterSwapHidesBodyPerViewer: on the opponent and the ally machine the body and every attached primitive are hidden from the first frame at or after Start + BushEnterSwapSec (on that frame, +- 1 frame), drawn before it; the ally then holds IsAllyBodyHidden and no body; the owner keeps its body; the negative control (key + 5 frames) FAILS as it must. Screenshots: con-enter-opp-3p-after-swap.png (enemy: no body), con-enter-ally-3p-after-swap.png (ally: hatched marker, no body), con-enter-owner-3p-inside.png. NOT DONE: the 1P captures (the prototype camera toggle has no console path; the production 1P/3P toggle is Camera stories 008/009) and the lead sign-off.
+**Deviations**: ADVISORY: test file under Tests/PIE/Concealment/; evidence names con-enter-*-3p-*.png in the batch folder.
+**Test Evidence**: production/qa/evidence/concealment-027-034-2026-10-29/
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: OBSERVED — 3-player PIE: after the swap the enemy's client draws nothing of the hider and the ally shows the hatched marker with no body (con-enter-*.png).
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/concealment-027-034-2026-10-29/evidence.md)

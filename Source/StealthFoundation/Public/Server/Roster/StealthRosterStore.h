@@ -19,6 +19,7 @@ struct FRosterStoreAdapters;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnRosterStoreEvent, const FRosterEvent& /*Event*/);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnParticipantViewRebound, FParticipantId /*Participant*/);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPawnReleasedToCrowd, APawn* /*Pawn*/, FParticipantId /*FormerParticipant*/);
 
 /** Optional overrides of URosterStore's engine adapters (tests only; production passes none). */
 struct FRosterStoreInitOverrides
@@ -127,6 +128,12 @@ public:
 	ERosterResult NotifyConnectionChanged(FParticipantId Id, ERosterConnection Projection, bool bKicked = false);
 	ERosterResult BindPawn(FParticipantId Id, APawn* Pawn, const TOptional<FRosterEpochToken>& ExpectedEpoch = {});
 	ERosterResult ReleaseToCrowd(APawn* Pawn);
+	/**
+	 * Raised (server, game thread, inside the caller's call stack) after a ReleaseToCrowd applied: Pawn is now an unbound NPC
+	 * and FormerParticipant no longer owns it (Round R17 grace conversion, a leaver). Concealment re-evaluates a concealed
+	 * pawn's former allies here (story con-032; the input IVP story-030's former-ally cull re-evaluation needs).
+	 */
+	FOnPawnReleasedToCrowd OnPawnReleasedToCrowd;
 	/** FRosterCore::RetireBinding (story psr-020): the informant-kill retire, no lifecycle transition, no event. */
 	ERosterResult RetireBinding(APawn* Pawn, int64 RetireAtServerTimeMs, ERosterReason Reason = ERosterReason::InformantKilled);
 	ERosterResult ClearBinding(APawn* Pawn, EEndPlayReason::Type Reason);

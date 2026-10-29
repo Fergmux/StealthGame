@@ -28,8 +28,8 @@ FPenaltyParams FPenaltyParams::FromTuning(const FStealthServerTuning& Values)
 	Out.StrikeOutReleaseGraceSec = static_cast<double>(Values.Penalty_Server.StrikeOutReleaseGraceSec);
 	Out.InformantRespawnDelaySec = static_cast<double>(Values.Penalty_Public.InformantRespawnDelaySec);
 	Out.DeathFallSec = static_cast<double>(Values.Assassination_Public.DeathFallSec);
-	// Owned elsewhere and not registered yet (TD-TDC-I3): Camera's NoPawnFadeSec, LSC's EmergenceRetrySec.
-	Out.NoPawnFadeSec = StealthTuningPendingOwnerKeys::NoPawnFadeSec;
+	Out.NoPawnFadeSec = static_cast<double>(Values.Camera_Public.NoPawnFadeSec); // registered by Camera story cs-001
+	// Owned elsewhere and not registered yet (TD-TDC-I3): LSC's EmergenceRetrySec.
 	Out.EmergenceRetrySec = StealthTuningPendingOwnerKeys::EmergenceRetrySec;
 	return Out;
 }

@@ -230,7 +230,8 @@ EResolveResult FConcealmentCore::ExecuteEnter(const FQueueItem& Item, APawn& Paw
 	Record.bTransitionOpen = true;
 	const double Start = Record.TransitionStartServerTime;
 	Deps.Pawns->WritePose(Pawn, EActionPose::BushEnter, Start);
-	Deps.Pawns->StartWarp(Pawn, Bush->Anchor + FVector(0.0, 0.0, Deps.Pawns->GetCapsuleHalfHeightCm(Pawn)), Params.Public.BushEnterSwapSec, /*bEnter*/ true);
+	Deps.Pawns->StartWarp(Pawn, Bush->Anchor + FVector(0.0, 0.0, Deps.Pawns->GetCapsuleHalfHeightCm(Pawn)), Params.Public.BushEnterSwapSec, /*bEnter*/ true,
+		/*bOwnerPredicts: the Hide press*/ true);
 	Schedule(Item, Pawn, Record, EConcealPhase::Commit, Start + Params.Public.BushEnterSwapSec);
 	Schedule(Item, Pawn, Record, EConcealPhase::End, Start + Params.Public.BushEnterDurSec);
 	Deps.Queue->OnActionStarted(Pawn, EActionType::HideEnter);
@@ -320,7 +321,7 @@ void FConcealmentCore::StartExit(const FQueueItem& Cause, APawn& Pawn, FConcealR
 	const double Start = Record.TransitionStartServerTime;
 	Deps.Pawns->WritePose(Pawn, EActionPose::BushExit, Start);
 	Deps.Pawns->StartWarp(Pawn, ConcealmentGeometry::ExitPoint(*Bush, Side, Deps.Pawns->GetCapsuleRadiusCm(Pawn)) + FVector(0.0, 0.0, Deps.Pawns->GetCapsuleHalfHeightCm(Pawn)),
-		Params.Public.BushExitDurSec, /*bEnter*/ false);
+		Params.Public.BushExitDurSec, /*bEnter*/ false, /*bOwnerPredicts: only a pressed Hide(Exit), never the guard's exit*/ Cause.Type == EQueueItemType::PawnCommand);
 	Schedule(Cause, Pawn, Record, EConcealPhase::Cross, Start + Params.Public.BushExitCrossSec);
 	Schedule(Cause, Pawn, Record, EConcealPhase::End, Start + Params.Public.BushExitDurSec);
 }
@@ -401,7 +402,14 @@ void FConcealmentCore::Cross(APawn& Pawn, FConcealRecord& Record, FQueueKey Key)
 	SetFlags(Pawn, Record, false);
 	if (bWasOccupant)
 	{
-		LogRow(Key, Pawn, Record.BushId, Record.State == EConcealState::Emerging ? EConcealmentLogEvent::Emerge : EConcealmentLogEvent::ExitCross);
+		if (Record.State == EConcealState::Emerging)
+		{
+			LogRow(Key, Pawn, Record.BushId, EConcealmentLogEvent::Emerge, 0, 0, Record.bEmergeKilled ? 1u : 0u);
+		}
+		else
+		{
+			LogRow(Key, Pawn, Record.BushId, EConcealmentLogEvent::ExitCross);
+		}
 	}
 	Deps.Pawns->OnStateChanged(Pawn, Record.State, Record.BushId, Record.TransitionStartServerTime);
 }
@@ -499,19 +507,9 @@ void FConcealmentCore::LogRow(FQueueKey Key, const APawn& Pawn, uint16 BushId, E
 	{
 		return;
 	}
-	FRoundLogEntry Entry;
-	Entry.Key = Key;
-	Entry.ServerTime = Now();
-	Entry.Type = ERoundLogType::Concealment;
-	Entry.Code = static_cast<uint16>(Event);
 	const FParticipantId Participant = Deps.Relations != nullptr ? Deps.Relations->GetParticipant(Pawn) : FParticipantId();
-	Entry.Participants[0] = Participant.Value;
-	Entry.Data[0] = BushId;
-	Entry.Data[1] = Deps.Relations != nullptr && Deps.Relations->IsPlayerPawn(Pawn) ? 1u : 0u;
-	Entry.Data[2] = D2;
-	Entry.Data[3] = D3;
-	Entry.Data[4] = D4;
-	Deps.Log->Append(Entry);
+	const bool bPlayer = Deps.Relations != nullptr && Deps.Relations->IsPlayerPawn(Pawn);
+	Deps.Log->Append(ConcealmentLog::MakeEntry(Key, Now(), Event, Participant, BushId, bPlayer, D2, D3, D4));
 }
 
 // ---- Events ----------------------------------------------------------------------------------------------------------
@@ -531,6 +529,7 @@ void FConcealmentCore::OnAttackExecuted(APawn& Attacker, double ContactServerTim
 	// The emerge side: the open side nearest the aim yaw (story con-005's tie rule).
 	Record->Side = ConcealmentGeometry::NearestOpenSide(Bush->EntryAxisMask, Deps.Pawns->GetLookYawDeg(Attacker));
 	Record->bCrossed = false;
+	Record->bEmergeKilled = false; // set by OnStrikeKilled later in this slot when the strike kills
 	Record->bTransitionOpen = true;
 	// OnConcealmentBroken: the un-cull in the Attack's slot.
 	if (Record->bCulled && Deps.Cull != nullptr)
@@ -542,9 +541,24 @@ void FConcealmentCore::OnAttackExecuted(APawn& Attacker, double ContactServerTim
 	// Cross at ContactServerTime - StrikeContactSec: the same formula clients use (they cannot round differently).
 	const double CrossAt = ContactServerTime >= 0.0 ? ContactServerTime - Params.StrikeContactSec : Exec + Params.Public.BushStrikeEmergeSec;
 	Deps.Pawns->StartWarp(Attacker, ConcealmentGeometry::ExitPoint(*Bush, Record->Side, Deps.Pawns->GetCapsuleRadiusCm(Attacker)) + FVector(0.0, 0.0, Deps.Pawns->GetCapsuleHalfHeightCm(Attacker)),
-		FMath::Max(CrossAt - Exec, 0.05), /*bEnter*/ false);
+		FMath::Max(CrossAt - Exec, 0.05), /*bEnter*/ false, /*bOwnerPredicts: an Attack press starts no owner-side move*/ false);
 	Schedule(Item, Attacker, *Record, EConcealPhase::Cross, CrossAt);
 	Schedule(Item, Attacker, *Record, EConcealPhase::End, FMath::Max(Exec + Params.AttackLockoutSec, CrossAt));
+}
+
+void FConcealmentCore::OnStrikeKilled(const APawn& Attacker)
+{
+	FConcealRecord* Record = Records.Find(TWeakObjectPtr<APawn>(const_cast<APawn*>(&Attacker)));
+	if (Record != nullptr && Record->State == EConcealState::Emerging && !Record->bCrossed && !Record->bKilled)
+	{
+		Record->bEmergeKilled = true;
+	}
+}
+
+void FConcealmentCore::OnBushStrike(const APawn& Attacker, uint16 BushId, int32 CandidatesBeforeReach, int32 CandidatesAfterReach, FQueueKey Key)
+{
+	LogRow(Key, Attacker, BushId, EConcealmentLogEvent::BushStrike, static_cast<uint32>(FMath::Max(CandidatesBeforeReach, 0)),
+		static_cast<uint32>(FMath::Max(CandidatesAfterReach, 0)));
 }
 
 void FConcealmentCore::OnPawnKilled(APawn& Victim, FQueueKey Key)
@@ -633,6 +647,37 @@ void FConcealmentCore::OnParticipantRebound(FParticipantId Participant, const AP
 			Deps.Flags->SetTeammateConcealed(Participant, false);
 			Record.FlagParticipant = FParticipantId();
 		}
+	}
+	// A rejoiner resumes its pawn (story con-032 AC2): when the pawn it is bound to is concealed now (Concealed, or before
+	// its crossing), the participant learns its state from the owner flag (and its team from the team flag); pose None.
+	FConcealRecord* Resumed = NewPawn != nullptr ? Records.Find(TWeakObjectPtr<APawn>(const_cast<APawn*>(NewPawn))) : nullptr;
+	if (Resumed != nullptr && !Resumed->bKilled && Resumed->bInOccupancy && !Resumed->bCrossed)
+	{
+		Resumed->FlagParticipant = Participant;
+		Deps.Flags->SetOwnerConcealed(Participant, true);
+		Deps.Flags->SetTeammateConcealed(Participant, true);
+	}
+}
+
+void FConcealmentCore::OnPawnReleased(APawn& Pawn, FParticipantId FormerParticipant)
+{
+	FConcealRecord* Record = Records.Find(TWeakObjectPtr<APawn>(&Pawn));
+	if (Record == nullptr || Record->bKilled)
+	{
+		return;
+	}
+	if (Record->FlagParticipant.IsValid() && Deps.Flags != nullptr)
+	{
+		Deps.Flags->SetOwnerConcealed(Record->FlagParticipant, false);
+		Deps.Flags->SetTeammateConcealed(Record->FlagParticipant, false);
+	}
+	Record->FlagParticipant = FParticipantId();
+	(void)FormerParticipant;
+	if (Record->bCulled && Deps.Cull != nullptr)
+	{
+		// The same cull, pushed again: the deadline lands on the next grid boundary and the close now reaches the former
+		// allies too (they hold the actor with the body already hidden locally, so nothing pops).
+		Deps.Cull->SetCullState(&Pawn, true, Now());
 	}
 }
 

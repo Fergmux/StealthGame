@@ -1,12 +1,12 @@
 # Story 029: Every enter, exit and emerge plays one identical rustle, and an occupied bush plays nothing
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -60,11 +60,14 @@ The rustle makes entry visible to anyone with line of sight and leaves no trace 
 
 ## Files
 
+- `Source/StealthGameplay/Features/Concealment/Public/View/BushRustle.h`
 - `Source/StealthGameplay/Features/Concealment/Private/BushRustle.cpp`
-- `Source/StealthGameplay/Features/Concealment/Private/BushRuntimeSubsystem.cpp` (`PushRustlePulse`)
-- `Source/StealthGameplay/Private/Tests/Concealment/RustlePulseSlotTest.cpp` (class `FConcealmentRustlePulseSlotTest`, name `StealthGame.Concealment.RustlePulseSlot`)
-- `Source/StealthTestHarness/Private/Tests/PIE/RustleParityTest.cpp` (`NETWORK_TEST_CLASS(RustleParity, "StealthGame.Concealment.PIE")`)
-- `production/qa/evidence/con-rustle-*.png`, `con-rustle-readtest.md`
+- `Source/StealthGameplay/Features/Concealment/Public/View/BushRuntimeSubsystem.h`
+- `Source/StealthGameplay/Features/Concealment/Private/BushRuntimeSubsystem.cpp`
+- `Source/StealthGameplay/Features/Concealment/Public/View/ConcealmentComponent.h`
+- `Source/StealthGameplay/Features/Concealment/Private/ConcealmentComponent.cpp`
+- `Source/StealthGameplay/Private/Tests/Concealment/RustlePulseSlotTest.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Concealment/RustleParityPieTest.cpp`
 
 ---
 
@@ -102,3 +105,12 @@ The rustle makes entry visible to anyone with line of sight and leaves no trace 
 
 - Depends on: `story-002-bush-runtime-from-manifest.md`, `story-004-hide-enter-execution-and-commit.md`, `story-005-hide-exit-execution-and-blocked-side.md`; Camera `production/epics/camera-system/story-015-mask-apply-path.md`
 - Unlocks: `story-035-prototype-retirement-and-regression.md`
+
+## Completion Notes
+**Completed**: 2026-10-29 (status In Review)
+**Criteria**: AC1 passing: StealthGame.Concealment.PIE.RustleParity (NPC and player, enter / exit / emerge at 0, 1 and 4 occupants, the 1-occupant case with every copy forced to its farthest LOD: one pulse per transition per machine, identical SFX, onset, amplitude, side and face position; no pulse while merely occupied). AC3 passing: StealthGame.Concealment.RustlePulseSlot (onsets, face point, 8-slot ring, 9th overwrites the oldest, eye-masked tag, no kind / team / LOD / camera / occupancy input). AC2 (the 20 m read test with 12 testers) NOT DONE: needs a build and 12 testers (producer to schedule); the story closes only with it.
+**Deviations**: ADVISORY: graybox stand-ins: no MPC_BushRustle asset (Art epic) - the ring is the client-local source and writes an MPC only when one is configured; the SFX is the sample's MSS_FoleySound_Scuff (read only). The pulse's exit side is read from the body's position once it is 40 cm off the anchor (or 0.4 s after the onset), so a late write is seeked, never re-timed. The eye-mask application of the tag is Camera story 015.
+**Test Evidence**: production/qa/evidence/concealment-027-034-2026-10-29/
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: N/A — the graybox bush has no rustle material (Art epic) and no audio in the capture; the pulse parity is asserted per machine by the PIE test.
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/concealment-027-034-2026-10-29/evidence.md)

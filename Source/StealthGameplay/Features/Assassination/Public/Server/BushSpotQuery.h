@@ -3,6 +3,7 @@
 #include "StealthServerOnlyGuard.h"
 
 #include "CoreMinimal.h"
+#include "View/StealthQueueTypes.h"
 
 class APawn;
 
@@ -39,4 +40,14 @@ public:
 
 	/** CON-R9 in-slot occupancy exit of a victim killed while concealed (its un-cull is staged with the death write). */
 	virtual void RemoveOccupant(APawn* Pawn) {}
+
+	/**
+	 * CON-R15 (story con-030): a strike resolved through the bush spot rule (rule 2, hit or whiff) in the slot Key. The
+	 * candidate-set size before the F1 reach filter (non-ally occupants) and after it (0 is valid). Concealment writes its
+	 * BushStrike Event Log row; it never changes the outcome.
+	 */
+	virtual void OnBushStrike(uint16 BushId, const APawn* Attacker, int32 CandidatesBeforeReach, int32 CandidatesAfterReach, FQueueKey Key) {}
+
+	/** CON-R15 (story con-030): Attacker's strike killed its victim in this slot (an emerging striker's Emerge row flag). */
+	virtual void OnStrikeKilled(const APawn* Attacker) {}
 };

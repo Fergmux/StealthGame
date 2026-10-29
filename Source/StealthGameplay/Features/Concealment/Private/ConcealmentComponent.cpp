@@ -13,6 +13,7 @@
 #include "GameFramework/RootMotionSource.h"
 #include "HAL/IConsoleManager.h"
 #include "View/BushRuntimeSubsystem.h"
+#include "View/BushRustle.h"
 #include "View/BodyHiddenLatch.h"
 #include "View/StealthRosterTeamView.h"
 #include "View/StealthRosterTypes.h"
@@ -23,6 +24,11 @@
 
 namespace ConcealmentComponentLocal
 {
+	/** The rustle's exit side is read once the body is this far off the anchor (story con-029)... */
+	constexpr double RustleSideDecisiveCm = 40.0;
+	/** ...or at the latest this long after the onset. */
+	constexpr double RustleSideWaitSec = 0.4;
+
 	/** Stealth.Concealment.OwnerWarp: 0 server only, 1 a1 (on FActionState arrival), 2 b (predict on press; the verdict). */
 	TAutoConsoleVariable<int32> CVarOwnerWarp(TEXT("Stealth.Concealment.OwnerWarp"), 2,
 		TEXT("Concealment owner-side warp (spike S-CON-1): 0 server only, 1 start on FActionState arrival, 2 predict on press (default)."));
@@ -390,6 +396,7 @@ void UConcealmentComponent::HandleActionState(const FActionState& State)
 		}
 	}
 	LastSeenActionSeq = State.Seq;
+	ArmRustle(State);
 	if (State.Pose == EActionPose::BushEnter || State.Pose == EActionPose::BushExit)
 	{
 		OwnerPredictedUntil = -1.0; // the server's pose confirms the prediction
@@ -411,6 +418,79 @@ void UConcealmentComponent::HandleActionState(const FActionState& State)
 		break;
 	default:
 		break;
+	}
+}
+
+void UConcealmentComponent::ArmRustle(const FActionState& State)
+{
+	const TOptional<EBushRustleKind> Kind = BushRustle::KindOfPose(State);
+	const UWorld* World = GetWorld();
+	const AActor* Owner = GetOwner();
+	if (!Kind.IsSet() || World == nullptr || Owner == nullptr || World->GetNetMode() == NM_DedicatedServer
+		|| (State.Seq == RustleSeq && State.StartServerTime == RustleStart))
+	{
+		return;
+	}
+	RustleSeq = State.Seq;
+	RustleStart = State.StartServerTime;
+	RustleBushId = 0;
+	const UBushRuntimeSubsystem* Bushes = UBushRuntimeSubsystem::Get(World);
+	if (Bushes == nullptr)
+	{
+		return;
+	}
+	const FVector Here = Owner->GetActorLocation();
+	const FBushRuntime* Bush = Kind.GetValue() == EBushRustleKind::Enter ? Bushes->FindEnterableBush(Here, Tuning.BushEntryReachCm + 40.0) : Bushes->FindBushAt(Here);
+	if (Bush == nullptr)
+	{
+		Bush = Kind.GetValue() == EBushRustleKind::Enter ? Bushes->FindBushAt(Here) : Bushes->FindEnterableBush(Here, Tuning.BushEntryReachCm + 40.0);
+	}
+	if (Bush == nullptr)
+	{
+		return;
+	}
+	RustleBushId = Bush->Id;
+	RustleKind = static_cast<uint8>(Kind.GetValue());
+	RustleEntrySide = ConcealmentGeometry::SideFromYaw(ConcealmentGeometry::YawFromAnchor(*Bush, Here));
+	RustleOnset = BushRustle::OnsetFor(Kind.GetValue(), State.StartServerTime, Tuning);
+	UpdateRustle(ServerNow());
+}
+
+void UConcealmentComponent::UpdateRustle(double Now)
+{
+	if (RustleBushId == 0 || Now < RustleOnset)
+	{
+		return;
+	}
+	const uint16 BushId = RustleBushId;
+	const AStealthPawn* Pawn = GetOwner<AStealthPawn>();
+	UBushRuntimeSubsystem* Bushes = UBushRuntimeSubsystem::Get(GetWorld());
+	const FBushRuntime* Bush = Bushes != nullptr ? Bushes->Find(BushId) : nullptr;
+	if (Pawn == nullptr || Bush == nullptr)
+	{
+		RustleBushId = 0;
+		return;
+	}
+	const EBushRustleKind ArmedKind = static_cast<EBushRustleKind>(RustleKind);
+	if (ArmedKind != EBushRustleKind::Enter && Now < RustleOnset + ConcealmentComponentLocal::RustleSideWaitSec
+		&& FVector::Dist2D(Pawn->GetActorLocation(), Bush->Anchor) < ConcealmentComponentLocal::RustleSideDecisiveCm)
+	{
+		// The exit side is read from where the body is going; a copy that has not moved off the anchor yet (an owner waiting
+		// for its corrections, a fresh actor) waits for a decisive position. The pulse keeps its onset: the write is seeked.
+		return;
+	}
+	RustleBushId = 0;
+	// A pawn killed before the onset makes no rustle (the swap or crossing it leads never comes).
+	if (Pawn->HasDeathWrite() && Pawn->GetDeathState().DeathServerTime >= 0.0 && Pawn->GetDeathState().DeathServerTime < RustleOnset)
+	{
+		return;
+	}
+	const EBushRustleKind Kind = static_cast<EBushRustleKind>(RustleKind);
+	const uint8 Side = Kind == EBushRustleKind::Enter ? RustleEntrySide
+		: ConcealmentGeometry::SideFromYaw(ConcealmentGeometry::YawFromAnchor(*Bush, Pawn->GetActorLocation()));
+	if (Bushes->PushRustlePulse(BushId, Side, RustleStart, Kind, Now) != INDEX_NONE)
+	{
+		++RustlePushes;
 	}
 }
 
@@ -496,6 +576,7 @@ void UConcealmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	// The client latch (and the listen host's): every frame (cheap; the hide windows and the ally flag change between
 	// RepNotifies). A dedicated server draws nothing.
 	RefreshPresentation(Now);
+	UpdateRustle(Now);
 	ACharacter* Character = Cast<ACharacter>(GetOwner());
 	UCharacterMovementComponent* Movement = Character != nullptr ? Character->GetCharacterMovement() : nullptr;
 	if (Movement != nullptr && OwnerIgnoreCorrectionsUntil >= 0.0 && Now >= OwnerIgnoreCorrectionsUntil)

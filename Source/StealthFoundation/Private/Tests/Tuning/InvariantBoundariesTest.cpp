@@ -187,13 +187,21 @@ bool FTuningInvariantBoundariesTest::RunTest(const FString& Parameters)
 	const TArray<FTuningSchemaRow> Schema = FixtureSchema();
 	TestEqual(TEXT("the fixture schema holds exactly one range pair beyond the real schema's"), FindTuningRangePairs(Schema).Num(), FindTuningRangePairs(GetTuningSchema()).Num() + 1);
 	// The real schema's pairs are the 18 Crowd Min/Max pairs registered by story cnb-003 (none before it) and Objectives'
-	// RivalSignalDelayMinSec / RivalSignalDelayMaxSec (story oc-001; I-5 checks Min <= Max beside I-OC2's spread rule).
+	// RivalSignalDelayMinSec / RivalSignalDelayMaxSec (story oc-001; I-5 checks Min <= Max beside I-OC2's spread rule), and
+	// Camera's FovVMinDeg / FovVMaxDeg (story cs-001: the vertical FOV slider range).
 	const TArray<FTuningRangePair> RealPairs = FindTuningRangePairs(GetTuningSchema());
-	TestEqual(TEXT("the real schema holds the 18 Crowd range pairs (story cnb-003) and the Objectives rival-delay pair (oc-001)"), RealPairs.Num(), 19);
+	TestEqual(TEXT("the real schema holds the 18 Crowd range pairs (story cnb-003), the Objectives rival-delay pair (oc-001) and the Camera FOV pair (cs-001)"), RealPairs.Num(), 20);
 	int32 ObjectivesPairs = 0;
+	int32 CameraPairs = 0;
 	for (const FTuningRangePair& Pair : RealPairs)
 	{
 		const FString Owner(Pair.Min->Owner);
+		if (Owner == TEXT("Camera"))
+		{
+			++CameraPairs;
+			TestEqual(TEXT("the Camera pair is the vertical FOV range"), FString(Pair.Min->Key), FString(TEXT("FovVMinDeg")));
+			continue;
+		}
 		if (Owner == TEXT("Objectives"))
 		{
 			++ObjectivesPairs;
@@ -203,6 +211,7 @@ bool FTuningInvariantBoundariesTest::RunTest(const FString& Parameters)
 		TestEqual(FString::Printf(TEXT("range pair %s is Crowd-owned"), *FString(Pair.Min->Key)), Owner, FString(TEXT("Crowd")));
 	}
 	TestEqual(TEXT("one Objectives range pair"), ObjectivesPairs, 1);
+	TestEqual(TEXT("one Camera range pair"), CameraPairs, 1);
 
 	// Range-pair recognition: <Prefix>Min<Unit>/<Prefix>Max<Unit>; a one-sided bound or a lone Min is not a pair.
 	{

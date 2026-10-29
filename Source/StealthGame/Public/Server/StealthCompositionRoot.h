@@ -152,6 +152,14 @@ public:
 	FParticipantId RegisterPlayer(APlayerController* Player);
 	/** Logout: Lobby removes the record; otherwise the projection becomes Disconnected. */
 	void UnregisterPlayer(APlayerController* Player);
+#if WITH_STEALTH_TEST_SEAMS
+	/**
+	 * Test seam (Concealment story con-032): the Session-level drop of Player's participant without the engine logout, so
+	 * its pawn survives for the Round R17 hold (a real logout releases and destroys it today): the participant's controller
+	 * mapping is forgotten (Round reads Disconnected) and the Roster projection becomes Disconnected. Never releases the pawn.
+	 */
+	void DropConnectionForTest(APlayerController* Player);
+#endif
 
 	/** Session's map. */
 	FParticipantId GetParticipant(const APlayerController* Player) const;

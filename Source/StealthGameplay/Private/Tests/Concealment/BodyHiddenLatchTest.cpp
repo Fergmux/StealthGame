@@ -83,7 +83,10 @@ bool FConcealmentBodyHiddenLatchTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("BushEnter before its swap, ally flag false: waits (shown)"), Eval(Enter, S + 0.2, false));
 	TestTrue(TEXT("ally flag true before the pose sets: hidden at once"), Eval(Enter, S + 0.2, false, true));
 	TestFalse(TEXT("death before the commit cancels the pending swap (shown after the swap time)"), Eval(Enter, S + 0.7, false, false, false, S + 0.3));
-	TestTrue(TEXT("death after the commit never clears"), Eval(Enter, S + 1.5, true, false, false, S + 0.6));
+	TestTrue(TEXT("death after the commit (the death write carries bDiedConcealed) never clears"), Eval(Enter, S + 1.5, true, false, false, S + 0.6, true));
+	// Story con-033 AC3: a TargetPawn strike executed at +0.3 s of BushEnter contacts at +0.7 s, after the swap time; its
+	// death write carries no bDiedConcealed (killed before the commit), so the latch set at the swap clears at its arrival.
+	TestFalse(TEXT("death write without bDiedConcealed after the swap time: the cancelled swap shows the fall"), Eval(Enter, S + 0.75, true, false, false, S + 0.7, false));
 
 	// AC3: an ally watching the whole enter, BushEnter -> None at +0.9 s, swept at 1/60 s.
 	bool bLatch = false;

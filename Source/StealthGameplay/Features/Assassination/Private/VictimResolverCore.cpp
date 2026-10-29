@@ -127,6 +127,7 @@ FVictimResolution FVictimResolverCore::Resolve(const FEncounterParams& Params, c
 			{
 				continue;
 			}
+			++Out.CandidateCount;
 			const FStrikeReachResult Reach = FVictimResolverCore::Reach(Params, Request.Variant, Request.Attacker, Facts);
 			if (Reach.bInReach)
 			{

@@ -4394,42 +4394,44 @@ stories:
     name: "On exit and bush-emerge the body is never drawn before the leaf crossing and the actor exists by then"
     file: "production/epics/concealment-bushes/story-027-uncull-before-leaf-plane.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
+    completed: "2026-10-29"
     sprint: 2
-    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+    note: "CON batch 2 2026-10-29; PIE.ExitUncullBeforeLeafPlane, PIE.AttackBreaksConcealment; evidence production/qa/evidence/concealment-027-034-2026-10-29/"
   - id: "con-028"
     name: "At the swap server time the body, shadow and reflections vanish on the same frame for opponent and ally clients"
     file: "production/epics/concealment-bushes/story-028-enter-swap-hides-body-per-viewer.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: "gameplay-programmer"
     estimate_days: 1.0
-    blocker: ""
+    blocker: "1P captures and lead sign-off pending"
     sprint: 2
-    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+    note: "CON batch 2 2026-10-29; PIE.EnterSwapHidesBodyPerViewer passing; 3P screenshots retained; 1P needs Camera 008/009 toggle; evidence production/qa/evidence/concealment-027-034-2026-10-29/"
   - id: "con-029"
     name: "Every enter, exit and emerge plays one identical rustle, and an occupied bush plays nothing"
     file: "production/epics/concealment-bushes/story-029-rustle-parity.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: "gameplay-programmer"
     estimate_days: 1.0
-    blocker: ""
+    blocker: "AC2 20 m read test with 12 testers (producer to schedule)"
     sprint: 2
-    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+    note: "CON batch 2 2026-10-29; RustlePulseSlot, PIE.RustleParity passing; evidence production/qa/evidence/concealment-027-034-2026-10-29/"
   - id: "con-030"
     name: "The concealment log rows go to the Event Log only and feed the F1, F2 and review-metric calculators"
     file: "production/epics/concealment-bushes/story-030-concealment-log-and-metric-calculators.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
+    completed: "2026-10-29"
     sprint: 2
-    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+    note: "CON batch 2 2026-10-29; ConcealmentLog, MetricCalculators; evidence production/qa/evidence/concealment-027-034-2026-10-29/"
   - id: "con-031"
     name: "Logged internal matches satisfy the parity, hiding-is-a-pause and ambush metrics"
     file: "production/epics/concealment-bushes/story-031-playtest-metrics-review.md"
@@ -4444,32 +4446,34 @@ stories:
     name: "A disconnect, grace expiry or rejoin never cancels or exposes a concealed pawn instantly"
     file: "production/epics/concealment-bushes/story-032-ownership-change-while-concealed.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
+    completed: "2026-10-29"
     sprint: 2
-    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+    note: "CON batch 2 2026-10-29; TransitionSurvivesHandover, PIE.DisconnectRelease; GetBoundPawn reads Roster first; evidence production/qa/evidence/concealment-027-034-2026-10-29/"
   - id: "con-033"
     name: "Blind strikes at any bush look identical to the attacker and a killed-concealed body is never drawn on a non-owner client"
     file: "production/epics/concealment-bushes/story-033-blind-strike-parity-and-kill-timing.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 1.0
     blocker: ""
+    completed: "2026-10-29"
     sprint: 2
-    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+    note: "CON batch 2 2026-10-29; PIE.BlindStrikeParity, PIE.KillWhileConcealedTiming, PIE.NoImmunityWhileEntering, latch fix; evidence production/qa/evidence/concealment-027-034-2026-10-29/"
   - id: "con-034"
     name: "The R5 leak matrix passes on the production hide for every LOD and lighting cell"
     file: "production/epics/concealment-bushes/story-034-r5-leak-matrix.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: "gameplay-programmer"
     estimate_days: 1.0
-    blocker: ""
+    blocker: "lead sign-off; re-run LowSun_VSM1/Noon_VSM1 and the 25 m magenta row; TSR ghost decision"
     sprint: 2
-    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+    note: "CON batch 2 2026-10-29; Stealth.R5Matrix capture + tools/analysis/r5_matrix.py; PARTIAL (con-r5-results.md); HW-RT cells N/A by configuration (r.RayTracing=False, ADR-0022)"
   - id: "con-035"
     name: "The prototype concealment code is retired and the networked behaviours it proved still hold"
     file: "production/epics/concealment-bushes/story-035-prototype-retirement-and-regression.md"
@@ -4477,6 +4481,72 @@ stories:
     status: blocked
     owner: "gameplay-programmer"
     estimate_days: 1.0
-    blocker: "028, 033, 034 still open"
+    blocker: "028, 029, 034 In Review (human items)"
     sprint: 2
-    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Blocked: 028, 033, 034 still open"
+    note: "CON batch 2 2026-10-29: not started; deps 028/029/034 are In Review"
+  - id: "cam-001"
+    name: "Camera tuning keys and invariants"
+    file: "production/epics/camera-system/story-001-camera-tuning-keys-and-invariants.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "Camera batch 2026-10-29 (plain cores, not yet on screen); Camera.KeysRegistered, Camera.InvariantsRejected; TuningSchemaVersion 10; evidence production/qa/evidence/camera-001-012-2026-10-29/"
+  - id: "cam-002"
+    name: "View envelope pure function"
+    file: "production/epics/camera-system/story-002-view-envelope-pure-function.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "Camera batch 2026-10-29 (plain cores, not yet on screen); Camera.EnvelopeClamp, Camera.SoftEdgeNoDeadZone, Camera.MouseLatchedPush; evidence production/qa/evidence/camera-001-012-2026-10-29/"
+  - id: "cam-003"
+    name: "Stick look response and no aim assist"
+    file: "production/epics/camera-system/story-003-stick-look-response-no-aim-assist.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "Camera batch 2026-10-29 (plain cores, not yet on screen); Camera.StickCurve, Camera.NoAimAssist; evidence production/qa/evidence/camera-001-012-2026-10-29/"
+  - id: "cam-006"
+    name: "Eye pivot, boom and collision"
+    file: "production/epics/camera-system/story-006-eye-pivot-boom-collision.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "Camera batch 2026-10-29 (plain cores, not yet on screen); Camera.BoomRecovery, Camera.PivotCapAndCorrection, Camera.SqueezeAndSwap; D6 mask band 25/35 cm; evidence production/qa/evidence/camera-001-012-2026-10-29/"
+  - id: "cam-010"
+    name: "Field of view"
+    file: "production/epics/camera-system/story-010-field-of-view.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "Camera batch 2026-10-29 (plain cores, not yet on screen); Camera.FovCap, Camera.FovEase; evidence production/qa/evidence/camera-001-012-2026-10-29/"
+  - id: "cam-012"
+    name: "Eye mask core"
+    file: "production/epics/camera-system/story-012-eye-mask-core.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "Camera batch 2026-10-29 (plain cores, not yet on screen); Camera.MaskTiming, Camera.MaskParityAndInputs, Camera.MaskConeAndBands, Camera.MaskTraceCap; evidence production/qa/evidence/camera-001-012-2026-10-29/"

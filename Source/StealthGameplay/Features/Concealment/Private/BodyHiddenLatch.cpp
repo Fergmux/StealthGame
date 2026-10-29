@@ -23,8 +23,11 @@ bool EvaluateBodyHidden(const FBodyHiddenInputs& In, const FConcealmentTuning_Pu
 	if (A.Pose == EActionPose::BushEnter)
 	{
 		const double Swap = A.StartServerTime + Tuning.BushEnterSwapSec;
-		// Death before the commit cancels the pending swap: an ordinary visible kill (CON-R6b rule 4).
-		const bool bDiedBeforeSwap = bDead && In.Death.DeathServerTime < Swap;
+		// Death before the commit cancels the pending swap: an ordinary visible kill (CON-R6b rule 4). The commit evidence
+		// is the death write's bDiedConcealed (story con-033 AC3): the server sets it for every victim killed after its
+		// commit (Concealed or CullPending), and never for an entrant killed before it, whose death write still carries a
+		// DeathServerTime (the strike's contact) after the swap time when the strike executed in the enter's first 0.5 s.
+		const bool bDiedBeforeSwap = bDead && (In.Death.DeathServerTime < Swap || !In.Death.bDiedConcealed);
 		if (!bDiedBeforeSwap && In.Now >= Swap)
 		{
 			return true;

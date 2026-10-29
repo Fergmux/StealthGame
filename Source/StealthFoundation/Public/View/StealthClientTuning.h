@@ -35,4 +35,7 @@ struct STEALTHFOUNDATION_API FStealthClientTuning
 
 	UPROPERTY(EditAnywhere, Category = "Locomotion")
 	FLocomotionTuning_Public Locomotion_Public;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	FCameraTuning_Public Camera_Public;
 };

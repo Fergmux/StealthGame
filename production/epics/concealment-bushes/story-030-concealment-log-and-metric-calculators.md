@@ -1,12 +1,12 @@
 # Story 030: The concealment log rows go to the Event Log only and feed the F1, F2 and review-metric calculators
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -59,10 +59,21 @@ F1: `E[O] = (n_N·r_N·D_N + n_P·r_P·D_P) / N_B` (NPC term 0.383, opponent ter
 
 ## Files
 
+- `Source/StealthGameplay/Features/Concealment/Public/Server/ConcealmentLog.h`
 - `Source/StealthGameplay/Features/Concealment/Private/ConcealmentLog.cpp`
+- `Source/StealthGameplay/Features/Concealment/Public/Server/ConcealmentMetrics.h`
 - `Source/StealthGameplay/Features/Concealment/Private/ConcealmentMetrics.cpp`
-- `Source/StealthGameplay/Private/Tests/Concealment/ConcealmentLogTest.cpp` (class `FConcealmentLogTest`)
-- `Source/StealthGameplay/Private/Tests/Concealment/MetricCalculatorsTest.cpp` (class `FConcealmentMetricCalculatorsTest`, name `StealthGame.Concealment.MetricCalculators`)
+- `Source/StealthGameplay/Features/Concealment/Public/Server/ConcealmentCore.h`
+- `Source/StealthGameplay/Features/Concealment/Private/ConcealmentCore.cpp`
+- `Source/StealthGameplay/Features/Concealment/Public/Server/ConcealmentService.h`
+- `Source/StealthGameplay/Features/Concealment/Private/ConcealmentService.cpp`
+- `Source/StealthGameplay/Features/Assassination/Public/Server/BushSpotQuery.h`
+- `Source/StealthGameplay/Features/Assassination/Public/Server/VictimResolverCore.h`
+- `Source/StealthGameplay/Features/Assassination/Private/VictimResolverCore.cpp`
+- `Source/StealthGameplay/Features/Assassination/Private/AttackResolverCore.cpp`
+- `Source/StealthGameplay/Private/Tests/Assassination/EncounterTestRig.h`
+- `Source/StealthGameplay/Private/Tests/Concealment/ConcealmentLogTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Concealment/MetricCalculatorsTest.cpp`
 
 ---
 
@@ -97,3 +108,12 @@ F1: `E[O] = (n_N·r_N·D_N + n_P·r_P·D_P) / N_B` (NPC term 0.383, opponent ter
 
 - Depends on: `story-004-hide-enter-execution-and-commit.md`, `story-014-attack-breaks-concealment.md`; round-match-framework epic Event Log stories
 - Unlocks: `story-031-playtest-metrics-review.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1, AC2 passing: StealthGame.Concealment.ConcealmentLog (Commit, ExitCross, Emerge with the kill flag, Killed and BushStrike rows with candidates before / after reach, from Assassination's resolver over IBushSpotQuery::OnBushStrike / OnStrikeKilled; NeverReleased; no UE_LOG / UE_LOGF, scan with a seeded control); StealthGame.Concealment.MetricCalculators (F1 0.429, m0 0.349, cap 44.9 %, F2 0.152 / 0.633 r_P; the 720 s round fixture 57.6 s / 8.0 %, r_P 0.25, m 44.0 %; boundaries 29 / 30 strikes and 25.0 / 25.1 %).
+**Deviations**: ADVISORY: m counts strikes whose candidate set AFTER the reach filter (the uniform pick's set) is non-empty and holds >= 2 (CON-R12 reading); the review thresholds (40 %, 10 points, 30 strikes, 25 %) are named GDD constants, not tuning keys.
+**Test Evidence**: Source/StealthGameplay/Private/Tests/Concealment/ConcealmentLogTest.cpp, Source/StealthGameplay/Private/Tests/Concealment/MetricCalculatorsTest.cpp
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: N/A — server-only Event Log rows and offline calculators: nothing is drawn or heard.
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/concealment-027-034-2026-10-29/evidence.md)

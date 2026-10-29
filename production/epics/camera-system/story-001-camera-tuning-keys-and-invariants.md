@@ -1,12 +1,12 @@
 # Story 001: Camera tuning keys and invariants
 
 > **Epic**: Camera System
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -61,12 +61,26 @@ Prototype replaced: none directly. `UStealthSettings` camera-adjacent fields in 
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
-- `Source/StealthFoundation/Public/View/Tuning/StealthCameraParams.h` (parameter structs; final home set by the TDC schema story)
-- `Source/StealthFoundation/Private/Tuning/StealthCameraKeys.cpp` (key rows and invariants I-CS-1 to I-CS-5)
-- `Source/StealthGameplay/Private/Tests/Camera/KeysRegisteredTest.cpp` (class `FCameraKeysRegisteredTest`, name `StealthGame.Camera.KeysRegistered`)
-- `Source/StealthGameplay/Private/Tests/Camera/InvariantsRejectedTest.cpp` (class `FCameraInvariantsRejectedTest`, name `StealthGame.Camera.InvariantsRejected`)
+- `Source/StealthFoundation/Public/View/StealthTuningPublicSubstructs.h`
+- `Source/StealthFoundation/Public/View/StealthClientTuning.h`
+- `Source/StealthFoundation/Public/Server/StealthServerTuning.h`
+- `Source/StealthFoundation/Public/Server/StealthTuningData.h`
+- `Source/StealthFoundation/Public/View/Tuning/StealthCameraParams.h`
+- `Source/StealthFoundation/Public/Server/StealthCameraInvariants.h`
+- `Source/StealthFoundation/Private/Tuning/CameraInvariants.cpp`
+- `Source/StealthFoundation/Private/Tuning/StealthTuningInvariants.cpp`
+- `Source/StealthFoundation/Public/Server/StealthTuningInvariants.h`
+- `Source/StealthFoundation/Public/Server/StealthTuningVersion.h`
+- `Source/StealthFoundation/Private/Tuning/StealthTuningSchema.generated.inl`
+- `Source/StealthFoundation/Public/Server/Testing/StealthCameraTuningKnobs.h`
+- `Source/StealthGameEditor/Private/Tests/Tuning/SchemaCompleteTest.cpp`
+- `Source/StealthFoundation/Private/Tests/Tuning/InvariantBoundariesTest.cpp`
+- `Source/StealthFoundation/Private/Tuning/PenaltyInvariants.cpp`
+- `Source/StealthGameplay/Features/Penalty/Private/StealthPenaltyCore.cpp`
+- `Source/StealthGame/Private/StealthPlayerController.cpp`
+- `Source/StealthTestHarness/Private/Tests/PIE/Penalty/InformantKilledViewPieTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/CameraKeysRegisteredTest.cpp`
+- `Source/StealthGameplay/Private/Tests/Camera/CameraInvariantsRejectedTest.cpp`
 
 ---
 
@@ -106,3 +120,12 @@ Test: AC2 `InvariantsRejected` (AC-CS-22 invariants, AC-CS-16 last bullet)
 
 - Depends on: cross-epic: `production/epics/tuning-data-config/story-038-schema-row-types.md`, `story-040-canonical-keys-and-faces.md` (row types and key registry), `story-002-gameplay-presentation-module-skeletons.md` (the `StealthGameplay` module exists for the tests)
 - Unlocks: `production/epics/camera-system/story-002-view-envelope-pure-function.md`, `story-006-eye-pivot-boom-collision.md`, `story-010-field-of-view.md`, `story-012-eye-mask-core.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1, AC2 passing: StealthGame.Camera.KeysRegistered (44 Camera keys, owner Camera, Client audience, latch, default, hard and safe range, unit; ViewHeadLeadMaxDeg's sentinel; the six user settings are not keys and have FStealthCameraUserSettings ranges); StealthGame.Camera.InvariantsRejected (I-CS-1..5 Reject rows; each violation rejected by its own row; blend 0.13 / lockout 0.15 passes, 0.20 / 0.15 rejected; an in-range I-CS-3 preset rejected whole, Default loads, no F-1 repair). TuningSchemaVersion 10 (fingerprint 0x8071b141e30b03d4); StealthGame.Tuning.SchemaComplete pins.
+**Deviations**: ADVISORY: CameraPivotLagTraversalSec added as its own key (the GDD row's parenthesised 0.12); units chosen from the CR-15.2 suffix list (Gain, Frac, PerSec); the IIF lockout is a pending owner key (0.30); Camera's NoPawnFadeSec now feeds Penalty (the pending constant deleted). Invariants file named CameraInvariants.cpp (story planned StealthCameraKeys.cpp).
+**Test Evidence**: Source/StealthGameplay/Private/Tests/Camera/CameraKeysRegisteredTest.cpp, CameraInvariantsRejectedTest.cpp
+**Gate**: Build Succeeded; full ^StealthGame. suite 594 tests, 593 passed first run (ExitUncullBeforeLeafPlane snap check narrowed to late actors, re-run alone at full counts PASS)
+Run result: N/A — tuning rows and load-time checks: nothing on screen.
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/camera-001-012-2026-10-29/evidence.md)

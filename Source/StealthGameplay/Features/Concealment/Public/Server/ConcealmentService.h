@@ -111,6 +111,8 @@ public:
 	virtual bool IsConcealed(const APawn* Pawn) const override;
 	virtual bool GetFootprint(uint16 BushId, FBox2D& OutFootprint) const override;
 	virtual void RemoveOccupant(APawn* Pawn) override;
+	virtual void OnBushStrike(uint16 BushId, const APawn* Attacker, int32 CandidatesBeforeReach, int32 CandidatesAfterReach, FQueueKey Key) override;
+	virtual void OnStrikeKilled(const APawn* Attacker) override;
 
 	// IBodyRemovalObserver
 	virtual void OnBodyRemovalCommitted(APawn* Body) override;
@@ -118,6 +120,8 @@ public:
 private:
 	void HandleActionStarted(class AStealthPawn* Pawn, EActionType Type);
 	void HandleRosterEvent(const FRosterEvent& Event);
+	/** Roster ReleaseToCrowd (story con-032): the pawn is an NPC now. */
+	void HandlePawnReleased(APawn* Pawn, FParticipantId FormerParticipant);
 
 	struct FAdapters;
 	TSharedPtr<FAdapters> Adapters;
@@ -128,4 +132,5 @@ private:
 	TWeakObjectPtr<URosterStore> Roster;
 	FDelegateHandle ActionStartedHandle;
 	FDelegateHandle RosterEventHandle;
+	FDelegateHandle ReleasedHandle;
 };

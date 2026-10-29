@@ -390,7 +390,16 @@ ERosterResult URosterStore::BindPawn(FParticipantId Id, APawn* Pawn, const TOpti
 	return CoreRef().BindPawn(Id, MakePawnHandle(Pawn), ExpectedEpoch);
 }
 
-ERosterResult URosterStore::ReleaseToCrowd(APawn* Pawn) { return CoreRef().ReleaseToCrowd(MakePawnHandle(Pawn)); }
+ERosterResult URosterStore::ReleaseToCrowd(APawn* Pawn)
+{
+	const FParticipantId Former = Pawn != nullptr ? GetParticipant(Pawn) : FParticipantId();
+	const ERosterResult Result = CoreRef().ReleaseToCrowd(MakePawnHandle(Pawn));
+	if (Result == ERosterResult::Applied && Pawn != nullptr)
+	{
+		OnPawnReleasedToCrowd.Broadcast(Pawn, Former);
+	}
+	return Result;
+}
 
 ERosterResult URosterStore::RetireBinding(APawn* Pawn, int64 RetireAtServerTimeMs, ERosterReason Reason)
 {
