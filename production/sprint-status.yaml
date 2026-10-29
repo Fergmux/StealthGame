@@ -4550,3 +4550,25 @@ stories:
     completed: "2026-10-29"
     sprint: 2
     note: "Camera batch 2026-10-29 (plain cores, not yet on screen); Camera.MaskTiming, Camera.MaskParityAndInputs, Camera.MaskConeAndBands, Camera.MaskTraceCap; evidence production/qa/evidence/camera-001-012-2026-10-29/"
+  - id: "cam-007"
+    name: "ViewBlock channel and collision profiles"
+    file: "production/epics/camera-system/story-007-viewblock-channel-collision-profiles.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "Camera batch 2026-10-29; Camera.CollisionProfiles, Camera.CollisionProfileValidator; ini profiles StealthKit/Prop/Foliage/Glass/Decoration, Pawn+CharacterMesh Camera Ignore; smoke production/qa/smoke-2026-10-29-camera-collision-profiles.md"
+  - id: "cam-024"
+    name: "Presentation include check and Tell Matrix review"
+    file: "production/epics/camera-system/story-024-presentation-include-check-tell-matrix.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "Camera batch 2026-10-29; Camera.PresentationIncludeCheck; Tell Matrix T17 present, Crowd envelope stand-in advisory (production/qa/evidence/camera-tell-matrix-review.md); game-designer sign-off pending"

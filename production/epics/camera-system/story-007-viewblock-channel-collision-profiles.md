@@ -1,12 +1,12 @@
 # Story 007: ViewBlock channel and collision profiles
 
 > **Epic**: Camera System
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Config/Data
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -62,13 +62,13 @@ Prototype replaced: the prototype uses ad hoc `Visibility`/`Camera` traces (`Ste
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
-- `Config/DefaultEngine.ini` (`[/Script/Engine.CollisionProfile]`: `+DefaultChannelResponses` for `ViewBlock`, profile responses)
-- `Source/StealthGameplay/Public/View/Core/StealthCollisionChannels.h` (the single `ViewBlock` constant)
+- `Config/DefaultEngine.ini`
+- `Source/StealthGameplay/Public/View/Core/StealthCollisionChannels.h`
+- `Source/StealthGameEditor/Private/Validators/StealthCollisionProfileValidator.h`
 - `Source/StealthGameEditor/Private/Validators/StealthCollisionProfileValidator.cpp`
-- `Source/StealthGameEditor/Private/Tests/CollisionProfileValidatorTest.cpp` (class `FCameraCollisionProfileValidatorTest`, name `StealthGame.Camera.CollisionProfileValidator`)
-- `tests/smoke/` entry for the ini check
+- `Source/StealthGameEditor/Private/Tests/CollisionProfileValidatorTest.cpp`
+- `Source/StealthGameEditor/StealthGameEditor.Build.cs`
+- `tests/smoke/critical-paths.md`
 
 ---
 
@@ -102,3 +102,12 @@ QL-STORY-READY: GAPS (reviewed before the AC1/AC2 revision above; the revision a
 
 - Depends on: cross-epic: tuning-data-config `story-011-t0-lint-framework-and-gate.md` (the ADR-0008 audit framework that hosts the validator) and `story-002-gameplay-presentation-module-skeletons.md`
 - Unlocks: `production/epics/camera-system/story-006-eye-pivot-boom-collision.md` (Camera responses at runtime), `story-013-mask-live-world-is-eye-mask-visible.md`, `story-016-aim-ray.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1, AC2 passing: StealthGame.Camera.CollisionProfiles (exactly one +DefaultChannelResponses ViewBlock, bTraceType=True, DefaultResponse=ECR_Block, on ECC_GameTraceChannel2 = StealthCollision::ViewBlock; every row of StealthCollision::ProfileTable exists with the expected ViewBlock / Camera responses, the explicit rows write both in CustomResponses: Pawn and CharacterMesh Ignore / Ignore (Camera Ignore added), StealthKit and StealthProp Block / Block, StealthFoliage Ignore / Ignore, StealthGlass Ignore / Block, StealthDecoration Ignore / Ignore, WaterBodyCollision Ignore / Ignore; BlockAll / BlockAllDynamic Block / Block by channel default). AC3 passing: StealthGame.Camera.CollisionProfileValidator (UStealthCollisionProfileValidator, a UEditorValidatorBase: a drifted kit mesh is Invalid naming the asset and 'Camera: Ignore'; a matching one Valid; nothing loaded-and-saved). Smoke: production/qa/smoke-2026-10-29-camera-collision-profiles.md, tests/smoke/critical-paths.md entry 9.
+**Deviations**: ADVISORY: the channel already existed (ECC_GameTraceChannel2, the story's revised AC1), so the ini change is the profile table only; an override in the editor turns a preset into Custom (a named profile cannot drift on load), so the Custom rule is: a Custom Pawn-type body is held to the Pawn row, any other Custom body that blocks ViewBlock must block Camera; the validator is exercised on transient objects, not checked-in fixture assets (no Content written); no kit / foliage asset uses the new profiles yet (Level Socket Contract and Art epics assign them); StealthGameEditor gained the DataValidation module dependency (project files regenerated, Result: Succeeded). The ADR-0015 follow-up note of the channel index: ECC_GameTraceChannel2, recorded in StealthCollisionChannels.h.
+**Test Evidence**: Source/StealthGameEditor/Private/Tests/CollisionProfileValidatorTest.cpp; production/qa/evidence/camera-007-024-2026-10-29/
+**Gate**: Build Succeeded (project files regenerated after the Build.cs change: Result: Succeeded); full StealthGame suite 597 tests, 597 passed
+Run result: OBSERVED — 3-player PIE: with pawns ignoring the Camera channel the 3P rig frames normally with another pawn 1.2 m away (cam-007-*.png).
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/camera-007-024-2026-10-29/evidence.md)

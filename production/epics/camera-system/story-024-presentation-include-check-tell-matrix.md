@@ -1,12 +1,12 @@
 # Story 024: Presentation include check and Tell Matrix review
 
 > **Epic**: Camera System
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25e
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -59,10 +59,7 @@ Prototype replaced: none.
 
 ## Files
 
-*The code and test files this story creates or changes. `/create-stories` lists the planned ones; `/dev-story` replaces the list with the files it changed; `/story-done` checks scope against it.*
-
-- `tools/lint/` camera include rule (path set by the T0 lint framework story)
-- `Source/StealthGameplay/Private/Tests/Camera/PresentationIncludeCheckTest.cpp` (class `FCameraPresentationIncludeCheckTest`, name `StealthGame.Camera.PresentationIncludeCheck`)
+- `Source/StealthGameplay/Private/Tests/Camera/PresentationIncludeCheckTest.cpp`
 - `production/qa/evidence/camera-tell-matrix-review.md`
 
 ---
@@ -96,3 +93,12 @@ QL-STORY-READY: GAPS
 
 - Depends on: `production/epics/camera-system/story-013-mask-live-world-is-eye-mask-visible.md` (the camera module has code to scan); cross-epic: tuning-data-config `story-011-t0-lint-framework-and-gate.md`, `story-010-negative-control-helper.md`; crowd-npc-behaviour (virtual look, Tell Matrix)
 - Unlocks: None
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1 passing: StealthGame.Camera.PresentationIncludeCheck (every camera source under StealthGameplay/Private/Core/Camera and the camera headers under Public/View/Core and View/Tuning: no Server/ include, no GetPlayerState / GetController / IsPlayerControlled / GetOwner outside the allowlist, which is empty; the negative control seeds a server include and a GetPlayerState call and the check fails on it). AC2 (ADVISORY doc review): production/qa/evidence/camera-tell-matrix-review.md: Tell Matrix row T17 PRESENT; Crowd's virtual look calls StealthCrowdView::EvaluateViewEnvelope, which is Crowd's own stand-in, not Camera's F1 (StealthViewEnvelope::Step): DEVIATION (advisory), recommendation for the Crowd epic owner recorded; game-designer sign-off pending.
+**Deviations**: ADVISORY: the lint is an automation test in the T0 framework (StealthNegativeControl) rather than a tools/lint/ script; the allowlist lives in the test (empty: the cores read no identity); the camera manager and look wiring (004/005) are not built yet, so their files join the scanned set when they land (the scan globs the folders).
+**Test Evidence**: Source/StealthGameplay/Private/Tests/Camera/PresentationIncludeCheckTest.cpp; production/qa/evidence/camera-tell-matrix-review.md
+**Gate**: Build Succeeded (project files regenerated after the Build.cs change: Result: Succeeded); full StealthGame suite 597 tests, 597 passed
+Run result: N/A — a static source scan and a document review: nothing is drawn or heard.
+**Reviewed by**: self code review 2026-10-29 (notes in production/qa/evidence/camera-007-024-2026-10-29/evidence.md)

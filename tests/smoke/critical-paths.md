@@ -25,3 +25,10 @@
 
 7. No visible frame rate drops on target hardware (60fps target)
 8. No memory growth over 5 minutes of play (once core loop is implemented)
+
+## Config Integrity
+
+9. Collision profiles (Camera story cs-007, ADR-0015 4.1): `StealthGame.Camera.CollisionProfiles` passes — exactly one
+   `ViewBlock` trace channel (default Block) in `Config/DefaultEngine.ini` on the channel `StealthCollision::ViewBlock`
+   names, and every profile in `StealthCollision::ProfileTable` sets its `ViewBlock` and `Camera` responses as the table
+   prescribes; `StealthGame.Camera.CollisionProfileValidator` passes (the asset audit fails a drifted body).
