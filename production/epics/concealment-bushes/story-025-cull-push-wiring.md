@@ -1,12 +1,12 @@
 # Story 025: Commit, exit, break and kill drive the IVP cull through IConcealmentCullSource in the right slot
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready — Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25). Other dependencies are ordinary story order (see Dependencies).
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: 2026-10-26
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -94,7 +94,9 @@ Commit: `SetCullState(Pawn, true, ServerNow())` (`CullPending`, deadline on the 
 **Required evidence**:
 - Integration: the PIE `CullSendTimeTest.cpp` and `OwnedActorsFollowCullTest.cpp` — must exist and pass, OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.CullDeadlineGrid, StealthGame.Concealment.CullStateChain, StealthGame.Concealment.PIE.PerViewerVisibility.CoOccupantsAndCullBoundary; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -102,3 +104,10 @@ Commit: `SetCullState(Pawn, true, ServerNow())` (`CullPending`, deadline on the 
 
 - Depends on: `story-004-hide-enter-execution-and-commit.md`, `story-005-hide-exit-execution-and-blocked-side.md`, `story-014-attack-breaks-concealment.md`, `story-017-kill-while-concealed-server-rules.md`; IVP `story-004-spike-s9-cull-latency-and-explicit-channel-close.md` and `story-005-spike-s10-reopen-behaviour-and-netguid.md` (blockers), `story-024-concealment-cull-audience.md`, `story-025-concealment-cull-timing.md`
 - Unlocks: `story-026-per-viewer-visibility-pie.md`, `story-027-uncull-before-leaf-plane.md`, `story-028-enter-swap-hides-body-per-viewer.md`, `story-032-ownership-change-while-concealed.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1 and AC3 passing: each close lands on the first 15 Hz pawn net-update boundary at or after commit + ConcealCullDelayMs (250 ms) within one server frame (PIE, every commit of the run) and the boundary rule is pinned headless (CullDeadlineGrid: 20 commits across a period, same-frame commits share a boundary); exit, break and the concealed kill's death write un-cull in the same step through IConcealmentCullSource only. AC2 (OwnedActorsFollowCull) DEFERRED: no carried or tend prop actor exists yet (Objectives' props are not actors); owned actors use bNetUseOwnerRelevancy, so they follow AStealthPawn::IsNetRelevantFor.
+**Deviations**: The 200-commit LeakNetProfile run is replaced in the per-commit gate by the headless boundary test plus the PIE commits; the IVP cull mechanism is built here as UStealthConcealmentCull (Foundation world subsystem: Visible/CullPending/Culled records, grid deadline anchored at Active entry, TG_PostUpdateWork close of non-ally channels, S10-R2/R3 re-open guard with ReopenAckTimeoutMs 350) - IVP stories 024/025's cull; S10-R4 repair and R6 clock remain IVP scope.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

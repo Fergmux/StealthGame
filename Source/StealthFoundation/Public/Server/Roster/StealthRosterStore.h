@@ -194,6 +194,15 @@ public:
 	 */
 	ERosterResult SetOwnerTally(FParticipantId Id, uint8 WrongTargetTally, uint32 LastResultSeq, uint32 ExpectedEpoch);
 
+	/**
+	 * Concealment's teammate flag (ADR-0001 section 5, ADR-0017 section 1; story con-023): Id's C-TeamView teammate entry
+	 * carries bIsConcealed from the next push (team audience). Concealment is its only caller.
+	 *   Store->SetTeammateConcealed(Participant, true);   // at the commit; false at the crossing or the body's removal
+	 */
+	ERosterResult SetTeammateConcealed(FParticipantId Id, bool bConcealed);
+	/** The teammate flag of Id as the push step holds it (tests and dumps). */
+	bool IsTeammateConcealed(FParticipantId Id) const;
+
 	// --- FTickableGameObject ------------------------------------------------------------------------------------------
 
 	virtual void Tick(float DeltaTime) override;

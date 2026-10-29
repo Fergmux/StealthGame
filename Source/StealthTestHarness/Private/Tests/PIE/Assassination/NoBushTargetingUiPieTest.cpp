@@ -15,6 +15,7 @@
 #include "CQTest.h"
 #include "HAL/IConsoleManager.h"
 #include "StealthBush.h"
+#include "Tests/PIE/Concealment/ConcealmentPieSupport.h"
 #include "StealthCharacter.h"
 #include "StealthGameMode.h"
 #include "StealthSettings.h"
@@ -153,7 +154,8 @@ NETWORK_TEST_CLASS(NoBushTargetingUi, "StealthGame.Assassination.PIE")
 				}
 				OccupiedBush = Bushes[0];
 				EmptyBush = Bushes[1];
-				Hider->GetPawn()->TeleportTo(OccupiedBush->GetActorLocation() + FVector(0.0, 0.0, 100.0), Hider->GetPawn()->GetActorRotation());
+				// Concealment epic: H hides through the production Hide(Enter) (a teleport into the leaves is blocked).
+				StealthConcealmentPie::HideIn(Cast<AStealthPawn>(Hider->GetPawn()), OccupiedBush->GetActorLocation(), Seq);
 				const FVector Toward = (EmptyBush->GetActorLocation() - OccupiedBush->GetActorLocation()).GetSafeNormal2D();
 				Attacker->GetPawn()->TeleportTo(OccupiedBush->GetActorLocation() + Toward * StandOffCm + FVector(0.0, 0.0, 100.0), Attacker->GetPawn()->GetActorRotation());
 				Mark = ServerNow(ServerWorld());

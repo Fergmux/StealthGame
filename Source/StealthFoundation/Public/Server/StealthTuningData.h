@@ -57,6 +57,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Objectives")
 	FObjectivesTuning_Server Objectives_Server;
 
+	UPROPERTY(EditAnywhere, Category = "Concealment")
+	FConcealmentTuning_Public Concealment_Public;
+
+	UPROPERTY(EditAnywhere, Category = "Concealment")
+	FConcealmentTuning_Server Concealment_Server;
+
 	UPROPERTY(EditAnywhere, Category = "Locomotion")
 	FLocomotionTuning_Public Locomotion_Public;
 

@@ -1,12 +1,12 @@
 # Story 013: Inside a bush the body is still, the view is clamped and Prepare and Interact are refused
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -94,7 +94,9 @@ The body does not turn: a freely turning body would give a full panorama from a 
 **Required evidence**:
 - Visual/Feel: retained screenshots `con-inside-{1p,3p}.png` in `production/qa/evidence/` plus sign-off in `con-inside-evidence.md`; the automated tests above also exist
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.PIE.CollisionAndStillness.InsideViewAndStillness, StealthGame.Concealment.InsideInputs; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -102,3 +104,10 @@ The body does not turn: a freely turning body would give a full panorama from a 
 
 - Depends on: `story-004-hide-enter-execution-and-commit.md`, `story-011-server-warp-to-anchor-and-exit-motion.md`, `story-023-owner-and-team-concealed-flags.md`; Camera `production/epics/camera-system/story-014-concealed-and-informant-view.md`; IIF `production/epics/input-interaction-framework/story-052-no-brace-or-tend-in-bush.md`
 - Unlocks: `story-035-prototype-retirement-and-regression.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1 and AC3 passing (0 cm server displacement, body yaw unchanged, Prepare/Interact refused; Camera/ViewBlock ignored by the volume set). AC2 (3P lens inside the dome, grade and vignette) is the Visual part: owner view captured in the run-and-observe (con-*-hider-*.png); the dome clamp and grade wait on the Camera story-014 (CS-R11.3) - lead sign-off pending.
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

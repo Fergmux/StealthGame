@@ -14,7 +14,7 @@
 
 static_assert(static_cast<int32>(EQueueItemType::DebugItem) + 1 == GQueueItemTypeCount, "GQueueItemTypeCount out of date");
 static_assert(static_cast<int32>(ETimerKind::EndedAutoReset) + 1 == GTimerKindCount, "GTimerKindCount out of date");
-static_assert(static_cast<int32>(ERoundLogType::CascadeOverflow) + 1 == GRoundLogTypeCount, "GRoundLogTypeCount out of date");
+static_assert(static_cast<int32>(ERoundLogType::Concealment) + 1 == GRoundLogTypeCount, "GRoundLogTypeCount out of date");
 
 namespace
 {

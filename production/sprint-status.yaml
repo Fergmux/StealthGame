@@ -4104,3 +4104,379 @@ stories:
     completed: "2026-10-28"
     sprint: 2
     note: "OC batch 2026-10-28c; FObjectivesPlaytestAnalyser + PlaytestAnalyserFixture; oc-playtest-metrics.md NOT ENOUGH DATA (record only; human playtests); evidence production/qa/evidence/objectives-chain-013-023-2026-10-28/"
+  - id: "con-001"
+    name: "Concealment tuning keys are registered and the F3 timing chain is validated at load"
+    file: "production/epics/concealment-bushes/story-001-concealment-tuning-keys-and-timing-validator.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.TuningRows, StealthGame.Concealment.TimingChain, StealthGame.Concealment.NoDwellKey; StealthGame.Tuning.SchemaComplete (Concealment pins); evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-002"
+    name: "Every machine builds the same bush runtime from the Manifest with zero replicated actors, and an empty EntryAxis is rejected"
+    file: "production/epics/concealment-bushes/story-002-bush-runtime-from-manifest.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.ManifestReject, StealthGame.Concealment.SingleVolumeSet, StealthGame.Concealment.BushRuntimeHash, StealthGame.Concealment.PIE.BushSiteParity.EveryMachineBuildsTheSameBushes; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-003"
+    name: "The per-pawn Concealment state machine and per-bush occupancy record exist as headless core"
+    file: "production/epics/concealment-bushes/story-003-conceal-state-machine-and-occupancy-record.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.StateMachine, StealthGame.Concealment.OccupancyRecord, StealthGame.Concealment.TakeoverEligibility; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-004"
+    name: "Hide(Enter) executes in its slot, commits at the swap and a failed guard exits ordinarily"
+    file: "production/epics/concealment-bushes/story-004-hide-enter-execution-and-commit.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.EnterExecution, StealthGame.Concealment.GuardFaultPath; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-005"
+    name: "Hide(Exit) picks an open, unblocked side, is never refused and un-culls in the same step"
+    file: "production/epics/concealment-bushes/story-005-hide-exit-execution-and-blocked-side.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.ExitSideAndBlocked, StealthGame.Concealment.ExitExecution, StealthGame.Concealment.ExitSideMapping; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-006"
+    name: "Ended and Reset leave concealment consistent and no dwell timer exists"
+    file: "production/epics/concealment-bushes/story-006-round-phase-lifecycle-and-no-dwell.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.RoundEndAndReset, StealthGame.Concealment.NoDwellTimer, StealthGame.Concealment.StaleItemsVoided; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-007"
+    name: "CanBegin for HideEnter and HideExit gives the same reply for every pawn kind and every occupancy"
+    file: "production/epics/concealment-bushes/story-007-hide-legality-predicate.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.EntryLegality, StealthGame.Concealment.SamePathForNpcs; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-008"
+    name: "Collision is a pure function of state and elapsed time, re-derived after correction replay"
+    file: "production/epics/concealment-bushes/story-008-conceal-collision-pure-function.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.CollisionAndAvoidance, StealthGame.Concealment.CollisionReplay, StealthGame.Concealment.MoveZeroed; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-009"
+    name: "Concealed and transitioning pawns are invisible to NPC perception and absent from NPC steering"
+    file: "production/epics/concealment-bushes/story-009-crowd-perception-filter-and-steering-exclusion.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.PerceptionFilter; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-010"
+    name: "Spike S-CON-1, choose the owner-side warp mechanism that meets AC-CON-31"
+    file: "production/epics/concealment-bushes/story-010-spike-s-con-1-owner-side-warp.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthSpike.Concealment.ConcealmentOwnerWarp.MeasureEveryMechanism (spike, not in the gate); evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-011"
+    name: "Every pawn is warped to the anchor on enter and root-moved out on exit by the same server path"
+    file: "production/epics/concealment-bushes/story-011-server-warp-to-anchor-and-exit-motion.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.PIE.CollisionAndStillness.CollisionAndAvoidance; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-012"
+    name: "The owner's hide and exit show no snap and start moving within 50 ms (S-CON-1 mechanism)"
+    file: "production/epics/concealment-bushes/story-012-owner-warp-no-snap.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.PIE.OwnerWarpNoSnap.HideAndExitStartWithin50msWithoutSnap; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-013"
+    name: "Inside a bush the body is still, the view is clamped and Prepare and Interact are refused"
+    file: "production/epics/concealment-bushes/story-013-inside-the-bush-stillness-and-view.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.PIE.CollisionAndStillness.InsideViewAndStillness, StealthGame.Concealment.InsideInputs; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-014"
+    name: "An Attack from inside breaks concealment, un-culls in the same step and ends outside the bush"
+    file: "production/epics/concealment-bushes/story-014-attack-breaks-concealment.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.BreakAtExecution, StealthGame.Concealment.EmergeTiming, StealthGame.Concealment.InsideInputs; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-015"
+    name: "A strike point targets a bush within 75 cm and GetSpotOccupants returns the non-ally record"
+    file: "production/epics/concealment-bushes/story-015-spot-zone-and-occupants.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.SpotZoneAndVictim, StealthGame.Concealment.SpotOccupants; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-016"
+    name: "The victim among reachable bush occupants is an unbiased draw from the server-secret BushSpotPick stream"
+    file: "production/epics/concealment-bushes/story-016-spot-pick-secret-stream.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.SpotPick; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-017"
+    name: "Killing a concealed pawn leaves the record at the slot, re-opens only at the death write and holds the owner and team flags until body removal"
+    file: "production/epics/concealment-bushes/story-017-kill-while-concealed-server-rules.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.KillSlotRules, StealthGame.Concealment.DeathWrite, StealthGame.Concealment.BodyRemovalOrRebind; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-018"
+    name: "A pawn struck while Entering dies as a visible pawn before the commit and as a spot candidate after it"
+    file: "production/epics/concealment-bushes/story-018-no-immunity-while-entering.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.NoImmunityWhileEntering; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-019"
+    name: "EvaluateBodyHidden is a pure, fail-closed, state-derived function"
+    file: "production/epics/concealment-bushes/story-019-body-hidden-latch-function.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.BodyHiddenLatchTable; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-020"
+    name: "A fresh or late-arriving pawn actor starts hidden, evaluates in PostNetInit and exposes IsAllyBodyHidden"
+    file: "production/epics/concealment-bushes/story-020-fresh-actor-latch-and-ally-hidden-read.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.BodyHiddenLatchTable, StealthGame.Concealment.PIE.PerViewerVisibility.HiderCulledForEnemyKeptForAllyAndOwner, StealthGame.Concealment.PIE.PerViewerVisibility.CoOccupantsAndCullBoundary; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-021"
+    name: "Spike R5, a hidden pawn leaves no shadow, VSM, Lumen, reflection or ray-traced trace on 5.8.4"
+    file: "production/epics/concealment-bushes/story-021-spike-r5-hidden-primitive-leaks.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 2.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; Stealth.Spike.R5 (console spike, not in the gate); StealthGame.Pawn.RenderFlagParity; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-022"
+    name: "A latched pawn drops every render proxy, the aim channel response and the audio and decals, on clients and the listen host"
+    file: "production/epics/concealment-bushes/story-022-presentation-hide-application-and-host-parity.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Pawn.RenderFlagParity, StealthGame.Concealment.PIE.PerViewerVisibility.ListenHostParity; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-023"
+    name: "Commit and crossing set and clear the owner and ally concealed flags through their only writers"
+    file: "production/epics/concealment-bushes/story-023-owner-and-team-concealed-flags.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.OwnerAndTeamFlags, StealthGame.Roster.TeammateConcealed; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-024"
+    name: "IsConcealedFrom matches a checked-in truth table and is server-only"
+    file: "production/epics/concealment-bushes/story-024-is-concealed-from-truth-table.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.IsConcealedFromTruthTable, StealthGame.Concealment.CoOccupantRivalsBlind; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-025"
+    name: "Commit, exit, break and kill drive the IVP cull through IConcealmentCullSource in the right slot"
+    file: "production/epics/concealment-bushes/story-025-cull-push-wiring.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.CullDeadlineGrid, StealthGame.Concealment.CullStateChain, StealthGame.Concealment.PIE.PerViewerVisibility.CoOccupantsAndCullBoundary; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-026"
+    name: "Opponents get no trace of a concealed pawn, co-occupant rivals are blind, allies see the marker and informants have no x-ray"
+    file: "production/epics/concealment-bushes/story-026-per-viewer-visibility-pie.md"
+    priority: must-have
+    status: done
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    completed: "2026-10-29"
+    sprint: 2
+    note: "CON batch 2026-10-29; StealthGame.Concealment.PIE.PerViewerVisibility.HiderCulledForEnemyKeptForAllyAndOwner, StealthGame.Concealment.PIE.PerViewerVisibility.CoOccupantsAndCullBoundary, StealthGame.Concealment.CoOccupantRivalsBlind; evidence production/qa/evidence/concealment-001-026-2026-10-29/"
+  - id: "con-027"
+    name: "On exit and bush-emerge the body is never drawn before the leaf crossing and the actor exists by then"
+    file: "production/epics/concealment-bushes/story-027-uncull-before-leaf-plane.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    sprint: 2
+    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+  - id: "con-028"
+    name: "At the swap server time the body, shadow and reflections vanish on the same frame for opponent and ally clients"
+    file: "production/epics/concealment-bushes/story-028-enter-swap-hides-body-per-viewer.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    sprint: 2
+    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+  - id: "con-029"
+    name: "Every enter, exit and emerge plays one identical rustle, and an occupied bush plays nothing"
+    file: "production/epics/concealment-bushes/story-029-rustle-parity.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    sprint: 2
+    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+  - id: "con-030"
+    name: "The concealment log rows go to the Event Log only and feed the F1, F2 and review-metric calculators"
+    file: "production/epics/concealment-bushes/story-030-concealment-log-and-metric-calculators.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    sprint: 2
+    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+  - id: "con-031"
+    name: "Logged internal matches satisfy the parity, hiding-is-a-pause and ambush metrics"
+    file: "production/epics/concealment-bushes/story-031-playtest-metrics-review.md"
+    priority: must-have
+    status: blocked
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: "playtest data (10 logged matches) not yet available"
+    sprint: 2
+    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Blocked: playtest data (10 logged matches) not yet available"
+  - id: "con-032"
+    name: "A disconnect, grace expiry or rejoin never cancels or exposes a concealed pawn instantly"
+    file: "production/epics/concealment-bushes/story-032-ownership-change-while-concealed.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    sprint: 2
+    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+  - id: "con-033"
+    name: "Blind strikes at any bush look identical to the attacker and a killed-concealed body is never drawn on a non-owner client"
+    file: "production/epics/concealment-bushes/story-033-blind-strike-parity-and-kill-timing.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    sprint: 2
+    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+  - id: "con-034"
+    name: "The R5 leak matrix passes on the production hide for every LOD and lighting cell"
+    file: "production/epics/concealment-bushes/story-034-r5-leak-matrix.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: ""
+    sprint: 2
+    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Ready"
+  - id: "con-035"
+    name: "The prototype concealment code is retired and the networked behaviours it proved still hold"
+    file: "production/epics/concealment-bushes/story-035-prototype-retirement-and-regression.md"
+    priority: must-have
+    status: blocked
+    owner: "gameplay-programmer"
+    estimate_days: 1.0
+    blocker: "028, 033, 034 still open"
+    sprint: 2
+    note: "not started in the CON batch 2026-10-29 (the batch closed 001-026); Blocked: 028, 033, 034 still open"

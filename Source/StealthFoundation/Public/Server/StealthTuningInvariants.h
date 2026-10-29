@@ -113,8 +113,13 @@ namespace StealthTuningPendingOwnerKeys
 	 * (FAssassinationInvariantInputs::FromValues) and the constant is deleted (Penalty's InformantRespawnDelaySec was, story
 	 * nkp-009: W-ASN-11 reads the schema row).
 	 */
-	inline constexpr double BushStrikeEmergeSec = 0.35;
 	inline constexpr double PawnRefAgreementCm = 75.0;
+	/**
+	 * The Information Visibility Policy's ConcealCullDelayMs (commit to cull, default 250, confirmed by spike S12), read by
+	 * Concealment's F3(a) (I-CON-F3a) and the Concealment core's cull push until the IVP epic registers it as a schema row
+	 * (story con-001; the TD-TDC-I3 pattern).
+	 */
+	inline constexpr double ConcealCullDelayMs = 250.0;
 	/**
 	 * The keys Penalty's F2 respawn due time and its commit retries read from owners that have not registered them yet
 	 * (stories nkp-009, nkp-012; the TD-TDC-I3 pattern), each the owner GDD's default: Camera's NoPawnFadeSec 0.5 (the F2

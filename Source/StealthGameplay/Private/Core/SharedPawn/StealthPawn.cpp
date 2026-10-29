@@ -1,4 +1,5 @@
 #include "View/Core/StealthPawn.h"
+#include "View/Core/StealthMotionGate.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/GameStateBase.h"
@@ -10,6 +11,7 @@
 #include "View/Core/StealthPawnMovementComponent.h"
 #if WITH_STEALTH_TEST_SEAMS
 #include "Server/Testing/StealthRelevancyDenySeam.h"
+#include "Server/Visibility/StealthConcealmentCull.h"
 #endif
 
 const FName AStealthPawn::GameplayTasksComponentName(TEXT("GameplayTasks"));
@@ -66,8 +68,32 @@ AStealthPawn::AStealthPawn(const FObjectInitializer& ObjectInitializer)
 
 	SharedMotionWarping = CreateOptionalDefaultSubobject<UStealthMotionWarpingComponent>(MotionWarpingComponentName);
 
+	// Feature components on every pawn (Concealment's UConcealmentComponent, ADR-0017 section 1): the same classes, order
+	// and flags on every pawn, registered by the features without Core naming them (View/Core/StealthMotionGate.h).
+	for (const StealthPawnFeatureComponents::FEntry& Entry : StealthPawnFeatureComponents::GetEntries())
+	{
+		if (UClass* Class = Entry.GetClass != nullptr ? Entry.GetClass() : nullptr)
+		{
+			CreateDefaultSubobject(Entry.Name, UActorComponent::StaticClass(), Class, /*bIsRequired*/ true, /*bIsTransient*/ false);
+		}
+	}
+
 	// R17.1 Body: one capsule size for every pawn, the sample character's values recorded here.
 	GetCapsuleComponent()->InitCapsuleSize(SampleCapsuleRadiusCm, SampleCapsuleHalfHeightCm);
+
+	// ADR-0017 section 6 (Concealment story con-022 AC1): the three gating flags are class defaults of every pawn primitive,
+	// never toggled at runtime, so a primitive hidden by SetVisibility(false, true) keeps no render proxy (no shadow, no
+	// Lumen, no far-field ray tracing). The engine defaults are already false; they are pinned here against a Blueprint
+	// child overriding them (audited by StealthGame.Pawn.RenderFlagParity).
+	for (UPrimitiveComponent* Primitive : { static_cast<UPrimitiveComponent*>(GetMesh()), static_cast<UPrimitiveComponent*>(GetCapsuleComponent()) })
+	{
+		if (Primitive != nullptr)
+		{
+			Primitive->bCastHiddenShadow = false;
+			Primitive->bAffectIndirectLightingWhileHidden = false;
+			Primitive->bRayTracingFarField = false;
+		}
+	}
 }
 
 FStealthBodyConstants AStealthPawn::GetPublishedBodyConstants()
@@ -155,6 +181,10 @@ void AStealthPawn::PostNetInit()
 	Super::PostNetInit();
 	bNetInitialised = true;
 	NetInitFrame = GFrameCounter;
+	// ADR-0017 section 5 (Concealment story con-020): the body-hidden latch of a fresh actor is evaluated here, from the
+	// full replicated state, in the same call that created it (before any frame renders or the S10 warm-up shows it).
+	OnActionStateChanged.Broadcast(this);
+
 	// ADR-0003 section 5.8 / ADR-0018 section 5.1 (story asn-022): a re-opened or late actor is presented from the state it
 	// arrived with, through the same idempotent evaluation as every RepNotify (the first bunch's RepNotifies waited for this).
 	if (HasDeathWrite() || ActionState.Pose != EActionPose::None)
@@ -171,6 +201,12 @@ bool AStealthPawn::IsNetRelevantFor(const AActor* RealViewer, const AActor* View
 		return false;
 	}
 #endif
+	// ADR-0003 section 5 (IVP stories 024/025, Concealment story con-025): a culled concealed pawn is not relevant to a
+	// non-ally viewer, and a re-open waits for the close's acknowledgement (the S10 guard). The same rule for every pawn kind.
+	if (const UStealthConcealmentCull* Cull = UStealthConcealmentCull::Get(GetWorld()); Cull != nullptr && !Cull->IsRelevantTo(this, RealViewer))
+	{
+		return false;
+	}
 	return Super::IsNetRelevantFor(RealViewer, ViewTarget, SrcLocation);
 }
 

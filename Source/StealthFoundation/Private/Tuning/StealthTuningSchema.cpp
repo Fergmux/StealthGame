@@ -59,11 +59,14 @@ uint64 ComputeTuningSchemaFingerprint(TConstArrayView<FTuningSchemaRow> Rows)
 	{
 		const int32 Len = FCStringAnsi::Strlen(Row->Key);
 		const uint8 LenByte = static_cast<uint8>(Len);
+		// u16le enum value count: an enum key's declared values are 0..HardMax (the generator writes that range; story
+		// con-001 added the first enum key), every other type counts 0.
+		const uint16 EnumCount = Row->TypeTag == StealthTuningTypeTag::Enum ? static_cast<uint16>(Row->HardMax + 1.0) : 0;
 		const uint8 Tail[5] = {
 			Row->TypeTag,
 			static_cast<uint8>(Row->bPublic ? 1 : 0),
 			static_cast<uint8>(Row->Latch),
-			0, 0, // u16le enum value count: no enum key exists yet (EnumValues column, tdc-038 open point)
+			static_cast<uint8>(EnumCount & 0xFF), static_cast<uint8>(EnumCount >> 8),
 		};
 		StealthFnv1a64::Update(State, &LenByte, 1);
 		StealthFnv1a64::Update(State, reinterpret_cast<const uint8*>(Row->Key), Len);

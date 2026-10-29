@@ -27,6 +27,7 @@
 #include "StealthGameMode.h"
 #include "StealthSettings.h"
 #include "Tests/PIE/Assassination/AssassinationPieSupport.h"
+#include "Tests/PIE/Concealment/ConcealmentPieSupport.h"
 #include "Tests/PIE/StealthPIEOpenCircle.h"
 
 namespace PrototypeScenariosACFData
@@ -414,8 +415,8 @@ NETWORK_TEST_CLASS(PrototypeScenariosACF, "StealthGame.Assassination.PIE")
 				KillsAfterEmptyBush = Kills.Num();
 				ContactServerTime = -1.0;
 				ReplaceStrikerAtBush(); // the first strike's lunge moved it toward the bush
-				const float HalfHeight = Target->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-				Target->TeleportTo(BushCentre + FVector(0.0, 0.0, HalfHeight + 2.0), Target->GetActorRotation(), false, true);
+				// Concealment epic: the enemy hides through the production Hide(Enter) (a teleport into the leaves is blocked).
+				ASSERT_THAT(IsTrue(StealthConcealmentPie::HideIn(Target.Get(), BushCentre, Seq), TEXT("the bush's runtime exists")));
 				Mark = ServerNow(ServerWorld());
 			})
 			.Until(TEXT("the enemy is concealed"), [this]()

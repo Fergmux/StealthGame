@@ -1,5 +1,7 @@
 #include "StealthGameMode.h"
 #include "StealthBush.h"
+#include "Server/ConcealmentService.h"
+#include "View/BushRuntimeSubsystem.h"
 #include "StealthCharacter.h"
 #include "StealthCityGenerator.h"
 #include "StealthGame.h"
@@ -491,6 +493,16 @@ void AStealthGameMode::PollLayoutNavReady()
 		It->ValidateReachability();
 	}
 	UE_LOG(LogStealth, Log, TEXT("Layout ready (seed %d, nav wait %.1fs)."), PendingLayoutSeed, Waited);
+	// Concealment story con-002 (AC-CON-27): a layout whose BushSites fail V-BUSH-1 never reaches a round.
+	if (const UBushRuntimeSubsystem* Bushes = UBushRuntimeSubsystem::Get(GetWorld()); Bushes != nullptr && Bushes->GetLastReject() != EBushSiteReject::None)
+	{
+		UE_LOG(LogStealth, Error, TEXT("Layout rejected: a BushSite fails V-BUSH-1 (seed %d)."), PendingLayoutSeed);
+		if (URoundMatchStore* Round = URoundMatchStore::Get(GetWorld()))
+		{
+			Round->NotifyLayoutAborted();
+		}
+		return;
+	}
 	// Objectives story oc-005: OnLayoutReady binds the chain to the (stand-in) site assignment before Round hears of the layout.
 	if (UStealthCompositionRoot* Root = UStealthCompositionRoot::Get(GetWorld()))
 	{
@@ -904,11 +916,9 @@ void AStealthGameMode::HandleHubActionStarted(AStealthPawn* Pawn, EActionType Ty
 {
 	// The brace tell is the pawn's presentation of its FActionState Brace pose (AStealthCharacter::HandleActionStateChanged,
 	// story asn-027); only the prototype concealment rule "a strike from a bush reveals the attacker" stays here.
-	AStealthCharacter* Character = Cast<AStealthCharacter>(Pawn);
-	if (Character != nullptr && Type == EActionType::Attack)
-	{
-		Character->RevealFromConcealment();
-	}
+	// Concealment epic: an Attack from inside a bush breaks concealment in UConcealmentService (story con-014).
+	(void)Pawn;
+	(void)Type;
 }
 
 void AStealthGameMode::HandleProductionExile(AStealthCharacter* Body, AController* FormerController)
@@ -932,6 +942,12 @@ void AStealthGameMode::HandlePing(AStealthCharacter* Sender, const FVector& Loca
 	AStealthPlayerState* PS = Sender ? Sender->GetStealthPlayerState() : nullptr;
 	AStealthGameState* GS = GetStealthGameState();
 	if (!PS || !GS || PS->Team >= STEALTH_NUM_TEAMS)
+	{
+		return;
+	}
+	// D26 / D33 (ADR-0011 PNG-R5 step 2): a pawn in a bush or any hide transition cannot ping (Emerging included); the
+	// drop is silent on the server.
+	if (const UConcealmentService* Concealment = UConcealmentService::Get(GetWorld()); Concealment != nullptr && Concealment->IsInBushOrTransition(Sender))
 	{
 		return;
 	}
@@ -1226,22 +1242,38 @@ void AStealthGameMode::DebugBotAction(int32 PlayerIndex, const FString& Action)
 
 	if (Action.Equals(TEXT("hide"), ESearchCase::IgnoreCase))
 	{
-		AStealthBush* Nearest = nullptr;
-		float NearestDistance = TNumericLimits<float>::Max();
-		for (TActorIterator<AStealthBush> It(GetWorld()); It; ++It)
+		// Concealment epic: stand at the nearest bush's entry (the stand-in Manifest's runtime), then the one Hide(Enter) path.
+		const UBushRuntimeSubsystem* Bushes = UBushRuntimeSubsystem::Get(GetWorld());
+		const FBushRuntime* Nearest = nullptr;
+		double NearestDistance = TNumericLimits<double>::Max();
+		for (const FBushRuntime& Bush : Bushes != nullptr ? Bushes->GetBushes() : TArray<FBushRuntime>())
 		{
-			const float Distance = FVector::Dist(It->GetActorLocation(), Pawn->GetActorLocation());
+			const double Distance = FVector::Dist2D(Bush.Anchor, Pawn->GetActorLocation());
 			if (Distance < NearestDistance)
 			{
 				NearestDistance = Distance;
-				Nearest = *It;
+				Nearest = &Bush;
 			}
 		}
-		if (Nearest)
+		if (Nearest != nullptr)
 		{
-			Pawn->TeleportTo(FVector(Nearest->GetActorLocation().X, Nearest->GetActorLocation().Y, Pawn->GetActorLocation().Z), Pawn->GetActorRotation());
-			UE_LOG(LogStealth, Log, TEXT("[Bot] #%d hides in %s."), PlayerIndex, *Nearest->GetName());
+			const uint8 Side = ConcealmentGeometry::NearestOpenSide(Nearest->EntryAxisMask, ConcealmentGeometry::YawFromAnchor(*Nearest, Pawn->GetActorLocation()));
+			const FVector Entry = Nearest->Anchor + ConcealmentGeometry::SideNormal(Side) * 135.0 + FVector(0.0, 0.0, Pawn->GetSimpleCollisionHalfHeight() + 2.0);
+			Pawn->TeleportTo(Entry, (Nearest->Anchor - Entry).GetSafeNormal2D().Rotation());
+			const uint16 BushId = Nearest->Id;
+			AsOwner([BushId](UPawnCommandComponent& Command) { Command.Hide(FHideCommand::Enter(BushId)); });
+			UE_LOG(LogStealth, Log, TEXT("[Bot] #%d hides in bush %d (Hide(Enter) submitted)."), PlayerIndex, static_cast<int32>(BushId));
 		}
+		return;
+	}
+
+	if (Action.StartsWith(TEXT("unhide"), ESearchCase::IgnoreCase))
+	{
+		// "unhide [side 0-3]": the one Hide(Exit) path; the side defaults to the look yaw's.
+		const FString Arg = Action.RightChop(6).TrimStartAndEnd();
+		const uint8 Side = Arg.IsEmpty() ? ConcealmentGeometry::SideFromYaw(Pawn->GetControlRotation().Yaw) : static_cast<uint8>(FCString::Atoi(*Arg) & 0x3);
+		AsOwner([Side](UPawnCommandComponent& Command) { Command.Hide(FHideCommand::Exit(Side)); });
+		UE_LOG(LogStealth, Log, TEXT("[Bot] #%d leaves the bush by side %d (Hide(Exit) submitted)."), PlayerIndex, static_cast<int32>(Side));
 		return;
 	}
 

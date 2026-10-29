@@ -1,0 +1,62 @@
+[2026.10.29-02.10.17:567][111]LogStealthRound: Round phase Unknown -> Lobby (change 1, round 0)
+[2026.10.29-02.10.22:827][128]LogStealthRound: Round phase Lobby -> Preparing (change 2, round 1)
+[2026.10.29-02.10.25:943][139]LogStealthRound: Round phase Preparing -> Active (change 3, round 1)
+[2026.10.29-02.10.30:012][152]LogStealth: [Bot] Phase=1 Winner=255 NPCs=49
+[2026.10.29-02.10.30:012][152]LogStealth: [Bot] Objectives: bound=1 team0 stage=1 prelims=0, team1 stage=1 prelims=0
+[2026.10.29-02.10.30:012][152]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.29-02.10.30:012][152]LogStealth: [Bot] #0 FergsPC-89C089CD4EDB team=0 state=Active pawn=V(X=-2400.00, Y=-2600.00, Z=88.27) braced=0 concealed=0
+[2026.10.29-02.10.30:012][152]LogStealth: [Bot] #1 FergsPC-232B109D4988 team=1 state=Active pawn=V(X=-2400.00, Y=2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.10.30:012][152]LogStealth: [Bot] #2 FergsPC-F053E4024716 team=0 state=Active pawn=V(X=-2850.00, Y=-2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.10.43:021][191]LogStealth: [Bot] #2 hides in bush 5 (Hide(Enter) submitted).
+[2026.10.29-02.10.46:015][200]LogStealth: [Bot] #1 watches #2.
+[2026.10.29-02.10.47:022][203]LogStealth: [Bot] #0 watches #2.
+[2026.10.29-02.10.51:017][215]LogStealth: [Bot] Phase=1 Winner=255 NPCs=49
+[2026.10.29-02.10.51:017][215]LogStealth: [Bot] Objectives: bound=1 team0 stage=1 prelims=0, team1 stage=1 prelims=0
+[2026.10.29-02.10.51:017][215]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.29-02.10.51:017][215]LogStealth: [Bot] #0 FergsPC-89C089CD4EDB team=0 state=Active pawn=V(X=-2401.36, Y=-2593.21, Z=88.27) braced=0 concealed=0
+[2026.10.29-02.10.51:017][215]LogStealth: [Bot] #1 FergsPC-232B109D4988 team=1 state=Active pawn=V(X=-2463.48, Y=-1800.05, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.10.51:017][215]LogStealth: [Bot] #2 FergsPC-F053E4024716 team=0 state=Active pawn=V(X=-2469.97, Y=-2250.00, Z=88.27) braced=0 concealed=1
+[2026.10.29-02.10.54:350][225]LogStealth: [Bot] #1 blind-strikes at V(X=-2429.97, Y=-2250.00, Z=88.27).
+[2026.10.29-02.10.54:666][226]LogStealth: [Encounter] BP_CrowdCharacter_C_4 killed BP_CrowdCharacter_C_35 in the slot (victim kind 0).
+[2026.10.29-02.10.54:981][227]LogStealthGameplay: [EncounterView] transient grade cause 0 at 37.787 (due 37.523, reduced 0)
+[2026.10.29-02.10.55:004][227]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_35 at 37.456 (DeathServerTime 37.523, concealed 1).
+[2026.10.29-02.10.55:328][228]LogStealthGameplay: [EncounterView] role change Assassinated presented at 37.787 (DeathServerTime 37.523)
+[2026.10.29-02.10.55:328][228]LogStealthGameplay: [EncounterView] transient grade cause 1 at 37.787 (due 37.523, reduced 0)
+[2026.10.29-02.10.56:391][232]LogStealth: [Encounter] body BP_CrowdCharacter_C_35 released at 38.846 (controller StealthPlayerController_2).
+[2026.10.29-02.10.59:738][242]LogStealth: [Bot] Phase=1 Winner=255 NPCs=49
+[2026.10.29-02.10.59:738][242]LogStealth: [Bot] Objectives: bound=1 team0 stage=1 prelims=0, team1 stage=1 prelims=0
+[2026.10.29-02.10.59:738][242]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 1 inf 1 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.29-02.10.59:738][242]LogStealth: [Bot] #0 FergsPC-89C089CD4EDB team=0 state=Active pawn=V(X=-2401.36, Y=-2593.21, Z=88.27) braced=0 concealed=0
+[2026.10.29-02.10.59:738][242]LogStealth: [Bot] #1 FergsPC-232B109D4988 team=1 state=Active pawn=V(X=-2479.57, Y=-2019.97, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.10.59:738][242]LogStealth: [Bot] #2 FergsPC-F053E4024716 team=0 state=Informant pawn=none braced=0 concealed=0
+[2026.10.29-02.11.11:281][276]LogStealthRound: Round phase Unknown -> Lobby (change 1, round 0)
+[2026.10.29-02.11.16:510][294]LogStealthRound: Round phase Lobby -> Preparing (change 2, round 1)
+[2026.10.29-02.11.19:278][302]LogStealthRound: Round phase Preparing -> Active (change 3, round 1)
+[2026.10.29-02.11.20:586][306]LogStealth: [Bot] Phase=1 Winner=255 NPCs=50
+[2026.10.29-02.11.20:586][306]LogStealth: [Bot] Objectives: bound=1 team0 stage=1 prelims=0, team1 stage=1 prelims=0
+[2026.10.29-02.11.20:586][306]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.29-02.11.20:586][306]LogStealth: [Bot] #0 FergsPC-28A1291E40B5 team=0 state=Active pawn=V(X=-2700.00, Y=-2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.11.20:586][306]LogStealth: [Bot] #1 FergsPC-215679C742F8 team=1 state=Active pawn=V(X=-3000.00, Y=2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.11.20:586][306]LogStealth: [Bot] #2 FergsPC-9BA065444A75 team=0 state=Active pawn=V(X=-3000.00, Y=-2600.00, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.11.33:598][345]LogStealth: [Bot] #2 hides in bush 7 (Hide(Enter) submitted).
+[2026.10.29-02.11.36:600][354]LogStealth: [Bot] #1 watches #2.
+[2026.10.29-02.11.37:599][357]LogStealth: [Bot] #0 watches #2.
+[2026.10.29-02.11.41:598][369]LogStealth: [Bot] Phase=1 Winner=255 NPCs=50
+[2026.10.29-02.11.41:598][369]LogStealth: [Bot] Objectives: bound=1 team0 stage=1 prelims=0, team1 stage=1 prelims=0
+[2026.10.29-02.11.41:598][369]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 2 inf 0 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.29-02.11.41:598][369]LogStealth: [Bot] #0 FergsPC-28A1291E40B5 team=0 state=Active pawn=V(X=-2181.98, Y=-3451.06, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.11.41:598][369]LogStealth: [Bot] #1 FergsPC-215679C742F8 team=1 state=Active pawn=V(X=-2070.00, Y=-3305.51, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.11.41:598][369]LogStealth: [Bot] #2 FergsPC-9BA065444A75 team=0 state=Active pawn=V(X=-2000.00, Y=-3750.03, Z=88.27) braced=0 concealed=1
+[2026.10.29-02.11.44:931][379]LogStealth: [Bot] #1 blind-strikes at V(X=-1960.00, Y=-3750.03, Z=88.27).
+[2026.10.29-02.11.45:252][380]LogStealth: [Encounter] BP_CrowdCharacter_C_44 killed BP_CrowdCharacter_C_24 in the slot (victim kind 0).
+[2026.10.29-02.11.45:561][381]LogStealthGameplay: [EncounterView] transient grade cause 0 at 35.050 (due 34.787, reduced 0)
+[2026.10.29-02.11.45:583][381]LogStealth: [Encounter] death write applied on BP_CrowdCharacter_C_24 at 34.720 (DeathServerTime 34.787, concealed 1).
+[2026.10.29-02.11.45:914][382]LogStealthGameplay: [EncounterView] role change Assassinated presented at 35.050 (DeathServerTime 34.787)
+[2026.10.29-02.11.45:914][382]LogStealthGameplay: [EncounterView] transient grade cause 1 at 35.050 (due 34.787, reduced 0)
+[2026.10.29-02.11.46:917][385]LogStealth: [Encounter] body BP_CrowdCharacter_C_24 released at 36.053 (controller StealthPlayerController_2).
+[2026.10.29-02.11.49:944][394]LogStealth: [Bot] Phase=1 Winner=255 NPCs=50
+[2026.10.29-02.11.49:944][394]LogStealth: [Bot] Objectives: bound=1 team0 stage=1 prelims=0, team1 stage=1 prelims=0
+[2026.10.29-02.11.49:944][394]LogStealth: [Bot] [prod] Round Active  idx 1  changes 3  played 1 | Roster 3 (T0 2 act 1 inf 1 / T1 1 act 1 inf 0) epoch 1 | factory pawns 53, untokened 0
+[2026.10.29-02.11.49:944][394]LogStealth: [Bot] #0 FergsPC-28A1291E40B5 team=0 state=Active pawn=V(X=-2181.98, Y=-3451.06, Z=88.28) braced=0 concealed=0
+[2026.10.29-02.11.49:944][394]LogStealth: [Bot] #1 FergsPC-215679C742F8 team=1 state=Active pawn=V(X=-1998.65, Y=-3523.49, Z=88.27) braced=0 concealed=0
+[2026.10.29-02.11.49:944][394]LogStealth: [Bot] #2 FergsPC-9BA065444A75 team=0 state=Informant pawn=none braced=0 concealed=0

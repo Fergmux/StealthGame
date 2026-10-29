@@ -53,10 +53,12 @@ enum class ERoundLogType : uint8
 	MailboxOverflow,
 	WinLatched,
 	CascadeOverflow,
+	/** Concealment's server-only slice (ADR-0017 section 10, GDD CON-R15; story con-004/con-030). Never released in MVP. */
+	Concealment,
 };
 
 /** Number of ERoundLogType values (per-type counters are sized by it). */
-inline constexpr int32 GRoundLogTypeCount = 32;
+inline constexpr int32 GRoundLogTypeCount = 33;
 
 /** The kill timeline and the win record: these occupy ring slots and are never evicted (R19 Truncation). */
 inline constexpr bool IsProtectedRoundLogType(ERoundLogType Type)
@@ -139,6 +141,9 @@ namespace RoundLogFlags
  *   Dropped_StaleConnection  P0 participant; D0 EQueueItemType, D1 item generation, D2 current generation
  *   MailboxOverflow   D0 items dropped from SourceMailbox in this drain
  *   CascadeOverflow   D0 1 (written once per slot, at the first breach; every moved follow-on gets its own slot)
+ *   Concealment       P0 the pawn's participant (invalid for an NPC); Code EConcealmentLogEvent; D0 BushId, D1 PawnKind
+ *                     (0 NPC, 1 player), D2 candidates before the reach filter and D3 after it (BushStrike), D4 kill flag
+ *                     (Emerge); Tick is Key.ServerTickIndex (ADR-0017 section 10)
  *   WinLatched        Code ERoundEndReason; D0 winner team (GRoundLogNoTeam for none), D1 PreparingFailed code;
  *                     Key is the terminal key
  * Never store a server secret, sub-seed, stream key or entropy (R19 "Secrets are not stored").

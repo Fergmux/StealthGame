@@ -2,6 +2,8 @@
 #include "Server/StealthTuningSubstructs.h"
 #include "View/Core/StealthPawnMovementComponent.h"
 #include "StealthBush.h"
+#include "View/ConcealmentComponent.h"
+#include "Server/ConcealmentService.h"
 #include "StealthGame.h"
 #include "StealthGameMode.h"
 #include "StealthMovementComponent.h"
@@ -66,8 +68,6 @@ void AStealthCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AStealthCharacter, AppearanceIndex);
-	DOREPLIFETIME(AStealthCharacter, bConcealed);
-	DOREPLIFETIME(AStealthCharacter, bRevealedUntilExit);
 	DOREPLIFETIME(AStealthCharacter, HeldUntilServerTime);
 
 #if !UE_BUILD_SHIPPING
@@ -97,10 +97,9 @@ void AStealthCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (GetNetMode() != NM_DedicatedServer)
-	{
-		UpdateConcealmentVisibility();
-	}
+
+	// Concealment epic: per-viewer concealment is the production presentation latch (UConcealmentComponent) plus the
+	// server cull; the prototype's replicated bConcealed and its client-side toggle were retired.
 }
 
 void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -249,35 +248,10 @@ void AStealthCharacter::HoldInPlace(float Duration)
 	}
 }
 
-void AStealthCharacter::SetInBush(AStealthBush* Bush, bool bInside)
+bool AStealthCharacter::IsConcealed() const
 {
-	if (!HasAuthority())
-	{
-		return;
-	}
-	OverlappingBushes.RemoveAll([](const TWeakObjectPtr<AStealthBush>& Entry) { return !Entry.IsValid(); });
-	if (bInside)
-	{
-		OverlappingBushes.AddUnique(Bush);
-	}
-	else
-	{
-		OverlappingBushes.Remove(Bush);
-	}
-	bConcealed = OverlappingBushes.Num() > 0;
-	if (!bConcealed)
-	{
-		bRevealedUntilExit = false;
-	}
-}
-
-void AStealthCharacter::RevealFromConcealment()
-{
-	if (HasAuthority() && bConcealed)
-	{
-		bRevealedUntilExit = true;
-		ForceNetUpdate();
-	}
+	const UConcealmentService* Concealment = HasAuthority() ? UConcealmentService::Get(GetWorld()) : nullptr;
+	return Concealment != nullptr && Concealment->GetState(this) == EConcealState::Concealed;
 }
 
 void AStealthCharacter::SetAppearanceIndex(int32 NewIndex)
@@ -369,25 +343,6 @@ void AStealthCharacter::ApplyBraceTell(bool bBraced)
 	else
 	{
 		UnCrouch();
-	}
-}
-
-void AStealthCharacter::UpdateConcealmentVisibility()
-{
-	// A body keeps the visibility it had at the death write (story asn-023 owns the killed-concealed body's hide); the
-	// encounter presentation's removal hides it afterwards (story asn-020).
-	if (HasDeathWrite())
-	{
-		return;
-	}
-	const bool bShouldHide = IsConcealed() && !IsLocallyControlled() && !IsTeammateOfLocalViewer();
-	if (bShouldHide != bHiddenForLocalViewer)
-	{
-		bHiddenForLocalViewer = bShouldHide;
-		if (USkeletalMeshComponent* MeshComponent = GetMesh())
-		{
-			MeshComponent->SetVisibility(!bShouldHide, true);
-		}
 	}
 }
 

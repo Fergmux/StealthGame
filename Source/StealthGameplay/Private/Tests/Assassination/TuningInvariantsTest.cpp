@@ -222,7 +222,7 @@ bool FAssassinationTuningInvariantsTest::RunTest(const FString& Parameters)
 		// The table adapter reads the same inputs a test injects at the GDD defaults.
 		const FAssassinationInvariantInputs Live = FAssassinationInvariantInputs::FromValues(Defaults);
 		const FAssassinationInvariantInputs Gdd = GddInputs();
-		TestTrue(TEXT("live inputs equal the GDD defaults"), Live.CapsuleRadiusCm == Gdd.CapsuleRadiusCm && Live.BushStrikeEmergeSec == Gdd.BushStrikeEmergeSec
+		TestTrue(TEXT("live inputs equal the GDD defaults"), Live.CapsuleRadiusCm == Gdd.CapsuleRadiusCm && FMath::IsNearlyEqual(Live.BushStrikeEmergeSec, Gdd.BushStrikeEmergeSec, 1e-6) /* a float schema row since con-001 */
 			&& Live.CrowdReplacementMinDelaySec == Gdd.CrowdReplacementMinDelaySec && Live.InformantRespawnDelaySec == Gdd.InformantRespawnDelaySec && Live.PawnRefAgreementCm == Gdd.PawnRefAgreementCm);
 	}
 

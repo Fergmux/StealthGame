@@ -55,6 +55,13 @@ enum class EStealthFault : uint8
 	 * traversal movement mode asked for a pawn that may not traverse (Detail: EStealthMovementMisuse).
 	 */
 	MovementMisuse = 19,
+	/**
+	 * A Concealment commit guard failed (ADR-0017 section 3, AC-CON-29; story con-004): the capsule was not wholly inside the
+	 * hide volume at the swap, so nothing committed and an ordinary exit followed (Detail: the BushId).
+	 */
+	ConcealGuard = 20,
+	/** A Concealment transition outside the legal move list was refused (ADR-0017 section 1; Detail: (from << 8) | to). */
+	ConcealTransition = 21,
 };
 
 /**

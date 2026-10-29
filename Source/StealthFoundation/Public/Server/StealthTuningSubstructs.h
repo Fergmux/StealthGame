@@ -102,6 +102,45 @@ struct STEALTHFOUNDATION_API FObjectivesTuning_Server
 	float ObjectiveFinalDwellDefectSec = 240.0f;
 };
 
+/**
+ * BushVictimMode values (GDD concealment-bushes.md Tuning Knobs; playtest A/B only). UniformHash is the shipped rule (the
+ * unbiased BushSpotPick draw, F4); All breaks P3 (one strike kills one pawn) and EarliestCommitted makes NPC entrants cover.
+ */
+UENUM()
+enum class EBushVictimMode : uint8
+{
+	UniformHash,
+	EarliestCommitted,
+	All,
+};
+
+/**
+ * Concealment (Bushes) ServerOnly keys (GDD concealment-bushes.md Tuning Knobs, audience ServerOnly; ADR-0017; story con-001):
+ * never replicated, read only by the server's Concealment core and spot queries. No key names a dwell, capacity, stay,
+ * reveal or timeout (P4; StealthGame.Concealment.NoDwellKey).
+ */
+USTRUCT()
+struct STEALTHFOUNDATION_API FConcealmentTuning_Server
+{
+	GENERATED_BODY()
+
+	/** F4 spot zone: horizontal distance beyond the footprint a strike point still targets the bush (= OpenSpotToleranceCm). */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "20", ClampMax = "200", SafeMin = "40", SafeMax = "120", Latch = "Round", Owner = "Concealment", Unit = "Cm"))
+	float BushSpotToleranceCm = 75.0f;
+
+	/** CON-R3: own re-entry cooldown from the last exit or emergence completion (the same for NPCs). */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "0", ClampMax = "30", SafeMin = "3", SafeMax = "15", Latch = "Round", Owner = "Concealment", Unit = "Sec"))
+	float BushReenterCooldownSec = 6.0f;
+
+	/** CON-R8: per-pawn depenetration cap when an exit lands on a blocking pawn (never a launch). */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "0", ClampMax = "60", SafeMin = "15", SafeMax = "40", Latch = "Round", Owner = "Concealment", Unit = "Cm"))
+	float BushExitDepenetrationCapCm = 30.0f;
+
+	/** Bush strike victim rule (playtest A/B only; the default must stay UniformHash). */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (Latch = "Round", Owner = "Concealment", Unit = "Mode"))
+	EBushVictimMode BushVictimMode = EBushVictimMode::UniformHash;
+};
+
 /** Crowd & NPC Behaviour ServerOnly keys (the owner has no public key yet, so no _Public struct). */
 USTRUCT()
 struct STEALTHFOUNDATION_API FCrowdTuning_Server

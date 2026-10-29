@@ -1,7 +1,7 @@
 # Story 028: At the swap server time the body, shadow and reflections vanish on the same frame for opponent and ally clients
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: spike R5 (`story-021-spike-r5-hidden-primitive-leaks.md`) has not reported. Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25).
+> **Status**: Ready — Update 2026-10-29: spike R5 reported (`production/qa/spikes/2026-10-29_R5.md`: the ADR-0017 §6 flag set suffices for the software-Lumen cells; groom and attached Niagara lose their proxy with the mesh) and story 022 built the production hide; the S10 gate was cleared 2026-10-26 (story-056 PASS).
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: M

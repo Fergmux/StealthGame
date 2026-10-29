@@ -25,7 +25,7 @@ enum class ETuningF1Action : uint8
 	Clamped,
 	/** A non-finite float (NaN, +/-Infinity) took the schema default. */
 	DefaultedNonFinite,
-	/** An enum value outside its declared set took the schema default (no enum key exists yet). */
+	/** An enum value outside its declared set took the schema default (the first enum key: BushVictimMode, story con-001). */
 	DefaultedUndeclaredEnum,
 };
 

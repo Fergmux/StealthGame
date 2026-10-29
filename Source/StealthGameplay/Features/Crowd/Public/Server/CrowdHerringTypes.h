@@ -103,7 +103,7 @@ struct FCrowdActionTimings
 	double PrepareCapSec = 4.0;
 	/** The Prepare cooldown (Assassination DefenceCooldownSec, from activation). */
 	double PrepareCooldownSec = 60.0;
-	/** Concealment BushReenterCooldownSec (a pending owner key until the Concealment epic registers it). */
+	/** Concealment BushReenterCooldownSec (the Concealment schema row, story con-001). */
 	double BushReenterCooldownSec = 6.0;
 	/** SCL HandoverHoldSec: after an AI takeover the heading is held at walk this long (story cnb-028). */
 	double HandoverHoldSec = 0.8;

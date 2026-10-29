@@ -1,12 +1,12 @@
 # Story 017: Killing a concealed pawn leaves the record at the slot, re-opens only at the death write and holds the owner and team flags until body removal
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -92,7 +92,9 @@
 **Required evidence**:
 - Logic: `KillWhileConcealedTest.cpp` under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.KillSlotRules, StealthGame.Concealment.DeathWrite, StealthGame.Concealment.BodyRemovalOrRebind; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -100,3 +102,10 @@
 
 - Depends on: `story-003-conceal-state-machine-and-occupancy-record.md`, `story-004-hide-enter-execution-and-commit.md`, `story-023-owner-and-team-concealed-flags.md`; assassination-defence-reversal epic (outcome slot, death write; stories not yet written); Roster `production/epics/participant-state-roster/story-041-team-view-repush-on-controller-swap.md`
 - Unlocks: `story-033-blind-strike-parity-and-kill-timing.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing.
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

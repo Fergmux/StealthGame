@@ -141,6 +141,47 @@ struct STEALTHFOUNDATION_API FObjectivesTuning_Public
 };
 
 /**
+ * Concealment (Bushes) keys a client needs (GDD concealment-bushes.md Tuning Knobs, audience All; ADR-0017 section 3; story
+ * con-001): every client plays the hide clips and runs the body-hidden latch from these, so they replicate with the snapshot.
+ * F3 (the timing chain) is not a set of independent ranges: it is the ADR-0004 Check rows I-CON-F3a..f
+ * (Server/StealthConcealmentInvariants.h), run at preset load. No key names a dwell, capacity, stay, reveal or timeout (P4).
+ * The four ServerOnly keys are FConcealmentTuning_Server (Server/StealthTuningSubstructs.h), never nameable here.
+ */
+USTRUCT()
+struct STEALTHFOUNDATION_API FConcealmentTuning_Public
+{
+	GENERATED_BODY()
+
+	/** Hide(Enter) transition length: execution to the End item (CON-R5; F3a, F3e). */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "0.6", ClampMax = "1.5", SafeMin = "0.8", SafeMax = "1.3", Latch = "Round", Owner = "Concealment", Unit = "Sec"))
+	float BushEnterDurSec = 0.9f;
+
+	/** Execution to the Commit item and the leaf-plane swap; the clip's swap notify equals it within one frame (F3a, F3d, F3e). */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "0.3", ClampMax = "0.8", SafeMin = "0.46", SafeMax = "0.65", Latch = "Round", Owner = "Concealment", Unit = "Sec"))
+	float BushEnterSwapSec = 0.5f;
+
+	/** Hide(Exit) transition length: execution to the End item (CON-R8; F3e). */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "0.6", ClampMax = "1.5", SafeMin = "0.8", SafeMax = "1.3", Latch = "Round", Owner = "Concealment", Unit = "Sec"))
+	float BushExitDurSec = 0.9f;
+
+	/** Exit execution to the outward leaf crossing (the Cross item; the body shows from here; F3b, F3e). */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "0.3", ClampMax = "0.8", SafeMin = "0.35", SafeMax = "0.7", Latch = "Round", Owner = "Concealment", Unit = "Sec"))
+	float BushExitCrossSec = 0.45f;
+
+	/** Strike-from-bush execution to its leaf crossing (CON-R9; F3c, F3f). The clip is Assassination's. */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "0.3", ClampMax = "0.6", SafeMin = "0.3", SafeMax = "0.5", Latch = "Round", Owner = "Concealment", Unit = "Sec"))
+	float BushStrikeEmergeSec = 0.35f;
+
+	/** Enter reach: horizontal capsule-centre distance to the planter's outer edge on an open side (CON-R3; F3d). */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "20", ClampMax = "150", SafeMin = "30", SafeMax = "70", Latch = "Round", Owner = "Concealment", Unit = "Cm"))
+	float BushEntryReachCm = 60.0f;
+
+	/** Rustle pulse amplitude (presentation, VA-2): passes the 20 m read test and fails at twice the value. */
+	UPROPERTY(EditAnywhere, Category = "Concealment", meta = (ClampMin = "4", ClampMax = "20", SafeMin = "8", SafeMax = "12", Latch = "Use", Owner = "Concealment", Unit = "Cm"))
+	float BushRustleAmplitudeCm = 10.0f;
+};
+
+/**
  * Shared Character & Locomotion keys a client needs (GDD shared-character-locomotion.md Tuning Knobs, audience Client;
  * story SCL-003). One value for every pawn: no key has an NPC or player variant (AC-SCL-01). Keys marked provisional in
  * the GDD (traversal, net emulation, spike R3) change only through /propagate-design-change.

@@ -1,5 +1,9 @@
 #include "View/Input/PawnCommandClient.h"
 
+#include "View/BushRuntimeSubsystem.h"
+#include "View/ConcealmentComponent.h"
+#include "View/ConcealmentOwnerViewComponent.h"
+#include "GameFramework/GameStateBase.h"
 #include "View/Core/StealthLocomotionModel.h"
 
 #include "CollisionQueryParams.h"
@@ -345,10 +349,9 @@ void UPawnCommandClient::BindInput(UEnhancedInputComponent& Input)
 	}));
 	Bind(TEXT("IA_Hide"), ETriggerEvent::Started, Guard([](UPawnCommandClient& Self, const FInputActionInstance&)
 	{
-		// Hide toggles Enter/Exit by state (IIF R15); the prototype has no hidden state on the owner yet, so Enter.
 		if (!Self.bMenuMode)
 		{
-			Self.Core.OnInstant(ECommandKind::HideEnter);
+			Self.PressHide();
 		}
 	}));
 
@@ -475,6 +478,53 @@ void UPawnCommandClient::HandlePing(const FInputActionInstance& Instance)
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(StealthPing), false, Controller->GetPawn());
 	const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, ViewLocation, End, ECC_Visibility, Params);
 	Uplink->SendTeamPing(bHit ? Hit.ImpactPoint : End);
+}
+
+void UPawnCommandClient::PressHide()
+{
+	// Hide toggles Enter/Exit by the owner's own concealment evidence (IIF R15; Concealment stories con-004/005); the owner's
+	// warp prediction starts at the press (Concealment story con-012, the S-CON-1 verdict).
+	ECommandKind Kind = ECommandKind::HideEnter;
+	const FNetCommandArgs Args = BuildHideArgs(Kind);
+	Core.OnInstant(Kind, Args);
+	const APlayerController* Controller = GetOwningController();
+	if (UConcealmentComponent* Concealment = UConcealmentComponent::Find(Controller != nullptr ? Controller->GetPawn() : nullptr))
+	{
+		Concealment->OnOwnerHidePressed(Kind, Args.BushId, Args.SideIndex);
+	}
+}
+
+FNetCommandArgs UPawnCommandClient::BuildHideArgs(ECommandKind& OutKind) const
+{
+	// The owner knows its own state (its controller's owner-only concealed flag and its own replicated pose) and the
+	// public bush geometry: Enter names the bush in entry reach (CON-R3), Exit the side the look yaw faces (CON-R8).
+	FNetCommandArgs Args;
+	OutKind = ECommandKind::HideEnter;
+	const APlayerController* Controller = GetOwningController();
+	const APawn* Self = Controller ? Controller->GetPawn() : nullptr;
+	if (Controller == nullptr || Self == nullptr)
+	{
+		return Args;
+	}
+	const UConcealmentOwnerViewComponent* OwnerView = Controller->FindComponentByClass<UConcealmentOwnerViewComponent>();
+	const UConcealmentComponent* Concealment = UConcealmentComponent::Find(Self);
+	const UWorld* World = GetWorld();
+	const AGameStateBase* GameState = World != nullptr ? World->GetGameState() : nullptr;
+	const double Now = GameState != nullptr ? GameState->GetServerWorldTimeSeconds() : 0.0;
+	const bool bInside = (OwnerView != nullptr && OwnerView->IsConcealed()) || (Concealment != nullptr && Concealment->GetEffectiveState(Now) != EConcealState::Outside);
+	if (bInside)
+	{
+		OutKind = ECommandKind::HideExit;
+		Args.SideIndex = ConcealmentGeometry::SideFromYaw(Controller->GetControlRotation().Yaw);
+		return Args;
+	}
+	const UBushRuntimeSubsystem* Bushes = UBushRuntimeSubsystem::Get(World);
+	const double Reach = Concealment != nullptr ? Concealment->GetTuning().BushEntryReachCm : FConcealmentTuning_Public().BushEntryReachCm;
+	if (const FBushRuntime* Bush = Bushes != nullptr ? Bushes->FindEnterableBush(Self->GetActorLocation(), Reach) : nullptr)
+	{
+		Args.BushId = Bush->Id;
+	}
+	return Args;
 }
 
 FNetCommandArgs UPawnCommandClient::BuildAttackArgs(APawn*& OutHostLocalRef) const

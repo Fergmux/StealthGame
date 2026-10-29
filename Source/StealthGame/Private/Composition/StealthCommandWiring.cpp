@@ -67,81 +67,6 @@ FEpochToken FStealthRoundEpochSource::GetCurrentEpoch() const
 	return Gateway != nullptr ? Gateway->GetEpochToken() : FEpochToken();
 }
 
-// ---- FStealthPrototypeBushSpotQuery (stand-in) ---------------------------------------------------------------------
-
-void FStealthPrototypeBushSpotQuery::GetBushes(TArray<const AStealthBush*>& Out) const
-{
-	Out.Reset();
-	if (UWorld* Target = World.Get())
-	{
-		for (TActorIterator<AStealthBush> It(Target); It; ++It)
-		{
-			if (IsValid(*It))
-			{
-				Out.Add(*It);
-			}
-		}
-	}
-	Out.Sort([](const AStealthBush& A, const AStealthBush& B) { return A.GetFName().LexicalLess(B.GetFName()); });
-}
-
-bool FStealthPrototypeBushSpotQuery::GetFootprint(uint16 BushId, FBox2D& OutFootprint) const
-{
-	TArray<const AStealthBush*> Bushes;
-	GetBushes(Bushes);
-	const int32 Index = static_cast<int32>(BushId) - 1;
-	if (!Bushes.IsValidIndex(Index))
-	{
-		return false;
-	}
-	OutFootprint = Bushes[Index]->GetFootprint2D();
-	return OutFootprint.bIsValid;
-}
-
-bool FStealthPrototypeBushSpotQuery::FindSpotZone(const FVector& WorldPoint, uint16& OutBushId) const
-{
-	TArray<const AStealthBush*> Bushes;
-	GetBushes(Bushes);
-	const FVector2D Point(WorldPoint);
-	for (int32 Index = 0; Index < Bushes.Num(); ++Index)
-	{
-		const FBox2D Zone = Bushes[Index]->GetFootprint2D().ExpandBy(ToleranceCm);
-		if (Zone.bIsValid && Zone.IsInside(Point))
-		{
-			OutBushId = static_cast<uint16>(Index + 1);
-			return true;
-		}
-	}
-	return false;
-}
-
-void FStealthPrototypeBushSpotQuery::GetSpotOccupants(uint16 BushId, const APawn* Attacker, TArray<APawn*>& OutOccupants) const
-{
-	OutOccupants.Reset();
-	FBox2D Footprint(ForceInit);
-	UWorld* Target = World.Get();
-	if (Target == nullptr || !GetFootprint(BushId, Footprint))
-	{
-		return;
-	}
-	// A capsule standing in the volume overlaps it; its centre lies within the footprint grown by the capsule radius.
-	const FBox2D Occupied = Footprint.ExpandBy(AStealthPawn::SampleCapsuleRadiusCm);
-	for (TActorIterator<AStealthCharacter> It(Target); It; ++It)
-	{
-		AStealthCharacter* Character = *It;
-		if (Character != Attacker && IsConcealed(Character) && Occupied.IsInside(FVector2D(Character->GetActorLocation())))
-		{
-			OutOccupants.Add(Character);
-		}
-	}
-}
-
-bool FStealthPrototypeBushSpotQuery::IsConcealed(const APawn* Pawn) const
-{
-	const AStealthCharacter* Character = Cast<AStealthCharacter>(Pawn);
-	return Character != nullptr && !Character->IsDying() && Character->IsConcealed();
-}
-
 // ---- FStealthPrototypeCommandFallback (stand-in until IIF stage 2) -------------------------------------------------
 
 EResolveResult FStealthPrototypeCommandFallback::Resolve(const FQueueItem& Item, FQueueKey Key)
@@ -150,6 +75,10 @@ EResolveResult FStealthPrototypeCommandFallback::Resolve(const FQueueItem& Item,
 	if (Payload != nullptr && (static_cast<ECommandKind>(Payload->Kind) == ECommandKind::InteractBegin || static_cast<ECommandKind>(Payload->Kind) == ECommandKind::InteractEnd))
 	{
 		return Interact != nullptr ? Interact->Resolve(Item, Key) : EResolveResult::Voided; // every pawn kind, the same path
+	}
+	if (Payload != nullptr && (static_cast<ECommandKind>(Payload->Kind) == ECommandKind::HideEnter || static_cast<ECommandKind>(Payload->Kind) == ECommandKind::HideExit))
+	{
+		return Hide != nullptr ? Hide->Resolve(Item, Key) : EResolveResult::Voided; // Concealment's slot (con-004/005)
 	}
 	AStealthGameMode* Mode = GameMode.Get();
 	AStealthCharacter* Character = Payload != nullptr ? Cast<AStealthCharacter>(Payload->Pawn.Pawn.Get()) : nullptr;
@@ -160,19 +89,10 @@ EResolveResult FStealthPrototypeCommandFallback::Resolve(const FQueueItem& Item,
 	switch (static_cast<ECommandKind>(Payload->Kind))
 	{
 	case ECommandKind::Traverse:
-	case ECommandKind::HideEnter:
-	case ECommandKind::HideExit:
-		return EResolveResult::Executed; // no-ops, as under the D53 prototype queue
+		return EResolveResult::Executed; // a no-op, as under the D53 prototype queue
 	default:
 		return EResolveResult::Voided; // Attack and Prepare never reach the fallback (Assassination resolves them)
 	}
-}
-
-// ---- FStealthPrototypeBodyRemovalObserver (stand-in until Concealment) --------------------------------------------
-
-void FStealthPrototypeBodyRemovalObserver::OnBodyRemovalCommitted(APawn* Body)
-{
-	UE_LOGF(LogStealth, Verbose, "[Encounter] body removal committed for %ls", Body != nullptr ? *Body->GetName() : TEXT("?"));
 }
 
 // ---- FStealthControllerReplyTransport --------------------------------------------------------------------------------

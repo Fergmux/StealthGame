@@ -1,12 +1,12 @@
 # Story 020: A fresh or late-arriving pawn actor starts hidden, evaluates in PostNetInit and exposes IsAllyBodyHidden
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready — Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25). Other dependencies are ordinary story order (see Dependencies).
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: 2026-10-26
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -95,7 +95,9 @@ Construct non-owner pawn actors presentation-hidden in `PostInitializeComponents
 **Required evidence**:
 - Integration: the PIE `FreshActorLatchTest.cpp` — must exist and pass, OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.BodyHiddenLatchTable, StealthGame.Concealment.PIE.PerViewerVisibility.HiderCulledForEnemyKeptForAllyAndOwner, StealthGame.Concealment.PIE.PerViewerVisibility.CoOccupantsAndCullBoundary; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -103,3 +105,10 @@ Construct non-owner pawn actors presentation-hidden in `PostInitializeComponents
 
 - Depends on: `story-019-body-hidden-latch-function.md`, `story-004-hide-enter-execution-and-commit.md`, `story-023-owner-and-team-concealed-flags.md`; IVP `story-004-spike-s9-cull-latency-and-explicit-channel-close.md` and `story-005-spike-s10-reopen-behaviour-and-netguid.md` (blockers); Roster `production/epics/participant-state-roster/story-042-team-view-pawn-ref-ordering.md`
 - Unlocks: `story-026-per-viewer-visibility-pie.md`, `story-028-enter-swap-hides-body-per-viewer.md`, `story-032-ownership-change-while-concealed.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1 (v) and the ally-watch case, AC2 and AC4 passing: an enemy client re-creates a killed-concealed body hidden from its first frame (bDiedConcealed), an ally holds a concealed teammate hidden through the whole enter, a fresh actor holds hidden while a living teammate entry's PawnRef is unresolved (2 s bound), IsAllyBodyHidden is the Public/View facade (HUD hatched marker). AC1 (i)-(iv) are covered by the latch table (BodyHiddenLatchTable: fresh-actor rows at each boundary) rather than per-case PIE re-opens; AC3 (late clip seek under LeakNetProfile) DEFERRED with the BushEnter/BushExit clips (no clip assets yet; the latch already reads only ServerNow - Start).
+**Deviations**: The S10-R5 warm-up term (hidden = latch OR NOT bPoseWarm, owner's own pawn included) is not built here: a fresh client actor's latch is evaluated at its PostNetInit (AStealthPawn broadcasts OnActionStateChanged there, before any frame renders) and the existing S10-R5 warm-up (EncounterPresentation, bHiddenInGame) keeps the un-posed body hidden; the latch uses the separate visibility flag and restores, never overwrites, the mesh's anim tick option so the warm-up's bone-finalisation show still fires. The unresolved-ally hold applies only to an unresolved CONCEALED teammate entry (an informant waiting to respawn has no pawn and must not hold every fresh actor). Teammate Markers TM-R5 STAND-IN: the prototype HUD draws a hatched box around the chevron of a teammate whose body is hidden.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

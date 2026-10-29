@@ -1,0 +1,5 @@
+Evidence stamp: Concealment 001-026, 2026-10-29
+Build: cycle.ps1 Result: Succeeded
+Tests: 565/565 (tests exit=0)
+Run: OBSERVED 3-player PIE, con-01..06
+Spikes: S-CON-1 PASS (b); R5 PASS (software Lumen cells; HW-RT not run)

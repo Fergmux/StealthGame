@@ -13,6 +13,8 @@
 #include "Server/StealthCompositionRoot.h"
 #include "View/StealthRosterTeamView.h"
 #include "View/ObjectiveTeamViewComponent.h"
+#include "View/ConcealmentOwnerViewComponent.h"
+#include "View/ConcealmentComponent.h"
 
 #include "Camera/CameraActor.h"
 #include "Camera/PlayerCameraManager.h"
@@ -104,6 +106,8 @@ AStealthPlayerController::AStealthPlayerController()
 	TeamView = CreateDefaultSubobject<URosterTeamViewComponent>(TEXT("TeamView"));
 	// Story oc-011 (ADR-0020 section 6): the Objectives part of C-TeamView, owner-only through this controller.
 	ObjectiveTeamView = CreateDefaultSubobject<UObjectiveTeamViewComponent>(TEXT("ObjectiveTeamView"));
+	// Concealment story con-023: the owner's own concealed flag (owner audience).
+	ConcealmentOwnerView = CreateDefaultSubobject<UConcealmentOwnerViewComponent>(UConcealmentOwnerViewComponent::ComponentName);
 	CommandClient = CreateDefaultSubobject<UPawnCommandClient>(TEXT("CommandClient"));
 	// Story asn-016 (ADR-0018 section 1.5): the owner's cooldown end, COND_OwnerOnly through the registered subobject list.
 	DefenceOwner = CreateDefaultSubobject<UDefenceOwnerComponent>(TEXT("DefenceOwner"));
@@ -137,6 +141,22 @@ void AStealthPlayerController::BeginPlay()
 	if (IsLocalController() && ObjectiveTeamView)
 	{
 		ObjectiveTeamView->OnViewUpdated.AddUObject(this, &AStealthPlayerController::HandleObjectiveViewUpdated);
+	}
+	if (IsLocalController() && ConcealmentOwnerView)
+	{
+		// Concealment story con-023: the owner's own concealed flag is its pawn's concealment evidence (its predicted moves
+		// stay still and its capsule passes the leaves while concealed with pose None).
+		TWeakObjectPtr<AStealthPlayerController> WeakThis(this);
+		ConcealmentOwnerView->OnConcealedChanged.AddWeakLambda(this, [WeakThis](bool bConcealed)
+		{
+			if (AStealthPlayerController* Self = WeakThis.Get())
+			{
+				if (UConcealmentComponent* Concealment = UConcealmentComponent::Find(Self->GetPawn()))
+				{
+					Concealment->SetConcealedEvidence(bConcealed);
+				}
+			}
+		});
 	}
 	if (IsLocalController() && CommandClient)
 	{

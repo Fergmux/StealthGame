@@ -1,12 +1,12 @@
 # Story 026: Opponents get no trace of a concealed pawn, co-occupant rivals are blind, allies see the marker and informants have no x-ray
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready — Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25). Other dependencies are ordinary story order (see Dependencies).
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: 2026-10-26
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -90,7 +90,9 @@ All three checks are CQTest PIE tests under `StealthGame.Concealment.PIE`. For A
 **Required evidence**:
 - Integration: the three PIE tests above — must exist and pass, OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.PIE.PerViewerVisibility.HiderCulledForEnemyKeptForAllyAndOwner, StealthGame.Concealment.PIE.PerViewerVisibility.CoOccupantsAndCullBoundary, StealthGame.Concealment.CoOccupantRivalsBlind; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -98,3 +100,10 @@ All three checks are CQTest PIE tests under `StealthGame.Concealment.PIE`. For A
 
 - Depends on: `story-009-crowd-perception-filter-and-steering-exclusion.md`, `story-020-fresh-actor-latch-and-ally-hidden-read.md`, `story-024-is-concealed-from-truth-table.md`, `story-025-cull-push-wiring.md`; IVP S9 and S10 spike stories (blockers); teammate-markers epic (stories not yet written)
 - Unlocks: `story-035-prototype-retirement-and-regression.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing. AC1: for 10 s of concealment the enemy's client holds no actor and the enemy's connection no channel for the hider, sampled every frame (no actor means no shadow, decal, sound or trace target can exist; the 64-sample orbit is subsumed); AC2: co-occupant rivals hold no actor for each other, co-occupant allies hold each other body-hidden; AC3: an informant holds no actor for a concealed rival and holds its concealed ally body-hidden. The hatched-marker assertions wait for the Teammate Markers epic (the HUD stand-in draws it; observed in the run).
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

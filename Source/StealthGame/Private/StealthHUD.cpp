@@ -1,4 +1,6 @@
 #include "StealthHUD.h"
+#include "View/AllyBodyHidden.h"
+#include "View/ConcealmentOwnerViewComponent.h"
 #include "View/Input/PawnCommandClient.h"
 #include "StealthCharacter.h"
 #include "StealthGameState.h"
@@ -277,7 +279,10 @@ void AStealthHUD::DrawStatusPanel(const AStealthPlayerState* PS, const AStealthG
 		// Story nkp-018: the "Wrong targets" tally (UI-NKP-1) is painted by the Penalty overlay (squares, numeral, triangle),
 		// below this panel, Active and frozen alike; the true strike count stays on the server.
 
-		if (Pawn && Pawn->IsConcealed())
+		// Concealment story con-023: the owner's own concealed flag (owner audience), never the pawn's.
+		const AStealthPlayerController* OwnPC = Cast<AStealthPlayerController>(GetOwningPlayerController());
+		const UConcealmentOwnerViewComponent* OwnConcealment = OwnPC != nullptr ? OwnPC->GetConcealmentOwnerView() : nullptr;
+		if (OwnConcealment != nullptr && OwnConcealment->IsConcealed())
 		{
 			DrawShadowedText(TEXT("Hidden from enemies"), X, Y, AlliedTurquoise);
 			Y += Line;
@@ -334,8 +339,23 @@ void AStealthHUD::DrawTeammateMarkers(const AStealthPlayerState* PS)
 		const float S = 8.f;
 		DrawLine(Screen.X - S, Screen.Y - S, Screen.X, Screen.Y, Color, 2.f);
 		DrawLine(Screen.X + S, Screen.Y - S, Screen.X, Screen.Y, Color, 2.f);
+		// Concealment story con-020 AC4 (Teammate Markers TM-R5 stand-in): a teammate whose body is hidden on this client
+		// (concealed in a bush) gets the hatched marker: a box crossed by diagonal hatching around the chevron.
+		const bool bAllyHidden = IsAllyBodyHidden(Character);
+		if (bAllyHidden)
+		{
+			const float B = 14.f;
+			DrawLine(Screen.X - B, Screen.Y - B, Screen.X + B, Screen.Y - B, Color, 1.5f);
+			DrawLine(Screen.X + B, Screen.Y - B, Screen.X + B, Screen.Y + B, Color, 1.5f);
+			DrawLine(Screen.X + B, Screen.Y + B, Screen.X - B, Screen.Y + B, Color, 1.5f);
+			DrawLine(Screen.X - B, Screen.Y + B, Screen.X - B, Screen.Y - B, Color, 1.5f);
+			// Three diagonal hatch lines inside the box.
+			DrawLine(Screen.X - B, Screen.Y, Screen.X, Screen.Y - B, Color, 1.f);
+			DrawLine(Screen.X - B, Screen.Y + B, Screen.X + B, Screen.Y - B, Color, 1.f);
+			DrawLine(Screen.X, Screen.Y + B, Screen.X + B, Screen.Y, Color, 1.f);
+		}
 		const AStealthPlayerState* MatePS = Character->GetStealthPlayerState();
-		const FString Label = MatePS ? MatePS->GetPlayerName() + (Character->IsInformant() ? TEXT(" (informant)") : TEXT("")) : FString();
+		const FString Label = MatePS ? MatePS->GetPlayerName() + (Character->IsInformant() ? TEXT(" (informant)") : TEXT("")) + (bAllyHidden ? TEXT(" (hidden)") : TEXT("")) : FString();
 		DrawShadowedText(Label, Screen.X, Screen.Y - S - 20.f, Color, 0.8f, true);
 	}
 }
@@ -502,7 +522,7 @@ void AStealthHUD::CollectOwnerElements(const AStealthPlayerController& PC, TArra
 			: (Remaining > 0.0 ? TEXT("Defence:Recovering")
 				: (Pawn && (Pawn->IsRunning() || Pawn->IsInTraversal()) ? TEXT("Defence:Unavailable") : TEXT("Defence:Ready")));
 		Out.Add(Defence);
-		if (Pawn && Pawn->IsConcealed())
+		if (const UConcealmentOwnerViewComponent* OwnConcealment = PC.GetConcealmentOwnerView(); OwnConcealment != nullptr && OwnConcealment->IsConcealed())
 		{
 			Out.Add(TEXT("Concealed"));
 		}

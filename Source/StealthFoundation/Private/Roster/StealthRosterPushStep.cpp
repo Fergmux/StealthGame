@@ -26,6 +26,7 @@ void FRosterPushStep::Reset()
 	Reconnect.Reset();
 	OwnerRespawnDue.Reset();
 	OwnerTally.Reset();
+	Concealed.Reset();
 	OwnerDirty.Reset();
 	RetiringThisFrame.Reset();
 	RetiringClearNextFrame.Reset();
@@ -100,6 +101,7 @@ void FRosterPushStep::OnRosterEvent(const FRosterEvent& Event)
 		{
 			OwnerRespawnDue.Reset(); // the new epoch starts with no countdown (Penalty also writes 0 before the latch)
 			OwnerTally.Reset(); // and with a 0 tally (Penalty's reset re-push writes 0 under the new epoch)
+			Concealed.Reset(); // every pawn is destroyed at the reset: no teammate stays concealed
 		}
 		for (TPair<FParticipantId, FReconnectState>& Pair : Reconnect)
 		{
@@ -162,6 +164,7 @@ FTeamView FRosterPushStep::BuildView(const FParticipantRecord& Owner) const
 			}
 		}
 		Entry.PawnRef = (Pawn.IsSet() && Resolver) ? Resolver(Pawn) : nullptr;
+		Entry.bIsConcealed = Concealed.Contains(Id);
 		if (const FReconnectState* State = Reconnect.Find(Id))
 		{
 			Entry.bReconnecting = State->bReconnecting;
@@ -269,6 +272,29 @@ ERosterResult FRosterPushStep::SetOwnerTally(FParticipantId Id, uint8 WrongTarge
 		OwnerTally.Add(Id, Value);
 	}
 	OwnerDirty.Add(Id); // the owner's own view only: teammates' views carry no tally
+	return ERosterResult::Applied;
+}
+
+ERosterResult FRosterPushStep::SetTeammateConcealed(FParticipantId Id, bool bConcealed)
+{
+	const FParticipantRecord* Record = Core.FindRecord(Id);
+	if (Record == nullptr)
+	{
+		return ERosterResult::Rejected_UnknownParticipant;
+	}
+	if (Concealed.Contains(Id) == bConcealed)
+	{
+		return ERosterResult::NoOp_Unchanged;
+	}
+	if (bConcealed)
+	{
+		Concealed.Add(Id);
+	}
+	else
+	{
+		Concealed.Remove(Id);
+	}
+	MarkTeamDirty(Record->Team); // the teammates' views carry the flag
 	return ERosterResult::Applied;
 }
 

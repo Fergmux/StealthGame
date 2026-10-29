@@ -27,6 +27,7 @@ void FSavedMove_Stealth::Clear()
 	bSavedWantsToRun = false;
 	SavedPose = EStealthActionPose::None;
 	StartMotionState = FStealthMotionState();
+	SavedGateState = 0;
 }
 
 uint8 FSavedMove_Stealth::GetCompressedFlags() const
@@ -51,7 +52,7 @@ bool FSavedMove_Stealth::SameLatches(const FStealthMotionState& A, const FStealt
 bool FSavedMove_Stealth::CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const
 {
 	const FSavedMove_Stealth* Other = static_cast<const FSavedMove_Stealth*>(NewMove.Get());
-	if (Other == nullptr || Other->bSavedWantsToRun != bSavedWantsToRun || Other->SavedPose != SavedPose)
+	if (Other == nullptr || Other->bSavedWantsToRun != bSavedWantsToRun || Other->SavedPose != SavedPose || Other->SavedGateState != SavedGateState)
 	{
 		return false;
 	}
@@ -71,6 +72,7 @@ void FSavedMove_Stealth::SetMoveFor(ACharacter* C, float InDeltaTime, FVector co
 		bSavedWantsToRun = Movement->bWantsToRun;
 		SavedPose = Movement->ActionPose;
 		StartMotionState = Movement->MotionState;
+		SavedGateState = Movement->MotionGateState;
 	}
 }
 
@@ -93,6 +95,7 @@ void FSavedMove_Stealth::PrepMoveFor(ACharacter* C)
 	{
 		RestoreLatches(*Movement, StartMotionState);
 		Movement->ActionPose = SavedPose;
+		Movement->MotionGateState = SavedGateState;
 	}
 }
 

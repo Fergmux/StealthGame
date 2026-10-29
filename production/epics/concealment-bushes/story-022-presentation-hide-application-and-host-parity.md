@@ -1,12 +1,12 @@
 # Story 022: A latched pawn drops every render proxy, the aim channel response and the audio and decals, on clients and the listen host
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: spike R5 (`story-021-spike-r5-hidden-primitive-leaks.md`) has not reported; the hidden-primitive flag set is unverified for VSM cache pages, groom and Niagara
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -91,7 +91,9 @@
 **Required evidence**:
 - Integration: the PIE `ListenHostParityTest.cpp` and `PresentationHideTest.cpp` — must exist and pass, OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Pawn.RenderFlagParity, StealthGame.Concealment.PIE.PerViewerVisibility.ListenHostParity; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -99,3 +101,10 @@
 
 - Depends on: `story-021-spike-r5-hidden-primitive-leaks.md` (blocker), `story-019-body-hidden-latch-function.md`, `story-004-hide-enter-execution-and-commit.md`; SCL `production/epics/shared-character-locomotion/story-043-footstep-parity.md`
 - Unlocks: `story-028-enter-swap-hides-body-per-viewer.md`, `story-034-r5-leak-matrix.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC2 passing: ApplyHidden sets SetVisibility(false, true) on the mesh (and root-attached props), switches the presentation-aim channel to ignore on mesh and capsule, keeps pose freshness (AlwaysTickPoseAndRefreshBones while hidden), suppresses anim-notify dispatch (footstep decals, foley, notify Niagara, sounds) and pauses attached audio emitters; the three gating flags are pinned false on AStealthPawn's primitives and audited on the configured character class (RenderFlagParity); bHidden is never used. ListenHostParity: the host watching a remote opponent conceal has the latch set from the replicated action state, the mesh and every attachment invisible, bHidden unchanged on every frame, its presentation-aim trace passing through the pawn, and the host's blind strike resolving through the server path (the hider dies with bDiedConcealed). AC3 (the Camera eye-mask dither) holds by construction - a hidden primitive has no proxy, so no mask value can draw it - and is asserted when the Camera eye mask (ADR-0015) exists.
+**Deviations**: R5 prescribed no extra step (VSM, groom, Niagara). Attached Niagara keeps simulating while hidden (render-only hide).
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

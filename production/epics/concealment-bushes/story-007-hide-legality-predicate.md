@@ -1,12 +1,12 @@
 # Story 007: CanBegin for HideEnter and HideExit gives the same reply for every pawn kind and every occupancy
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -89,7 +89,9 @@ Enter legality (CON-R3): IIF class/locomotion legality (not running, not travers
 **Required evidence**:
 - Logic: `EntryLegalityTest.cpp` and `SamePathForNpcsTest.cpp` under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.EntryLegality, StealthGame.Concealment.SamePathForNpcs; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - headless core rule (no player-observable surface of its own); the integrated behaviour is observed in the batch's 3-player PIE run (con-*.png)
 
 ---
 
@@ -97,3 +99,10 @@ Enter legality (CON-R3): IIF class/locomotion legality (not running, not travers
 
 - Depends on: `story-001-concealment-tuning-keys-and-timing-validator.md`, `story-002-bush-runtime-from-manifest.md`, `story-005-hide-exit-execution-and-blocked-side.md` (cooldown source); IIF `story-003-action-hub-and-predicate-registry.md` and `story-033-legality-matrix.md` under `production/epics/input-interaction-framework/`; SCL `production/epics/shared-character-locomotion/story-013-isrunning-hysteresis.md`
 - Unlocks: `story-011-server-warp-to-anchor-and-exit-motion.md` (PIE use)
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC2 passing (every row at occupancy 0, 1 and 4; identical replies for unbound AI pawns).
+**Deviations**: Interact refusal inside a bush is a STAND-IN predicate registered by the composition root (StealthBushGatedPredicate: Interact NotNow while in a bush or transition) until the IIF Interact owner reads Concealment directly.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

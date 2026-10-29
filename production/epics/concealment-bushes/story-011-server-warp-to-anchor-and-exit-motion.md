@@ -1,12 +1,12 @@
 # Story 011: Every pawn is warped to the anchor on enter and root-moved out on exit by the same server path
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -95,7 +95,9 @@ The server starts the source for every pawn at Hide execution; the target is the
 **Required evidence**:
 - Integration: `WarpSpeedTest.cpp` and the PIE functional-map test — must exist and pass, OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.PIE.CollisionAndStillness.CollisionAndAvoidance; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -103,3 +105,10 @@ The server starts the source for every pawn at Hide execution; the target is the
 
 - Depends on: `story-001-concealment-tuning-keys-and-timing-validator.md`, `story-004-hide-enter-execution-and-commit.md`, `story-005-hide-exit-execution-and-blocked-side.md`, `story-008-conceal-collision-pure-function.md`
 - Unlocks: `story-012-owner-warp-no-snap.md`, `story-013-inside-the-bush-stillness-and-view.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing: one FRootMotionSource_MoveToForce (ConcealEnter / ConcealExit) for NPC and player pawns; an Outside pawn walking into the volume is blocked; two pawns enter one bush together; a third Outside pawn still blocks.
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

@@ -28,6 +28,7 @@
 #include "Server/StealthTuningSchema.h"
 #include "Server/Testing/StealthNegativeControl.h"
 #include "Server/Testing/StealthAssassinationTuningKnobs.h"
+#include "Server/Testing/StealthConcealmentTuningKnobs.h"
 #include "Server/Testing/StealthCrowdTuningKnobs.h"
 #include "Server/Testing/StealthObjectivesTuningKnobs.h"
 #include "Server/Testing/StealthPenaltyTuningKnobs.h"
@@ -136,6 +137,11 @@ namespace SchemaCompleteTestData
 		if (const FFloatProperty* Float = CastField<FFloatProperty>(KeyProp))
 		{
 			OutValue = Float->GetPropertyValue_InContainer(OwnerValue);
+			return true;
+		}
+		if (const FEnumProperty* Enum = CastField<FEnumProperty>(KeyProp))
+		{
+			OutValue = static_cast<double>(Enum->GetUnderlyingProperty()->GetSignedIntPropertyValue(Enum->ContainerPtrToValuePtr<void>(OwnerValue)));
 			return true;
 		}
 		return false;
@@ -292,6 +298,11 @@ bool FTuningSchemaCompleteTest::RunTest(const FString& Parameters)
 	}
 	// The ten Objectives-owned Tuning Knobs rows (story oc-001); ObjectiveInteractSec is already a TDC canonical pin.
 	for (const StealthObjectivesTuningKnobs::FKnob& Knob : StealthObjectivesTuningKnobs::Knobs)
+	{
+		Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
+	}
+	// The eleven Concealment Tuning Knobs rows (story con-001; BushVictimMode pins its value index, UniformHash 0).
+	for (const StealthConcealmentTuningKnobs::FKnob& Knob : StealthConcealmentTuningKnobs::Knobs)
 	{
 		Pins.Add({ Knob.Key, static_cast<double>(Knob.Default) });
 	}

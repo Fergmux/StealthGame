@@ -1,12 +1,12 @@
 # Story 015: A strike point targets a bush within 75 cm and GetSpotOccupants returns the non-ally record
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -94,7 +94,9 @@ F4: `TargetsBush(b, W) = d_xy(W, Footprint_b) ≤ BushSpotToleranceCm`. The aim 
 **Required evidence**:
 - Logic: `SpotZoneTest.cpp` and `SpotOccupantsTest.cpp` under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.SpotZoneAndVictim, StealthGame.Concealment.SpotOccupants; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -102,3 +104,10 @@ F4: `TargetsBush(b, W) = d_xy(W, Footprint_b) ≤ BushSpotToleranceCm`. The aim 
 
 - Depends on: `story-002-bush-runtime-from-manifest.md`, `story-003-conceal-state-machine-and-occupancy-record.md`
 - Unlocks: `story-016-spot-pick-secret-stream.md`, `story-033-blind-strike-parity-and-kill-timing.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing (75 cm zone with rounded corners, inclusive boundary; non-ally occupants; the bush rule is terminal).
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

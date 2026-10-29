@@ -1,12 +1,12 @@
 # Story 003: The per-pawn Concealment state machine and per-bush occupancy record exist as headless core
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -102,7 +102,9 @@ The `ICrowdPerceptionFilter` interface is story 009; the client latch is story 0
 **Required evidence**:
 - Logic: the three tests above under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.StateMachine, StealthGame.Concealment.OccupancyRecord, StealthGame.Concealment.TakeoverEligibility; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - headless core rule (no player-observable surface of its own); the integrated behaviour is observed in the batch's 3-player PIE run (con-*.png)
 
 ---
 
@@ -110,3 +112,10 @@ The `ICrowdPerceptionFilter` interface is story 009; the client latch is story 0
 
 - Depends on: IIF `production/epics/input-interaction-framework/story-002-pawn-command-core-skeleton.md` (component host)
 - Unlocks: `story-004-hide-enter-execution-and-commit.md`, `story-005-hide-exit-execution-and-blocked-side.md`, `story-006-round-phase-lifecycle-and-no-dwell.md`, `story-014-attack-breaks-concealment.md`, `story-015-spot-zone-and-occupants.md`, `story-017-kill-while-concealed-server-rules.md`, `story-024-is-concealed-from-truth-table.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing (state machine through the real resolvers, occupancy record = Concealed + Exiting-before-crossing, takeover eligibility).
+**Deviations**: Commit keeps the transition generation (the commit is a step inside the enter transition, not a new transition; decision logged). UConcealmentComponent is a pawn feature component registered through StealthPawnFeatureComponents so Core never names Concealment.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

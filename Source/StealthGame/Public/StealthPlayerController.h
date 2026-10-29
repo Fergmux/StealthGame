@@ -18,6 +18,7 @@ enum class EPenaltyCardPhase : uint8;
 
 class URosterTeamViewComponent;
 class UObjectiveTeamViewComponent;
+class UConcealmentOwnerViewComponent;
 struct FObjectiveTeamView;
 class UPawnCommandClient;
 class UDefenceOwnerComponent;
@@ -359,6 +360,9 @@ public:
 	/** The owner-only C-TeamView Objectives part (story oc-011; written only by UObjectivesService). The HUD's objective source. */
 	UObjectiveTeamViewComponent* GetObjectiveTeamView() const { return ObjectiveTeamView; }
 
+	/** Concealment story con-023: the owner's own concealed flag (owner audience; the server's Concealment core writes it). */
+	UConcealmentOwnerViewComponent* GetConcealmentOwnerView() const { return ConcealmentOwnerView; }
+
 	/** Removes expired messages and pings. */
 	void PruneExpired(double Now);
 
@@ -491,6 +495,9 @@ protected:
 	/** C-TeamView, Objectives part (ADR-0020 section 6, story oc-011): the team's objective view, owning connection only. */
 	UPROPERTY(VisibleAnywhere, Category = "Stealth")
 	TObjectPtr<UObjectiveTeamViewComponent> ObjectiveTeamView;
+
+	UPROPERTY(VisibleAnywhere, Category = "Stealth")
+	TObjectPtr<UConcealmentOwnerViewComponent> ConcealmentOwnerView;
 
 	/** Owner: a local HUD line when the own team's stage advances (from the view, never from an RPC). */
 	void HandleObjectiveViewUpdated(const FObjectiveTeamView& View);

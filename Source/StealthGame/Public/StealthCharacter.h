@@ -82,8 +82,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stealth")
 	bool IsDying() const { return HasDeathWrite(); }
 
+	/**
+	 * Server: the pawn is Concealed in a bush (the production UConcealmentService record; Concealment epic). False on every
+	 * client, which never learns another pawn's concealment (the replicated prototype bConcealed leak was retired).
+	 */
 	UFUNCTION(BlueprintPure, Category = "Stealth")
-	bool IsConcealed() const { return bConcealed && !bRevealedUntilExit; }
+	bool IsConcealed() const;
 
 	/** Held after a strike: movement speed is zero. */
 	bool IsHeldInPlace() const;
@@ -98,12 +102,6 @@ public:
 
 	/** Server: freezes movement for Duration seconds (the Round adapter's stop at Ended). */
 	void HoldInPlace(float Duration);
-
-	/** Server: bush overlap bookkeeping. */
-	void SetInBush(AStealthBush* Bush, bool bInside);
-
-	/** Server: a strike from concealment reveals the attacker until they leave the bush. */
-	void RevealFromConcealment();
 
 	/** Server: picks this character's appearance from the shared pool. */
 	void SetAppearanceIndex(int32 NewIndex);
@@ -127,9 +125,6 @@ public:
 protected:
 	/** Whether the local viewer is on this pawn's team. */
 	bool IsTeammateOfLocalViewer() const;
-
-	/** Hides concealed enemies from this machine's viewer only (per-viewer concealment). */
-	void UpdateConcealmentVisibility();
 
 	void ApplyAppearance();
 
@@ -164,21 +159,10 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_AppearanceIndex)
 	int32 AppearanceIndex = INDEX_NONE;
 
-	/** In a bush. Replicated to all so each client can hide enemies locally (prototype; see header note). */
-	UPROPERTY(Replicated)
-	bool bConcealed = false;
-
-	UPROPERTY(Replicated)
-	bool bRevealedUntilExit = false;
-
 	UPROPERTY(Replicated)
 	double HeldUntilServerTime = 0.0;
-
-	/** Bushes currently overlapping (server). */
-	TArray<TWeakObjectPtr<AStealthBush>> OverlappingBushes;
 
 	bool bFirstPerson = false;
 	bool bLocalInteracting = false;
 	double LocalInteractStartTime = 0.0;
-	bool bHiddenForLocalViewer = false;
 };

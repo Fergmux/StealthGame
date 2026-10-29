@@ -784,6 +784,7 @@ FCrowdActionTimings UCrowdDirector::GetActionTimings() const
 	Timings.PrepareCapSec = FAssassinationTuning_Public().DefenceDurationSec;
 	Timings.PrepareCooldownSec = FAssassinationTuning_Public().DefenceCooldownSec;
 	Timings.HandoverHoldSec = FLocomotionTuning_Server().HandoverHoldSec;
+	Timings.BushReenterCooldownSec = FConcealmentTuning_Server().BushReenterCooldownSec; // registered by story con-001
 	return Timings;
 }
 

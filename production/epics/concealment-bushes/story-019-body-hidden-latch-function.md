@@ -1,12 +1,12 @@
 # Story 019: EvaluateBodyHidden is a pure, fail-closed, state-derived function
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -96,7 +96,9 @@ The tuning comes through the ADR-0004 client face (`FConcealmentTuning_Public` a
 **Required evidence**:
 - Logic: `BodyHiddenLatchTest.cpp` under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.BodyHiddenLatchTable; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - headless core rule (no player-observable surface of its own); the integrated behaviour is observed in the batch's 3-player PIE run (con-*.png)
 
 ---
 
@@ -104,3 +106,10 @@ The tuning comes through the ADR-0004 client face (`FConcealmentTuning_Public` a
 
 - Depends on: `story-001-concealment-tuning-keys-and-timing-validator.md` (client tuning face); the Foundation `FActionState`/`FDeathState` struct definitions (ADR-0018; assassination-defence-reversal epic stories not yet written, so use the Foundation definitions)
 - Unlocks: `story-020-fresh-actor-latch-and-ally-hidden-read.md`, `story-022-presentation-hide-application-and-host-parity.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing.
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

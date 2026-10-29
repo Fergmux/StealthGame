@@ -5,6 +5,7 @@
 #include "View/Core/StealthGait.h"
 #include "View/Core/StealthLocomotionModel.h"
 #include "View/StealthTuningPublicSubstructs.h"
+#include "View/Core/StealthMotionGate.h"
 #include "StealthPawnMovementComponent.generated.h"
 
 class IStealthFaultSink;
@@ -100,6 +101,21 @@ public:
 	/** The recorded freeze time (-1: none). */
 	double GetFrozenFromServerTime() const { return FrozenFromServerTime; }
 
+	/**
+	 * The feature motion gate of this pawn (Concealment's UConcealmentComponent, ADR-0017 section 4): consulted before every
+	 * simulated move, its state byte saved in FSavedMove_Stealth and restored on replay. Null: no gate. Not owned.
+	 */
+	void SetMotionGate(IStealthMotionGate* Gate) { MotionGate = Gate; }
+	IStealthMotionGate* GetMotionGate() const { return MotionGate; }
+	/** The gate state byte of the last simulated move (0 = open). */
+	uint8 GetMotionGateState() const { return MotionGateState; }
+
+	/** Owner corrections received from the server since the last reset (observation; Concealment story con-012). */
+	int32 GetClientCorrectionCount() const { return ClientCorrectionCount; }
+	/** The largest received correction (server position minus the owner's) since the last reset, in cm. */
+	double GetMaxClientCorrectionCm() const { return MaxClientCorrectionCm; }
+	void ResetClientCorrectionStats() { ClientCorrectionCount = 0; MaxClientCorrectionCm = 0.0; }
+
 	/** Injects the fault sink the backstops report to (null: the process log sink). Not owned. */
 	void SetFaultSink(IStealthFaultSink* Sink) { FaultSink = Sink; }
 
@@ -145,12 +161,17 @@ protected:
 	virtual void OnMovementUpdated(float DeltaSeconds, const FVector& OldLocation, const FVector& OldVelocity) override;
 	/** Replay restores each saved move's gait and pose; the live intent is put back afterwards (engine pattern for crouch). */
 	virtual bool ClientUpdatePositionAfterServerUpdate() override;
+	using Super::OnClientCorrectionReceived;
+	/** Counts the owner's received corrections and their size (the engine's notification, before it applies them). */
+	virtual void OnClientCorrectionReceived(class FNetworkPredictionData_Client_Character& ClientData, float TimeStamp, FVector NewLocation, FVector NewVelocity,
+		FMovementBaseInterfaceData* NewMovementBaseInterfaceData, FName NewBaseBoneName, bool bHasBase, bool bBaseRelativePosition, uint8 ServerMovementMode,
+		FVector ServerGravityDirection) override;
 
 	/** The legality class of the owning pawn (the injected source; Active without one). */
 	virtual EStealthGaitLegality GetGaitLegality() const;
 
 	/** True when the pawn itself has commanded motion disabled: the freeze flag (a prototype adapter adds its hold). */
-	virtual bool IsCommandedMotionDisabled() const { return IsCommandedMotionFrozen(); }
+	virtual bool IsCommandedMotionDisabled() const { return IsCommandedMotionFrozen() || (MotionGate != nullptr && MotionGate->IsMoveBlocked(MotionGateState)); }
 
 	/** Called after the traversal mode was refused (a prototype adapter cancels its montage here). */
 	virtual void OnTraversalModeRefused() {}
@@ -181,6 +202,10 @@ private:
 	bool bModelSteppedThisMove = false;
 
 	const IStealthGaitLegalitySource* LegalitySource = nullptr;
+	IStealthMotionGate* MotionGate = nullptr;
+	uint8 MotionGateState = 0;
+	int32 ClientCorrectionCount = 0;
+	double MaxClientCorrectionCm = 0.0;
 	IStealthFaultSink* FaultSink = nullptr;
 	int32 BackstopHits = 0;
 

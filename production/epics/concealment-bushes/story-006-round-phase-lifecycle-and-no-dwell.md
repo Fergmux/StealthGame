@@ -1,12 +1,12 @@
 # Story 006: Ended and Reset leave concealment consistent and no dwell timer exists
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -95,7 +95,9 @@ The `ConcealmentTransition` timer kind is a third post-latch exemption: its item
 **Required evidence**:
 - Logic: the three tests above under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.RoundEndAndReset, StealthGame.Concealment.NoDwellTimer, StealthGame.Concealment.StaleItemsVoided; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - headless core rule (no player-observable surface of its own); the integrated behaviour is observed in the batch's 3-player PIE run (con-*.png)
 
 ---
 
@@ -103,3 +105,10 @@ The `ConcealmentTransition` timer kind is a third post-latch exemption: its item
 
 - Depends on: `story-003-conceal-state-machine-and-occupancy-record.md`, `story-004-hide-enter-execution-and-commit.md`, `story-005-hide-exit-execution-and-blocked-side.md`; round-match-framework epic phase-gate and latch stories; IIF `production/epics/input-interaction-framework/story-095-command-test-seams.md`
 - Unlocks: `story-032-ownership-change-while-concealed.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing (latch exemption for in-flight transitions, reset empties every record, 30 min no-dwell simulation, stale items voided).
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

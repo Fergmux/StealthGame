@@ -17,6 +17,21 @@
           "source": "ADR-0020 sections 4 and 6; owner-only through the PlayerController (bOnlyRelevantToOwner, registered sub-object list), push-based"
         }
       ]
+    },
+    {
+      "name": "Owner data: Concealment owner flag (UTeamViewComponentBase)",
+      "rows": [
+        {
+          "class": "UConcealmentOwnerViewComponent",
+          "property": "bIsConcealed",
+          "condition": "COND_OwnerOnly",
+          "audience": "Owner",
+          "carrier": "C-Owner",
+          "policyRows": ["IsConcealed"],
+          "owners": ["information-visibility-policy", "concealment-bushes"],
+          "source": "ADR-0017 section 1 (UConcealmentOwnerViewComponent); IVP R3 IsConcealed row, audience Owner; on the PlayerController (relevant to its owner only), push-based; story con-023"
+        }
+      ]
     }
   ]
 }

@@ -74,55 +74,25 @@ private:
 };
 
 /**
- * STAND-IN (Concealment epic not built; ADR-0017 FBushRuntime replaces it): IBushSpotQuery over the prototype bushes.
- * BushId = 1-based index of the world's AStealthBush actors sorted by name; footprint = the bush volume's 2D box; spot
- * zone = footprint grown by BushSpotToleranceCm; occupants = concealed AStealthCharacters standing in the footprint
- * (AStealthCharacter::IsConcealed, the prototype overlap-driven concealment).
- */
-class FStealthPrototypeBushSpotQuery final : public IBushSpotQuery
-{
-public:
-	FStealthPrototypeBushSpotQuery(UWorld* InWorld, double InToleranceCm) : World(InWorld), ToleranceCm(InToleranceCm) {}
-
-	virtual bool FindSpotZone(const FVector& WorldPoint, uint16& OutBushId) const override;
-	virtual void GetSpotOccupants(uint16 BushId, const APawn* Attacker, TArray<APawn*>& OutOccupants) const override;
-	virtual bool IsConcealed(const APawn* Pawn) const override;
-	virtual bool GetFootprint(uint16 BushId, FBox2D& OutFootprint) const override;
-
-private:
-	void GetBushes(TArray<const AStealthBush*>& Out) const;
-
-	TWeakObjectPtr<UWorld> World;
-	double ToleranceCm = 0.0;
-};
-
-/**
  * STAND-IN (until IIF stage 2, the IIF slot resolver): the non-Assassination discrete commands, resolved inside the same
  * queue slot after Assassination's action-slot gate. InteractBegin / InteractEnd go to the Interact hold stand-in
  * (FInteractHoldStandIn: the production Objectives path, story oc-005; it replaced the prototype objective handler, retired
- * by story oc-022); Traverse, HideEnter and HideExit execute as no-ops (the sample Blueprint runs
- * traversal; prototype concealment is overlap-driven). Without an Interact resolver the Interact commands are Voided.
+ * by story oc-022); HideEnter and HideExit go to Concealment's resolver (UConcealmentService, stories con-004/005; every
+ * pawn kind the same path); Traverse executes as a no-op (the sample Blueprint runs traversal). Without an Interact or a
+ * Hide resolver those commands are Voided.
  */
 class FStealthPrototypeCommandFallback final : public IQueueResolver
 {
 public:
-	FStealthPrototypeCommandFallback(AStealthGameMode* InGameMode, IQueueResolver* InInteract) : GameMode(InGameMode), Interact(InInteract) {}
+	FStealthPrototypeCommandFallback(AStealthGameMode* InGameMode, IQueueResolver* InInteract, IQueueResolver* InHide)
+		: GameMode(InGameMode), Interact(InInteract), Hide(InHide) {}
 
 	virtual EResolveResult Resolve(const FQueueItem& Item, FQueueKey Key) override;
 
 private:
 	TWeakObjectPtr<AStealthGameMode> GameMode;
 	IQueueResolver* Interact = nullptr;
-};
-
-/**
- * STAND-IN (Concealment epic not built; its FBushRuntime observer replaces it; story asn-019): the prototype keeps no
- * killed-concealed owner / team flags, so a committed body removal changes nothing here (it is logged at Verbose).
- */
-class FStealthPrototypeBodyRemovalObserver final : public IBodyRemovalObserver
-{
-public:
-	virtual void OnBodyRemovalCommitted(APawn* Body) override;
+	IQueueResolver* Hide = nullptr;
 };
 
 /**

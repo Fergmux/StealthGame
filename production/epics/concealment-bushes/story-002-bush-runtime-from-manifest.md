@@ -1,12 +1,12 @@
 # Story 002: Every machine builds the same bush runtime from the Manifest with zero replicated actors, and an empty EntryAxis is rejected
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -103,7 +103,9 @@ The anchor is the footprint centre at ground level inside the 0.35 m curb ring; 
 **Required evidence**:
 - Integration: `ManifestRejectTest.cpp` and the PIE `BushSiteParityTest.cpp` — must exist and pass, OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.ManifestReject, StealthGame.Concealment.SingleVolumeSet, StealthGame.Concealment.BushRuntimeHash, StealthGame.Concealment.PIE.BushSiteParity.EveryMachineBuildsTheSameBushes; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -111,3 +113,10 @@ The anchor is the footprint centre at ground level inside the 0.35 m curb ring; 
 
 - Depends on: level-socket-contract epic (`BushSite` / `FLayoutManifest`; stories not yet written), ADR-0014 graybox provider (Core Layout Service)
 - Unlocks: `story-004-hide-enter-execution-and-commit.md`, `story-007-hide-legality-predicate.md`, `story-008-conceal-collision-pure-function.md`, `story-015-spot-zone-and-occupants.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing. Every machine builds UBushRuntimeSubsystem from the stand-in Manifest's BushSite records and each bush's {BushId, HideVolume 2.0 x 2.0 x 2.25 m, EntryAxis, Anchor} hashes identically on the server and both clients (1 cm perturbation control); an empty EntryAxis rejects the layout (V-BUSH-1 -> NotifyLayoutAborted); one local non-replicated ABushVolumeSet per machine.
+**Deviations**: D49 STAND-IN: the graybox Manifest's BushSite records are gathered by the composition root (StealthConcealmentWiring::GatherBushSites) from L_Prototype's ten AStealthBush actors, sorted by name, ground-traced, all four sides open; the actors keep only their placement (NoCollision, no gameplay). Built from AStealthGameState::BuildCityForSeed on every machine.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

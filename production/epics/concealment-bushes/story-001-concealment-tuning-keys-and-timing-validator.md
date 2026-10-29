@@ -1,12 +1,12 @@
 # Story 001: Concealment tuning keys are registered and the F3 timing chain is validated at load
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -103,7 +103,9 @@ No prototype code is replaced: the prototype has no concealment tuning (constant
 **Required evidence**:
 - Logic: `Source/StealthGameplay/Private/Tests/Concealment/TimingChainTest.cpp` and `NoDwellKeyTest.cpp` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.TuningRows, StealthGame.Concealment.TimingChain, StealthGame.Concealment.NoDwellKey; StealthGame.Tuning.SchemaComplete (Concealment pins); evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - headless core rule (no player-observable surface of its own); the integrated behaviour is observed in the batch's 3-player PIE run (con-*.png)
 
 ---
 
@@ -111,3 +113,10 @@ No prototype code is replaced: the prototype has no concealment tuning (constant
 
 - Depends on: TDC epic `production/epics/tuning-data-config/story-041-schema-generator-commandlet.md` (schema registration) and the TDC validator pipeline stories
 - Unlocks: `story-004-hide-enter-execution-and-commit.md`, `story-005-hide-exit-execution-and-blocked-side.md`, `story-007-hide-legality-predicate.md`, `story-011-server-warp-to-anchor-and-exit-motion.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing. The eleven keys (Public: BushEnterDurSec 0.9, BushEnterSwapSec 0.5, BushExitDurSec 0.9, BushExitCrossSec 0.45, BushStrikeEmergeSec 0.35, BushEntryReachCm 60, BushRustleAmplitudeCm 10; Server: BushSpotToleranceCm 75, BushReenterCooldownSec 6, BushExitDepenetrationCapCm 30, BushVictimMode) are schema rows equal to the GDD fixture; the F3 chain is six TDC invariant rows I-CON-F3a..f (EvaluateF3 / DescribeF3); no key names dwell/capacity/stay/reveal/timeout (planted names are flagged).
+**Deviations**: Sub-structs live in StealthFoundation (FConcealmentTuning_Public / _Server; the TDC schema convention every feature followed). BushVictimMode is the schema's first enum key: SchemaGen, the fingerprint and ApplyF1 gained enum support (an undeclared enum value falls back to the default with DefaultedUndeclaredEnum). TuningSchemaVersion 8 -> 9 (fingerprint 0x21e2825b8dc4aec5). ConcealCullDelayMs is IVP-owned and not registered yet: a pending-owner constant (250 ms) read by I-CON-F3 and the cull, the BushStrikeEmergeSec pending constant removed (Assassination and Penalty invariants read the real row).
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

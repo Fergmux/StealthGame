@@ -1,12 +1,12 @@
 # Story 024: IsConcealedFrom matches a checked-in truth table and is server-only
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -85,7 +85,9 @@ The expected table is checked in as a fixture and written by hand from the GDD, 
 **Required evidence**:
 - Logic: `IsConcealedFromTruthTableTest.cpp` under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.IsConcealedFromTruthTable, StealthGame.Concealment.CoOccupantRivalsBlind; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - headless core rule (no player-observable surface of its own); the integrated behaviour is observed in the batch's 3-player PIE run (con-*.png)
 
 ---
 
@@ -93,3 +95,10 @@ The expected table is checked in as a fixture and written by hand from the GDD, 
 
 - Depends on: `story-003-conceal-state-machine-and-occupancy-record.md`; IVP `production/epics/information-visibility-policy/story-010-query-default-deny.md`
 - Unlocks: `story-026-per-viewer-visibility-pie.md`, `story-033-blind-strike-parity-and-kill-timing.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC2 passing (hand-written truth table; co-occupant rivals blind).
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

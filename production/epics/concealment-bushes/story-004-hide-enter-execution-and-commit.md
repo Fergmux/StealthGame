@@ -1,12 +1,12 @@
 # Story 004: Hide(Enter) executes in its slot, commits at the swap and a failed guard exits ordinarily
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -106,7 +106,9 @@ The entering pawn is an ordinary visible pawn until the commit: no invulnerable 
 **Required evidence**:
 - Logic: the tests above under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.EnterExecution, StealthGame.Concealment.GuardFaultPath; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -114,3 +116,10 @@ The entering pawn is an ordinary visible pawn until the commit: no invulnerable 
 
 - Depends on: `story-001-concealment-tuning-keys-and-timing-validator.md`, `story-002-bush-runtime-from-manifest.md`, `story-003-conceal-state-machine-and-occupancy-record.md`; IIF `production/epics/input-interaction-framework/story-003-action-hub-and-predicate-registry.md`; Round queue stories (round-match-framework epic) for `ScheduleAt`
 - Unlocks: `story-005-hide-exit-execution-and-blocked-side.md`, `story-011-server-warp-to-anchor-and-exit-motion.md`, `story-014-attack-breaks-concealment.md`, `story-018-no-immunity-while-entering.md`, `story-025-cull-push-wiring.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing. AC4 (ClipKeyAgreement) DEFERRED: no BushEnter clip asset exists in the project yet (art); the server key governs and the presentation reads only the server times, so nothing depends on the notify. The test lands with the clip.
+**Deviations**: A guard failure exits internally in both phases (Active and after the latch: Exiting, BushExit, Cross/End items, never a PawnCommand; decision logged). bTransitionOpen makes an Exit Busy until the enter's End.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

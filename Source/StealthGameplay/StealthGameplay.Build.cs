@@ -44,6 +44,11 @@ public class StealthGameplay : ModuleRules
 		PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Objectives", "Public"));
 		PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Objectives", "Private"));
 
+		// ADR-0007 / ADR-0017 (Concealment epic, stories con-002..con-009): the Concealment feature folder Features/Concealment/,
+		// laid out like Objectives ("View/BushRuntimeSubsystem.h" client-safe, "Server/ConcealmentService.h" guarded).
+		PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Concealment", "Public"));
+		PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Features", "Concealment", "Private"));
+
 		// ADR-0016 sections 1, 3, 4 (stories cnb-004, cnb-007, cnb-012): the crowd's StateTree (the StateTree and
 		// GameplayStateTree plugins are enabled in the .uproject), its native gameplay-tag events and the async path
 		// queries. The StateTree types sit in public Crowd headers (the schema, the component, the task), so the two

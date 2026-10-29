@@ -1,0 +1,3 @@
+{"event":"setup","spot":"X=-2600.000 Y=-2450.000 Z=410.000","subject":"BP_CrowdCharacter_C","sun":1,"createRenderStateForHiddenWithCollision":0,"rayTracing":0,"settleFrames":90}
+{"event":"profile","toggles":120,"setVisibilityGameMsMean":0.0164,"renderMsStatic":0.000,"renderMsToggling":0.000,"gameMsStatic":8.639,"gameMsToggling":8.630}
+{"event":"done"}

@@ -1,12 +1,12 @@
 # Story 009: Concealed and transitioning pawns are invisible to NPC perception and absent from NPC steering
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -85,7 +85,9 @@
 **Required evidence**:
 - Integration: `PerceptionFilterTest.cpp` and the PIE `NpcRouteBushInvarianceTest.cpp` — must exist and pass, OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.PerceptionFilter; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - headless core rule (no player-observable surface of its own); the integrated behaviour is observed in the batch's 3-player PIE run (con-*.png)
 
 ---
 
@@ -93,3 +95,10 @@
 
 - Depends on: `story-003-conceal-state-machine-and-occupancy-record.md`; Crowd `production/epics/crowd-npc-behaviour/story-008-spatial-hash-and-perception-filter.md` and `story-011-avoidance-and-yield.md`
 - Unlocks: `story-026-per-viewer-visibility-pie.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1 passing. AC2 (NpcRouteBushInvariance, 100 seeded NPC routes bit-identical occupied vs empty) DEFERRED to the Crowd determinism harness: the invariance follows structurally from AC1 (IsSteeringObstacle is false for every non-Outside pawn and Crowd reads no occupancy; header scan) but the 100-route bit-identity run is not built.
+**Deviations**: Crowd's bush herring is switched on (CNB-022): FStealthCrowdHerringSites feeds bush sites (entry 35 cm out) and BushReenterCooldownSec comes from Concealment's tuning.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

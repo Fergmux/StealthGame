@@ -22,6 +22,17 @@ double FTuningPipelineCore::ApplyF1(const FTuningSchemaRow& Row, double Authored
 		OutAction = ETuningF1Action::DefaultedNonFinite;
 		return Row.Default;
 	}
+	// (1b) An enum key accepts exactly its declared values (0..HardMax, whole numbers); anything else takes the default
+	// (story con-001: the first enum key, BushVictimMode). Never clamped to a neighbouring value.
+	if (Row.TypeTag == StealthTuningTypeTag::Enum)
+	{
+		if (Authored < Row.HardMin || Authored > Row.HardMax || Authored != FMath::RoundToDouble(Authored))
+		{
+			OutAction = ETuningF1Action::DefaultedUndeclaredEnum;
+			return Row.Default;
+		}
+		return Authored;
+	}
 	// (2) A declared sentinel is valid by itself.
 	if (Row.bHasSentinel && Authored == Row.Sentinel)
 	{

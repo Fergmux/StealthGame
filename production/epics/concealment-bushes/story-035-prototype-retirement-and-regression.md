@@ -1,7 +1,7 @@
 # Story 035: The prototype concealment code is retired and the networked behaviours it proved still hold
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: depends on stories still blocked (012, 028 on R5, 033, 034); nothing is retired until the production system it replaces is observed working. Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25).
+> **Status**: Blocked — BLOCKED: depends on stories still open (028, 033, 034 now Ready; 012 Complete 2026-10-29); nothing is retired until the production system it replaces is observed working. Note 2026-10-29: the integration batch already retired the prototype's bush overlap concealment and replicated bConcealed (concealment-001-026 evidence); this story keeps the regression sweep and the remaining retirement checks.
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M

@@ -1,12 +1,12 @@
 # Story 008: Collision is a pure function of state and elapsed time, re-derived after correction replay
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -98,7 +98,9 @@ Collision is computed for each simulated move from `State` and the move's elapse
 **Required evidence**:
 - Logic: the three tests above under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.CollisionAndAvoidance, StealthGame.Concealment.CollisionReplay, StealthGame.Concealment.MoveZeroed; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - headless core rule (no player-observable surface of its own); the integrated behaviour is observed in the batch's 3-player PIE run (con-*.png)
 
 ---
 
@@ -106,3 +108,10 @@ Collision is computed for each simulated move from `State` and the move's elapse
 
 - Depends on: `story-002-bush-runtime-from-manifest.md`, `story-003-conceal-state-machine-and-occupancy-record.md`; SCL `production/epics/shared-character-locomotion/story-016-commanded-vs-external-displacement.md`
 - Unlocks: `story-011-server-warp-to-anchor-and-exit-motion.md`, `story-012-owner-warp-no-snap.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1a, AC2, AC3 passing; AC1b (the physical check) is story 011 AC3 as planned.
+**Deviations**: The gate state rides each saved move (FSavedMove_Stealth::SavedGateState) and is not evaluated during a replay (bClientUpdating); the motion gate registers at OnRegister (a move can run before BeginPlay).
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

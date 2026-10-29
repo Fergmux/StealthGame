@@ -67,6 +67,15 @@ public:
 	/** The owner part's current {tally, LastResultSeq} of Id ({0, 0} = none; tests and dumps). */
 	TPair<uint8, uint32> GetOwnerTally(FParticipantId Id) const;
 
+	/**
+	 * Concealment's teammate flag (ADR-0001 section 5, ADR-0017 section 1; story con-023): Id's entry in its teammates'
+	 * views carries bIsConcealed from the next flush (team audience). Concealment is the only caller; the push step stays the
+	 * only writer of the replicated entry. NoOp_Unchanged when already in place; cleared for everyone by OnRosterReset.
+	 */
+	ERosterResult SetTeammateConcealed(FParticipantId Id, bool bConcealed);
+	/** The flag as the push step holds it (tests and dumps). */
+	bool IsTeammateConcealed(FParticipantId Id) const { return Concealed.Contains(Id); }
+
 	/** Forgets every view, flag and dirty mark (EndMatch). */
 	void Reset();
 
@@ -93,6 +102,8 @@ private:
 	TMap<FParticipantId, double> OwnerRespawnDue;
 	/** Owner-part {WrongTargetTally, LastResultSeq} per participant (absent = {0, 0}; SetOwnerTally). */
 	TMap<FParticipantId, TPair<uint8, uint32>> OwnerTally;
+	/** Participants Concealment marked concealed (SetTeammateConcealed). */
+	TSet<FParticipantId> Concealed;
 	/** Participants whose own view must be rebuilt at the next flush (an owner-part write). */
 	TSet<FParticipantId> OwnerDirty;
 	/** Participants whose retiring fields must be cleared by the following flush. */

@@ -13,8 +13,10 @@ AStealthBush::AStealthBush()
 
 	Volume = CreateDefaultSubobject<UBoxComponent>(TEXT("Volume"));
 	Volume->SetBoxExtent(FVector(120.f, 120.f, 100.f));
-	Volume->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-	Volume->SetGenerateOverlapEvents(true);
+	// Concealment epic (ADR-0017): the bush is now only the visual planter and the stand-in Manifest's BushSite; the
+	// production hide volume is the local ABushVolumeSet's box. The prototype's overlap-driven concealment is off.
+	Volume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Volume->SetGenerateOverlapEvents(false);
 	RootComponent = Volume;
 
 	Foliage = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Foliage"));
@@ -65,47 +67,11 @@ void AStealthBush::BeginPlay()
 	Super::BeginPlay();
 	ApplyFoliageColor();
 
-	if (HasAuthority())
-	{
-		Volume->OnComponentBeginOverlap.AddDynamic(this, &AStealthBush::OnVolumeBeginOverlap);
-		Volume->OnComponentEndOverlap.AddDynamic(this, &AStealthBush::OnVolumeEndOverlap);
-
-		// Characters already inside when the round starts.
-		TArray<AActor*> Inside;
-		Volume->GetOverlappingActors(Inside, AStealthCharacter::StaticClass());
-		for (AActor* Actor : Inside)
-		{
-			CastChecked<AStealthCharacter>(Actor)->SetInBush(this, true);
-		}
-	}
+	// Concealment epic: hiding is the production Hide(Enter) command (UConcealmentService); no overlap conceals anyone.
 }
 
 void AStealthBush::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (HasAuthority())
-	{
-		TArray<AActor*> Inside;
-		Volume->GetOverlappingActors(Inside, AStealthCharacter::StaticClass());
-		for (AActor* Actor : Inside)
-		{
-			CastChecked<AStealthCharacter>(Actor)->SetInBush(this, false);
-		}
-	}
 	Super::EndPlay(EndPlayReason);
 }
 
-void AStealthBush::OnVolumeBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (AStealthCharacter* Character = Cast<AStealthCharacter>(OtherActor))
-	{
-		Character->SetInBush(this, true);
-	}
-}
-
-void AStealthBush::OnVolumeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if (AStealthCharacter* Character = Cast<AStealthCharacter>(OtherActor))
-	{
-		Character->SetInBush(this, false);
-	}
-}

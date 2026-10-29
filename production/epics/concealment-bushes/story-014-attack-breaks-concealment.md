@@ -1,12 +1,12 @@
 # Story 014: An Attack from inside breaks concealment, un-culls in the same step and ends outside the bush
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -91,7 +91,9 @@ Subscribe to IIF's `OnActionStarted(Pawn, Attack)` (IIF `story-054-concealment-h
 **Required evidence**:
 - Logic: `AttackBreaksConcealmentTest.cpp` under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.BreakAtExecution, StealthGame.Concealment.EmergeTiming, StealthGame.Concealment.InsideInputs; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -99,3 +101,10 @@ Subscribe to IIF's `OnActionStarted(Pawn, Attack)` (IIF `story-054-concealment-h
 
 - Depends on: `story-003-conceal-state-machine-and-occupancy-record.md`, `story-004-hide-enter-execution-and-commit.md`, `story-005-hide-exit-execution-and-blocked-side.md`; IIF `production/epics/input-interaction-framework/story-054-concealment-hears-attack.md`; assassination-defence-reversal epic (`BushStrike` clip, ASN-R21; stories not yet written)
 - Unlocks: `story-027-uncull-before-leaf-plane.md`, `story-033-blind-strike-parity-and-kill-timing.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing (break at execution in the Attack's slot, emerge timing, inside inputs).
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

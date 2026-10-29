@@ -14,5 +14,8 @@ public class StealthGame : ModuleRules
 
 		// ADR-0007 composition root: StealthGame wires the production modules together.
 		PrivateDependencyModuleNames.AddRange(new string[] { "StealthFoundation", "StealthGameplay", "StealthPresentation" });
+
+		// Spike R5 (Concealment story con-021, non-Shipping): the render-thread frame time of the hide/show profile.
+		PrivateDependencyModuleNames.Add("RenderCore");
 	}
 }

@@ -1,12 +1,12 @@
 # Story 021: Spike R5, a hidden pawn leaves no shadow, VSM, Lumen, reflection or ray-traced trace on 5.8.4
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -86,7 +86,9 @@ Throwaway code on the prototype map is acceptable, but it must follow the rule s
 **Required evidence**:
 - Visual/Feel: retained captures in `production/qa/evidence/` plus the spike report `production/qa/spikes/<date>_R5.md` with lead sign-off
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): Stealth.Spike.R5 (console spike, not in the gate); StealthGame.Pawn.RenderFlagParity; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - rendering PIE in the editor (D3D12 SM6, software Lumen): captures and heat images in production/qa/spikes/2026-10-29_R5/
 
 ---
 
@@ -94,3 +96,10 @@ Throwaway code on the prototype map is acceptable, but it must follow the rule s
 
 - Depends on: None
 - Unlocks: `story-022-presentation-hide-application-and-host-parity.md`, `story-028-enter-swap-hides-body-per-viewer.md`, `story-034-r5-leak-matrix.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC2 met for the cells this build can run: 6 cells (low sun / noon / shade x VSM on/off, software Lumen); in every Hidden state no subject primitive (body, groom, attached Niagara) has a render proxy and the subject-region difference Hidden-vs-Empty equals Empty-vs-Empty noise (visible control ~80x larger); VSM pages, groom and Niagara need no extra step; hide/show costs 0.024 ms game thread (0.016 ms under the D56 PROXY affinity). The four hardware-RT Lumen cells are NOT RUN (r.RayTracing=False; carried to story 034 with the packaged render-thread profile). Report production/qa/spikes/2026-10-29_R5.md with retained captures.
+**Deviations**: The noise floor uses the same empty spot captured twice (the prototype bushes do not sway) instead of two bushes at matched sway phase; no magenta proxy (the empty-frame diff shows any residual directly); the subject stands 7 m ahead of the player's own camera (the sample's camera system keeps the view target); NpcCount 0 and the HUD hidden for the session (DefaultGame.ini restored).
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

@@ -1,12 +1,12 @@
 # Story 016: The victim among reachable bush occupants is an unbiased draw from the server-secret BushSpotPick stream
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: S
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -93,7 +93,9 @@ Provide a small helper `PickSpotVictim(Reachable, Stream, Key)` that Assassinati
 **Required evidence**:
 - Logic: `SpotPickTest.cpp` under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.SpotPick; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - headless core rule (no player-observable surface of its own); the integrated behaviour is observed in the batch's 3-player PIE run (con-*.png)
 
 ---
 
@@ -101,3 +103,10 @@ Provide a small helper `PickSpotVictim(Reachable, Stream, Key)` that Assassinati
 
 - Depends on: `story-015-spot-zone-and-occupants.md`; session-travel `production/epics/session-travel/story-011-server-sub-seed-server-only.md` and `story-008-secret-stream-counter-independence.md`
 - Unlocks: `story-033-blind-strike-parity-and-kill-timing.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing (unbiased draw from the server-secret BushSpotPick stream; filter before pick).
+**Deviations**: The pick stays in Assassination's VictimResolverCore (it owns the outcome slot); Concealment supplies the occupant list through IBushSpotQuery, replacing ASN-006's fake bush query.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

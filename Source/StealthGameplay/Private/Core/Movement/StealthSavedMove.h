@@ -35,6 +35,8 @@ public:
 	EStealthActionPose SavedPose = EStealthActionPose::None;
 	/** The model state at the start of the move. */
 	FStealthMotionState StartMotionState;
+	/** The motion gate's state byte of the move (Concealment collision; restored on replay). */
+	uint8 SavedGateState = 0;
 };
 
 /** Allocates FSavedMove_Stealth. */

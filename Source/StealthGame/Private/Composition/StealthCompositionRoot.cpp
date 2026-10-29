@@ -3,6 +3,11 @@
 #include "Server/ActionHub.h"
 #include "Server/AssassinationAttackPredicate.h"
 #include "Server/AssassinationPreparePredicate.h"
+#include "Server/ConcealmentService.h"
+#include "Server/Visibility/StealthConcealmentCull.h"
+#include "Server/StealthTuningInvariants.h"
+#include "StealthConcealmentWiring.h"
+#include "StealthBushGatedPredicate.h"
 #include "Server/EncounterService.h"
 #include "Server/StealthPenaltyDueAdapter.h"
 #include "Server/StealthPenaltyService.h"
@@ -472,8 +477,13 @@ void UStealthCompositionRoot::Deinitialize()
 	InteractHolds.Reset();
 	ObjectivesAdapters.Reset();
 	PrototypeFallback.Reset();
-	PrototypeBushes.Reset();
-	PrototypeBodyObserver.Reset();
+	if (UConcealmentService* ConcealmentService = Concealment.Get())
+	{
+		ConcealmentService->Unbind();
+	}
+	Concealment.Reset();
+	HerringSites.Reset();
+	ConcealmentFlags.Reset();
 	ReplyTransport.Reset();
 	CommandEpoch.Reset();
 	CommandQueue.Reset();
@@ -630,10 +640,11 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	}
 	Encounters->Shutdown(); // a previous world's registration on the same queue (Release already ran for a destroyed one)
 
-	// Stand-ins of the composition root (StealthCommandWiring.h): the prototype bush query until Concealment, and the
-	// Interact / Hide / Traverse dispatch until IIF stage 2. Tuning: the schema defaults until the TDC store feeds features.
+	// Stand-ins of the composition root (StealthCommandWiring.h): the Interact / Traverse dispatch until IIF stage 2 (Hide
+	// goes to Concealment's resolver). Tuning: the schema defaults until the TDC store feeds features.
 	const FEncounterParams Params = FEncounterParams::Defaults();
-	PrototypeBushes = MakeShared<FStealthPrototypeBushSpotQuery>(World, Params.Server.OpenSpotToleranceCm); // = BushSpotToleranceCm (W-ASN-9)
+	// Concealment (con-003..014) first: Assassination's bush spot query and body-removal observer are its service.
+	UConcealmentService* ConcealmentService = WireConcealment(World);
 	// Objectives stories oc-005..009: the Interact hold stand-in (until IIF stage 2) and the Objectives adapters it reads.
 	ObjectivesAdapters = MakeShared<FStealthObjectivesAdapters>(World, this, CommandClock.Get());
 	FInteractHoldStandIn::FDeps HoldDeps;
@@ -662,8 +673,7 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		});
 	}
 	InteractHolds = MakeShared<FInteractHoldStandIn>(HoldDeps);
-	PrototypeFallback = MakeShared<FStealthPrototypeCommandFallback>(InGameMode, InteractHolds.Get());
-	PrototypeBodyObserver = MakeShared<FStealthPrototypeBodyRemovalObserver>(); // STAND-IN: Concealment's removal observer
+	PrototypeFallback = MakeShared<FStealthPrototypeCommandFallback>(InGameMode, InteractHolds.Get(), ConcealmentService);
 	ReplyTransport = MakeShared<FStealthControllerReplyTransport>(World);
 	ReplyWorld = World;
 	USessionService* Session = USessionService::Get(World);
@@ -675,13 +685,13 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	Init.SubSeeds = Session != nullptr ? &Session->GetSubSeedSource() : nullptr;
 	Init.Params = Params;
 	Init.Log = MatchCore->GetRoundLogWriter();
-	Init.Bushes = PrototypeBushes.Get();
+	Init.Bushes = ConcealmentService; // ASN-006: the real bush spot query (Concealment's occupancy record and footprints)
 	Init.Roster = GetRosterStore();
 	// NKP story 005: the production Penalty service is the tally source (its exile sets bExiled); story nkp-021 retired the
 	// prototype fallback, so a world with no Penalty subsystem answers every result with tally 0 and no exile.
 	UPenaltyService* PenaltyService = World->GetSubsystem<UPenaltyService>();
 	Init.Tally = PenaltyService;
-	Init.BodyObserver = PrototypeBodyObserver.Get();
+	Init.BodyObserver = ConcealmentService; // the killed-concealed flags clear at the body's removal (story con-017)
 	Init.Faults = &CommandFaults;
 	if (!Encounters->Initialize(Init))
 	{
@@ -696,6 +706,32 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 		UE_LOGF(LogStealth, Error, "Encounters: a PawnCommand / HoldTimer resolver or a DeathWrite / CounterPose applier was already registered.");
 	}
 	InGameMode->BindEncounterService(*Encounters);
+	// Concealment hears the kills (the outcome slot: the record leaves, Entering victims stay visible) and the death writes
+	// (the staging pass: a killed-concealed victim re-opens with bDiedConcealed), stories con-017 / con-018.
+	if (ConcealmentService != nullptr)
+	{
+		TWeakObjectPtr<UConcealmentService> WeakConcealment(ConcealmentService);
+		if (FOnPawnKilled* Killed = Encounters->GetOnPawnKilled())
+		{
+			ConcealKilledHandle = Killed->AddLambda([WeakConcealment](APawn* Victim, APawn*, EVictimKind, EKillCause)
+			{
+				if (UConcealmentService* Service = WeakConcealment.Get())
+				{
+					Service->HandlePawnKilled(Victim);
+				}
+			});
+		}
+		if (FOnDeathWriteApplied* DeathWrite = Encounters->GetOnDeathWriteApplied())
+		{
+			ConcealDeathWriteHandle = DeathWrite->AddLambda([WeakConcealment](APawn* Victim, double, bool)
+			{
+				if (UConcealmentService* Service = WeakConcealment.Get())
+				{
+					Service->HandleDeathWrite(Victim);
+				}
+			});
+		}
+	}
 
 	// NPC-Kill Penalty (stories nkp-001..005, 008): the production service counts strikes from OnPawnKilled, answers the
 	// tally, runs the exile of the L-th ungraced NPC kill (Roster StrikeLimit, the Crowd Director's adoption, the factory
@@ -751,6 +787,76 @@ void UStealthCompositionRoot::WireEncounters(AStealthGameMode* InGameMode)
 	WireObjectives(InGameMode);
 }
 
+UConcealmentService* UStealthCompositionRoot::WireConcealment(UWorld* World)
+{
+	URoundMatchStore* Round = GetRoundStore();
+	FResolutionQueueCore* Queue = Round != nullptr ? Round->GetRoundQueue() : nullptr;
+	FRoundMatchCore* MatchCore = Round != nullptr ? Round->GetMatchCore() : nullptr;
+	UConcealmentService* Service = UConcealmentService::Get(World);
+	UActionHub* Hub = UActionHub::Get(World);
+	if (Service == nullptr || Queue == nullptr || MatchCore == nullptr || Hub == nullptr || !CommandClock.IsValid())
+	{
+		UE_LOGF(LogStealth, Error, "Concealment not wired: no service, hub or round queue (no pawn can hide this match).");
+		return nullptr;
+	}
+	ConcealmentFlags = MakeShared<FStealthConcealmentFlags>(this);
+	FConcealmentServiceInit Init;
+	Init.Clock = CommandClock.Get();
+	Init.Queue = Queue;
+	Init.Epoch = CommandEpoch.Get();
+	Init.Hub = Hub;
+	Init.Roster = GetRosterStore();
+	Init.Flags = ConcealmentFlags.Get();
+	// Story con-025 (ADR-0003 section 5): the Visibility Policy's concealment cull, audience by the Roster's teams.
+	if (UStealthConcealmentCull* Cull = UStealthConcealmentCull::Get(World))
+	{
+		TWeakObjectPtr<UStealthCompositionRoot> WeakRoot(this);
+		Cull->ConfigureTeams([WeakRoot](const APawn* Pawn) -> int32
+		{
+			URosterStore* Roster = WeakRoot.IsValid() ? WeakRoot->GetRosterStore() : nullptr;
+			const FParticipantRecord* Record = Roster != nullptr ? Roster->FindRecord(Roster->GetParticipant(const_cast<APawn*>(Pawn))) : nullptr;
+			return Record != nullptr && Record->Team != ERosterTeam::None ? static_cast<int32>(Record->Team) : -1;
+		}, [WeakRoot](const AActor* Viewer) -> int32
+		{
+			const UStealthCompositionRoot* Root = WeakRoot.Get();
+			const URosterStore* Roster = Root != nullptr ? Root->GetRosterStore() : nullptr;
+			const FParticipantRecord* Record = Roster != nullptr ? Roster->FindRecord(Root->GetParticipant(Cast<APlayerController>(Viewer))) : nullptr;
+			return Record != nullptr && Record->Team != ERosterTeam::None ? static_cast<int32>(Record->Team) : -1;
+		});
+		Cull->SetTiming(FLocomotionTuning_Server().PawnNetUpdateHz, StealthTuningPendingOwnerKeys::ConcealCullDelayMs);
+		Init.Cull = Cull;
+	}
+	Init.Log = MatchCore->GetRoundLogWriter();
+	Init.Faults = &CommandFaults;
+	// Tuning stand-in: the schema defaults (as every feature) until the TDC store feeds features the frozen set.
+	Init.Params.Public = FConcealmentTuning_Public();
+	Init.Params.Server = FConcealmentTuning_Server();
+	Init.Params.AttackLockoutSec = FAssassinationTuning_Public().AttackAttemptLockoutSec;
+	Init.Params.StrikeContactSec = FAssassinationTuning_Public().StrikeContactSec;
+	if (!Service->Bind(Init))
+	{
+		UE_LOGF(LogStealth, Error, "Concealment not wired: the service refused its seams.");
+		return nullptr;
+	}
+	Concealment = Service;
+	// The layout's bushes (the stand-in Manifest built them at the layout step; a rebuild after travel lands here too).
+	if (const UBushRuntimeSubsystem* Runtime = UBushRuntimeSubsystem::Get(World))
+	{
+		Service->SetBushes(Runtime->GetBushes());
+	}
+	// ADR-0011 section 6: the Hide predicate for both directions, weakly; the service is a world subsystem (lives with it).
+	Hub->RegisterPredicate(EActionType::HideEnter, TWeakInterfacePtr<ICommandPredicate>(Service));
+	Hub->RegisterPredicate(EActionType::HideExit, TWeakInterfacePtr<ICommandPredicate>(Service));
+	// Crowd (ADR-0016 sections 3 and 5): the perception filter, and the bush herring sites (CNB-022 switched on).
+	if (UCrowdDirector* Director = UCrowdDirector::Get(World))
+	{
+		Director->SetPerceptionFilter(TWeakInterfacePtr<ICrowdPerceptionFilter>(Service));
+		HerringSites = MakeShared<FStealthCrowdHerringSites>(World);
+		Director->SetHerringSites(HerringSites.Get());
+	}
+	return Service;
+}
+
 void UStealthCompositionRoot::WireObjectives(AStealthGameMode* InGameMode)
 {
 	URoundMatchStore* Round = GetRoundStore();
@@ -804,6 +910,16 @@ void UStealthCompositionRoot::WireObjectives(AStealthGameMode* InGameMode)
 	// ADR-0020 section 1 / ADR-0011 section 6: the Interact predicate and the one interact-target owner, registered weakly.
 	Hub->RegisterPredicate(EActionType::Interact, TWeakInterfacePtr<ICommandPredicate>(ObjectivesService));
 	Hub->RegisterInteractTargetOwner(TWeakInterfacePtr<IInteractTargetOwner>(ObjectivesService));
+	// Concealment stories con-013 / con-014 (IIF R9 stand-in): no tend from inside a bush or a hide transition (NotNow).
+	if (UConcealmentService* ConcealmentService = Concealment.Get())
+	{
+		if (InteractBushGate == nullptr)
+		{
+			InteractBushGate = NewObject<UStealthBushGatedPredicate>(this);
+		}
+		InteractBushGate->Initialize(TWeakInterfacePtr<ICommandPredicate>(ObjectivesService), ConcealmentService);
+		Hub->RegisterPredicate(EActionType::Interact, TWeakInterfacePtr<ICommandPredicate>(InteractBushGate));
+	}
 #if !UE_BUILD_SHIPPING
 	// Round's DebugItem slot for DebugObjectiveCompletion runs the same counted-completion effect (story oc-008).
 	TWeakObjectPtr<UObjectivesService> WeakService(ObjectivesService);
@@ -849,6 +965,12 @@ void UStealthCompositionRoot::HandleRoundActive(uint32 RoundEpoch, double Active
 	{
 		const FEpochToken Epoch(Roster != nullptr && Roster->IsStoreInitialized() ? Roster->GetEpochToken().MatchId : 0, RoundEpoch);
 		ObjectivesService->HandleRoundActive(Epoch, ActivePhaseStart);
+	}
+	// ADR-0003 section 5.3: the concealment cull's global grid starts at the round's Active entry.
+	const UConcealmentService* ConcealmentService = Concealment.Get();
+	if (UStealthConcealmentCull* Cull = ConcealmentService != nullptr ? UStealthConcealmentCull::Get(ConcealmentService->GetWorld()) : nullptr)
+	{
+		Cull->SetGridAnchor(ActivePhaseStart);
 	}
 }
 

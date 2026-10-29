@@ -481,6 +481,16 @@ ERosterResult URosterStore::SetOwnerRespawnDue(FParticipantId Id, double DueServ
 	return PushStep ? PushStep->SetOwnerRespawnDue(Id, DueServerTime, ExpectedEpoch) : ERosterResult::Rejected_NotAuthority;
 }
 
+ERosterResult URosterStore::SetTeammateConcealed(FParticipantId Id, bool bConcealed)
+{
+	return PushStep ? PushStep->SetTeammateConcealed(Id, bConcealed) : ERosterResult::Rejected_NotAuthority;
+}
+
+bool URosterStore::IsTeammateConcealed(FParticipantId Id) const
+{
+	return PushStep && PushStep->IsTeammateConcealed(Id);
+}
+
 ERosterResult URosterStore::SetOwnerTally(FParticipantId Id, uint8 WrongTargetTally, uint32 LastResultSeq, uint32 ExpectedEpoch)
 {
 	return PushStep ? PushStep->SetOwnerTally(Id, WrongTargetTally, LastResultSeq, ExpectedEpoch) : ERosterResult::Rejected_NotAuthority;

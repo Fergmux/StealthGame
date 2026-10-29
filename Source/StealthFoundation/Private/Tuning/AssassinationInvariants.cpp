@@ -46,7 +46,7 @@ FAssassinationInvariantInputs FAssassinationInvariantInputs::FromValues(const FS
 {
 	FAssassinationInvariantInputs Out;
 	Out.CapsuleRadiusCm = StealthTuningConstants::SclCapsuleRadiusCm;
-	Out.BushStrikeEmergeSec = StealthTuningPendingOwnerKeys::BushStrikeEmergeSec;
+	Out.BushStrikeEmergeSec = static_cast<double>(Values.Concealment_Public.BushStrikeEmergeSec); // registered by story con-001
 	Out.CrowdReplacementMinDelaySec = Values.Crowd_Server.CrowdReplacementMinDelaySec;
 	Out.InformantRespawnDelaySec = static_cast<double>(Values.Penalty_Public.InformantRespawnDelaySec); // registered by story nkp-009
 	Out.PawnRefAgreementCm = StealthTuningPendingOwnerKeys::PawnRefAgreementCm;

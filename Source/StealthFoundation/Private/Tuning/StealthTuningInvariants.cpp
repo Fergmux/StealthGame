@@ -7,6 +7,7 @@
 
 #include "Server/StealthAssassinationInvariants.h"
 #include "Server/StealthObjectivesInvariants.h"
+#include "Server/StealthConcealmentInvariants.h"
 #include "Server/StealthPenaltyInvariants.h"
 #include "Server/StealthServerTuning.h"
 #include "Server/StealthTuningConstants.h"
@@ -299,6 +300,13 @@ namespace
 		{ "I-OC2", "Objectives", &StealthObjectivesInvariants::TableCheck<&StealthObjectivesInvariants::CheckIOc2>,
 			StealthObjectivesInvariants::IOc2RejectClause, StealthObjectivesInvariants::IOc2WarnClause },
 		{ "I-OC3", "Objectives", &StealthObjectivesInvariants::TableCheck<&StealthObjectivesInvariants::CheckIOc3> },
+		// Concealment F3 timing chain (story con-001; ConcealmentInvariants.cpp): one Reject row per constraint.
+		{ "I-CON-F3a", "Concealment", &StealthConcealmentInvariants::TableCheck<StealthConcealmentInvariants::F3a> },
+		{ "I-CON-F3b", "Concealment", &StealthConcealmentInvariants::TableCheck<StealthConcealmentInvariants::F3b> },
+		{ "I-CON-F3c", "Concealment", &StealthConcealmentInvariants::TableCheck<StealthConcealmentInvariants::F3c> },
+		{ "I-CON-F3d", "Concealment", &StealthConcealmentInvariants::TableCheck<StealthConcealmentInvariants::F3d> },
+		{ "I-CON-F3e", "Concealment", &StealthConcealmentInvariants::TableCheck<StealthConcealmentInvariants::F3e> },
+		{ "I-CON-F3f", "Concealment", &StealthConcealmentInvariants::TableCheck<StealthConcealmentInvariants::F3f> },
 	};
 
 	/**

@@ -1,12 +1,12 @@
 # Story 023: Commit and crossing set and clear the owner and ally concealed flags through their only writers
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -90,7 +90,9 @@
 **Required evidence**:
 - Integration: `OwnerFlagsTest.cpp` and the PIE `RejoinConcealedTest.cpp` — must exist and pass, OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.OwnerAndTeamFlags, StealthGame.Roster.TeammateConcealed; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -98,3 +100,10 @@
 
 - Depends on: `story-003-conceal-state-machine-and-occupancy-record.md`, `story-004-hide-enter-execution-and-commit.md`; Roster `production/epics/participant-state-roster/story-038-owner-view-feed.md` and `story-041-team-view-repush-on-controller-swap.md`
 - Unlocks: `story-013-inside-the-bush-stillness-and-view.md`, `story-017-kill-while-concealed-server-rules.md`, `story-032-ownership-change-while-concealed.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1 and AC3 passing (owner-only bIsConcealed on the controller, Roster SetTeammateConcealed the sole team writer, crossing clears both, AI pawns call neither, one allowlist row). AC2 (RejoinConcealed) DEFERRED: Session's PIE rejoin is not built (same constraint recorded by Objectives oc-011); the rebind path (HandleParticipantRebound) is covered by BodyRemovalOrRebind.
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

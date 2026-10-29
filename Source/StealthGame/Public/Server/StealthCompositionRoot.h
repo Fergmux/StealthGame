@@ -177,6 +177,9 @@ public:
 	/** The Objectives service of the current server world (stories oc-005..oc-009), or null. */
 	class UObjectivesService* GetObjectivesService() const { return Objectives.Get(); }
 
+	/** The current server world's Concealment service (null before the round queue exists). */
+	class UConcealmentService* GetConcealmentService() const { return Concealment.Get(); }
+
 	/**
 	 * Preparing (ADR-0020 section 2): Objectives selects and validates the one cooked chain. False: the round must fail
 	 * Preparing with ObjectiveChainInvalid. True when no Objectives service is wired in this world.
@@ -200,6 +203,8 @@ private:
 	void HandleRosterEvent(const FRosterEvent& Event);
 	/** Builds the encounter service for World and registers it on Round's current queue (strikes resolve in its slot). */
 	void WireEncounters(AStealthGameMode* InGameMode);
+	/** Binds the Concealment service on Round's current queue and registers its predicate and Crowd seams (con-003..009). */
+	class UConcealmentService* WireConcealment(UWorld* World);
 	/** Round's queue is about to be destroyed: the service forgets it without touching it. */
 	void HandleRoundQueueReleasing();
 	/** Round's Reset step (story asn-019): the encounter service clears its round (roles, stamps, writes, bodies). */
@@ -226,6 +231,10 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<class UAssassinationAttackPredicate> AttackPredicate;
 
+	/** Concealment stories con-013 / con-014: the Interact predicate behind the bush gate (no tend from inside a bush). */
+	UPROPERTY(Transient)
+	TObjectPtr<class UStealthBushGatedPredicate> InteractBushGate;
+
 	TWeakObjectPtr<AStealthGameMode> GameMode;
 	TMap<TWeakObjectPtr<APlayerController>, FParticipantId> ParticipantByController;
 
@@ -237,10 +246,17 @@ private:
 	TSharedPtr<class FStealthWorldCommandClock> CommandClock;
 	TSharedPtr<class FStealthRoundCommandQueue> CommandQueue;
 	TSharedPtr<class FStealthRoundEpochSource> CommandEpoch;
-	TSharedPtr<class FStealthPrototypeBushSpotQuery> PrototypeBushes;
 	TSharedPtr<class FStealthPrototypeCommandFallback> PrototypeFallback;
-	/** Stand-ins of the Penalty tally and the Concealment removal observer (stories asn-015, asn-019). */
-	TSharedPtr<class FStealthPrototypeBodyRemovalObserver> PrototypeBodyObserver;
+	/**
+	 * Concealment (stories con-002..con-014): the current server world's service (Hide resolver and predicate, Crowd's
+	 * perception filter, Assassination's bush spot query and body-removal observer), Crowd's bush herring sites and the
+	 * owner/team flag writers (StealthConcealmentWiring.h).
+	 */
+	TWeakObjectPtr<class UConcealmentService> Concealment;
+	TSharedPtr<class FStealthCrowdHerringSites> HerringSites;
+	TSharedPtr<class FStealthConcealmentFlags> ConcealmentFlags;
+	FDelegateHandle ConcealKilledHandle;
+	FDelegateHandle ConcealDeathWriteHandle;
 	/** NPC-Kill Penalty (stories nkp-001..005): the production service of the current server world (the encounter
 	 *  service's tally source and the exile), and its pawn-level gateway (StealthPenaltyWiring.h; nkp-021 retires the
 	 *  prototype follow-ons the gateway still calls). */

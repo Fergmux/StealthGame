@@ -1,12 +1,12 @@
 # Story 010: Spike S-CON-1, choose the owner-side warp mechanism that meets AC-CON-31
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -87,7 +87,9 @@ Throwaway code on the prototype map `L_Prototype` is acceptable, but it must fol
 **Required evidence**:
 - Integration: a written spike report `production/qa/spikes/<date>_S-CON-1.md` with capture artefacts (a documented measurement)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthSpike.Concealment.ConcealmentOwnerWarp.MeasureEveryMechanism (spike, not in the gate); evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: N/A - spike: a measurement in an in-process network PIE; the report and records are the evidence
 
 ---
 
@@ -95,3 +97,10 @@ Throwaway code on the prototype map `L_Prototype` is acceptable, but it must fol
 
 - Depends on: None (uses the SCL pawn and the prototype map)
 - Unlocks: `story-012-owner-warp-no-snap.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC2 met: 100 hides + 100 exits per mechanism under StealthLeak2 (PktLag 100 ms, PktLoss 2 %); (b) PredictOnPress passes (press-to-motion p95 9.3 ms, max 11.7 ms; 0 corrections during any transition; end gap 0.0 cm); (a1) fails (one RTT, every transition corrected > 5 cm; E4 observed: duplicated, then corrected); (a2) not built (cannot start earlier than a1). Verdict production/qa/spikes/2026-10-28_S-CON-1.md with the per-transition records; ADR-0017 left unedited by the spike and amended through the ADR route (S-CON-1 resolution 2026-10-28).
+**Deviations**: The spike runs through the production path (PressHide -> queue -> service) rather than throwaway warp code, with the mechanism selected by the dev CVar Stealth.Concealment.OwnerWarp; named StealthSpike.* so the 16-minute run stays out of the per-commit gate. First run invalid (owner outside entry reach: rig defect, fixed), second aborted by an MCP probe hitting the commandlet; third run is the record.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

@@ -203,6 +203,19 @@ void UStealthMovementComponent::PerformMovement(float DeltaTime)
 	{
 		MotionState.FacingYawDeg = static_cast<float>(UpdatedComponent->GetComponentRotation().Yaw);
 	}
+	if (MotionGate != nullptr)
+	{
+		// A live move asks the gate at its own server time; a replayed one keeps the byte its saved move recorded
+		// (FSavedMove_Stealth::PrepMoveFor restored it), never the current ServerNow's (ADR-0017 section 4).
+		if (CharacterOwner == nullptr || !CharacterOwner->bClientUpdating)
+		{
+			const UWorld* World = GetWorld();
+			const AGameStateBase* GameState = World != nullptr ? World->GetGameState() : nullptr;
+			const double Now = GameState != nullptr ? GameState->GetServerWorldTimeSeconds() : (World != nullptr ? World->GetTimeSeconds() : 0.0);
+			MotionGateState = MotionGate->EvaluateMoveState(Now);
+		}
+		MotionGate->ApplyMoveState(MotionGateState);
+	}
 	Super::PerformMovement(DeltaTime);
 }
 
@@ -317,6 +330,18 @@ FNetworkPredictionData_Client* UStealthMovementComponent::GetPredictionData_Clie
 		MutableThis->ClientPredictionData = new FNetworkPredictionData_Client_Stealth(*this);
 	}
 	return ClientPredictionData;
+}
+
+void UStealthMovementComponent::OnClientCorrectionReceived(FNetworkPredictionData_Client_Character& ClientData, float TimeStamp, FVector NewLocation, FVector NewVelocity,
+	FMovementBaseInterfaceData* NewMovementBaseInterfaceData, FName NewBaseBoneName, bool bHasBase, bool bBaseRelativePosition, uint8 ServerMovementMode,
+	FVector ServerGravityDirection)
+{
+	++ClientCorrectionCount;
+	if (UpdatedComponent != nullptr)
+	{
+		MaxClientCorrectionCm = FMath::Max(MaxClientCorrectionCm, FVector::Dist(NewLocation, UpdatedComponent->GetComponentLocation()));
+	}
+	Super::OnClientCorrectionReceived(ClientData, TimeStamp, NewLocation, NewVelocity, NewMovementBaseInterfaceData, NewBaseBoneName, bHasBase, bBaseRelativePosition, ServerMovementMode, ServerGravityDirection);
 }
 
 bool UStealthMovementComponent::ClientUpdatePositionAfterServerUpdate()

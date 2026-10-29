@@ -26,12 +26,12 @@ namespace PenaltyInvariantsLocal
 	};
 }
 
-FPenaltyInvariantInputs FPenaltyInvariantInputs::FromValues(const FStealthServerTuning&)
+FPenaltyInvariantInputs FPenaltyInvariantInputs::FromValues(const FStealthServerTuning& Values)
 {
 	FPenaltyInvariantInputs Out;
 	Out.RespawnStarvationSec = StealthTuningPendingOwnerKeys::RespawnStarvationSec;
 	Out.NoPawnFadeSec = StealthTuningPendingOwnerKeys::NoPawnFadeSec;
-	Out.BushStrikeEmergeSec = StealthTuningPendingOwnerKeys::BushStrikeEmergeSec;
+	Out.BushStrikeEmergeSec = static_cast<double>(Values.Concealment_Public.BushStrikeEmergeSec); // registered by story con-001
 	return Out;
 }
 

@@ -1,4 +1,5 @@
 #include "StealthGameState.h"
+#include "Composition/StealthConcealmentWiring.h"
 #include "StealthCityGenerator.h"
 
 #include "EngineUtils.h"
@@ -70,6 +71,9 @@ void AStealthGameState::BuildCityForSeed() const
 			It->Build(RoundSeed);
 		}
 	}
+	// Concealment story con-002: every machine builds the same bush runtime from the (stand-in) Manifest's BushSites once
+	// the seeded layout placed the bushes; the server validates V-BUSH-1 again at the layout-ready step.
+	StealthConcealmentLayout::RebuildBushRuntime(GetWorld());
 }
 
 void AStealthGameState::OnRep_RoundSeed()

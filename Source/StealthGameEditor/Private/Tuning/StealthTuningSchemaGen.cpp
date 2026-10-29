@@ -122,10 +122,26 @@ namespace StealthTuningSchemaGen
 				OutValue = static_cast<double>(Float->GetPropertyValue_InContainer(KeyContainer));
 				return true;
 			}
-			if (Key->IsA<FEnumProperty>() || (Key->IsA<FByteProperty>() && CastField<FByteProperty>(Key)->Enum != nullptr))
+			// The first enum key (Concealment's BushVictimMode, story con-001; tdc-038 open point): a uint8 UENUM whose declared
+			// values are 0..N-1 in declaration order. Its hard and safe ranges are that index set (ReadRanges), so F-1 maps any
+			// undeclared value to the default (DefaultedUndeclaredEnum); the type tag and the value count enter the fingerprint.
+			if (const FEnumProperty* EnumProp = CastField<FEnumProperty>(Key))
 			{
-				OutError = TEXT("enum keys need the EnumValues row column, which is added with the first enum key (story tdc-038 open point)");
-				return false;
+				const FNumericProperty* Underlying = EnumProp->GetUnderlyingProperty();
+				if (Underlying == nullptr || Underlying->GetElementSize() != 1)
+				{
+					OutError = TEXT("an enum key must be a uint8 enum class (CR-3)");
+					return false;
+				}
+				OutTypeTag = StealthTuningTypeTag::Enum;
+				OutValue = static_cast<double>(Underlying->GetSignedIntPropertyValue(EnumProp->ContainerPtrToValuePtr<void>(KeyContainer)));
+				return true;
+			}
+			if (const FByteProperty* ByteProp = CastField<FByteProperty>(Key); ByteProp != nullptr && ByteProp->Enum != nullptr)
+			{
+				OutTypeTag = StealthTuningTypeTag::Enum;
+				OutValue = static_cast<double>(ByteProp->GetPropertyValue_InContainer(KeyContainer));
+				return true;
 			}
 			if (Key->IsA<FSoftObjectProperty>())
 			{
@@ -146,6 +162,38 @@ namespace StealthTuningSchemaGen
 				Row.HardMax = 1.0;
 				Row.SafeMin = 0.0;
 				Row.SafeMax = 1.0;
+				return true;
+			}
+			if (Row.TypeTag == StealthTuningTypeTag::Enum)
+			{
+				// The declared value set 0..N-1 (the hidden _MAX entry excluded): every declared value is in range, nothing else is.
+				const UEnum* Enum = nullptr;
+				if (const FEnumProperty* EnumProp = CastField<FEnumProperty>(Key))
+				{
+					Enum = EnumProp->GetEnum();
+				}
+				else if (const FByteProperty* ByteProp = CastField<FByteProperty>(Key))
+				{
+					Enum = ByteProp->Enum;
+				}
+				const int32 Count = Enum != nullptr ? (Enum->ContainsExistingMax() ? Enum->NumEnums() - 1 : Enum->NumEnums()) : 0;
+				if (Count < 1)
+				{
+					OutErrors.Add(FString::Printf(TEXT("%s: an enum key needs at least one declared value"), *Row.Key));
+					return false;
+				}
+				for (int32 Index = 0; Index < Count; ++Index)
+				{
+					if (Enum->GetValueByIndex(Index) != Index)
+					{
+						OutErrors.Add(FString::Printf(TEXT("%s: enum values must be 0..N-1 in declaration order"), *Row.Key));
+						return false;
+					}
+				}
+				Row.HardMin = 0.0;
+				Row.HardMax = static_cast<double>(Count - 1);
+				Row.SafeMin = Row.HardMin;
+				Row.SafeMax = Row.HardMax;
 				return true;
 			}
 			bool bOk = true;
@@ -288,6 +336,7 @@ namespace StealthTuningSchemaGen
 			Row.TypeTag = Gen.TypeTag;
 			Row.bPublic = Gen.bPublic;
 			Row.Latch = Gen.Latch;
+			Row.HardMax = Gen.HardMax; // an enum key's value count (0..HardMax) enters the fingerprint
 		}
 		return ComputeTuningSchemaFingerprint(Schema);
 	}

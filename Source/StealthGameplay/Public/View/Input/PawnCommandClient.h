@@ -233,6 +233,13 @@ private:
 	void SendMove(const FVector2D& Raw);
 	void SendMoveTo(class UPawnCommandComponent* Command, const FVector2D& Raw);
 	FNetCommandArgs BuildAttackArgs(APawn*& OutHostLocalRef) const;
+public:
+	/** The IA_Hide press (also the spike's and tests' entry): the toggled Hide command, then the owner's warp prediction. */
+	void PressHide();
+
+private:
+	/** Hide's kind (Enter or Exit, by the owner's concealment evidence) and its BushId / SideIndex (Concealment con-004/005). */
+	FNetCommandArgs BuildHideArgs(ECommandKind& OutKind) const;
 
 	void HandleMove(const FInputActionInstance& Instance);
 	void HandleMoveCompleted(const FInputActionInstance& Instance);

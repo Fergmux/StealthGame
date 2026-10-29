@@ -1,12 +1,12 @@
 # Story 012: The owner's hide and exit show no snap and start moving within 50 ms (S-CON-1 mechanism)
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: spike S-CON-1 (`story-010-spike-s-con-1-owner-side-warp.md`) has not reported; the owner-side mechanism is chosen by its verdict
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -88,7 +88,9 @@ Implement exactly the mechanism recorded in the §4 amendment; if the verdict is
 **Required evidence**:
 - Integration: the PIE `OwnerWarpNoSnapTest.cpp` and `OwnerWarpMechanismTest.cpp` — must exist and pass, OR a documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.PIE.OwnerWarpNoSnap.HideAndExitStartWithin50msWithoutSnap; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -96,3 +98,10 @@ Implement exactly the mechanism recorded in the §4 amendment; if the verdict is
 
 - Depends on: `story-010-spike-s-con-1-owner-side-warp.md` (blocker), `story-008-conceal-collision-pure-function.md`, `story-011-server-warp-to-anchor-and-exit-motion.md`
 - Unlocks: `story-013-inside-the-bush-stillness-and-view.md` (visual evidence), `story-035-prototype-retirement-and-regression.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC2 passing: StealthGame.Concealment.PIE.OwnerWarpNoSnap runs 20 hides + 20 exits under StealthLeak2 through the production path: every transition moves the owner within 50 ms (worst 10.3 ms) with no correction above 5 cm (worst 0.00 cm) and the server reaches every state; the recorded mechanism (b) is the default (CVar 2) and bServerAcceptClientAuthoritativePosition is false (asserted). The 100 + 100 measurement is the spike's (story 010) on the same code path.
+**Deviations**: Per-commit gate runs 20 + 20 transitions instead of 100 + 100 (the full count is the spike record; decision logged). Known cost: a Hide the server refuses after the owner predicted it is undone by one normal correction after the window.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

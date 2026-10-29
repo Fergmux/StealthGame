@@ -1,7 +1,7 @@
 # Story 034: The R5 leak matrix passes on the production hide for every LOD and lighting cell
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: spike R5 (`story-021-spike-r5-hidden-primitive-leaks.md`) has not reported, and the production hide (`story-022-presentation-hide-application-and-host-parity.md`) is unbuilt
+> **Status**: Ready — Update 2026-10-29: spike R5 reported (`production/qa/spikes/2026-10-29_R5.md`) and the production hide (story 022) is built; the hardware-RT Lumen cells need an `r.RayTracing=True` build (R5 could not run them).
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: M

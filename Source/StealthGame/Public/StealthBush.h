@@ -8,10 +8,10 @@ class UBoxComponent;
 class UStaticMeshComponent;
 
 /**
- * Designated hiding place. A character inside is invisible to enemy viewers (hidden per viewer on
- * each client; teammates still see them). A concealed character can still be blind-attacked by an
- * enemy who strikes at their spot. Every character (NPCs included) is concealed the same way, so
- * entering a bush is not by itself proof of being a player.
+ * The graybox bush planter (Concealment epic): the visual placeholder and the stand-in Manifest's BushSite (its footprint
+ * centre; StealthConcealmentWiring GatherBushSites). Hiding is the production Hide command (UConcealmentService); the hide
+ * volume is the local ABushVolumeSet's box. This actor has no gameplay of its own (the prototype's overlap-driven,
+ * replicated concealment was retired); story con-035 deletes the class when the Level Socket Contract places bushes.
  */
 UCLASS()
 class STEALTHGAME_API AStealthBush : public AActor
@@ -33,12 +33,6 @@ protected:
 
 	void ApplyFoliageColor();
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-	UFUNCTION()
-	void OnVolumeBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnVolumeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	/** Concealment volume. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stealth")

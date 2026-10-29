@@ -1,12 +1,12 @@
 # Story 005: Hide(Exit) picks an open, unblocked side, is never refused and un-culls in the same step
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: 2026-10-25f
-> **Last Updated**: not yet set (set by /dev-story)
+> **Last Updated**: 2026-10-29
 
 ## Context
 
@@ -96,7 +96,9 @@ The side index is chosen by the client from its look yaw (change request to IIF;
 **Required evidence**:
 - Logic: the three tests above under `Source/StealthGameplay/Private/Tests/Concealment/` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (2026-10-29): StealthGame.Concealment.ExitSideAndBlocked, StealthGame.Concealment.ExitExecution, StealthGame.Concealment.ExitSideMapping; evidence production/qa/evidence/concealment-001-026-2026-10-29/
+
+Run result: OBSERVED - 3-player listen-server PIE on L_Prototype (production/qa/evidence/concealment-001-026-2026-10-29/, con-*.png per viewer)
 
 ---
 
@@ -104,3 +106,10 @@ The side index is chosen by the client from its look yaw (change request to IIF;
 
 - Depends on: `story-003-conceal-state-machine-and-occupancy-record.md`, `story-004-hide-enter-execution-and-commit.md`
 - Unlocks: `story-007-hide-legality-predicate.md` (cooldown source), `story-011-server-warp-to-anchor-and-exit-motion.md`, `story-027-uncull-before-leaf-plane.md`
+
+## Completion Notes
+**Completed**: 2026-10-29
+**Criteria**: AC1-AC3 passing.
+**Deviations**: None.
+**Test Evidence**: production/qa/evidence/concealment-001-026-2026-10-29/
+**Reviewed by**: self code review 2026-10-29 (APPROVED; notes in the evidence)

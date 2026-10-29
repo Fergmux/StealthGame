@@ -1,7 +1,7 @@
 # Story 033: Blind strikes at any bush look identical to the attacker and a killed-concealed body is never drawn on a non-owner client
 
 > **Epic**: Concealment (Bushes)
-> **Status**: Blocked — BLOCKED: needs the assassination-defence-reversal strike resolver. Update 2026-10-26: the S10 gate is cleared — story-056 (S10 fix + re-run) reported **PASS** (`production/qa/spikes/2026-10-26_S10-rerun.md`: re-open guard with `ReopenAckTimeoutMs` 350, lost-pawn repair, warm-up and the ADR-0002 clock budget all met; S9 PASS 2026-10-25).
+> **Status**: Ready — Update 2026-10-29: the assassination-defence-reversal strike resolver is built (asn epic: AttackResolverCore / VictimResolverCore with the BushSpotPick draw over Concealment's IBushSpotQuery); the S10 gate was cleared 2026-10-26 (story-056 PASS).
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L

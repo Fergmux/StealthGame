@@ -64,41 +64,41 @@ Stories embed Control Manifest version 2026-10-25f (the manifest header moved fr
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | Concealment tuning keys are registered and the F3 timing chain is validated at load | Logic | Ready | ADR-0017 |
-| 002 | Every machine builds the same bush runtime from the Manifest with zero replicated actors | Integration | Ready | ADR-0017 |
-| 003 | The per-pawn Concealment state machine and occupancy record exist as headless core | Logic | Ready | ADR-0017 |
-| 004 | Hide(Enter) executes in its slot, commits at the swap and a failed guard exits ordinarily | Logic | Ready | ADR-0017 |
-| 005 | Hide(Exit) picks an open, unblocked side, is never refused and un-culls in the same step | Logic | Ready | ADR-0017 |
-| 006 | Ended and Reset leave concealment consistent and no dwell timer exists | Logic | Ready | ADR-0017 |
-| 007 | CanBegin for HideEnter and HideExit gives the same reply for every pawn kind and occupancy | Logic | Ready | ADR-0017 |
-| 008 | Collision is a pure function of state and elapsed time, re-derived after correction replay | Logic | Ready | ADR-0017 |
-| 009 | Concealed and transitioning pawns are invisible to NPC perception and absent from steering | Integration | Ready | ADR-0017 |
-| 010 | Spike S-CON-1: choose the owner-side warp mechanism that meets AC-CON-31 | Integration | Ready | ADR-0017 |
-| 011 | Every pawn is warped to the anchor on enter and root-moved out on exit by the same server path | Integration | Ready | ADR-0017 |
-| 012 | The owner's hide and exit show no snap and start moving within 50 ms | Integration | Blocked (S-CON-1) | ADR-0017 |
-| 013 | Inside a bush the body is still, the view is clamped and Prepare and Interact are refused | Visual/Feel | Ready | ADR-0017 |
-| 014 | An Attack from inside breaks concealment, un-culls in the same step and ends outside | Logic | Ready | ADR-0017 |
-| 015 | A strike point targets a bush within 75 cm and GetSpotOccupants returns the non-ally record | Logic | Ready | ADR-0017 |
-| 016 | The victim among reachable bush occupants is an unbiased draw from the BushSpotPick stream | Logic | Ready | ADR-0017, ADR-0006 |
-| 017 | Killing a concealed pawn leaves the record at the slot and re-opens only at the death write | Logic | Ready | ADR-0017 |
-| 018 | A pawn struck while Entering dies as a visible pawn before the commit | Logic | Ready | ADR-0017 |
-| 019 | EvaluateBodyHidden is a pure, fail-closed, state-derived function | Logic | Ready | ADR-0017 |
-| 020 | A fresh or late-arriving pawn actor starts hidden and exposes IsAllyBodyHidden | Integration | Blocked (S9, S10) | ADR-0017, ADR-0003 |
-| 021 | Spike R5: a hidden pawn leaves no shadow, VSM, Lumen, reflection or ray-traced trace | Visual/Feel | Ready | ADR-0017, ADR-0022 |
-| 022 | A latched pawn drops every render proxy, the aim channel response and audio on clients and host | Integration | Blocked (R5) | ADR-0017, ADR-0022 |
-| 023 | Commit and crossing set and clear the owner and ally concealed flags through their only writers | Integration | Ready | ADR-0017 |
-| 024 | IsConcealedFrom matches a checked-in truth table and is server-only | Logic | Ready | ADR-0017 |
-| 025 | Commit, exit, break and kill drive the IVP cull through IConcealmentCullSource | Integration | Blocked (S9, S10) | ADR-0017, ADR-0003 |
-| 026 | Opponents get no trace of a concealed pawn; co-occupant rivals blind; informants no x-ray | Integration | Blocked (S9, S10) | ADR-0017, ADR-0003 |
-| 027 | On exit and bush-emerge the body is never drawn before the leaf crossing | Integration | Blocked (S9, S10, S12) | ADR-0017, ADR-0003 |
-| 028 | At the swap server time the body vanishes on the same frame for opponent and ally clients | Visual/Feel | Blocked (R5, S9, S10) | ADR-0017 |
+| 001 | Concealment tuning keys are registered and the F3 timing chain is validated at load | Logic | Complete | ADR-0017 |
+| 002 | Every machine builds the same bush runtime from the Manifest with zero replicated actors | Integration | Complete | ADR-0017 |
+| 003 | The per-pawn Concealment state machine and occupancy record exist as headless core | Logic | Complete | ADR-0017 |
+| 004 | Hide(Enter) executes in its slot, commits at the swap and a failed guard exits ordinarily | Logic | Complete | ADR-0017 |
+| 005 | Hide(Exit) picks an open, unblocked side, is never refused and un-culls in the same step | Logic | Complete | ADR-0017 |
+| 006 | Ended and Reset leave concealment consistent and no dwell timer exists | Logic | Complete | ADR-0017 |
+| 007 | CanBegin for HideEnter and HideExit gives the same reply for every pawn kind and occupancy | Logic | Complete | ADR-0017 |
+| 008 | Collision is a pure function of state and elapsed time, re-derived after correction replay | Logic | Complete | ADR-0017 |
+| 009 | Concealed and transitioning pawns are invisible to NPC perception and absent from steering | Integration | Complete | ADR-0017 |
+| 010 | Spike S-CON-1: choose the owner-side warp mechanism that meets AC-CON-31 | Integration | Complete | ADR-0017 |
+| 011 | Every pawn is warped to the anchor on enter and root-moved out on exit by the same server path | Integration | Complete | ADR-0017 |
+| 012 | The owner's hide and exit show no snap and start moving within 50 ms | Integration | Complete | ADR-0017 |
+| 013 | Inside a bush the body is still, the view is clamped and Prepare and Interact are refused | Visual/Feel | Complete | ADR-0017 |
+| 014 | An Attack from inside breaks concealment, un-culls in the same step and ends outside | Logic | Complete | ADR-0017 |
+| 015 | A strike point targets a bush within 75 cm and GetSpotOccupants returns the non-ally record | Logic | Complete | ADR-0017 |
+| 016 | The victim among reachable bush occupants is an unbiased draw from the BushSpotPick stream | Logic | Complete | ADR-0017, ADR-0006 |
+| 017 | Killing a concealed pawn leaves the record at the slot and re-opens only at the death write | Logic | Complete | ADR-0017 |
+| 018 | A pawn struck while Entering dies as a visible pawn before the commit | Logic | Complete | ADR-0017 |
+| 019 | EvaluateBodyHidden is a pure, fail-closed, state-derived function | Logic | Complete | ADR-0017 |
+| 020 | A fresh or late-arriving pawn actor starts hidden and exposes IsAllyBodyHidden | Integration | Complete | ADR-0017, ADR-0003 |
+| 021 | Spike R5: a hidden pawn leaves no shadow, VSM, Lumen, reflection or ray-traced trace | Visual/Feel | Complete | ADR-0017, ADR-0022 |
+| 022 | A latched pawn drops every render proxy, the aim channel response and audio on clients and host | Integration | Complete | ADR-0017, ADR-0022 |
+| 023 | Commit and crossing set and clear the owner and ally concealed flags through their only writers | Integration | Complete | ADR-0017 |
+| 024 | IsConcealedFrom matches a checked-in truth table and is server-only | Logic | Complete | ADR-0017 |
+| 025 | Commit, exit, break and kill drive the IVP cull through IConcealmentCullSource | Integration | Complete | ADR-0017, ADR-0003 |
+| 026 | Opponents get no trace of a concealed pawn; co-occupant rivals blind; informants no x-ray | Integration | Complete | ADR-0017, ADR-0003 |
+| 027 | On exit and bush-emerge the body is never drawn before the leaf crossing | Integration | Ready | ADR-0017, ADR-0003 |
+| 028 | At the swap server time the body vanishes on the same frame for opponent and ally clients | Visual/Feel | Ready | ADR-0017 |
 | 029 | Every enter, exit and emerge plays one identical rustle; an occupied bush plays nothing | Visual/Feel | Ready | ADR-0017 |
 | 030 | The concealment log goes to the Event Log only and feeds the F1, F2 and metric calculators | Logic | Ready | ADR-0017 |
-| 031 | Logged internal matches satisfy the parity, hiding-is-a-pause and ambush metrics | Integration | Blocked (needs >= 10 logged matches, Crowd, Objectives) | ADR-0017 |
-| 032 | A disconnect, grace expiry or rejoin never cancels or exposes a concealed pawn instantly | Integration | Blocked (S9, S10) | ADR-0017, ADR-0003 |
-| 033 | Blind strikes look identical to the attacker; killed-concealed body never drawn on non-owner | Integration | Blocked (S9, S10, Assassination resolver) | ADR-0017, ADR-0018 |
-| 034 | The R5 leak matrix passes on the production hide for every LOD and lighting cell | Visual/Feel | Blocked (R5) | ADR-0017, ADR-0022 |
-| 035 | The prototype concealment code is retired and the proven networked behaviours still hold | Integration | Blocked (stories 012, 020-034) | ADR-0017, ADR-0003 |
+| 031 | Logged internal matches satisfy the parity, hiding-is-a-pause and ambush metrics | Integration | Blocked (needs >= 10 logged matches) | ADR-0017 |
+| 032 | A disconnect, grace expiry or rejoin never cancels or exposes a concealed pawn instantly | Integration | Ready | ADR-0017, ADR-0003 |
+| 033 | Blind strikes look identical to the attacker; killed-concealed body never drawn on non-owner | Integration | Ready | ADR-0017, ADR-0018 |
+| 034 | The R5 leak matrix passes on the production hide for every LOD and lighting cell | Visual/Feel | Ready | ADR-0017, ADR-0022 |
+| 035 | The prototype concealment code is retired and the proven networked behaviours still hold | Integration | Blocked (stories 028, 033, 034) | ADR-0017, ADR-0003 |
 
 ## Definition of Done
 
